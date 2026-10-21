@@ -6,7 +6,7 @@ A component of [NovaTrail](https://github.com/altnovatrail/spec/tree/v0.2.9), a 
 
 ## Status
 
-Detailing. The documents come first: the first epic of [RUN.md](RUN.md) decides what the component's card left open, and the code follows in the order RUN.md sets. There is no code here yet: it starts with that measurement.
+The reading measurement, epic E2 of [RUN.md](RUN.md), is planned and comes first. Detailing, the first epic, which decides what the component's card left open, waits for the measurement's conclusions. There is no code here yet: it starts with that measurement.
 
 ## Documents
 
