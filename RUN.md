@@ -1048,10 +1048,17 @@
     - проверка gcc в ступени `toolchain`. Pull request Dependabot, который уберёт gcc из базового образа, сам покраснеет на «Go / test» сообщением Go «-race requires cgo» и не сольётся. А проверка была бы ещё одним отличием от ступени `spec`;
     - версии инструментов в `justfile` как третье место сверх двух, названных в RULES.md, Hard rules. Место задаёт договор `go.yml` (R16 .github), так же сделал `module-kit` (R04 module-kit), и это называет architecture 3.3 .github. В образ инструмент не ставится, и закреплён он там, где берётся, — в рецепте.
   - **ветка `t34-go-ci`.** Коммит, push и pull request — исполнитель, по поручению автора: «закомить и создай PR». Это отступление от правила 7 — только в этой задаче, как в T11. Мерж — за автором.
+  - **pull request #15** — все двенадцать проверок зелёные: четыре «Go / …», «CodeQL / analyze (go)», «CodeQL / analyze (actions)», «CodeQL / languages», «CodeQL», «Secrets / gitleaks», «DCO / sign-off», «Documents / docs-check-repo» и «SonarCloud Code Analysis».
+    - Ступень `toolchain` собралась в CI: архивы Node, just, Go и golangci-lint сошлись с суммами, а `go version` — `go1.27.3`.
+    - В журнале «CodeQL / analyze (go)» — «Found 2 go.mod files in: .devcontainer/gopls/go.mod, go.mod.». У `.devcontainer/gopls` — «No packages found.» без замечания, а пакеты `tutor`, `cmd/tutor-eval` и `provider` извлечены.
+    - Строка «Failed to stat go.sum after running `go mod tidy -e`» — о корневом модуле: зависимостей у него нет, а значит, нет и `go.sum`. Это запись журнала, а не замечание (`go/extractor/cli/go-autobuilder/go-autobuilder.go` CodeQL 2.27.2). Записи «it altered go.mod» или «it altered go.sum» нет: lock-файл gopls tidy не изменил.
+  - **мерж** — автор, 2026-10-21, коммит 3711667. На нём зелёные CI, CodeQL и Scorecard, а Dependabot отработал уже с экосистемой `gomod`.
+  - **ruleset `main` 25493197** — пять новых проверок поставил исполнитель после мержа, по поручению автора: «сам добавь пять новых проверок в ruleset main». По правилу 4 и «Моему шагу» это шаг автора, и отступление — только в этой задаче.
+    - Тело `PUT` собрано из `GET` командой «Моего шага». До отправки сверено, что меняется только список проверок, а имена и приложение — GitHub Actions, `integration_id` 15368 — те же, что у пяти проверок на коммите 3711667.
+    - После отправки `GET` правил `main` даёт десять проверок. Весь ruleset отличается от прежнего только пятью новыми, а повторный прогон фильтра ничего не добавляет.
+  - **после Rebuild Container**, его сделал автор, в новом контейнере: `go version` — `go1.27.3`, теперь из ступени `toolchain`, `GOTOOLCHAIN` — `local`, golangci-lint — 2.15.0, gopls — 0.24.0, а `just ci-lint` и `just ci-test` — зелёные.
+  - **pull request с этими записями** — ветка `t34-after-merge`: push, pull request и мерж — исполнитель, по поручению автора: «сам запушь ветку и создай PR и потом смерж его».
 - **Открыто:**
-  - проверки pull request — «Go / lint», «Go / test», «Go / vuln», «Go / licenses», «CodeQL / analyze (go)» и прежние — идут только в нём: Docker в devcontainer нет, и ступень `toolchain` здесь не собиралась. В журнале «CodeQL / analyze (go)» ждём два найденных `go.mod` и «No packages found.» у `.devcontainer/gopls` без замечания;
-  - Rebuild Container — шаг автора: ступень `toolchain` изменилась. Ждём `go version` — go1.27.3, golangci-lint — 2.15.0, gopls — 0.24.0, а `just ci-lint` и `just ci-test` — зелёные;
-  - пять проверок в ruleset `main` 25493197 — шаг автора после мержа, командой из «Моего шага»;
   - В18 «в реестр spec» — кто пишет файлы CI репозитория, когда у него появляется код. До ответа `spec` такие файлы `tutor` пишет своей сессией по поручению автора — T35 и T32;
   - В19 — вопрос автору: команды `go` и `samples/`.
 
