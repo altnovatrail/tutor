@@ -18,14 +18,19 @@ concurrency:
 jobs:
   secrets:
     name: Secrets
-    uses: altnovatrail/.github/.github/workflows/secrets.yml@ff2a3597769ca85e59e476b1a41bdcbc1f50e3ed # v0.1.0
+    uses: altnovatrail/.github/.github/workflows/secrets.yml@c772cc86973240e21cebb310fd0cda221a752ade # v0.1.5
 
   # A pull request's commits are what it checks; a push to main has been checked as one.
   dco:
     name: DCO
     if: github.event_name == 'pull_request'
-    uses: altnovatrail/.github/.github/workflows/dco.yml@ff2a3597769ca85e59e476b1a41bdcbc1f50e3ed # v0.1.0
+    uses: altnovatrail/.github/.github/workflows/dco.yml@c772cc86973240e21cebb310fd0cda221a752ade # v0.1.5
 
   documents:
     name: Documents
-    uses: altnovatrail/.github/.github/workflows/documents.yml@ff2a3597769ca85e59e476b1a41bdcbc1f50e3ed # v0.1.0
+    uses: altnovatrail/.github/.github/workflows/documents.yml@c772cc86973240e21cebb310fd0cda221a752ade # v0.1.5
+
+  # The repository's Go code, by its own ci- recipes in its toolchain stage (R16 .github).
+  go:
+    name: Go
+    uses: altnovatrail/.github/.github/workflows/go.yml@c772cc86973240e21cebb310fd0cda221a752ade # v0.1.5
