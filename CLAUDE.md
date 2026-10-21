@@ -30,3 +30,14 @@ The bar, the project, how we work, citations, work across repositories and the h
 ## Environment
 
 Open the repository in VS Code and choose "Reopen in Container"; clone it with `--recurse-submodules`, or the container checks out `spec/` when it starts. Keep the clone in a folder named `tutor`, as `git clone` names it: `.claude/settings.json` keeps spec's own CLAUDE.md out of this repository's sessions by that path. The container is spec's: Node.js and just, and the GitHub CLI and Claude Code on top. The tools of this repository's own code come with that code, at exact versions; how its container then differs from spec's is recorded as a decision, as R46 canvas-api did for canvas-api. `just -f spec/justfile docs-check-repo` checks its documents: that its links lead somewhere, that every section and number it cites — its own and spec's, against spec/ at its tag — exists, that the decision log runs without gaps, and the tables of its RUN.md (R32 spec). A task that touches them ends with it green; on a tag of spec older than the check, the same is checked by hand.
+
+## samples/
+
+`samples/` holds the samples of the AI-reading measurement: the author's handwriting, with the time and pressure of every stroke (R05, architecture 3.1). No agent opens it, whatever the task: it does not read, list, search, copy or run anything on what is there, and it never moves a sample into the repository. Three things hold this:
+- this rule, which AGENTS.md makes binding on every agent, Codex too;
+- `/samples/` in `.gitignore`;
+- for Claude Code, deny rules in `.claude/settings.json` on reading it, on writing there and on any shell command whose text holds its name. That includes a command that names it only in passing, such as an edit of a document that mentions it: such an edit goes through the editing tools, not the shell.
+
+A command that walks the whole tree, such as `grep -r` or `find .`, names no folder, and neither the deny rules nor `.gitignore` keep it out of `samples/`. Walk the tracked files instead, with `git grep` and `git ls-files`: `samples/` is never tracked.
+
+Inside the container these are rules, not an access boundary. So whatever needs the samples, the paid runs among them, is run by the author, and only the summary report, without handwriting, reaches the repository. Tests run on synthetic strokes that the code draws.

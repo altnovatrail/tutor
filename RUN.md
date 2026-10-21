@@ -109,7 +109,7 @@
 | [x] | T08 | Исследование: как дать модели ход рассуждения | Claude, проверяю я | да | T01 |
 | [x] | T10 | Переход на последний релиз `spec` | я + Claude | — | — |
 | [x] | T33 | Переход на последний релиз `spec` | я + Claude | — | T10 |
-| [ ] | T11 | Каркас Go, devcontainer и запрет на `samples/` | я + Claude | — | T10 |
+| [x] | T11 | Каркас Go, devcontainer и запрет на `samples/` | я + Claude | — | T10 |
 | [ ] | T12 | Формат образца и синтетические образцы | Claude, проверяю я | — | T08, T11 |
 | [ ] | T13 | Страница записи | я + Claude | — | T12 |
 | [ ] | T14 | Проверка по строкам | Claude | — | T11 |
@@ -837,6 +837,58 @@
   - `just -f spec/justfile docs-check-repo` — зелёный.
 - **Разделы:** RULES.md, Hard rules; repositories 2.1, 6 spec; R12 spec, R15 spec, R30 spec, R34 spec; architecture 3, 3.1; R05, R09; В14; Д1.
 - **Мой шаг:** Rebuild Container; коммит.
+- **Сделано (2026-10-21):**
+  - **правило 12**, по pull request #12: открыты те же семь находок Scorecard, что в R02, у CodeQL открытых находок нет, а у SonarCloud — ни одной, quality gate — OK. `spec` — на последнем релизе, `v0.2.14`;
+  - **модуль** `github.com/altnovatrail/tutor`. В `go.mod` — `toolchain go1.27.3`, точная версия, и `go 1.27` — версия языка, чтобы `tutor` не заставлял `api` поднимать свою. Пакеты:
+    - `tutor` — корень, библиотека;
+    - `provider` — порт поставщиков;
+    - `cmd/tutor-eval` — CLI eval-раннера: пока только `-version`, с тестом. Лишние аргументы он отвергает.
+
+    Раскладка — в [docs/architecture.md](docs/architecture.md), раздел 3.2;
+  - **devcontainer:**
+    - Go 1.27.3, golangci-lint 2.15.0 и gopls 0.24.0 — в ступени `devcontainer`. Ступень `toolchain` осталась как у `spec`: в ней идёт общая проверка документов, и Go ей не нужен, пока проверки Go не пришли в CI (В14);
+    - у каждого архива — сумма sha256 по списку издателя и сверка до распаковки (R34 spec);
+    - `GOTOOLCHAIN=local`;
+    - в `devcontainer.json` расширение Go не ставит своих инструментов.
+
+    Чем контейнер теперь отличается от контейнера `spec` и исключение для golangci-lint под GPL-3.0 (R12 spec) — запись R12;
+  - **рецепты** `build`, `test`, `lint` и `fmt` в `justfile`, настройки линтеров — `.golangci.yml`;
+  - **три запрета на `samples/`:**
+    - правило в CLAUDE.md;
+    - `/samples/` в `.gitignore`;
+    - правила `deny` в `.claude/settings.json` — `Read` и `Edit` на `/samples` и всё в нём и `Bash(*samples*)`;
+  - **проверено:**
+    - архивы обеих архитектур скачаны и сошлись с суммами издателей (`sha256sum --check --strict`), у golangci-lint — ещё и с полем `digest` API GitHub;
+    - все шаги RUN проходят `bash -n`. Оба новых шага — Go с golangci-lint и gopls — прогнаны целиком, только с каталогом установки в scratchpad вместо `/usr/local` и не от root:
+      - архивы скачаны, суммы сошлись, архивы распакованы;
+      - `go version` — `go1.27.3`, golangci-lint — 2.15.0, gopls — 0.24.0;
+      - кеши сборки gopls убраны;
+    - на этом toolchain `just build`, `just test` и `just lint` зелёные, `golangci-lint config verify` — ok. `just lint` падает на неотформатированном файле, то есть проверяет и форматирование;
+    - Claude Code не читает пустой пробный файл в `samples/`: «File is in a directory that is denied by your permission settings». Команда оболочки со словом `samples` запрещена, а `git status` каталога не видит;
+    - `just -f spec/justfile docs-check-repo` — ok: 6 файлов, 93 ссылки, 663 раздела, 1043 номера;
+  - **`/code-review high`, один круг** — 9 находок. Исправлено восемь:
+    - комментарий к `version()` обещал «(devel)» у сборки из рабочей копии, а Go 1.24+ ставит туда версию из git;
+    - `go 1.27.3` в `go.mod` заставил бы `api` поднять свою версию. Теперь точную версию называет `toolchain go1.27.3`, а `go 1.27` — версия языка;
+    - раздел 3.2 приписывал точную версию строке `go`;
+    - лишние аргументы CLI молча игнорировались;
+    - у лицензий Go, gopls и staticcheck в R12 не было источника и даты;
+    - Go и golangci-lint стояли в `toolchain`, и общая проверка документов качала бы их на каждом pull request впустую. Теперь они в `devcontainer` до В14;
+    - в шаге gopls был `-mod=readonly`, который при `go install` с версией ничего не делает. `go clean` остался: `rm -rf` не уберёт кеш модулей, файлы которого `go` делает только для чтения, если шаг идёт не от root;
+    - про `Bash(*samples*)` было сказано, что поиск соблюдает `.gitignore`. Это верно для инструмента Grep, но не для `grep -r` в оболочке. Теперь CLAUDE.md велит обходить дерево через `git grep` и `git ls-files`.
+
+    Не исправлено одно: `~/go/bin` в PATH. Инструменты приходят с образом по точной версии, а не через `go install` руками (R12, «Отвергнуто»).
+  - **после Rebuild Container**, его сделал автор, в новом контейнере:
+    - `go version` — `go1.27.3`, `GOTOOLCHAIN` — `local`;
+    - golangci-lint — 2.15.0, gopls — 0.24.0;
+    - `just build`, `just test` и `just lint` — зелёные, проверка документов — тоже;
+  - **ветка `t11-go-skeleton`.** Коммит, push и pull request — исполнитель, по поручению автора: «создай ветку и закомить и запушь и создай PR». Это отступление от правила 7 — только в этой задаче, как в T09, T10 и T08. Мерж — за автором;
+  - **pull request #13.** SonarCloud держал мерж находкой docker:S8545, «Go dependencies should be locked to verified versions», на `go install` gopls по версии модуля. По решению автора gopls теперь ставится из lock-файла `.devcontainer/gopls/`: `go.mod` с `tool golang.org/x/tools/gopls` и `go.sum`, а установка — `go install -mod=readonly tool` (R12). Шаг сверяет версию в lock-файле с `GOPLS_VERSION`. Его прогнали так же, как прежние шаги, — с каталогом установки в scratchpad: gopls 0.24.0 встал, кеши убраны, а строка сверки при чужой версии останавливает шаг.
+- **Открыто:**
+  - Dockerfile после пересборки снова изменился — gopls теперь из lock-файла. Новый шаг в настоящей сборке образа покажет следующий Rebuild Container;
+  - пустой пробный файл `samples/probe-t11` остался: агенту `samples/` закрыт, и удалить его может только автор;
+  - Grep и Glob закрывает то же правило `Read` — так говорит документация Claude Code. В этой сессии этих инструментов нет, и проверены только чтение и команды оболочки;
+  - `Bash(*samples*)` запрещает любую команду, в тексте которой есть это слово, — даже `sed` по RUN.md, где оно встречается. Такие правки — инструментом Edit. А команду, которая обходит всё дерево, — `grep -r`, `find .` — правило не ловит, и `.gitignore` её не держит. От неё держит только правило в CLAUDE.md: обходить отслеживаемые файлы через `git grep` и `git ls-files`;
+  - Д1: тестов Go в CI нет, пока не решён В14. Задача, которая подключит их, перенесёт Go и golangci-lint в ступень `toolchain` (R12).
 
 #### T12. Формат образца и синтетические образцы
 
