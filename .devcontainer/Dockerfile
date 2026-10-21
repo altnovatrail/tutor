@@ -28,7 +28,8 @@ ARG GOLANGCI_LINT_VERSION=2.15.0
 # The sha256 of every archive, per architecture, as its publisher lists it: SHASUMS256.txt of
 # the Node release, SHA256SUMS of the just release, the list at go.dev/dl for Go,
 # golangci-lint-<version>-checksums.txt of the golangci-lint release. A sum written here keeps an
-# archive from being swapped once it has been read (R34), and is raised together with its version.
+# archive from being swapped once it has been read (R34 spec), and is raised together with its
+# version.
 ARG NODE_SHA256_AMD64=6e1db87ef58b8819e5d5402eff1536491b18edd8eb7bee5ef7897876e88dc5ff
 ARG NODE_SHA256_ARM64=724282c3b43aec998aa9527380465b45d229e021b58035f5f4f63095eabfe5d5
 ARG JUST_SHA256_AMD64=4a5cc2f53e6f0f8c59092a6cc38291eb729d46a7dd95d3ae582008881b84931d
@@ -151,7 +152,7 @@ ARG GOPLS_VERSION=0.24.0
 # gopls is built from its lock file, gopls/ in this folder. Its go.mod names gopls as a tool at an
 # exact version, and its go.sum holds the hash of every module the build takes. -mod=readonly
 # builds from that lock and nothing else: a module missing from go.sum, or with another hash, stops
-# the build, as a wrong sum stops an archive (R34). The last line checks that the lock and
+# the build, as a wrong sum stops an archive (R34 spec). The last line checks that the lock and
 # GOPLS_VERSION name the same version. The caches are removed in the same layer: go clean takes the
 # module cache, whose files the go command makes read-only, and the build cache.
 COPY gopls/go.mod gopls/go.sum /tmp/gopls-build/src/
