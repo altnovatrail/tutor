@@ -40,4 +40,6 @@ Open the repository in VS Code and choose "Reopen in Container"; clone it with `
 
 A command that walks the whole tree, such as `grep -r` or `find .`, names no folder, and neither the deny rules nor `.gitignore` keep it out of `samples/`. Walk the tracked files instead, with `git grep` and `git ls-files`: `samples/` is never tracked.
 
+The go command given `./...`, the tools that load packages through it (golangci-lint, govulncheck, go-licenses) and `golangci-lint fmt` are the one exception, so the recipes of the `justfile` may run as they are. They read the names in each folder, `samples/` among them, but open only `.go` files, of which there are none there, and print nothing from it (R14 in docs/decisions.md). If a `.go` file ever lands in `samples/`, the exception no longer holds.
+
 Inside the container these are rules, not an access boundary. So whatever needs the samples, the paid runs among them, is run by the author, and only the summary report, without handwriting, reaches the repository. Tests run on synthetic strokes that the code draws.
