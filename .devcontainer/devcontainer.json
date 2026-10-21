@@ -6,7 +6,8 @@
         "dockerfile": "Dockerfile",
         // The full environment, not the toolchain stage on its own.
         "target": "devcontainer",
-        // The image copies nothing from the repository, so it is built from this folder alone.
+        // The image copies nothing from the repository outside this folder (only gopls/, the lock
+        // file of gopls), so it is built from this folder alone.
         "context": "."
     },
     "remoteUser": "vscode",

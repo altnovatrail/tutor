@@ -418,7 +418,12 @@
   - Go 1.27.3 из `go.dev/dl` и golangci-lint 2.15.0 из его релиза на GitHub — последние релизы на 2026-10-21;
   - у каждого — `ARG` с версией и суммой sha256 на каждую архитектуру и сверка до распаковки (R34 spec). Суммы взяты из списка go.dev/dl и из `golangci-lint-2.15.0-checksums.txt`, а у golangci-lint сверены ещё и с полем `digest` API GitHub. Все четыре архива скачаны и прошли `sha256sum --check --strict`;
   - `GOTOOLCHAIN=local`: команда `go` не скачивает другую версию, что бы ни просил `go.mod`. Точную версию называет и строка `toolchain go1.27.3` в `go.mod`, а строка `go 1.27` — только версия языка: ею `tutor` не заставляет `api` поднимать свою;
-  - gopls 0.24.0, который запускает расширение Go. Он собирается `go install` из своего модуля по точной версии, а каждый скачанный модуль сверяется с базой контрольных сумм Go, `sum.golang.org`, — это то, что R34 spec требует от архива. Кеши сборки чистятся в том же слое, как в R46 canvas-api.
+  - gopls 0.24.0, который запускает расширение Go. Он собирается из своего lock-файла в `.devcontainer/gopls/`:
+    - `go.mod` называет gopls инструментом по точной версии;
+    - `go.sum` держит хеш каждого модуля сборки;
+    - `go install -mod=readonly tool` собирает только по ним: модуль без хеша или с другим хешем останавливает сборку, как R34 spec останавливает архив с чужой суммой;
+    - последняя строка шага сверяет версию в lock-файле с `GOPLS_VERSION`;
+    - кеши сборки чистятся в том же слое, как в R46 canvas-api.
 - **`devcontainer.json`** — расширение Go не ставит и не обновляет своих инструментов и не линтует при сохранении: `go.toolsManagement.autoUpdate`, `go.toolsManagement.checkForUpdates` и `go.lintOnSave`.
 - **Лицензии** (прочитано 2026-10-21):
   - Go и с ним gofmt — BSD-3-Clause ([LICENSE Go](https://github.com/golang/go/blob/master/LICENSE));
@@ -431,13 +436,21 @@
 - **Go и линтер — в `devcontainer`, пока проверки Go не пришли в CI.** Общая проверка документов собирает ступень `toolchain` и гоняет docs-check внутри неё. Там Go и линтер были бы ещё ~90 МБ загрузки и ещё одним поводом упасть на каждом pull request, а пользы не дали бы. Когда решится В14, задача, которая подключит проверки Go, перенесёт их в `toolchain` вместе с суммами.
 - **golangci-lint** — как в canvas-api (R46 canvas-api): один бинарник даёт и линтеры, и форматтеры. Так `just lint` проверяет и форматирование без отдельного инструмента.
 - **gopls** нужен расширению Go. Без него расширение поставило бы последнюю версию само, не по точной версии.
+- **gopls — из lock-файла.** Установку `go install` по одной версии модуля SonarCloud держит находкой docker:S8545, «Go dependencies should be locked to verified versions», на pull request #13. Его quality gate держит мерж (R30 spec), а правило 12 RUN.md велит сначала чинить кодом. Так решил автор 2026-10-21.
 
 — *Отвергнуто:*
 - **staticcheck и gofmt вместо golangci-lint.** staticcheck — под MIT ([LICENSE go-tools](https://github.com/dominikh/go-tools/blob/master/LICENSE), прочитано 2026-10-21), а gofmt — часть Go, так что исключение не понадобилось бы. Но это два инструмента вместо одного, а errorlint, misspell и nolintlint пришлось бы ставить отдельно. Сам staticcheck входит в golangci-lint;
 - **Go и линтер в `toolchain` уже сейчас** — довод выше;
 - **`go 1.27.3` в `go.mod`:** у библиотеки эта строка — нижняя граница, и `api` пришлось бы поднять свою;
+- **`go install` gopls по версии модуля, без lock-файла.** Так было в первой редакции этой записи. Версии зависимостей и тогда задавал `go.mod` самого gopls, а модули сверял `sum.golang.org`. Но SonarCloud такую установку не принимает, а его quality gate держит мерж;
+- **отметить находку SonarCloud ложной:** правило 12 считает это крайней мерой, а lock-файл чинит находку кодом;
 - **delve:** отладки пока нет. Он встанет тем же путём, что gopls: в Dockerfile, по точной версии, в `/usr/local/bin`;
 - **`~/go/bin` в PATH:** инструмент, поставленный руками через `go install`, был бы не по точной версии. Инструменты приходят с образом;
 - **инструменты, которые расширение Go ставит само:** они приходят не по точной версии.
 
-— *Следствие:* версия Go, golangci-lint или gopls поднимается правкой Dockerfile вместе с суммами (R34 spec), а пересобрать контейнер — шаг автора. — `.devcontainer/Dockerfile`, `.devcontainer/devcontainer.json`, `.golangci.yml`, `justfile`, `go.mod`; architecture 3.2; RUN.md, T11.
+— *Следствие:*
+- версия Go или golangci-lint поднимается правкой Dockerfile вместе с суммами (R34 spec);
+- версия gopls поднимается командой `go get -tool` в `.devcontainer/gopls/` вместе с `GOPLS_VERSION`;
+- пересобрать контейнер — шаг автора.
+
+— `.devcontainer/Dockerfile`, `.devcontainer/devcontainer.json`, `.devcontainer/gopls/`, `.golangci.yml`, `justfile`, `go.mod`; architecture 3.2; RUN.md, T11.

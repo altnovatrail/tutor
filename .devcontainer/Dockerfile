@@ -165,17 +165,21 @@ RUN arch="$(dpkg --print-architecture)"; \
 ENV PATH="/usr/local/go/bin:${PATH}" \
     GOTOOLCHAIN=local
 
-# gopls is built from its module at an exact version. There is no archive here to check against
-# a sum: the go command checks every module it downloads against the Go checksum database,
-# sum.golang.org, which is what R34 asks of an archive. Its caches are removed in the same layer:
-# go clean takes the module cache, whose files the go command makes read-only, and the build cache,
-# and then the folder goes.
+# gopls is built from its lock file, gopls/ in this folder. Its go.mod names gopls as a tool at an
+# exact version, and its go.sum holds the hash of every module the build takes. -mod=readonly
+# builds from that lock and nothing else: a module missing from go.sum, or with another hash, stops
+# the build, as a wrong sum stops an archive (R34). The last line checks that the lock and
+# GOPLS_VERSION name the same version. The caches are removed in the same layer: go clean takes the
+# module cache, whose files the go command makes read-only, and the build cache.
+COPY gopls/go.mod gopls/go.sum /tmp/gopls-build/src/
 RUN echo "gopls ${GOPLS_VERSION}"; \
     export GOPATH=/tmp/gopls-build GOCACHE=/tmp/gopls-build/cache; \
-    GOBIN=/usr/local/bin go install "golang.org/x/tools/gopls@v${GOPLS_VERSION}"; \
+    cd /tmp/gopls-build/src; \
+    GOBIN=/usr/local/bin go install -mod=readonly tool; \
     go clean -cache -modcache; \
+    cd /; \
     rm -rf /tmp/gopls-build; \
-    gopls version
+    gopls version | grep -F "gopls v${GOPLS_VERSION}"
 
 # Claude Code comes from the registry at an exact version, rather than from an installer
 # script run off the network: what arrives is the package that version names, and npm checks
