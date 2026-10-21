@@ -53,7 +53,13 @@
                 "git.alwaysSignOff": true,
                 // spec is a read-only submodule of every other NovaTrail repository: Source
                 // Control does not offer it as one more repository to commit in.
-                "git.detectSubmodules": false
+                "git.detectSubmodules": false,
+                // The Go extension neither fetches nor updates tools of its own: gopls comes with
+                // the image at GOPLS_VERSION. Its linter on save would be one more such tool, and
+                // `just lint` lints.
+                "go.toolsManagement.autoUpdate": false,
+                "go.toolsManagement.checkForUpdates": "off",
+                "go.lintOnSave": "off"
             },
             // Exact versions; the Claude Code extension matches CLAUDE_CODE_VERSION.
             "extensions": [

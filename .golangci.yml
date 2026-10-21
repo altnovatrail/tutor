@@ -1,0 +1,17 @@
+# golangci-lint: `just lint` runs the linters and checks the formatting, and `just fmt` formats.
+# `golangci-lint config verify` checks this file.
+version: "2"
+
+linters:
+  # errcheck, govet, ineffassign, staticcheck and unused.
+  default: standard
+  enable:
+    - errorlint # %w and errors.Is or errors.As, not == and %v
+    - misspell
+    - nolintlint # a //nolint without a reason is a silent exception
+    - unconvert
+
+formatters:
+  enable:
+    - gofmt
+    - goimports

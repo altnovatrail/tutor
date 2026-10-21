@@ -1,0 +1,4 @@
+# The samples of the AI-reading measurement: the author's handwriting, with the time and pressure
+# of every stroke. They stay out of git, and no agent opens them: CLAUDE.md, .claude/settings.json
+# and docs/architecture.md, section 3.1 (R05).
+/samples/

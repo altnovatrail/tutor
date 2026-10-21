@@ -2,5 +2,14 @@
   "claudeMdExcludes": [
     "**/tutor/spec/CLAUDE.md",
     "**/tutor/spec/**/CLAUDE.md"
-  ]
+  ],
+  "permissions": {
+    "deny": [
+      "Read(/samples)",
+      "Read(/samples/**)",
+      "Edit(/samples)",
+      "Edit(/samples/**)",
+      "Bash(*samples*)"
+    ]
+  }
 }
