@@ -4,11 +4,12 @@
 # detected at RUN time via dpkg instead. A host that has Docker can build this, and that is the
 # whole requirement.
 #
-# Two stages. `toolchain` holds what it takes to check the schemas and documents, and is the
-# stage the automated checks run inside. `devcontainer` adds what a person needs on top of that
-# and is the default stage, so building this file with no target gives the full environment.
+# Two stages. `toolchain` holds what it takes to check the schemas, the documents and the Go
+# code, and is the stage the automated checks run inside. `devcontainer` adds what a person
+# needs on top of that and is the default stage, so building this file with no target gives the
+# full environment.
 
-# -- toolchain: checks the schemas and documents -----------------------------
+# -- toolchain: checks the schemas, the documents and the Go code ------------
 
 FROM mcr.microsoft.com/devcontainers/base:3.0.10-noble@sha256:21e9e3275736cb3bc33a2904b279a2ab292c51fedd53c2963463627d4586c3e6 AS toolchain
 
@@ -17,13 +18,25 @@ SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 # Node.js LTS: the JSON Schema validators and the document linters are npm packages.
 ARG NODE_VERSION=24.21.0
 ARG JUST_VERSION=1.58.0
+# Go builds and tests tutor; golangci-lint runs its linters and formatters, gofmt and goimports
+# among them. The Go checks of CI run with both, in this stage, and CodeQL reads the code from a
+# build with this Go (R13 of docs/decisions.md). golangci-lint is under GPL-3.0. spec's R12
+# allows that of a development tool that ships nothing, as an exception named in the decision
+# that brings it in: here, R12 of docs/decisions.md.
+ARG GO_VERSION=1.27.3
+ARG GOLANGCI_LINT_VERSION=2.15.0
 # The sha256 of every archive, per architecture, as its publisher lists it: SHASUMS256.txt of
-# the Node release, SHA256SUMS of the just release. A sum written here keeps an archive from
-# being swapped once it has been read (R34), and is raised together with its version.
+# the Node release, SHA256SUMS of the just release, the list at go.dev/dl for Go,
+# golangci-lint-<version>-checksums.txt of the golangci-lint release. A sum written here keeps an
+# archive from being swapped once it has been read (R34), and is raised together with its version.
 ARG NODE_SHA256_AMD64=6e1db87ef58b8819e5d5402eff1536491b18edd8eb7bee5ef7897876e88dc5ff
 ARG NODE_SHA256_ARM64=724282c3b43aec998aa9527380465b45d229e021b58035f5f4f63095eabfe5d5
 ARG JUST_SHA256_AMD64=4a5cc2f53e6f0f8c59092a6cc38291eb729d46a7dd95d3ae582008881b84931d
 ARG JUST_SHA256_ARM64=748237128c4c40cbdabc65e841d05ceba13cc23a91eaba395495894c1d9764df
+ARG GO_SHA256_AMD64=65efbc80fdc1fa2cd2631cad5b481777a68e8725f34e89f50fc6ac714e379b40
+ARG GO_SHA256_ARM64=a06e99309dbcbdca1a8ccd2282c3ee146e55930886e26b4f1193269587165f49
+ARG GOLANGCI_LINT_SHA256_AMD64=9b7fe6a6bf6334b98decf8d86b11415ea7889afdabdd1959fdce23af2a9ebcea
+ARG GOLANGCI_LINT_SHA256_ARM64=b4d8f17068b35ee6060cc2f69a16fb48740d706fbba81661c318649c114a6998
 
 # Every archive comes through one helper, so that every download is retried the same way and
 # checked against its sum before anything unpacks it. --retry-all-errors is the point of it: a
@@ -32,9 +45,11 @@ ARG JUST_SHA256_ARM64=748237128c4c40cbdabc65e841d05ceba13cc23a91eaba395495894c1d
 RUN arch="$(dpkg --print-architecture)"; \
     case "$arch" in \
         amd64) node_arch=x64; gnu_arch=x86_64; \
-            node_sha256="$NODE_SHA256_AMD64"; just_sha256="$JUST_SHA256_AMD64" ;; \
+            node_sha256="$NODE_SHA256_AMD64"; just_sha256="$JUST_SHA256_AMD64"; \
+            go_sha256="$GO_SHA256_AMD64"; golangci_lint_sha256="$GOLANGCI_LINT_SHA256_AMD64" ;; \
         arm64) node_arch=arm64; gnu_arch=aarch64; \
-            node_sha256="$NODE_SHA256_ARM64"; just_sha256="$JUST_SHA256_ARM64" ;; \
+            node_sha256="$NODE_SHA256_ARM64"; just_sha256="$JUST_SHA256_ARM64"; \
+            go_sha256="$GO_SHA256_ARM64"; golangci_lint_sha256="$GOLANGCI_LINT_SHA256_ARM64" ;; \
         *) echo "unsupported architecture: $arch" >&2; exit 1 ;; \
     esac; \
     workdir="$(mktemp -d)"; \
@@ -57,9 +72,25 @@ RUN arch="$(dpkg --print-architecture)"; \
     tar -C "$workdir" -xzf "$workdir/just-${JUST_VERSION}-${gnu_arch}.tar.gz" just; \
     install -m 0755 "$workdir/just" /usr/local/bin/just; \
     \
+    echo "go ${GO_VERSION}"; \
+    fetch "https://go.dev/dl/go${GO_VERSION}.linux-${arch}.tar.gz" \
+        "$workdir/go-${GO_VERSION}-${arch}.tar.gz" "$go_sha256"; \
+    tar -C /usr/local -xzf "$workdir/go-${GO_VERSION}-${arch}.tar.gz"; \
+    \
+    echo "golangci-lint ${GOLANGCI_LINT_VERSION}"; \
+    fetch "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCI_LINT_VERSION}/golangci-lint-${GOLANGCI_LINT_VERSION}-linux-${arch}.tar.gz" \
+        "$workdir/golangci-lint-${GOLANGCI_LINT_VERSION}-${arch}.tar.gz" "$golangci_lint_sha256"; \
+    tar -C "$workdir" --strip-components=1 \
+        -xzf "$workdir/golangci-lint-${GOLANGCI_LINT_VERSION}-${arch}.tar.gz" \
+        "golangci-lint-${GOLANGCI_LINT_VERSION}-linux-${arch}/golangci-lint"; \
+    install -m 0755 "$workdir/golangci-lint" /usr/local/bin/golangci-lint; \
+    \
     rm -rf "$workdir"
 
-ENV PATH="/usr/local/node/bin:/home/vscode/.local/bin:${PATH}"
+# GOTOOLCHAIN=local: the go command runs the Go installed here and never downloads another,
+# whatever a go.mod asks for. The exact version is this file's.
+ENV PATH="/usr/local/go/bin:/usr/local/node/bin:/home/vscode/.local/bin:${PATH}" \
+    GOTOOLCHAIN=local
 
 # -- devcontainer: the toolchain, plus what a person works with --------------
 
@@ -113,57 +144,9 @@ RUN arch="$(dpkg --print-architecture)"; \
     \
     rm -rf "$workdir"
 
-# Go builds and tests tutor; golangci-lint runs its linters and formatters, gofmt and goimports
-# among them; gopls is the language server that the Go extension in devcontainer.json starts.
-# They sit in this stage until the checks of Go come to CI (В14 in RUN.md). Then Go and
-# golangci-lint move to `toolchain`, the stage the checks run in; until then that stage's build in
-# CI is spared them. golangci-lint is under GPL-3.0. spec's R12 allows that of a development tool
-# that ships nothing, as an exception named in the decision that brings it in: here, R12 of
-# docs/decisions.md.
-ARG GO_VERSION=1.27.3
-ARG GOLANGCI_LINT_VERSION=2.15.0
+# gopls is the language server that the Go extension in devcontainer.json starts. It is built
+# with the Go of the toolchain stage, and only here: the checks do not need it.
 ARG GOPLS_VERSION=0.24.0
-# The sums, as above: the list at go.dev/dl for Go, golangci-lint-<version>-checksums.txt of the
-# golangci-lint release. The helper is the one above, written once more: every RUN is a shell of
-# its own.
-ARG GO_SHA256_AMD64=65efbc80fdc1fa2cd2631cad5b481777a68e8725f34e89f50fc6ac714e379b40
-ARG GO_SHA256_ARM64=a06e99309dbcbdca1a8ccd2282c3ee146e55930886e26b4f1193269587165f49
-ARG GOLANGCI_LINT_SHA256_AMD64=9b7fe6a6bf6334b98decf8d86b11415ea7889afdabdd1959fdce23af2a9ebcea
-ARG GOLANGCI_LINT_SHA256_ARM64=b4d8f17068b35ee6060cc2f69a16fb48740d706fbba81661c318649c114a6998
-
-RUN arch="$(dpkg --print-architecture)"; \
-    case "$arch" in \
-        amd64) go_sha256="$GO_SHA256_AMD64"; golangci_lint_sha256="$GOLANGCI_LINT_SHA256_AMD64" ;; \
-        arm64) go_sha256="$GO_SHA256_ARM64"; golangci_lint_sha256="$GOLANGCI_LINT_SHA256_ARM64" ;; \
-        *) echo "unsupported architecture: $arch" >&2; exit 1 ;; \
-    esac; \
-    workdir="$(mktemp -d)"; \
-    fetch() { \
-        local url="$1" out="$2" sha256="$3"; \
-        curl -fsSL --proto "=https" --proto-redir "=https" --retry 3 --retry-all-errors \
-            -o "$out" "$url"; \
-        echo "${sha256}  ${out}" | sha256sum --check --strict -; \
-    }; \
-    \
-    echo "go ${GO_VERSION}"; \
-    fetch "https://go.dev/dl/go${GO_VERSION}.linux-${arch}.tar.gz" \
-        "$workdir/go-${GO_VERSION}-${arch}.tar.gz" "$go_sha256"; \
-    tar -C /usr/local -xzf "$workdir/go-${GO_VERSION}-${arch}.tar.gz"; \
-    \
-    echo "golangci-lint ${GOLANGCI_LINT_VERSION}"; \
-    fetch "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCI_LINT_VERSION}/golangci-lint-${GOLANGCI_LINT_VERSION}-linux-${arch}.tar.gz" \
-        "$workdir/golangci-lint-${GOLANGCI_LINT_VERSION}-${arch}.tar.gz" "$golangci_lint_sha256"; \
-    tar -C "$workdir" --strip-components=1 \
-        -xzf "$workdir/golangci-lint-${GOLANGCI_LINT_VERSION}-${arch}.tar.gz" \
-        "golangci-lint-${GOLANGCI_LINT_VERSION}-linux-${arch}/golangci-lint"; \
-    install -m 0755 "$workdir/golangci-lint" /usr/local/bin/golangci-lint; \
-    \
-    rm -rf "$workdir"
-
-# GOTOOLCHAIN=local: the go command runs the Go installed here and never downloads another,
-# whatever a go.mod asks for. The exact version is this file's.
-ENV PATH="/usr/local/go/bin:${PATH}" \
-    GOTOOLCHAIN=local
 
 # gopls is built from its lock file, gopls/ in this folder. Its go.mod names gopls as a tool at an
 # exact version, and its go.sum holds the hash of every module the build takes. -mod=readonly
