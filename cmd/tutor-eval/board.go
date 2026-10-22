@@ -8,8 +8,8 @@ import (
 	"net"
 	"net/http"
 	"os"
-	"os/exec"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/altnovatrail/tutor/internal/board"
@@ -28,34 +28,29 @@ const (
 
 func serveHTTP(s *http.Server) error { return s.ListenAndServe() }
 
-// checkIgnored refuses a directory for the pictures that lies in a git work tree which does not
-// ignore it: the author's handwriting would be one `git add` away from the repository. Only the
-// samples folder at the root of tutor is ignored, so the default -dir works from the root alone.
-// Outside any work tree, or without git, there is nothing to guard.
+// checkIgnored refuses a directory for the pictures that lies in a git work tree outside the
+// samples folder at its root — the one folder tutor's .gitignore ignores (R05) — since the
+// author's handwriting would be one `git add` away from the repository. The default -dir works
+// from the root alone. A directory outside any work tree has nothing to guard.
 func checkIgnored(dir string) error {
 	abs, err := filepath.Abs(dir)
 	if err != nil {
 		return err
 	}
-	existing := abs // git runs in the nearest directory that exists
-	for {
-		if info, err := os.Stat(existing); err == nil && info.IsDir() {
-			break
-		}
-		parent := filepath.Dir(existing)
-		if parent == existing {
+	for root := abs; ; {
+		if _, err := os.Stat(filepath.Join(root, ".git")); err == nil {
+			rel, err := filepath.Rel(filepath.Join(root, "samples"), abs)
+			if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+				return fmt.Errorf("%s is in the git work tree %s outside its samples folder, which git does not ignore: run the board from the root of tutor, or give -dir a folder in samples", abs, root)
+			}
 			return nil
 		}
-		existing = parent
+		parent := filepath.Dir(root)
+		if parent == root {
+			return nil
+		}
+		root = parent
 	}
-	cmd := exec.Command("git", "check-ignore", "-q", abs)
-	cmd.Dir = existing
-	err = cmd.Run()
-	var exit *exec.ExitError
-	if errors.As(err, &exit) && exit.ExitCode() == 1 {
-		return fmt.Errorf("%s is in a git work tree that does not ignore it: run the board from the root of tutor, or give -dir a folder git ignores", abs)
-	}
-	return nil
 }
 
 // runBoard starts the check board on a local address. getenv and serve are the process's, so

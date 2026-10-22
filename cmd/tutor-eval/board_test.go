@@ -57,10 +57,17 @@ func TestCheckIgnored(t *testing.T) {
 	if err := checkIgnored("../../samples/board"); err != nil {
 		t.Errorf("the samples folder at the root: %v, want it taken", err)
 	}
-	if err := checkIgnored("samples/board"); err == nil || !strings.Contains(err.Error(), "does not ignore it") {
+	if err := checkIgnored("samples/board"); err == nil || !strings.Contains(err.Error(), "outside its samples folder") {
 		t.Errorf("a samples folder below the root = %v, want it refused", err)
 	}
 	if err := checkIgnored(t.TempDir()); err != nil {
 		t.Errorf("a folder outside any work tree: %v, want it taken", err)
+	}
+	// A folder whose name only starts like the samples folder is not in it.
+	if err := checkIgnored("../../samples-copy/board"); err == nil {
+		t.Error("a folder beside the samples folder was taken")
+	}
+	if err := checkIgnored("../../samples"); err != nil {
+		t.Errorf("the samples folder itself: %v, want it taken", err)
 	}
 }
