@@ -30,9 +30,9 @@ lint:
 fmt:
     golangci-lint fmt ./...
 
-# Start the check board on http://127.0.0.1:8080 (R19 in docs/decisions.md). It asks for each eval
-# key that is not set yet, without showing it, so that no key lands in the shell's history; Enter
-# skips that model. Arguments go to tutor-eval board: just board -max-usd 10.
+# This recipe asks for each eval key that is not set yet, without showing it, so that no key lands
+# in the shell's history; Enter skips that model. Its arguments go to tutor-eval board.
+# Start the check board on http://127.0.0.1:8080 (R19 in docs/decisions.md).
 board *args:
     #!/usr/bin/env bash
     set -euo pipefail
