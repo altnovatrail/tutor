@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Check board</title>
+<style>
+  :root { --ink: #1d1d1b; --muted: #6b6b66; --line: #d4d4cf; --paper: #ffffff; --bg: #f4f4f1;
+          --ok: #1a7f37; --bad: #b42318; --warn: #8a6100; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 16px; background: var(--bg); color: var(--ink);
+         font: 16px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 1040px; margin: 0 auto; }
+  header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  header strong { min-width: 7em; text-align: center; }
+  #summary { margin-left: auto; color: var(--muted); font-size: 0.95rem; }
+  #statement { font-size: 1.2rem; margin: 14px 0 10px; }
+  canvas { display: block; width: 100%; height: auto; background: var(--paper); border: 1px solid var(--line);
+           border-radius: 8px; touch-action: none; cursor: crosshair; }
+  .tools { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+  button { font: inherit; padding: 6px 14px; border: 1px solid var(--line); border-radius: 6px;
+           background: var(--paper); color: var(--ink); cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  button.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  #status { color: var(--muted); }
+  .results { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; margin-top: 14px; }
+  .card { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+  .card h3 { margin: 0 0 6px; font-size: 1.05rem; }
+  .verdict { font-weight: 600; }
+  .verdict.correct { color: var(--ok); } .verdict.error { color: var(--bad); } .verdict.unreadable { color: var(--warn); }
+  .card ol { margin: 6px 0; padding-left: 1.6em; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .meta { color: var(--muted); font-size: 0.85rem; }
+  .failure { color: var(--bad); }
+  .marks { display: flex; gap: 8px; margin-top: 10px; }
+  .marks button.chosen { border-color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); font-weight: 600; }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <button id="prev" aria-label="Previous task">←</button>
+    <strong id="counter"></strong>
+    <button id="next" aria-label="Next task">→</button>
+    <span id="summary"></span>
+  </header>
+  <p id="statement" lang="ru"></p>
+  <canvas id="board" width="1000" height="600" aria-label="The board to write the solution on"></canvas>
+  <div class="tools">
+    <button id="undo">Undo stroke</button>
+    <button id="clear">Clear</button>
+    <button id="check" class="primary">Check</button>
+    <span id="status" role="status"></span>
+  </div>
+  <section id="results" class="results" aria-live="polite"></section>
+</main>
+<script>
+"use strict";
+// The board keeps the strokes, so that a stroke can be undone; the picture sent to the models is
+// drawn from them on a white sheet, without the task's text.
+const canvas = document.getElementById("board");
+const ctx = canvas.getContext("2d");
+const state = { tasks: [], index: 0, strokes: [], current: null, busy: false };
+
+function el(tag, text, cls) {
+  const node = document.createElement(tag);
+  if (text !== undefined) node.textContent = text; // the models' words are text, never markup
+  if (cls) node.className = cls;
+  return node;
+}
+
+function setStatus(text) { document.getElementById("status").textContent = text; }
+
+function pen() {
+  ctx.strokeStyle = "#111"; ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.lineJoin = "round";
+}
+
+function redraw() {
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  pen();
+  for (const stroke of state.strokes) {
+    ctx.beginPath();
+    ctx.moveTo(stroke[0].x, stroke[0].y);
+    for (const p of stroke.slice(1)) ctx.lineTo(p.x, p.y);
+    if (stroke.length === 1) ctx.lineTo(stroke[0].x + 0.1, stroke[0].y + 0.1);
+    ctx.stroke();
+  }
+}
+
+function point(e) {
+  const r = canvas.getBoundingClientRect();
+  return { x: (e.clientX - r.left) * canvas.width / r.width, y: (e.clientY - r.top) * canvas.height / r.height };
+}
+
+canvas.addEventListener("pointerdown", (e) => {
+  if (state.busy) return;
+  canvas.setPointerCapture(e.pointerId);
+  state.current = [point(e)];
+  state.strokes.push(state.current);
+  redraw();
+});
+canvas.addEventListener("pointermove", (e) => {
+  if (!state.current) return;
+  const last = state.current[state.current.length - 1];
+  const p = point(e);
+  state.current.push(p);
+  pen();
+  ctx.beginPath(); ctx.moveTo(last.x, last.y); ctx.lineTo(p.x, p.y); ctx.stroke();
+});
+for (const type of ["pointerup", "pointercancel"]) canvas.addEventListener(type, () => { state.current = null; });
+
+function showTask() {
+  const task = state.tasks[state.index];
+  document.getElementById("counter").textContent = `Task ${state.index + 1} of ${state.tasks.length}`;
+  document.getElementById("statement").textContent = task.statement;
+  state.strokes = [];
+  redraw();
+  document.getElementById("results").replaceChildren();
+  setStatus("");
+}
+
+function showSummary(summary) {
+  const parts = summary.models.map((m) => `${m.model}: right ${m.right} of ${m.marked}`);
+  parts.push(`spent $${summary.spent_usd.toFixed(2)} of $${summary.max_usd.toFixed(2)}`);
+  document.getElementById("summary").textContent = parts.join(" · ");
+}
+
+function verdictText(v) {
+  if (v.verdict === "correct") return "Correct";
+  if (v.verdict === "error") return v.first_error_line ? `Error in line ${v.first_error_line}` : "Error";
+  return "Cannot read it";
+}
+
+async function post(url, body) {
+  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || res.statusText);
+  return data;
+}
+
+function card(attempt, result) {
+  const box = el("article", undefined, "card");
+  box.append(el("h3", result.model));
+  if (!result.verdict) {
+    box.append(el("p", result.error, "failure"));
+    return box;
+  }
+  const v = result.verdict;
+  box.append(el("p", verdictText(v), "verdict " + v.verdict));
+  box.append(el("div", "Read:"));
+  const lines = el("ol");
+  for (const line of v.lines) lines.append(el("li", line));
+  box.append(lines);
+  box.append(el("p", `Answer: ${v.answer || "—"}`));
+  if (v.comment) { const c = el("p", v.comment); c.lang = "ru"; box.append(c); }
+  box.append(el("p", `${(result.latency_ms / 1000).toFixed(1)} s · $${result.cost_usd.toFixed(3)}`, "meta"));
+  const marks = el("div", undefined, "marks");
+  const right = el("button", "AI was right");
+  const wrong = el("button", "AI was wrong");
+  for (const [button, isRight] of [[right, true], [wrong, false]]) {
+    button.addEventListener("click", async () => {
+      try {
+        showSummary(await post("/api/mark", { attempt, model: result.model, right: isRight }));
+        right.classList.toggle("chosen", isRight);
+        wrong.classList.toggle("chosen", !isRight);
+      } catch (err) {
+        setStatus("The mark is not saved: " + err.message);
+      }
+    });
+    marks.append(button);
+  }
+  box.append(marks);
+  return box;
+}
+
+async function check() {
+  if (state.strokes.length === 0) { setStatus("Write a solution first."); return; }
+  state.busy = true;
+  for (const id of ["check", "undo", "clear", "prev", "next"]) document.getElementById(id).disabled = true;
+  setStatus("Checking: the models are thinking, which can take a couple of minutes…");
+  try {
+    const data = await post("/api/check", { task: state.tasks[state.index].id, image: canvas.toDataURL("image/png") });
+    document.getElementById("results").replaceChildren(...data.results.map((r) => card(data.attempt, r)));
+    showSummary(data.summary);
+    setStatus(data.warning || "Mark under each model whether it was right.");
+  } catch (err) {
+    setStatus("The check failed: " + err.message);
+  } finally {
+    state.busy = false;
+    for (const id of ["check", "undo", "clear", "prev", "next"]) document.getElementById(id).disabled = false;
+  }
+}
+
+document.getElementById("undo").addEventListener("click", () => { state.strokes.pop(); redraw(); });
+document.getElementById("clear").addEventListener("click", () => {
+  state.strokes = []; redraw(); document.getElementById("results").replaceChildren(); setStatus("");
+});
+document.getElementById("check").addEventListener("click", check);
+document.getElementById("prev").addEventListener("click", () => {
+  state.index = (state.index + state.tasks.length - 1) % state.tasks.length; showTask();
+});
+document.getElementById("next").addEventListener("click", () => {
+  state.index = (state.index + 1) % state.tasks.length; showTask();
+});
+
+(async () => {
+  try {
+    state.tasks = await (await fetch("/api/tasks")).json();
+    showSummary(await (await fetch("/api/summary")).json());
+    showTask();
+  } catch (err) {
+    setStatus("The board did not load: " + err.message);
+  }
+})();
+</script>
+</body>
+</html>

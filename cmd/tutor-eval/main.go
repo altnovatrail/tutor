@@ -31,6 +31,8 @@ const (
 )
 
 const usage = `usage:
+  tutor-eval board [-addr A] [-dir D] [-max-usd N]   the check board: solve tasks by hand, the models
+                                                      judge, you mark whether they were right
   tutor-eval check FILE...   check samples and banks; samples against a bank given with them
   tutor-eval synth DIR       write the synthetic bank and one synthetic sample per scenario
   tutor-eval -version        print the version
@@ -69,6 +71,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return exitUsage
 	}
 	switch cmd, operands := rest[0], rest[1:]; cmd {
+	case "board":
+		return runBoard(operands, stdout, stderr, os.Getenv, serveHTTP)
 	case "check":
 		if len(operands) == 0 {
 			_, _ = fmt.Fprintln(stderr, "tutor-eval check: no files given")
