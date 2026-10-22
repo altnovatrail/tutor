@@ -6,7 +6,13 @@ A component of [NovaTrail](https://github.com/altnovatrail/spec/tree/v0.2.18), a
 
 ## Status
 
-The reading measurement, epic E2 of [RUN.md](RUN.md), is planned and comes first. Detailing, the first epic, which decides what the component's card left open, waits for the measurement's conclusions. There is no code here yet: it starts with that measurement.
+The MVP is the check board: you solve five fixed maths tasks by hand in the browser, Claude Opus 5.5 and GPT-6 Astra read the work and judge it, and you mark whether each was right. Run it in the devcontainer with keys for eval:
+
+```
+TUTOR_ANTHROPIC_API_KEY=… TUTOR_OPENAI_API_KEY=… go run ./cmd/tutor-eval board
+```
+
+How it works is section 3.3 of [docs/architecture.md](docs/architecture.md). The larger reading measurement of epic E2 in [RUN.md](RUN.md) is on hold until the board shows whether it is needed, and so is detailing, the first epic.
 
 ## Documents
 
