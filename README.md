@@ -6,11 +6,13 @@ A component of [NovaTrail](https://github.com/altnovatrail/spec/tree/v0.2.18), a
 
 ## Status
 
-The MVP is the check board: you solve five fixed maths tasks by hand in the browser, Claude Opus 5.5 and GPT-6 Astra read the work and judge it, and you mark whether each was right. Run it in the devcontainer with keys for eval:
+The MVP is the check board: you solve five fixed maths tasks by hand in the browser, Claude Opus 5.5 and GPT-6 Astra read the work and judge it, and you mark whether each was right. Start it in a terminal of the devcontainer:
 
 ```
-TUTOR_ANTHROPIC_API_KEY=… TUTOR_OPENAI_API_KEY=… go run ./cmd/tutor-eval board
+just board
 ```
+
+It asks for the Anthropic and OpenAI keys for eval without showing them, so no key lands in the shell's history; Enter skips a model. When the terminal says the board is at http://127.0.0.1:8080, open that address. Until then the page only keeps loading: VS Code forwards the port, but nothing answers on it yet.
 
 How it works is section 3.3 of [docs/architecture.md](docs/architecture.md). The larger reading measurement of epic E2 in [RUN.md](RUN.md) is on hold until the board shows whether it is needed, and so is detailing, the first epic.
 

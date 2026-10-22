@@ -1,7 +1,8 @@
-# tutor's own recipes: build, test and lint its Go code in the devcontainer. The ci- ones are what
-# .github's shared go.yml runs, one job each, in the toolchain stage of .devcontainer/Dockerfile,
-# from a checkout without the spec submodule (R16 .github; R13 in docs/decisions.md): their names
-# are the same in every Go repository of NovaTrail, and what they run is this repository's own.
+# tutor's own recipes: build, test and lint its Go code in the devcontainer, and start the check
+# board. The ci- ones are what .github's shared go.yml runs, one job each, in the toolchain stage of
+# .devcontainer/Dockerfile, from a checkout without the spec submodule (R16 .github; R13 in
+# docs/decisions.md): their names are the same in every Go repository of NovaTrail, and what they
+# run is this repository's own.
 # The documents are checked by spec's recipe: just -f spec/justfile docs-check-repo
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
@@ -28,6 +29,23 @@ lint:
 # Format the code in place, the way lint checks it.
 fmt:
     golangci-lint fmt ./...
+
+# Start the check board on http://127.0.0.1:8080 (R19 in docs/decisions.md). It asks for each eval
+# key that is not set yet, without showing it, so that no key lands in the shell's history; Enter
+# skips that model. Arguments go to tutor-eval board: just board -max-usd 10.
+board *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -z "${TUTOR_ANTHROPIC_API_KEY:-}" ]; then
+        read -rsp 'Anthropic key for eval, or Enter to skip: ' TUTOR_ANTHROPIC_API_KEY
+        echo >&2
+    fi
+    if [ -z "${TUTOR_OPENAI_API_KEY:-}" ]; then
+        read -rsp 'OpenAI key for eval, or Enter to skip: ' TUTOR_OPENAI_API_KEY
+        echo >&2
+    fi
+    export TUTOR_ANTHROPIC_API_KEY TUTOR_OPENAI_API_KEY
+    exec go run ./cmd/tutor-eval board {{ args }}
 
 # Run lint, the linters and the formatting check, under the name go.yml runs.
 ci-lint: lint
