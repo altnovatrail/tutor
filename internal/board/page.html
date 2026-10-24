@@ -65,7 +65,12 @@
   <section id="results" class="results" aria-live="polite"></section>
   <section class="summary" aria-label="Summary">
     <h2>Summary</h2>
-    <table id="summary"></table>
+    <table id="summary">
+      <thead>
+        <tr><th scope="col">Model · effort</th><th scope="col">Right of marked</th><th scope="col">Answers</th><th scope="col">No answer</th><th scope="col">Mean price</th><th scope="col">Mean time</th></tr>
+      </thead>
+      <tbody></tbody>
+    </table>
   </section>
 </main>
 <script>
@@ -169,20 +174,25 @@ function setControls(enabled) {
   });
 }
 
+// A row per model and effort, under the headers the markup gives the table.
 function showSummary(summary) {
   document.getElementById("spent").textContent =
     `spent $${summary.spent_usd.toFixed(2)} of $${summary.max_usd.toFixed(2)} this run`;
   const table = document.getElementById("summary");
-  if (summary.pairs.length === 0) { table.replaceChildren(el("caption", "No checks yet.")); return; }
-  const head = el("tr");
-  for (const name of ["Model · effort", "Right of marked", "Answers", "No answer", "Mean price", "Mean time"]) head.append(el("th", name));
   const rows = summary.pairs.map((p) => {
     const row = el("tr");
     for (const cell of [`${p.model} · ${p.effort}`, `${p.right} of ${p.marked}`, String(p.answers), String(p.no_answer),
       `$${p.mean_cost_usd.toFixed(4)}`, `${(p.mean_latency_ms / 1000).toFixed(1)} s`]) row.append(el("td", cell));
     return row;
   });
-  table.replaceChildren(head, ...rows);
+  if (rows.length === 0) {
+    const row = el("tr");
+    const none = el("td", "No checks yet.");
+    none.colSpan = table.tHead.rows[0].cells.length;
+    row.append(none);
+    rows.push(row);
+  }
+  table.tBodies[0].replaceChildren(...rows);
 }
 
 function verdictText(v) {
