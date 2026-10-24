@@ -2,10 +2,15 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
+	"net/http/httptest"
 	"strings"
 	"testing"
+
+	"github.com/altnovatrail/tutor/internal/board"
 )
 
 func TestBoardCommand(t *testing.T) {
@@ -48,6 +53,40 @@ func TestBoardCommand(t *testing.T) {
 				t.Errorf("output %q, want it to hold %q", out, tt.wantOut)
 			}
 		})
+	}
+}
+
+// The board offers every current Claude model at every effort level, ticking Claude Opus 5.5 at
+// high as the board asked before, and GPT-6 Astra at high alone, unticked.
+func TestBoardOffers(t *testing.T) {
+	var handler http.Handler
+	serve := func(s *http.Server) error { handler = s.Handler; return nil }
+	env := map[string]string{anthropicKeyVar: "a-key", openAIKeyVar: "o-key"}
+	var stdout, stderr bytes.Buffer
+	if code := runBoard([]string{"-dir", t.TempDir()}, &stdout, &stderr, func(k string) string { return env[k] }, serve); code != exitOK {
+		t.Fatalf("code %d, stderr %q", code, stderr.String())
+	}
+	rec := httptest.NewRecorder()
+	req := httptest.NewRequest("GET", "/api/models", nil)
+	req.Host = "127.0.0.1:8080"
+	handler.ServeHTTP(rec, req)
+	var offers []board.Offer
+	if err := json.Unmarshal(rec.Body.Bytes(), &offers); err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, o := range offers {
+		got = append(got, fmt.Sprintf("%s %s %s %v", o.Model, strings.Join(o.Efforts, ","), o.Effort, o.Ticked))
+	}
+	want := []string{
+		"Claude Haiku 5.5 low,medium,high,xhigh,max high false",
+		"Claude Sonnet 5.5 low,medium,high,xhigh,max high false",
+		"Claude Opus 5.5 low,medium,high,xhigh,max high true",
+		"Claude Fable 5.1 low,medium,high,xhigh,max high false",
+		"GPT-6 Astra high high false",
+	}
+	if strings.Join(got, "\n") != strings.Join(want, "\n") {
+		t.Errorf("offers:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
 	}
 }
 

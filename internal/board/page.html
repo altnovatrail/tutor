@@ -13,7 +13,17 @@
   main { max-width: 1040px; margin: 0 auto; }
   header { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
   header strong { min-width: 7em; text-align: center; }
-  #summary { margin-left: auto; color: var(--muted); font-size: 0.95rem; }
+  #spent { margin-left: auto; color: var(--muted); font-size: 0.95rem; }
+  .models { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 12px 0 0; padding: 8px 12px;
+            background: var(--paper); border: 1px solid var(--line); border-radius: 8px; }
+  .models label { display: flex; align-items: center; gap: 6px; }
+  .models select { font: inherit; }
+  .price { color: var(--muted); font-size: 0.85rem; }
+  .summary { margin-top: 18px; }
+  .summary h2 { font-size: 1.05rem; margin: 0 0 6px; }
+  .summary table { border-collapse: collapse; background: var(--paper); font-size: 0.95rem; }
+  .summary th, .summary td { border: 1px solid var(--line); padding: 4px 10px; text-align: right; }
+  .summary th:first-child, .summary td:first-child { text-align: left; }
   #statement { font-size: 1.2rem; margin: 14px 0 10px; }
   canvas { display: block; width: 100%; height: auto; background: var(--paper); border: 1px solid var(--line);
            border-radius: 8px; touch-action: none; cursor: crosshair; }
@@ -41,8 +51,9 @@
     <button id="prev" aria-label="Previous task">←</button>
     <strong id="counter"></strong>
     <button id="next" aria-label="Next task">→</button>
-    <span id="summary"></span>
+    <span id="spent"></span>
   </header>
+  <section id="models" class="models" aria-label="The models to ask and their effort"></section>
   <p id="statement" lang="ru"></p>
   <canvas id="board" width="1000" height="600" aria-label="The board to write the solution on"></canvas>
   <div class="tools">
@@ -52,6 +63,10 @@
     <span id="status" role="status"></span>
   </div>
   <section id="results" class="results" aria-live="polite"></section>
+  <section class="summary" aria-label="Summary">
+    <h2>Summary</h2>
+    <table id="summary"></table>
+  </section>
 </main>
 <script>
 "use strict";
@@ -59,7 +74,7 @@
 // drawn from them on a white sheet, without the task's text.
 const canvas = document.getElementById("board");
 const ctx = canvas.getContext("2d");
-const state = { tasks: [], index: 0, strokes: [], current: null, busy: false };
+const state = { tasks: [], offers: [], index: 0, strokes: [], current: null, busy: false };
 
 function el(tag, text, cls) {
   const node = document.createElement(tag);
@@ -119,10 +134,55 @@ function showTask() {
   setStatus("");
 }
 
+// The models the page offers: a row each, with a box to tick it and the effort to ask it at.
+function showOffers() {
+  const rows = state.offers.map((offer, i) => {
+    const row = el("div");
+    const label = el("label");
+    const box = el("input");
+    box.type = "checkbox"; box.id = `ask-${i}`; box.checked = offer.ticked;
+    label.append(box, offer.model);
+    const effort = el("select");
+    effort.id = `effort-${i}`; effort.setAttribute("aria-label", `Effort of ${offer.model}`);
+    for (const level of offer.efforts) effort.append(el("option", level));
+    effort.value = offer.effort;
+    effort.disabled = offer.efforts.length < 2;
+    const price = el("span", ` $${offer.input_usd_per_mtok} / $${offer.output_usd_per_mtok} per M tokens`, "price");
+    label.append(" ", effort, price);
+    row.append(label);
+    return row;
+  });
+  document.getElementById("models").replaceChildren(...rows);
+}
+
+// The models ticked on the page, each at its chosen effort.
+function picks() {
+  return state.offers.flatMap((offer, i) => document.getElementById(`ask-${i}`).checked
+    ? [{ model: offer.model, effort: document.getElementById(`effort-${i}`).value }] : []);
+}
+
+function setControls(enabled) {
+  for (const id of ["check", "undo", "clear", "prev", "next"]) document.getElementById(id).disabled = !enabled;
+  state.offers.forEach((offer, i) => {
+    document.getElementById(`ask-${i}`).disabled = !enabled;
+    document.getElementById(`effort-${i}`).disabled = !enabled || offer.efforts.length < 2;
+  });
+}
+
 function showSummary(summary) {
-  const parts = summary.models.map((m) => `${m.model}: right ${m.right} of ${m.marked}`);
-  parts.push(`spent $${summary.spent_usd.toFixed(2)} of $${summary.max_usd.toFixed(2)}`);
-  document.getElementById("summary").textContent = parts.join(" · ");
+  document.getElementById("spent").textContent =
+    `spent $${summary.spent_usd.toFixed(2)} of $${summary.max_usd.toFixed(2)} this run`;
+  const table = document.getElementById("summary");
+  if (summary.pairs.length === 0) { table.replaceChildren(el("caption", "No checks yet.")); return; }
+  const head = el("tr");
+  for (const name of ["Model · effort", "Right of marked", "Answers", "No answer", "Mean price", "Mean time"]) head.append(el("th", name));
+  const rows = summary.pairs.map((p) => {
+    const row = el("tr");
+    for (const cell of [`${p.model} · ${p.effort}`, `${p.right} of ${p.marked}`, String(p.answers), String(p.no_answer),
+      `$${p.mean_cost_usd.toFixed(4)}`, `${(p.mean_latency_ms / 1000).toFixed(1)} s`]) row.append(el("td", cell));
+    return row;
+  });
+  table.replaceChildren(head, ...rows);
 }
 
 function verdictText(v) {
@@ -140,9 +200,11 @@ async function post(url, body) {
 
 function card(attempt, result) {
   const box = el("article", undefined, "card");
-  box.append(el("h3", result.model));
+  box.append(el("h3", result.effort ? `${result.model} · ${result.effort}` : result.model));
+  const meta = el("p", `${(result.latency_ms / 1000).toFixed(1)} s · $${result.cost_usd.toFixed(4)} · ` +
+    `${result.input_tokens} in / ${result.output_tokens} out tokens`, "meta");
   if (!result.verdict) {
-    box.append(el("p", result.error, "failure"));
+    box.append(el("p", result.error, "failure"), meta);
     return box;
   }
   const v = result.verdict;
@@ -153,7 +215,7 @@ function card(attempt, result) {
   box.append(lines);
   box.append(el("p", `Answer: ${v.answer || "—"}`));
   if (v.comment) { const c = el("p", v.comment); c.lang = "ru"; box.append(c); }
-  box.append(el("p", `${(result.latency_ms / 1000).toFixed(1)} s · $${result.cost_usd.toFixed(3)}`, "meta"));
+  box.append(meta);
   const marks = el("div", undefined, "marks");
   const right = el("button", "AI was right");
   const wrong = el("button", "AI was wrong");
@@ -175,11 +237,13 @@ function card(attempt, result) {
 
 async function check() {
   if (state.strokes.length === 0) { setStatus("Write a solution first."); return; }
+  const models = picks();
+  if (models.length === 0) { setStatus("Tick a model to ask."); return; }
   state.busy = true;
-  for (const id of ["check", "undo", "clear", "prev", "next"]) document.getElementById(id).disabled = true;
+  setControls(false);
   setStatus("Checking: the models are thinking, which can take a couple of minutes…");
   try {
-    const data = await post("/api/check", { task: state.tasks[state.index].id, image: canvas.toDataURL("image/png") });
+    const data = await post("/api/check", { task: state.tasks[state.index].id, image: canvas.toDataURL("image/png"), models });
     document.getElementById("results").replaceChildren(...data.results.map((r) => card(data.attempt, r)));
     showSummary(data.summary);
     setStatus(data.warning || "Mark under each model whether it was right.");
@@ -187,7 +251,7 @@ async function check() {
     setStatus("The check failed: " + err.message);
   } finally {
     state.busy = false;
-    for (const id of ["check", "undo", "clear", "prev", "next"]) document.getElementById(id).disabled = false;
+    setControls(true);
   }
 }
 
@@ -206,6 +270,8 @@ document.getElementById("next").addEventListener("click", () => {
 (async () => {
   try {
     state.tasks = await (await fetch("/api/tasks")).json();
+    state.offers = await (await fetch("/api/models")).json();
+    showOffers();
     showSummary(await (await fetch("/api/summary")).json());
     showTask();
   } catch (err) {

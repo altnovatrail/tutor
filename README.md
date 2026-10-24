@@ -6,15 +6,15 @@ A component of [NovaTrail](https://github.com/altnovatrail/spec/tree/v0.2.18), a
 
 ## Status
 
-The MVP is the check board: you solve five fixed maths tasks by hand in the browser, Claude Opus 5.5 and GPT-6 Astra read the work and judge it, and you mark whether each was right. Start it in a terminal of the devcontainer:
+The MVP is the check board: you solve five fixed maths tasks by hand in the browser, the Claude models you tick read the work, each at the effort you choose, and judge it, and you mark whether each was right. The summary shows, for each model at each effort, how often it was right and what an answer costs and takes. On 2026-10-23 Claude Opus 5.5 at high effort judged all five tasks right, at about a cent and five seconds a check (R20 in [docs/decisions.md](docs/decisions.md)); GPT-6 Astra, which the board can also ask, is not used. Next comes the larger reading measurement of epic E2, on Claude models only: the board sends the model only the picture, and the measurement is to show whether the writing process, stroke order and erasures, helps the model (R21). Start the board in a terminal of the devcontainer:
 
 ```
 just board
 ```
 
-It asks for the Anthropic and OpenAI keys for eval without showing them, so no key lands in the shell's history; Enter skips a model. When the terminal says the board is at http://127.0.0.1:8080, open that address. Until then the page only keeps loading: VS Code forwards the port, but nothing answers on it yet.
+It asks for the Anthropic and OpenAI keys for eval without showing them, so no key lands in the shell's history; Enter skips a model. When the terminal says the board is at http://127.0.0.1:8080, open that address, or the one the Ports tab of VS Code shows if it forwarded the port under another number. Until then the page only keeps loading: VS Code forwards the port, but nothing answers on it yet.
 
-How it works is section 3.3 of [docs/architecture.md](docs/architecture.md). The larger reading measurement of epic E2 in [RUN.md](RUN.md) is on hold until the board shows whether it is needed, and so is detailing, the first epic.
+How it works is section 3.3 of [docs/architecture.md](docs/architecture.md). The plan is [RUN.md](RUN.md); detailing, the first epic, waits for the measurement's conclusions.
 
 ## Documents
 
