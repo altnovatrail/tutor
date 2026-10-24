@@ -64,6 +64,22 @@ func TestAsk(t *testing.T) {
 	}
 }
 
+// The adapter takes high effort alone and refuses another level before it calls the API.
+func TestOtherEffort(t *testing.T) {
+	calls := 0
+	srv := httptest.NewServer(http.HandlerFunc(func(http.ResponseWriter, *http.Request) { calls++ }))
+	t.Cleanup(srv.Close)
+	c := New("test-key", option.WithBaseURL(srv.URL+"/v1/"), option.WithMaxRetries(0))
+	r := request
+	r.Effort = "low"
+	if _, err := c.Ask(context.Background(), r); err == nil || !strings.Contains(err.Error(), `no effort level "low"`) {
+		t.Errorf("error = %v, want the level refused", err)
+	}
+	if calls != 0 {
+		t.Errorf("the API was called %d times for a level the adapter does not take", calls)
+	}
+}
+
 func TestNoAnswer(t *testing.T) {
 	tests := map[string]string{
 		"incomplete": `{"id":"resp_1","object":"response","status":"incomplete","model":"gpt-6-astra",

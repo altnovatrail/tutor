@@ -13,7 +13,6 @@ import (
 	"time"
 
 	"github.com/altnovatrail/tutor/internal/board"
-	"github.com/altnovatrail/tutor/provider"
 	"github.com/altnovatrail/tutor/provider/claude"
 	"github.com/altnovatrail/tutor/provider/gpt"
 )
@@ -26,7 +25,34 @@ const (
 	openAIKeyVar    = "TUTOR_OPENAI_API_KEY"
 )
 
+// The page starts as the board asked before it offered a choice: Claude Opus 5.5 at high effort
+// (R19).
+const (
+	startModel  = "claude-opus-5-5"
+	startEffort = "high"
+)
+
 func serveHTTP(s *http.Server) error { return s.ListenAndServe() }
+
+// choices are the models the board offers: every current Claude model at every effort level with
+// the Anthropic key, and GPT-6 Astra at high alone with the OpenAI key, unticked, since GPT is not
+// used on the board (R20).
+func choices(getenv func(string) string, stderr io.Writer) []board.Choice {
+	var offered []board.Choice
+	if key := getenv(anthropicKeyVar); key != "" {
+		for _, m := range claude.Models {
+			offered = append(offered, board.Choice{Model: claude.New(key, m), Efforts: claude.Efforts, Effort: startEffort, Ticked: m.ID == startModel})
+		}
+	} else {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %s is not set: Claude is left out\n", anthropicKeyVar)
+	}
+	if key := getenv(openAIKeyVar); key != "" {
+		offered = append(offered, board.Choice{Model: gpt.New(key), Efforts: gpt.Efforts, Effort: gpt.Efforts[0]})
+	} else {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %s is not set: GPT is left out\n", openAIKeyVar)
+	}
+	return offered
+}
 
 // checkIgnored refuses a directory for the pictures that lies in a git work tree outside the
 // samples folder at its root — the one folder tutor's .gitignore ignores (R05) — since the
@@ -81,18 +107,8 @@ func runBoard(args []string, stdout, stderr io.Writer, getenv func(string) strin
 		return exitUsage
 	}
 
-	var models []provider.Model
-	if key := getenv(anthropicKeyVar); key != "" {
-		models = append(models, claude.New(key))
-	} else {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %s is not set: Claude is left out\n", anthropicKeyVar)
-	}
-	if key := getenv(openAIKeyVar); key != "" {
-		models = append(models, gpt.New(key))
-	} else {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %s is not set: GPT is left out\n", openAIKeyVar)
-	}
-	if len(models) == 0 {
+	offered := choices(getenv, stderr)
+	if len(offered) == 0 {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval board: no model to ask: set %s or %s\n", anthropicKeyVar, openAIKeyVar)
 		return exitUsage
 	}
@@ -101,7 +117,7 @@ func runBoard(args []string, stdout, stderr io.Writer, getenv func(string) strin
 		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %v\n", err)
 		return exitUsage
 	}
-	b, err := board.New(models, *dir, *maxUSD)
+	b, err := board.New(offered, *dir, *maxUSD)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %v\n", err)
 		return exitFail

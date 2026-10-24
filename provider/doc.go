@@ -9,8 +9,9 @@ import (
 )
 
 // Request is one question to a model about a picture: instructions, a text, the picture as PNG,
-// the JSON schema the answer must follow, and the most output tokens the answer may take,
-// reasoning included — which bounds what a call can cost.
+// the JSON schema the answer must follow, the most output tokens the answer may take, reasoning
+// included — which bounds what a call can cost — and the effort the model should spend on it: one
+// of the levels its adapter names, or empty for the model's own default.
 type Request struct {
 	Instructions    string
 	Text            string
@@ -18,6 +19,7 @@ type Request struct {
 	SchemaName      string
 	Schema          map[string]any
 	MaxOutputTokens int64
+	Effort          string
 }
 
 // Response is a model's answer: JSON that follows the request's schema, the model the provider

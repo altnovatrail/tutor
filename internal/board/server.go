@@ -6,6 +6,7 @@ package board
 
 import (
 	"bytes"
+	"cmp"
 	"context"
 	"crypto/rand"
 	"embed"
@@ -21,6 +22,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -31,27 +33,50 @@ import (
 //go:embed page.html
 var page embed.FS
 
-// Limits of a try: the size of the request and of the picture, and how long the models may take.
+// Limits of a try: the size of the request and of the picture, and how long the models may take —
+// long enough that at the top effort levels the output limit, not the clock, ends a long answer.
 const (
 	maxBody    = 8 << 20
 	maxSide    = 4000
-	askTimeout = 4 * time.Minute
+	askTimeout = 10 * time.Minute
 	logName    = "board.jsonl"
 )
 
+// effortBefore is the effort of the answers logged before the page offered a choice of efforts:
+// the board asked every model at high (R19).
+const effortBefore = "high"
+
+// Choice is a model the board offers: the effort levels the page offers it at, least first, the
+// level the page starts it on, and whether the page starts with it ticked.
+type Choice struct {
+	Model   provider.Model
+	Efforts []string
+	Effort  string
+	Ticked  bool
+}
+
 // Server serves the board.
 type Server struct {
-	models []provider.Model
-	dir    string
-	maxUSD float64
+	choices []Choice
+	index   map[string]int // a model's name: its place among the choices
+	dir     string
+	maxUSD  float64
 
 	checking sync.Mutex // one try at a time: the spending cap holds, and tries do not mix
 	logMu    sync.Mutex // one writer of the log at a time
 
-	mu       sync.Mutex
-	spent    float64
-	attempts map[string]bool            // the tries the log knows, so that a mark names a real one
-	marks    map[string]map[string]bool // model, try: was the model right
+	mu      sync.Mutex
+	spent   float64
+	answers map[string]map[string]answer // try, model: the answers the log knows, so that a mark names a real one
+	marks   map[string]map[string]bool   // model, try: was the model right
+}
+
+// answer is what the summary needs of a model's answer to a try.
+type answer struct {
+	effort    string
+	costUSD   float64
+	latencyMs int64
+	failed    bool
 }
 
 // record is one line of the log: a model's answer to a try, or the person's mark of it.
@@ -65,15 +90,21 @@ type record struct {
 	Right   *bool     `json:"right,omitempty"`
 }
 
-// New returns a board that asks the given models, keeps its log and pictures in dir, and does not
-// start a try that could take the calls of this run past maxUSD. The tries and marks of earlier
-// runs are read back from the log, so the summary goes on where it stopped; a last line cut short
-// by a crash is skipped.
-func New(models []provider.Model, dir string, maxUSD float64) (*Server, error) {
+// New returns a board that offers the given models, keeps its log and pictures in dir, and does
+// not start a try that could take the calls of this run past maxUSD. The answers and marks of
+// earlier runs are read back from the log, so the summary goes on where it stopped; a last line
+// cut short by a crash is skipped.
+func New(choices []Choice, dir string, maxUSD float64) (*Server, error) {
+	if err := checkChoices(choices); err != nil {
+		return nil, err
+	}
 	if err := os.MkdirAll(dir, 0o700); err != nil {
 		return nil, err
 	}
-	s := &Server{models: models, dir: dir, maxUSD: maxUSD, attempts: map[string]bool{}, marks: map[string]map[string]bool{}}
+	s := &Server{choices: choices, index: map[string]int{}, dir: dir, maxUSD: maxUSD, answers: map[string]map[string]answer{}, marks: map[string]map[string]bool{}}
+	for i, c := range choices {
+		s.index[c.Model.Name()] = i
+	}
 	data, err := os.ReadFile(filepath.Join(dir, logName))
 	if errors.Is(err, os.ErrNotExist) {
 		return s, nil
@@ -91,13 +122,43 @@ func New(models []provider.Model, dir string, maxUSD float64) (*Server, error) {
 			return nil, fmt.Errorf("%s, line %d: %w", logName, i+1, err)
 		}
 		switch {
-		case r.Kind == "check":
-			s.attempts[r.Attempt] = true
+		case r.Kind == "check" && r.Result != nil:
+			s.remember(r.Attempt, r.Model, *r.Result)
 		case r.Kind == "mark" && r.Right != nil:
 			s.mark(r.Model, r.Attempt, *r.Right)
 		}
 	}
 	return s, nil
+}
+
+// checkChoices makes sure that every offered model has a name of its own and starts on a level it
+// is offered at.
+func checkChoices(choices []Choice) error {
+	if len(choices) == 0 {
+		return errors.New("no model to offer")
+	}
+	seen := map[string]bool{}
+	for _, c := range choices {
+		name := c.Model.Name()
+		if seen[name] {
+			return fmt.Errorf("%s is offered twice", name)
+		}
+		seen[name] = true
+		if !slices.Contains(c.Efforts, c.Effort) {
+			return fmt.Errorf("%s starts on the effort %q, which it is not offered at", name, c.Effort)
+		}
+	}
+	return nil
+}
+
+// remember keeps what the summary needs of an answer. An answer logged before the page offered a
+// choice of efforts has none, and it was asked at high.
+func (s *Server) remember(attempt, model string, res Result) {
+	if s.answers[attempt] == nil {
+		s.answers[attempt] = map[string]answer{}
+	}
+	effort := cmp.Or(res.Effort, effortBefore)
+	s.answers[attempt][model] = answer{effort: effort, costUSD: res.CostUSD, latencyMs: res.LatencyMs, failed: res.Verdict == nil}
 }
 
 func (s *Server) mark(model, attempt string, right bool) {
@@ -107,10 +168,12 @@ func (s *Server) mark(model, attempt string, right bool) {
 	s.marks[model][attempt] = right
 }
 
-// Handler routes the board's requests. addr is the address the board listens on: a request must
-// name it, or the same port on another loopback name, as its host — and, if it has an origin, come
-// from it. A page on another site open in the same browser can neither spend the keys nor, by
-// rebinding its domain to 127.0.0.1, read the answers.
+// Handler routes the board's requests. addr is the address the board listens on, for the message
+// that turns a request away. A request must name a loopback host, on any port — VS Code forwards
+// the board's port to the computer the browser runs on, and picks another number when that one is
+// taken there — and, if it has an origin, come from the address it names: the board's own page. A
+// page on another site open in the same browser can neither spend the keys nor, by rebinding its
+// domain to 127.0.0.1, read the answers: its requests name its own domain or come from it.
 func (s *Server) Handler(addr string) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, _ *http.Request) {
@@ -119,17 +182,17 @@ func (s *Server) Handler(addr string) http.Handler {
 		_, _ = w.Write(data)
 	})
 	mux.HandleFunc("GET /api/tasks", func(w http.ResponseWriter, _ *http.Request) { writeJSON(w, http.StatusOK, Tasks) })
+	mux.HandleFunc("GET /api/models", func(w http.ResponseWriter, _ *http.Request) { writeJSON(w, http.StatusOK, s.offers()) })
 	mux.HandleFunc("GET /api/summary", func(w http.ResponseWriter, _ *http.Request) { writeJSON(w, http.StatusOK, s.summary()) })
 	mux.HandleFunc("POST /api/check", s.check)
 	mux.HandleFunc("POST /api/mark", s.markHandler)
-	hosts := allowedHosts(addr)
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !hosts[r.Host] {
-			writeError(w, http.StatusForbidden, "the board answers only at its own address, http://"+addr)
+		if !loopback(r.Host) {
+			writeError(w, http.StatusForbidden, "the board answers only at a local address, such as http://"+addr)
 			return
 		}
 		if origin := r.Header.Get("Origin"); origin != "" {
-			if u, err := url.Parse(origin); err != nil || !hosts[u.Host] {
+			if u, err := url.Parse(origin); err != nil || u.Host != r.Host {
 				writeError(w, http.StatusForbidden, "a request from another site")
 				return
 			}
@@ -139,66 +202,182 @@ func (s *Server) Handler(addr string) http.Handler {
 	})
 }
 
-// allowedHosts is the host part a request to the board may carry: its address, and the same port
-// on every loopback name when it listens on one.
-func allowedHosts(addr string) map[string]bool {
-	hosts := map[string]bool{addr: true}
-	host, port, err := net.SplitHostPort(addr)
-	if err != nil {
-		return hosts
+// loopback reports whether a request's host, with or without its port, names this machine:
+// localhost or a loopback address.
+func loopback(hostport string) bool {
+	host := hostport
+	if h, _, err := net.SplitHostPort(hostport); err == nil {
+		host = h
 	}
-	if ip := net.ParseIP(host); host == "localhost" || (ip != nil && ip.IsLoopback()) {
-		for _, name := range []string{"localhost", "127.0.0.1", "[::1]"} {
-			hosts[name+":"+port] = true
-		}
-	}
-	return hosts
+	ip := net.ParseIP(strings.Trim(host, "[]"))
+	return host == "localhost" || (ip != nil && ip.IsLoopback())
 }
 
-// Summary is how often each model was right, by the person's marks, and what the calls of this
-// run cost.
+// Offer is a model as the page offers it: its name, its price per million input and output tokens
+// in US dollars, the effort levels it may be asked at, least first, the level the page starts it
+// on, and whether the page starts with it ticked.
+type Offer struct {
+	Model   string   `json:"model"`
+	Input   float64  `json:"input_usd_per_mtok"`
+	Output  float64  `json:"output_usd_per_mtok"`
+	Efforts []string `json:"efforts"`
+	Effort  string   `json:"effort"`
+	Ticked  bool     `json:"ticked"`
+}
+
+func (s *Server) offers() []Offer {
+	offers := make([]Offer, len(s.choices))
+	for i, c := range s.choices {
+		in, out := c.Model.Price()
+		offers[i] = Offer{Model: c.Model.Name(), Input: in, Output: out, Efforts: c.Efforts, Effort: c.Effort, Ticked: c.Ticked}
+	}
+	return offers
+}
+
+// Summary is, for each model at each effort it was asked at, how its answers went, and what the
+// calls of this run cost.
 type Summary struct {
-	Models   []ModelSummary `json:"models"`
-	SpentUSD float64        `json:"spent_usd"`
-	MaxUSD   float64        `json:"max_usd"`
+	Pairs    []PairSummary `json:"pairs"`
+	SpentUSD float64       `json:"spent_usd"`
+	MaxUSD   float64       `json:"max_usd"`
 }
 
-// ModelSummary is one model's line of the summary.
-type ModelSummary struct {
-	Model  string `json:"model"`
-	Marked int    `json:"marked"`
-	Right  int    `json:"right"`
+// PairSummary is one line of the summary: a model at one effort. It counts the model's answers and
+// those that gave no verdict, how many the person marked and how many of those were right, and the
+// mean price and time of an answer — failed ones included, since they are billed and waited for
+// too.
+type PairSummary struct {
+	Model         string  `json:"model"`
+	Effort        string  `json:"effort"`
+	Answers       int     `json:"answers"`
+	NoAnswer      int     `json:"no_answer"`
+	Marked        int     `json:"marked"`
+	Right         int     `json:"right"`
+	MeanCostUSD   float64 `json:"mean_cost_usd"`
+	MeanLatencyMs int64   `json:"mean_latency_ms"`
 }
 
 func (s *Server) summary() Summary {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	sum := Summary{SpentUSD: s.spent, MaxUSD: s.maxUSD}
-	for _, m := range s.models {
-		line := ModelSummary{Model: m.Name()}
-		for _, right := range s.marks[m.Name()] {
+	type pair struct{ model, effort string }
+	lines := map[pair]*PairSummary{}
+	cost := map[pair]float64{}
+	latency := map[pair]int64{}
+	for _, byModel := range s.answers {
+		for model, a := range byModel {
+			p := pair{model, a.effort}
+			if lines[p] == nil {
+				lines[p] = &PairSummary{Model: model, Effort: a.effort}
+			}
+			lines[p].Answers++
+			if a.failed {
+				lines[p].NoAnswer++
+			}
+			cost[p] += a.costUSD
+			latency[p] += a.latencyMs
+		}
+	}
+	for model, byTry := range s.marks {
+		for attempt, right := range byTry {
+			a, ok := s.answers[attempt][model]
+			if !ok {
+				continue
+			}
+			line := lines[pair{model, a.effort}]
 			line.Marked++
 			if right {
 				line.Right++
 			}
 		}
-		sum.Models = append(sum.Models, line)
 	}
+	sum := Summary{Pairs: []PairSummary{}, SpentUSD: s.spent, MaxUSD: s.maxUSD}
+	for p, line := range lines {
+		line.MeanCostUSD = cost[p] / float64(line.Answers)
+		line.MeanLatencyMs = latency[p] / int64(line.Answers)
+		sum.Pairs = append(sum.Pairs, *line)
+	}
+	slices.SortFunc(sum.Pairs, func(a, b PairSummary) int {
+		return cmp.Or(
+			cmp.Compare(s.place(a.Model), s.place(b.Model)),
+			strings.Compare(a.Model, b.Model),
+			cmp.Compare(s.level(a.Model, a.Effort), s.level(b.Model, b.Effort)),
+			strings.Compare(a.Effort, b.Effort))
+	})
 	return sum
 }
 
-// CheckRequest is a try: the task and the picture of the sheet, a PNG as a data URL.
-type CheckRequest struct {
-	Task  string `json:"task"`
-	Image string `json:"image"`
+// place is where the page offers a model; a model it does not offer this run — one whose key is
+// not set, say — comes after every offered one.
+func (s *Server) place(model string) int {
+	if i, ok := s.index[model]; ok {
+		return i
+	}
+	return len(s.choices)
 }
 
-// CheckResponse is every model's answer to the try.
+// level is where an effort stands among the levels the page offers a model at, least first; a
+// level it is not offered at comes after them.
+func (s *Server) level(model, effort string) int {
+	i := s.place(model)
+	if i == len(s.choices) {
+		return 0
+	}
+	if j := slices.Index(s.choices[i].Efforts, effort); j >= 0 {
+		return j
+	}
+	return len(s.choices[i].Efforts)
+}
+
+// CheckRequest is a try: the task, the picture of the sheet — a PNG as a data URL — and the models
+// to ask, each at an effort.
+type CheckRequest struct {
+	Task   string `json:"task"`
+	Image  string `json:"image"`
+	Models []Pick `json:"models"`
+}
+
+// Pick is a model ticked on the page and the effort to ask it at.
+type Pick struct {
+	Model  string `json:"model"`
+	Effort string `json:"effort"`
+}
+
+// CheckResponse is every asked model's answer to the try.
 type CheckResponse struct {
 	Attempt string   `json:"attempt"`
 	Results []Result `json:"results"`
 	Summary Summary  `json:"summary"`
 	Warning string   `json:"warning,omitempty"`
+}
+
+// picked turns the page's picks into the models to ask, each at its picked effort, in the order
+// the page offers them. A pick must name an offered model, once, at a level it is offered at: the
+// page cannot make the board call a model or a level the board does not offer.
+func (s *Server) picked(picks []Pick) ([]Choice, error) {
+	if len(picks) == 0 {
+		return nil, errors.New("tick a model to ask")
+	}
+	chosen := make([]Choice, 0, len(picks))
+	ticked := map[string]bool{}
+	for _, p := range picks {
+		i, ok := s.index[p.Model]
+		if !ok {
+			return nil, fmt.Errorf("no such model: %s", p.Model)
+		}
+		if ticked[p.Model] {
+			return nil, fmt.Errorf("%s is ticked twice", p.Model)
+		}
+		ticked[p.Model] = true
+		c := s.choices[i]
+		if !slices.Contains(c.Efforts, p.Effort) {
+			return nil, fmt.Errorf("%s is not offered at the effort %q", p.Model, p.Effort)
+		}
+		c.Effort = p.Effort
+		chosen = append(chosen, c)
+	}
+	slices.SortFunc(chosen, func(a, b Choice) int { return cmp.Compare(s.place(a.Model.Name()), s.place(b.Model.Name())) })
+	return chosen, nil
 }
 
 func (s *Server) check(w http.ResponseWriter, r *http.Request) {
@@ -216,21 +395,26 @@ func (s *Server) check(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
+	chosen, err := s.picked(req.Models)
+	if err != nil {
+		writeError(w, http.StatusBadRequest, err.Error())
+		return
+	}
 	if !s.checking.TryLock() {
 		writeError(w, http.StatusConflict, "another check is running: wait for its answers")
 		return
 	}
 	defer s.checking.Unlock()
 	worst := 0.0
-	for _, m := range s.models {
-		worst += worstCost(m)
+	for _, c := range chosen {
+		worst += worstCost(c.Model)
 	}
 	s.mu.Lock()
 	spent := s.spent
 	s.mu.Unlock()
 	if spent+worst > s.maxUSD {
 		writeError(w, http.StatusTooManyRequests, fmt.Sprintf(
-			"spent $%.2f of the $%.2f this run may spend, and a check can cost up to $%.2f: restart the board with a higher -max-usd",
+			"spent $%.2f of the $%.2f this run may spend, and this check can cost up to $%.2f: tick fewer or cheaper models, or restart the board with a higher -max-usd",
 			spent, s.maxUSD, worst))
 		return
 	}
@@ -242,28 +426,33 @@ func (s *Server) check(w http.ResponseWriter, r *http.Request) {
 	}
 	ctx, cancel := context.WithTimeout(r.Context(), askTimeout)
 	defer cancel()
-	results := make([]Result, len(s.models))
+	results := make([]Result, len(chosen))
 	var wg sync.WaitGroup
-	for i, m := range s.models {
-		wg.Go(func() { results[i] = ask(ctx, m, task, pic) })
+	for i, c := range chosen {
+		wg.Go(func() { results[i] = ask(ctx, c.Model, c.Effort, task, pic) })
 	}
 	wg.Wait()
 
-	s.mu.Lock()
-	s.attempts[attempt] = true
-	for _, res := range results {
-		s.spent += res.CostUSD
-	}
-	s.mu.Unlock()
 	now := time.Now().UTC()
 	records := make([]record, len(results))
 	for i := range results {
 		records[i] = record{Kind: "check", Time: now, Attempt: attempt, Task: task.ID, Model: results[i].Model, Result: &results[i]}
 	}
 	resp := CheckResponse{Attempt: attempt, Results: results}
-	if err := s.appendLog(records...); err != nil {
-		resp.Warning = "the answers are not in the log: " + err.Error()
+	logErr := s.appendLog(records...)
+	if logErr != nil {
+		resp.Warning = "the answers are not in the log, so they cannot be marked: " + logErr.Error()
 	}
+	// The calls are billed whether or not the log took them; only answers in the log can be marked,
+	// since a mark of any other would be lost at the next start.
+	s.mu.Lock()
+	for _, res := range results {
+		s.spent += res.CostUSD
+		if logErr == nil {
+			s.remember(attempt, res.Model, res)
+		}
+	}
+	s.mu.Unlock()
 	resp.Summary = s.summary()
 	writeJSON(w, http.StatusOK, resp)
 }
@@ -300,10 +489,14 @@ func (s *Server) markHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.mu.Lock()
-	known := s.attempts[req.Attempt]
+	a, answered := s.answers[req.Attempt][req.Model]
 	s.mu.Unlock()
-	if !known || !s.hasModel(req.Model) {
-		writeError(w, http.StatusBadRequest, "no such try or model")
+	if !answered {
+		writeError(w, http.StatusBadRequest, "no such try or model: the model did not answer this try")
+		return
+	}
+	if a.failed {
+		writeError(w, http.StatusBadRequest, "the model gave no verdict on this try, so there is nothing to mark")
 		return
 	}
 	right := req.Right
@@ -315,15 +508,6 @@ func (s *Server) markHandler(w http.ResponseWriter, r *http.Request) {
 	s.mark(req.Model, req.Attempt, right)
 	s.mu.Unlock()
 	writeJSON(w, http.StatusOK, s.summary())
-}
-
-func (s *Server) hasModel(name string) bool {
-	for _, m := range s.models {
-		if m.Name() == name {
-			return true
-		}
-	}
-	return false
 }
 
 // appendLog adds records to the log in one write.

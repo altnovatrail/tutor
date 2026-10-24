@@ -3,9 +3,11 @@
 package gpt
 
 import (
+	"cmp"
 	"context"
 	"encoding/base64"
 	"fmt"
+	"slices"
 
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
@@ -17,6 +19,10 @@ import (
 
 // Model is the exact ID of the model the adapter calls (R07 spec).
 const Model = "gpt-6-astra"
+
+// Efforts are the effort levels the adapter takes: high alone, as on the board, where GPT is not
+// chosen among levels (R20).
+var Efforts = []string{"high"}
 
 // Client calls GPT-6 Astra.
 type Client struct {
@@ -37,8 +43,11 @@ func (c *Client) Price() (input, output float64) { return 10, 50 }
 
 // Ask sends the picture and the text and asks for JSON that follows the schema. The picture goes
 // with the detail "high", so that the model does not shrink it; the answer is not stored at
-// OpenAI; the reasoning effort is high, as Claude's is.
+// OpenAI; the reasoning effort is high, the request's or by default.
 func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response, error) {
+	if r.Effort != "" && !slices.Contains(Efforts, r.Effort) {
+		return provider.Response{}, fmt.Errorf("gpt: no effort level %q", r.Effort)
+	}
 	image := "data:image/png;base64," + base64.StdEncoding.EncodeToString(r.PNG)
 	resp, err := c.sdk.Responses.New(ctx, responses.ResponseNewParams{
 		Model:        Model,
@@ -59,7 +68,7 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 				Strict: openai.Bool(true),
 			},
 		}},
-		Reasoning:       shared.ReasoningParam{Effort: shared.ReasoningEffortHigh},
+		Reasoning:       shared.ReasoningParam{Effort: shared.ReasoningEffort(cmp.Or(r.Effort, Efforts[0]))},
 		MaxOutputTokens: openai.Int(r.MaxOutputTokens),
 		Store:           openai.Bool(false),
 	})
