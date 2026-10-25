@@ -47,12 +47,14 @@ const (
 const effortBefore = "high"
 
 // Choice is a model the board offers: the effort levels the page offers it at, least first, the
-// level the page starts it on, and whether the page starts with it ticked.
+// level the page starts it on, whether the page starts with it ticked, and the levels at which it
+// may be asked to answer without thinking — none if its thinking cannot be turned off.
 type Choice struct {
-	Model   provider.Model
-	Efforts []string
-	Effort  string
-	Ticked  bool
+	Model      provider.Model
+	Efforts    []string
+	Effort     string
+	Ticked     bool
+	NoThinking []string
 }
 
 // Server serves the board.
@@ -71,12 +73,30 @@ type Server struct {
 	marks   map[string]map[string]bool   // model, try: was the model right
 }
 
-// answer is what the summary needs of a model's answer to a try.
+// answer is what the summary needs of a model's answer to a try: its line, its price and time,
+// whether it gave no verdict, and the tokens and the time of its first text, with whether they are
+// known. They are for an answer with a verdict alone, since the count of a failed call may be cut
+// short: the log has kept the tokens since the page offered a choice of efforts, those spent
+// thinking and the time of the first text since the short answer.
 type answer struct {
-	effort    string
-	costUSD   float64
-	latencyMs int64
-	failed    bool
+	pair           pair
+	costUSD        float64
+	latencyMs      int64
+	failed         bool
+	outputTokens   int64
+	knowsOutput    bool
+	thinkingTokens int64
+	knowsThinking  bool
+	firstTokenMs   int64
+	knowsFirst     bool
+}
+
+// pair is a line of the summary: a model at one effort, with its thinking or without, and the form
+// of its answers.
+type pair struct {
+	model, effort string
+	noThinking    bool
+	form          string
 }
 
 // record is one line of the log: a model's answer to a try, or the person's mark of it.
@@ -131,8 +151,8 @@ func New(choices []Choice, dir string, maxUSD float64) (*Server, error) {
 	return s, nil
 }
 
-// checkChoices makes sure that every offered model has a name of its own and starts on a level it
-// is offered at.
+// checkChoices makes sure that every offered model has a name of its own, starts on a level it is
+// offered at, and may be asked not to think only at levels it is offered at.
 func checkChoices(choices []Choice) error {
 	if len(choices) == 0 {
 		return errors.New("no model to offer")
@@ -147,18 +167,37 @@ func checkChoices(choices []Choice) error {
 		if !slices.Contains(c.Efforts, c.Effort) {
 			return fmt.Errorf("%s starts on the effort %q, which it is not offered at", name, c.Effort)
 		}
+		for _, level := range c.NoThinking {
+			if !slices.Contains(c.Efforts, level) {
+				return fmt.Errorf("%s may be asked not to think at the effort %q, which it is not offered at", name, level)
+			}
+		}
 	}
 	return nil
 }
 
 // remember keeps what the summary needs of an answer. An answer logged before the page offered a
-// choice of efforts has none, and it was asked at high.
+// choice of efforts has none, and it was asked at high; nor does it have its tokens. An answer
+// logged before the short one has no form: it is of the earlier form, and the tokens it spent
+// thinking are not known.
 func (s *Server) remember(attempt, model string, res Result) {
 	if s.answers[attempt] == nil {
 		s.answers[attempt] = map[string]answer{}
 	}
-	effort := cmp.Or(res.Effort, effortBefore)
-	s.answers[attempt][model] = answer{effort: effort, costUSD: res.CostUSD, latencyMs: res.LatencyMs, failed: res.Verdict == nil}
+	form := cmp.Or(res.Form, formEarlier)
+	answered := res.Verdict != nil
+	s.answers[attempt][model] = answer{
+		pair:           pair{model: model, effort: cmp.Or(res.Effort, effortBefore), noThinking: res.NoThinking, form: form},
+		costUSD:        res.CostUSD,
+		latencyMs:      res.LatencyMs,
+		failed:         !answered,
+		outputTokens:   res.OutputTokens,
+		knowsOutput:    answered && res.Effort != "",
+		thinkingTokens: res.ThinkingTokens,
+		knowsThinking:  answered && form == formShort,
+		firstTokenMs:   res.FirstTokenMs,
+		knowsFirst:     answered && res.FirstTokenMs > 0,
+	}
 }
 
 func (s *Server) mark(model, attempt string, right bool) {
@@ -215,21 +254,23 @@ func loopback(hostport string) bool {
 
 // Offer is a model as the page offers it: its name, its price per million input and output tokens
 // in US dollars, the effort levels it may be asked at, least first, the level the page starts it
-// on, and whether the page starts with it ticked.
+// on, whether the page starts with it ticked, and the levels at which it may be asked not to think.
 type Offer struct {
-	Model   string   `json:"model"`
-	Input   float64  `json:"input_usd_per_mtok"`
-	Output  float64  `json:"output_usd_per_mtok"`
-	Efforts []string `json:"efforts"`
-	Effort  string   `json:"effort"`
-	Ticked  bool     `json:"ticked"`
+	Model      string   `json:"model"`
+	Input      float64  `json:"input_usd_per_mtok"`
+	Output     float64  `json:"output_usd_per_mtok"`
+	Efforts    []string `json:"efforts"`
+	Effort     string   `json:"effort"`
+	Ticked     bool     `json:"ticked"`
+	NoThinking []string `json:"no_thinking_efforts"`
 }
 
 func (s *Server) offers() []Offer {
 	offers := make([]Offer, len(s.choices))
 	for i, c := range s.choices {
 		in, out := c.Model.Price()
-		offers[i] = Offer{Model: c.Model.Name(), Input: in, Output: out, Efforts: c.Efforts, Effort: c.Effort, Ticked: c.Ticked}
+		offers[i] = Offer{Model: c.Model.Name(), Input: in, Output: out, Efforts: c.Efforts, Effort: c.Effort, Ticked: c.Ticked,
+			NoThinking: append([]string{}, c.NoThinking...)}
 	}
 	return offers
 }
@@ -242,40 +283,67 @@ type Summary struct {
 	MaxUSD   float64       `json:"max_usd"`
 }
 
-// PairSummary is one line of the summary: a model at one effort. It counts the model's answers and
-// those that gave no verdict, how many the person marked and how many of those were right, and the
-// mean price and time of an answer — failed ones included, since they are billed and waited for
-// too.
+// PairSummary is one line of the summary: a model at one effort, with its thinking or without, and
+// the form of its answers. It counts the model's answers and those that gave no verdict, how many
+// the person marked and how many of those were right, and the mean price and time of an answer —
+// failed ones included, since they are billed and waited for too — and the means of when the
+// first text came and of the tokens out and of those spent thinking, over the answers that gave a
+// verdict and whose log line knows them; a mean is null where no line does.
 type PairSummary struct {
-	Model         string  `json:"model"`
-	Effort        string  `json:"effort"`
-	Answers       int     `json:"answers"`
-	NoAnswer      int     `json:"no_answer"`
-	Marked        int     `json:"marked"`
-	Right         int     `json:"right"`
-	MeanCostUSD   float64 `json:"mean_cost_usd"`
-	MeanLatencyMs int64   `json:"mean_latency_ms"`
+	Model              string  `json:"model"`
+	Effort             string  `json:"effort"`
+	NoThinking         bool    `json:"no_thinking"`
+	Form               string  `json:"form"`
+	Answers            int     `json:"answers"`
+	NoAnswer           int     `json:"no_answer"`
+	Marked             int     `json:"marked"`
+	Right              int     `json:"right"`
+	MeanCostUSD        float64 `json:"mean_cost_usd"`
+	MeanLatencyMs      int64   `json:"mean_latency_ms"`
+	MeanFirstTokenMs   *int64  `json:"mean_first_token_ms"`
+	MeanOutputTokens   *int64  `json:"mean_output_tokens"`
+	MeanThinkingTokens *int64  `json:"mean_thinking_tokens"`
+}
+
+// totals are the sums behind a line of the summary, each with the number of answers it adds up.
+type totals struct {
+	cost                                float64
+	latency                             int64
+	first, output, thinking             int64
+	withFirst, withOutput, withThinking int64
 }
 
 func (s *Server) summary() Summary {
 	s.mu.Lock()
 	defer s.mu.Unlock()
-	type pair struct{ model, effort string }
 	lines := map[pair]*PairSummary{}
-	cost := map[pair]float64{}
-	latency := map[pair]int64{}
+	sums := map[pair]*totals{}
 	for _, byModel := range s.answers {
-		for model, a := range byModel {
-			p := pair{model, a.effort}
+		for _, a := range byModel {
+			p := a.pair
 			if lines[p] == nil {
-				lines[p] = &PairSummary{Model: model, Effort: a.effort}
+				lines[p] = &PairSummary{Model: p.model, Effort: p.effort, NoThinking: p.noThinking, Form: p.form}
+				sums[p] = &totals{}
 			}
-			lines[p].Answers++
+			line, t := lines[p], sums[p]
+			line.Answers++
 			if a.failed {
-				lines[p].NoAnswer++
+				line.NoAnswer++
 			}
-			cost[p] += a.costUSD
-			latency[p] += a.latencyMs
+			t.cost += a.costUSD
+			t.latency += a.latencyMs
+			if a.knowsFirst {
+				t.first += a.firstTokenMs
+				t.withFirst++
+			}
+			if a.knowsOutput {
+				t.output += a.outputTokens
+				t.withOutput++
+			}
+			if a.knowsThinking {
+				t.thinking += a.thinkingTokens
+				t.withThinking++
+			}
 		}
 	}
 	for model, byTry := range s.marks {
@@ -284,7 +352,7 @@ func (s *Server) summary() Summary {
 			if !ok {
 				continue
 			}
-			line := lines[pair{model, a.effort}]
+			line := lines[a.pair]
 			line.Marked++
 			if right {
 				line.Right++
@@ -293,8 +361,12 @@ func (s *Server) summary() Summary {
 	}
 	sum := Summary{Pairs: []PairSummary{}, SpentUSD: s.spent, MaxUSD: s.maxUSD}
 	for p, line := range lines {
-		line.MeanCostUSD = cost[p] / float64(line.Answers)
-		line.MeanLatencyMs = latency[p] / int64(line.Answers)
+		t := sums[p]
+		line.MeanCostUSD = t.cost / float64(line.Answers)
+		line.MeanLatencyMs = t.latency / int64(line.Answers)
+		line.MeanFirstTokenMs = mean(t.first, t.withFirst)
+		line.MeanOutputTokens = mean(t.output, t.withOutput)
+		line.MeanThinkingTokens = mean(t.thinking, t.withThinking)
 		sum.Pairs = append(sum.Pairs, *line)
 	}
 	slices.SortFunc(sum.Pairs, func(a, b PairSummary) int {
@@ -302,9 +374,33 @@ func (s *Server) summary() Summary {
 			cmp.Compare(s.place(a.Model), s.place(b.Model)),
 			strings.Compare(a.Model, b.Model),
 			cmp.Compare(s.level(a.Model, a.Effort), s.level(b.Model, b.Effort)),
-			strings.Compare(a.Effort, b.Effort))
+			strings.Compare(a.Effort, b.Effort),
+			later(a.NoThinking, b.NoThinking),
+			later(a.Form == formEarlier, b.Form == formEarlier))
 	})
 	return sum
+}
+
+// mean is the mean of n values that add up to sum, or nil if there are none.
+func mean(sum, n int64) *int64 {
+	if n == 0 {
+		return nil
+	}
+	m := sum / n
+	return &m
+}
+
+// later orders a line that is so after one that is not: a model without its thinking after the
+// same model with it, and the earlier form of answer after the short one.
+func later(a, b bool) int {
+	switch {
+	case a == b:
+		return 0
+	case a:
+		return 1
+	default:
+		return -1
+	}
 }
 
 // place is where the page offers a model; a model it does not offer this run — one whose key is
@@ -337,10 +433,11 @@ type CheckRequest struct {
 	Models []Pick `json:"models"`
 }
 
-// Pick is a model ticked on the page and the effort to ask it at.
+// Pick is a model ticked on the page, the effort to ask it at, and whether to ask it not to think.
 type Pick struct {
-	Model  string `json:"model"`
-	Effort string `json:"effort"`
+	Model      string `json:"model"`
+	Effort     string `json:"effort"`
+	NoThinking bool   `json:"no_thinking,omitempty"`
 }
 
 // CheckResponse is every asked model's answer to the try.
@@ -351,14 +448,15 @@ type CheckResponse struct {
 	Warning string   `json:"warning,omitempty"`
 }
 
-// picked turns the page's picks into the models to ask, each at its picked effort, in the order
-// the page offers them. A pick must name an offered model, once, at a level it is offered at: the
-// page cannot make the board call a model or a level the board does not offer.
-func (s *Server) picked(picks []Pick) ([]Choice, error) {
+// picked turns the page's picks into the questions to ask, each model at its picked effort, in the
+// order the page offers them. A pick must name an offered model, once, at a level it is offered
+// at, and without thinking only at a level it is offered so at: the page cannot make the board
+// call a model or a level the board does not offer.
+func (s *Server) picked(picks []Pick) ([]question, error) {
 	if len(picks) == 0 {
 		return nil, errors.New("tick a model to ask")
 	}
-	chosen := make([]Choice, 0, len(picks))
+	chosen := make([]question, 0, len(picks))
 	ticked := map[string]bool{}
 	for _, p := range picks {
 		i, ok := s.index[p.Model]
@@ -373,10 +471,12 @@ func (s *Server) picked(picks []Pick) ([]Choice, error) {
 		if !slices.Contains(c.Efforts, p.Effort) {
 			return nil, fmt.Errorf("%s is not offered at the effort %q", p.Model, p.Effort)
 		}
-		c.Effort = p.Effort
-		chosen = append(chosen, c)
+		if p.NoThinking && !slices.Contains(c.NoThinking, p.Effort) {
+			return nil, fmt.Errorf("%s is not offered without thinking at the effort %q", p.Model, p.Effort)
+		}
+		chosen = append(chosen, question{model: c.Model, effort: p.Effort, noThinking: p.NoThinking})
 	}
-	slices.SortFunc(chosen, func(a, b Choice) int { return cmp.Compare(s.place(a.Model.Name()), s.place(b.Model.Name())) })
+	slices.SortFunc(chosen, func(a, b question) int { return cmp.Compare(s.place(a.model.Name()), s.place(b.model.Name())) })
 	return chosen, nil
 }
 
@@ -407,7 +507,7 @@ func (s *Server) check(w http.ResponseWriter, r *http.Request) {
 	defer s.checking.Unlock()
 	worst := 0.0
 	for _, c := range chosen {
-		worst += worstCost(c.Model)
+		worst += worstCost(c.model)
 	}
 	s.mu.Lock()
 	spent := s.spent
@@ -419,7 +519,7 @@ func (s *Server) check(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	attempt, err := s.savePicture(pic)
+	attempt, err := s.savePicture(pic.png)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, err.Error())
 		return
@@ -429,7 +529,7 @@ func (s *Server) check(w http.ResponseWriter, r *http.Request) {
 	results := make([]Result, len(chosen))
 	var wg sync.WaitGroup
 	for i, c := range chosen {
-		wg.Go(func() { results[i] = ask(ctx, c.Model, c.Effort, task, pic) })
+		wg.Go(func() { results[i] = ask(ctx, c, task, pic) })
 	}
 	wg.Wait()
 
@@ -533,20 +633,21 @@ func (s *Server) appendLog(records ...record) error {
 	return err
 }
 
-// decodePNG takes a data URL or bare base64 and checks that it is a PNG of a sensible size.
-func decodePNG(image string) ([]byte, error) {
+// decodePNG takes a data URL or bare base64, checks that it is a PNG of a sensible size, and
+// returns it with its size.
+func decodePNG(image string) (picture, error) {
 	data, err := base64.StdEncoding.DecodeString(strings.TrimPrefix(image, "data:image/png;base64,"))
 	if err != nil {
-		return nil, errors.New("the picture is not base64")
+		return picture{}, errors.New("the picture is not base64")
 	}
 	cfg, err := png.DecodeConfig(bytes.NewReader(data))
 	if err != nil {
-		return nil, errors.New("the picture is not a PNG")
+		return picture{}, errors.New("the picture is not a PNG")
 	}
 	if cfg.Width < 1 || cfg.Height < 1 || cfg.Width > maxSide || cfg.Height > maxSide {
-		return nil, fmt.Errorf("the picture is %d×%d, larger than %d×%d", cfg.Width, cfg.Height, maxSide, maxSide)
+		return picture{}, fmt.Errorf("the picture is %d×%d, larger than %d×%d", cfg.Width, cfg.Height, maxSide, maxSide)
 	}
-	return data, nil
+	return picture{png: data, width: cfg.Width, height: cfg.Height}, nil
 }
 
 // readJSON reads a request's JSON body. It takes only application/json, which a page on another

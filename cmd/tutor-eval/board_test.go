@@ -57,7 +57,8 @@ func TestBoardCommand(t *testing.T) {
 }
 
 // The board offers every current Claude model at every effort level, ticking Claude Opus 5.5 at
-// high as the board asked before, and GPT-6 Astra at high alone, unticked.
+// high as the board asked before, and GPT-6 Astra at high alone, unticked. Haiku 5.5 and Sonnet
+// 5.5 may also be asked without thinking, at high and below; the others always think.
 func TestBoardOffers(t *testing.T) {
 	var handler http.Handler
 	serve := func(s *http.Server) error { handler = s.Handler; return nil }
@@ -76,14 +77,14 @@ func TestBoardOffers(t *testing.T) {
 	}
 	var got []string
 	for _, o := range offers {
-		got = append(got, fmt.Sprintf("%s %s %s %v", o.Model, strings.Join(o.Efforts, ","), o.Effort, o.Ticked))
+		got = append(got, fmt.Sprintf("%s %s %s %v [%s]", o.Model, strings.Join(o.Efforts, ","), o.Effort, o.Ticked, strings.Join(o.NoThinking, ",")))
 	}
 	want := []string{
-		"Claude Haiku 5.5 low,medium,high,xhigh,max high false",
-		"Claude Sonnet 5.5 low,medium,high,xhigh,max high false",
-		"Claude Opus 5.5 low,medium,high,xhigh,max high true",
-		"Claude Fable 5.1 low,medium,high,xhigh,max high false",
-		"GPT-6 Astra high high false",
+		"Claude Haiku 5.5 low,medium,high,xhigh,max high false [low,medium,high]",
+		"Claude Sonnet 5.5 low,medium,high,xhigh,max high false [low,medium,high]",
+		"Claude Opus 5.5 low,medium,high,xhigh,max high true []",
+		"Claude Fable 5.1 low,medium,high,xhigh,max high false []",
+		"GPT-6 Astra high high false []",
 	}
 	if strings.Join(got, "\n") != strings.Join(want, "\n") {
 		t.Errorf("offers:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))

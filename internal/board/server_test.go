@@ -14,21 +14,25 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"reflect"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/altnovatrail/tutor/provider"
 )
 
 // fakeModel answers every request the same way and remembers what it was asked.
 type fakeModel struct {
-	name   string
-	answer string
-	err    error
-	billed int64 // tokens a failed call still bills
-	mu     sync.Mutex
-	asked  []provider.Request
+	name    string
+	answer  string
+	err     error
+	billed  int64 // tokens a failed call still bills
+	partial bool  // a failed call broke off after its answer began
+	mu      sync.Mutex
+	asked   []provider.Request
 }
 
 func (f *fakeModel) Name() string                   { return f.name }
@@ -38,9 +42,10 @@ func (f *fakeModel) Ask(_ context.Context, r provider.Request) (provider.Respons
 	f.asked = append(f.asked, r)
 	f.mu.Unlock()
 	if f.err != nil {
-		return provider.Response{InputTokens: f.billed, OutputTokens: f.billed}, f.err
+		return provider.Response{InputTokens: f.billed, OutputTokens: f.billed, Partial: f.partial}, f.err
 	}
-	return provider.Response{JSON: f.answer, Model: f.name + "-id", InputTokens: 1000, OutputTokens: 500}, nil
+	return provider.Response{JSON: f.answer, Model: f.name + "-id", InputTokens: 1000, OutputTokens: 500, ThinkingTokens: 300,
+		FirstToken: 1500 * time.Millisecond, Retries: 1}, nil
 }
 
 func (f *fakeModel) requests() []provider.Request {
@@ -49,7 +54,7 @@ func (f *fakeModel) requests() []provider.Request {
 	return append([]provider.Request(nil), f.asked...)
 }
 
-const goodAnswer = `{"lines":["3x + 1 = 7","3x = 6","x = 2"],"answer":"x = 2","verdict":"correct","first_error_line":null,"comment":"Прочитал три строки, ответ верный."}`
+const goodAnswer = `{"verdict":"correct","mark":null}`
 
 // sheet is a small white PNG with a black line, as the page sends it.
 func sheet(t *testing.T, w, h int) string {
@@ -68,11 +73,12 @@ func sheet(t *testing.T, w, h int) string {
 	return "data:image/png;base64," + base64.StdEncoding.EncodeToString(buf.Bytes())
 }
 
-// offer offers every model at low and high effort, starting on high and ticked.
+// offer offers every model at low and high effort, starting on high and ticked, and without its
+// thinking at low.
 func offer(models ...provider.Model) []Choice {
 	choices := make([]Choice, len(models))
 	for i, m := range models {
-		choices[i] = Choice{Model: m, Efforts: []string{"low", "high"}, Effort: "high", Ticked: true}
+		choices[i] = Choice{Model: m, Efforts: []string{"low", "high"}, Effort: "high", Ticked: true, NoThinking: []string{"low"}}
 	}
 	return choices
 }
@@ -123,11 +129,18 @@ func call(t *testing.T, h http.Handler, method, path string, body any) (*httptes
 	return rec, out
 }
 
-// line is the summary's line of a model at an effort, or nil.
+// line is the summary's line of a model at an effort, with its thinking, of short answers, or nil.
 func line(t *testing.T, summary map[string]any, model, effort string) map[string]any {
 	t.Helper()
+	return lineOf(t, summary, model, effort, false, formShort)
+}
+
+// lineOf is the summary's line of a model at an effort, with its thinking or without, of answers
+// of the form, or nil.
+func lineOf(t *testing.T, summary map[string]any, model, effort string, noThinking bool, form string) map[string]any {
+	t.Helper()
 	for _, p := range summary["pairs"].([]any) {
-		if l := p.(map[string]any); l["model"] == model && l["effort"] == effort {
+		if l := p.(map[string]any); l["model"] == model && l["effort"] == effort && l["no_thinking"] == noThinking && l["form"] == form {
 			return l
 		}
 	}
@@ -139,6 +152,14 @@ func TestPageTasksAndModels(t *testing.T) {
 	rec, _ := call(t, h, "GET", "/", nil)
 	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "Check board") {
 		t.Fatalf("GET / = %d, want the page", rec.Code)
+	}
+	// The summary's headers are in the markup, which a static reading of the page sees, and the
+	// marks have a layer of their own.
+	for _, want := range []string{`<th scope="col">Mean first token</th>`, `<th scope="col">Mean tokens out</th>`,
+		`<th scope="col">Mean thinking tokens</th>`, `<canvas id="marks"`} {
+		if !strings.Contains(rec.Body.String(), want) {
+			t.Errorf("the page does not hold %s", want)
+		}
 	}
 	rec, _ = call(t, h, "GET", "/api/tasks", nil)
 	var tasks []map[string]any
@@ -155,17 +176,29 @@ func TestPageTasksAndModels(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &offers); err != nil || len(offers) != 1 {
 		t.Fatalf("GET /api/models = %s, want one model", rec.Body)
 	}
-	if o := offers[0]; o.Model != "A" || o.Input != 4 || o.Output != 20 || strings.Join(o.Efforts, ",") != "low,high" || o.Effort != "high" || !o.Ticked {
+	if o := offers[0]; o.Model != "A" || o.Input != 4 || o.Output != 20 || strings.Join(o.Efforts, ",") != "low,high" || o.Effort != "high" || !o.Ticked ||
+		strings.Join(o.NoThinking, ",") != "low" {
 		t.Errorf("the offered model = %+v", o)
+	}
+
+	// A model whose thinking does not turn off is offered with an empty list, which the page reads.
+	b, err := New([]Choice{{Model: &fakeModel{name: "B"}, Efforts: []string{"high"}, Effort: "high"}}, t.TempDir(), 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec, _ = call(t, b.Handler(boardAddr), "GET", "/api/models", nil)
+	if !strings.Contains(rec.Body.String(), `"no_thinking_efforts":[]`) {
+		t.Errorf("GET /api/models = %s, want an empty list of levels without thinking", rec.Body)
 	}
 }
 
 func TestNewRefusesBadChoices(t *testing.T) {
 	a := &fakeModel{name: "A"}
 	tests := map[string][]Choice{
-		"no model":                  nil,
-		"a model offered twice":     append(offer(a), offer(a)...),
-		"a level it is not offered": {{Model: a, Efforts: []string{"low"}, Effort: "high"}},
+		"no model":                                 nil,
+		"a model offered twice":                    append(offer(a), offer(a)...),
+		"a level it is not offered":                {{Model: a, Efforts: []string{"low"}, Effort: "high"}},
+		"no thinking at a level it is not offered": {{Model: a, Efforts: []string{"low"}, Effort: "low", NoThinking: []string{"high"}}},
 	}
 	for name, choices := range tests {
 		t.Run(name, func(t *testing.T) {
@@ -196,8 +229,9 @@ func TestCheckAndMark(t *testing.T) {
 		t.Errorf("the broken model's result = %v, want its error in words and its billed tokens", second)
 	}
 	asked := good.requests()[0]
-	if !strings.Contains(asked.Text, "Correct answer: x = 2") || len(asked.PNG) == 0 || asked.Schema == nil || asked.Effort != "high" {
-		t.Errorf("the model was asked %+v, want the task's answer, the picture, the schema and the effort", asked)
+	if !strings.HasPrefix(asked.Text, "The picture is 100 pixels wide and 60 pixels high.\n") || !strings.Contains(asked.Text, "Correct answer: x = 2") ||
+		len(asked.PNG) == 0 || asked.Schema == nil || asked.Effort != "high" || asked.NoThinking {
+		t.Errorf("the model was asked %+v, want the picture's size, the task's answer, the picture, the schema and the effort", asked)
 	}
 
 	attempt := out["attempt"].(string)
@@ -287,6 +321,18 @@ func TestPicks(t *testing.T) {
 		t.Errorf("a mark of a model that did not answer the try = %d %s", rec.Code, rec.Body)
 	}
 
+	// Without thinking, at a level where the model is offered so.
+	rec, out = call(t, h, "POST", "/api/check", CheckRequest{Task: "posts", Image: img, Models: []Pick{{Model: "A", Effort: "low", NoThinking: true}}})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("check without thinking = %d %s", rec.Code, rec.Body)
+	}
+	if got := a.requests(); len(got) != 2 || !got[1].NoThinking || got[1].Effort != "low" {
+		t.Errorf("A was asked %+v, want without thinking at low", got)
+	}
+	if r := out["results"].([]any)[0].(map[string]any); r["no_thinking"] != true {
+		t.Errorf("result = %v, want it marked as without thinking", r)
+	}
+
 	tests := []struct {
 		name  string
 		picks []Pick
@@ -296,6 +342,7 @@ func TestPicks(t *testing.T) {
 		{"a model not offered", []Pick{{Model: "Z", Effort: "high"}}, "no such model: Z"},
 		{"a level not offered", []Pick{{Model: "A", Effort: "max"}}, `not offered at the effort "max"`},
 		{"a model ticked twice", []Pick{{Model: "A", Effort: "low"}, {Model: "A", Effort: "high"}}, "ticked twice"},
+		{"no thinking at a level not offered so", []Pick{{Model: "A", Effort: "high", NoThinking: true}}, `not offered without thinking at the effort "high"`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -305,8 +352,19 @@ func TestPicks(t *testing.T) {
 			}
 		})
 	}
-	if len(a.requests()) != 1 || len(b.requests()) != 0 {
+	if len(a.requests()) != 2 || len(b.requests()) != 0 {
 		t.Error("a refused pick called a model")
+	}
+
+	// A model whose thinking does not turn off is not asked without it at any level.
+	c := &fakeModel{name: "C", answer: goodAnswer}
+	board, err := New([]Choice{{Model: c, Efforts: []string{"low", "high"}, Effort: "high"}}, t.TempDir(), 5)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rec, out = call(t, board.Handler(boardAddr), "POST", "/api/check", CheckRequest{Task: "posts", Image: img, Models: []Pick{{Model: "C", Effort: "low", NoThinking: true}}})
+	if rec.Code != http.StatusBadRequest || !strings.Contains(fmt.Sprint(out["error"]), "not offered without thinking") || len(c.requests()) != 0 {
+		t.Errorf("no thinking on a model without it = %d %s", rec.Code, rec.Body)
 	}
 }
 
@@ -361,19 +419,27 @@ func TestSpendingCap(t *testing.T) {
 	}
 }
 
-// The summary has a line for each model at each effort, with the means of its answers; an answer
-// logged before the page offered efforts counts as high, and a model this run does not offer comes
-// last.
+// The summary has a line for each model at each effort, with its thinking and without, and for
+// each form of answer, with the means of its answers. An answer logged before the page offered
+// efforts counts as high and has no tokens; one logged before the short answer is of the earlier
+// form, and the tokens it spent thinking are not known. The means of tokens and of the first token
+// leave out the answers without a verdict, whose count may be cut short. A model this run does not
+// offer comes last.
 func TestSummaryByPairs(t *testing.T) {
 	dir := t.TempDir()
 	log := strings.Join([]string{
 		`{"kind":"check","time":"2026-10-22T10:00:00Z","attempt":"t1","task":"posts","model":"A","result":{"model":"A","verdict":{"verdict":"correct"},"latency_ms":4000,"cost_usd":0.01}}`,
 		`{"kind":"check","time":"2026-10-22T10:00:00Z","attempt":"t1","task":"posts","model":"GPT","result":{"model":"GPT","verdict":{"verdict":"error"},"latency_ms":9000,"cost_usd":0.05}}`,
-		`{"kind":"check","time":"2026-10-23T10:00:00Z","attempt":"t2","task":"posts","model":"A","result":{"model":"A","effort":"high","verdict":{"verdict":"error"},"input_tokens":1000,"output_tokens":500,"latency_ms":6000,"cost_usd":0.03}}`,
+		`{"kind":"check","time":"2026-10-23T10:00:00Z","attempt":"t2","task":"posts","model":"A","result":{"model":"A","effort":"high","verdict":{"lines":["x"],"answer":"x","verdict":"error","first_error_line":1,"comment":"c"},"input_tokens":1000,"output_tokens":500,"latency_ms":6000,"cost_usd":0.03}}`,
 		`{"kind":"check","time":"2026-10-23T10:01:00Z","attempt":"t3","task":"posts","model":"A","result":{"model":"A","effort":"low","error":"the model gave no answer","input_tokens":1000,"output_tokens":100,"latency_ms":1000,"cost_usd":0.002}}`,
+		`{"kind":"check","time":"2026-10-25T10:00:00Z","attempt":"t4","task":"posts","model":"A","result":{"model":"A","effort":"high","form":"short","verdict":{"verdict":"so_far_correct","mark":null},"input_tokens":1300,"output_tokens":200,"thinking_tokens":150,"first_token_ms":2000,"latency_ms":2500,"cost_usd":0.009}}`,
+		`{"kind":"check","time":"2026-10-25T10:01:00Z","attempt":"t5","task":"posts","model":"A","result":{"model":"A","effort":"high","form":"short","error":"the call failed: boom","input_tokens":0,"output_tokens":0,"thinking_tokens":0,"latency_ms":500,"cost_usd":0}}`,
+		`{"kind":"check","time":"2026-10-25T10:02:00Z","attempt":"t6","task":"posts","model":"A","result":{"model":"A","effort":"low","no_thinking":true,"form":"short","verdict":{"verdict":"error","mark":{"shape":"box","x1":1,"y1":2,"x2":3,"y2":4}},"place":{"shape":"box","x1":1,"y1":2,"x2":3,"y2":4},"input_tokens":1300,"output_tokens":40,"thinking_tokens":0,"first_token_ms":900,"latency_ms":1200,"cost_usd":0.0002}}`,
 		`{"kind":"mark","time":"2026-10-22T10:01:00Z","attempt":"t1","model":"A","right":true}`,
 		`{"kind":"mark","time":"2026-10-23T10:02:00Z","attempt":"t2","model":"A","right":false}`,
 		`{"kind":"mark","time":"2026-10-23T10:02:00Z","attempt":"t3","model":"A","right":false}`,
+		`{"kind":"mark","time":"2026-10-25T10:03:00Z","attempt":"t4","model":"A","right":true}`,
+		`{"kind":"mark","time":"2026-10-25T10:03:00Z","attempt":"t6","model":"A","right":false}`,
 		`{"kind":"mark","time":"2026-10-23T10:03:00Z","attempt":"t9","model":"A","right":true}`,
 	}, "\n") + "\n"
 	if err := os.WriteFile(filepath.Join(dir, logName), []byte(log), 0o600); err != nil {
@@ -383,47 +449,159 @@ func TestSummaryByPairs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := []PairSummary{
-		{Model: "A", Effort: "low", Answers: 1, NoAnswer: 1, Marked: 1, Right: 0, MeanCostUSD: 0.002, MeanLatencyMs: 1000},
-		{Model: "A", Effort: "high", Answers: 2, Marked: 2, Right: 1, MeanCostUSD: 0.02, MeanLatencyMs: 5000},
-		{Model: "GPT", Effort: "high", Answers: 1, MeanCostUSD: 0.05, MeanLatencyMs: 9000},
+	// model · effort · without thinking · form: answers, no answer, marked, right, mean price, time,
+	// first token, tokens out and thinking tokens.
+	want := []string{
+		"A low false earlier: 1 1 1 0 $0.002000 1000 ms, first — out — thinking —",
+		"A low true short: 1 0 1 0 $0.000200 1200 ms, first 900 out 40 thinking 0",
+		"A high false short: 2 1 1 1 $0.004500 1500 ms, first 2000 out 200 thinking 150",
+		"A high false earlier: 2 0 2 1 $0.020000 5000 ms, first — out 500 thinking —",
+		"GPT high false earlier: 1 0 0 0 $0.050000 9000 ms, first — out — thinking —",
 	}
-	got := s.summary().Pairs
-	if len(got) != len(want) {
-		t.Fatalf("summary = %+v, want %+v", got, want)
+	var got []string
+	for _, l := range s.summary().Pairs {
+		got = append(got, fmt.Sprintf("%s %s %v %s: %d %d %d %d $%.6f %d ms, first %s out %s thinking %s", l.Model, l.Effort, l.NoThinking, l.Form,
+			l.Answers, l.NoAnswer, l.Marked, l.Right, l.MeanCostUSD, l.MeanLatencyMs, shown(l.MeanFirstTokenMs), shown(l.MeanOutputTokens), shown(l.MeanThinkingTokens)))
 	}
-	for i := range want {
-		g := got[i]
-		if g.Model != want[i].Model || g.Effort != want[i].Effort || g.Answers != want[i].Answers || g.NoAnswer != want[i].NoAnswer ||
-			g.Marked != want[i].Marked || g.Right != want[i].Right || g.MeanLatencyMs != want[i].MeanLatencyMs ||
-			fmt.Sprintf("%.6f", g.MeanCostUSD) != fmt.Sprintf("%.6f", want[i].MeanCostUSD) {
-			t.Errorf("line %d = %+v, want %+v", i, g, want[i])
+	if !slices.Equal(got, want) {
+		t.Errorf("summary:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+}
+
+// shown is a mean as the test names it: a dash where the log knows none.
+func shown(mean *int64) string {
+	if mean == nil {
+		return "—"
+	}
+	return fmt.Sprint(*mean)
+}
+
+func TestAnswerOffTheSchema(t *testing.T) {
+	pic := picture{png: []byte("png"), width: 1000, height: 600}
+	for _, answer := range []string{"not json", `{"verdict":"maybe","mark":null}`} {
+		m := &fakeModel{name: "A", answer: answer}
+		if res := ask(context.Background(), question{model: m, effort: "high"}, &Tasks[0], pic); res.Verdict != nil || !strings.Contains(res.Error, "off the schema") {
+			t.Errorf("the answer %s = %+v, want it off the schema", answer, res)
+		}
+	}
+	// A call cut off by the clock or by a closed page before any bill came, and an answer that broke
+	// off before its tokens were counted, are counted at the most they could cost.
+	for name, m := range map[string]*fakeModel{
+		"cut off by the clock":           {name: "A", err: context.DeadlineExceeded},
+		"cut off by a closed page":       {name: "A", err: context.Canceled},
+		"broken off before the count":    {name: "A", err: errors.New("stream broke"), billed: 1, partial: true},
+		"cut off after the stream began": {name: "A", err: context.DeadlineExceeded, billed: 1300, partial: true},
+	} {
+		res := ask(context.Background(), question{model: m, effort: "high"}, &Tasks[0], pic)
+		if !strings.Contains(res.Error, "counted at the most it could cost") || res.CostUSD != worstCost(m) {
+			t.Errorf("%s = %+v, want it counted at $%.3f", name, res, worstCost(m))
+		}
+	}
+	m := &fakeModel{name: "A", err: context.DeadlineExceeded}
+	if res := ask(context.Background(), question{model: m, effort: "high"}, &Tasks[0], pic); !strings.HasPrefix(res.Error, "the model did not answer in time") {
+		t.Errorf("a timeout = %+v", res)
+	}
+	// A call that failed before the stream began bills nothing.
+	m = &fakeModel{name: "A", err: errors.New("boom")}
+	if res := ask(context.Background(), question{model: m, effort: "high"}, &Tasks[0], pic); !strings.Contains(res.Error, "boom") || res.CostUSD != 0 {
+		t.Errorf("a failed call = %+v, want its error and no cost", res)
+	}
+}
+
+// ask carries the answer and what the call took into the result, with the place the board draws.
+func TestAskCarriesTheAnswer(t *testing.T) {
+	m := &fakeModel{name: "A", answer: `{"verdict":"error","mark":{"shape":"circle","x1":-5,"y1":20,"x2":40,"y2":50}}`}
+	res := ask(context.Background(), question{model: m, effort: "low", noThinking: true}, &Tasks[0], picture{png: []byte("png"), width: 100, height: 60})
+	if res.Verdict == nil || res.Verdict.Verdict != "error" || res.Verdict.Mark == nil || res.Verdict.Mark.X1 != -5 {
+		t.Errorf("verdict = %+v, want the model's own", res.Verdict)
+	}
+	if res.Place == nil || *res.Place != (Mark{Shape: "circle", X1: 0, Y1: 20, X2: 40, Y2: 50}) {
+		t.Errorf("place = %+v, want the model's box held inside the picture", res.Place)
+	}
+	if res.Form != formShort || !res.NoThinking || res.Effort != "low" || res.ModelID != "A-id" || res.InputTokens != 1000 || res.OutputTokens != 500 ||
+		res.ThinkingTokens != 300 || res.FirstTokenMs != 1500 || res.Retries != 1 || res.CostUSD != 0.014 {
+		t.Errorf("result = %+v", res)
+	}
+	asked := m.requests()[0]
+	if asked.Instructions != instructions || !asked.NoThinking || asked.Effort != "low" || asked.MaxOutputTokens != maxOutputTokens ||
+		!strings.HasPrefix(asked.Text, "The picture is 100 pixels wide and 60 pixels high.\nTask: ") {
+		t.Errorf("the model was asked %+v", asked)
+	}
+}
+
+// The schema is valid JSON with the board's verdicts and shapes, in the order the model writes
+// them: the verdict, then the mark, and the box from its top-left corner.
+func TestSchema(t *testing.T) {
+	raw, ok := schema["properties"].(json.RawMessage)
+	if !ok || !json.Valid(raw) {
+		t.Fatalf("the schema's properties are not valid JSON:\n%s", raw)
+	}
+	var props struct {
+		Verdict struct {
+			Enum []string `json:"enum"`
+		} `json:"verdict"`
+		Mark struct {
+			AnyOf []struct {
+				Properties struct {
+					Shape struct {
+						Enum []string `json:"enum"`
+					} `json:"shape"`
+				} `json:"properties"`
+			} `json:"anyOf"`
+		} `json:"mark"`
+	}
+	if err := json.Unmarshal(raw, &props); err != nil || len(props.Mark.AnyOf) != 2 {
+		t.Fatalf("the schema's properties = %v, %s", err, raw)
+	}
+	if !slices.Equal(props.Verdict.Enum, verdicts) || !slices.Equal(props.Mark.AnyOf[1].Properties.Shape.Enum, shapes) {
+		t.Errorf("the schema's enums = %v and %v, want %v and %v", props.Verdict.Enum, props.Mark.AnyOf[1].Properties.Shape.Enum, verdicts, shapes)
+	}
+	compact := strings.Join(strings.Fields(string(raw)), "")
+	order := []string{`"verdict":`, `"mark":`, `"shape":`, `"x1":`, `"y1":`, `"x2":`, `"y2":`}
+	for i := 1; i < len(order); i++ {
+		if strings.Index(compact, order[i-1]) > strings.Index(compact, order[i]) {
+			t.Errorf("%s comes after %s in the schema", order[i-1], order[i])
 		}
 	}
 }
 
-func TestAnswerOffTheSchema(t *testing.T) {
-	m := &fakeModel{name: "A", answer: "not json"}
-	res := ask(context.Background(), m, "high", &Tasks[0], []byte("png"))
-	if res.Verdict != nil || !strings.Contains(res.Error, "off the schema") {
-		t.Errorf("an answer off the schema = %+v", res)
+// read takes the answer apart: the verdict stands, and the place is the model's box, its corners
+// in either order, held inside the picture, for a mistake alone. A box wholly outside the picture,
+// or with no width, or with no height unless underlined, is no place.
+func TestRead(t *testing.T) {
+	box := func(shape string, x1, y1, x2, y2 int) string {
+		return fmt.Sprintf(`{"verdict":"error","mark":{"shape":%q,"x1":%d,"y1":%d,"x2":%d,"y2":%d}}`, shape, x1, y1, x2, y2)
 	}
-	// A call cut off by the clock or by a closed page brings back no bill, so it counts at the most
-	// it could cost.
-	for _, err := range []error{context.DeadlineExceeded, context.Canceled} {
-		m = &fakeModel{name: "A", err: err}
-		res := ask(context.Background(), m, "high", &Tasks[0], nil)
-		if !strings.Contains(res.Error, "counted at the most it could cost") || res.CostUSD != worstCost(m) {
-			t.Errorf("a call cut off by %v = %+v, want it counted at $%.3f", err, res, worstCost(m))
-		}
+	tests := []struct {
+		name    string
+		answer  string
+		verdict string
+		place   *Mark
+	}{
+		{"inside the picture", box("underline", 10, 20, 90, 40), "error", &Mark{"underline", 10, 20, 90, 40}},
+		{"slightly outside", box("box", -4, 50, 104, 66), "error", &Mark{"box", 0, 50, 100, 60}},
+		{"wholly outside", box("circle", 120, 10, 150, 20), "error", nil},
+		{"an underline below the picture", box("underline", 10, 80, 90, 80), "error", nil},
+		{"the corners the other way round", box("box", 90, 40, 10, 20), "error", &Mark{"box", 10, 20, 90, 40}},
+		{"a flat underline", box("underline", 10, 30, 90, 30), "error", &Mark{"underline", 10, 30, 90, 30}},
+		{"a flat box", box("box", 10, 30, 90, 30), "error", nil},
+		{"no width", box("circle", 50, 10, 50, 40), "error", nil},
+		{"a shape of its own", box("arrow", 10, 20, 90, 40), "error", nil},
+		{"an error without a place", `{"verdict":"error","mark":null}`, "error", nil},
+		{"a place without an error", `{"verdict":"so_far_correct","mark":{"shape":"box","x1":1,"y1":1,"x2":5,"y2":5}}`, "so_far_correct", nil},
+		{"correct", `{"verdict":"correct","mark":null}`, "correct", nil},
+		{"unreadable", `{"verdict":"unreadable","mark":null}`, "unreadable", nil},
 	}
-	m = &fakeModel{name: "A", err: context.DeadlineExceeded}
-	if res := ask(context.Background(), m, "high", &Tasks[0], nil); !strings.HasPrefix(res.Error, "the model did not answer in time") {
-		t.Errorf("a timeout = %+v", res)
-	}
-	m = &fakeModel{name: "A", err: errors.New("boom")}
-	if res := ask(context.Background(), m, "high", &Tasks[0], nil); !strings.Contains(res.Error, "boom") {
-		t.Errorf("a failed call = %+v", res)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			v, place, err := read(tt.answer, 100, 60)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if v.Verdict != tt.verdict || !reflect.DeepEqual(place, tt.place) {
+				t.Errorf("= %q, %+v; want %q, %+v", v.Verdict, place, tt.verdict, tt.place)
+			}
+		})
 	}
 }
 

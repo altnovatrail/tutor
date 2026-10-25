@@ -6,7 +6,9 @@ import (
 	"cmp"
 	"context"
 	"encoding/base64"
+	"errors"
 	"fmt"
+	"net/http"
 	"slices"
 
 	"github.com/openai/openai-go/v3"
@@ -43,11 +45,22 @@ func (c *Client) Price() (input, output float64) { return 10, 50 }
 
 // Ask sends the picture and the text and asks for JSON that follows the schema. The picture goes
 // with the detail "high", so that the model does not shrink it; the answer is not stored at
-// OpenAI; the reasoning effort is high, the request's or by default.
+// OpenAI; the reasoning effort is high, the request's or by default. GPT-6 Astra always reasons,
+// so a request without thinking is refused before any call. The answer is not streamed: GPT is not
+// used on the board (R20), so when its first text comes is not measured.
 func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response, error) {
 	if r.Effort != "" && !slices.Contains(Efforts, r.Effort) {
 		return provider.Response{}, fmt.Errorf("gpt: no effort level %q", r.Effort)
 	}
+	if r.NoThinking {
+		return provider.Response{}, errors.New("gpt: GPT-6 Astra cannot answer without reasoning")
+	}
+	// The SDK sends a request again after some failures; each attempt passes through here.
+	attempts := 0
+	count := option.WithMiddleware(func(req *http.Request, next option.MiddlewareNext) (*http.Response, error) {
+		attempts++
+		return next(req)
+	})
 	image := "data:image/png;base64," + base64.StdEncoding.EncodeToString(r.PNG)
 	resp, err := c.sdk.Responses.New(ctx, responses.ResponseNewParams{
 		Model:        Model,
@@ -71,12 +84,18 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 		Reasoning:       shared.ReasoningParam{Effort: shared.ReasoningEffort(cmp.Or(r.Effort, Efforts[0]))},
 		MaxOutputTokens: openai.Int(r.MaxOutputTokens),
 		Store:           openai.Bool(false),
-	})
+	}, count)
 	if err != nil {
-		return provider.Response{}, err
+		return provider.Response{Retries: max(attempts-1, 0)}, err
 	}
 	// Tokens are billed whatever the answer, so they go back with an error too.
-	out := provider.Response{Model: resp.Model, InputTokens: resp.Usage.InputTokens, OutputTokens: resp.Usage.OutputTokens}
+	out := provider.Response{
+		Model:          resp.Model,
+		InputTokens:    resp.Usage.InputTokens,
+		OutputTokens:   resp.Usage.OutputTokens,
+		ThinkingTokens: resp.Usage.OutputTokensDetails.ReasoningTokens,
+		Retries:        max(attempts-1, 0),
+	}
 	if resp.Status == responses.ResponseStatusIncomplete {
 		return out, fmt.Errorf("%w: the answer is incomplete (%s)", provider.ErrNoAnswer, resp.IncompleteDetails.Reason)
 	}

@@ -35,13 +35,14 @@ const (
 func serveHTTP(s *http.Server) error { return s.ListenAndServe() }
 
 // choices are the models the board offers: every current Claude model at every effort level with
-// the Anthropic key, and GPT-6 Astra at high alone with the OpenAI key, unticked, since GPT is not
-// used on the board (R20).
+// the Anthropic key — without thinking, too, where its thinking can be turned off — and GPT-6
+// Astra at high alone with the OpenAI key, unticked, since GPT is not used on the board (R20).
 func choices(getenv func(string) string, stderr io.Writer) []board.Choice {
 	var offered []board.Choice
 	if key := getenv(anthropicKeyVar); key != "" {
 		for _, m := range claude.Models {
-			offered = append(offered, board.Choice{Model: claude.New(key, m), Efforts: claude.Efforts, Effort: startEffort, Ticked: m.ID == startModel})
+			offered = append(offered, board.Choice{Model: claude.New(key, m), Efforts: claude.Efforts, Effort: startEffort, Ticked: m.ID == startModel,
+				NoThinking: m.NoThinkingEfforts()})
 		}
 	} else {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %s is not set: Claude is left out\n", anthropicKeyVar)
