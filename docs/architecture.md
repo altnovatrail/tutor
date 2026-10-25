@@ -51,7 +51,7 @@
 
 У карточки четыре пункта — подразделы 2.1–2.4. Подраздел 2.5 — сверх карточки: её «Решить при детализации» допуска к ИИ не называет, хотя в том, что делает `tutor`, она ставит функцию допуска и ссылается на Т-20 (architecture 3.6 spec). Его называет задача, которая завела этот репозиторий (T09 `spec`): функция допуска — код `tutor`, её вызывают до каждого запроса к ИИ, а Т-20 блокирует этап 2. Карточку под него правит итог детализации, T06, — строкой таблицы 3 RUN.md «в реестр spec», когда решение T05 принято, а не заранее (architecture 3 spec).
 
-Подраздел 2.6 — тоже сверх карточки, и решает его не E1, а исследование эпика E2 — задачи T41 и T42 в RUN.md: как сделать проверку дешевле и быстрее. Поручил его автор 2026-10-23, а ни карточка, ни реестры `spec` такого пункта не называют. Карточку под него правят, когда будет решение, — строкой таблицы 3 RUN.md «в реестр spec», как и для 2.5.
+Подраздел 2.6 — тоже сверх карточки, и решает его не E1, а исследование эпика E2 — задачи T41, T42 и T44 в RUN.md: как сделать проверку дешевле и быстрее. Поручил его автор 2026-10-23, а ни карточка, ни реестры `spec` такого пункта не называют. Карточку под него правят, когда будет решение, — строкой таблицы 3 RUN.md «в реестр spec», как и для 2.5.
 
 Четыре пункта из шести стоят на вопросах реестров `spec` — Т-23, П-15, Т-13 и Т-20, — и закрывает эти вопросы `spec`. Здесь решается то, что из них приходится на `tutor`, а что задача выяснит о самом вопросе, уходит «в реестр spec».
 
@@ -133,7 +133,7 @@
 
 ### 2.6. Цена и время проверки
 
-- **Суть:** как сделать проверку дешевле и быстрее — в токенах и в секундах до ответа. Это поручение автора 2026-10-23: «как сэкономить токены и увеличить время отклика… исследовать похожие решени на рынке и предложить решения». Рынок разбирает T41, а варианты для `tutor` и рекомендацию — T42.
+- **Суть:** как сделать проверку дешевле и быстрее — в токенах и в секундах до ответа. Это поручение автора 2026-10-23: «как сэкономить токены и увеличить время отклика… исследовать похожие решени на рынке и предложить решения». Рынок разбирает T41, варианты внутри Claude — T42, а варианты за пределами Claude и общую рекомендацию — T44.
 - **Что известно — доска** (раздел 3.3):
   - Opus 5.5 с `high` проверяет решение примерно за $0,01 и 5 с (R20);
   - серия T40 2026-10-25, по сводке доски:
@@ -220,8 +220,80 @@
     Публичного API для математики нет у Microsoft — распознаватель чернил Azure снят — и у Apple: распознаватель PencilKit — только для текста. У Gradescope публичного API нет совсем, а у Samsung и Photomath мы его не нашли.
   - **Что прочитано, показывают** Goodnotes — карточкой подтверждения, до вычисления, — и Apple — по нажатию на «=», а неясные знаки ученик уточняет сам.
   - **Кэш запросов** в найденных источниках не описан. Время до первого токена отдельно от полного ответа публикует только Khan Academy.
-- **Варианты:** пока пусто — их даст T42.
-- **Задача:** T41 — рынок; T42 — варианты и рекомендация.
+- **Что известно — куда уходят секунды** (T42). Источники — в разделе 4: блок Anthropic и блок «Замеры скорости третьих сторон».
+  - **Что говорит Anthropic.**
+    - Рычаги задержки — модель, длина запроса и ответа и потоковый ответ: «The fewer tokens the model has to process and generate, the faster the response will be».
+    - По строке «Comparative latency» в Models overview Haiku 5.5 — «Fastest», Sonnet 5.5 — «Fast», Opus 5.5 — «Moderate», Fable 5.1 — «Slower». Чисел Anthropic не публикует.
+    - Мышление оплачивается как выход, даже когда его текст не возвращается.
+  - **Чужие замеры.**
+    - Artificial Analysis меряет нагрузку с картинкой: одна картинка в 1 мегапиксель, около 1 000 токенов входа и 1 000 токенов ответа, медиана за 72 часа. Скорость выхода он считает по токенам ответа. Время мышления у Claude он от времени до первого токена ответа не отделяет — это вывод из данных его страниц.
+    - OpenRouter показывает медианы живого трафика: время до первого токена — за последние 30 минут, со всеми уровнями усилия и любой длиной запросов. Его скорость считается от отправки запроса, вместе с временем до первого токена и мышлением.
+
+    | Модель · усилие | До первого токена, с | Скорость выхода, токенов в секунду | Источник |
+    |---|---|---|---|
+    | Haiku 5.5 · `low` | 4,05 | 116 | Artificial Analysis, API Anthropic, картинка |
+    | Sonnet 5.5 · `low` | 1,17 | 73 | Artificial Analysis, API Anthropic, картинка |
+    | Opus 5.5 · `low` | 2,84 | 55 | Artificial Analysis, API Anthropic, картинка |
+    | Opus 5.5 · `high` | 7,90 | 57 | Artificial Analysis, API Anthropic, картинка |
+    | Fable 5.1 · `low` | 0,87 | 36 | Artificial Analysis, API Anthropic, картинка |
+    | Haiku 5.5 | 1,77 | 145 | OpenRouter, срез 2026-10-25 около 05:19 UTC |
+    | Sonnet 5.5 | 1,72 | 103 | OpenRouter, тот же срез |
+    | Opus 5.5 | 3,02 | 80 | OpenRouter, тот же срез |
+    | Opus 5.5, Fast mode | 1,72 | 133 | OpenRouter, тот же срез |
+    | Fable 5.1 | 3,04 | 65 | OpenRouter, тот же срез |
+
+    У Artificial Analysis усилие меняет время до первого токена, а не скорость выхода. У Opus 5.5 до первого токена — 2,84 с при `low` и 7,90 с при `high`, а скорость при обоих — 55–57 токенов в секунду. Значит, лишнее время уходит на мышление.
+  - **Оценка исполнителя для доски:** время ≈ постоянная часть + токены выхода ÷ скорость выхода. Со скоростями Artificial Analysis для картинки:
+    - Opus 5.5 · `high`: около 230 токенов ÷ 57 ≈ 4 с из 5,7 с всего, и около 1,7 с остаётся на постоянную часть — вход, сеть, запуск ответа;
+    - Haiku 5.5 · `low`: около 540 токенов ÷ 116 ≈ 4,7 с из 6,0 с, и около 1,3 с остаётся.
+
+    Выходит, что Haiku пишет более чем вдвое больше токенов и поэтому не быстрее. Видимый ответ у обеих моделей — по одной и той же схеме, так что лишнее у Haiku — вероятно, мышление. Оценка грубая:
+    - токены выхода посчитаны по цене при входе в 1 300 токенов, а вход больше, так что 230 и 540 — оценки сверху;
+    - скорость Artificial Analysis — в токенах другого токенизатора и на чужих задачах, а его варианты Sonnet, Opus и Fable идут с запасной моделью, «with fallback», — так, вероятно, настроены иначе, чем доска;
+    - Opus у автора ответил быстрее, чем у Artificial Analysis приходит его первый токен ответа. Значит, на задачах доски он думает меньше.
+  - **Что ещё есть в запросе доски:**
+    - **поля ответа идут по алфавиту.** Схема доски — словарь Go, а SDK кодирует запрос своей копией `encoding/json` (`anthropic-sdk-go`, `internal/encoding/json`), и та сортирует ключи словаря. Anthropic же держит порядок схемы, а все поля доски обязательные. Модель пишет `answer`, `comment`, `first_error_line`, `lines`, `verdict`: комментарий и номер ошибки — раньше прочитанных строк, а вердикт — последним;
+    - **structured outputs добавляют свою системную подсказку**, и она оплачивается как вход. Так что вход больше 1 300 токенов, а на сколько — не опубликовано. Первый запрос с новой схемой ждёт компиляции грамматики, а потом грамматика лежит в кэше 24 часа с последнего использования;
+    - **SDK повторяет неудачный вызов** по умолчанию до двух раз (`MaxRetries: 2`), и время доски включает такие повторы, если они были;
+    - **доска не пишет** ни время до первого токена, ни токены мышления. Токены мышления ответ API несёт (`usage.output_tokens_details.thinking_tokens`), а время до первого токена можно измерить только самим вызовом, потоковым.
+- **Варианты — внутри Claude** (T42). Цена и время — для одной проверки на доске; это оценка исполнителя, если не сказано иное.
+
+  | Вариант | Что меняется | Цена | Время | Вызовов | Что нужно | Риск |
+  |---|---|---|---|---|---|---|
+  | Haiku 5.5 без мышления | мышление у Haiku можно выключить при усилии `high` и ниже; остаётся видимый ответ, около 150–250 токенов | около $0,0002 | около 2,5–3,5 с | 1 | выключатель мышления на доске | в ответе бывает «reasoning-like text»; точность не мерена |
+  | Sonnet 5.5 · `low` | у Artificial Analysis — 1,2 с до первого токена и 73 токена в секунду | около $0,004–0,005 | около 3–5 с | 1 | ничего: доска его уже предлагает | на доске не пробовали |
+  | Opus 5.5 в Fast mode | выход до 2,5 раза быстрее. Anthropic говорит, что выигрыш — в скорости выхода, а не во времени до первого токена. Но мышление — тоже выход: у OpenRouter время до первого токена у Opus в Fast mode — 1,72 с против 3,02 с, на разном трафике | вдвое дороже, около $0,02 | около 3–4 с | 1 | `speed: "fast"` в адаптере | только Opus 5.5; не с Batch; у разных скоростей кэш не общий; ZDR — да, кроме Covered Models |
+  | Каскад Haiku → Opus | Haiku читает всё, Opus — только когда Haiku вернул «не прочитать» | $0,0004 + p × $0,0098, где p — доля переходов | время Haiku + p × время Opus | 1–2 | правило перехода; долю p даёт замер | уверенно неверное чтение Haiku каскад не ловит, а ложная тревога хуже отсутствия проверки (R04 spec). Переходить по словесной уверенности модели нельзя: ей верить не советуют (В11) |
+  | Короче ответ | в вызове чтения нет комментария по-русски: на 60–90 токенов меньше | у Opus — около −$0,0015 | у Opus — около −1–1,5 с. У Khan Academy короткий ответ агента снял в среднем 3 с (раздел 4, блок «Рынок») | 1 | правка схемы | на доске автор теряет комментарий |
+  | Поля по порядку | строки, ответ, вердикт, номер ошибки, комментарий — заданные явно | 0 | 0; с потоком вердикт приходит раньше комментария | 1 | порядок — структурой Go с полями в нужном порядке или готовым JSON, `json.RawMessage`, значением `properties` в словаре схемы. Ключи словаря SDK сортирует, а поля структуры и готовый JSON оставляет как есть | — |
+  | Потоковый ответ | первые токены приходят раньше; полное время, по-видимому, то же — Anthropic об этом не пишет | 0 | видимая реакция раньше; программа может судить по строкам по мере прихода | 1 | поток в адаптере и канал `api` → `app` | слова наставника — только после проверки утечки (architecture 3.5 spec, В23); ранний вердикт меняет контракт (architecture 4.1 spec, В24) |
+  | Кэш общего начала | чтение общего начала из кэша стоит 5 % цены входа у Opus и 10 % у Haiku, а запись — 125 % | у Opus — до −$0,002 на попадание в кэш, если общее начало дотянет до 512 токенов | выигрыш заметен «for long documents», а здесь он мал | 1 | общее начало от 512 токенов. У доски его нет: инструкции — около 250 токенов, а вместе с условием задачи в системной подсказке — около 500 (оценка исполнителя). И явная точка кэша — после общего начала | автоматический кэш ставит точку на последний блок запроса, и в кэш ушла бы картинка ученика — каждый раз новая, так что кэш только пишется. Смена усилия или скорости сбрасывает кэш. ZDR — да |
+  | Вырезка картинки | около 200 токенов вместо около 790 | у Opus — около −$0,0024 | немного меньше: Anthropic советует уменьшать картинку ради задержки | 1 | канва отдаёт вырезку (В13) | мелкие цифры читаются хуже (R08) |
+  | Batch — только для замера | вдвое дешевле: у Opus — $2 и $10 за миллион токенов | у Opus — около $0,005 | обычно меньше часа, не больше суток | 1 | асинхронный прогон | ZDR нет: запросы и ответы хранятся до 29 дней, если батч не удалить раньше. По тому же доводу R06 не взял в замер Fable 5.1, так что нужны поправка к R06 и согласие добровольцев (В9) |
+
+  **ZDR у средств:** у Fast mode — да, кроме Covered Models; у кэша — да; у Batch — нет. Structured outputs хранят только схему, до 24 часов с последнего использования. Остальные варианты — обычный вызов Messages API.
+
+  **Не варианты:** Priority Tier больше не продаётся, а все четыре модели доски и так в списке исключений для него. Регион `us` дороже в 1,1 раза, а о задержке в нём Anthropic не пишет.
+- **Рекомендация — внутри Claude** (T42):
+  - **доске — малая задача с кодом.** Решает автор, по правилу 4: серия стоит центы. Что в ней:
+    - потоковый вызов и журнал: время до первого токена, полное время, токены мышления и повторы SDK;
+    - поля схемы — явно по порядку: строки, ответ, вердикт, номер ошибки, комментарий;
+    - Haiku 5.5 без мышления — ещё одна пара на выбор.
+
+    Потом — серия на тех же пяти задачах: Haiku 5.5 · `low` с мышлением и без, Sonnet 5.5 · `low`, Opus 5.5 · `high` и он же в Fast mode. Числа заменят оценки выше;
+  - **замеру** (R21) — для его планирования:
+    - мерить потоком время до первого токена и генерацию отдельно и писать токены мышления;
+    - пары брать по числам доски, Sonnet 5.5 · `low` — если доска покажет его быстрым и точным;
+    - Batch — нет, пока замер держится ZDR по R06: Batch хранит запросы до 29 дней. Иначе — поправка к R06 и согласие добровольцев (В9);
+  - **продукту:**
+    - в вызове чтения — без слов наставника, строки первыми, ответ короткий;
+    - поток — программе, а ранний вердикт по строкам — после ответа на В24;
+    - кэш — только явной точкой после общего начала, не на картинке;
+    - Fast mode — только где нужна сильная модель и важна скорость, за двойную цену; под ZDR он работает, кроме Covered Models.
+
+  Общая рекомендация — вместе с вариантами за пределами Claude — в T44.
+- **Варианты — за пределами Claude:** пока пусто — их даст T44.
+- **Задача:** T41 — рынок; T42 — внутри Claude; T44 — за пределами Claude и общая рекомендация.
 
 ## 3. Устройство
 
@@ -657,6 +729,37 @@ just board
   - «By default, the cache has a 5-minute lifetime. The cache is refreshed for no additional cost each time the cached content is used.»; «If you find that 5 minutes is too short, Anthropic also offers a 1-hour cache duration at additional cost»;
   - «Cache reads: When cached content is used (10% of base input token price, or 2.5% on Claude Fable 5.1 and Claude Mythos 5.1, and 5% on Claude Opus 5.5 and Claude Sonnet 5.5)»;
   - «the minimum cacheable prompt length is: 512 tokens for Claude Fable 5.1, … Claude Opus 5.5, … and Claude Haiku 5.5». Пропущены другие модели списка.
+- Задержка и скорость, прочитано 2026-10-25 (T42). Своей даты страницы не показывают.
+  - [Reducing latency](https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/reduce-latency): рычаги — «1. Choose the right model», «2. Optimize prompt and output length», «3. Stream responses». «For speed-critical applications, Claude Haiku 5.5 offers the fastest response times while maintaining high intelligence. Effort is its main control for speed and cost.»; «The fewer tokens the model has to process and generate, the faster the response will be.» О потоке: «This can significantly improve the perceived responsiveness of your application».
+  - [Models overview](https://platform.claude.com/docs/en/models/overview), строка «Comparative latency»: у Fable 5.1 — «Slower», у Opus 5.5 — «Moderate», у Sonnet 5.5 — «Fast», у Haiku 5.5 — «Fastest». «Actual latency depends on prompt length, output length, and thinking effort.»
+  - [Fast mode](https://platform.claude.com/docs/en/build-with-claude/fast-mode):
+    - «Speed benefits are focused on output tokens per second (OTPS), not time to first token (TTFT)»;
+    - цена — «Claude Opus 5.5 | $8 USD / MTok | $40 USD / MTok», ячейки строки таблицы здесь разделены « | ». Страница [Optimizing for cost and intelligence](https://platform.claude.com/docs/en/about-claude/models/optimizing-for-cost-and-intelligence) говорит о Fast mode: «at twice the standard token prices»;
+    - «Fast mode is not available with the Batch API.»; «Requests at different speeds do not share cached prefixes.»;
+    - ZDR — в шапке страницы: «eligible», с оговоркой «Excludes Covered Models».
+  - [Service tiers](https://platform.claude.com/docs/en/api/service-tiers): «Priority Tier capacity commitments are no longer available for purchase.»; «Priority Tier is supported on all available Claude models except Claude Fable 5.1, Claude Haiku 5.5, …» — в том же списке исключений Sonnet 5.5 и Opus 5.5.
+  - [Effort](https://platform.claude.com/docs/en/build-with-claude/effort): «Claude Opus 5.5 and Claude Haiku 5.5 default to medium.»; «Effort is a behavioral signal, not a strict token budget.» Об уровне `low` на странице [Thinking: steering and cost](https://platform.claude.com/docs/en/build-with-claude/thinking-steering-and-cost): «Skips thinking for simple tasks where speed matters most.»
+  - [Thinking](https://platform.claude.com/docs/en/build-with-claude/thinking):
+    - у Haiku 5.5 — «Thinking off at high effort or below», а у Opus 5.5 — «Thinking can't be turned off on these models.»;
+    - «the tokens Claude spends reasoning are billed as output tokens, even when the thinking text isn't returned to you, and they count toward max_tokens alongside the response text».
+
+    О Haiku 5.5 — страница [Prompting Claude Haiku 5.5](https://platform.claude.com/docs/en/build-with-claude/prompt-engineering/prompting-claude-haiku-5-5): «sometimes writes reasoning-like text in the reply that users see. This occurs more often with thinking off or at low effort.»
+  - [Prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching), сверх цитат выше:
+    - «Cache write tokens with a 5-minute TTL are 1.25 times the base input tokens price.»;
+    - автоматический кэш «applies the cache breakpoint to the last cacheable block»;
+    - «You generally see improved time-to-first-token for long documents.»;
+    - «Changing the output_config.effort value always invalidates message blocks»; «Switching between speed: "fast" and standard speed invalidates system and message caches»;
+    - «Prompt caching (both automatic and explicit) is ZDR eligible.»
+  - [Structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs): «The injected prompt costs you tokens like any other system prompt.»; «The first time you use a specific schema, there is additional latency while the grammar compiles.»; «Compiled grammars are cached for 24 hours from last use»; «properties in objects maintain their defined ordering from your schema», а оговорка — «required properties appear first, followed by optional properties». В таблице хранения [API and data retention](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention) у structured outputs — «Yes (qualified)»: «Your prompts and Claude's outputs are not stored. Only the JSON schema is cached, for up to 24 hours since last use.»
+  - [Batch processing](https://platform.claude.com/docs/en/build-with-claude/batch-processing):
+    - «most batches finishing in less than 1 hour while reducing costs by 50%»; «Batches expire if processing does not complete within 24 hours.»;
+    - у Opus 5.5 — «$2 / MTok | $10 / MTok», вход и выход;
+    - «Batch processing stores request and response data for up to 29 days after batch creation. You can delete a message batch at any time after processing».
+
+    В [API and data retention](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention) у Batch: «29-day retention; async storage required.»
+  - [Vision](https://platform.claude.com/docs/en/build-with-claude/vision): «To minimize latency and to simplify coordinate-based workflows, prefer resizing images before uploading them.»
+  - [Data residency](https://platform.claude.com/docs/en/manage-claude/data-residency): регион `us` — «priced at 1.1x the standard rate across all token pricing categories».
+  - [Messages API](https://platform.claude.com/docs/en/api/messages/create): в `usage` есть `output_tokens_details.thinking_tokens`, `service_tier` и `speed`, а полей времени нет.
 - [Данные](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention): Fable 5.1 требует 30 дней хранения и «not available under ZDR unless expressly authorized by Anthropic». Поэтому сильная модель замера — Opus 5.5 (R06).
 - [Несовершеннолетние](https://support.claude.com/en/articles/9307344-responsible-use-of-anthropic-s-models-guidelines-for-organizations-serving-minors): статья от 16.03.2026 не изменилась с privacy 5.3 spec. Новая [Usage Policy](https://www.anthropic.com/legal/aup) опубликована заранее и вступает в силу 12.11.2026 («Effective November 12, 2026»); сейчас действует редакция от 15.09.2025. Новая добавляет: «Any specific age eligibility requirements for use of our products will be set out in our Terms of Service.»
 - [Workspaces](https://platform.claude.com/docs/en/manage-claude/workspaces): «Spend limits: Cap monthly spending for a workspace»; «You cannot set limits on the Default Workspace».
@@ -831,3 +934,14 @@ just board
 - **Отброшены** — решают задачу по фото, а хода ученика не читают:
   - Thetawise: «ThetaWise reads the math and gets straight to work.» ([страница](https://thetawise.ai/features/math-solver));
   - Mathos AI: «Our AI math solver and calculator recognize handwriting and complex formulas instantly.» ([сайт](https://www.mathos.ai/)).
+
+**Замеры скорости третьих сторон** — источники подраздела 2.6 (T42). Прочитано 2026-10-25. Это замеры на чужих задачах, а не проверка доски.
+- **Artificial Analysis:**
+  - [методика](https://artificialanalysis.ai/methodology/performance-benchmarking): «Vision workload | A single 1 megapixel image and approximately 1,000 input tokens, 1,000 output tokens» — ячейки строки таблицы здесь разделены « | »; «median (P50) over the past 72 hours»;
+  - о скорости: «we calculate output speed using the last 80% of answer chunks»; токены считает «tiktoken library (o200k_base)», а сервер стоит в «Google Cloud's us-central1-a»;
+  - на страницах моделей — о времени до первого токена ответа: «For reasoning models, this includes the 'thinking' time of the model before providing an answer.» У Claude в данных страниц время мышления не выделено, `reasoningTime` — 0. Наш вывод: оно входит во время до первого токена;
+  - числа нагрузки с картинкой — из данных, встроенных в страницы моделей, по строке API Anthropic. Например, у [Opus 5.5 · high](https://artificialanalysis.ai/models/claude-opus-5-5-high/providers): `"visionSingleImage":{"medianOutputSpeed":56.691…,"medianTimeToFirstChunk":7.8973…`. Так же — страницы [Haiku 5.5 · low](https://artificialanalysis.ai/models/claude-haiku-5-5-low/providers), [Sonnet 5.5 · low](https://artificialanalysis.ai/models/claude-sonnet-5-5-low/providers), [Opus 5.5 · low](https://artificialanalysis.ai/models/claude-opus-5-5-low/providers) и [Fable 5.1 · low](https://artificialanalysis.ai/models/claude-fable-5-1-low/providers). В 2.6 числа округлены. Варианты Sonnet, Opus и Fable названы там «with fallback».
+- **OpenRouter**, страницы моделей — медианы живого трафика, срез 2026-10-25 около 05:19 UTC. Числа меняются каждые несколько минут:
+  - [Opus 5.5](https://openrouter.ai/anthropic/claude-opus-5.5): в строке Anthropic — ячейки «$4.00», «$20.00», «$0.20», «3.02s» и «80 tps», а в строке Anthropic с пометкой «Fast» — «$8.00», «$40.00», «$0.40», «1.72s» и «133 tps»;
+  - так же — [Haiku 5.5](https://openrouter.ai/anthropic/claude-haiku-5.5), [Sonnet 5.5](https://openrouter.ai/anthropic/claude-sonnet-5.5) и [Fable 5.1](https://openrouter.ai/anthropic/claude-fable-5.1). Фильтр страниц «Reasoning effort» показывает все уровни сразу;
+  - подсказки столбцов, из скрипта страницы: «Median time to first token, measured from when the request is sent. Data from the last 30 minutes.»; о скорости — «measured from when the request is sent to the end of the response, so time to first token is included. Includes reasoning tokens. Only responses with more than 50 output tokens count.»
