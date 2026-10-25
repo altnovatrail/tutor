@@ -16,17 +16,22 @@
   #spent { margin-left: auto; color: var(--muted); font-size: 0.95rem; }
   .models { display: flex; flex-wrap: wrap; gap: 6px 18px; margin: 12px 0 0; padding: 8px 12px;
             background: var(--paper); border: 1px solid var(--line); border-radius: 8px; }
+  .offer { display: flex; align-items: center; gap: 4px 12px; flex-wrap: wrap; }
   .models label { display: flex; align-items: center; gap: 6px; }
   .models select { font: inherit; }
-  .price { color: var(--muted); font-size: 0.85rem; }
+  .price, .thinking { color: var(--muted); font-size: 0.85rem; }
   .summary { margin-top: 18px; }
   .summary h2 { font-size: 1.05rem; margin: 0 0 6px; }
   .summary table { border-collapse: collapse; background: var(--paper); font-size: 0.95rem; }
   .summary th, .summary td { border: 1px solid var(--line); padding: 4px 10px; text-align: right; }
   .summary th:first-child, .summary td:first-child { text-align: left; }
   #statement { font-size: 1.2rem; margin: 14px 0 10px; }
-  canvas { display: block; width: 100%; height: auto; background: var(--paper); border: 1px solid var(--line);
+  .sheet { position: relative; }
+  #board { display: block; width: 100%; height: auto; background: var(--paper); border: 1px solid var(--line);
            border-radius: 8px; touch-action: none; cursor: crosshair; }
+  /* The marks lie on the board's drawing surface, inside its 1px border, and let the pen through. */
+  #marks { position: absolute; top: 1px; left: 1px; width: calc(100% - 2px); height: calc(100% - 2px);
+           border-radius: 7px; pointer-events: none; }
   .tools { display: flex; gap: 8px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
   button { font: inherit; padding: 6px 14px; border: 1px solid var(--line); border-radius: 6px;
            background: var(--paper); color: var(--ink); cursor: pointer; }
@@ -34,11 +39,12 @@
   button.primary { background: var(--ink); color: var(--paper); border-color: var(--ink); }
   #status { color: var(--muted); }
   .results { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; margin-top: 14px; }
-  .card { background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+  .card { background: var(--paper); border: 1px solid var(--line); border-left: 6px solid var(--model, var(--line));
+          border-radius: 8px; padding: 12px 14px; }
   .card h3 { margin: 0 0 6px; font-size: 1.05rem; }
   .verdict { font-weight: 600; }
-  .verdict.correct { color: var(--ok); } .verdict.error { color: var(--bad); } .verdict.unreadable { color: var(--warn); }
-  .card ol { margin: 6px 0; padding-left: 1.6em; font-family: ui-monospace, Menlo, Consolas, monospace; }
+  .verdict.correct, .verdict.so_far_correct { color: var(--ok); }
+  .verdict.error { color: var(--bad); } .verdict.unreadable { color: var(--warn); }
   .meta { color: var(--muted); font-size: 0.85rem; }
   .failure { color: var(--bad); }
   .marks { display: flex; gap: 8px; margin-top: 10px; }
@@ -55,7 +61,10 @@
   </header>
   <section id="models" class="models" aria-label="The models to ask and their effort"></section>
   <p id="statement" lang="ru"></p>
-  <canvas id="board" width="1000" height="600" aria-label="The board to write the solution on"></canvas>
+  <div class="sheet">
+    <canvas id="board" width="1000" height="600" aria-label="The board to write the solution on"></canvas>
+    <canvas id="marks" width="1000" height="600" aria-hidden="true"></canvas>
+  </div>
   <div class="tools">
     <button id="undo">Undo stroke</button>
     <button id="clear">Clear</button>
@@ -67,7 +76,7 @@
     <h2>Summary</h2>
     <table id="summary">
       <thead>
-        <tr><th scope="col">Model · effort</th><th scope="col">Right of marked</th><th scope="col">Answers</th><th scope="col">No answer</th><th scope="col">Mean price</th><th scope="col">Mean time</th></tr>
+        <tr><th scope="col">Model · effort</th><th scope="col">Right of marked</th><th scope="col">Answers</th><th scope="col">No answer</th><th scope="col">Mean price</th><th scope="col">Mean time</th><th scope="col">Mean first token</th><th scope="col">Mean tokens out</th><th scope="col">Mean thinking tokens</th></tr>
       </thead>
       <tbody></tbody>
     </table>
@@ -76,10 +85,18 @@
 <script>
 "use strict";
 // The board keeps the strokes, so that a stroke can be undone; the picture sent to the models is
-// drawn from them on a white sheet, without the task's text.
+// drawn from them on a white sheet, without the task's text. The models' marks go on a layer of
+// their own above it, which the picture never holds.
 const canvas = document.getElementById("board");
 const ctx = canvas.getContext("2d");
+const layer = document.getElementById("marks");
+const marks = layer.getContext("2d");
 const state = { tasks: [], offers: [], index: 0, strokes: [], current: null, busy: false };
+
+// Each model marks the board and frames its card in a colour of its own, none of them the ink's
+// black or a grey, so that two models' marks are not taken for each other or for the writing.
+const colours = ["#c2255c", "#1c7ed6", "#7048e8", "#e8590c", "#0c8599"];
+const shown = { underline: "underlined", circle: "circled", box: "boxed" };
 
 function el(tag, text, cls) {
   const node = document.createElement(tag);
@@ -105,6 +122,32 @@ function redraw() {
     if (stroke.length === 1) ctx.lineTo(stroke[0].x + 0.1, stroke[0].y + 0.1);
     ctx.stroke();
   }
+}
+
+function colour(model) {
+  const i = state.offers.findIndex((offer) => offer.model === model);
+  return colours[Math.max(i, 0) % colours.length];
+}
+
+function clearMarks() { marks.clearRect(0, 0, layer.width, layer.height); }
+
+// A mark goes where the model put it, around its box and a few pixels clear of it, so that it does
+// not cover the writing: a line under the box, an ellipse through the box's corners or a frame.
+function drawMark(place, stroke) {
+  const gap = 6;
+  marks.strokeStyle = stroke; marks.lineWidth = 4; marks.lineCap = "round"; marks.lineJoin = "round";
+  marks.beginPath();
+  if (place.shape === "underline") {
+    marks.moveTo(place.x1, place.y2 + gap);
+    marks.lineTo(place.x2, place.y2 + gap);
+  } else if (place.shape === "circle") {
+    const rx = (place.x2 - place.x1) / 2;
+    const ry = (place.y2 - place.y1) / 2;
+    marks.ellipse(place.x1 + rx, place.y1 + ry, rx * Math.SQRT2 + gap, ry * Math.SQRT2 + gap, 0, 0, 2 * Math.PI);
+  } else {
+    marks.rect(place.x1 - gap, place.y1 - gap, place.x2 - place.x1 + 2 * gap, place.y2 - place.y1 + 2 * gap);
+  }
+  marks.stroke();
 }
 
 function point(e) {
@@ -135,14 +178,26 @@ function showTask() {
   document.getElementById("statement").textContent = task.statement;
   state.strokes = [];
   redraw();
+  clearMarks();
   document.getElementById("results").replaceChildren();
   setStatus("");
 }
 
-// The models the page offers: a row each, with a box to tick it and the effort to ask it at.
+// The tick that asks a model to answer without thinking works only at the levels where its
+// thinking turns off; at the others it is cleared and greyed out.
+function syncThinking(i, enabled) {
+  const tick = document.getElementById(`no-thinking-${i}`);
+  if (!tick) return;
+  const allowed = state.offers[i].no_thinking_efforts.includes(document.getElementById(`effort-${i}`).value);
+  if (!allowed) tick.checked = false;
+  tick.disabled = !enabled || !allowed;
+}
+
+// The models the page offers: a row each, with a box to tick it, the effort to ask it at and, where
+// its thinking can be turned off, a box to ask it not to think.
 function showOffers() {
   const rows = state.offers.map((offer, i) => {
-    const row = el("div");
+    const row = el("div", undefined, "offer");
     const label = el("label");
     const box = el("input");
     box.type = "checkbox"; box.id = `ask-${i}`; box.checked = offer.ticked;
@@ -152,18 +207,31 @@ function showOffers() {
     for (const level of offer.efforts) effort.append(el("option", level));
     effort.value = offer.effort;
     effort.disabled = offer.efforts.length < 2;
+    effort.addEventListener("change", () => syncThinking(i, true));
     const price = el("span", ` $${offer.input_usd_per_mtok} / $${offer.output_usd_per_mtok} per M tokens`, "price");
     label.append(" ", effort, price);
     row.append(label);
+    if (offer.no_thinking_efforts.length > 0) {
+      const off = el("label", undefined, "thinking");
+      const tick = el("input");
+      tick.type = "checkbox"; tick.id = `no-thinking-${i}`;
+      off.append(tick, "no thinking");
+      row.append(off);
+    }
     return row;
   });
   document.getElementById("models").replaceChildren(...rows);
+  state.offers.forEach((offer, i) => syncThinking(i, true));
 }
 
-// The models ticked on the page, each at its chosen effort.
+// The models ticked on the page, each at its chosen effort, with or without its thinking.
 function picks() {
-  return state.offers.flatMap((offer, i) => document.getElementById(`ask-${i}`).checked
-    ? [{ model: offer.model, effort: document.getElementById(`effort-${i}`).value }] : []);
+  return state.offers.flatMap((offer, i) => {
+    if (!document.getElementById(`ask-${i}`).checked) return [];
+    const tick = document.getElementById(`no-thinking-${i}`);
+    const noThinking = Boolean(tick?.checked && !tick.disabled);
+    return [{ model: offer.model, effort: document.getElementById(`effort-${i}`).value, no_thinking: noThinking }];
+  });
 }
 
 function setControls(enabled) {
@@ -171,18 +239,35 @@ function setControls(enabled) {
   state.offers.forEach((offer, i) => {
     document.getElementById(`ask-${i}`).disabled = !enabled;
     document.getElementById(`effort-${i}`).disabled = !enabled || offer.efforts.length < 2;
+    syncThinking(i, enabled);
   });
 }
 
-// A row per model and effort, under the headers the markup gives the table.
+function seconds(ms) { return (ms / 1000).toFixed(1) + " s"; }
+function dollars(usd) { return "$" + usd.toFixed(5); }
+
+// known shows a mean the log knows, and a dash where it knows none.
+function known(value, show) { return value === null ? "—" : show(value); }
+
+function pairName(model, effort, noThinking) {
+  let name = effort ? `${model} · ${effort}` : model;
+  if (noThinking) name += " · no thinking";
+  return name;
+}
+
+// A row per model and effort, with its thinking and without, and per form of answer, under the
+// headers the markup gives the table.
 function showSummary(summary) {
   document.getElementById("spent").textContent =
     `spent $${summary.spent_usd.toFixed(2)} of $${summary.max_usd.toFixed(2)} this run`;
   const table = document.getElementById("summary");
   const rows = summary.pairs.map((p) => {
     const row = el("tr");
-    for (const cell of [`${p.model} · ${p.effort}`, `${p.right} of ${p.marked}`, String(p.answers), String(p.no_answer),
-      `$${p.mean_cost_usd.toFixed(4)}`, `${(p.mean_latency_ms / 1000).toFixed(1)} s`]) row.append(el("td", cell));
+    let name = pairName(p.model, p.effort, p.no_thinking);
+    if (p.form === "earlier") name += " · earlier answer, with reading";
+    for (const cell of [name, `${p.right} of ${p.marked}`, String(p.answers), String(p.no_answer),
+      dollars(p.mean_cost_usd), seconds(p.mean_latency_ms), known(p.mean_first_token_ms, seconds),
+      known(p.mean_output_tokens, String), known(p.mean_thinking_tokens, String)]) row.append(el("td", cell));
     return row;
   });
   if (rows.length === 0) {
@@ -195,10 +280,24 @@ function showSummary(summary) {
   table.tBodies[0].replaceChildren(...rows);
 }
 
-function verdictText(v) {
-  if (v.verdict === "correct") return "Correct";
-  if (v.verdict === "error") return v.first_error_line ? `Error in line ${v.first_error_line}` : "Error";
-  return "Cannot read it";
+function verdictText(result) {
+  const verdict = result.verdict.verdict;
+  if (verdict === "correct") return "Correct";
+  if (verdict === "so_far_correct") return "No mistakes so far — keep going";
+  if (verdict === "unreadable") return "Cannot read it";
+  if (!result.place) return "Error — the model gave no usable place";
+  return `Error — ${shown[result.place.shape]} on the board`;
+}
+
+// The numbers of an answer: its time and when its first text came, its price, its tokens — of the
+// output, those spent thinking — and how many times the request was sent again, if it was.
+function numbers(result) {
+  const parts = [seconds(result.latency_ms)];
+  if (result.first_token_ms) parts.push("first token at " + seconds(result.first_token_ms));
+  parts.push(dollars(result.cost_usd));
+  parts.push(`${result.input_tokens} in / ${result.output_tokens} out tokens, ${result.thinking_tokens} of them thinking`);
+  if (result.retries) parts.push("sent again: " + result.retries);
+  return parts.join(" · ");
 }
 
 async function post(url, body) {
@@ -210,23 +309,15 @@ async function post(url, body) {
 
 function card(attempt, result) {
   const box = el("article", undefined, "card");
-  box.append(el("h3", result.effort ? `${result.model} · ${result.effort}` : result.model));
-  const meta = el("p", `${(result.latency_ms / 1000).toFixed(1)} s · $${result.cost_usd.toFixed(4)} · ` +
-    `${result.input_tokens} in / ${result.output_tokens} out tokens`, "meta");
+  box.style.setProperty("--model", colour(result.model));
+  box.append(el("h3", pairName(result.model, result.effort, result.no_thinking)));
+  const meta = el("p", numbers(result), "meta");
   if (!result.verdict) {
     box.append(el("p", result.error, "failure"), meta);
     return box;
   }
-  const v = result.verdict;
-  box.append(el("p", verdictText(v), "verdict " + v.verdict));
-  box.append(el("div", "Read:"));
-  const lines = el("ol");
-  for (const line of v.lines) lines.append(el("li", line));
-  box.append(lines);
-  box.append(el("p", `Answer: ${v.answer || "—"}`));
-  if (v.comment) { const c = el("p", v.comment); c.lang = "ru"; box.append(c); }
-  box.append(meta);
-  const marks = el("div", undefined, "marks");
+  box.append(el("p", verdictText(result), "verdict " + result.verdict.verdict), meta);
+  const marked = el("div", undefined, "marks");
   const right = el("button", "AI was right");
   const wrong = el("button", "AI was wrong");
   for (const [button, isRight] of [[right, true], [wrong, false]]) {
@@ -239,22 +330,24 @@ function card(attempt, result) {
         setStatus("The mark is not saved: " + err.message);
       }
     });
-    marks.append(button);
+    marked.append(button);
   }
-  box.append(marks);
+  box.append(marked);
   return box;
 }
 
 async function check() {
-  if (state.strokes.length === 0) { setStatus("Write a solution first."); return; }
+  if (state.strokes.length === 0) { setStatus("Write something first."); return; }
   const models = picks();
   if (models.length === 0) { setStatus("Tick a model to ask."); return; }
   state.busy = true;
   setControls(false);
-  setStatus("Checking: the models are thinking, which can take a couple of minutes…");
+  clearMarks();
+  setStatus("Checking: the models are reading the board, which at the top efforts can take a couple of minutes…");
   try {
     const data = await post("/api/check", { task: state.tasks[state.index].id, image: canvas.toDataURL("image/png"), models });
     document.getElementById("results").replaceChildren(...data.results.map((r) => card(data.attempt, r)));
+    for (const r of data.results) if (r.place) drawMark(r.place, colour(r.model));
     showSummary(data.summary);
     setStatus(data.warning || "Mark under each model whether it was right.");
   } catch (err) {
@@ -265,9 +358,11 @@ async function check() {
   }
 }
 
+// Undo leaves the answers and their marks, which belong to the picture the models checked; a new
+// check, Clear and another task take them away.
 document.getElementById("undo").addEventListener("click", () => { state.strokes.pop(); redraw(); });
 document.getElementById("clear").addEventListener("click", () => {
-  state.strokes = []; redraw(); document.getElementById("results").replaceChildren(); setStatus("");
+  state.strokes = []; redraw(); clearMarks(); document.getElementById("results").replaceChildren(); setStatus("");
 });
 document.getElementById("check").addEventListener("click", check);
 document.getElementById("prev").addEventListener("click", () => {
