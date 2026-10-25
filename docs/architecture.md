@@ -291,8 +291,78 @@
     - кэш — только явной точкой после общего начала, не на картинке;
     - Fast mode — только где нужна сильная модель и важна скорость, за двойную цену; под ZDR он работает, кроме Covered Models.
 
-  Общая рекомендация — вместе с вариантами за пределами Claude — в T44.
-- **Варианты — за пределами Claude:** пока пусто — их даст T44.
+  Общая рекомендация — ниже, после вариантов за пределами Claude (T44).
+- **Варианты — за пределами Claude** (T44). Цена и время — для одной проверки на доске: картинка 1000 × 600 и около 500 токенов текста, а ответ — 150–250 токенов по нынешней схеме или 30–50 по T45. Это оценка исполнителя, если не сказано иное. Источники — в разделе 4, блоки «OpenAI — скорость и цена», «Поставщики быстрого вывода» и «Распознаватели на устройстве».
+  - **Два пути в платформе уже есть.** Вердикт ждёт только вызова чтения, без ключа, а сильная модель — разбор и подсказка, с ключом — идёт только после «пока нет» (architecture 4.1 spec). Поэтому вопрос этой части — кто быстрее и дешевле сделает вызов чтения. «Ученик долго не продвигается» из примера автора — это таймер, а он против О-8 и О-21: в платформе этому соответствует лестница подсказок, которую программа поднимает по неверным ответам (R03 spec).
+  - **Отсев поставщиков быстрого вывода.** Вопросы идут по порядку и до первого «стоп» (RUN.md, T44):
+    1. модель с картинкой в API самого поставщика;
+    2. обучение на данных клиента;
+    3. несовершеннолетние;
+    4. хранение, DPA и регион — их только записывают.
+
+    OpenAI в отсев не входит: его условия уже сверил privacy 5.3 spec. Условия поставщиков — наше чтение, не юридическое.
+
+    | Поставщик | Модель с картинкой | Обучение на данных | Несовершеннолетние | Хранение, DPA, регион | Итог |
+    |---|---|---|---|---|---|
+    | Groq | `qwen/qwen3.8-27b`, только Preview — «for evaluation purposes only» | нет, без разрешения клиента | приложения для несовершеннолетних предусмотрены, а за закон отвечает клиент. Разрешение ли это, решит юрист | по умолчанию не хранит, ZDR — любому клиенту. Что DPA покрывает Preview-модели, в документации не нашли. Хранит в США | прошёл, но модель с картинкой — только для пробы |
+    | Together AI | Qwen3.5 9B и ещё три | только по согласию. Но по умолчанию хранит запросы и «may use them for product improvements», а обучение условия сами исключают только при ZDR | о конечных пользователях молчит — «только 18+». В политике приватности — «not directed to, or intended for anyone under the age of thirteen (13)», а условия запрещают передавать «any sensitive personal data» | ZDR включается. Публичного DPA не нашли, регион по умолчанию не назван | прошёл, «только 18+» |
+    | Cerebras | `qwen-3.8-27b`, Public Preview — по словам Cerebras, «production-ready» | нет | молчит — «только 18+». В справке сказано «our products are not intended for minors», но это не условие договора | по справке и документации, не хранит ни входов, ни выходов, ни картинок. Но решает это DPA, а он — в PDF, текст которого не извлёкся | прошёл, «только 18+» |
+    | SambaNova | `gemma-4-31B-it`, только Preview — «should not be used in production environments» | нет | молчит — «только 18+» | хранит до 30 дней для проверки злоупотреблений, ZDR не нашли. В публичном DPA нет оговорки о Preview | прошёл, «только 18+», но модель с картинкой — только для пробы |
+    | SiliconFlow | есть | нет | нельзя передавать «any personal information of children under the age of 14» | — | стоп на вопросе 3 |
+    | Fireworks | Kimi K3 и ещё восемь | нет | во входе не должно быть «any personal information of children under 13» | — | стоп на вопросе 3 |
+    | Mathpix, распознаватель на сервере | рукописная математика по картинке, но рукописной кириллицы в списке поддерживаемого нет | об обучении на данных не пишет. По умолчанию картинки видит команда проверки качества, а для всего аккаунта это выключается | молчит — «только 18+» | 30 или 90 дней — страницы расходятся. DPA — по запросу, есть адрес в ЕС | прошёл, «только 18+» |
+
+    **Что из этого следует** — вывод исполнителя, не юридический:
+    - **детям сейчас не подходит никто.** Где условия молчат, там «только 18+»: для младше 18 privacy 5.1 spec требует условий, которые прямо их разрешают. Условия Groq предусматривают приложения для несовершеннолетних и возлагают закон на клиента. Разрешение ли это в смысле privacy 5.1 spec, решит юрист, а модель с картинкой у Groq пока только для пробы, и DPA на неё не нашли. SiliconFlow и Fireworks запрещают передавать персональные данные детей младше 14 и младше 13;
+    - **для взрослых учеников** первым кандидатом выглядит Cerebras. Модуль сочинений — для любого возраста (R41 spec), так что такие ученики в срезе есть.
+      - Его модель с картинкой Cerebras считает готовой к работе. Данные, по его справке и документации, он не хранит, но DPA не прочитан. Выход — около 1 850 токенов в секунду, по его словам.
+      - Время до первого токена с картинкой он не публикует.
+      - Перед работой с данными учеников нужно его письменное подтверждение, что строка справки о несовершеннолетних их не касается;
+    - **eval у поставщиков.** Together, Cerebras и Fireworks запрещают benchmarking, а SambaNova — публиковать результаты без её согласия. Это касается eval-прогонов `tutor` и опубликованных отчётов;
+    - **у открытых моделей — свои лицензии.** Qwen3.8 и Gemma 4 — под Apache-2.0, а модель Muse Spark Open, по словам Meta, «is not intended for individuals under the age of 18».
+  - **Распознаватель на устройстве.** Канва — веб-компонент, так что распознаватель работал бы в браузере, а штрихи остались бы на устройстве (privacy 1 spec). Всё, что поставляется с платформой, должно иметь лицензию, совместимую с Apache-2.0 (R12 spec), а у модели это код, веса и данные обучения.
+
+    | Кандидат | Вход | Математика | В браузере | Размер | Лицензии: код / веса / данные | Итог |
+    |---|---|---|---|---|---|---|
+    | Prompt API в Chrome (Gemini Nano) | картинка с канвы | не опубликовано; русского нет | только в Chrome 148 и новее на компьютере; нужно больше 4 ГБ видеопамяти или 16 ГБ памяти | около 4 ГБ, по прессе | модель Google | не вариант: это генеративный ИИ Google, а планшетов и русского нет. Как к нему относится R47 spec, — В27 |
+    | Handwriting Recognition API (WICG) | штрихи | нет | только на некоторых устройствах ChromeOS, только английский | — | часть ОС | не вариант |
+    | TexTeller 3.0 | картинка 448 × 448 | рукописные формулы — по словам авторов | да, ONNX для transformers.js | около 202 МБ | Apache-2.0 / Apache-2.0 / рукописную часть, по словам авторов, собрали из открытых наборов. По оценке исполнителя, это CROHME, MathWriting и HME100K, а первые два — под NC | не проходит строгого чтения R12 spec — из-за данных (В28) |
+    | Pix2Text-MFR 1.5 | картинка | рукописные формулы — примеры на карточке | ONNX | около 120 МБ | MIT / MIT / не опубликовано. Начальные веса — от TrOCR, а от какой именно, не сказано. Рукописную TrOCR дообучали на IAM, под NC | не решить: нужно раскрыть и данные, и начальные веса |
+    | своя малая сеть цифр — для ячеек рабочей тетради (R41 spec) | картинка ячейки | цифры, запятая, знак | да | мала, по оценке исполнителя | Apache-2.0 / Apache-2.0 / синтетика `internal/synth` и образцы взрослых добровольцев (П-16) | проходит и строгое чтение R12 spec (В28). Не исследован |
+
+    Числовой оценки не даёт ни один кандидат, и ни один ничего не пишет о «:» и десятичной запятой. transformers.js не возвращает вероятностей токенов. WebGPU есть не везде — например, в Firefox для Android его нет.
+
+    Остальные открытые модели — PP-FormulaNet, pix2tex, SmolVLM, Florence-2 — читают печатные формулы, а рукопись у них не доделана или не заявлена. У SmolVLM к тому же в запретах стоит «Evaluating or scoring individuals (e.g., in employment, education, credit)».
+  - **Варианты:**
+
+    | Вариант | Что меняется | Цена | Время | Вызовов | Что нужно | Рамки | Риск |
+    |---|---|---|---|---|---|---|---|
+    | `gpt-6-luna` с effort `none` | модель OpenAI без рассуждения. У Artificial Analysis на нагрузке с картинкой — 1,26 с до первого токена и 96,7 токена в секунду | около $0,0002 — как у Haiku 5.5 | около 1,6–3,8 с | 1 | `none` задать явно: по умолчанию у Luna — `medium`. Адаптер `provider/gpt` пока знает только `gpt-6-astra` с `high` | условия OpenAI уже сверены (privacy 5.3 spec). Детям младше 13 или младше возраста цифрового согласия — только с ZDR по одобрению OpenAI, а младше 18 — ещё с фильтрами, мониторингом и раскрытием, что это ИИ. Модель — только после eval (architecture 4.6 spec) | как Luna считает токены картинки, не опубликовано; без рассуждения точность не мерена |
+    | Fast mode у OpenAI | бывший Priority processing | вдвое дороже | «up to 2.5×» — общая фраза руководства, а с названной моделью — только у GPT-5.6 Sol. Для Luna и Astra своих чисел нет | 1 | `service_tier: "fast"` | совместим с ZDR и регионом данных там, где это позволяет модель | у Astra нет SLA, а при резком росте трафика часть запросов идёт с обычной скоростью и по обычной цене |
+    | Быстрый поставщик | модель с картинкой у Cerebras, Groq, SambaNova или Together | около $0,0004–0,003 | генерация — доли секунды, по словам поставщиков. Время до первого токена с картинкой опубликовано только для SambaNova — 2,4 с у Artificial Analysis | 1 | адаптер поставщика, полный разбор условий (В26) и eval | детям — никто: отсев выше | у Groq и SambaNova — только Preview; данные уходят ещё одному обработчику, нужен ещё один договор (privacy 5.1 spec) |
+    | Mathpix | распознаватель по картинке на сервере | $0,002, а сверх миллиона картинок в месяц — $0,0015 | медиана меньше 0,5 с, по его словам | 1 | адаптер, проверка качества, выключенная для всего аккаунта, и DPA | «только 18+» | рукописной кириллицы в списке нет; хранение — 30 или 90 дней |
+    | Цифры на устройстве | своя малая сеть читает ячейки тетради | $0 за проверку | не мерено | 0 | модель в релизе `tutor` с дайджестом, eval и ответ на В27 и В28 | устройство читает, а вердикт выносит `module-kit` (R03 spec) | ложное «верно»: неверная цифра прочитана как ключ |
+    | Гибрид | быстрый читатель, а сильная модель — только когда тот не подтвердил «верно» | цена быстрого пути плюс p × цена медленного. С `gpt-6-luna` и Opus 5.5 при p = 0,1, 0,3 и 0,5 — около $0,0012, $0,0031 и $0,0051 | около 2,6, 3,7 и 4,9 с, а на неверных ответах — около 7,7 с | 1–2 | правило перехода; p — только из eval | быстрый путь только подтверждает «верно», иначе наблюдение даёт сильный читатель, без ключа. Считать ли расхождение двух чтений «не прочитать», — вопрос Т-33. Путь выбирают не по словесной уверенности модели | ложное «верно» быстрого читателя гибрид не ловит |
+
+    p — доля проверок, которые уходят к сильной модели. Её значения — оценка исполнителя.
+  - **Не варианты:**
+    - SiliconFlow и Fireworks — стоп на вопросе 3, выше;
+    - агрегаторы и облака — OpenRouter, Bedrock, Azure: ещё один обработчик и ещё одни условия. Без ключа OpenRouter и скорость не показывает;
+    - Flex и Batch у OpenAI вдвое дешевле, но медленнее и бывают недоступны, с ошибкой 429. Это для eval-раннера, не для живой проверки;
+    - Ultrafast есть только у `gpt-6-astra` и GPT-6.1 Sol. Он в шесть раз дороже обычного, а скорость не опубликована;
+    - ввод штрихами у Mathpix и облачный веб-SDK MyScript: штрихи ушли бы с устройства (privacy 1 spec; architecture 3.1 spec);
+    - Prompt API в Chrome и Handwriting Recognition API — в таблице устройства выше.
+- **Рекомендация** — общая, вместе с T42 (T44):
+  - **доске (T45)** — ничего сверх T42 без решения автора. Если автор захочет сравнить Claude с моделью не Claude, то это `gpt-6-luna` с effort `none`. Адаптер GPT на доске уже есть, но Luna и `none` он ещё не знает. GPT на доску не подключали (R20), и вернуть его — решение автора;
+  - **замеру** (R21) — только Claude. Но в журнал стоит писать то, из чего потом выйдет p гибрида: согласие Haiku с Opus в «верно» и долю «не прочитать»;
+  - **продукту:**
+    - вызов чтения на листе — на Claude, как советует T42: Haiku 5.5 без мышления и короткий ответ;
+    - второй быстрый читатель — `gpt-6-luna` с effort `none`. Условия OpenAI уже сверены, по цене Luna как Haiku, а по замеру Artificial Analysis проверка займёт около 1,6–3,8 с. Детям младше 13 или младше возраста цифрового согласия — только с ZDR по одобрению OpenAI, а младше 18 — ещё с мерами privacy 5.3 spec. Модель — только после eval;
+    - быстрые поставщики — только для взрослых учеников и только после полного разбора условий (В26) и eval. Первым — Cerebras, а Groq — когда его модель с картинкой выйдет из Preview и DPA её покроет;
+    - ячейки рабочей тетради — цифры на устройстве своей малой сетью, с откатом к ИИ: это единственный путь, который проходит и строгое чтение R12 spec (В28). Сначала нужен ответ на В27: чей это код и насколько верить значению с устройства;
+    - в гибриде быстрый путь только подтверждает «верно». «Пока нет» и низкая оценка уходят к сильному читателю, без ключа, и наблюдение даёт он. Считать ли расхождение двух чтений «не прочитать», — вопрос Т-33, а p даст только eval;
+    - `app` не шлёт работу повторно, если она не изменилась с прошлой проверки: такая проверка не стоит вызова.
+  - **Итог одной фразой:** быстрее и дешевле всего читают Haiku 5.5 без мышления (T42) и `gpt-6-luna` с `none` — около $0,0002 за проверку. Сильная модель нужна разбору и подсказке после «пока нет» (architecture 4.1 spec). А быстрые поставщики детям сейчас закрыты своими условиями, готовые распознаватели на устройстве — строгим чтением лицензий (В28).
 - **Задача:** T41 — рынок; T42 — внутри Claude; T44 — за пределами Claude и общая рекомендация.
 
 ### 2.7. Оценка по рубрике
@@ -953,7 +1023,7 @@ just board
   - Thetawise: «ThetaWise reads the math and gets straight to work.» ([страница](https://thetawise.ai/features/math-solver));
   - Mathos AI: «Our AI math solver and calculator recognize handwriting and complex formulas instantly.» ([сайт](https://www.mathos.ai/)).
 
-**Замеры скорости третьих сторон** — источники подраздела 2.6 (T42). Прочитано 2026-10-25. Это замеры на чужих задачах, а не проверка доски.
+**Замеры скорости третьих сторон** — источники подраздела 2.6 (T42, T44). Прочитано 2026-10-25. Это замеры на чужих задачах, а не проверка доски.
 - **Artificial Analysis:**
   - [методика](https://artificialanalysis.ai/methodology/performance-benchmarking): «Vision workload | A single 1 megapixel image and approximately 1,000 input tokens, 1,000 output tokens» — ячейки строки таблицы здесь разделены « | »; «median (P50) over the past 72 hours»;
   - о скорости: «we calculate output speed using the last 80% of answer chunks»; токены считает «tiktoken library (o200k_base)», а сервер стоит в «Google Cloud's us-central1-a»;
@@ -963,3 +1033,87 @@ just board
   - [Opus 5.5](https://openrouter.ai/anthropic/claude-opus-5.5): в строке Anthropic — ячейки «$4.00», «$20.00», «$0.20», «3.02s» и «80 tps», а в строке Anthropic с пометкой «Fast» — «$8.00», «$40.00», «$0.40», «1.72s» и «133 tps»;
   - так же — [Haiku 5.5](https://openrouter.ai/anthropic/claude-haiku-5.5), [Sonnet 5.5](https://openrouter.ai/anthropic/claude-sonnet-5.5) и [Fable 5.1](https://openrouter.ai/anthropic/claude-fable-5.1). Фильтр страниц «Reasoning effort» показывает все уровни сразу;
   - подсказки столбцов, из скрипта страницы: «Median time to first token, measured from when the request is sent. Data from the last 30 minutes.»; о скорости — «measured from when the request is sent to the end of the response, so time to first token is included. Includes reasoning tokens. Only responses with more than 50 output tokens count.»
+- **Artificial Analysis, для T44** — та же нагрузка с картинкой, из данных страниц, по строке самого поставщика:
+  - [GPT-6 Luna, без рассуждения](https://artificialanalysis.ai/models/gpt-6-luna-non-reasoning/providers): `"visionSingleImage":{"medianOutputSpeed":96.6567964259013,"medianTimeToFirstChunk":1.25676392999995`. Наш вывод: это effort `none` — другой настройки без рассуждения у Luna нет;
+  - так же — [GPT-6 Luna · low](https://artificialanalysis.ai/models/gpt-6-luna-low/providers): 1,92 с и 103,8 токена в секунду; [GPT-6 Luna · medium](https://artificialanalysis.ai/models/gpt-6-luna-medium/providers): 3,01 с и 68,1; [GPT-6 Astra · low](https://artificialanalysis.ai/models/gpt-6-astra-low/providers): 1,97 с и 36,5;
+  - [Gemma 4 31B, без рассуждения](https://artificialanalysis.ai/models/gemma-4-31b-non-reasoning/providers), строка SambaNova: `"medianOutputSpeed":393.250138980534,"medianTimeToFirstChunk":2.40469330750005`;
+  - для Groq, Cerebras, Together и Fireworks чисел на моделях с картинкой у Artificial Analysis нет. OpenRouter без ключа их не показывает: «Only visible when authenticated with an API key or cookie; returns null for unauthenticated requests.» ([список эндпоинтов](https://openrouter.ai/docs/api/api-reference/endpoints/list-all-endpoints-for-a-model)).
+
+**OpenAI — скорость и цена** — источники подраздела 2.6 (T44). Прочитано 2026-10-25, по `.md`-версиям страниц.
+- Цитаты блока «OpenAI» выше сверены заново и все на месте. «Batch and Flex are priced at 50% of Standard rates» теперь стоит не на странице цен, а на страницах моделей `gpt-6-luna` и `gpt-6-astra`.
+- [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna): «`reasoning.effort` supports `none`, `low`, `medium` (default), `high`, `xhigh`, and `max`.» Для `none` [Reasoning](https://developers.openai.com/api/docs/guides/reasoning) называет «Latency-critical tasks that do not benefit from any reasoning or multi-chained tool calls.» Чисел времени и токенов для `none` OpenAI не публикует.
+- [Fast mode](https://developers.openai.com/api/docs/guides/fast-mode):
+  - «Priority processing was renamed Fast mode on July 30, 2026.»;
+  - «Fast mode delivers up to 2.5× faster speeds and more consistent latency with pay-as-you-go pricing.» А [страница цен](https://developers.openai.com/api/docs/pricing) привязывает это число к одной модели: «In Fast mode, GPT-5.6 Sol runs up to 2.5× faster than Standard processing.»;
+  - «Fast mode for GPT-6 Astra does not include a latency SLA.»;
+  - «If your traffic ramps too fast, the system may downgrade some Fast mode requests to standard speeds and charge standard rates.»;
+  - на страницах моделей — «Fast mode is priced at 2x the applicable rates.»;
+  - в том же руководстве — «the speed at which Fast mode operates for `gpt-5.6-sol` to make it up to 2.5×» и «Fast mode is compatible with data residency, Zero Data Retention, and a Business Associate Agreement (BAA), subject to model-specific availability.»
+- [Ultrafast](https://developers.openai.com/api/docs/guides/ultrafast-mode): «It is broadly available for GPT-6 Astra and GPT-6.1 Sol.» У Astra в нём $60 и $300 за 1 млн токенов, по странице цен.
+- [Flex](https://developers.openai.com/api/docs/guides/flex-processing): «It's ideal for non-production or lower priority tasks, such as model evaluations, data enrichment, and asynchronous workloads.»; «Flex processing is in beta with limited model availability.»
+- Регион данных:
+  - на странице цен — «Regional processing (data residency) endpoints are charged a 10% uplift for models released on or after March 5, 2026.»;
+  - в [Your data](https://developers.openai.com/api/docs/guides/your-data) — «To use data residency with any region other than the United States, you must be approved for abuse monitoring controls, and execute a Modified Retention amendment.» Картинки в регионе ЕС: «Image support in these regions requires approval for enhanced Zero Data Retention or enhanced Modified Abuse Monitoring.»
+- [Prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching): «The minimum cacheable prompt length is 1,024 tokens for GPT-5.6 and later»; «For GPT-5.6 and later, cache writes cost 1.25× the standard, uncached input-token rate for the default 30-minute lifetime.» У доски общее начало — около 500 токенов, меньше минимума.
+- Картинка 1000 × 600 у `gpt-6-astra`, по формуле патчей выше, — оценка исполнителя. При `auto`, `high` и `original` это 608 патчей и 730 токенов, а при `low` — 192 токена. Для `gpt-6-luna` правило не опубликовано: её нет ни в таблице множителей, ни в калькуляторе.
+
+**Поставщики быстрого вывода** — источники подраздела 2.6 (T44). Прочитано 2026-10-25. Условия — наше чтение, не юридическое: о каждом стоп-вопросе — юристу, прежде чем звать поставщика.
+- **Groq:**
+  - [модели](https://console.groq.com/docs/models): «Preview models are intended for evaluation purposes only and should not be used in production environments as they may be discontinued at short notice.» Обе модели с картинкой — в таблице Preview, а у `qwen/qwen3.8-27b` там указано 450 токенов в секунду;
+  - [картинки](https://console.groq.com/docs/vision): «Each image counts as 2048 input tokens.»; цена `qwen/qwen3.8-27b` — $0.80 и $4.00 за 1 млн токенов, по таблице моделей;
+  - [Services Agreement](https://console.groq.com/docs/legal/services-agreement), «Last Modified: June 22, 2026»:
+    - §4.2 — «For clarity, Groq is not permitted to use Inputs or Outputs for training or fine-tuning any AI Model Services or other models, unless explicitly granted permission or instructed by Customer.»;
+    - §6.3 — «Customer will be solely responsible for ensuring that the Customer Application complies with all applicable laws and regulations», когда приложение «directed towards or is likely to be accessed by individuals under the age of majority»;
+    - §3.6 — «Except as otherwise expressly indicated in Documentation, Groq’s DPA and BAA do not apply to Beta Services.» и «Beta Services are not Cloud Services under this Agreement.»;
+  - [данные](https://console.groq.com/docs/your-data): «By default, Groq does not retain customer data for inference requests.»; «All customers may enable Zero Data Retention (ZDR) in Data Controls settings.»; «All customer data is retained in Google Cloud Platform (GCP) buckets located in the United States.»;
+  - лицензия модели Muse Spark Open, на [её странице](https://huggingface.co/meta-models/Muse-Spark-Open-816B-A42B): «Muse Spark Open is not intended for individuals under the age of 18.» А у [Qwen3.8-27B](https://huggingface.co/api/models/Qwen/Qwen3.8-27B) — `"license":"apache-2.0"`.
+- **Together AI:**
+  - [приватность и безопасность](https://docs.together.ai/docs/privacy-and-security): «Data sharing for training other models is opt-in and not enabled by default.»; «By default, Together stores the prompts you send and the responses models return, and may use them for product improvements.»;
+  - [ZDR](https://docs.together.ai/docs/zero-data-retention): «ZDR is not enabled by default.»;
+  - [условия](https://www.together.ai/terms-of-service), «Updated May 19, 2026»: «You will not use the Services to transmit or provide to the Company any financial or medical information of any nature or any sensitive personal data»; и ещё запрет — «engage in competitive analysis or benchmarking»;
+  - [политика приватности](https://www.together.ai/privacy): «Our Services are not directed to, or intended for anyone under the age of thirteen (13).»;
+  - в [таблице моделей с картинкой](https://docs.together.ai/docs/serverless/models) — четыре модели, среди них Qwen3.5 9B за $0.17 и $0.25 за 1 млн токенов;
+  - [картинки](https://docs.together.ai/docs/inference/vision/overview): «Each image breaks into a tile grid (capped at 2×2 of 560-pixel tiles) and you pay 1,601 tokens per tile.» Таблица и формула той же страницы расходятся для сторон от 560 до 1 119 px, так что картинка доски — 1 601 или 6 404 токена.
+- **SiliconFlow** — картинку его API принимает, по [документации](https://docs.siliconflow.com/en/userguide/capabilities/vision): «For VLM models, you can invoke the `/chat/completions` API by constructing a `message` containing either an `image URL` or a `base64-encoded image`.» [Условия](https://docs.siliconflow.com/en/legals/terms-of-service), «Update Date: Sep. 09th, 2026»: «you will not upload or provide, directly or indirectly through this service, any personal information of children under the age of 14». В [условиях китайского сервиса](https://api-docs.siliconflow.cn/docs/legals/terms-of-service) — то же: «您不会上传或通过本服务直接或通过其他方式提供14岁以下儿童的任何个人信息». Перевод наш: «вы не будете загружать или передавать через этот сервис, напрямую или иначе, никакую личную информацию детей младше 14 лет».
+- **Cerebras:**
+  - [картинки](https://inference-docs.cerebras.ai/capabilities/image-inputs): «Image inputs are available for `qwen-3.8-27b` with Shared Inference.»; «This feature is in Public Preview»; «Image inputs are processed as soon as they are received, and the original image payloads are not persisted.»; на токен картинки — «32 × 32 pixels per image token»;
+  - [предварительные выпуски](https://inference-docs.cerebras.ai/support/preview-releases): «Public Preview features are available to all customers and represent a stable, production-ready implementation.»;
+  - [модель](https://inference-docs.cerebras.ai/models/qwen-3.8-27b): «Pricing: $0.99 per million input tokens and $1.49 per million output tokens.» На [странице цен](https://www.cerebras.ai/pricing) — «~1,850 tokens/s»;
+  - [условия](https://www.cerebras.ai/terms-of-service): «For clarity, the foregoing does not grant Cerebras the right to use Service Content for the purpose of training or fine-tuning models.» Там же запрет — «for benchmarking or competitive analysis of the Service»;
+  - [справка](https://www.cerebras.ai/policies): «No – we do not store, leverage, or share any inputs or outputs from our AI services.» О детях там же: «No – our products are not intended for minors and we do not knowingly collect their personal data.» «If we discover such data, we delete it.»;
+  - [политика приватности](https://www.cerebras.ai/privacy-policy): «We do not retain inputs and outputs associated with our training, inference and chatbot Services.» Но сама политика «does not apply to Personal Data we process in our role as a data processor or service provider on behalf of our customers and partners», а DPA — PDF, текст которого не извлёкся.
+- **SambaNova:**
+  - [модели](https://docs.sambanova.ai/docs/en/models/sambacloud-models): «Preview models are intended for evaluation purposes and developer experimentation only, and should not be used in production environments.»; `gemma-4-31B-it` — единственная модель с картинкой, и она в Preview. Цена — $0.38 и $1.15 за 1 млн токенов, по [странице цен](https://cloud.sambanova.ai/plans/pricing). У Gemma 4 в [карточке](https://huggingface.co/google/gemma-4-31b-it) — `license: apache-2.0`;
+  - [DPA](https://sambanova.ai/data-processing-agreement-sambanova): «shall not use Customer Personal Data to train or fine-tune any machine-learning or artificial-intelligence model»; запросы и ответы «are retained for no more than 30 days solely for security, fraud and abuse monitoring and then deleted»;
+  - [условия](https://sambanova.ai/cloud-end-user-license-agreement), §1(g): без согласия нельзя «publish or disclose information or results relating to capabilities, performance, performance comparisons or other “benchmarking” activities relating to the Service or our infrastructure».
+- **Fireworks** — в [библиотеке моделей](https://fireworks.ai/models?filter=Vision) девять бессерверных моделей с картинкой, среди них Kimi K3. [Условия](https://fireworks.ai/terms-of-service) — в PDF, «Last Updated: July 10, 2026». Текст исполнитель извлёк сам:
+  - §3.3 — «(vii) your Input does not include any personal information of children under 13 (or the applicable age of digital consent).»;
+  - §3.6 — «We will not use your Content to train our own models or to improve the Service.»;
+  - §2.2(i) — запрет «for benchmarking or competitive analysis of the Service».
+- **Mathpix** — цена и время уже в блоке «Рынок» выше:
+  - [OCR](https://mathpix.com/ocr): «OCR individual images of handwritten and printed equations, text, tables, and diagrams to get digital formats like LaTeX, AsciiMath, and MathML.»;
+  - на [странице языков](https://mathpix.com/language-support) рукописные — хинди, английский и языки на латинице, а русский есть только среди печатных;
+  - [приватность в API](https://docs.mathpix.com/concepts/privacy): «Images and results are accessible to the Mathpix QA team for quality improvements»; «Mathpix can also pin improve_mathpix at the account level on your app key (for example, as part of an enterprise agreement).»;
+  - DPA и ЕС: «EU residency commitments can be incorporated into your Data Processing Agreement.» ([документация](https://docs.mathpix.com/concepts/eu-data-residency)) и «API customers may additionally choose our EU endpoint (eu.api.mathpix.com)» ([политика приватности](https://mathpix.com/privacy));
+  - хранение: в [политике приватности](https://mathpix.com/privacy) — «We will retain Customer Provided and Automatically Collected data for up to 30 days, unless you have opted out of data retention for QA.», а в [документации](https://docs.mathpix.com/concepts/data-retention) у картинки — «Retained for up to 90 days».
+
+**Распознаватели на устройстве** — источники подраздела 2.6 (T44). Прочитано 2026-10-25.
+- **Prompt API в Chrome:**
+  - [страница API](https://developer.chrome.com/docs/ai/prompt-api), «Last updated: August 26, 2026»: для веба — с Chrome 148; «For expectedInputs, this can be text, image, or audio.»; языки — «"en", "ja", "es", "de", and "fr"»;
+  - [начало работы](https://developer.chrome.com/docs/ai/get-started): «GPU: Strictly more than 4 GB of VRAM.»; «CPU: 16 GB of RAM or more and 4 CPU cores or more.»; «Chrome for Android, iOS, and ChromeOS on non-Chromebook Plus devices are not yet supported by the APIs which use foundation models.»;
+  - размер модели — «4GB», по [Decrypt](https://decrypt.co/367193/chrome-removes-privacy-claim-gemini-nano-google), 2026-05-07: «Chrome is quietly installing a 4GB AI on your devices.»;
+  - на прочитанных страницах Chrome об AI возрастных условий нет. Общие условия Google, на которые ссылается подвал, не читались. У той же модели на Android, в [условиях ML Kit GenAI](https://developers.google.com/ml-kit/genai-terms), сказано: «You must be 18 years of age or older to use the APIs.»
+- **Handwriting Recognition API** — [статья Chrome](https://developer.chrome.com/docs/web-platform/handwriting-recognition): «It only supports English (en), and a gesture model (zxx-x-gesture) to recognize gestures such as crossing out words.» В [Chrome Status](https://chromestatus.com/feature/5263213807534080): «At the moment, the recognizer is only implemented / available on certain Chrome OS devices.»
+- **TexTeller:**
+  - [README](https://github.com/OleehyO/TexTeller): «Support scanned image, handwritten formulas, English(Chinese) mixed formulas.» Код и веса — под Apache-2.0;
+  - [карточка набора](https://huggingface.co/datasets/OleehyO/latex-formulas-80M): «The handwritten subset of this dataset was collected entirely from existing open source work, which includes all test sets.»;
+  - размер — около 202 МБ в сборке q4f16 [для transformers.js](https://huggingface.co/onnx-community/TexTeller-ONNX). Это сумма размеров файлов, оценка исполнителя.
+- **Pix2Text-MFR 1.5** — [карточка](https://huggingface.co/breezedeus/pix2text-mfr-1.5): «This MFR model utilizes the TrOCR architecture developed by Microsoft, starting with its initial values and retrained using a dataset of mathematical formula images.» Лицензия — MIT, а данные не названы. У [рукописной TrOCR](https://huggingface.co/microsoft/trocr-small-handwritten) — «TrOCR model fine-tuned on the IAM dataset».
+- **SmolVLM** — [карточка](https://huggingface.co/HuggingFaceTB/SmolVLM-256M-Instruct), в запрещённом использовании: «Evaluating or scoring individuals (e.g., in employment, education, credit)».
+- **Наборы данных:**
+  - [MathWriting](https://github.com/google-research/google-research/tree/master/mathwriting) — «Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International license»;
+  - CROHME — «Creative Commons Attribution-NonCommercial-ShareAlike 3.0 Unported License», по архивной копии страницы TC11 от 2026-01-23: сама страница не открылась;
+  - IAM — «This database may be used for non-commercial research purpose only.», тоже по архивной копии.
+
+  Некоммерческие лицензии у ASF — в категории X: «Non-commercial licenses: Creative Commons Non-Commercial variants» ([ASF, Third-party license policy](https://www.apache.org/legal/resolved.html)).
+- **transformers.js** — [README](https://github.com/huggingface/transformers.js): «By default, when running in the browser, the model will be run on your CPU (via WASM).» Вероятностей токенов `generate()` не возвращает: в коде на этом месте стоит `// TODO:`.
