@@ -51,7 +51,9 @@
 
 У карточки четыре пункта — подразделы 2.1–2.4. Подраздел 2.5 — сверх карточки: её «Решить при детализации» допуска к ИИ не называет, хотя в том, что делает `tutor`, она ставит функцию допуска и ссылается на Т-20 (architecture 3.6 spec). Его называет задача, которая завела этот репозиторий (T09 `spec`): функция допуска — код `tutor`, её вызывают до каждого запроса к ИИ, а Т-20 блокирует этап 2. Карточку под него правит итог детализации, T06, — строкой таблицы 3 RUN.md «в реестр spec», когда решение T05 принято, а не заранее (architecture 3 spec).
 
-Четыре пункта из пяти стоят на вопросах реестров `spec` — Т-23, П-15, Т-13 и Т-20, — и закрывает эти вопросы `spec`. Здесь решается то, что из них приходится на `tutor`, а что задача выяснит о самом вопросе, уходит «в реестр spec».
+Подраздел 2.6 — тоже сверх карточки, и решает его не E1, а исследование эпика E2 — задачи T41 и T42 в RUN.md: как сделать проверку дешевле и быстрее. Поручил его автор 2026-10-23, а ни карточка, ни реестры `spec` такого пункта не называют. Карточку под него правят, когда будет решение, — строкой таблицы 3 RUN.md «в реестр spec», как и для 2.5.
+
+Четыре пункта из шести стоят на вопросах реестров `spec` — Т-23, П-15, Т-13 и Т-20, — и закрывает эти вопросы `spec`. Здесь решается то, что из них приходится на `tutor`, а что задача выяснит о самом вопросе, уходит «в реестр spec».
 
 ### 2.1. Один вызов или два
 
@@ -128,6 +130,98 @@
   - платформа работает и совсем без поставщика ИИ: ответ вводом, выбором, правкой или состоянием виджета проверяется без ИИ — так работают режим без ИИ (О-5) и self-hosting без договоров с поставщиками (architecture 4.2 spec).
 - **Варианты:** пока пусто.
 - **Задача:** T05.
+
+### 2.6. Цена и время проверки
+
+- **Суть:** как сделать проверку дешевле и быстрее — в токенах и в секундах до ответа. Это поручение автора 2026-10-23: «как сэкономить токены и увеличить время отклика… исследовать похожие решени на рынке и предложить решения». Рынок разбирает T41, а варианты для `tutor` и рекомендацию — T42.
+- **Что известно — доска** (раздел 3.3):
+  - Opus 5.5 с `high` проверяет решение примерно за $0,01 и 5 с (R20);
+  - серия T40 2026-10-25, по сводке доски:
+
+    | Пара | Прав из отмеченных | Ответов | Без оценки | Средняя цена | Среднее время |
+    |---|---|---|---|---|---|
+    | Claude Haiku 5.5 · `low` | 3 из 3 | 4 | 0 | $0,0004 | 6,0 с |
+    | Claude Opus 5.5 · `high` | 4 из 4 | 5 | 0 | $0,0098 | 5,7 с |
+
+    Haiku примерно в 25 раз дешевле, а быстрее не был. Пять задач и один почерк — ориентир, а не замер (R20);
+  - время доска меряет целиком — от вопроса до полного ответа, без потоковой выдачи (`internal/board/ask.go`). Сколько из него уходит до первого токена, а сколько на генерацию, не видно;
+  - токенов выхода сводка не показывает. Оценка исполнителя по цене: (средняя цена − 1 300 × цена входа) / цена выхода.
+    - У Opus выходит около 230 токенов, у Haiku — около 540, а с учётом округления цены до $0,0001 — от 440 до 640.
+    - Вход — около 1 300 токенов: картинка доски 1000 × 600 — это 792 по формуле Vision (раздел 4), остальное — текст запроса.
+    - Ошибка входа на 300 токенов сдвигает оценку для Opus примерно на четверть;
+  - картинка: вырезка по чернилам с цифрами около 32 px стоит у Claude около 200 токенов, а картинка доски — около 790 (R08; раздел 3.1; В13);
+  - кэш запросов Anthropic (раздел 4):
+    - общее начало запроса живёт в кэше 5 минут по умолчанию, а за доплату — час; каждое чтение продлевает срок;
+    - чтение его у Opus 5.5 стоит 5 % цены входа;
+    - начало короче 512 токенов не кэшируется.
+
+    У доски общее только начало — инструкции, около 250 токенов по оценке исполнителя. Картинка идёт раньше условия задачи (`provider/claude`), так что на ней общее начало и кончается. Кэшировать доске нечего.
+- **Что известно — рынок** (T41). Шестнадцать продуктов, которые читают рукописную запись или рукописное решение. Всё в таблице — заявления самих компаний, кроме помеченного:
+  - «пресса» — пересказ прессы;
+  - «обзор» — чужой обзор без методики;
+  - «интервью» — слова сотрудника в прессе;
+  - «вывод» — вывод исполнителя из источника.
+
+  «Не опубликовано» значит: искали и не нашли. Цитаты и даты — в разделе 4, блок «Рынок».
+
+  | Продукт | Вход | Где распознаёт | Что проверяет | Время и цена | Два пути |
+  |---|---|---|---|---|---|
+  | MyScript: iink SDK, MyScript Math | чернила; в Math — ещё фото | SDK для приложений — на устройстве, облачный — на сервере | распознаёт и считает ответ; ИИ-функции Math работают на OpenAI | время не опубликовано; облако — по договору | ответ сразу после «=», шаги — только онлайн |
+  | Mathpix | чернила и картинка | на серверах Mathpix или на сервере заказчика | только распознаёт | по картинке — медиана меньше 0,5 с, по чернилам — 200 мс; $0,002 за запрос | распознаёт по ходу письма или разовым запросом |
+  | Google ML Kit Digital Ink | чернила со временем | на устройстве | только текст и фигуры, без математики | около 100 мс на строку (2020); сервер не нужен | один, на устройстве |
+  | Apple Math Notes | Apple Pencil | на устройстве (интервью) | считает ответ; по нажатию на «=» показывает, что прочитал | «instantly»; API для математики нет | один |
+  | Microsoft OneNote Math Assistant | чернила | в облаке Microsoft | решает и показывает свои шаги | не опубликовано; API нет | ответ сразу, шаги — по кнопке |
+  | Samsung Notes | перо S Pen | на устройстве, но одна сноска требует интернет | считает ответ после «=» | «instant solutions»; API не нашли | ответ на устройстве, шаги — через Circle to Search |
+  | 小猿口算, теперь 小猿AI | фото страницы | на сервере, в основе — распознавание текста (пресса, 2019) | ответы под тип задачи | «1 秒», по словам компании; 3–5 с (обзор, 2026) | «верно» или «неверно» сразу, затем разбор ошибок |
+  | 作业帮 | фото | на серверах с GPU, больше 30 нейросетей — в системе фотопоиска, на которой стоит и проверка (пресса, 2020) | расчётные задачи целиком, точность 98 % (пресса, 2020) | распознавание фото — 200 мс (пресса, 2020) | проверка сразу, разбор — потом |
+  | Photomath | фото | в облаке, раньше — на устройстве | распознаёт задачу, решает программа | «instantly» | анимированные разборы с ИИ — в платной Plus |
+  | Magma Math | чернила на холсте | Gemini — по списку канадского юрлица; на сервере (вывод) | ответ, а ещё — показана ли работа | не опубликовано | оценка сразу, ИИ — после неверного ответа |
+  | Gradescope | скан или фото в PDF | на платформе; генеративного ИИ нет — по вторичному источнику | группирует похожие ответы, оценивает преподаватель | не опубликовано; публичного API нет | пакетно |
+  | Khanmigo | фото или скан | модели OpenAI; кто читает картинку — не опубликовано | ход ученика проверяет агент: запускает его математику в песочнице с SymPy | только сдвиги своих A/B-тестов | предпроверка решает, звать ли агента проверки |
+  | Snorkl | запись доски и голоса | модели OpenAI (2024) | ответ и объяснение, моделью: оценка от 0 до 4 | «instant», чисел нет | не опубликован |
+  | Goodnotes | рукопись в блокноте | строки — на устройстве, ИИ по математике — в облаке | строки выкладки; в облаке — решает задачу | на устройстве «real-time»; сложные запросы к ИИ — «a few minutes» | устройство — без кредитов, облако — за кредиты |
+  | MathGPT.ai | рукописные работы, вуз | не опубликовано | решения и доказательства | «in minutes» | пакетно |
+  | Brisk | фото рукописной работы | не опубликовано | замечания и отзыв для учителя | «in seconds» | не опубликован |
+
+  **Что из этого следует:**
+  - **Два пути — у семи из шестнадцати:** MyScript Math, OneNote, Samsung, 小猿口算, 作业帮, Magma и Goodnotes.
+    - Быстрый путь — ответ или «верно» сразу: на устройстве у Goodnotes и, по сноске Newsroom, у Samsung; на сервере за секунду у 小猿口算 и 作业帮 — по словам компании и прессы.
+    - Медленный — объяснение, разбор или подсказка, онлайн: у MyScript Math шаги — только онлайн, а его ИИ-функции работают на OpenAI; у Goodnotes — модель на Amazon Bedrock и Wolfram Alpha; у Magma — Gemini после неверного ответа.
+    - Путь внутри одного ответа выбирает Khanmigo: предпроверка решает, звать ли агента проверки математики, и это снимает около 0,3 с.
+  - **Сами распознаватели быстры:** ML Kit — около 100 мс на строку на телефоне (2020), Mathpix — 200 мс по чернилам и медиана меньше 0,5 с по картинке.
+  - **Детские приложения** 小猿口算 и 作业帮, по пересказам прессы 2019–2020 годов, проверяют так: картинка уходит на сервер и распознаётся. 小猿口算 проверяет её под тип задачи, а 作业帮 — расчётные задачи целиком, на той же системе фотопоиска, что и поиск задач. Большие модели они называют позже:
+    - 小猿口算 — для диагностики слабых мест;
+    - 作业帮 — для проверки на своём учебном планшете S30 (2024). Где работает модель, не сказано.
+  - **Считать математику отдают программе:** у Khanmigo агент проверки запускает математику ученика в песочнице с SymPy, у Goodnotes её считает Wolfram Alpha, у Photomath задачу решает программа. Это близко к порядку ролей платформы: вердикт выносит программа (R03 spec). Но решение для подсказок у Khanmigo пишет модель o3-mini, а 作业帮 на S30 проверяет большой моделью.
+  - **Ход самого ученика сверяют немногие:**
+    - Khanmigo — программой;
+    - Goodnotes — строки на устройстве;
+    - Snorkl — объяснение, моделью;
+    - MathGPT.ai — решения и доказательства, пакетно;
+    - Magma смотрит, показана ли работа.
+
+    Остальные считают ответ к тому, что написано, оценивают ответ или решают задачу сами.
+  - **Скорость числом публикуют немногие:**
+    - Mathpix — медиана меньше 0,5 с по картинке и 200 мс по чернилам, «на живом трафике»;
+    - ML Kit — около 100 мс на строку на телефоне (2020);
+    - 小猿口算 — «1 秒» на сайте, а чужой обзор 2026 года видел 3–5 с;
+    - 作业帮 — 200 мс на распознавание фото, в пересказе доклада о системе фотопоиска (2020).
+
+    Khan Academy публикует сдвиги своих A/B-тестов:
+    - короткий ответ агента проверки — в среднем на 3 с быстрее;
+    - агент, который смотрит только на то, что ученик уже сделал, — ещё на 400 мс быстрее, и подсказка вдвое реже выдаёт ответ;
+    - быстрая модель и предпроверка — каждая на 0,3 с.
+
+    Остальные чисел не дают: одни пишут «instantly» или «real-time», пакетные — «in minutes», а MyScript, Microsoft и Gradescope не пишут ничего.
+  - **Цену запроса публикует только Mathpix:**
+    - $0,002 за запрос по чернилам или по картинке, а сверх миллиона запросов в месяц — $0,0015;
+    - сессия живого распознавания — до тысячи бесплатно, дальше $0,01 до ста тысяч.
+
+    Публичного API для математики нет у Microsoft — распознаватель чернил Azure снят — и у Apple: распознаватель PencilKit — только для текста. У Gradescope публичного API нет совсем, а у Samsung и Photomath мы его не нашли.
+  - **Что прочитано, показывают** Goodnotes — карточкой подтверждения, до вычисления, — и Apple — по нажатию на «=», а неясные знаки ученик уточняет сам.
+  - **Кэш запросов** в найденных источниках не описан. Время до первого токена отдельно от полного ответа публикует только Khan Academy.
+- **Варианты:** пока пусто — их даст T42.
+- **Задача:** T41 — рынок; T42 — варианты и рекомендация.
 
 ## 3. Устройство
 
@@ -559,6 +653,10 @@ just board
 - [Pricing](https://platform.claude.com/docs/en/about-claude/pricing), за 1 млн токенов: Haiku 5.5 — $0.10 вход и $0.50 выход (запрос до 100 000 токенов); Opus 5.5 — $4 и $20; Fable 5.1 — $10 и $50. Размышления оплачиваются как выход; batch — «a 50% discount».
 - [Vision](https://platform.claude.com/docs/en/build-with-claude/vision): картинка стоит «⌈width / 28⌉ × ⌈height / 28⌉ visual tokens».
 - Там же, сверено 2026-10-21. Картинок в одном запросе — «600 per request on the API, for all other models», а у моделей с окном 200k — «100 per request on the API». Окно у Haiku 5.5 и Opus 5.5 — «1M tokens» ([Models overview](https://platform.claude.com/docs/en/about-claude/models/overview)), значит, им — 600. Если картинок больше 20, каждая — не больше 2000 px: «resize each image so that neither dimension exceeds 2000 px, or keep the request to 20 or fewer image and document blocks». Картинку 1000×1000 px модель не уменьшает: в таблице уменьшения у обоих уровней — «Not resized».
+- [Prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching), сверено 2026-10-25 по тексту страницы (T41):
+  - «By default, the cache has a 5-minute lifetime. The cache is refreshed for no additional cost each time the cached content is used.»; «If you find that 5 minutes is too short, Anthropic also offers a 1-hour cache duration at additional cost»;
+  - «Cache reads: When cached content is used (10% of base input token price, or 2.5% on Claude Fable 5.1 and Claude Mythos 5.1, and 5% on Claude Opus 5.5 and Claude Sonnet 5.5)»;
+  - «the minimum cacheable prompt length is: 512 tokens for Claude Fable 5.1, … Claude Opus 5.5, … and Claude Haiku 5.5». Пропущены другие модели списка.
 - [Данные](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention): Fable 5.1 требует 30 дней хранения и «not available under ZDR unless expressly authorized by Anthropic». Поэтому сильная модель замера — Opus 5.5 (R06).
 - [Несовершеннолетние](https://support.claude.com/en/articles/9307344-responsible-use-of-anthropic-s-models-guidelines-for-organizations-serving-minors): статья от 16.03.2026 не изменилась с privacy 5.3 spec. Новая [Usage Policy](https://www.anthropic.com/legal/aup) опубликована заранее и вступает в силу 12.11.2026 («Effective November 12, 2026»); сейчас действует редакция от 15.09.2025. Новая добавляет: «Any specific age eligibility requirements for use of our products will be set out in our Terms of Service.»
 - [Workspaces](https://platform.claude.com/docs/en/manage-claude/workspaces): «Spend limits: Cap monthly spending for a workspace»; «You cannot set limits on the Default Workspace».
@@ -652,3 +750,84 @@ just board
 - product 5.2 canvas-api: «Проверка запускается после паузы 1,5–2 секунды или по кнопке **Check**»; «пауза посреди мысли — это нормально».
 - T74 canvas-api: «сотня листов — разведка (≤ 5 %)», а не проверка целей беты (≤ 1 %) из product 12 canvas-api.
 - Цели беты в product 12 canvas-api: ложные тревоги ≤ 1 %, ложно верные ≤ 0,5 %, лишние просьбы переписать ≤ 5 %, точность места ≥ 80 %.
+
+**Рынок: как другие читают рукописное решение** — источники подраздела 2.6 (T41). Прочитано 2026-10-25.
+- Цитаты сняты с текста самих страниц через `curl`. Справки Gradescope, Khan Academy и Goodnotes на запрос страницы отвечали 403, и их текст взят из публичного JSON тех же статей (API Zendesk).
+- В скобках — дата самой страницы, если она есть.
+- Всё ниже — заявления самих компаний, кроме того, что прямо названо пересказом прессы, вторичным источником или чужим обзором.
+
+- **MyScript** (iink SDK, MyScript Math):
+  - [цены](https://developer.myscript.com/pricing/): «On-device recognition Includes all the features of MyScript iink SDK: our SDK for native applications. Pricing is based on licenses per device.»; в облаке — «Free 2,000 requests, for testing and development only», а дальше — по договору;
+  - [облако](https://developer.myscript.com/docs/cloud/4.5/overview/introduction/): «MyScript technology processes all recognition operations on the server side.»; «MyScript Cloud servers are deployed on AWS in Oregon»;
+  - [блог iink SDK 3.0](https://www.myscript.com/blog/iink-sdk-3-0-math/) (2024-04-26): «The new architecture comprises an end-to-end model, functioning as an encoder-decoder transformer based on the multi-head attention mechanism.»;
+  - [политика данных](https://www.myscript.com/privacy-policy/) («Version: May 2026»), о MyScript Math: «The AI features are powered by OpenAI.»;
+  - [справка MyScript Math](https://help.myscript.com/math/create-and-manage-your-content/write-and-solve-calculations/): «Leave your calculation unfinished with an '=' sign, and the app automatically solves it for you, as long as all values in the calculation are defined.»; «Yes, step-by-step solutions require both an internet connection and a signed-in MyScript account.» Время ответа не опубликовано.
+- **Mathpix**:
+  - [OCR](https://mathpix.com/ocr): «<0.5s Median image response»; «200ms Digital ink, recognized as you draw»; «Latency figures measured on live customer traffic, not a curated test set.»; «There is an on-premise deployment for documents that cannot leave your network»;
+  - [цены API](https://mathpix.com/pricing/api): по штрихам — «$0.002 / request», а в таблице ступеней — «1M+ requests $0.0015»; «Volume tiers reset each calendar month»; по картинке — «$0.002 / image», а сверх миллиона — «1M+ images $0.0015»; «Digital ink billed against a stroke session ID is priced per session instead: free up to 1K, then $0.01 (1K–100K), $0.008 (100K–1M), and $0.005 above 1M.»;
+  - [данные](https://mathpix.com/privacy) («Last Updated: August 5, 2024»): «By default, we collect information like requests and responses for QA purposes.»; «You can opt-out of any images being saved to disk for QA purposes from your API key by setting the improve_mathpix flag in your API requests to false». Флаг говорит о картинках;
+  - [штрихи](https://docs.mathpix.com/guides/strokes): «Recognition quality depends heavily on how many points your client actually captures.»
+- **Google ML Kit Digital Ink Recognition**:
+  - [обзор](https://developers.google.com/ml-kit/vision/digital-ink-recognition) (2024-07-10): «The user's handwriting stays on the device, recognition is performed without any network connection»;
+  - [модели](https://developers.google.com/ml-kit/vision/digital-ink-recognition/base-models) (2024-07-10): «models that can recognize text in over 300 languages, as well as models that classify symbols and shapes». Модели для математики в списке нет;
+  - [Android](https://developers.google.com/ml-kit/vision/digital-ink-recognition/android) (2026-10-23): «Around 20MB of storage is required per language.»;
+  - [блог](https://developers.googleblog.com/digital-ink-recognition-in-ml-kit/) (2020-08-06): «On a typical mobile device recognizing a line of text takes about 100 ms.»
+- **Apple Math Notes** (iPadOS 18 и новее):
+  - [справка](https://support.apple.com/guide/ipad/solve-math-with-math-notes-ipadeb38d0f8/ipados): «Tap the equal sign to see what Math Notes understood in what you wrote.»; «Tap any dotted blue lines to clarify what you wrote»;
+  - [Newsroom](https://www.apple.com/newsroom/2024/06/ipados-18-introduces-powerful-intelligence-features-and-apps-for-apple-pencil/) (2024-06-10): «see them instantly solved in their own handwriting»;
+  - пересказ прессы, [9to5Mac](https://9to5mac.com/2024/07/17/ipados-18-smart-script-math-notes-interview/) (2024-07-17), слова менеджера продукта Apple: «It combines the natural input of pencil with the amazing on-device machine learning models». В первоисточниках Apple о Math Notes этого нет;
+  - распознаватель PencilKit, который Apple открыла в iOS 27, — только для текста ([WWDC26](https://developer.apple.com/videos/play/wwdc2026/203/)): «Handwriting recognition in PencilKit runs entirely on device.» API для математики нет.
+- **Microsoft OneNote Math Assistant**:
+  - [connected experiences](https://learn.microsoft.com/en-us/microsoft-365-apps/privacy/connected-experiences-content) (2026-05-18): строка «Math Assistant» в таблице того, что анализирует содержимое; «a connected experience sends content to Microsoft so that the connected experience can perform its function»;
+  - [справка](https://support.microsoft.com/en-us/onenote/onenote-help-and-learning/solve-math-equations-with-math-assistant-in-onenote): «Math Assistant in OneNote can solve it for you—helping you reach the solution quickly, or displaying step-by-step instructions»; «To learn how OneNote solved the problem, you can click or tap Show steps»;
+  - [справка о чернилах](https://support.microsoft.com/en-us/education/onenote/create-math-equations-using-ink-or-text-with-math-assistant-in-onenote): «Sometimes the Math tool misunderstands handwriting.»;
+  - [Azure Ink Recognizer](https://learn.microsoft.com/en-us/previous-versions/azure/cognitive-services/Ink-Recognizer/): «fully retired on January 31, 2021». Публичного API нет, время ответа не опубликовано.
+- **Samsung Notes** (Galaxy AI, Solve Math):
+  - [Samsung Newsroom](https://news.samsung.com/global/user-guide-galaxy-tab-s10-fe-the-ultimate-study-buddy-for-exam-season) (2025-04-03): «By writing a formula followed by an equal sign (=), the answer appears automatically.»; сноска: «Solve Math runs on-device and does not require an internet connection but requires a Samsung Account login.»;
+  - страница [Note Assist](https://www.samsung.com/us/support/answer/ANS10000941/): «Write equations ending with an equal sign, and Galaxy AI will provide instant solutions.»; её общая сноска — «A Samsung account and internet connection is required.» Сноска расходится со сноской Newsroom;
+  - шаги решения — через Circle to Search with Google ([справка](https://www.samsung.com/us/support/answer/ANS10007364/)): «Galaxy AI will solve the equation and provide step-by-step instructions.»
+- **小猿口算 (Xiaoyuan Kousuan)**, проверка домашних примеров по фото:
+  - [App Store](https://apps.apple.com/cn/app/id1325419855), версия 3.144.2 (2026-10-19), под новым именем: «小猿AI - 原「小猿口算」检查作业神器»; «作业检查/批改：拍照秒判对错，支持全学科、全学段100+题型批改，自动标注错误点，支持错因分析与错题讲解。» — по фото сразу «верно» или «неверно», с отметкой ошибки и разбором; «融合自研猿力大模型与deepseek大模型，精准诊断学生薄弱点» — свою большую модель и DeepSeek берут для диагностики слабых мест;
+  - [сайт](https://xiaoyuankousuan.com/): «拍照1秒批改全科作业» — проверка домашней работы за секунду;
+  - [雷锋网](https://www.leiphone.com/category/smarteducation/SMg6uhbPpdS5ez26.html) (2019-11-19), пересказ слов компании: «系统接收用户上传的图片后» — система получает загруженную картинку; «针对不同题型，系统采用专业的深度学习识别算法与批改策略» — под каждый тип задачи свои распознавание и правила проверки; «技术上主要采用的是通用OCR技术。» — в основе обычное распознавание текста; «不到一秒钟，整页的检查结果就会反馈在屏幕上» — проверка страницы меньше чем за секунду;
+  - чужой обзор без методики, [aixq.cc](https://www.aixq.cc/27261.html) (2026-05-08): «第一次使用时拍一张数学卷子，AI大概3到5秒就出结果» — по фото контрольной результат примерно через 3–5 секунд.
+- **作业帮 (Zuoyebang)**, проверка домашней работы по фото:
+  - [App Store](https://apps.apple.com/cn/app/id803781859), версия 14.54.0 (2026-10-10): «AI秒批作业：一键秒批全科作业，涵盖作业批改、口算批改和作文批改，错题解析+原题精讲» — мгновенная проверка, а затем разбор ошибок;
+  - [news.qq.com](https://news.qq.com/rain/a/20201224A0E0UD00) (2020-12-24), доклад руководителя архитектуры в пересказе PConline: «在作业帮的整套产品链条中，拍搜系统提供了底层的技术支持» — на системе фотопоиска стоит вся линейка продуктов; «从搜索到批改再到打分» — от поиска задач до проверки и оценки; «作业帮拍搜系统拥有超30种不同的神经网络各司其职» — больше 30 нейросетей; «大量使用GPU作为运算设备的深度学习在线推理服务» — распознавание идёт на серверах с GPU; «平均耗时从3秒以上缩短至300多毫秒，后续持续优化到平均200毫秒» — распознавание сократилось с 3 с до 200 мс в среднем;
+  - [Sohu](https://www.sohu.com/a/366829682_120154852) (2020-01-14), пересказ прессы: «计算类题型全批改，批改整体准确率达 98%» — расчётные задачи проверяются целиком, с точностью 98 %;
+  - [duozhi.com](http://www.duozhi.com/industry/insight/2024120616804.shtml) (2024-12-06), пресса: «基于银河大模型，S30支持小初高全科作业批改» — на учебном планшете компании S30 работы проверяют на основе её большой модели. Где работает модель, не сказано.
+- **Photomath** (Google):
+  - [справка](https://support.google.com/photomath/answer/14328660?hl=en): «Through the years Photomath switched focus from on-device to cloud computing. Each image with a math problem is now sent to cloud servers and is being analyzed by a highly advanced neural network.»;
+  - там же: «a problem-solving algorithm is applied to the formula to provide the solution and solving steps». Задачу решает программа; о проверке работы ученика справка не говорит;
+  - там же: «recognize math problems ranging from arithmetic to calculus instantly»; в платной Plus — «AI-powered animated Tutorials to visualize each step».
+- **Magma Math**, математика в школе, решение — на холсте:
+  - [продукт](https://www.magmamath.com/product): «Magma automatically grades both typed and handwritten answers.»;
+  - [список операторов](https://www.magmamath.com/ca/legal-documents/list-of-operators) канадского юрлица («Last updated: June 16, 2026»): «Google LLC (Google Gemini) | AI inference for instructional feedback and handwriting recognition | De-identified prompts only; no directly identifying student information | Outside Canada» — четыре ячейки одной строки таблицы, здесь разделённые « | ». По этой строке рукопись читает Gemini, а что на сервере — наш вывод;
+  - [Lava](https://intercom.help/magma-math-us/en/articles/11427417-how-lava-supports-student-learning) (2026-09-25): «Lava acts as a first layer of feedback during assignments.»; «When a student submits an incorrect response, Lava can provide» — дальше список подсказок; «If a student answers correctly but the drawing board only contains scribbles, dots, or other work that does not demonstrate their thinking, the Submit button changes to Verify.» Время ответа не опубликовано.
+- **Gradescope** (Turnitin):
+  - [AI-assisted grading](https://guides.gradescope.com/hc/en-us/articles/24838908062093-AI-assisted-grading-and-answer-groups) (2025-12-16): «Gradescope AI automatically forms suggested answer groups for your review.»; «Gradescope AI can read student handwriting of English-language text and math notation … The primary constraint is for the student's answer to be on one line». Оценку ставит преподаватель;
+  - вторичный источник, [Stanford Teaching Commons](https://teachingcommons.stanford.edu/opportunities/gradescope): «These features do not use generative AI technology.» Время обработки не опубликовано;
+  - [Public API](https://guides.gradescope.com/hc/en-us/articles/36028522325901-Gradescope-Public-API) (2025-04-22): «Unfortunately, we don’t have a public API».
+- **Khanmigo** (Khan Academy):
+  - [справка](https://support.khanacademy.org/hc/en-us/articles/36868912022541) (2025-10-06): «A photo of your handwritten math problem to check your steps»;
+  - [статья Khan Academy](https://arxiv.org/pdf/2608.11259), полный текст в PDF (AIED 2026, подана 2026-08-07):
+    - «This workflow uses a Python Math Agent to run and check student math on each message to reduce potential LLM math mistakes.»;
+    - «a Math Agent which can run student input math in a sandbox» — с NumPy и SymPy;
+    - «Tutor Me uses a reasoning LLM (o3-mini; OpenAI models, n.d.) to generate a solution and step-by-step hints for the AI tutor to reference.»;
+    - о переходе классификатора входа на GPT-4.1-mini: «Time to first token latency (P50) decreased by 14.40% ± 1.30%». В таблице результатов время до первого токена и время до полного ответа идут отдельными строками; вторая — «Time to full response Latency (P50)»;
+  - [блог](https://blog.khanacademy.org/how-khan-academy-is-building-a-better-ai-tutor-our-most-recent-learnings/) (2026-05-01): «Instructing the math agent to produce a more concise response to Khanmigo reduced mean response time by three seconds across 352,000 tutoring threads over five days.»; «A follow-up experiment in which we limited the agent to focusing on the math the student had already done instead of also working out the remaining steps to get to the solution reduced latency by another 400 milliseconds and reduced giving away the answer by 50%.»; «Switching the math agent to a faster AI model reduced response time by 0.3 seconds across 1.35 million tutoring threads over 12 days.»; предпроверка, нужен ли Math Agent, — «cutting response time by about 0.3 seconds»; рычаги — «a faster model, shorter outputs, tighter time-outs, and smarter routing».
+- **Snorkl**, ученик объясняет решение на доске голосом:
+  - [профиль iKeepSafe](https://ikeepsafe.org/content/uploads/2024/05/Snorkl-Product-Profile.pdf) (2024-05-16): «We use OpenAI's API to power the grading and feedback features in Snorkl.»;
+  - [оценки](https://help.snorkl.app/en/articles/12675870-understanding-snorkl-ai-scores) (2025-11-02): «Correctness – whether the student’s final answer, claim, or conclusion is accurate. Explanation Score (0–4) – how complete, clear, and thorough their reasoning or explanation is.»;
+  - [сайт](https://snorkl.app/): «providing instant AI feedback on recorded explanations». Секунды не опубликованы.
+- **Goodnotes**, рукописный блокнот:
+  - [блог](https://www.goodnotes.com/blog/how-its-made-ai-math-assistance) (2023-11-17): «AI Math Assistance runs locally on your device so that all data stays private to you.»; «checking your handwritten math work in real-time»;
+  - [кредиты](https://support.goodnotes.com/hc/en-us/articles/13817639294223) (2025-12-03): «Several helpful AI features run right on your device without using any credits: Math Conversion, Circle to Lasso, Spell Check, Handwriting Reflow, and Scribble to Erase.»; «The more advanced cloud-powered features (such as Goodnotes AI for Whiteboard/Notebook, Text Document, Math, and Meetings) will count toward your monthly credit usage.»;
+  - [данные](https://support.goodnotes.com/hc/en-us/articles/9795720752911) (2025-09-19): «Goodnotes AI uses an external large language model hosted on Amazon Bedrock»;
+  - [блог](https://www.goodnotes.com/blog/math-ai-that-builds-understanding) (2025-09-29): «Goodnotes AI handles the conversation and explanations with one model, then draws on Wolfram|Alpha’s capabilities for thinking through the math.»; «Before any computation happens, Goodnotes AI shows you exactly how it interpreted your problem with a confirmation card.»;
+  - [ассистент](https://support.goodnotes.com/hc/en-us/articles/10779112528399) (2026-03-17), о запросах к Goodnotes AI вообще, не только по математике: «More complex requests involving multiple steps may take a few minutes to complete.»
+- **MathGPT.ai**, проверка вузовских работ, [пресс-релиз](https://www.prnewswire.com/news-releases/mathgptai-automates-grading-for-handwritten-higher-education-math-assignments-302838255.html) (2026-07-29): «It processes unstructured, handwritten student math solutions and proofs in minutes, automatically analyzing uploaded paper-based work to factor it towards student grades, even when the final answer submitted is incorrect.»
+- **Brisk**, инструмент учителя, [страница](https://www.briskteaching.com/post/upload-photos-to-create-lesson-content-and-generate-feedback): «Upload a photo of a student’s handwritten work, and Brisk will analyze it, offering suggestions, corrections, or even full feedback in seconds». Модели и где он читает работу, не опубликовано.
+- **Отброшены** — решают задачу по фото, а хода ученика не читают:
+  - Thetawise: «ThetaWise reads the math and gets straight to work.» ([страница](https://thetawise.ai/features/math-solver));
+  - Mathos AI: «Our AI math solver and calculator recognize handwriting and complex formulas instantly.» ([сайт](https://www.mathos.ai/)).
