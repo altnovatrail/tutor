@@ -7,10 +7,14 @@ import (
 	"fmt"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/altnovatrail/tutor/internal/board"
+	"github.com/altnovatrail/tutor/internal/sample"
+	"github.com/altnovatrail/tutor/internal/synth"
 )
 
 func TestBoardCommand(t *testing.T) {
@@ -88,6 +92,78 @@ func TestBoardOffers(t *testing.T) {
 	}
 	if strings.Join(got, "\n") != strings.Join(want, "\n") {
 		t.Errorf("offers:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
+	}
+}
+
+// The record mode needs no key and takes no spending cap, and the flags of each mode are its own.
+// It does not start with a bank or a plan it cannot read, check or match, and it guards its
+// directory before it makes it.
+func TestBoardRecordCommand(t *testing.T) {
+	dir := t.TempDir()
+	write := func(name string, data []byte) string {
+		path := filepath.Join(dir, name)
+		if err := os.WriteFile(path, data, 0o600); err != nil {
+			t.Fatal(err)
+		}
+		return path
+	}
+	brokenPlan := write("broken-plan.json", []byte(`{"format": "tutor-sheet-plan", "version": 0, "sheets": []}`))
+	synthBank, err := sample.Marshal(synth.Bank())
+	if err != nil {
+		t.Fatal(err)
+	}
+	otherBank := write("other-bank.json", synthBank)
+	blocker := write("blocker", nil)
+	files := []string{"-bank", measurementBank, "-plan", measurementPlan}
+	keys := map[string]string{anthropicKeyVar: "a-key"}
+	tests := []struct {
+		name       string
+		args       []string
+		env        map[string]string
+		wantCode   int
+		wantServed bool
+		wantOut    string
+	}{
+		{"the record mode", append([]string{"-record", "-dir", t.TempDir()}, files...), nil, exitOK, true, "The record mode of the board is at http://127.0.0.1:8080"},
+		{"a spending cap", append([]string{"-record", "-dir", t.TempDir(), "-max-usd", "3"}, files...), nil, exitUsage, false, "-max-usd is for the check board"},
+		{"a bank on the check board", []string{"-dir", t.TempDir(), "-bank", measurementBank}, keys, exitUsage, false, "-bank and -plan are for the record mode"},
+		{"a plan on the check board", []string{"-dir", t.TempDir(), "-plan", measurementPlan}, keys, exitUsage, false, "-bank and -plan are for the record mode"},
+		{"a broken plan", []string{"-record", "-dir", t.TempDir(), "-bank", measurementBank, "-plan", brokenPlan}, nil, exitFail, false, "invalid plan: sheets: are missing"},
+		{"no bank", []string{"-record", "-dir", t.TempDir(), "-bank", filepath.Join(dir, "nowhere.json"), "-plan", measurementPlan}, nil, exitFail, false, "nowhere.json: open"},
+		{"a plan of tasks not in the bank", []string{"-record", "-dir", t.TempDir(), "-bank", otherBank, "-plan", measurementPlan}, nil, exitFail, false, `sheets[0].task: "posts" is not in the bank`},
+		{"a public address", append([]string{"-record", "-dir", t.TempDir(), "-addr", "0.0.0.0:8080"}, files...), nil, exitUsage, false, "not a local address"},
+		{"an empty directory", append([]string{"-record", "-dir", ""}, files...), nil, exitUsage, false, "-dir is empty"},
+		{"a directory that cannot be made", append([]string{"-record", "-dir", filepath.Join(blocker, "sheets")}, files...), nil, exitFail, false, "tutor-eval board: mkdir "},
+		// The tests run in cmd/tutor-eval, where samples/sheets is not the samples folder at the root.
+		{"the default directory", append([]string{"-record"}, files...), nil, exitUsage, false, "cmd/tutor-eval/samples/sheets is in the git work tree"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var stdout, stderr bytes.Buffer
+			var handler http.Handler
+			serve := func(s *http.Server) error { handler = s.Handler; return nil }
+			got := runBoard(tt.args, &stdout, &stderr, func(k string) string { return tt.env[k] }, serve)
+			if got != tt.wantCode || (handler != nil) != tt.wantServed {
+				t.Errorf("code %d, served %v; want %d, %v (stderr %q)", got, handler != nil, tt.wantCode, tt.wantServed, stderr.String())
+			}
+			if out := stdout.String() + stderr.String(); !strings.Contains(out, tt.wantOut) {
+				t.Errorf("output %q, want it to hold %q", out, tt.wantOut)
+			}
+			if handler == nil {
+				return
+			}
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest("GET", "/api/record/plan", nil)
+			req.Host = "127.0.0.1:8080"
+			handler.ServeHTTP(rec, req)
+			var view board.PlanView
+			if err := json.Unmarshal(rec.Body.Bytes(), &view); err != nil || len(view.Sheets) != 40 {
+				t.Errorf("GET /api/record/plan = %d %s, want the plan's 40 sheets", rec.Code, rec.Body)
+			}
+		})
+	}
+	if _, err := os.Stat("samples"); !errors.Is(err, os.ErrNotExist) {
+		t.Errorf("the refused default directory was made: %v", err)
 	}
 }
 

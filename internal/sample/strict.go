@@ -196,10 +196,14 @@ func join(path, name string) string {
 	return path + "." + name
 }
 
+// Root is the path of a problem with the file as a whole rather than with one of its fields, such
+// as a field the format does not have at the top of the file.
+const Root = "(the file)"
+
 // at names the root of the file when the path is empty.
 func at(path string) string {
 	if path == "" {
-		return "(the file)"
+		return Root
 	}
 	return path
 }

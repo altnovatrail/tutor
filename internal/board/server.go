@@ -1,7 +1,8 @@
 // Package board is the check board: a local page where a person solves fixed tasks by hand, the
 // models read the work and judge it, and the person marks whether each model was right. Nothing
 // leaves the machine but the calls to the models; the pictures and the marks stay in a directory
-// outside git (R19).
+// outside git (R19). Its record mode asks no model: the author writes the sheets of the sheet plan,
+// and each is saved as a sample file in a directory outside git (R25).
 package board
 
 import (
@@ -207,12 +208,8 @@ func (s *Server) mark(model, attempt string, right bool) {
 	s.marks[model][attempt] = right
 }
 
-// Handler routes the board's requests. addr is the address the board listens on, for the message
-// that turns a request away. A request must name a loopback host, on any port — VS Code forwards
-// the board's port to the computer the browser runs on, and picks another number when that one is
-// taken there — and, if it has an origin, come from the address it names: the board's own page. A
-// page on another site open in the same browser can neither spend the keys nor, by rebinding its
-// domain to 127.0.0.1, read the answers: its requests name its own domain or come from it.
+// Handler routes the board's requests, behind guard. addr is the address the board listens on,
+// for the message that turns a request away.
 func (s *Server) Handler(addr string) http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, _ *http.Request) {
@@ -225,6 +222,17 @@ func (s *Server) Handler(addr string) http.Handler {
 	mux.HandleFunc("GET /api/summary", func(w http.ResponseWriter, _ *http.Request) { writeJSON(w, http.StatusOK, s.summary()) })
 	mux.HandleFunc("POST /api/check", s.check)
 	mux.HandleFunc("POST /api/mark", s.markHandler)
+	return guard(addr, mux)
+}
+
+// guard passes a request on to next, in either mode of the board, only if it names a loopback
+// host, on any port — VS Code forwards the board's port to the computer the browser runs on, and
+// picks another number when that one is taken there — and, if it has an origin, comes from the
+// address it names: the board's own page. A page on another site open in the same browser can
+// neither spend the keys or write a sheet nor, by rebinding its domain to 127.0.0.1, read what the
+// board answers: its requests name its own domain or come from it. addr is the address the board
+// listens on, for the message that turns a request away.
+func guard(addr string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !loopback(r.Host) {
 			writeError(w, http.StatusForbidden, "the board answers only at a local address, such as http://"+addr)
@@ -237,7 +245,7 @@ func (s *Server) Handler(addr string) http.Handler {
 			}
 		}
 		w.Header().Set("X-Content-Type-Options", "nosniff")
-		mux.ServeHTTP(w, r)
+		next.ServeHTTP(w, r)
 	})
 }
 
@@ -565,15 +573,24 @@ func (s *Server) savePicture(pic []byte) (string, error) {
 		return "", err
 	}
 	attempt := time.Now().UTC().Format("20060102-150405") + "-" + hex.EncodeToString(tail)
-	f, err := os.OpenFile(filepath.Join(s.dir, attempt+".png"), os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	return attempt, createNew(filepath.Join(s.dir, attempt+".png"), pic)
+}
+
+// createNew writes a file that must not exist yet, readable by its owner alone: what the board
+// writes is the author's handwriting. A file it could not finish, it removes.
+func createNew(path string, data []byte) error {
+	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
 	if err != nil {
-		return "", err
+		return err
 	}
-	_, err = f.Write(pic)
+	_, err = f.Write(data)
 	if cerr := f.Close(); err == nil {
 		err = cerr
 	}
-	return attempt, err
+	if err != nil {
+		_ = os.Remove(path)
+	}
+	return err
 }
 
 // MarkRequest is the person's mark: whether a model was right about a try.
