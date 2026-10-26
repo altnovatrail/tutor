@@ -53,6 +53,20 @@ board *args:
 record *args:
     go run ./cmd/tutor-eval board -record {{ args }}
 
+# This recipe asks for the Anthropic key for eval if it is not set yet, without showing it, so that
+# no key lands in the shell's history; with -stub the run needs none, and Enter skips it. Its
+# arguments go to tutor-eval run: -part dev or -part test, and the rest.
+# Run the measurement on a part of the split, after its estimate and your yes (T23 in RUN.md).
+measure *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -z "${TUTOR_ANTHROPIC_API_KEY:-}" ]; then
+        read -rsp 'Anthropic key for eval, or Enter with -stub: ' TUTOR_ANTHROPIC_API_KEY
+        echo >&2
+    fi
+    export TUTOR_ANTHROPIC_API_KEY
+    exec go run ./cmd/tutor-eval run {{ args }}
+
 # Run lint, the linters and the formatting check, under the name go.yml runs.
 ci-lint: lint
 

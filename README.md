@@ -34,6 +34,14 @@ just record
 
 Pick a sheet of the plan, write what it shows with a pen or a mouse, press Done, check the markup the plan filled in and press Save. If the board grouped the strokes into lines wrongly, pick strokes on the sheet and move them to another line, or join two lines. The board checks the markup after every change, and its words show beside the fields. On a sheet with a planned erasure, the board takes the move of the eraser on the plan's line for it, and you check that too. The sheet is saved with every stroke's points, their time and pressure, and every erasure, as a sample in `samples/sheets`, outside git.
 
+Once the sheets are written and split into a development and a test part (`tutor-eval sheets`, then `tutor-eval split` once), the measurement runs on a part:
+
+```
+just measure -part dev
+```
+
+It first says how many calls the run makes and what they are expected to cost, and starts only when you type yes. It starts no call that could take it past its cap, $3 for the development part and $6 for the test, and logs every answer in `samples/runs`, outside git. With `-stub` it asks no model: a stub answers by the markup, and the run needs no key.
+
 How it works is section 3.3 of [docs/architecture.md](docs/architecture.md). The plan is [RUN.md](RUN.md); detailing, the first epic, waits for the measurement's conclusions.
 
 ## Documents

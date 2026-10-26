@@ -10,6 +10,7 @@ package judge
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -73,6 +74,26 @@ var (
 	bothBlock    = journalBlock + "\n\n" + framesBlock + "\n\nThe journal says which step each frame stands just before."
 )
 
+// The labels of the pictures and the text of a request around the task.
+const (
+	finalLabel = "Image 1: the sheet as the writer left it."
+	frameLabel = "Image %d: frame %d, the sheet just before an erasure."
+	textFormat = "Image 1 is %d pixels wide and %d pixels high.\nTask: %s\nCorrect answer: %s\nReference solution:\n%s"
+)
+
+// Fingerprint names the prompt of the measurement: the SHA-256 of every word a judge reads besides
+// those of the sheet and its task — the instructions of the four forms, the labels of the pictures,
+// the text round the task and the words of the journal. The log of a run keeps it, so that runs of
+// one prompt can be told from runs of another: the prompt is frozen before the test (T27).
+func Fingerprint() string {
+	words := []string{finalLabel, frameLabel, textFormat}
+	for _, f := range Forms {
+		words = append(words, f.Instructions())
+	}
+	words = append(words, journal.Words()...)
+	return fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join(words, "\x00"))))
+}
+
 // Instructions are the instructions of a form: the text every form has, and the block of the form.
 func (f Form) Instructions() string {
 	switch f {
@@ -135,17 +156,16 @@ func (f Form) Request(t *sample.Task, sh *Sheet) (provider.Request, error) {
 	case f.Frames() && len(sh.Frames) == 0:
 		return provider.Request{}, fmt.Errorf("judge: form %s shows frames, and the sheet has none", f)
 	}
-	images := []provider.Image{{Label: "Image 1: the sheet as the writer left it.", PNG: sh.Final}}
+	images := []provider.Image{{Label: finalLabel, PNG: sh.Final}}
 	if f.Frames() {
 		for i, png := range sh.Frames {
 			images = append(images, provider.Image{
-				Label: fmt.Sprintf("Image %d: frame %d, the sheet just before an erasure.", i+2, i+1),
+				Label: fmt.Sprintf(frameLabel, i+2, i+1),
 				PNG:   png,
 			})
 		}
 	}
-	text := fmt.Sprintf("Image 1 is %d pixels wide and %d pixels high.\nTask: %s\nCorrect answer: %s\nReference solution:\n%s",
-		sh.Width, sh.Height, t.Statement, t.Key, strings.Join(t.Solution, "\n"))
+	text := fmt.Sprintf(textFormat, sh.Width, sh.Height, t.Statement, t.Key, strings.Join(t.Solution, "\n"))
 	if f.Journal() {
 		text += "\n\n" + strings.TrimRight(sh.Journal.Text(f == FormD), "\n")
 	}
@@ -230,6 +250,63 @@ func Read(answer string) (*Answer, error) {
 		a.Box = &Box{X1: min(*b.X1, *b.X2), Y1: min(*b.Y1, *b.Y2), X2: max(*b.X1, *b.X2), Y2: max(*b.Y1, *b.Y2)}
 	}
 	return a, nil
+}
+
+// Margin is how far round a box the points of a line still count, in pixels (architecture 3.1).
+const Margin = 8
+
+// Hit is the line of a sample's markup a box hits: the line with the most points inside the box
+// and Margin round it, of the points still on the sheet, by its number. It is 0 when no line has
+// more points there than every other: none, or two with as many.
+func Hit(s *sample.Sample, b Box) int {
+	best, most, tie := 0, 0, false
+	for i, points := range linePoints(s) {
+		n := 0
+		for _, p := range points {
+			if p.X >= float64(b.X1-Margin) && p.X <= float64(b.X2+Margin) && p.Y >= float64(b.Y1-Margin) && p.Y <= float64(b.Y2+Margin) {
+				n++
+			}
+		}
+		switch {
+		case n > most:
+			best, most, tie = i+1, n, false
+		case n == most && n > 0:
+			tie = true
+		}
+	}
+	if tie {
+		return 0
+	}
+	return best
+}
+
+// Around is the box round the points of a line of a sample's markup, by its number: the box a judge
+// that is always right gives for a mistake on that line. A line without points has none.
+func Around(s *sample.Sample, line int) *Box {
+	var b *Box
+	for _, p := range linePoints(s)[line-1] {
+		x, y := int(p.X), int(p.Y)
+		if b == nil {
+			b = &Box{X1: x, Y1: y, X2: x, Y2: y}
+		}
+		b.X1, b.Y1, b.X2, b.Y2 = min(b.X1, x), min(b.Y1, y), max(b.X2, x+1), max(b.Y2, y+1)
+	}
+	return b
+}
+
+// linePoints are the points of each line of a sample's markup, which are all on the sheet.
+func linePoints(s *sample.Sample) [][]sample.Point {
+	byID := make(map[string][]sample.Point, len(s.Strokes))
+	for _, st := range s.Strokes {
+		byID[st.ID] = st.Points
+	}
+	out := make([][]sample.Point, len(s.Lines))
+	for i, l := range s.Lines {
+		for _, id := range l.Strokes {
+			out[i] = append(out[i], byID[id]...)
+		}
+	}
+	return out
 }
 
 // strict decodes one JSON object with no field it does not know.
