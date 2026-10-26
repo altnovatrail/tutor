@@ -159,6 +159,7 @@ func TestCheckRefusesBrokenSamples(t *testing.T) {
 		}, "lines[1].strokes[0]", "is erased"},
 		{"a stroke in two lines", sample.ScenarioCorrect, func(s *sample.Sample) { s.Lines[1].Strokes[0] = s.Lines[0].Strokes[0] }, "lines[1].strokes[0]", "already belongs to lines[0]"},
 		{"a line without its text", sample.ScenarioCorrect, func(s *sample.Sample) { s.Lines[0].Text = "" }, "lines[0].text", "is missing"},
+		{"a line without strokes", sample.ScenarioCorrect, func(s *sample.Sample) { s.Lines[0].Strokes = []string{} }, "lines[0].strokes", "are missing"},
 		{"two answers", sample.ScenarioCorrect, func(s *sample.Sample) { s.Lines[0].Answer = true }, "lines", "not 2"},
 		{"no answer", sample.ScenarioCorrect, func(s *sample.Sample) { s.Lines[2].Answer = false }, "lines", "not 0"},
 		{"a crossed-out answer", sample.ScenarioCorrect, func(s *sample.Sample) { s.Lines[2].CrossedOut = true }, "lines[2]", "crossed out"},

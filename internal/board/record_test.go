@@ -250,9 +250,6 @@ func TestRecordPropose(t *testing.T) {
 	if !reflect.DeepEqual(p.Lines, s.Lines) || !reflect.DeepEqual(p.Expected, s.Expected) || len(p.Differences) != 0 {
 		t.Errorf("the proposal = %+v, want the plan's markup on the strokes of each line", p)
 	}
-	if len(p.Bands) != 4 || p.Bands[0] != (Band{Top: 40, Bottom: 70}) || p.Bands[3] != (Band{Top: 310, Bottom: 340}) {
-		t.Errorf("bands = %+v, want each line's from its highest point to its lowest", p.Bands)
-	}
 
 	stray := sample.Stroke{ID: "s-stray", Points: []sample.Point{{X: 500, Y: 560, TMs: 9000, Pressure: 0.5}}}
 	_, out := call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: 2, Strokes: append(slices.Clone(s.Strokes), stray)})
@@ -295,11 +292,23 @@ func TestRecordProposeErasures(t *testing.T) {
 		}
 		return p, out
 	}
+	// erasureLines is the line the board names for each erasure of a sheet, as the page sees it in
+	// the answer to a check.
+	erasureLines := func(s *sample.Sample) []int {
+		t.Helper()
+		_, out := call(t, h, "POST", "/api/record/check", saveBody(sh.Number, raw(t, s)))
+		var got []int
+		for _, n := range out["erasure_lines"].([]any) {
+			got = append(got, int(n.(float64)))
+		}
+		return got
+	}
 
 	// The planned erasure on line 1, and a slip below every line and one on line 2.
-	p, _ := propose(slip(slip(erasing(written(sh), sh), "s-low", 560), "s-on-2", 150))
-	if !slices.Equal(p.ErasureLines, []int{1, 0, 2}) || p.Planned == nil || *p.Planned != 0 || len(p.Differences) != 0 {
-		t.Errorf("the proposal = lines %v, planned %v, differences %v; want lines 1, 0 and 2 and the first planned", p.ErasureLines, p.Planned, p.Differences)
+	three := slip(slip(erasing(written(sh), sh), "s-low", 560), "s-on-2", 150)
+	p, _ := propose(three)
+	if got := erasureLines(three); !slices.Equal(got, []int{1, 0, 2}) || p.Planned == nil || *p.Planned != 0 || len(p.Differences) != 0 {
+		t.Errorf("lines %v, planned %v, differences %v; want lines 1, 0 and 2 and the first planned", got, p.Planned, p.Differences)
 	}
 
 	// Two moves of the eraser that took as many strokes from line 1: the earlier is taken, and the
@@ -335,11 +344,13 @@ func TestRecordProposeErasures(t *testing.T) {
 		}
 		return s
 	}
-	if p, _ := propose(wide([]string{"x1", "x2", "y1", "y2"}, []string{"z1", "z2", "z3"})); !slices.Equal(p.ErasureLines, []int{1, 1}) || p.Planned == nil || *p.Planned != 1 {
-		t.Errorf("lines %v, planned %v; want both on line 1, the first by the higher of two lines as many, and the second, with three strokes from it, planned", p.ErasureLines, p.Planned)
+	first := wide([]string{"x1", "x2", "y1", "y2"}, []string{"z1", "z2", "z3"})
+	if p, _ := propose(first); !slices.Equal(erasureLines(first), []int{1, 1}) || p.Planned == nil || *p.Planned != 1 {
+		t.Errorf("lines %v, planned %v; want both on line 1, the first by the higher of two lines as many, and the second, with three strokes from it, planned", erasureLines(first), p.Planned)
 	}
-	if p, _ := propose(wide([]string{"x1", "y1", "y2"}, []string{"z1", "z2"})); !slices.Equal(p.ErasureLines, []int{2, 1}) || p.Planned == nil || *p.Planned != 1 {
-		t.Errorf("lines %v, planned %v; want the first on line 2 and the second, with two strokes from line 1, planned", p.ErasureLines, p.Planned)
+	second := wide([]string{"x1", "y1", "y2"}, []string{"z1", "z2"})
+	if p, _ := propose(second); !slices.Equal(erasureLines(second), []int{2, 1}) || p.Planned == nil || *p.Planned != 1 {
+		t.Errorf("lines %v, planned %v; want the first on line 2 and the second, with two strokes from line 1, planned", erasureLines(second), p.Planned)
 	}
 	if p, _ := propose(wide([]string{"x1", "x2"}, []string{"z1", "z2"})); p.Planned == nil || *p.Planned != 0 {
 		t.Errorf("planned %v; want the earlier of two that took as many", p.Planned)
@@ -364,8 +375,8 @@ func TestRecordProposeErasures(t *testing.T) {
 	plain := slip(erasing(written(rc.plan.Sheets[1]), sh), "s-low", 560)
 	plain.Erasures[0].Planned = nil
 	_, out = call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: 2, Strokes: plain.Strokes, Erasures: plain.Erasures})
-	if fmt.Sprint(out["erasure_lines"]) != "[1 0]" || out["planned"] != nil || len(out["differences"].([]any)) != 0 {
-		t.Errorf("the proposal for sheet 2 = %v, want the slips' lines and nothing planned", out)
+	if out["planned"] != nil || len(out["differences"].([]any)) != 0 {
+		t.Errorf("the proposal for sheet 2 = %v, want nothing planned and nothing named", out)
 	}
 }
 
@@ -397,8 +408,9 @@ func TestRecordSaveErasure(t *testing.T) {
 	}
 	noted(t, out["differences"], "sample.erasures[0].planned.line", "is 2, and the plan sheet's 1")
 	noted(t, out["differences"], "sample.erasures[0].planned.text", `is "57", and the plan sheet's "56"`)
-	if n := len(out["differences"].([]any)); n != 2 {
-		t.Errorf("differences = %v, want two", out["differences"])
+	noted(t, out["differences"], "sample.erasures[0].planned.line", "is 2, but the erasure took its strokes from line 1")
+	if n := len(out["differences"].([]any)); n != 3 {
+		t.Errorf("differences = %v, want three", out["differences"])
 	}
 }
 
@@ -439,6 +451,73 @@ func TestRecordSave(t *testing.T) {
 	}
 	if names := files(t, rc.dir); len(names) != 2 || !slices.IsSorted(names) || names[1] != out["file"] {
 		t.Errorf("the directory holds %q, want the second save last by name", names)
+	}
+}
+
+// A check reads a sheet as a save would and answers its problems, or how it differs from its plan
+// sheet, and it writes nothing.
+func TestRecordCheck(t *testing.T) {
+	rc, h := recorder(t)
+	check := func(number int, s string) (int, map[string]any) {
+		t.Helper()
+		rec, out := call(t, h, "POST", "/api/record/check", saveBody(number, s))
+		return rec.Code, out
+	}
+	good := written(rc.plan.Sheets[1])
+	if code, out := check(2, raw(t, good)); code != http.StatusOK || len(out["problems"].([]any)) != 0 || len(out["differences"].([]any)) != 0 {
+		t.Errorf("a check of a good sheet = %d %v, want neither problems nor differences", code, out)
+	}
+	good.Lines[1].Text = "3x = 7 - 1"
+	code, out := check(2, raw(t, good))
+	noted(t, out["differences"], "sample.lines[1].text", `is "3x = 7 - 1", and the plan sheet's line 2 is "3x = 7 + 1"`)
+	if code != http.StatusOK || len(out["problems"].([]any)) != 0 {
+		t.Errorf("a check of a sheet off its plan = %d %v, want its differences only", code, out)
+	}
+	broken := written(rc.plan.Sheets[1])
+	broken.Lines[3].Answer = false
+	code, out = check(2, raw(t, broken))
+	noted(t, out["problems"], "sample.lines", "one line is the answer, not 0")
+	if code != http.StatusOK || len(out["differences"].([]any)) != 0 {
+		t.Errorf("a check of a broken sheet = %d %v, want its problems only", code, out)
+	}
+	_, out = call(t, h, "POST", "/api/record/check", map[string]any{"number": 2})
+	noted(t, out["problems"], "sample", "is missing")
+	if rec, out := call(t, h, "POST", "/api/record/check", saveBody(7, raw(t, good))); rec.Code != http.StatusUnprocessableEntity {
+		t.Errorf("a check of no sheet = %d %v, want 422", rec.Code, out)
+	}
+	if names := files(t, rc.dir); len(names) != 0 {
+		t.Errorf("a check left %q in the directory", names)
+	}
+}
+
+// The check names each erasure's line by the bands of the lines as the markup has them, the higher
+// on the sheet of two that hold as many, whatever their order in the markup and whatever its
+// problems.
+func TestRecordCheckErasureLines(t *testing.T) {
+	rc, h := recorder(t)
+	sh := rc.plan.Sheets[2]
+	lineOf := func(s *sample.Sample) string {
+		t.Helper()
+		_, out := call(t, h, "POST", "/api/record/check", saveBody(sh.Number, raw(t, s)))
+		return fmt.Sprint(out["erasure_lines"])
+	}
+	s := slip(erasing(written(sh), sh), "s-low", 560)
+	if got := lineOf(s); got != "[1 0]" {
+		t.Errorf("erasure lines = %s, want [1 0]", got)
+	}
+	// A stroke from the bottom of line 1 to the top of line 2 shares as much with each, and the
+	// lines stand bottom first in the markup: the higher line on the sheet is named, line 2 there.
+	between := written(sh)
+	between.Lines[0], between.Lines[1] = between.Lines[1], between.Lines[0]
+	between.Strokes = append(between.Strokes, sample.Stroke{ID: "s-between", Points: []sample.Point{
+		{X: 500, Y: 70, TMs: 90_000, Pressure: 0.5}, {X: 500, Y: 130, TMs: 90_010, Pressure: 0.5}}})
+	between.Erasures = []sample.Erasure{{TMs: 90_100, Strokes: []string{"s-between"}}}
+	if got := lineOf(between); got != "[2]" {
+		t.Errorf("erasure lines = %s, want [2]: the line higher on the sheet", got)
+	}
+	_, out := call(t, h, "POST", "/api/record/check", saveBody(sh.Number, raw(t, between)))
+	if len(out["problems"].([]any)) == 0 {
+		t.Errorf("the check of markup with the lines swapped = %v, want its problems too", out)
 	}
 }
 
