@@ -22,7 +22,7 @@ import (
 func intp(n int) *int { return &n }
 
 // recordPlan returns a new plan of three sheets on the synthetic bank: a correct one, one with an
-// error, and one with a planned erasure, which the board cannot save yet.
+// error, and one with a planned erasure.
 func recordPlan() *sample.Plan {
 	v := sample.Version
 	return &sample.Plan{Format: sample.PlanFormat, Version: &v, Sheets: []sample.PlanSheet{
@@ -84,6 +84,32 @@ func written(sh sample.PlanSheet) *sample.Sample {
 	return s
 }
 
+// erasing adds to a written sheet the erasure its plan sheet plans: a stroke on the plan's line,
+// written after the rest, and one move of the eraser that takes it away, with the plan's markup.
+func erasing(s *sample.Sample, sh sample.PlanSheet) *sample.Sample {
+	last := s.Strokes[len(s.Strokes)-1].Points
+	at := last[len(last)-1].TMs + 300
+	y := 40 + 90*float64(sh.Erasure.Line-1) + 10
+	s.Strokes = append(s.Strokes, sample.Stroke{ID: "s-erased", Points: []sample.Point{
+		{X: 300, Y: y, TMs: at, Pressure: 0.5}, {X: 330, Y: y + 5, TMs: at + 20, Pressure: 0.5}}})
+	s.Erasures = append(s.Erasures, sample.Erasure{TMs: at + 500, Strokes: []string{"s-erased"},
+		Planned: &sample.PlannedErasure{Line: sh.Erasure.Line, Erased: sh.Erasure.Erased, Text: sh.Erasure.Text}})
+	return s
+}
+
+// slip adds a stroke at the height y, written after the rest, and an erasure that takes it away.
+func slip(s *sample.Sample, id string, y float64) *sample.Sample {
+	last := s.Strokes[len(s.Strokes)-1].Points
+	at := last[len(last)-1].TMs
+	for _, e := range s.Erasures {
+		at = max(at, e.TMs)
+	}
+	at += 300
+	s.Strokes = append(s.Strokes, sample.Stroke{ID: id, Points: []sample.Point{{X: 600, Y: y, TMs: at, Pressure: 0.5}}})
+	s.Erasures = append(s.Erasures, sample.Erasure{TMs: at + 100, Strokes: []string{id}})
+	return s
+}
+
 // raw is a sample as JSON, without spaces.
 func raw(t *testing.T, s *sample.Sample) string {
 	t.Helper()
@@ -135,7 +161,9 @@ func TestRecordPage(t *testing.T) {
 	if rec.Code != http.StatusOK || !strings.HasPrefix(rec.Header().Get("Content-Type"), "text/html") || !strings.Contains(page, "<title>Record sheets</title>") {
 		t.Fatalf("GET / = %d %s, want the record page", rec.Code, rec.Header().Get("Content-Type"))
 	}
-	for _, want := range []string{`<html lang="en">`, `<canvas id="sheet" width="1000" height="600"`, `<canvas id="bands" width="1000" height="600">`} {
+	// A hidden part of the form stays hidden whatever its class lays out.
+	for _, want := range []string{`<html lang="en">`, `<canvas id="sheet" width="1000" height="600"`, `<canvas id="bands" width="1000" height="600">`,
+		`[hidden] { display: none !important; }`} {
 		if !strings.Contains(page, want) {
 			t.Errorf("the page does not hold %s", want)
 		}
@@ -182,12 +210,12 @@ func TestRecordPlanView(t *testing.T) {
 	}
 	var got []string
 	for _, sh := range view.Sheets {
-		got = append(got, fmt.Sprintf("%d %s %s: %q, saveable %v %q, saved %d", sh.Number, sh.Task, sh.Scenario, sh.Statement, sh.Saveable, sh.Why, sh.Saved))
+		got = append(got, fmt.Sprintf("%d %s %s: %q, saved %d", sh.Number, sh.Task, sh.Scenario, sh.Statement, sh.Saved))
 	}
 	want := []string{
-		`1 synthetic-linear-01 correct: "Реши уравнение 3x + 1 = 7.", saveable true "", saved 2`,
-		`2 synthetic-linear-01 error: "Реши уравнение 3x + 1 = 7.", saveable true "", saved 0`,
-		`3 synthetic-calculation-01 erasure-fixed: "Вычисли (47 + 19) : 6.", saveable false "the sheet has a planned erasure, and the board does not mark erasures yet", saved 0`,
+		`1 synthetic-linear-01 correct: "Реши уравнение 3x + 1 = 7.", saved 2`,
+		`2 synthetic-linear-01 error: "Реши уравнение 3x + 1 = 7.", saved 0`,
+		`3 synthetic-calculation-01 erasure-fixed: "Вычисли (47 + 19) : 6.", saved 0`,
 	}
 	if !slices.Equal(got, want) {
 		t.Errorf("the plan sheets:\n%s\nwant:\n%s", strings.Join(got, "\n"), strings.Join(want, "\n"))
@@ -249,6 +277,129 @@ func TestRecordPropose(t *testing.T) {
 		t.Errorf("a proposal for no sheet = %d, want 422", rec.Code)
 	}
 	noted(t, out["problems"], "number", "4 is not a sheet of the plan, 1…3")
+}
+
+// For each erasure the board names the line most of its strokes stood on. On a sheet with a planned
+// erasure it takes for it the move of the eraser that took the most strokes from the plan's line,
+// the earlier of two that took as many, and never what Undo took away. It names a sheet with no
+// move of the eraser, and one where more than one took strokes from the plan's line.
+func TestRecordProposeErasures(t *testing.T) {
+	rc, h := recorder(t)
+	sh := rc.plan.Sheets[2]
+	propose := func(s *sample.Sample, undone ...bool) (Proposal, map[string]any) {
+		t.Helper()
+		rec, out := call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: sh.Number, Strokes: s.Strokes, Erasures: s.Erasures, Undone: undone})
+		var p Proposal
+		if err := json.Unmarshal(rec.Body.Bytes(), &p); err != nil || rec.Code != http.StatusOK {
+			t.Fatalf("propose = %d %s", rec.Code, rec.Body)
+		}
+		return p, out
+	}
+
+	// The planned erasure on line 1, and a slip below every line and one on line 2.
+	p, _ := propose(slip(slip(erasing(written(sh), sh), "s-low", 560), "s-on-2", 150))
+	if !slices.Equal(p.ErasureLines, []int{1, 0, 2}) || p.Planned == nil || *p.Planned != 0 || len(p.Differences) != 0 {
+		t.Errorf("the proposal = lines %v, planned %v, differences %v; want lines 1, 0 and 2 and the first planned", p.ErasureLines, p.Planned, p.Differences)
+	}
+
+	// Two moves of the eraser that took as many strokes from line 1: the earlier is taken, and the
+	// sheet is named. Made by Undo, the second does not count.
+	two := slip(erasing(written(sh), sh), "s-again", 50)
+	p, out := propose(two)
+	if p.Planned == nil || *p.Planned != 0 {
+		t.Errorf("planned = %v, want the earlier of two moves that took as many strokes from line 1", p.Planned)
+	}
+	noted(t, out["differences"], "sample.erasures", "2 moves of the eraser took strokes from line 1, and the planned erasure is one move")
+	if p, _ := propose(two, false, true); p.Planned == nil || *p.Planned != 0 || len(p.Differences) != 0 {
+		t.Errorf("with the second by Undo: planned %v, differences %v; want the first and nothing named", p.Planned, p.Differences)
+	}
+	if p, _ := propose(two, true, false); p.Planned == nil || *p.Planned != 1 {
+		t.Errorf("with the first by Undo: planned %v, want the second", p.Planned)
+	}
+
+	// The move that took the most strokes from the plan's line, counted stroke by stroke. Extra
+	// strokes on lines 1 and 2 are taken away, and the lines of the strokes left stay the plan's.
+	wide := func(moves ...[]string) *sample.Sample {
+		s := written(sh)
+		at := int64(50_000)
+		for _, st := range []struct {
+			id string
+			y  float64
+		}{{"x1", 50}, {"x2", 52}, {"y1", 140}, {"y2", 142}, {"z1", 54}, {"z2", 56}, {"z3", 58}} {
+			s.Strokes = append(s.Strokes, sample.Stroke{ID: st.id, Points: []sample.Point{{X: 700, Y: st.y, TMs: at, Pressure: 0.5}}})
+			at += 100
+		}
+		for _, m := range moves {
+			at += 100
+			s.Erasures = append(s.Erasures, sample.Erasure{TMs: at, Strokes: m})
+		}
+		return s
+	}
+	if p, _ := propose(wide([]string{"x1", "x2", "y1", "y2"}, []string{"z1", "z2", "z3"})); !slices.Equal(p.ErasureLines, []int{1, 1}) || p.Planned == nil || *p.Planned != 1 {
+		t.Errorf("lines %v, planned %v; want both on line 1, the first by the higher of two lines as many, and the second, with three strokes from it, planned", p.ErasureLines, p.Planned)
+	}
+	if p, _ := propose(wide([]string{"x1", "y1", "y2"}, []string{"z1", "z2"})); !slices.Equal(p.ErasureLines, []int{2, 1}) || p.Planned == nil || *p.Planned != 1 {
+		t.Errorf("lines %v, planned %v; want the first on line 2 and the second, with two strokes from line 1, planned", p.ErasureLines, p.Planned)
+	}
+	if p, _ := propose(wide([]string{"x1", "x2"}, []string{"z1", "z2"})); p.Planned == nil || *p.Planned != 0 {
+		t.Errorf("planned %v; want the earlier of two that took as many", p.Planned)
+	}
+
+	// No erasure at all, or only Undo's: no move of the eraser, and the sheet is named. Moves that
+	// took nothing from the plan's line: nothing planned, and the page asks to pick one.
+	_, out = propose(written(sh))
+	noted(t, out["differences"], "sample.erasures", "the sheet has no move of the eraser, and its plan sheet plans an erasure on line 1")
+	if out["planned"] != nil {
+		t.Errorf("planned = %v on a sheet without erasures, want null", out["planned"])
+	}
+	_, out = propose(erasing(written(sh), sh), true)
+	noted(t, out["differences"], "sample.erasures", "Undo makes slips only")
+	elsewhere := written(sh)
+	elsewhere.Erasures = []sample.Erasure{{TMs: 100_000, Strokes: []string{"s-6"}}}
+	if p, _ := propose(elsewhere); p.Planned != nil || len(p.Differences) != 0 {
+		t.Errorf("planned %v, differences %v; want nothing planned and nothing named", p.Planned, p.Differences)
+	}
+
+	// A sheet without a planned erasure: its slips have lines, and nothing is planned.
+	plain := slip(erasing(written(rc.plan.Sheets[1]), sh), "s-low", 560)
+	plain.Erasures[0].Planned = nil
+	_, out = call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: 2, Strokes: plain.Strokes, Erasures: plain.Erasures})
+	if fmt.Sprint(out["erasure_lines"]) != "[1 0]" || out["planned"] != nil || len(out["differences"].([]any)) != 0 {
+		t.Errorf("the proposal for sheet 2 = %v, want the slips' lines and nothing planned", out)
+	}
+}
+
+// A sheet with its planned erasure is saved, and a planned erasure other than the plan's is named.
+func TestRecordSaveErasure(t *testing.T) {
+	rc, h := recorder(t)
+	sh := rc.plan.Sheets[2]
+	s := slip(erasing(written(sh), sh), "s-low", 560)
+	rec, out := call(t, h, "POST", "/api/record/save", saveBody(3, raw(t, s)))
+	if rec.Code != http.StatusOK || out["file"] != "03-20261026-101530-123-synthetic-calculation-01-erasure-fixed.json" || len(out["differences"].([]any)) != 0 {
+		t.Fatalf("save = %d %v, want the file of sheet 3 without differences", rec.Code, out)
+	}
+	data, err := os.ReadFile(filepath.Join(rc.dir, out["file"].(string)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	back, err := sample.ReadSample(bytes.NewReader(data))
+	if err == nil {
+		err = back.CheckWithBank(rc.bank)
+	}
+	if err != nil || !reflect.DeepEqual(back, s) {
+		t.Errorf("the saved file = %v; want the sample sent, passing the check with the bank", err)
+	}
+
+	s.Erasures[0].Planned = &sample.PlannedErasure{Line: 2, Erased: sample.ErasedMistake, Text: "57"}
+	rec, out = call(t, h, "POST", "/api/record/save", saveBody(3, raw(t, s)))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("save = %d %s", rec.Code, rec.Body)
+	}
+	noted(t, out["differences"], "sample.erasures[0].planned.line", "is 2, and the plan sheet's 1")
+	noted(t, out["differences"], "sample.erasures[0].planned.text", `is "57", and the plan sheet's "56"`)
+	if n := len(out["differences"].([]any)); n != 2 {
+		t.Errorf("differences = %v, want two", out["differences"])
+	}
 }
 
 // A saved sheet is a new file, named by its plan sheet, the time and its task and scenario, that
@@ -345,7 +496,7 @@ func TestRecordSaveRefuses(t *testing.T) {
 		{"another sheet", saveBody(1, edit(written(rc.plan.Sheets[0]), func(s *sample.Sample) { s.Sheet.Height = 1400 })), "sample.sheet", "not the board's 1000 × 600"},
 		{"a trap of another task", saveBody(2, strings.Replace(withError, `"trap":"sign-on-transfer"`, `"trap":"arithmetic"`, 1)), "sample.expected.trap", "not a trap of the task"},
 		{"no such sheet", saveBody(9, correct), "number", "9 is not a sheet of the plan"},
-		{"a sheet with a planned erasure", saveBody(3, correct), "number", "sheet 3 cannot be saved yet: the sheet has a planned erasure"},
+		{"an erasure scenario without its planned erasure", saveBody(3, raw(t, written(rc.plan.Sheets[2]))), "sample.erasures", "one planned erasure, not 0"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

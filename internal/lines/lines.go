@@ -1,6 +1,7 @@
 // Package lines finds the lines of a sheet: the strokes that stand at one height, told apart by
 // the gaps between them down the sheet. The record mode of the board proposes a sheet's lines with
-// it (R25), and the journal of the writing process is to group the strokes with it too.
+// it and finds on which line an erasure took its strokes (R25), and the journal of the writing
+// process is to group the strokes with it too.
 package lines
 
 import (
@@ -35,15 +36,9 @@ func Group(strokes []sample.Stroke, gap float64) []Line {
 	}
 	bands := make([]band, 0, len(strokes))
 	for i, s := range strokes {
-		if len(s.Points) == 0 {
-			continue
+		if top, bottom, ok := Band(s); ok {
+			bands = append(bands, band{order: i, id: s.ID, top: top, bottom: bottom})
 		}
-		b := band{order: i, id: s.ID, top: s.Points[0].Y, bottom: s.Points[0].Y}
-		for _, p := range s.Points[1:] {
-			b.top = min(b.top, p.Y)
-			b.bottom = max(b.bottom, p.Y)
-		}
-		bands = append(bands, b)
 	}
 	slices.SortStableFunc(bands, func(a, b band) int { return cmp.Compare(a.top, b.top) })
 
@@ -65,4 +60,33 @@ func Group(strokes []sample.Stroke, gap float64) []Line {
 		}
 	}
 	return lines
+}
+
+// Band returns the band of the sheet strokes take together, from their highest point down to their
+// lowest; ok is false when they have no points.
+func Band(strokes ...sample.Stroke) (top, bottom float64, ok bool) {
+	for _, s := range strokes {
+		for _, p := range s.Points {
+			if !ok {
+				top, bottom, ok = p.Y, p.Y, true
+				continue
+			}
+			top, bottom = min(top, p.Y), max(bottom, p.Y)
+		}
+	}
+	return top, bottom, ok
+}
+
+// On returns the index of the line a band of the sheet stands on: the line it overlaps the most, or
+// else the nearest one, less than gap away; -1 when it stands on none. Of two lines it overlaps as
+// much, the higher one is taken.
+func On(top, bottom float64, ls []Line, gap float64) int {
+	best, most := -1, -gap
+	for i, l := range ls {
+		// overlap is how much of the band the line shares, or, below 0, how far apart the two stand.
+		if overlap := min(bottom, l.Bottom) - max(top, l.Top); overlap > most {
+			best, most = i, overlap
+		}
+	}
+	return best
 }
