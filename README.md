@@ -26,6 +26,14 @@ just board
 
 It asks for the Anthropic and OpenAI keys for eval without showing them, so no key lands in the shell's history; Enter skips a model. When the terminal says the board is at http://127.0.0.1:8080, open that address, or the one the Ports tab of VS Code shows if it forwarded the port under another number. Until then the page only keeps loading: VS Code forwards the port, but nothing answers on it yet.
 
+The measurement's sheets are written in the board's record mode, which asks no model and so needs no key:
+
+```
+just record
+```
+
+Pick a sheet of the plan, write what it shows with a pen or a mouse, press Done, check the markup the plan filled in and press Save. The sheet is saved with every stroke's points, their time and pressure, and every erasure, as a sample in `samples/sheets`, outside git. A sheet with a planned erasure can be saved once the board marks erasures.
+
 How it works is section 3.3 of [docs/architecture.md](docs/architecture.md). The plan is [RUN.md](RUN.md); detailing, the first epic, waits for the measurement's conclusions.
 
 ## Documents

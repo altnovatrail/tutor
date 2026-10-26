@@ -31,8 +31,23 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-//go:embed page.html
-var page embed.FS
+// The pages of the board's two modes: the check board's and the record mode's.
+//
+//go:embed page.html record.html
+var pages embed.FS
+
+// servePage answers with one of the board's pages, read once. The pages are embedded, so a name
+// without a page is a mistake in this package's code.
+func servePage(name string) http.HandlerFunc {
+	data, err := pages.ReadFile(name)
+	if err != nil {
+		panic("board: " + err.Error())
+	}
+	return func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		_, _ = w.Write(data)
+	}
+}
 
 // Limits of a try: the size of the request and of the picture, and how long the models may take —
 // long enough that at the top effort levels the output limit, not the clock, ends a long answer.
@@ -212,11 +227,7 @@ func (s *Server) mark(model, attempt string, right bool) {
 // for the message that turns a request away.
 func (s *Server) Handler(addr string) http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, _ *http.Request) {
-		data, _ := page.ReadFile("page.html")
-		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		_, _ = w.Write(data)
-	})
+	mux.HandleFunc("GET /{$}", servePage("page.html"))
 	mux.HandleFunc("GET /api/tasks", func(w http.ResponseWriter, _ *http.Request) { writeJSON(w, http.StatusOK, Tasks) })
 	mux.HandleFunc("GET /api/models", func(w http.ResponseWriter, _ *http.Request) { writeJSON(w, http.StatusOK, s.offers()) })
 	mux.HandleFunc("GET /api/summary", func(w http.ResponseWriter, _ *http.Request) { writeJSON(w, http.StatusOK, s.summary()) })

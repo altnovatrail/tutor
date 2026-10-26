@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"reflect"
+	"regexp"
 	"slices"
 	"strings"
 	"testing"
@@ -124,11 +125,35 @@ func noted(t *testing.T, notes any, path, want string) {
 	t.Errorf("no note at %q holding %q in %v", path, want, notes)
 }
 
+// The record page is the board's sheet, 1000 × 600, in English but for the statement, which is in
+// Russian. Every field of its markup has a label, and no canvas is hidden from a screen reader:
+// SonarCloud reads the page as it stands (Web:S6825).
 func TestRecordPage(t *testing.T) {
 	_, h := recorder(t)
 	rec, _ := call(t, h, "GET", "/", nil)
-	if rec.Code != http.StatusOK || !strings.Contains(rec.Body.String(), "POST /api/record/save") {
-		t.Errorf("GET / = %d %q, want the note on what the record mode answers", rec.Code, rec.Body)
+	page := rec.Body.String()
+	if rec.Code != http.StatusOK || !strings.HasPrefix(rec.Header().Get("Content-Type"), "text/html") || !strings.Contains(page, "<title>Record sheets</title>") {
+		t.Fatalf("GET / = %d %s, want the record page", rec.Code, rec.Header().Get("Content-Type"))
+	}
+	for _, want := range []string{`<html lang="en">`, `<canvas id="sheet" width="1000" height="600"`, `<canvas id="bands" width="1000" height="600">`} {
+		if !strings.Contains(page, want) {
+			t.Errorf("the page does not hold %s", want)
+		}
+	}
+	if !regexp.MustCompile(`<p id="statement"[^>]*\blang="ru"`).MatchString(page) {
+		t.Error("the statement is not marked as Russian")
+	}
+	if strings.Contains(page, "aria-hidden") {
+		t.Error("the page hides an element from a screen reader")
+	}
+	fields := regexp.MustCompile(`<(?:input|select|textarea)\b[^>]*\bid="([^"]+)"[^>]*>`).FindAllStringSubmatch(page, -1)
+	if len(fields) < 3 {
+		t.Fatalf("the page's markup holds %d fields, want the outcome, the first error and the trap", len(fields))
+	}
+	for _, f := range fields {
+		if !strings.Contains(page, `<label for="`+f[1]+`"`) && !strings.Contains(f[0], "aria-label=") {
+			t.Errorf("the field %s has no label", f[1])
+		}
 	}
 }
 
@@ -169,6 +194,15 @@ func TestRecordPlanView(t *testing.T) {
 	}
 	if !reflect.DeepEqual(view.Sheets[1].PlanSheet, rc.plan.Sheets[1]) {
 		t.Errorf("plan sheet 2 = %+v, want it as the plan has it", view.Sheets[1].PlanSheet)
+	}
+	// Each sheet carries its task's traps, for the page's choice of the trap a mistake falls into.
+	for _, sh := range view.Sheets {
+		if want := synth.Bank().Task(sh.Task).Traps; len(want) == 0 || !reflect.DeepEqual(sh.Traps, want) {
+			t.Errorf("sheet %d: traps %+v, want its task's %+v", sh.Number, sh.Traps, want)
+		}
+	}
+	if !strings.Contains(rec.Body.String(), `"traps":[{"id":"sign-on-transfer"`) {
+		t.Errorf("GET /api/record/plan = %s, want the traps with their IDs", rec.Body)
 	}
 }
 
