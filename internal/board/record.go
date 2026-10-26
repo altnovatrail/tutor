@@ -2,6 +2,7 @@ package board
 
 import (
 	"bytes"
+	"cmp"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,6 +11,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"sync"
 	"time"
@@ -84,6 +86,7 @@ func (rc *Recorder) Handler(addr string) http.Handler {
 	mux.HandleFunc("GET /{$}", servePage("record.html"))
 	mux.HandleFunc("GET /api/record/plan", rc.planHandler)
 	mux.HandleFunc("POST /api/record/propose", rc.propose)
+	mux.HandleFunc("POST /api/record/check", rc.check)
 	mux.HandleFunc("POST /api/record/save", rc.save)
 	return guard(addr, mux)
 }
@@ -190,29 +193,18 @@ type ProposeRequest struct {
 
 // Proposal is the markup the board proposes for a sheet. Its lines are found among the strokes
 // still on the sheet, by the gaps between them (lines.Group), and take the texts and the answer of
-// the plan sheet's lines in their order. With them come the band of the sheet each line takes,
-// for the page to draw, the plan sheet's outcome, and how the sheet differs from its plan sheet,
-// such as by a line more.
+// the plan sheet's lines in their order. With them come the plan sheet's outcome and how the sheet
+// differs from its plan sheet, such as by a line more.
 //
-// ErasureLines says, for each erasure of the request in its order, on which of the lines found
-// most of its strokes stood (lines.On): the line's number, the higher of two that hold as many, or
-// 0 when none of them stood on a line. On a sheet whose plan sheet plans an erasure, Planned is
-// the index of the erasure the board takes for it: of the moves of the eraser, the one that took
-// the most strokes from the plan's line, the earlier of two that took as many. Planned is null
-// when none took any.
+// On a sheet whose plan sheet plans an erasure, Planned is the index of the erasure the board
+// takes for it: of the moves of the eraser, the one that took the most strokes from the plan's
+// line, the earlier of two that took as many. A stroke stood on the line its band stands on
+// (lines.On). Planned is null when none took any.
 type Proposal struct {
-	Lines        []sample.Line   `json:"lines"`
-	Bands        []Band          `json:"bands"`
-	Expected     sample.Expected `json:"expected"`
-	ErasureLines []int           `json:"erasure_lines"`
-	Planned      *int            `json:"planned"`
-	Differences  []Note          `json:"differences"`
-}
-
-// Band is the stretch of the sheet a line takes, from its highest point down to its lowest.
-type Band struct {
-	Top    float64 `json:"top"`
-	Bottom float64 `json:"bottom"`
+	Lines       []sample.Line   `json:"lines"`
+	Expected    sample.Expected `json:"expected"`
+	Planned     *int            `json:"planned"`
+	Differences []Note          `json:"differences"`
 }
 
 func (rc *Recorder) propose(w http.ResponseWriter, r *http.Request) {
@@ -241,13 +233,12 @@ func (rc *Recorder) propose(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	found := lines.Group(onSheet, lines.Gap)
-	p := Proposal{Lines: make([]sample.Line, len(found)), Bands: make([]Band, len(found)), Expected: sh.Expected, Differences: []Note{}}
+	p := Proposal{Lines: make([]sample.Line, len(found)), Expected: sh.Expected, Differences: []Note{}}
 	for i, l := range found {
 		p.Lines[i] = sample.Line{Strokes: l.Strokes, Answer: i+1 == sh.Answer}
 		if i < len(sh.Lines) {
 			p.Lines[i].Text = sh.Lines[i]
 		}
-		p.Bands[i] = Band{Top: l.Top, Bottom: l.Bottom}
 	}
 	switch n, want := len(found), len(sh.Lines); {
 	case n == 0:
@@ -257,13 +248,8 @@ func (rc *Recorder) propose(w http.ResponseWriter, r *http.Request) {
 	case n < want:
 		p.Differences = append(p.Differences, Note{"sample.lines", fmt.Sprintf("the sheet has %d lines, and its plan sheet %d: a long stroke may join two lines, or a line is not written", n, want)})
 	}
-	taken := takenFrom(byID, req.Erasures, found)
-	p.ErasureLines = make([]int, len(taken))
-	for i, t := range taken {
-		p.ErasureLines[i] = t.line
-	}
 	if pe := sh.Erasure; pe != nil {
-		p.Planned, p.Differences = plannedOf(taken, req.Undone, pe.Line, p.Differences)
+		p.Planned, p.Differences = plannedOf(takenFrom(byID, req.Erasures, found), req.Undone, pe.Line, p.Differences)
 	}
 	writeJSON(w, http.StatusOK, p)
 }
@@ -342,6 +328,63 @@ type Saved struct {
 	Differences []Note `json:"differences"`
 }
 
+// Checked is what a check of a sheet found: the problems that would keep it from being saved, and
+// how its markup differs from its plan sheet; a sheet with problems has no differences named.
+// ErasureLines says, for each erasure in its order, on which line of the markup most of its
+// strokes stood, the higher of two that hold as many, or 0 when none did: the page shows it by the
+// erasure, and gives it whatever the markup's problems.
+type Checked struct {
+	Problems     []Note `json:"problems"`
+	Differences  []Note `json:"differences"`
+	ErasureLines []int  `json:"erasure_lines"`
+}
+
+// check reads a sheet's sample as a save would, and answers what keeps it from being saved and how
+// it differs from its plan sheet, without saving it. The page asks after every change of the
+// markup, so that each rule of the format comes in words before the save.
+func (rc *Recorder) check(w http.ResponseWriter, r *http.Request) {
+	var req SaveRequest
+	if !readJSON(w, r, &req) {
+		return
+	}
+	sh := rc.sheet(w, req.Number)
+	if sh == nil {
+		return
+	}
+	c := Checked{Problems: []Note{}, Differences: []Note{}, ErasureLines: []int{}}
+	if s, problems := rc.examine(sh, req.Sample); len(problems) > 0 {
+		c.Problems = problems
+	} else {
+		c.Differences = differences(sh, s)
+	}
+	// The lines of the erasures are geometry, not rules: they come from the markup as it is, even
+	// one the format refuses.
+	var loose sample.Sample
+	if json.Unmarshal(req.Sample, &loose) == nil {
+		for _, e := range loose.Erasures {
+			c.ErasureLines = append(c.ErasureLines, fromLine(&loose, e))
+		}
+	}
+	writeJSON(w, http.StatusOK, c)
+}
+
+// examine reads the sample sent for a plan sheet with the format's strict reader and checks it on
+// its own, against the plan sheet and against the bank. It returns the sample, or every problem
+// it found at its path in the request.
+func (rc *Recorder) examine(sh *sample.PlanSheet, raw json.RawMessage) (*sample.Sample, []Note) {
+	if len(raw) == 0 {
+		return nil, []Note{{"sample", "is missing: the sample document of the sheet"}}
+	}
+	s, err := sample.ReadSample(bytes.NewReader(raw))
+	if err != nil {
+		return nil, notesOf(err)
+	}
+	if problems := rc.against(sh, s); len(problems) > 0 {
+		return nil, problems
+	}
+	return s, nil
+}
+
 func (rc *Recorder) save(w http.ResponseWriter, r *http.Request) {
 	var req SaveRequest
 	if !readJSON(w, r, &req) {
@@ -351,16 +394,8 @@ func (rc *Recorder) save(w http.ResponseWriter, r *http.Request) {
 	if sh == nil {
 		return
 	}
-	if len(req.Sample) == 0 {
-		refuse(w, Note{"sample", "is missing: the sample document of the sheet"})
-		return
-	}
-	s, err := sample.ReadSample(bytes.NewReader(req.Sample))
-	if err != nil {
-		refuse(w, notesOf(err)...)
-		return
-	}
-	if problems := rc.against(sh, s); len(problems) > 0 {
+	s, problems := rc.examine(sh, req.Sample)
+	if len(problems) > 0 {
 		refuse(w, problems...)
 		return
 	}
@@ -473,9 +508,48 @@ func differences(sh *sample.PlanSheet, s *sample.Sample) []Note {
 			if er.Planned.Text != pe.Text {
 				add(path+".text", "is %q, and the plan sheet's %q", er.Planned.Text, pe.Text)
 			}
+			if from := fromLine(s, er); from != er.Planned.Line {
+				add(path+".line", "is %d, but the erasure took its strokes from %s", er.Planned.Line, lineOrNone(from))
+			}
 		}
 	}
 	return notes
+}
+
+// fromLine is the number of the sample's line that most of an erasure's strokes stood on, by the
+// bands of the lines (lines.On), the higher on the sheet of two that hold as many, or 0 when none
+// of them stood on a line. The sample's lines need not stand in order down the sheet.
+func fromLine(s *sample.Sample, e sample.Erasure) int {
+	byID := make(map[string]sample.Stroke, len(s.Strokes))
+	for _, st := range s.Strokes {
+		byID[st.ID] = st
+	}
+	// found holds the lines with a band, top to bottom; number gives each its number in the sample.
+	var found []lines.Line
+	var number []int
+	for i, l := range s.Lines {
+		var strokes []sample.Stroke
+		for _, id := range l.Strokes {
+			strokes = append(strokes, byID[id])
+		}
+		if top, bottom, ok := lines.Band(strokes...); ok {
+			found = append(found, lines.Line{Top: top, Bottom: bottom})
+			number = append(number, i+1)
+		}
+	}
+	order := make([]int, len(found))
+	for i := range order {
+		order[i] = i
+	}
+	slices.SortStableFunc(order, func(a, b int) int { return cmp.Compare(found[a].Top, found[b].Top) })
+	sorted := make([]lines.Line, len(found))
+	for i, at := range order {
+		sorted[i] = found[at]
+	}
+	if n := takenFrom(byID, []sample.Erasure{e}, sorted)[0].line; n > 0 {
+		return number[order[n-1]]
+	}
+	return 0
 }
 
 // lineNumber is the number a markup field names, or 0 for none.

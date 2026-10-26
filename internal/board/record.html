@@ -48,6 +48,9 @@
   .erasure-list { list-style: none; margin: 0 0 6px; padding: 0; display: grid; gap: 4px; }
   .erasure-list label { display: inline-flex; align-items: center; gap: 6px; }
   .kind { color: var(--soft); margin: 0; }
+  .edit { margin: 0 0 10px; padding: 8px 10px; background: var(--ground); border-radius: 6px; }
+  .edit .bar { margin-top: 6px; }
+  .line label { display: inline-flex; align-items: center; gap: 4px; }
   .notes { margin: 10px 0 0; padding-left: 1.2em; }
   .notes.problems { color: var(--stop); }
 </style>
@@ -79,12 +82,25 @@
   <section id="markup" class="markup" hidden aria-label="The markup of the sheet">
     <fieldset id="fields">
       <legend>The markup, filled in from the plan</legend>
+      <div class="edit">
+        <p id="picked" class="kind"></p>
+        <div class="bar">
+          <label for="move-to">Move them to</label>
+          <select id="move-to"></select>
+          <button id="move" type="button">Move</button>
+          <button id="loose" type="button">Not a line</button>
+          <button id="unpick" type="button">Unpick</button>
+        </div>
+        <p id="edit-note" class="kind"></p>
+        <p id="loose-note" class="kind"></p>
+      </div>
       <ol id="lines" class="lines"></ol>
       <div class="fields">
         <label for="outcome">Outcome</label>
         <select id="outcome" aria-describedby="flag-outcome">
           <option value="correct">correct</option>
           <option value="error">error</option>
+          <option value="unreadable">unreadable</option>
         </select>
         <span id="flag-outcome" class="flag"></span>
         <label for="first-error">First wrong line</label>
@@ -127,8 +143,10 @@ const WIDTH = 1000;
 const HEIGHT = 600;
 const REACH = 6;        // how near, in units of the sheet, the eraser's path passes a stroke it takes
 const AGAIN_MS = 4000;  // how long a press that would lose the sheet waits for the second one
+const TYPE_MS = 300;    // how long typing in a text of the form pauses before the board checks it
+const PICK = 10;        // how near, in units of the sheet, a click picks a stroke after Done
 const KINDS = { mistake: "a mistake, fixed after it", "correct-step": "a correct step, replaced by a wrong one" };
-const BACK_HINT = " Press Back to take a stray stroke away or write what is missing, or Clear to write the sheet again.";
+const MEND_HINT = " Pick strokes on the sheet and move them, or join lines, until they are the plan’s; or press Back to take a stray stroke away or write what is missing, or Clear to write the sheet again.";
 
 const byId = (id) => document.getElementById(id);
 const sheetCanvas = byId("sheet");
@@ -140,7 +158,8 @@ Object.assign(ink, { lineWidth: 3, lineCap: "round", lineJoin: "round" });
 // view is the page; sheet is what is written on the sheet being recorded. mode is "write", then
 // "markup" after Done, and "saved" once the server has saved the sheet.
 const view = { plan: null, at: 0, mode: "write", tool: "pen", hold: null, pending: null,
-               proposal: null, planned: -1, pausedAt: 0, saved: false, busy: false };
+               proposal: null, planned: -1, pausedAt: 0, saved: false, busy: false,
+               lines: [], loose: [], picked: new Set(), checks: 0, checked: null, regrouped: false, typing: 0 };
 let sheet = blank(0);
 
 // blank is a new sheet, whose clock starts at the time stamp start: every time on it — of a point
@@ -282,6 +301,7 @@ function drawBands(bands) {
   shade.textAlign = "right";
   shade.textBaseline = "middle";
   for (const [i, b] of bands.entries()) {
+    if (!b) continue;
     shade.fillStyle = i % 2 === 0 ? "rgba(11, 92, 173, 0.12)" : "rgba(214, 122, 18, 0.15)";
     shade.fillRect(0, b.top - 6, WIDTH, b.bottom - b.top + 12);
     shade.fillStyle = "#0b3d75";
@@ -297,8 +317,19 @@ function drawErased() {
   for (const st of sheet.strokes.filter((x) => e.strokes.includes(x.id))) trace(shade, st.points);
 }
 
+// drawStrokes draws strokes still on the sheet over it, in a colour of their own.
+function drawStrokes(ids, style, dash) {
+  const want = new Set(ids);
+  Object.assign(shade, { strokeStyle: style, lineWidth: 4, lineCap: "round", lineJoin: "round" });
+  shade.setLineDash(dash);
+  for (const st of visible()) if (want.has(st.id)) trace(shade, st.points);
+  shade.setLineDash([]);
+}
+
 function overlay() {
-  drawBands(view.proposal.bands);
+  drawBands(lineBands());
+  drawStrokes(view.loose, "#7a828c", [6, 5]);
+  drawStrokes([...view.picked], "#7048e8", []);
   drawErased();
 }
 
@@ -329,13 +360,17 @@ function setControls() {
   byId("fields").disabled = view.mode !== "markup" || view.busy;
   byId("back").disabled = view.mode !== "markup" || view.busy;
   byId("save").disabled = view.mode !== "markup" || view.busy || !ready();
+  const editing = view.mode === "markup" && !view.busy && view.picked.size > 0;
+  for (const id of ["move-to", "move", "loose", "unpick"]) byId(id).disabled = !editing;
   sheetCanvas.classList.toggle("rubbing", view.tool === "eraser");
 }
 
 // open starts the shown plan sheet anew: nothing written, its clock starting at stamp.
 function open(stamp) {
   sheet = blank(stamp);
-  Object.assign(view, { mode: "write", hold: null, pending: null, proposal: null, planned: -1, saved: false });
+  Object.assign(view, { mode: "write", hold: null, pending: null, proposal: null, planned: -1, saved: false,
+                        lines: [], loose: [], picked: new Set(), checked: null });
+  view.checks += 1;
   const sh = current();
   byId("title").textContent = `Sheet ${sh.number} of ${view.plan.sheets.length}`;
   byId("saves").textContent = savesText(sh.saved);
@@ -368,6 +403,13 @@ function again(what, e, message) {
 }
 
 sheetCanvas.addEventListener("pointerdown", (e) => {
+  if (view.plan && view.mode === "markup" && !view.busy && e.isPrimary) {
+    if (e.pointerType !== "mouse" || e.button === 0) {
+      e.preventDefault();
+      pick(e);
+    }
+    return;
+  }
   if (!view.plan || view.mode !== "write" || view.busy || view.hold || !e.isPrimary) return;
   if (e.pointerType === "mouse" && e.button !== 0) return;
   e.preventDefault();
@@ -501,7 +543,8 @@ byId("done").addEventListener("click", async (e) => {
 // resume goes back to writing; the sheet's clock moves on by the time spent on the markup.
 function resume(stamp) {
   sheet.start += stamp - view.pausedAt;
-  Object.assign(view, { mode: "write", proposal: null });
+  Object.assign(view, { mode: "write", proposal: null, checked: null, picked: new Set() });
+  view.checks += 1;
   byId("markup").hidden = true;
   shade.clearRect(0, 0, WIDTH, HEIGHT);
   draw();
@@ -520,6 +563,42 @@ function option(value, text) {
   return node;
 }
 
+// bandOf is the band of the sheet that strokes take, from their highest point down to their
+// lowest, or null when they have no points: lines.Band on the server.
+function bandOf(ids) {
+  const want = new Set(ids);
+  let band = null;
+  for (const st of sheet.strokes) {
+    if (!want.has(st.id)) continue;
+    for (const p of st.points) {
+      band = band ? { top: Math.min(band.top, p.y), bottom: Math.max(band.bottom, p.y) } : { top: p.y, bottom: p.y };
+    }
+  }
+  return band;
+}
+
+function lineBands() { return view.lines.map((l) => bandOf(l.strokes)); }
+
+// fromPlan is a line of the form at its place: its strokes, and the text and the answer of the plan
+// sheet's line there.
+function fromPlan(strokes, i) {
+  const sh = current();
+  return { strokes, text: sh.lines[i] ?? "", answer: i + 1 === sh.answer, illegible: false, crossed_out: false,
+           touched: false, textSet: false, answerSet: false };
+}
+
+function tick(name, checked, change) {
+  const label = make("label");
+  const box = make("input");
+  Object.assign(box, { type: "checkbox", checked });
+  box.addEventListener("change", () => {
+    change(box.checked);
+    edited();
+  });
+  label.append(box, ` ${name}`);
+  return label;
+}
+
 function lineRow(line, i) {
   const row = make("li", undefined, "line");
   const name = make("label", `Line ${i + 1}`);
@@ -527,25 +606,43 @@ function lineRow(line, i) {
   const text = make("input");
   Object.assign(text, { type: "text", id: `text-${i}`, value: line.text, spellcheck: false });
   text.setAttribute("aria-describedby", `flag-line-${i}`);
-  text.addEventListener("input", edited);
+  text.addEventListener("input", () => {
+    Object.assign(line, { text: text.value, textSet: true });
+    edited(true);
+  });
   const pick = make("label");
   const radio = make("input");
   Object.assign(radio, { type: "radio", name: "answer", id: `answer-${i}`, checked: line.answer });
-  radio.addEventListener("change", edited);
+  radio.addEventListener("change", () => {
+    for (const l of view.lines) Object.assign(l, { answer: l === line, answerSet: l === line });
+    edited();
+  });
   pick.append(radio, " the answer");
+  row.append(name, text, pick,
+    tick("illegible", line.illegible, (on) => { line.illegible = on; }),
+    tick("crossed out", line.crossed_out, (on) => { line.crossed_out = on; }));
+  if (i + 1 < view.lines.length) {
+    const join = make("button", "Join with the next line");
+    join.type = "button";
+    join.addEventListener("click", () => joinNext(i));
+    row.append(join);
+  }
   const flag = make("span", "", "flag");
   flag.id = `flag-line-${i}`;
-  row.append(name, text, pick, flag);
+  row.append(flag);
   return row;
 }
 
-function onLine(n) { return n ? `on line ${n}` : "on no line"; }
+function onLine(n) {
+  if (n === undefined) return "its line being found";
+  return n ? `on line ${n}` : "on no line";
+}
 
 // erasureRow is an erasure of the sheet in the form: a slip, or, on a sheet that plans an erasure,
 // one the author may take for the planned one.
-function erasureRow(e, i) {
+function erasureRow(e, i, on) {
   const row = make("li");
-  const taken = `Erasure ${i + 1}: ${e.strokes.length === 1 ? "1 stroke" : e.strokes.length + " strokes"}, ${onLine(view.proposal.erasure_lines[i])}`;
+  const taken = `Erasure ${i + 1}: ${e.strokes.length === 1 ? "1 stroke" : e.strokes.length + " strokes"}, ${onLine(on[i])}`;
   if (e.undo) {
     row.textContent = `${taken}, by Undo: a slip.`;
     return row;
@@ -569,48 +666,147 @@ function erasureRow(e, i) {
 
 function showErasures() {
   const sh = current();
-  const block = byId("erasure-block");
-  block.hidden = sheet.erasures.length === 0 && !sh.erasure;
+  byId("erasure-block").hidden = sheet.erasures.length === 0 && !sh.erasure;
   byId("erasures-title").textContent = sh.erasure
     ? "Erasures: pick the planned one, and the rest are slips"
     : "Erasures, all of them slips";
-  byId("erasures").replaceChildren(...sheet.erasures.map(erasureRow));
-  const planned = sh.erasure;
-  byId("planned-fields").hidden = !planned;
-  byId("planned-kind").textContent = planned ? `The planned erasure took away ${KINDS[planned.erased]}.` : "";
-  if (planned) {
-    byId("planned-line").replaceChildren(...view.proposal.lines.map((_, i) => option(String(i + 1), `line ${i + 1}`)));
-    byId("planned-line").value = String(planned.line);
-    byId("planned-text").value = planned.text;
-    byId("planned-line").onchange = edited;
-    byId("planned-text").oninput = edited;
-  }
+  // The board names each erasure's line in its check of the markup as it stands.
+  const on = (view.checked?.at === view.checks && view.checked.erasure_lines) || [];
+  byId("erasures").replaceChildren(...sheet.erasures.map((e, i) => erasureRow(e, i, on)));
+  byId("planned-fields").hidden = !sh.erasure;
+  byId("planned-kind").textContent = sh.erasure ? `The planned erasure took away ${KINDS[sh.erasure.erased]}.` : "";
 }
 
-// showMarkup lays the lines the board found over the sheet and fills the form in from the plan.
+// numbered fills a select with the lines of the form, keeping its choice where the line is still
+// there.
+function numbered(select, fallback) {
+  const kept = Number(select.value);
+  select.replaceChildren(...view.lines.map((_, i) => option(String(i + 1), `line ${i + 1}`)));
+  select.value = String(kept >= 1 && kept <= view.lines.length ? kept : Math.min(Math.max(fallback, 1), view.lines.length));
+}
+
+// showLines lays the lines of the form over the sheet and into the form.
+function showLines() {
+  byId("lines").replaceChildren(...view.lines.map(lineRow));
+  numbered(byId("first-error"), current().expected.first_error ?? 1);
+  numbered(byId("planned-line"), current().erasure?.line ?? 1);
+  showErasures();
+  showPicked();
+  overlay();
+}
+
+// showMarkup fills the form in from the board's proposal and the plan.
 function showMarkup() {
   const p = view.proposal;
   const sh = current();
-  view.planned = p.planned ?? -1;
-  overlay();
-  byId("lines").replaceChildren(...p.lines.map(lineRow));
-  showErasures();
+  Object.assign(view, { lines: p.lines.map((l, i) => ({ ...fromPlan([...l.strokes], i), text: l.text, answer: l.answer })),
+                        loose: [], picked: new Set(), planned: p.planned ?? -1, checked: null, regrouped: false });
   byId("outcome").value = p.expected.outcome;
-  byId("first-error").replaceChildren(...p.lines.map((_, i) => option(String(i + 1), `line ${i + 1}`)));
   byId("first-error").value = String(p.expected.first_error ?? 1);
   byId("trap").replaceChildren(option("", "none"), ...sh.traps.map((t) => option(t.id, `${t.id} — ${t.description}`)));
   byId("trap").value = p.expected.trap;
-  for (const id of ["outcome", "first-error", "trap"]) byId(id).onchange = edited;
-  byId("problems").replaceChildren();
+  byId("planned-line").value = String(sh.erasure?.line ?? 1);
+  byId("planned-text").value = sh.erasure?.text ?? "";
+  for (const id of ["outcome", "first-error", "trap", "planned-line"]) byId(id).onchange = () => edited();
+  byId("planned-text").oninput = () => edited(true);
+  byId("edit-note").textContent = "";
+  showLines();
   byId("markup").hidden = false;
-  refresh();
+  edited();
 }
 
-function answerLine() {
-  return view.proposal.lines.findIndex((_, i) => byId(`answer-${i}`).checked) + 1;
+// pick takes the stroke still on the sheet nearest to the click, within reach, into the picked
+// strokes, or out of them.
+function pick(e) {
+  const p = spot(e, surface());
+  let best = null;
+  let nearest = PICK;
+  for (const st of visible()) {
+    const d = Math.min(...st.points.map((a, i) => gap(p, a, st.points[i + 1] ?? a)));
+    if (d <= nearest) {
+      best = st;
+      nearest = d;
+    }
+  }
+  if (!best) return;
+  if (view.picked.has(best.id)) view.picked.delete(best.id);
+  else view.picked.add(best.id);
+  showPicked();
+  overlay();
 }
 
-function sameCount() { return view.proposal.lines.length === current().lines.length; }
+function showPicked() {
+  const n = view.picked.size;
+  byId("picked").textContent = n === 0
+    ? "To change the lines, click strokes on the sheet to pick them."
+    : `${n === 1 ? "1 stroke" : n + " strokes"} picked.`;
+  const to = byId("move-to");
+  const keep = to.value;
+  const targets = [...view.lines.map((_, i) => option(String(i), `line ${i + 1}`)), option("new", "a new line")];
+  to.replaceChildren(...targets);
+  to.value = targets.some((o) => o.value === keep) ? keep : targets[0].value;
+  const loose = view.loose.length;
+  byId("loose-note").textContent = loose ? `Not a line: ${loose === 1 ? "1 stroke" : loose + " strokes"}, dashed on the sheet.` : "";
+  setControls();
+}
+
+// regroup puts the lines of the form in order after a change of their strokes: a line left without
+// strokes goes, the rest go top to bottom, each with its strokes in the order written. A line the
+// change touched takes the plan's text at its new place; the others keep the text and the marks the
+// author set on them, and the answer stays where the author put it if that line was not touched.
+function regroup() {
+  const order = new Map(sheet.strokes.map((s, i) => [s.id, i]));
+  const kept = view.lines
+    .filter((l) => l.strokes.length > 0)
+    .map((l) => ({ line: l, strokes: [...l.strokes].sort((a, b) => order.get(a) - order.get(b)), top: bandOf(l.strokes).top }))
+    .sort((a, b) => a.top - b.top);
+  const ownAnswer = kept.some((k) => !k.line.touched && k.line.answerSet);
+  view.lines = kept.map(({ line, strokes }, i) => {
+    const fresh = fromPlan(strokes, i);
+    if (ownAnswer) Object.assign(fresh, { answer: !line.touched && line.answerSet, answerSet: !line.touched && line.answerSet });
+    if (line.touched) return fresh;
+    return { ...fresh, text: line.textSet ? line.text : fresh.text, textSet: line.textSet, illegible: line.illegible, crossed_out: line.crossed_out };
+  });
+  view.picked.clear();
+  view.regrouped = true;
+  byId("edit-note").textContent = "The lines changed: a line the change touched takes the plan’s text at its place, and the others keep what you set on them.";
+  showLines();
+  edited();
+}
+
+// moveTo moves the picked strokes to a line of the form, by its index, to a new line, or out of the
+// lines: "not a line", such as a drawing.
+function moveTo(target) {
+  const ids = [...view.picked];
+  if (ids.length === 0) return;
+  for (const l of view.lines) {
+    const left = l.strokes.filter((id) => !view.picked.has(id));
+    if (left.length !== l.strokes.length) Object.assign(l, { strokes: left, touched: true });
+  }
+  view.loose = view.loose.filter((id) => !view.picked.has(id));
+  if (target === "loose") view.loose.push(...ids);
+  else if (target === "new") view.lines.push({ strokes: ids, touched: true });
+  else Object.assign(view.lines[Number(target)], { strokes: [...view.lines[Number(target)].strokes, ...ids], touched: true });
+  regroup();
+}
+
+function joinNext(i) {
+  Object.assign(view.lines[i], { strokes: [...view.lines[i].strokes, ...view.lines[i + 1].strokes], touched: true });
+  view.lines[i + 1].strokes = [];
+  regroup();
+}
+
+byId("move").addEventListener("click", () => moveTo(byId("move-to").value));
+byId("loose").addEventListener("click", () => moveTo("loose"));
+byId("unpick").addEventListener("click", () => {
+  view.picked.clear();
+  showPicked();
+  overlay();
+});
+
+function answerLine() { return view.lines.findIndex((l) => l.answer) + 1; }
+
+function sameCount() { return view.lines.length === current().lines.length; }
 
 // erasureProblem says, in words, what keeps the planned erasure of the sheet from the save, or
 // nothing: a sheet whose scenario plans an erasure has one, and its markup says what it took away.
@@ -625,43 +821,23 @@ function erasureProblem() {
   return "";
 }
 
-// ready says whether the form holds markup the board can save.
+// ready says whether the form holds markup the board can save: the plan's count of lines, the
+// planned erasure picked where the scenario has one, and the board's last check of this very
+// markup without a problem.
 function ready() {
-  if (!view.proposal || !sameCount() || answerLine() === 0 || erasureProblem() !== "") return false;
-  return view.proposal.lines.every((_, i) => byId(`text-${i}`).value.trim() !== "");
+  if (!view.proposal || view.mode !== "markup" || !sameCount() || erasureProblem() !== "") return false;
+  return view.checked?.at === view.checks && view.checked.problems.length === 0;
 }
 
-// differences names, before the save, where the form leaves the plan.
-function differences() {
-  const sh = current();
-  const notes = [];
-  for (const [i, planned] of sh.lines.entries()) {
-    const written = byId(`text-${i}`).value.trim();
-    if (written !== planned) notes.push(`Line ${i + 1} reads “${written}”, and the plan’s “${planned}”.`);
-  }
-  if (answerLine() !== sh.answer) notes.push(`The answer is ${answerLine() ? "line " + answerLine() : "on no line"}, and the plan’s line ${sh.answer}.`);
-  const outcome = byId("outcome").value;
-  if (outcome !== sh.expected.outcome) notes.push(`The outcome is ${outcome}, and the plan’s ${sh.expected.outcome}.`);
-  const first = outcome === "error" ? Number(byId("first-error").value) : null;
-  if (first !== sh.expected.first_error) notes.push(`The first wrong line is ${first ?? "none"}, and the plan’s ${sh.expected.first_error ?? "none"}.`);
-  const trap = outcome === "error" ? byId("trap").value : "";
-  if (trap !== sh.expected.trap) notes.push(`The trap is ${trap || "none"}, and the plan’s ${sh.expected.trap || "none"}.`);
-  const pe = sh.erasure;
-  if (pe && view.planned >= 0) {
-    const line = Number(byId("planned-line").value);
-    const text = byId("planned-text").value.trim();
-    if (line !== pe.line) notes.push(`The planned erasure is marked on line ${line}, and the plan’s on line ${pe.line}.`);
-    if (text !== pe.text) notes.push(`The erased strokes said “${text}”, and the plan’s “${pe.text}”.`);
-    const took = view.proposal.erasure_lines[view.planned];
-    if (took !== line) notes.push(`The planned erasure took its strokes from ${took ? "line " + took : "no line"}, and it is marked on line ${line}.`);
-  }
-  return notes;
-}
-
-// edited follows a change of the form: the problems of the last refused save may be gone with it.
-function edited() {
+// edited follows every change of the form: the board's last check is of other markup now, so the
+// page waits for a new one, after a pause in typing for a text.
+function edited(typing = false) {
+  view.checks += 1;
+  clearTimeout(view.typing);
   clearFlags();
   refresh();
+  if (typing) view.typing = setTimeout(checkNow, TYPE_MS);
+  else checkNow();
 }
 
 function listInto(id, texts) { byId(id).replaceChildren(...texts.map((t) => make("li", t))); }
@@ -669,21 +845,60 @@ function listInto(id, texts) { byId(id).replaceChildren(...texts.map((t) => make
 // sentence makes a note of the server a sentence of its own.
 function sentence(text) { return text.charAt(0).toUpperCase() + text.slice(1) + "."; }
 
+// fieldName names the field of the form a path of the request stands for, or gives the path.
+function fieldName(path) {
+  const line = /^sample\.lines\[(\d+)\]/.exec(path);
+  if (line) return `Line ${Number(line[1]) + 1}`;
+  if (/^sample\.erasures\[\d+\]\.planned/.test(path)) return "The planned erasure";
+  const named = { "sample.lines": "The lines", "sample.erasures": "The erasures", "sample.expected.outcome": "The outcome",
+    "sample.expected.first_error": "The first wrong line", "sample.expected.trap": "The trap" }[path];
+  return named ?? path;
+}
+
+function described(notes) { return notes.map((d) => `${fieldName(d.path)}: ${d.message}.`); }
+
+// refresh shows what the page knows of the markup at once; the board's check follows.
 function refresh() {
   if (!view.proposal) return;
   const error = byId("outcome").value === "error";
   byId("first-error").disabled = !error;
   byId("trap").disabled = !error;
-  const notes = view.proposal.differences.map((d) => sentence(d.message) + (d.path === "sample.lines" ? BACK_HINT : ""));
-  if (sameCount()) {
-    const own = differences();
-    if (own.length) notes.push("Differs from the plan:", ...own);
-  }
+  // The board's notes on the lines hold until the lines change; then the page counts them itself.
+  const notes = view.proposal.differences
+    .filter((d) => d.path !== "sample.lines" || !view.regrouped)
+    .map((d) => sentence(d.message) + (d.path === "sample.lines" ? MEND_HINT : ""));
+  if (!sameCount() && view.regrouped) notes.unshift(`The sheet has ${view.lines.length} lines, and its plan sheet ${current().lines.length}.${MEND_HINT}`);
+  // The page names a count of lines off the plan's itself, so the board's count of them goes.
+  const off = view.checked?.at === view.checks
+    ? view.checked.differences.filter((d) => sameCount() || !(d.path === "sample.lines" && d.message.startsWith("are ")))
+    : [];
+  if (off.length) notes.push("Differs from the plan:", ...described(off));
   listInto("differences", notes);
   if (!sameCount()) say("The lines are not the plan’s, so the sheet cannot be saved.");
   else if (erasureProblem()) say(erasureProblem());
-  else say(ready() ? "Check the lines and the markup, then Save." : "Every line needs its text, and one line is the answer.");
+  else if (view.checked?.at !== view.checks) say("Checking the markup…");
+  else if (view.checked.problems.length) say("The markup does not pass the check: see the notes at the fields.");
+  else say("Check the lines and the markup, then Save.");
   setControls();
+}
+
+// checkNow asks the board to check the markup as it stands, the way a save would; an answer to an
+// older markup is dropped.
+async function checkNow() {
+  const at = view.checks;
+  const sh = current();
+  let answer;
+  try {
+    answer = await post("/api/record/check", { number: sh.number, sample: sample() });
+  } catch (err) {
+    answer = { ok: false, data: { error: err.message } };
+  }
+  if (at !== view.checks || view.mode !== "markup") return;
+  view.checked = answer.ok ? { at, ...answer.data } : { at, problems: [{ path: "check", message: answer.data.error || String(answer.status) }], differences: [], erasure_lines: [] };
+  clearFlags();
+  showProblems(view.checked.problems);
+  showErasures();
+  refresh();
 }
 
 // plannedMarkup is the markup of the erasure taken for the planned one, as the form has it.
@@ -696,14 +911,13 @@ function plannedMarkup() {
 function sample() {
   const sh = current();
   const outcome = byId("outcome").value;
-  const answer = answerLine();
   return {
     format: "tutor-sample", version: 0, sheet: { width: WIDTH, height: HEIGHT },
     task: sh.task, writer: "author", scenario: sh.scenario,
     strokes: sheet.strokes.map((s) => ({ id: s.id, points: s.points })),
     erasures: sheet.erasures.map((e, i) => ({ ...asErasure(e), planned: i === view.planned && sh.erasure ? plannedMarkup() : null })),
-    lines: view.proposal.lines.map((line, i) => ({
-      text: byId(`text-${i}`).value.trim(), strokes: line.strokes, illegible: false, crossed_out: false, answer: i + 1 === answer,
+    lines: view.lines.map((l) => ({
+      text: l.text.trim(), strokes: l.strokes, illegible: l.illegible, crossed_out: l.crossed_out, answer: l.answer,
     })),
     injection: null,
     expected: {
@@ -728,7 +942,7 @@ function flagFor(path) {
 
 function clearFlags() {
   for (const id of ["outcome", "first-error", "trap", "erasures", "planned-line", "planned-text"]) byId(`flag-${id}`).textContent = "";
-  for (let i = 0; i < (view.proposal?.lines.length ?? 0); i++) byId(`flag-line-${i}`).textContent = "";
+  for (let i = 0; i < (view.lines?.length ?? 0); i++) byId(`flag-line-${i}`).textContent = "";
   byId("problems").replaceChildren();
 }
 
@@ -759,12 +973,13 @@ byId("save").addEventListener("click", async () => {
   view.busy = false;
   if (sheet !== asked) return;
   if (answer.ok) {
-    Object.assign(view, { mode: "saved", saved: true });
+    Object.assign(view, { mode: "saved", saved: true, picked: new Set() });
     sh.saved = answer.data.saved;
     byId("saves").textContent = savesText(sh.saved);
-    const notes = answer.data.differences.map((d) => `${d.path}: ${d.message}`);
+    const notes = described(answer.data.differences);
     listInto("differences", notes.length ? ["Saved with these differences from the plan:", ...notes] : []);
     say(`Saved as ${answer.data.file}. Go on with →, or Clear to write this sheet again.`);
+    overlay();
     setControls();
     return;
   }
