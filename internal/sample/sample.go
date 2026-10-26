@@ -1,9 +1,11 @@
-// Package sample is the format of the reading measurement's samples, of its bank of tasks and of
-// its sheet plan: their types, how they are read from JSON and how they are checked. A sample is
-// one sheet of handwriting: every stroke with the time and pressure of its points, in the order
-// it was written, every erasure, and the markup made while writing. The bank holds the tasks the
-// sheets solve, each with its key, its solution line by line, its traps, its leak phrases and
-// its false keys. The plan says what the writer writes on each sheet, and with it the markup.
+// Package sample is the format of the reading measurement's samples, of its bank of tasks, of its
+// sheet plan and of the split of its sheets: their types, how they are read from JSON and how they
+// are checked. A sample is one sheet of handwriting: every stroke with the time and pressure of its
+// points, in the order it was written, every erasure, and the markup made while writing. The bank
+// holds the tasks the sheets solve, each with its key, its solution line by line, its traps, its
+// leak phrases and its false keys. The plan says what the writer writes on each sheet, and with it
+// the markup. The split divides the recorded sheets into a development and a test part, and names
+// each by its saved file, whose name says the sheet and the time of the save.
 //
 // The format is tutor's own until spec's eval protocol replaces it (В7 in RUN.md); its fields
 // are explained in docs/architecture.md, section 3.1. A reader takes only the version it knows
@@ -231,7 +233,7 @@ func ReadPlan(r io.Reader) (*Plan, error) {
 	return &pl, nil
 }
 
-// Marshal writes a sample, a bank or a plan as indented JSON, ending with a newline.
+// Marshal writes a sample, a bank, a plan or a split as indented JSON, ending with a newline.
 func Marshal(v any) ([]byte, error) {
 	data, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {

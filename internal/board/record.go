@@ -2,7 +2,6 @@ package board
 
 import (
 	"bytes"
-	"cmp"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -11,13 +10,12 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
-	"slices"
-	"strconv"
 	"sync"
 	"time"
 
 	"github.com/altnovatrail/tutor/internal/lines"
 	"github.com/altnovatrail/tutor/internal/sample"
+	"github.com/altnovatrail/tutor/internal/sheets"
 )
 
 // The board's sheet, in its logical units: the canvas of the page, on which every sheet of the
@@ -26,11 +24,6 @@ const (
 	sheetWidth  = 1000
 	sheetHeight = 600
 )
-
-// savedName is the name of a saved sheet's file: the number of its plan sheet in two digits, the
-// time of the save in UTC to the millisecond, the task and the scenario. The start of the name is
-// of fixed width, so the last file of a sheet is the last by name (R25).
-var savedName = regexp.MustCompile(`^(\d{2})-(\d{8}-\d{6})-(\d{3})-([a-z0-9-]+)\.json$`)
 
 // plainName is what a task's ID must look like to go into a file name.
 var plainName = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
@@ -57,7 +50,7 @@ func NewRecorder(bank *sample.Bank, plan *sample.Plan, dir string) (*Recorder, e
 	if err := plan.CheckWithBank(bank); err != nil {
 		return nil, err
 	}
-	if len(plan.Sheets) > 99 {
+	if len(plan.Sheets) > sample.MaxSheets {
 		return nil, fmt.Errorf("the plan has %d sheets, and a file name holds a sheet's number in two digits", len(plan.Sheets))
 	}
 	for _, sh := range plan.Sheets {
@@ -132,23 +125,15 @@ func (rc *Recorder) saves() (map[int]int, time.Time, error) {
 	count := map[int]int{}
 	var last time.Time
 	for _, e := range entries {
-		m := savedName.FindStringSubmatch(e.Name())
-		if m == nil || !e.Type().IsRegular() {
+		n, ok := sample.ParseSheetFile(e.Name())
+		if !ok || !e.Type().IsRegular() {
 			continue
 		}
-		at, err := time.Parse("20060102-150405", m[2])
-		if err != nil {
-			continue
+		if n.At.After(last) {
+			last = n.At
 		}
-		ms, _ := strconv.Atoi(m[3])
-		if at = at.Add(time.Duration(ms) * time.Millisecond); at.After(last) {
-			last = at
-		}
-		number, _ := strconv.Atoi(m[1])
-		if number >= 1 && number <= len(rc.plan.Sheets) {
-			if sh := rc.plan.Sheets[number-1]; m[4] == sh.Task+"-"+string(sh.Scenario) {
-				count[number]++
-			}
+		if n.Number >= 1 && n.Number <= len(rc.plan.Sheets) && n.Saves(&rc.plan.Sheets[n.Number-1]) {
+			count[n.Number]++
 		}
 	}
 	return count, last, nil
@@ -249,46 +234,16 @@ func (rc *Recorder) propose(w http.ResponseWriter, r *http.Request) {
 		p.Differences = append(p.Differences, Note{"sample.lines", fmt.Sprintf("the sheet has %d lines, and its plan sheet %d: a long stroke may join two lines, or a line is not written", n, want)})
 	}
 	if pe := sh.Erasure; pe != nil {
-		p.Planned, p.Differences = plannedOf(takenFrom(byID, req.Erasures, found), req.Undone, pe.Line, p.Differences)
+		p.Planned, p.Differences = plannedOf(lines.TakenFrom(byID, req.Erasures, found), req.Undone, pe.Line, p.Differences)
 	}
 	writeJSON(w, http.StatusOK, p)
-}
-
-// taken is what an erasure took from the lines found: how many of its strokes stood on each line,
-// by the line's number, and the line most of them stood on, the higher of two that hold as many,
-// or 0 when none stood on a line.
-type taken struct {
-	from map[int]int
-	line int
-}
-
-// takenFrom finds what each erasure took from the lines found, stroke by stroke (lines.On).
-func takenFrom(byID map[string]sample.Stroke, erasures []sample.Erasure, found []lines.Line) []taken {
-	out := make([]taken, len(erasures))
-	for i, e := range erasures {
-		t := taken{from: map[int]int{}}
-		for _, id := range e.Strokes {
-			if top, bottom, ok := lines.Band(byID[id]); ok {
-				if n := lines.On(top, bottom, found, lines.Gap) + 1; n > 0 {
-					t.from[n]++
-				}
-			}
-		}
-		for n, k := range t.from {
-			if k > t.from[t.line] || (k == t.from[t.line] && n < t.line) {
-				t.line = n
-			}
-		}
-		out[i] = t
-	}
-	return out
 }
 
 // plannedOf picks the erasure the board takes for the planned one of a plan sheet, whose line is
 // line: of the moves of the eraser — Undo makes slips — the one that took the most strokes from the
 // line, the earlier of two that took as many. It names a sheet with no move of the eraser and one
 // where more than one took strokes from the line, as the planned erasure is one move (R25).
-func plannedOf(erasures []taken, undone []bool, line int, notes []Note) (*int, []Note) {
+func plannedOf(erasures []lines.Taken, undone []bool, line int, notes []Note) (*int, []Note) {
 	var planned *int
 	moves, from := 0, 0
 	for i, t := range erasures {
@@ -296,11 +251,11 @@ func plannedOf(erasures []taken, undone []bool, line int, notes []Note) (*int, [
 			continue
 		}
 		moves++
-		if t.from[line] == 0 {
+		if t.From[line] == 0 {
 			continue
 		}
 		from++
-		if planned == nil || t.from[line] > erasures[*planned].from[line] {
+		if planned == nil || t.From[line] > erasures[*planned].From[line] {
 			planned = &i
 		}
 	}
@@ -362,7 +317,7 @@ func (rc *Recorder) check(w http.ResponseWriter, r *http.Request) {
 	var loose sample.Sample
 	if json.Unmarshal(req.Sample, &loose) == nil {
 		for _, e := range loose.Erasures {
-			c.ErasureLines = append(c.ErasureLines, fromLine(&loose, e))
+			c.ErasureLines = append(c.ErasureLines, lines.ErasureLine(&loose, e))
 		}
 	}
 	writeJSON(w, http.StatusOK, c)
@@ -455,117 +410,15 @@ func (rc *Recorder) against(sh *sample.PlanSheet, s *sample.Sample) []Note {
 	return notes
 }
 
-// differences names how the markup of a sheet differs from its plan sheet: in its lines, its
-// answer, its outcome, its first error, its trap and its planned erasure. The board saves such a
-// sheet all the same: what was written, the author knows (R25).
+// differences names how the markup of a sheet differs from its plan sheet (sheets.Differences), at
+// the paths of the request. The board saves such a sheet all the same: what was written, the author
+// knows (R25).
 func differences(sh *sample.PlanSheet, s *sample.Sample) []Note {
 	notes := []Note{}
-	add := func(path, format string, args ...any) {
-		notes = append(notes, Note{path, fmt.Sprintf(format, args...)})
-	}
-	if len(s.Lines) != len(sh.Lines) {
-		add("sample.lines", "are %d, and the plan sheet's %d", len(s.Lines), len(sh.Lines))
-	}
-	answer := 0
-	for i, l := range s.Lines {
-		path := fmt.Sprintf("sample.lines[%d]", i)
-		if i < len(sh.Lines) && l.Text != sh.Lines[i] {
-			add(path+".text", "is %q, and the plan sheet's line %d is %q", l.Text, i+1, sh.Lines[i])
-		}
-		if l.Illegible {
-			add(path+".illegible", "is set, and the plan sheet marks no line illegible")
-		}
-		if l.CrossedOut {
-			add(path+".crossed_out", "is set, and the plan sheet marks no line crossed out")
-		}
-		if l.Answer {
-			answer = i + 1
-		}
-	}
-	if answer != sh.Answer {
-		add("sample.lines", "give the answer on %s, and the plan sheet on line %d", lineOrNone(answer), sh.Answer)
-	}
-	e, plan := s.Expected, sh.Expected
-	if e.Outcome != plan.Outcome {
-		add("sample.expected.outcome", "is %q, and the plan sheet's %q", e.Outcome, plan.Outcome)
-	}
-	if first, planned := lineNumber(e.FirstError), lineNumber(plan.FirstError); first != planned {
-		add("sample.expected.first_error", "is on %s, and the plan sheet's on %s", lineOrNone(first), lineOrNone(planned))
-	}
-	if e.Trap != plan.Trap {
-		add("sample.expected.trap", "is %q, and the plan sheet's %q", e.Trap, plan.Trap)
-	}
-	if pe := sh.Erasure; pe != nil {
-		for i, er := range s.Erasures {
-			if er.Planned == nil {
-				continue
-			}
-			path := fmt.Sprintf("sample.erasures[%d].planned", i)
-			// What the planned erasure took away, the scenario sets, so it cannot differ from the plan's.
-			if er.Planned.Line != pe.Line {
-				add(path+".line", "is %d, and the plan sheet's %d", er.Planned.Line, pe.Line)
-			}
-			if er.Planned.Text != pe.Text {
-				add(path+".text", "is %q, and the plan sheet's %q", er.Planned.Text, pe.Text)
-			}
-			if from := fromLine(s, er); from != er.Planned.Line {
-				add(path+".line", "is %d, but the erasure took its strokes from %s", er.Planned.Line, lineOrNone(from))
-			}
-		}
+	for _, d := range sheets.Differences(sh, s) {
+		notes = append(notes, Note{"sample." + d.Path, d.Message})
 	}
 	return notes
-}
-
-// fromLine is the number of the sample's line that most of an erasure's strokes stood on, by the
-// bands of the lines (lines.On), the higher on the sheet of two that hold as many, or 0 when none
-// of them stood on a line. The sample's lines need not stand in order down the sheet.
-func fromLine(s *sample.Sample, e sample.Erasure) int {
-	byID := make(map[string]sample.Stroke, len(s.Strokes))
-	for _, st := range s.Strokes {
-		byID[st.ID] = st
-	}
-	// found holds the lines with a band, top to bottom; number gives each its number in the sample.
-	var found []lines.Line
-	var number []int
-	for i, l := range s.Lines {
-		var strokes []sample.Stroke
-		for _, id := range l.Strokes {
-			strokes = append(strokes, byID[id])
-		}
-		if top, bottom, ok := lines.Band(strokes...); ok {
-			found = append(found, lines.Line{Top: top, Bottom: bottom})
-			number = append(number, i+1)
-		}
-	}
-	order := make([]int, len(found))
-	for i := range order {
-		order[i] = i
-	}
-	slices.SortStableFunc(order, func(a, b int) int { return cmp.Compare(found[a].Top, found[b].Top) })
-	sorted := make([]lines.Line, len(found))
-	for i, at := range order {
-		sorted[i] = found[at]
-	}
-	if n := takenFrom(byID, []sample.Erasure{e}, sorted)[0].line; n > 0 {
-		return number[order[n-1]]
-	}
-	return 0
-}
-
-// lineNumber is the number a markup field names, or 0 for none.
-func lineNumber(n *int) int {
-	if n == nil {
-		return 0
-	}
-	return *n
-}
-
-// lineOrNone names a line by its number, or says there is none.
-func lineOrNone(n int) string {
-	if n == 0 {
-		return "no line"
-	}
-	return "line " + strconv.Itoa(n)
 }
 
 // write saves a sheet in a new file, named by the plan sheet's number, the time of the save in UTC
@@ -583,7 +436,7 @@ func (rc *Recorder) write(sh *sample.PlanSheet, s *sample.Sample) (string, error
 		at = rc.last.Add(time.Millisecond)
 	}
 	for range 100 {
-		name := fmt.Sprintf("%02d-%s-%03d-%s-%s.json", sh.Number, at.Format("20060102-150405"), at.Nanosecond()/int(time.Millisecond), sh.Task, sh.Scenario)
+		name := sample.SheetFile(sh, at)
 		err = createNew(filepath.Join(rc.dir, name), data)
 		if errors.Is(err, fs.ErrExist) {
 			at = at.Add(time.Millisecond)

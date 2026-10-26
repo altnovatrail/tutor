@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/altnovatrail/tutor/internal/board"
-	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/provider/claude"
 	"github.com/altnovatrail/tutor/provider/gpt"
 )
@@ -110,15 +109,8 @@ func runBoard(args []string, stdout, stderr io.Writer, getenv func(string) strin
 	flags.BoolVar(&f.record, "record", false, "the record mode: write the sheets of the plan and save each as a sample, asking no model")
 	flags.StringVar(&f.bank, "bank", "eval/bank.json", "with -record: the bank of tasks")
 	flags.StringVar(&f.plan, "plan", "eval/sheets.json", "with -record: the sheet plan")
-	if err := flags.Parse(args); err != nil {
-		if errors.Is(err, flag.ErrHelp) {
-			return exitOK
-		}
-		return exitUsage
-	}
-	if flags.NArg() > 0 {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval board: unexpected arguments: %q\n", flags.Args())
-		return exitUsage
+	if code, ok := parse(flags, args, stderr); !ok {
+		return code
 	}
 	f.set = map[string]bool{}
 	flags.Visit(func(fl *flag.Flag) { f.set[fl.Name] = true })
@@ -197,17 +189,9 @@ func recordMode(f boardFlags, stderr io.Writer) (http.Handler, string, int) {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %v\n", err)
 		return nil, "", exitUsage
 	}
-	bank, err := readFile(f.bank, sample.ReadBank)
+	bank, plan, err := readPlan(f.bank, f.plan)
 	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %s: %v\n", f.bank, err)
-		return nil, "", exitFail
-	}
-	plan, err := readFile(f.plan, sample.ReadPlan)
-	if err == nil {
-		err = plan.CheckWithBank(bank)
-	}
-	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %s: %v\n", f.plan, err)
+		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %v\n", err)
 		return nil, "", exitFail
 	}
 	rc, err := board.NewRecorder(bank, plan, dir)

@@ -707,7 +707,7 @@ func TestRecordGuards(t *testing.T) {
 			}
 		})
 	}
-	if names := files(t, rc.dir); len(names) != 1 || !savedName.MatchString(names[0]) {
+	if names := files(t, rc.dir); len(names) != 1 || !saved(names[0]) {
 		t.Errorf("the directory holds %q, want the one sheet the board's own page saved", names)
 	}
 }
@@ -744,16 +744,8 @@ func TestNewRecorderRefuses(t *testing.T) {
 
 // The names the board gives its files are the ones it counts: the number of the plan sheet first,
 // in two digits.
-func TestSavedName(t *testing.T) {
-	for name, want := range map[string]bool{
-		"07-20261026-101530-123-chain-2-error.json":  true,
-		"7-20261026-101530-123-chain-2-error.json":   false,
-		"07-20261026-101530-12-chain-2-error.json":   false,
-		"07-20261026-101530-123-chain-2-error.json~": false,
-		"07-notes.json": false,
-	} {
-		if got := savedName.MatchString(name); got != want {
-			t.Errorf("%s: %v, want %v", name, got, want)
-		}
-	}
+// saved reports whether a name is that of a saved sheet's file.
+func saved(name string) bool {
+	_, ok := sample.ParseSheetFile(name)
+	return ok
 }

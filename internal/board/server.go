@@ -28,6 +28,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/altnovatrail/tutor/internal/newfile"
 	"github.com/altnovatrail/tutor/provider"
 )
 
@@ -588,21 +589,8 @@ func (s *Server) savePicture(pic []byte) (string, error) {
 }
 
 // createNew writes a file that must not exist yet, readable by its owner alone: what the board
-// writes is the author's handwriting. A file it could not finish, it removes.
-func createNew(path string, data []byte) error {
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
-	if err != nil {
-		return err
-	}
-	_, err = f.Write(data)
-	if cerr := f.Close(); err == nil {
-		err = cerr
-	}
-	if err != nil {
-		_ = os.Remove(path)
-	}
-	return err
-}
+// writes is the author's handwriting.
+func createNew(path string, data []byte) error { return newfile.Write(path, data, 0o600) }
 
 // MarkRequest is the person's mark: whether a model was right about a try.
 type MarkRequest struct {
