@@ -15,6 +15,7 @@ import (
 	"path/filepath"
 	"runtime/debug"
 
+	"github.com/altnovatrail/tutor/internal/newfile"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/synth"
 )
@@ -38,6 +39,11 @@ const usage = `usage:
                                                       and each is saved as a sample
   tutor-eval check FILE...   check samples, banks and sheet plans; samples and plans against
                              a bank given with them
+  tutor-eval sheets [-dir D] [-bank F] [-plan F]
+                             the summary of the recorded sheets against the plan, without the
+                             handwriting
+  tutor-eval split -seed N [-dev K] [-dir D] [-bank F] [-plan F]
+                             divide the recorded sheets into development and test, once
   tutor-eval synth DIR       write the synthetic bank and one synthetic sample per scenario
   tutor-eval -version        print the version
 `
@@ -83,6 +89,10 @@ func run(args []string, stdout, stderr io.Writer) int {
 			return exitUsage
 		}
 		return check(operands, stdout, stderr)
+	case "sheets":
+		return runSheets(operands, stdout, stderr)
+	case "split":
+		return runSplit(operands, stdout, stderr)
 	case "synth":
 		if len(operands) != 1 {
 			_, _ = fmt.Fprintln(stderr, "tutor-eval synth: give one directory")
@@ -225,7 +235,7 @@ func writeSynth(dir string, stdout, stderr io.Writer) int {
 		var data []byte
 		if data, err = sample.Marshal(f.content); err == nil {
 			path := filepath.Join(dir, f.name)
-			if err = writeNew(path, data); err == nil {
+			if err = newfile.Write(path, data, 0o644); err == nil {
 				written = append(written, path)
 			}
 		}
@@ -241,22 +251,6 @@ func writeSynth(dir string, stdout, stderr io.Writer) int {
 		return exitFail
 	}
 	return exitOK
-}
-
-// writeNew writes a file that must not exist yet. A file it could not finish, it removes.
-func writeNew(path string, data []byte) error {
-	f, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o644)
-	if err != nil {
-		return err
-	}
-	_, err = f.Write(data)
-	if cerr := f.Close(); err == nil {
-		err = cerr
-	}
-	if err != nil {
-		_ = os.Remove(path)
-	}
-	return err
 }
 
 // version is the version the go command stamped into the binary: the tag of a release it was

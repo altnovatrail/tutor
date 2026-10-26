@@ -62,3 +62,27 @@ func strokeByID(s *sample.Sample, id string) sample.Stroke {
 	i := slices.IndexFunc(s.Strokes, func(st sample.Stroke) bool { return st.ID == id })
 	return s.Strokes[i]
 }
+
+// The plan of the synthetic samples passes the plan's check with the bank, one sheet to each
+// scenario a plan can hold, and each sample is the markup its plan sheet plans.
+func TestPlan(t *testing.T) {
+	plan, samples := Plan()
+	if err := plan.Check(); err != nil {
+		t.Fatal(err)
+	}
+	if err := plan.CheckWithBank(Bank()); err != nil {
+		t.Fatal(err)
+	}
+	var scenarios []sample.Scenario
+	for i, sh := range plan.Sheets {
+		scenarios = append(scenarios, sh.Scenario)
+		if s := samples[i]; s.Scenario != sh.Scenario || s.Task != sh.Task || len(s.Lines) != len(sh.Lines) {
+			t.Errorf("sheet %d: the sample of %s, task %s, %d lines; want its plan sheet's", sh.Number, s.Scenario, s.Task, len(s.Lines))
+		}
+	}
+	want := []sample.Scenario{sample.ScenarioCorrect, sample.ScenarioError, sample.ScenarioSimilarDigits, sample.ScenarioAnswerNotLast,
+		sample.ScenarioMirroredDigits, sample.ScenarioErasureFixed, sample.ScenarioErasureBroken}
+	if !slices.Equal(scenarios, want) {
+		t.Errorf("scenarios = %v, want %v", scenarios, want)
+	}
+}

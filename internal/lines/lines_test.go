@@ -159,3 +159,42 @@ func TestOnFindsThePlannedLine(t *testing.T) {
 		t.Errorf("%d planned erasures checked, want those of erasure-fixed and erasure-broken", checked)
 	}
 }
+
+// An erasure stands on the line most of its strokes stood on, stroke by stroke, the higher of two
+// that hold as many.
+func TestTakenFrom(t *testing.T) {
+	found := []lines.Line{{Top: 40, Bottom: 70}, {Top: 130, Bottom: 160}}
+	byID := map[string]sample.Stroke{}
+	for _, st := range []sample.Stroke{stroke("a1", 50, 55), stroke("a2", 52, 58), stroke("b1", 140, 145), stroke("b2", 142, 150), stroke("off", 400, 410)} {
+		byID[st.ID] = st
+	}
+	taken := lines.TakenFrom(byID, []sample.Erasure{
+		{Strokes: []string{"a1", "b1", "b2"}},
+		{Strokes: []string{"a1", "a2", "b1", "b2"}},
+		{Strokes: []string{"off", "missing"}},
+	}, found)
+	if taken[0].Line != 2 || taken[0].From[1] != 1 || taken[0].From[2] != 2 {
+		t.Errorf("taken[0] = %+v, want line 2, one stroke from line 1 and two from line 2", taken[0])
+	}
+	if taken[1].Line != 1 {
+		t.Errorf("taken[1] = %+v, want line 1, the higher of two that hold as many", taken[1])
+	}
+	if taken[2].Line != 0 || len(taken[2].From) != 0 {
+		t.Errorf("taken[2] = %+v, want no line", taken[2])
+	}
+}
+
+// The line of an erasure in a sample's markup goes by the bands of its lines, whatever their order
+// in the markup.
+func TestErasureLine(t *testing.T) {
+	s := &sample.Sample{
+		Strokes: []sample.Stroke{stroke("low", 130, 160), stroke("high", 40, 70), stroke("between", 70, 130)},
+		Lines:   []sample.Line{{Strokes: []string{"low"}}, {Strokes: []string{"high"}}},
+	}
+	if got := lines.ErasureLine(s, sample.Erasure{Strokes: []string{"between"}}); got != 2 {
+		t.Errorf("ErasureLine = %d, want 2: the line higher on the sheet, second in the markup", got)
+	}
+	if got := lines.ErasureLine(s, sample.Erasure{Strokes: []string{"nowhere"}}); got != 0 {
+		t.Errorf("ErasureLine of a stroke the sample does not hold = %d, want 0", got)
+	}
+}

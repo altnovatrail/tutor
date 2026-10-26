@@ -88,6 +88,38 @@ func Samples() []*sample.Sample {
 	return out
 }
 
+// Plan returns the sheet plan of the synthetic samples a plan can hold, one sheet each in the
+// order of sample.Scenarios, and those samples in the plan's order: each plan sheet has its
+// sample's task, scenario, line texts, answer line, outcome and planned erasure, which writes its
+// whole line again. The scenarios a plan cannot hold — illegible-crossed-out, nearly-empty and
+// injection — are left out.
+func Plan() (*sample.Plan, []*sample.Sample) {
+	v := sample.Version
+	plan := &sample.Plan{Format: sample.PlanFormat, Version: &v, Sheets: []sample.PlanSheet{}}
+	var samples []*sample.Sample
+	for _, s := range Samples() {
+		switch s.Scenario {
+		case sample.ScenarioIllegible, sample.ScenarioNearlyEmpty, sample.ScenarioInjection:
+			continue
+		}
+		sh := sample.PlanSheet{Number: len(plan.Sheets) + 1, Task: s.Task, Scenario: s.Scenario, Lines: []string{}, Expected: s.Expected}
+		for i, l := range s.Lines {
+			sh.Lines = append(sh.Lines, l.Text)
+			if l.Answer {
+				sh.Answer = i + 1
+			}
+		}
+		for _, e := range s.Erasures {
+			if p := e.Planned; p != nil {
+				sh.Erasure = &sample.PlanErasure{Line: p.Line, Erased: p.Erased, Text: p.Text, Replacement: sh.Lines[p.Line-1]}
+			}
+		}
+		plan.Sheets = append(plan.Sheets, sh)
+		samples = append(samples, s)
+	}
+	return plan, samples
+}
+
 // Sample returns the synthetic sample of a scenario. It panics on a scenario sample.Scenarios
 // does not list.
 func Sample(sc sample.Scenario) *sample.Sample {
