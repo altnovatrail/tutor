@@ -33,6 +33,9 @@ const (
 const usage = `usage:
   tutor-eval board [-addr A] [-dir D] [-max-usd N]   the check board: solve tasks by hand, the models
                                                       judge, you mark whether they were right
+  tutor-eval board -record [-addr A] [-dir D] [-bank F] [-plan F]
+                                                      the record mode: write the sheets of the plan,
+                                                      and each is saved as a sample
   tutor-eval check FILE...   check samples, banks and sheet plans; samples and plans against
                              a bank given with them
   tutor-eval synth DIR       write the synthetic bank and one synthetic sample per scenario
