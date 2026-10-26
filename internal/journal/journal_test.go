@@ -243,21 +243,17 @@ func TestLeftOut(t *testing.T) {
 	}
 }
 
-// A stroke erased later can join two lines of the markup into one line of the journal: the
-// agreement counts neither of them.
+// Two lines of the markup written at one height are one line of the journal: the agreement counts
+// neither of them.
 func TestAgreement(t *testing.T) {
 	var s sheet
 	s.stroke("a", 100, 0, 10)
-	s.stroke("b", 150, 20, 30)
-	s.strokes = append(s.strokes, sample.Stroke{ID: "bridge", Points: []sample.Point{
-		{X: 300, Y: 102, TMs: 40, Pressure: 0.5}, {X: 300, Y: 152, TMs: 50, Pressure: 0.5},
-	}})
+	s.stroke("b", 104, 20, 30)
 	s.stroke("c", 300, 60, 70)
-	s.erase(100, "bridge")
 	smp := s.sample([]string{"a"}, []string{"b"}, []string{"c"})
 	j := journal.Of(smp)
 	if len(j.Lines) != 2 {
-		t.Fatalf("the journal finds %d lines, want 2: the erased stroke joins the first two", len(j.Lines))
+		t.Fatalf("the journal finds %d lines, want 2: the first two lines of the markup stand at one height", len(j.Lines))
 	}
 	if got, want := journal.Agree(smp, j), (journal.Agreement{Marked: 3, Same: 1}); got != want {
 		t.Errorf("the agreement is %+v, want %+v", got, want)

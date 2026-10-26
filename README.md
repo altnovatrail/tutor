@@ -34,6 +34,8 @@ just record
 
 Pick a sheet of the plan, write what it shows with a pen or a mouse, press Done, check the markup the plan filled in and press Save. If the board grouped the strokes into lines wrongly, pick strokes on the sheet and move them to another line, or join two lines. The board checks the markup after every change, and its words show beside the fields. On a sheet with a planned erasure, the board takes the move of the eraser on the plan's line for it, and you check that too. The sheet is saved with every stroke's points, their time and pressure, and every erasure, as a sample in `samples/sheets`, outside git.
 
+The sheets you do not write, code draws: `go run ./cmd/tutor-eval draw` draws every sheet of the plan that has no file yet, saves it beside yours with the writer `synthetic`, and leaves yours as they are.
+
 Once the sheets are written and split into a development and a test part (`tutor-eval sheets`, then `tutor-eval split` once), the measurement runs on a part:
 
 ```

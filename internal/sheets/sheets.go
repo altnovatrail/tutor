@@ -149,7 +149,7 @@ func tallies(list []tally) string {
 
 // Summary says what the directory holds against the plan, in numbers and names only: no point, no
 // stroke and no text of a line, nothing of the handwriting. The counts by task, scenario and
-// outcome, the erasures, the frames, the mouse and the markup off the plan, named by the paths of
+// outcome, the erasures, the frames, the sheets drawn by code, the mouse and the markup off the plan, named by the paths of
 // its fields as the board names them (Differences), are of the sheets that pass the check.
 func Summary(r *Recorded) string {
 	var b strings.Builder
@@ -197,7 +197,7 @@ func Summary(r *Recorded) string {
 	line("By outcome as marked: %s.", tallies(byOutcome(r, passing)))
 
 	planned, slips, slipped, framed := 0, 0, 0, 0
-	var mouse []int
+	var mouse, drawn []int
 	var off []string
 	for _, sh := range passing {
 		s := sh.Sample
@@ -216,6 +216,9 @@ func Summary(r *Recorded) string {
 		if len(s.Erasures) > 0 {
 			framed++
 		}
+		if s.Writer == sample.WriterSynthetic {
+			drawn = append(drawn, sh.Plan.Number)
+		}
 		if byMouse(s) {
 			mouse = append(mouse, sh.Plan.Number)
 		}
@@ -225,6 +228,7 @@ func Summary(r *Recorded) string {
 	}
 	line("Planned erasures: %d. Slips: %s on %s.", planned, count(slips, "erasure"), count(slipped, "sheet"))
 	line("With frames, that is with an erasure: %s.", count(framed, "sheet"))
+	line("Drawn by code, the writer synthetic: %s.", Numbers(drawn))
 	line("Written with a mouse, pressure 0.5 at every point: %s.", Numbers(mouse))
 	if len(off) == 0 {
 		line("Marked off the plan: none.")

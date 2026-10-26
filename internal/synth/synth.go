@@ -201,6 +201,8 @@ type writer struct {
 	rng    *rand.Rand
 	t      int64 // the clock, in ms since the sheet was opened
 	mirror bool  // draw 2, 5, 7 and 9 mirrored
+	// pointMs is the time between two points of a stroke.
+	pointMs int64
 }
 
 func newWriter(sc sample.Scenario) *writer {
@@ -220,8 +222,9 @@ func newWriter(sc sample.Scenario) *writer {
 			Erasures: []sample.Erasure{},
 			Lines:    []sample.Line{},
 		},
-		rng: rand.New(rand.NewPCG(seed, 2026)),
-		t:   1200,
+		rng:     rand.New(rand.NewPCG(seed, 2026)),
+		t:       1200,
+		pointMs: pointMs,
 	}
 }
 
@@ -361,7 +364,7 @@ func (w *writer) stroke(poly []pt) string {
 			TMs:      w.t,
 			Pressure: math.Round(pressure*1000) / 1000,
 		})
-		w.t += pointMs
+		w.t += w.pointMs
 	}
 	add(poly[0])
 	for i := 1; i < len(poly); i++ {
@@ -377,7 +380,7 @@ func (w *writer) stroke(poly []pt) string {
 		points[i].X = math.Round(points[i].X*10) / 10
 		points[i].Y = math.Round(points[i].Y*10) / 10
 	}
-	w.t -= pointMs // the clock stands at the last point
+	w.t -= w.pointMs // the clock stands at the last point
 	w.s.Strokes = append(w.s.Strokes, sample.Stroke{ID: id, Points: points})
 	return id
 }
