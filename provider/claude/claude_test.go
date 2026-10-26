@@ -112,7 +112,7 @@ func fakeAPI(t *testing.T, m Model, replies ...reply) (*Client, *fake) {
 var request = provider.Request{
 	Instructions: "Read and judge.",
 	Text:         "Task: 3x + 1 = 7",
-	PNG:          []byte("png"),
+	Images:       []provider.Image{{PNG: []byte("png")}},
 	SchemaName:   "verdict",
 	Schema:       map[string]any{"type": "object"},
 	Effort:       "high",
@@ -351,5 +351,84 @@ func TestNoAnswer(t *testing.T) {
 				t.Errorf("= %+v, %v, want ErrNoAnswer with the billed tokens", resp, err)
 			}
 		})
+	}
+}
+
+// The pictures go in their order in one message, each a block of its own after a block of its
+// label, and the text after them.
+func TestImages(t *testing.T) {
+	c, f := fakeAPI(t, Models[2], reply{body: goodStream})
+	r := request
+	r.Images = []provider.Image{{Label: "Image 1: the sheet as it was finished.", PNG: []byte("one")},
+		{Label: "Image 2: the sheet before erasure 1.", PNG: []byte("two")}, {Label: "Image 3: the sheet before erasure 2.", PNG: []byte("three")}}
+	if _, err := c.Ask(context.Background(), r); err != nil {
+		t.Fatal(err)
+	}
+	var sent struct {
+		Messages []struct {
+			Content []struct {
+				Type   string `json:"type"`
+				Text   string `json:"text"`
+				Source struct {
+					Data string `json:"data"`
+				} `json:"source"`
+				Transformations struct {
+					OversizedImage string `json:"oversized_image"`
+				} `json:"transformations"`
+			} `json:"content"`
+		} `json:"messages"`
+	}
+	if err := json.Unmarshal([]byte(f.requests()[0]), &sent); err != nil {
+		t.Fatal(err)
+	}
+	var got []string
+	for _, b := range sent.Messages[0].Content {
+		switch b.Type {
+		case "text":
+			got = append(got, "text "+b.Text)
+		case "image":
+			got = append(got, "image "+b.Source.Data+" "+b.Transformations.OversizedImage)
+		}
+	}
+	want := []string{
+		"text Image 1: the sheet as it was finished.", "image b25l error",
+		"text Image 2: the sheet before erasure 1.", "image dHdv error",
+		"text Image 3: the sheet before erasure 2.", "image dGhyZWU= error",
+		"text Task: 3x + 1 = 7",
+	}
+	if len(sent.Messages) != 1 || !slices.Equal(got, want) {
+		t.Errorf("the message = %q, want %q", got, want)
+	}
+}
+
+// Pictures the adapter will not send are refused before any call: none, an empty one, several
+// without their labels, more than MaxImages.
+func TestImagesRefused(t *testing.T) {
+	c, f := fakeAPI(t, Models[2], reply{body: goodStream})
+	many := make([]provider.Image, MaxImages+1)
+	for i := range many {
+		many[i] = provider.Image{Label: fmt.Sprintf("Image %d:", i+1), PNG: []byte("png")}
+	}
+	for _, tt := range []struct {
+		images []provider.Image
+		want   string
+	}{
+		{nil, "a request without a picture"},
+		{[]provider.Image{{PNG: nil}}, "picture 1 has no PNG"},
+		{[]provider.Image{{Label: "Image 1:", PNG: []byte("a")}, {PNG: []byte("b")}}, "picture 2 of 2 has no label"},
+		{many, "a request of 21 pictures, and the adapter sends 20 at most"},
+	} {
+		r := request
+		r.Images = tt.images
+		if _, err := c.Ask(context.Background(), r); err == nil || !strings.Contains(err.Error(), tt.want) {
+			t.Errorf("%d pictures: %v, want %q", len(tt.images), err, tt.want)
+		}
+	}
+	if n := len(f.requests()); n != 0 {
+		t.Errorf("refused requests reached the API %d times", n)
+	}
+	// One picture without a label goes as it is, as the board sends it.
+	if _, err := c.Ask(context.Background(), request); err != nil {
+		t.Error(err)
 	}
 }

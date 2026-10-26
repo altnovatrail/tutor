@@ -43,7 +43,10 @@ func (c *Client) Name() string { return "GPT-6 Astra" }
 // Price is GPT-6 Astra's price per million input and output tokens, in US dollars.
 func (c *Client) Price() (input, output float64) { return 10, 50 }
 
-// Ask sends the picture and the text and asks for JSON that follows the schema. The picture goes
+// Ask sends a picture and the text and asks for JSON that follows the schema. It sends one picture,
+// after its label, and refuses more before any call. That is the adapter's limit, not the model's:
+// GPT is not used on the board (R20), and the measurement of the writing process asks Claude alone
+// (R21). The picture goes
 // with the detail "high", so that the model does not shrink it; the answer is not stored at
 // OpenAI; the reasoning effort is high, the request's or by default. GPT-6 Astra always reasons,
 // so a request without thinking is refused before any call. The answer is not streamed: GPT is not
@@ -55,24 +58,31 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 	if r.NoThinking {
 		return provider.Response{}, errors.New("gpt: GPT-6 Astra cannot answer without reasoning")
 	}
+	if err := provider.CheckImages(r, 1); err != nil {
+		return provider.Response{}, fmt.Errorf("gpt: %w", err)
+	}
 	// The SDK sends a request again after some failures; each attempt passes through here.
 	attempts := 0
 	count := option.WithMiddleware(func(req *http.Request, next option.MiddlewareNext) (*http.Response, error) {
 		attempts++
 		return next(req)
 	})
-	image := "data:image/png;base64," + base64.StdEncoding.EncodeToString(r.PNG)
+	var content responses.ResponseInputMessageContentListParam
+	for _, im := range r.Images {
+		if im.Label != "" {
+			content = append(content, responses.ResponseInputContentParamOfInputText(im.Label))
+		}
+		content = append(content, responses.ResponseInputContentUnionParam{OfInputImage: &responses.ResponseInputImageParam{
+			Detail:   responses.ResponseInputImageDetailHigh,
+			ImageURL: openai.String("data:image/png;base64," + base64.StdEncoding.EncodeToString(im.PNG)),
+		}})
+	}
+	content = append(content, responses.ResponseInputContentParamOfInputText(r.Text))
 	resp, err := c.sdk.Responses.New(ctx, responses.ResponseNewParams{
 		Model:        Model,
 		Instructions: openai.String(r.Instructions),
 		Input: responses.ResponseNewParamsInputUnion{OfInputItemList: responses.ResponseInputParam{
-			responses.ResponseInputItemParamOfMessage(responses.ResponseInputMessageContentListParam{
-				{OfInputImage: &responses.ResponseInputImageParam{
-					Detail:   responses.ResponseInputImageDetailHigh,
-					ImageURL: openai.String(image),
-				}},
-				responses.ResponseInputContentParamOfInputText(r.Text),
-			}, responses.EasyInputMessageRoleUser),
+			responses.ResponseInputItemParamOfMessage(content, responses.EasyInputMessageRoleUser),
 		}},
 		Text: responses.ResponseTextConfigParam{Format: responses.ResponseFormatTextConfigUnionParam{
 			OfJSONSchema: &responses.ResponseFormatTextJSONSchemaConfigParam{

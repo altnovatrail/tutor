@@ -76,13 +76,13 @@ func (c *Client) Name() string { return c.model.Name }
 // Price is the model's price per million input and output tokens, in US dollars.
 func (c *Client) Price() (input, output float64) { return c.model.Input, c.model.Output }
 
-// Ask sends the picture and the text and asks for JSON that follows the schema, at the request's
+// Ask sends the pictures and the text and asks for JSON that follows the schema, at the request's
 // effort, and streams the answer, so that it sees when the answer's first text comes. Every model
 // in Models thinks adaptively when the request names no thinking, and on Opus 5.5 and Fable 5.1
 // thinking cannot be turned off, so the effort is what sets how much a model reasons. Without one,
 // a model takes its own default: medium on Opus 5.5 and Haiku 5.5, high on Sonnet 5.5 and Fable 5.1
 // (Models overview and Effort, read 2026-10-23). A request without thinking names its effort,
-// since thinking turns off only at some levels. The picture is never shrunk: a picture larger than
+// since thinking turns off only at some levels. A picture is never shrunk: a picture larger than
 // the model takes fails the call, rather than leave the model's pixels off the picture's.
 func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response, error) {
 	if err := c.check(r); err != nil {
@@ -156,9 +156,19 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 	return resp, nil
 }
 
-// check refuses, before any call, what the model cannot do: an effort level it does not know, or
-// an answer without thinking at a level where its thinking does not turn off.
+// MaxImages is the most pictures the adapter sends in one request. Above 20, a stricter limit of
+// size holds for every picture of the request (Vision, read 2026-10-26; docs/architecture.md,
+// section 4), and with oversized_image set to error a picture over it would fail the call. A
+// request of the measurement holds three at most.
+const MaxImages = 20
+
+// check refuses, before any call, what the adapter will not send: pictures provider.CheckImages
+// refuses, an effort level the model does not know, or an answer without thinking at a level where
+// its thinking does not turn off.
 func (c *Client) check(r provider.Request) error {
+	if err := provider.CheckImages(r, MaxImages); err != nil {
+		return fmt.Errorf("claude: %w", err)
+	}
 	if r.Effort != "" && !slices.Contains(Efforts, r.Effort) {
 		return fmt.Errorf("claude: no effort level %q", r.Effort)
 	}
@@ -168,15 +178,25 @@ func (c *Client) check(r provider.Request) error {
 	return nil
 }
 
-// params is the request as the API takes it.
+// params is the request as the API takes it: one message of the pictures in their order, each a
+// block of its own after a block of its label, as Anthropic advises for several pictures ("Image
+// 1:", "Image 2:"; docs/architecture.md, section 4), and the text after them.
 func (c *Client) params(r provider.Request) anthropic.MessageNewParams {
-	image := anthropic.NewImageBlockBase64("image/png", base64.StdEncoding.EncodeToString(r.PNG))
-	image.OfImage.Transformations.OversizedImage = anthropic.ImageTransformationsParamOversizedImageError
+	content := make([]anthropic.ContentBlockParamUnion, 0, 2*len(r.Images)+1)
+	for _, im := range r.Images {
+		if im.Label != "" {
+			content = append(content, anthropic.NewTextBlock(im.Label))
+		}
+		image := anthropic.NewImageBlockBase64("image/png", base64.StdEncoding.EncodeToString(im.PNG))
+		image.OfImage.Transformations.OversizedImage = anthropic.ImageTransformationsParamOversizedImageError
+		content = append(content, image)
+	}
+	content = append(content, anthropic.NewTextBlock(r.Text))
 	p := anthropic.MessageNewParams{
 		Model:     c.model.ID,
 		MaxTokens: r.MaxOutputTokens,
 		System:    []anthropic.TextBlockParam{{Text: r.Instructions}},
-		Messages:  []anthropic.MessageParam{anthropic.NewUserMessage(image, anthropic.NewTextBlock(r.Text))},
+		Messages:  []anthropic.MessageParam{anthropic.NewUserMessage(content...)},
 		OutputConfig: anthropic.OutputConfigParam{
 			Effort: anthropic.OutputConfigEffort(r.Effort),
 			Format: anthropic.JSONOutputFormatParam{Schema: r.Schema},

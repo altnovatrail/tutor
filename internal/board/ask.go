@@ -146,7 +146,7 @@ func ask(ctx context.Context, q question, t *Task, p picture) Result {
 	resp, err := q.model.Ask(ctx, provider.Request{
 		Instructions:    instructions,
 		Text:            prompt(t, p),
-		PNG:             p.png,
+		Images:          []provider.Image{{PNG: p.png}},
 		SchemaName:      "verdict",
 		Schema:          schema,
 		MaxOutputTokens: maxOutputTokens,
