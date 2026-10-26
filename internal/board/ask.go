@@ -170,7 +170,7 @@ func ask(ctx context.Context, q question, t *Task, p picture) Result {
 	}
 	if err != nil {
 		res.Error = describe(err)
-		if resp.Partial || (cutOff(err) && resp.InputTokens == 0 && resp.OutputTokens == 0) {
+		if !provider.Billed(resp, err) {
 			// The bill of such a call is not known, though the model may have spent tokens: an
 			// answer that broke off before the provider counted its tokens, or a call that the
 			// clock or a closed page cut off before any bill came. It is counted at the most it
@@ -231,10 +231,4 @@ func describe(err error) string {
 	default:
 		return "the call failed: " + err.Error()
 	}
-}
-
-// cutOff reports whether a call ended because its context did: the clock ran out, or the page
-// that asked went away.
-func cutOff(err error) bool {
-	return errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled)
 }

@@ -250,3 +250,24 @@ func TestRead(t *testing.T) {
 		}
 	}
 }
+
+// The fingerprint of the prompt is one SHA-256, the same at every call.
+func TestFingerprint(t *testing.T) {
+	f := judge.Fingerprint()
+	if len(f) != 64 || strings.Trim(f, "0123456789abcdef") != "" || judge.Fingerprint() != f {
+		t.Errorf("the fingerprint is %q", f)
+	}
+}
+
+// The box a judge that is always right gives round a line holds every point of the line, and the
+// line is the one it hits.
+func TestAround(t *testing.T) {
+	s := synth.Sample(sample.ScenarioError)
+	b := judge.Around(s, *s.Expected.FirstError)
+	if b == nil || judge.Hit(s, *b) != *s.Expected.FirstError {
+		t.Fatalf("the box round line %d is %+v, and it hits line %d", *s.Expected.FirstError, b, judge.Hit(s, *b))
+	}
+	if judge.Hit(s, judge.Box{X1: 900, Y1: 500, X2: 950, Y2: 550}) != 0 {
+		t.Error("a box away from the writing hits a line")
+	}
+}

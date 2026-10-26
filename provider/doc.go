@@ -95,3 +95,16 @@ func CheckImages(r Request, most int) error {
 	}
 	return nil
 }
+
+// Billed reports whether the tokens of a call's response are its whole bill. They are not for an
+// answer that broke off before the provider gave the final count of its tokens (Partial), nor for
+// a call that its context cut off before any bill came: the model may have spent tokens all the
+// same. A caller that caps its spending counts such a call at the most it could cost.
+func Billed(resp Response, err error) bool {
+	if err == nil {
+		return true
+	}
+	cutOff := errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled)
+	unknown := resp.Partial || cutOff && resp.InputTokens == 0 && resp.OutputTokens == 0
+	return !unknown
+}

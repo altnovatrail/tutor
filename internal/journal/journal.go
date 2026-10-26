@@ -221,33 +221,61 @@ func frames(steps []Step) []Frame {
 	return chosen
 }
 
+// The words of the journal's text: its first line, the phrase of each kind of step with the
+// numbers it takes, the marks of the frames and the end of a journal cut short.
+const (
+	header    = "How the sheet was written, step by step. Lines are numbered from the top of the sheet down, erased writing included."
+	wrote     = "Wrote line %d."
+	again     = "Wrote on line %d again."
+	back      = "Went back to line %d and wrote on it."
+	paused    = "Long pause."
+	erased    = "Erased %s."
+	oneStroke = "1 stroke on line %d"
+	strokesOn = "%d strokes on line %d"
+	moreOn    = "%d on line %d"
+	frame     = " Frame %d shows the sheet just before this."
+	leftOne   = "1 more step is left out."
+	left      = "%d more steps are left out."
+	frameLeft = " Frame %d shows the sheet just before %s."
+	leftIt    = "it"
+	leftOf    = "one of them"
+	comma     = ", "
+	and       = " and "
+)
+
+// Words are all the words a journal's text is made of. A change to any of them changes what a
+// judge reads, so the fingerprint of the measurement's prompt holds them (internal/judge).
+func Words() []string {
+	return []string{header, wrote, again, back, paused, erased, oneStroke, strokesOn, moreOn, frame, leftOne, left, frameLeft, leftIt, leftOf, comma, and}
+}
+
 // Text is the journal in English: a sentence on how to read it, then one numbered step a line, the
 // first MaxSteps steps, and how many it leaves out. With marks, a step that a frame stands just
 // before says so, by the frame's number, and so does the end for a frame among the steps left out.
 func (j *Journal) Text(marks bool) string {
 	var b strings.Builder
-	b.WriteString("How the sheet was written, step by step. Lines are numbered from the top of the sheet down, erased writing included.\n")
+	b.WriteString(header + "\n")
 	told := j.Steps[:min(len(j.Steps), MaxSteps)]
 	for i, st := range told {
 		fmt.Fprintf(&b, "%d. %s", i+1, st.text())
 		if marks && st.Frame > 0 {
-			fmt.Fprintf(&b, " Frame %d shows the sheet just before this.", st.Frame)
+			fmt.Fprintf(&b, frame, st.Frame)
 		}
 		b.WriteString("\n")
 	}
-	left, which := j.Steps[len(told):], "one of them"
-	switch len(left) {
+	rest, which := j.Steps[len(told):], leftOf
+	switch len(rest) {
 	case 0:
 		return b.String()
 	case 1:
-		b.WriteString("1 more step is left out.")
-		which = "it"
+		b.WriteString(leftOne)
+		which = leftIt
 	default:
-		fmt.Fprintf(&b, "%d more steps are left out.", len(left))
+		fmt.Fprintf(&b, left, len(rest))
 	}
-	for _, st := range left {
+	for _, st := range rest {
 		if marks && st.Frame > 0 {
-			fmt.Fprintf(&b, " Frame %d shows the sheet just before %s.", st.Frame, which)
+			fmt.Fprintf(&b, frameLeft, st.Frame, which)
 		}
 	}
 	b.WriteString("\n")
@@ -257,30 +285,30 @@ func (j *Journal) Text(marks bool) string {
 func (st Step) text() string {
 	switch st.Kind {
 	case Wrote:
-		return fmt.Sprintf("Wrote line %d.", st.Line)
+		return fmt.Sprintf(wrote, st.Line)
 	case Again:
-		return fmt.Sprintf("Wrote on line %d again.", st.Line)
+		return fmt.Sprintf(again, st.Line)
 	case Back:
-		return fmt.Sprintf("Went back to line %d and wrote on it.", st.Line)
+		return fmt.Sprintf(back, st.Line)
 	case Paused:
-		return "Long pause."
+		return paused
 	}
 	var parts []string
 	for i, line := range slices.Sorted(maps.Keys(st.Taken)) {
 		k := st.Taken[line]
 		switch {
 		case i > 0:
-			parts = append(parts, fmt.Sprintf("%d on line %d", k, line))
+			parts = append(parts, fmt.Sprintf(moreOn, k, line))
 		case k == 1:
-			parts = append(parts, fmt.Sprintf("1 stroke on line %d", line))
+			parts = append(parts, fmt.Sprintf(oneStroke, line))
 		default:
-			parts = append(parts, fmt.Sprintf("%d strokes on line %d", k, line))
+			parts = append(parts, fmt.Sprintf(strokesOn, k, line))
 		}
 	}
 	if n := len(parts); n > 1 {
-		parts = []string{strings.Join(parts[:n-1], ", ") + " and " + parts[n-1]}
+		parts = []string{strings.Join(parts[:n-1], comma) + and + parts[n-1]}
 	}
-	return "Erased " + parts[0] + "."
+	return fmt.Sprintf(erased, parts[0])
 }
 
 // Agreement is how the lines of a journal agree with the lines of a sample's markup: of the
@@ -290,7 +318,8 @@ func (st Step) text() string {
 // the board proposes with lines.Group (R25), so the agreement is higher than it would be with a
 // markup made apart, the more so on sheets saved before the board could edit the lines (T51).
 type Agreement struct {
-	Marked, Same int
+	Marked int `json:"marked"`
+	Same   int `json:"same"`
 }
 
 // Agree finds how the lines of the journal of a sample agree with its markup.

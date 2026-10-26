@@ -1,11 +1,12 @@
 // Command tutor-eval is tutor's eval runner: it runs the AI capabilities on eval samples, on the
-// same code that api calls, and reports how they did. Its runs come with the measurement's
-// runner. Until then it checks the files of samples, banks and sheet plans, and writes synthetic
-// ones: run it without arguments for its commands.
+// same code that api calls, and reports how they did. Its run command runs the measurement of the
+// writing process (R24); its other commands serve the board, check the files of samples, banks
+// and sheet plans, and write synthetic ones: run it without arguments for its commands.
 package main
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"flag"
@@ -14,6 +15,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime/debug"
+	"time"
 
 	"github.com/altnovatrail/tutor/internal/newfile"
 	"github.com/altnovatrail/tutor/internal/sample"
@@ -44,6 +46,9 @@ const usage = `usage:
                              handwriting
   tutor-eval split -seed N [-dev K] [-dir D] [-bank F] [-plan F]
                              divide the recorded sheets into development and test, once
+  tutor-eval run -part dev|test [-repeats N] [-max-usd N] [-log F] [-stub] [-dir D] [-bank F] [-plan F]
+                             run the measurement on a part: the estimate first, then calls
+                             to Claude once you type yes, and a log of every answer
   tutor-eval synth DIR       write the synthetic bank and one synthetic sample per scenario
   tutor-eval -version        print the version
 `
@@ -93,6 +98,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return runSheets(operands, stdout, stderr)
 	case "split":
 		return runSplit(operands, stdout, stderr)
+	case "run":
+		return runRun(context.Background(), operands, os.Stdin, stdout, stderr, os.Getenv, time.Now)
 	case "synth":
 		if len(operands) != 1 {
 			_, _ = fmt.Fprintln(stderr, "tutor-eval synth: give one directory")
