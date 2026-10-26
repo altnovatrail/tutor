@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/fs"
 	"net/http"
 	"os"
@@ -82,10 +81,7 @@ func NewRecorder(bank *sample.Bank, plan *sample.Plan, dir string) (*Recorder, e
 // the address the board listens on, for the message that turns a request away.
 func (rc *Recorder) Handler(addr string) http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("GET /{$}", func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		_, _ = io.WriteString(w, "The record mode of the board has no page yet. It answers GET /api/record/plan, POST /api/record/propose and POST /api/record/save.\n")
-	})
+	mux.HandleFunc("GET /{$}", servePage("record.html"))
 	mux.HandleFunc("GET /api/record/plan", rc.planHandler)
 	mux.HandleFunc("POST /api/record/propose", rc.propose)
 	mux.HandleFunc("POST /api/record/save", rc.save)
@@ -98,14 +94,16 @@ type PlanView struct {
 	Sheets []SheetView  `json:"sheets"`
 }
 
-// SheetView is a plan sheet with what the page needs besides: the statement of its task, whether
-// the board can save it yet, and why not, and how many times it has been saved.
+// SheetView is a plan sheet with what the page needs besides: the statement of its task and its
+// traps, for the author to pick the trap a mistake falls into, whether the board can save it yet,
+// and why not, and how many times it has been saved.
 type SheetView struct {
 	sample.PlanSheet
-	Statement string `json:"statement"`
-	Saveable  bool   `json:"saveable"`
-	Why       string `json:"why,omitempty"`
-	Saved     int    `json:"saved"`
+	Statement string        `json:"statement"`
+	Traps     []sample.Trap `json:"traps"`
+	Saveable  bool          `json:"saveable"`
+	Why       string        `json:"why,omitempty"`
+	Saved     int           `json:"saved"`
 }
 
 func (rc *Recorder) planHandler(w http.ResponseWriter, _ *http.Request) {
@@ -117,7 +115,9 @@ func (rc *Recorder) planHandler(w http.ResponseWriter, _ *http.Request) {
 	view := PlanView{Sheet: sample.Sheet{Width: sheetWidth, Height: sheetHeight}, Sheets: make([]SheetView, len(rc.plan.Sheets))}
 	for i, sh := range rc.plan.Sheets {
 		why := unsaveable(&sh)
-		view.Sheets[i] = SheetView{PlanSheet: sh, Statement: rc.bank.Task(sh.Task).Statement, Saveable: why == "", Why: why, Saved: saved[sh.Number]}
+		task := rc.bank.Task(sh.Task)
+		view.Sheets[i] = SheetView{PlanSheet: sh, Statement: task.Statement, Traps: append([]sample.Trap{}, task.Traps...),
+			Saveable: why == "", Why: why, Saved: saved[sh.Number]}
 	}
 	writeJSON(w, http.StatusOK, view)
 }

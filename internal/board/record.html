@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Record sheets</title>
+<style>
+  :root { --text: #1c2026; --soft: #5d6570; --edge: #cdd3da; --card: #ffffff; --ground: #edf0f3;
+          --go: #0b5cad; --stop: #a1361b; --faint: #e3e8ee; }
+  *, *::before, *::after { box-sizing: border-box; }
+  body { margin: 0; background: var(--ground); color: var(--text);
+         font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
+  .frame { max-width: 1040px; margin: 0 auto; padding: 14px 16px 40px; }
+  .pick { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+  .pick h1 { margin: 0; font-size: 1.15rem; min-width: 8.5em; text-align: center; }
+  .saves { color: var(--soft); margin-left: auto; }
+  .plan { margin: 10px 0 12px; }
+  .statement { font-size: 1.2rem; margin: 0 0 4px; }
+  .about { color: var(--soft); margin: 0 0 6px; }
+  .write { margin: 0; padding-left: 1.6em; font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; }
+  .write .tag { font-family: system-ui, sans-serif; font-size: 0.8rem; color: var(--go); margin-left: 0.6em; }
+  .unsaveable { color: var(--stop); margin: 6px 0 0; }
+  .paper { position: relative; }
+  #sheet { display: block; width: 100%; height: auto; background: #fff; border: 1px solid var(--edge);
+           border-radius: 6px; touch-action: none; cursor: crosshair; }
+  #sheet.rubbing { cursor: cell; }
+  /* The bands of the lines lie over the drawing surface, inside the sheet's 1px border, and let the pen through. */
+  #bands { position: absolute; inset: 1px; width: calc(100% - 2px); height: calc(100% - 2px);
+           border-radius: 5px; pointer-events: none; }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 10px; }
+  button { font: inherit; padding: 5px 14px; border-radius: 6px; border: 1px solid var(--edge);
+           background: var(--card); color: var(--text); cursor: pointer; }
+  button:disabled { opacity: 0.45; cursor: default; }
+  button.go { background: var(--go); border-color: var(--go); color: #fff; }
+  button[aria-pressed="true"] { background: var(--faint); border-color: var(--text); font-weight: 600; }
+  #status { color: var(--soft); }
+  .markup { margin-top: 16px; background: var(--card); border: 1px solid var(--edge); border-radius: 8px; padding: 12px 16px; }
+  .markup fieldset { border: 0; margin: 0; padding: 0; min-width: 0; }
+  .markup legend { font-weight: 600; font-size: 1.05rem; padding: 0; margin-bottom: 8px; }
+  .lines { list-style: none; margin: 0 0 10px; padding: 0; display: grid; gap: 6px; }
+  .line { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+  .line input[type="text"] { font: inherit; font-family: ui-monospace, "SFMono-Regular", Menlo, monospace;
+                             flex: 1 1 16em; min-width: 0; padding: 3px 6px; }
+  .fields { display: grid; grid-template-columns: max-content minmax(0, 22em) auto; gap: 6px 10px; align-items: center; }
+  .fields select { font: inherit; }
+  .flag { color: var(--stop); font-size: 0.9rem; }
+  .notes { margin: 10px 0 0; padding-left: 1.2em; }
+  .notes.problems { color: var(--stop); }
+</style>
+</head>
+<body>
+<div class="frame">
+  <nav class="pick" aria-label="The sheets of the plan">
+    <button id="sheet-prev" type="button" aria-label="Previous sheet">←</button>
+    <h1 id="title">Sheet</h1>
+    <button id="sheet-next" type="button" aria-label="Next sheet">→</button>
+    <span id="saves" class="saves"></span>
+  </nav>
+  <section class="plan" aria-labelledby="title">
+    <p id="statement" class="statement" lang="ru"></p>
+    <p id="about" class="about"></p>
+    <ol id="write" class="write"></ol>
+    <p id="unsaveable" class="unsaveable" hidden></p>
+  </section>
+  <div class="paper">
+    <canvas id="sheet" width="1000" height="600" aria-label="The sheet to write the lines of the plan on"></canvas>
+    <canvas id="bands" width="1000" height="600"></canvas>
+  </div>
+  <div class="bar">
+    <button id="eraser" type="button" aria-pressed="false">Eraser</button>
+    <button id="undo" type="button">Undo</button>
+    <button id="clear" type="button">Clear</button>
+    <button id="done" type="button" class="go">Done</button>
+    <span id="status" role="status"></span>
+  </div>
+  <section id="markup" class="markup" hidden aria-label="The markup of the sheet">
+    <fieldset id="fields">
+      <legend>The markup, filled in from the plan</legend>
+      <ol id="lines" class="lines"></ol>
+      <div class="fields">
+        <label for="outcome">Outcome</label>
+        <select id="outcome" aria-describedby="flag-outcome">
+          <option value="correct">correct</option>
+          <option value="error">error</option>
+        </select>
+        <span id="flag-outcome" class="flag"></span>
+        <label for="first-error">First wrong line</label>
+        <select id="first-error" aria-describedby="flag-first-error"></select>
+        <span id="flag-first-error" class="flag"></span>
+        <label for="trap">Trap</label>
+        <select id="trap" aria-describedby="flag-trap"></select>
+        <span id="flag-trap" class="flag"></span>
+      </div>
+    </fieldset>
+    <ul id="differences" class="notes"></ul>
+    <ul id="problems" class="notes problems"></ul>
+    <div class="bar">
+      <button id="back" type="button">Back</button>
+      <button id="save" type="button" class="go">Save</button>
+    </div>
+  </section>
+</div>
+<script>
+"use strict";
+// The record page: the author writes a sheet of the sheet plan, the board finds its lines, and the
+// author checks the markup the plan fills in and saves the sheet as a sample of the format
+// tutor-sample v0 (R25). Every point keeps its time and its pressure. The eraser and Undo take
+// whole strokes away, and each time they do is an erasure with its time.
+const WIDTH = 1000;
+const HEIGHT = 600;
+const REACH = 6;        // how near, in units of the sheet, the eraser's path passes a stroke it takes
+const AGAIN_MS = 4000;  // how long a press that would lose the sheet waits for the second one
+
+const byId = (id) => document.getElementById(id);
+const sheetCanvas = byId("sheet");
+const ink = sheetCanvas.getContext("2d");
+const bandCanvas = byId("bands");
+const shade = bandCanvas.getContext("2d");
+Object.assign(ink, { lineWidth: 3, lineCap: "round", lineJoin: "round" });
+
+// view is the page; sheet is what is written on the sheet being recorded. mode is "write", then
+// "markup" after Done, and "saved" once the server has saved the sheet.
+const view = { plan: null, at: 0, mode: "write", tool: "pen", hold: null, pending: null,
+               proposal: null, pausedAt: 0, saved: false, busy: false };
+let sheet = blank(0);
+
+// blank is a new sheet, whose clock starts at the time stamp start: every time on it — of a point
+// or an erasure — is milliseconds since then, and never less than the time before it.
+function blank(start) {
+  return { strokes: [], erasures: [], start, last: 0, made: 0, boxes: new Map() };
+}
+
+// clock gives the time on the sheet of a moment, given as an event's time stamp or performance.now():
+// both count from the same time origin.
+function clock(stamp) {
+  sheet.last = Math.max(sheet.last, Math.round(stamp - sheet.start));
+  return sheet.last;
+}
+
+function make(tag, text, className) {
+  const node = document.createElement(tag);
+  if (text !== undefined) node.textContent = text; // the plan's words are text, never markup
+  if (className) node.className = className;
+  return node;
+}
+
+function say(text) { byId("status").textContent = text; }
+function current() { return view.plan.sheets[view.at]; }
+function within(value, low, high) { return Math.min(Math.max(value, low), high); }
+function rounded(value, scale) { return Math.round(value * scale) / scale; }
+function unsaved() { return sheet.strokes.length > 0 && !view.saved; }
+function erasedIds() { return new Set(sheet.erasures.flatMap((e) => e.strokes)); }
+function visible() {
+  const gone = erasedIds();
+  return sheet.strokes.filter((s) => !gone.has(s.id));
+}
+
+// surface is where the sheet's drawing surface stands on the screen: the canvas's content box, inside
+// its border, over which the sheet's units stretch.
+function surface() {
+  const r = sheetCanvas.getBoundingClientRect();
+  return { left: r.left + sheetCanvas.clientLeft, top: r.top + sheetCanvas.clientTop,
+           width: sheetCanvas.clientWidth, height: sheetCanvas.clientHeight };
+}
+
+// spot is where an event falls on the sheet, in its units, kept on the sheet.
+function spot(e, box) {
+  return {
+    x: rounded(within((e.clientX - box.left) * WIDTH / box.width, 0, WIDTH), 10),
+    y: rounded(within((e.clientY - box.top) * HEIGHT / box.height, 0, HEIGHT), 10),
+  };
+}
+
+// point is a sample of the pen: its place, its time on the sheet and its pressure. A device without
+// pressure, a mouse, reports 0.5 while its button is down (Pointer Events).
+function point(e, box) {
+  const pressure = Number.isFinite(e.pressure) ? within(e.pressure, 0, 1) : 0.5;
+  return { ...spot(e, box), t_ms: clock(e.timeStamp), pressure: rounded(pressure, 1000) };
+}
+
+// samples are the pen's moves an event stands for: the events the browser coalesced into it, or the
+// event itself where it gives none.
+function samples(e) {
+  const coalesced = typeof e.getCoalescedEvents === "function" ? e.getCoalescedEvents() : [];
+  return coalesced.length > 0 ? coalesced : [e];
+}
+
+// eraserEnd tells the back end of a pen, its eraser button, from its tip.
+function eraserEnd(e) {
+  return e.pointerType === "pen" && (e.button === 5 || (e.buttons & 32) === 32);
+}
+
+function gap(p, a, b) {
+  const dx = b.x - a.x, dy = b.y - a.y;
+  const along = dx === 0 && dy === 0 ? 0 : within(((p.x - a.x) * dx + (p.y - a.y) * dy) / (dx * dx + dy * dy), 0, 1);
+  return Math.hypot(p.x - (a.x + along * dx), p.y - (a.y + along * dy));
+}
+
+function touches(stroke, p) {
+  return stroke.points.some((a, i) => gap(p, a, stroke.points[i + 1] ?? a) <= REACH);
+}
+
+// boxOf is the box a finished stroke takes on the sheet, kept once it is first asked for.
+function boxOf(stroke) {
+  let box = sheet.boxes.get(stroke.id);
+  if (!box) {
+    const xs = stroke.points.map((p) => p.x), ys = stroke.points.map((p) => p.y);
+    box = { left: Math.min(...xs), right: Math.max(...xs), top: Math.min(...ys), bottom: Math.max(...ys) };
+    sheet.boxes.set(stroke.id, box);
+  }
+  return box;
+}
+
+// sweep marks the strokes still on the sheet that the eraser touches on its path from a to b. It
+// tests the path in steps short enough to miss no stroke, and only the strokes whose box the path
+// comes within reach of.
+function sweep(hold, a, b) {
+  const near = visible().filter((st) => {
+    const box = boxOf(st);
+    return !hold.touched.has(st.id) && Math.min(a.x, b.x) - REACH <= box.right && Math.max(a.x, b.x) + REACH >= box.left &&
+      Math.min(a.y, b.y) - REACH <= box.bottom && Math.max(a.y, b.y) + REACH >= box.top;
+  });
+  if (near.length === 0) return;
+  const steps = Math.max(1, Math.ceil(Math.hypot(b.x - a.x, b.y - a.y) / (REACH / 2)));
+  for (let k = 1; k <= steps; k++) {
+    const p = { x: a.x + (b.x - a.x) * k / steps, y: a.y + (b.y - a.y) * k / steps };
+    for (const st of near) if (!hold.touched.has(st.id) && touches(st, p)) hold.touched.add(st.id);
+  }
+}
+
+function trace(points) {
+  const [first, ...rest] = points;
+  ink.beginPath();
+  ink.moveTo(first.x, first.y);
+  for (const p of rest) ink.lineTo(p.x, p.y);
+  if (rest.length === 0) ink.lineTo(first.x + 0.01, first.y); // a dot still shows
+  ink.stroke();
+}
+
+// draw shows the strokes still on the sheet, in the look of the check board; those the eraser is
+// touching right now are pale. While the pen writes, only its new pieces of line are drawn.
+function draw() {
+  ink.fillStyle = "#fff";
+  ink.fillRect(0, 0, WIDTH, HEIGHT);
+  const touched = view.hold?.rubbing ? view.hold.touched : new Set();
+  for (const s of visible()) {
+    ink.strokeStyle = touched.has(s.id) ? "#b9c0c8" : "#111";
+    trace(s.points);
+  }
+}
+
+function piece(a, b) {
+  ink.strokeStyle = "#111";
+  ink.beginPath();
+  ink.moveTo(a.x, a.y);
+  ink.lineTo(b.x, b.y);
+  ink.stroke();
+}
+
+function drawBands(bands) {
+  shade.clearRect(0, 0, WIDTH, HEIGHT);
+  shade.font = "600 20px system-ui, sans-serif";
+  shade.textAlign = "right";
+  shade.textBaseline = "middle";
+  for (const [i, b] of bands.entries()) {
+    shade.fillStyle = i % 2 === 0 ? "rgba(11, 92, 173, 0.12)" : "rgba(214, 122, 18, 0.15)";
+    shade.fillRect(0, b.top - 6, WIDTH, b.bottom - b.top + 12);
+    shade.fillStyle = "#0b3d75";
+    shade.fillText(String(i + 1), WIDTH - 10, (b.top + b.bottom) / 2);
+  }
+}
+
+function savesText(n) {
+  if (n === 0) return "not saved yet";
+  return n === 1 ? "saved once" : `saved ${n} times`;
+}
+
+// about says what the sheet is written for: its scenario, its answer, its planned mistake and the
+// erasure it plans.
+function about(sh) {
+  const parts = [`Scenario ${sh.scenario}`, `the answer is line ${sh.answer}`];
+  if (sh.expected.outcome === "error") parts.push(`line ${sh.expected.first_error} is wrong on purpose`);
+  if (sh.expected.trap) parts.push(`trap ${sh.expected.trap}`);
+  let text = parts.join(" · ") + ".";
+  const e = sh.erasure;
+  if (e) text += ` On line ${e.line}, write “${e.text}”, take it away in one stroke of the eraser, and write “${e.replacement}” instead.`;
+  return text;
+}
+
+function setControls() {
+  const writing = view.plan !== null && view.mode === "write" && !view.busy;
+  const sh = view.plan ? current() : null;
+  byId("eraser").disabled = !writing;
+  byId("undo").disabled = !writing || visible().length === 0;
+  byId("done").disabled = !writing || !sh?.saveable || visible().length === 0;
+  for (const id of ["clear", "sheet-prev", "sheet-next"]) byId(id).disabled = view.busy || !sh;
+  byId("fields").disabled = view.mode !== "markup" || view.busy;
+  byId("back").disabled = view.mode !== "markup" || view.busy;
+  byId("save").disabled = view.mode !== "markup" || view.busy || !ready();
+  sheetCanvas.classList.toggle("rubbing", view.tool === "eraser");
+}
+
+// open starts the shown plan sheet anew: nothing written, its clock starting at stamp.
+function open(stamp) {
+  sheet = blank(stamp);
+  Object.assign(view, { mode: "write", hold: null, pending: null, proposal: null, saved: false });
+  const sh = current();
+  byId("title").textContent = `Sheet ${sh.number} of ${view.plan.sheets.length}`;
+  byId("saves").textContent = savesText(sh.saved);
+  byId("statement").textContent = sh.statement;
+  byId("about").textContent = about(sh);
+  byId("write").replaceChildren(...sh.lines.map((text, i) => {
+    const item = make("li", text);
+    if (i + 1 === sh.answer) item.append(make("span", "the answer", "tag"));
+    if (sh.expected.first_error === i + 1) item.append(make("span", "wrong on purpose", "tag"));
+    return item;
+  }));
+  const note = byId("unsaveable");
+  note.hidden = sh.saveable;
+  note.textContent = sh.saveable ? "" : `Not saveable yet: ${sh.why}.`;
+  byId("markup").hidden = true;
+  shade.clearRect(0, 0, WIDTH, HEIGHT);
+  draw();
+  setControls();
+  say("");
+}
+
+// again lets a press that would lose what is written through only when it comes a second time, soon
+// after the first; the first says so.
+function again(what, e, message) {
+  const p = view.pending;
+  if (p && p.what === what && e.timeStamp - p.at <= AGAIN_MS) {
+    view.pending = null;
+    return true;
+  }
+  view.pending = { what, at: e.timeStamp };
+  say(message);
+  return false;
+}
+
+sheetCanvas.addEventListener("pointerdown", (e) => {
+  if (!view.plan || view.mode !== "write" || view.busy || view.hold || !e.isPrimary) return;
+  if (e.pointerType === "mouse" && e.button !== 0) return;
+  e.preventDefault();
+  sheetCanvas.setPointerCapture?.(e.pointerId);
+  const box = surface();
+  view.pending = null;
+  if (view.tool === "eraser" || eraserEnd(e)) {
+    const at = spot(e, box);
+    view.hold = { pointer: e.pointerId, rubbing: true, touched: new Set(), at };
+    sweep(view.hold, at, at);
+  } else {
+    sheet.made += 1;
+    const stroke = { id: "s-" + String(sheet.made).padStart(4, "0"), points: [point(e, box)] };
+    sheet.strokes.push(stroke);
+    view.hold = { pointer: e.pointerId, rubbing: false, stroke };
+  }
+  draw();
+});
+
+sheetCanvas.addEventListener("pointermove", (e) => {
+  const hold = view.hold;
+  if (!hold || e.pointerId !== hold.pointer) return;
+  const box = surface();
+  const touched = hold.rubbing ? hold.touched.size : 0;
+  for (const move of samples(e)) {
+    if (hold.rubbing) {
+      const p = spot(move, box);
+      sweep(hold, hold.at, p);
+      hold.at = p;
+    } else {
+      const p = point(move, box);
+      piece(hold.stroke.points.at(-1), p);
+      hold.stroke.points.push(p);
+    }
+  }
+  if (hold.rubbing && hold.touched.size !== touched) draw();
+});
+
+// end lets the pointer go. The pen's stroke ends without a point: a pointerup has no pressure. A
+// lifted eraser takes what it touched in that one move away, as one erasure at that moment; an
+// eraser the browser cancelled, or whose capture it lost, takes nothing away.
+function end(e, lifted) {
+  const hold = view.hold;
+  if (!hold || e.pointerId !== hold.pointer) return;
+  view.hold = null;
+  if (hold.rubbing && hold.touched.size > 0) {
+    if (lifted) {
+      const taken = sheet.strokes.filter((s) => hold.touched.has(s.id)).map((s) => s.id);
+      sheet.erasures.push({ t_ms: clock(e.timeStamp), strokes: taken });
+    } else {
+      say("The eraser was interrupted, and it took nothing away.");
+    }
+  }
+  draw();
+  setControls();
+}
+sheetCanvas.addEventListener("pointerup", (e) => end(e, true));
+sheetCanvas.addEventListener("pointercancel", (e) => end(e, false));
+sheetCanvas.addEventListener("lostpointercapture", (e) => end(e, false));
+
+byId("eraser").addEventListener("click", () => {
+  view.tool = view.tool === "eraser" ? "pen" : "eraser";
+  byId("eraser").setAttribute("aria-pressed", String(view.tool === "eraser"));
+  setControls();
+});
+
+// Undo takes the last stroke still on the sheet away, and the record keeps that as an erasure: a
+// slip of the pen.
+byId("undo").addEventListener("click", (e) => {
+  if (view.mode !== "write" || view.hold) return;
+  const last = visible().at(-1);
+  if (!last) return;
+  view.pending = null;
+  sheet.erasures.push({ t_ms: clock(e.timeStamp), strokes: [last.id] });
+  draw();
+  setControls();
+});
+
+byId("clear").addEventListener("click", (e) => {
+  if (!view.plan || view.hold || view.busy) return;
+  if (unsaved() && !again("clear", e, "Press Clear again to start the sheet over.")) return;
+  open(e.timeStamp);
+});
+
+function step(by, what, arrow, e) {
+  if (!view.plan || view.hold || view.busy) return;
+  if (unsaved() && !again(what, e, `The sheet is not saved: press ${arrow} again to leave it.`)) return;
+  const n = view.plan.sheets.length;
+  view.at = (view.at + by + n) % n;
+  open(e.timeStamp);
+}
+byId("sheet-prev").addEventListener("click", (e) => step(-1, "prev", "←", e));
+byId("sheet-next").addEventListener("click", (e) => step(1, "next", "→", e));
+
+async function post(url, body) {
+  const res = await fetch(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+  const data = await res.json();
+  return { ok: res.ok, status: res.status, data };
+}
+
+const asErasure = (e) => ({ t_ms: e.t_ms, strokes: e.strokes, planned: null });
+
+// Done locks the sheet and asks the board for its lines; the time until Back is cut out of the
+// record, so the markup leaves no pause in it.
+byId("done").addEventListener("click", async (e) => {
+  if (!view.plan || view.mode !== "write" || view.hold || view.busy) return;
+  const sh = current();
+  if (!sh.saveable || visible().length === 0) return;
+  const asked = sheet;
+  Object.assign(view, { mode: "markup", pausedAt: e.timeStamp, pending: null, busy: true });
+  setControls();
+  say("Finding the lines…");
+  let answer;
+  try {
+    answer = await post("/api/record/propose", { number: sh.number, strokes: sheet.strokes, erasures: sheet.erasures.map(asErasure) });
+  } catch (err) {
+    answer = { ok: false, data: { error: err.message } };
+  }
+  view.busy = false;
+  if (sheet !== asked || view.mode !== "markup") return; // the author moved on meanwhile
+  if (!answer.ok) {
+    resume(performance.now());
+    say(`The lines are not found: ${answer.data.error || answer.status}.`);
+    return;
+  }
+  view.proposal = answer.data;
+  showMarkup();
+});
+
+// resume goes back to writing; the sheet's clock moves on by the time spent on the markup.
+function resume(stamp) {
+  sheet.start += stamp - view.pausedAt;
+  Object.assign(view, { mode: "write", proposal: null });
+  byId("markup").hidden = true;
+  shade.clearRect(0, 0, WIDTH, HEIGHT);
+  draw();
+  setControls();
+}
+
+byId("back").addEventListener("click", (e) => {
+  if (view.mode !== "markup" || view.busy) return;
+  resume(e.timeStamp);
+  say("");
+});
+
+function option(value, text) {
+  const node = make("option", text);
+  node.value = value;
+  return node;
+}
+
+function lineRow(line, i) {
+  const row = make("li", undefined, "line");
+  const name = make("label", `Line ${i + 1}`);
+  name.htmlFor = `text-${i}`;
+  const text = make("input");
+  Object.assign(text, { type: "text", id: `text-${i}`, value: line.text, spellcheck: false });
+  text.setAttribute("aria-describedby", `flag-line-${i}`);
+  text.addEventListener("input", edited);
+  const pick = make("label");
+  const radio = make("input");
+  Object.assign(radio, { type: "radio", name: "answer", id: `answer-${i}`, checked: line.answer });
+  radio.addEventListener("change", edited);
+  pick.append(radio, " the answer");
+  const flag = make("span", "", "flag");
+  flag.id = `flag-line-${i}`;
+  row.append(name, text, pick, flag);
+  return row;
+}
+
+// showMarkup lays the lines the board found over the sheet and fills the form in from the plan.
+function showMarkup() {
+  const p = view.proposal;
+  const sh = current();
+  drawBands(p.bands);
+  byId("lines").replaceChildren(...p.lines.map(lineRow));
+  byId("outcome").value = p.expected.outcome;
+  byId("first-error").replaceChildren(...p.lines.map((_, i) => option(String(i + 1), `line ${i + 1}`)));
+  byId("first-error").value = String(p.expected.first_error ?? 1);
+  byId("trap").replaceChildren(option("", "none"), ...sh.traps.map((t) => option(t.id, `${t.id} — ${t.description}`)));
+  byId("trap").value = p.expected.trap;
+  for (const id of ["outcome", "first-error", "trap"]) byId(id).onchange = edited;
+  byId("problems").replaceChildren();
+  byId("markup").hidden = false;
+  refresh();
+}
+
+function answerLine() {
+  return view.proposal.lines.findIndex((_, i) => byId(`answer-${i}`).checked) + 1;
+}
+
+function sameCount() { return view.proposal.lines.length === current().lines.length; }
+
+// ready says whether the form holds markup the board can save.
+function ready() {
+  if (!view.proposal || !sameCount() || answerLine() === 0) return false;
+  return view.proposal.lines.every((_, i) => byId(`text-${i}`).value.trim() !== "");
+}
+
+// differences names, before the save, where the form leaves the plan.
+function differences() {
+  const sh = current();
+  const notes = [];
+  for (const [i, planned] of sh.lines.entries()) {
+    const written = byId(`text-${i}`).value.trim();
+    if (written !== planned) notes.push(`Line ${i + 1} reads “${written}”, and the plan’s “${planned}”.`);
+  }
+  if (answerLine() !== sh.answer) notes.push(`The answer is ${answerLine() ? "line " + answerLine() : "on no line"}, and the plan’s line ${sh.answer}.`);
+  const outcome = byId("outcome").value;
+  if (outcome !== sh.expected.outcome) notes.push(`The outcome is ${outcome}, and the plan’s ${sh.expected.outcome}.`);
+  const first = outcome === "error" ? Number(byId("first-error").value) : null;
+  if (first !== sh.expected.first_error) notes.push(`The first wrong line is ${first ?? "none"}, and the plan’s ${sh.expected.first_error ?? "none"}.`);
+  const trap = outcome === "error" ? byId("trap").value : "";
+  if (trap !== sh.expected.trap) notes.push(`The trap is ${trap || "none"}, and the plan’s ${sh.expected.trap || "none"}.`);
+  return notes;
+}
+
+// edited follows a change of the form: the problems of the last refused save may be gone with it.
+function edited() {
+  clearFlags();
+  refresh();
+}
+
+function listInto(id, texts) { byId(id).replaceChildren(...texts.map((t) => make("li", t))); }
+
+// sentence makes a note of the server a sentence of its own.
+function sentence(text) { return text.charAt(0).toUpperCase() + text.slice(1) + "."; }
+
+function refresh() {
+  if (!view.proposal) return;
+  const error = byId("outcome").value === "error";
+  byId("first-error").disabled = !error;
+  byId("trap").disabled = !error;
+  if (sameCount()) {
+    const notes = differences();
+    listInto("differences", notes.length ? ["Differs from the plan:", ...notes] : []);
+    say(ready() ? "Check the lines and the markup, then Save." : "Every line needs its text, and one line is the answer.");
+  } else {
+    listInto("differences", view.proposal.differences.map((d) => sentence(d.message) +
+      " Press Back to take a stray stroke away or write what is missing, or Clear to write the sheet again."));
+    say("The lines are not the plan’s, so the sheet cannot be saved.");
+  }
+  setControls();
+}
+
+// sample is the sheet as a document of the format tutor-sample v0: every field present, the
+// erasures slips without markup, and the lines as the form has them.
+function sample() {
+  const sh = current();
+  const outcome = byId("outcome").value;
+  const answer = answerLine();
+  return {
+    format: "tutor-sample", version: 0, sheet: { width: WIDTH, height: HEIGHT },
+    task: sh.task, writer: "author", scenario: sh.scenario,
+    strokes: sheet.strokes.map((s) => ({ id: s.id, points: s.points })),
+    erasures: sheet.erasures.map(asErasure),
+    lines: view.proposal.lines.map((line, i) => ({
+      text: byId(`text-${i}`).value.trim(), strokes: line.strokes, illegible: false, crossed_out: false, answer: i + 1 === answer,
+    })),
+    injection: null,
+    expected: {
+      outcome,
+      first_error: outcome === "error" ? Number(byId("first-error").value) : null,
+      trap: outcome === "error" ? byId("trap").value : "",
+    },
+  };
+}
+
+// flagFor is where the form shows a problem the board found at a path of the request, or null when
+// no field of the form holds it.
+function flagFor(path) {
+  const line = /^sample\.lines\[(\d+)\]/.exec(path);
+  if (line) return byId(`flag-line-${line[1]}`);
+  const field = { "sample.expected.outcome": "outcome", "sample.expected.first_error": "first-error", "sample.expected.trap": "trap" }[path];
+  return field ? byId(`flag-${field}`) : null;
+}
+
+function clearFlags() {
+  for (const id of ["outcome", "first-error", "trap"]) byId(`flag-${id}`).textContent = "";
+  for (let i = 0; i < (view.proposal?.lines.length ?? 0); i++) byId(`flag-line-${i}`).textContent = "";
+  byId("problems").replaceChildren();
+}
+
+function showProblems(problems) {
+  const rest = [];
+  for (const p of problems) {
+    const flag = flagFor(p.path);
+    if (flag) flag.textContent = [flag.textContent, sentence(p.message)].filter(Boolean).join(" ");
+    else rest.push(`${p.path}: ${p.message}`);
+  }
+  listInto("problems", rest);
+}
+
+byId("save").addEventListener("click", async () => {
+  if (view.mode !== "markup" || view.busy || !ready()) return;
+  const sh = current();
+  const asked = sheet;
+  clearFlags();
+  view.busy = true;
+  setControls();
+  say("Saving…");
+  let answer;
+  try {
+    answer = await post("/api/record/save", { number: sh.number, sample: sample() });
+  } catch (err) {
+    answer = { ok: false, data: { error: err.message } };
+  }
+  view.busy = false;
+  if (sheet !== asked) return;
+  if (answer.ok) {
+    Object.assign(view, { mode: "saved", saved: true });
+    sh.saved = answer.data.saved;
+    byId("saves").textContent = savesText(sh.saved);
+    const notes = answer.data.differences.map((d) => `${d.path}: ${d.message}`);
+    listInto("differences", notes.length ? ["Saved with these differences from the plan:", ...notes] : []);
+    say(`Saved as ${answer.data.file}. Go on with →, or Clear to write this sheet again.`);
+    setControls();
+    return;
+  }
+  showProblems(answer.data.problems ?? []);
+  say(`The sheet is not saved: ${answer.data.error || answer.status}.`);
+  setControls();
+});
+
+// A sheet written and not saved is lost with the tab, so the browser asks before it goes.
+window.addEventListener("beforeunload", (e) => {
+  if (unsaved()) e.preventDefault();
+});
+
+setControls();
+(async () => {
+  try {
+    const res = await fetch("/api/record/plan");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || res.statusText);
+    view.plan = data;
+    open(performance.now());
+  } catch (err) {
+    say(`The plan did not load: ${err.message}`);
+    setControls();
+  }
+})();
+</script>
+</body>
+</html>
