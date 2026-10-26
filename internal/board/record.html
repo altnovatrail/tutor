@@ -8,6 +8,7 @@
   :root { --text: #1c2026; --soft: #5d6570; --edge: #cdd3da; --card: #ffffff; --ground: #edf0f3;
           --go: #0b5cad; --stop: #a1361b; --faint: #e3e8ee; }
   *, *::before, *::after { box-sizing: border-box; }
+  [hidden] { display: none !important; }
   body { margin: 0; background: var(--ground); color: var(--text);
          font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; }
   .frame { max-width: 1040px; margin: 0 auto; padding: 14px 16px 40px; }
@@ -19,7 +20,6 @@
   .about { color: var(--soft); margin: 0 0 6px; }
   .write { margin: 0; padding-left: 1.6em; font-family: ui-monospace, "SFMono-Regular", Menlo, monospace; }
   .write .tag { font-family: system-ui, sans-serif; font-size: 0.8rem; color: var(--go); margin-left: 0.6em; }
-  .unsaveable { color: var(--stop); margin: 6px 0 0; }
   .paper { position: relative; }
   #sheet { display: block; width: 100%; height: auto; background: #fff; border: 1px solid var(--edge);
            border-radius: 6px; touch-action: none; cursor: crosshair; }
@@ -44,6 +44,10 @@
   .fields { display: grid; grid-template-columns: max-content minmax(0, 22em) auto; gap: 6px 10px; align-items: center; }
   .fields select { font: inherit; }
   .flag { color: var(--stop); font-size: 0.9rem; }
+  .sub { font-weight: 600; margin: 14px 0 4px; }
+  .erasure-list { list-style: none; margin: 0 0 6px; padding: 0; display: grid; gap: 4px; }
+  .erasure-list label { display: inline-flex; align-items: center; gap: 6px; }
+  .kind { color: var(--soft); margin: 0; }
   .notes { margin: 10px 0 0; padding-left: 1.2em; }
   .notes.problems { color: var(--stop); }
 </style>
@@ -60,7 +64,6 @@
     <p id="statement" class="statement" lang="ru"></p>
     <p id="about" class="about"></p>
     <ol id="write" class="write"></ol>
-    <p id="unsaveable" class="unsaveable" hidden></p>
   </section>
   <div class="paper">
     <canvas id="sheet" width="1000" height="600" aria-label="The sheet to write the lines of the plan on"></canvas>
@@ -91,6 +94,20 @@
         <select id="trap" aria-describedby="flag-trap"></select>
         <span id="flag-trap" class="flag"></span>
       </div>
+      <div id="erasure-block" hidden>
+        <p id="erasures-title" class="sub">Erasures</p>
+        <ol id="erasures" class="erasure-list" aria-labelledby="erasures-title"></ol>
+        <span id="flag-erasures" class="flag"></span>
+        <div id="planned-fields" class="fields" hidden>
+          <label for="planned-line">Line written in its place</label>
+          <select id="planned-line" aria-describedby="flag-planned-line"></select>
+          <span id="flag-planned-line" class="flag"></span>
+          <label for="planned-text">What the erased strokes said</label>
+          <input id="planned-text" type="text" spellcheck="false" aria-describedby="flag-planned-text">
+          <span id="flag-planned-text" class="flag"></span>
+        </div>
+        <p id="planned-kind" class="kind"></p>
+      </div>
     </fieldset>
     <ul id="differences" class="notes"></ul>
     <ul id="problems" class="notes problems"></ul>
@@ -110,6 +127,8 @@ const WIDTH = 1000;
 const HEIGHT = 600;
 const REACH = 6;        // how near, in units of the sheet, the eraser's path passes a stroke it takes
 const AGAIN_MS = 4000;  // how long a press that would lose the sheet waits for the second one
+const KINDS = { mistake: "a mistake, fixed after it", "correct-step": "a correct step, replaced by a wrong one" };
+const BACK_HINT = " Press Back to take a stray stroke away or write what is missing, or Clear to write the sheet again.";
 
 const byId = (id) => document.getElementById(id);
 const sheetCanvas = byId("sheet");
@@ -121,7 +140,7 @@ Object.assign(ink, { lineWidth: 3, lineCap: "round", lineJoin: "round" });
 // view is the page; sheet is what is written on the sheet being recorded. mode is "write", then
 // "markup" after Done, and "saved" once the server has saved the sheet.
 const view = { plan: null, at: 0, mode: "write", tool: "pen", hold: null, pending: null,
-               proposal: null, pausedAt: 0, saved: false, busy: false };
+               proposal: null, planned: -1, pausedAt: 0, saved: false, busy: false };
 let sheet = blank(0);
 
 // blank is a new sheet, whose clock starts at the time stamp start: every time on it — of a point
@@ -228,13 +247,13 @@ function sweep(hold, a, b) {
   }
 }
 
-function trace(points) {
+function trace(ctx, points) {
   const [first, ...rest] = points;
-  ink.beginPath();
-  ink.moveTo(first.x, first.y);
-  for (const p of rest) ink.lineTo(p.x, p.y);
-  if (rest.length === 0) ink.lineTo(first.x + 0.01, first.y); // a dot still shows
-  ink.stroke();
+  ctx.beginPath();
+  ctx.moveTo(first.x, first.y);
+  for (const p of rest) ctx.lineTo(p.x, p.y);
+  if (rest.length === 0) ctx.lineTo(first.x + 0.01, first.y); // a dot still shows
+  ctx.stroke();
 }
 
 // draw shows the strokes still on the sheet, in the look of the check board; those the eraser is
@@ -245,7 +264,7 @@ function draw() {
   const touched = view.hold?.rubbing ? view.hold.touched : new Set();
   for (const s of visible()) {
     ink.strokeStyle = touched.has(s.id) ? "#b9c0c8" : "#111";
-    trace(s.points);
+    trace(ink, s.points);
   }
 }
 
@@ -270,6 +289,19 @@ function drawBands(bands) {
   }
 }
 
+// drawErased shows the strokes the erasure taken for the planned one took away, over the sheet.
+function drawErased() {
+  const e = sheet.erasures[view.planned];
+  if (!e) return;
+  Object.assign(shade, { strokeStyle: "rgba(193, 18, 31, 0.7)", lineWidth: 3, lineCap: "round", lineJoin: "round" });
+  for (const st of sheet.strokes.filter((x) => e.strokes.includes(x.id))) trace(shade, st.points);
+}
+
+function overlay() {
+  drawBands(view.proposal.bands);
+  drawErased();
+}
+
 function savesText(n) {
   if (n === 0) return "not saved yet";
   return n === 1 ? "saved once" : `saved ${n} times`;
@@ -292,7 +324,7 @@ function setControls() {
   const sh = view.plan ? current() : null;
   byId("eraser").disabled = !writing;
   byId("undo").disabled = !writing || visible().length === 0;
-  byId("done").disabled = !writing || !sh?.saveable || visible().length === 0;
+  byId("done").disabled = !writing || visible().length === 0;
   for (const id of ["clear", "sheet-prev", "sheet-next"]) byId(id).disabled = view.busy || !sh;
   byId("fields").disabled = view.mode !== "markup" || view.busy;
   byId("back").disabled = view.mode !== "markup" || view.busy;
@@ -303,7 +335,7 @@ function setControls() {
 // open starts the shown plan sheet anew: nothing written, its clock starting at stamp.
 function open(stamp) {
   sheet = blank(stamp);
-  Object.assign(view, { mode: "write", hold: null, pending: null, proposal: null, saved: false });
+  Object.assign(view, { mode: "write", hold: null, pending: null, proposal: null, planned: -1, saved: false });
   const sh = current();
   byId("title").textContent = `Sheet ${sh.number} of ${view.plan.sheets.length}`;
   byId("saves").textContent = savesText(sh.saved);
@@ -315,9 +347,6 @@ function open(stamp) {
     if (sh.expected.first_error === i + 1) item.append(make("span", "wrong on purpose", "tag"));
     return item;
   }));
-  const note = byId("unsaveable");
-  note.hidden = sh.saveable;
-  note.textContent = sh.saveable ? "" : `Not saveable yet: ${sh.why}.`;
   byId("markup").hidden = true;
   shade.clearRect(0, 0, WIDTH, HEIGHT);
   draw();
@@ -412,7 +441,7 @@ byId("undo").addEventListener("click", (e) => {
   const last = visible().at(-1);
   if (!last) return;
   view.pending = null;
-  sheet.erasures.push({ t_ms: clock(e.timeStamp), strokes: [last.id] });
+  sheet.erasures.push({ t_ms: clock(e.timeStamp), strokes: [last.id], undo: true });
   draw();
   setControls();
 });
@@ -446,14 +475,15 @@ const asErasure = (e) => ({ t_ms: e.t_ms, strokes: e.strokes, planned: null });
 byId("done").addEventListener("click", async (e) => {
   if (!view.plan || view.mode !== "write" || view.hold || view.busy) return;
   const sh = current();
-  if (!sh.saveable || visible().length === 0) return;
+  if (visible().length === 0) return;
   const asked = sheet;
   Object.assign(view, { mode: "markup", pausedAt: e.timeStamp, pending: null, busy: true });
   setControls();
   say("Finding the lines…");
   let answer;
   try {
-    answer = await post("/api/record/propose", { number: sh.number, strokes: sheet.strokes, erasures: sheet.erasures.map(asErasure) });
+    answer = await post("/api/record/propose", { number: sh.number, strokes: sheet.strokes, erasures: sheet.erasures.map(asErasure),
+      undone: sheet.erasures.map((x) => Boolean(x.undo)) });
   } catch (err) {
     answer = { ok: false, data: { error: err.message } };
   }
@@ -509,12 +539,62 @@ function lineRow(line, i) {
   return row;
 }
 
+function onLine(n) { return n ? `on line ${n}` : "on no line"; }
+
+// erasureRow is an erasure of the sheet in the form: a slip, or, on a sheet that plans an erasure,
+// one the author may take for the planned one.
+function erasureRow(e, i) {
+  const row = make("li");
+  const taken = `Erasure ${i + 1}: ${e.strokes.length === 1 ? "1 stroke" : e.strokes.length + " strokes"}, ${onLine(view.proposal.erasure_lines[i])}`;
+  if (e.undo) {
+    row.textContent = `${taken}, by Undo: a slip.`;
+    return row;
+  }
+  if (!current().erasure) {
+    row.textContent = `${taken}, a slip.`;
+    return row;
+  }
+  const label = make("label");
+  const radio = make("input");
+  Object.assign(radio, { type: "radio", name: "planned", id: `planned-${i}`, checked: i === view.planned });
+  radio.addEventListener("change", () => {
+    view.planned = i;
+    overlay();
+    edited();
+  });
+  label.append(radio, ` ${taken}`);
+  row.append(label);
+  return row;
+}
+
+function showErasures() {
+  const sh = current();
+  const block = byId("erasure-block");
+  block.hidden = sheet.erasures.length === 0 && !sh.erasure;
+  byId("erasures-title").textContent = sh.erasure
+    ? "Erasures: pick the planned one, and the rest are slips"
+    : "Erasures, all of them slips";
+  byId("erasures").replaceChildren(...sheet.erasures.map(erasureRow));
+  const planned = sh.erasure;
+  byId("planned-fields").hidden = !planned;
+  byId("planned-kind").textContent = planned ? `The planned erasure took away ${KINDS[planned.erased]}.` : "";
+  if (planned) {
+    byId("planned-line").replaceChildren(...view.proposal.lines.map((_, i) => option(String(i + 1), `line ${i + 1}`)));
+    byId("planned-line").value = String(planned.line);
+    byId("planned-text").value = planned.text;
+    byId("planned-line").onchange = edited;
+    byId("planned-text").oninput = edited;
+  }
+}
+
 // showMarkup lays the lines the board found over the sheet and fills the form in from the plan.
 function showMarkup() {
   const p = view.proposal;
   const sh = current();
-  drawBands(p.bands);
+  view.planned = p.planned ?? -1;
+  overlay();
   byId("lines").replaceChildren(...p.lines.map(lineRow));
+  showErasures();
   byId("outcome").value = p.expected.outcome;
   byId("first-error").replaceChildren(...p.lines.map((_, i) => option(String(i + 1), `line ${i + 1}`)));
   byId("first-error").value = String(p.expected.first_error ?? 1);
@@ -532,9 +612,22 @@ function answerLine() {
 
 function sameCount() { return view.proposal.lines.length === current().lines.length; }
 
+// erasureProblem says, in words, what keeps the planned erasure of the sheet from the save, or
+// nothing: a sheet whose scenario plans an erasure has one, and its markup says what it took away.
+function erasureProblem() {
+  const sh = current();
+  if (!sh.erasure) return "";
+  if (!sheet.erasures.some((e) => !e.undo)) {
+    return `The sheet has no move of the eraser, and the scenario ${sh.scenario} plans an erasure: Undo makes slips only, so write the sheet again, erasing in one move of the eraser.`;
+  }
+  if (view.planned < 0) return `Pick the planned erasure: the scenario ${sh.scenario} has one, and the rest are slips.`;
+  if (byId("planned-text").value.trim() === "") return "Say what the erased strokes said.";
+  return "";
+}
+
 // ready says whether the form holds markup the board can save.
 function ready() {
-  if (!view.proposal || !sameCount() || answerLine() === 0) return false;
+  if (!view.proposal || !sameCount() || answerLine() === 0 || erasureProblem() !== "") return false;
   return view.proposal.lines.every((_, i) => byId(`text-${i}`).value.trim() !== "");
 }
 
@@ -553,6 +646,15 @@ function differences() {
   if (first !== sh.expected.first_error) notes.push(`The first wrong line is ${first ?? "none"}, and the plan’s ${sh.expected.first_error ?? "none"}.`);
   const trap = outcome === "error" ? byId("trap").value : "";
   if (trap !== sh.expected.trap) notes.push(`The trap is ${trap || "none"}, and the plan’s ${sh.expected.trap || "none"}.`);
+  const pe = sh.erasure;
+  if (pe && view.planned >= 0) {
+    const line = Number(byId("planned-line").value);
+    const text = byId("planned-text").value.trim();
+    if (line !== pe.line) notes.push(`The planned erasure is marked on line ${line}, and the plan’s on line ${pe.line}.`);
+    if (text !== pe.text) notes.push(`The erased strokes said “${text}”, and the plan’s “${pe.text}”.`);
+    const took = view.proposal.erasure_lines[view.planned];
+    if (took !== line) notes.push(`The planned erasure took its strokes from ${took ? "line " + took : "no line"}, and it is marked on line ${line}.`);
+  }
   return notes;
 }
 
@@ -572,20 +674,25 @@ function refresh() {
   const error = byId("outcome").value === "error";
   byId("first-error").disabled = !error;
   byId("trap").disabled = !error;
+  const notes = view.proposal.differences.map((d) => sentence(d.message) + (d.path === "sample.lines" ? BACK_HINT : ""));
   if (sameCount()) {
-    const notes = differences();
-    listInto("differences", notes.length ? ["Differs from the plan:", ...notes] : []);
-    say(ready() ? "Check the lines and the markup, then Save." : "Every line needs its text, and one line is the answer.");
-  } else {
-    listInto("differences", view.proposal.differences.map((d) => sentence(d.message) +
-      " Press Back to take a stray stroke away or write what is missing, or Clear to write the sheet again."));
-    say("The lines are not the plan’s, so the sheet cannot be saved.");
+    const own = differences();
+    if (own.length) notes.push("Differs from the plan:", ...own);
   }
+  listInto("differences", notes);
+  if (!sameCount()) say("The lines are not the plan’s, so the sheet cannot be saved.");
+  else if (erasureProblem()) say(erasureProblem());
+  else say(ready() ? "Check the lines and the markup, then Save." : "Every line needs its text, and one line is the answer.");
   setControls();
 }
 
+// plannedMarkup is the markup of the erasure taken for the planned one, as the form has it.
+function plannedMarkup() {
+  return { line: Number(byId("planned-line").value), erased: current().erasure.erased, text: byId("planned-text").value.trim() };
+}
+
 // sample is the sheet as a document of the format tutor-sample v0: every field present, the
-// erasures slips without markup, and the lines as the form has them.
+// erasures slips without markup but for the planned one, and the lines as the form has them.
 function sample() {
   const sh = current();
   const outcome = byId("outcome").value;
@@ -594,7 +701,7 @@ function sample() {
     format: "tutor-sample", version: 0, sheet: { width: WIDTH, height: HEIGHT },
     task: sh.task, writer: "author", scenario: sh.scenario,
     strokes: sheet.strokes.map((s) => ({ id: s.id, points: s.points })),
-    erasures: sheet.erasures.map(asErasure),
+    erasures: sheet.erasures.map((e, i) => ({ ...asErasure(e), planned: i === view.planned && sh.erasure ? plannedMarkup() : null })),
     lines: view.proposal.lines.map((line, i) => ({
       text: byId(`text-${i}`).value.trim(), strokes: line.strokes, illegible: false, crossed_out: false, answer: i + 1 === answer,
     })),
@@ -612,12 +719,15 @@ function sample() {
 function flagFor(path) {
   const line = /^sample\.lines\[(\d+)\]/.exec(path);
   if (line) return byId(`flag-line-${line[1]}`);
+  const planned = /^sample\.erasures\[(\d+)\]\.planned\.(line|text)$/.exec(path);
+  if (planned && Number(planned[1]) === view.planned) return byId(`flag-planned-${planned[2]}`);
+  if (path === "sample.erasures" || path.startsWith("sample.erasures[")) return byId("flag-erasures");
   const field = { "sample.expected.outcome": "outcome", "sample.expected.first_error": "first-error", "sample.expected.trap": "trap" }[path];
   return field ? byId(`flag-${field}`) : null;
 }
 
 function clearFlags() {
-  for (const id of ["outcome", "first-error", "trap"]) byId(`flag-${id}`).textContent = "";
+  for (const id of ["outcome", "first-error", "trap", "erasures", "planned-line", "planned-text"]) byId(`flag-${id}`).textContent = "";
   for (let i = 0; i < (view.proposal?.lines.length ?? 0); i++) byId(`flag-line-${i}`).textContent = "";
   byId("problems").replaceChildren();
 }

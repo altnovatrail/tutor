@@ -144,6 +144,7 @@ func TestCheckRefusesBrokenSamples(t *testing.T) {
 		}, "erasures[1].t_ms", "cannot write and erase at once"},
 		{"a planned erasure outside its scenarios", sample.ScenarioErasureFixed, func(s *sample.Sample) { s.Scenario = sample.ScenarioCorrect }, "erasures", "only the scenarios"},
 		{"an erasure scenario without its plan", sample.ScenarioErasureBroken, func(s *sample.Sample) { s.Erasures[0].Planned = nil }, "erasures", "one planned erasure, not 0"},
+		{"two planned erasures", sample.ScenarioErasureFixed, func(s *sample.Sample) { s.Erasures[0].Planned = s.Erasures[1].Planned }, "erasures", "one planned erasure, not 2"},
 		{"a planned erasure of another kind", sample.ScenarioErasureBroken, func(s *sample.Sample) { s.Erasures[0].Planned.Erased = sample.ErasedMistake }, "erasures[0].planned.erased", `erases a "correct-step"`},
 		{"a trap on a correct sheet", sample.ScenarioCorrect, func(s *sample.Sample) { s.Expected.Trap = "sign-on-transfer" }, "expected.trap", "only a sheet"},
 		{"an illegible answer on a correct sheet", sample.ScenarioCorrect, func(s *sample.Sample) { s.Lines[2].Illegible = true }, "lines[2]", "is an illegible answer"},

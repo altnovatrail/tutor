@@ -32,7 +32,7 @@ The measurement's sheets are written in the board's record mode, which asks no m
 just record
 ```
 
-Pick a sheet of the plan, write what it shows with a pen or a mouse, press Done, check the markup the plan filled in and press Save. The sheet is saved with every stroke's points, their time and pressure, and every erasure, as a sample in `samples/sheets`, outside git. A sheet with a planned erasure can be saved once the board marks erasures.
+Pick a sheet of the plan, write what it shows with a pen or a mouse, press Done, check the markup the plan filled in and press Save. On a sheet with a planned erasure, the board takes the move of the eraser on the plan's line for it, and you check that too. The sheet is saved with every stroke's points, their time and pressure, and every erasure, as a sample in `samples/sheets`, outside git.
 
 How it works is section 3.3 of [docs/architecture.md](docs/architecture.md). The plan is [RUN.md](RUN.md); detailing, the first epic, waits for the measurement's conclusions.
 

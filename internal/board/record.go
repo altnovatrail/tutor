@@ -95,14 +95,12 @@ type PlanView struct {
 }
 
 // SheetView is a plan sheet with what the page needs besides: the statement of its task and its
-// traps, for the author to pick the trap a mistake falls into, whether the board can save it yet,
-// and why not, and how many times it has been saved.
+// traps, for the author to pick the trap a mistake falls into, and how many times it has been
+// saved.
 type SheetView struct {
 	sample.PlanSheet
 	Statement string        `json:"statement"`
 	Traps     []sample.Trap `json:"traps"`
-	Saveable  bool          `json:"saveable"`
-	Why       string        `json:"why,omitempty"`
 	Saved     int           `json:"saved"`
 }
 
@@ -114,21 +112,10 @@ func (rc *Recorder) planHandler(w http.ResponseWriter, _ *http.Request) {
 	}
 	view := PlanView{Sheet: sample.Sheet{Width: sheetWidth, Height: sheetHeight}, Sheets: make([]SheetView, len(rc.plan.Sheets))}
 	for i, sh := range rc.plan.Sheets {
-		why := unsaveable(&sh)
 		task := rc.bank.Task(sh.Task)
-		view.Sheets[i] = SheetView{PlanSheet: sh, Statement: task.Statement, Traps: append([]sample.Trap{}, task.Traps...),
-			Saveable: why == "", Why: why, Saved: saved[sh.Number]}
+		view.Sheets[i] = SheetView{PlanSheet: sh, Statement: task.Statement, Traps: append([]sample.Trap{}, task.Traps...), Saved: saved[sh.Number]}
 	}
 	writeJSON(w, http.StatusOK, view)
-}
-
-// unsaveable says why the board cannot save a plan sheet yet, or nothing if it can: a sheet with a
-// planned erasure waits until the board marks erasures.
-func unsaveable(sh *sample.PlanSheet) string {
-	if sh.Erasure != nil {
-		return "the sheet has a planned erasure, and the board does not mark erasures yet"
-	}
-	return ""
 }
 
 // saves reads the names in the directory: how many saved files each plan sheet has — those named
@@ -196,6 +183,9 @@ type ProposeRequest struct {
 	Number   int              `json:"number"`
 	Strokes  []sample.Stroke  `json:"strokes"`
 	Erasures []sample.Erasure `json:"erasures"`
+	// Undone says, for each erasure in its order, whether Undo made it rather than a move of the
+	// eraser. What Undo takes away is a slip, never the planned erasure (R25).
+	Undone []bool `json:"undone"`
 }
 
 // Proposal is the markup the board proposes for a sheet. Its lines are found among the strokes
@@ -203,11 +193,20 @@ type ProposeRequest struct {
 // the plan sheet's lines in their order. With them come the band of the sheet each line takes,
 // for the page to draw, the plan sheet's outcome, and how the sheet differs from its plan sheet,
 // such as by a line more.
+//
+// ErasureLines says, for each erasure of the request in its order, on which of the lines found
+// most of its strokes stood (lines.On): the line's number, the higher of two that hold as many, or
+// 0 when none of them stood on a line. On a sheet whose plan sheet plans an erasure, Planned is
+// the index of the erasure the board takes for it: of the moves of the eraser, the one that took
+// the most strokes from the plan's line, the earlier of two that took as many. Planned is null
+// when none took any.
 type Proposal struct {
-	Lines       []sample.Line   `json:"lines"`
-	Bands       []Band          `json:"bands"`
-	Expected    sample.Expected `json:"expected"`
-	Differences []Note          `json:"differences"`
+	Lines        []sample.Line   `json:"lines"`
+	Bands        []Band          `json:"bands"`
+	Expected     sample.Expected `json:"expected"`
+	ErasureLines []int           `json:"erasure_lines"`
+	Planned      *int            `json:"planned"`
+	Differences  []Note          `json:"differences"`
 }
 
 // Band is the stretch of the sheet a line takes, from its highest point down to its lowest.
@@ -224,6 +223,10 @@ func (rc *Recorder) propose(w http.ResponseWriter, r *http.Request) {
 	sh := rc.sheet(w, req.Number)
 	if sh == nil {
 		return
+	}
+	byID := make(map[string]sample.Stroke, len(req.Strokes))
+	for _, s := range req.Strokes {
+		byID[s.ID] = s
 	}
 	erased := map[string]bool{}
 	for _, e := range req.Erasures {
@@ -254,7 +257,74 @@ func (rc *Recorder) propose(w http.ResponseWriter, r *http.Request) {
 	case n < want:
 		p.Differences = append(p.Differences, Note{"sample.lines", fmt.Sprintf("the sheet has %d lines, and its plan sheet %d: a long stroke may join two lines, or a line is not written", n, want)})
 	}
+	taken := takenFrom(byID, req.Erasures, found)
+	p.ErasureLines = make([]int, len(taken))
+	for i, t := range taken {
+		p.ErasureLines[i] = t.line
+	}
+	if pe := sh.Erasure; pe != nil {
+		p.Planned, p.Differences = plannedOf(taken, req.Undone, pe.Line, p.Differences)
+	}
 	writeJSON(w, http.StatusOK, p)
+}
+
+// taken is what an erasure took from the lines found: how many of its strokes stood on each line,
+// by the line's number, and the line most of them stood on, the higher of two that hold as many,
+// or 0 when none stood on a line.
+type taken struct {
+	from map[int]int
+	line int
+}
+
+// takenFrom finds what each erasure took from the lines found, stroke by stroke (lines.On).
+func takenFrom(byID map[string]sample.Stroke, erasures []sample.Erasure, found []lines.Line) []taken {
+	out := make([]taken, len(erasures))
+	for i, e := range erasures {
+		t := taken{from: map[int]int{}}
+		for _, id := range e.Strokes {
+			if top, bottom, ok := lines.Band(byID[id]); ok {
+				if n := lines.On(top, bottom, found, lines.Gap) + 1; n > 0 {
+					t.from[n]++
+				}
+			}
+		}
+		for n, k := range t.from {
+			if k > t.from[t.line] || (k == t.from[t.line] && n < t.line) {
+				t.line = n
+			}
+		}
+		out[i] = t
+	}
+	return out
+}
+
+// plannedOf picks the erasure the board takes for the planned one of a plan sheet, whose line is
+// line: of the moves of the eraser — Undo makes slips — the one that took the most strokes from the
+// line, the earlier of two that took as many. It names a sheet with no move of the eraser and one
+// where more than one took strokes from the line, as the planned erasure is one move (R25).
+func plannedOf(erasures []taken, undone []bool, line int, notes []Note) (*int, []Note) {
+	var planned *int
+	moves, from := 0, 0
+	for i, t := range erasures {
+		if i < len(undone) && undone[i] {
+			continue
+		}
+		moves++
+		if t.from[line] == 0 {
+			continue
+		}
+		from++
+		if planned == nil || t.from[line] > erasures[*planned].from[line] {
+			planned = &i
+		}
+	}
+	switch {
+	case moves == 0:
+		notes = append(notes, Note{"sample.erasures", fmt.Sprintf("the sheet has no move of the eraser, and its plan sheet plans an erasure on line %d: Undo makes slips only, so write the sheet again, erasing in one move of the eraser", line)})
+	case from > 1:
+		notes = append(notes, Note{"sample.erasures", fmt.Sprintf("%d moves of the eraser took strokes from line %d, and the planned erasure is one move: if the eraser was lifted midway, write the sheet again", from, line)})
+	}
+	return planned, notes
 }
 
 // SaveRequest is a sheet to save: the number of its plan sheet and the sample document, which the
@@ -279,10 +349,6 @@ func (rc *Recorder) save(w http.ResponseWriter, r *http.Request) {
 	}
 	sh := rc.sheet(w, req.Number)
 	if sh == nil {
-		return
-	}
-	if why := unsaveable(sh); why != "" {
-		refuse(w, Note{"number", fmt.Sprintf("sheet %d cannot be saved yet: %s", sh.Number, why)})
 		return
 	}
 	if len(req.Sample) == 0 {
@@ -355,8 +421,8 @@ func (rc *Recorder) against(sh *sample.PlanSheet, s *sample.Sample) []Note {
 }
 
 // differences names how the markup of a sheet differs from its plan sheet: in its lines, its
-// answer, its outcome, its first error and its trap. The board saves such a sheet all the same:
-// what was written, the author knows (R25).
+// answer, its outcome, its first error, its trap and its planned erasure. The board saves such a
+// sheet all the same: what was written, the author knows (R25).
 func differences(sh *sample.PlanSheet, s *sample.Sample) []Note {
 	notes := []Note{}
 	add := func(path, format string, args ...any) {
@@ -393,6 +459,21 @@ func differences(sh *sample.PlanSheet, s *sample.Sample) []Note {
 	}
 	if e.Trap != plan.Trap {
 		add("sample.expected.trap", "is %q, and the plan sheet's %q", e.Trap, plan.Trap)
+	}
+	if pe := sh.Erasure; pe != nil {
+		for i, er := range s.Erasures {
+			if er.Planned == nil {
+				continue
+			}
+			path := fmt.Sprintf("sample.erasures[%d].planned", i)
+			// What the planned erasure took away, the scenario sets, so it cannot differ from the plan's.
+			if er.Planned.Line != pe.Line {
+				add(path+".line", "is %d, and the plan sheet's %d", er.Planned.Line, pe.Line)
+			}
+			if er.Planned.Text != pe.Text {
+				add(path+".text", "is %q, and the plan sheet's %q", er.Planned.Text, pe.Text)
+			}
+		}
 	}
 	return notes
 }
