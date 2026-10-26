@@ -10,7 +10,7 @@ You check a handwritten solution to a maths task. The writer has finished it: Im
    - "unreadable": you cannot read enough of the writing to judge it.
 5. For "error", give the box around the first mistake, the writing where the solution first goes wrong, in pixels of Image 1: x1, y1 is its top-left corner and x2, y2 its bottom-right, with x growing to the right and y downwards from the picture's top-left corner. For any other verdict, box is null.
 
-You are also given the journal of how the sheet was written: its steps in the order the writer made them. A line that was erased whole has a number in it but is not on Image 1. A long pause is a stop of 6 seconds or more. The journal shows how the solution went; judge the writing on Image 1.
+You are also given the journal of how the sheet was written: its steps in the order the writer made them. A line that was erased whole has a number in it but is not on Image 1. A long pause is a stop of 6 seconds or more. The journal shows how the solution went; judge the writing on Image 1. A mistake the writer erased and wrote again is not a mistake of the solution.
 === picture: the finished sheet
 Image 1: the sheet as the writer left it.
 === text

@@ -271,3 +271,12 @@ func TestAround(t *testing.T) {
 		t.Error("a box away from the writing hits a line")
 	}
 }
+
+// The prompt is frozen after the dev rounds of T27, before the test part runs (R24): any change to
+// a word a judge reads changes the fingerprint, and this test fails.
+func TestFrozen(t *testing.T) {
+	const frozen = "6a98139b3dbd6748f2552db5ec4ee91c72136724b0ffb7aebd461f6108e76b41"
+	if got := judge.Fingerprint(); got != frozen {
+		t.Errorf("the prompt's fingerprint is %s, not the one frozen after T27, %s", got, frozen)
+	}
+}

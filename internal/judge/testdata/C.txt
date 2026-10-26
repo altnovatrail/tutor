@@ -10,13 +10,13 @@ You check a handwritten solution to a maths task. The writer has finished it: Im
    - "unreadable": you cannot read enough of the writing to judge it.
 5. For "error", give the box around the first mistake, the writing where the solution first goes wrong, in pixels of Image 1: x1, y1 is its top-left corner and x2, y2 its bottom-right, with x growing to the right and y downwards from the picture's top-left corner. For any other verdict, box is null.
 
-You are also given frames, the images after Image 1: each shows the sheet just before an erasure, with the writing the erasure then took away still on it. A frame shows how the solution went; what was erased is still not part of the solution, and the box is in pixels of Image 1.
+You are also given frames, the images after Image 1: each shows the sheet just before an erasure, with the writing the erasure then took away still on it. A frame shows how the solution went; what was erased is still not part of the solution, and the box is in pixels of Image 1. A mistake that a frame shows and Image 1 no longer has is no mistake: judge only what Image 1 shows.
 === picture: the finished sheet
 Image 1: the sheet as the writer left it.
 === picture: frame 1
-Image 2: frame 1, the sheet just before an erasure.
+Image 2: frame 1, an earlier state of the sheet, just before an erasure. What the erasure took away is not on Image 1 and is not part of the solution.
 === picture: frame 2
-Image 3: frame 2, the sheet just before an erasure.
+Image 3: frame 2, an earlier state of the sheet, just before an erasure. What the erasure took away is not on Image 1 and is not part of the solution.
 === text
 Image 1 is 1000 pixels wide and 600 pixels high.
 Task: Реши уравнение 3x + 1 = 7.
