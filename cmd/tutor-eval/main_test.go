@@ -134,6 +134,12 @@ func TestCheckFailures(t *testing.T) {
 	}
 	broken := write("broken.json", strings.Replace(string(data), `"writer": "author"`, `"writer": "child"`, 1))
 	otherTask := write("other-task.json", strings.Replace(string(data), `"task": "synthetic-linear-01"`, `"task": "nowhere"`, 1))
+	planText := `{"format": "tutor-sheet-plan", "version": 0, "sheets": [{"number": 1, "task": "synthetic-linear-01",
+		"scenario": "correct", "lines": ["3x + 1 = 7", "3x = 6", "x = 2"], "answer": 3,
+		"expected": {"outcome": "correct", "first_error": null, "trap": ""}, "erasure": null}]}`
+	plan := write("plan.json", planText)
+	brokenPlan := write("broken-plan.json", strings.Replace(planText, `"answer": 3`, `"answer": 4`, 1))
+	planOfOtherTask := write("plan-of-other-task.json", strings.Replace(planText, `"task": "synthetic-linear-01"`, `"task": "nowhere"`, 1))
 
 	tests := []struct {
 		name       string
@@ -147,8 +153,12 @@ func TestCheckFailures(t *testing.T) {
 		{"a sample of no task in the bank", []string{bank, otherTask}, exitFail, "", `other-task.json: invalid sample: task: "nowhere" is not in the bank`},
 		{"two banks", []string{bank, bank}, exitFail, "", "a second bank"},
 		{"a sample with a broken bank", []string{write("broken-bank.json", `{"format": "tutor-bank", "version": 0, "tasks": []}`), correct}, exitFail, "its task is not checked: the bank is invalid", "broken-bank.json: invalid bank"},
+		{"a plan before its bank", []string{plan, bank}, exitOK, "plan.json: ok, plan of 1 sheet, its tasks and traps are in the bank", ""},
+		{"a plan alone", []string{plan}, exitOK, "plan.json: ok, plan of 1 sheet, its tasks are not checked: no bank was given", ""},
+		{"a broken plan", []string{brokenPlan}, exitFail, "", "broken-plan.json: invalid plan: sheets[0].answer: 4 is not a line of the sheet, 1…3"},
+		{"a plan of no task in the bank", []string{bank, planOfOtherTask}, exitFail, "", `plan-of-other-task.json: invalid plan: sheets[0].task: "nowhere" is not in the bank`},
 		{"not JSON", []string{write("notes.json", "notes")}, exitFail, "", "not a JSON object"},
-		{"another format", []string{write("other.json", `{"format": "csv"}`)}, exitFail, "", `format "csv" is neither`},
+		{"another format", []string{write("other.json", `{"format": "csv"}`)}, exitFail, "", `format "csv" is not "tutor-sample", "tutor-bank" or "tutor-sheet-plan"`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

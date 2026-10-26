@@ -35,14 +35,20 @@ func (s *Sample) Check() error {
 // trap the sample names is one of the task's. It returns a *FormatError, or nil.
 func (s *Sample) CheckWithBank(b *Bank) error {
 	p := &problems{what: "sample"}
-	t := b.Task(s.Task)
+	checkInBank(p, "", s.Task, s.Expected.Trap, b)
+	return p.err()
+}
+
+// checkInBank checks that the bank has a task and, if a trap is named, that it is a trap of the
+// task. The fields are task and expected.trap under path, in a sample and in a plan sheet alike.
+func checkInBank(p *problems, path, task, trap string, b *Bank) {
+	t := b.Task(task)
 	switch {
 	case t == nil:
-		p.add("task", "%q is not in the bank", s.Task)
-	case s.Expected.Trap != "" && !slices.ContainsFunc(t.Traps, func(tr Trap) bool { return tr.ID == s.Expected.Trap }):
-		p.add("expected.trap", "%q is not a trap of the task %q", s.Expected.Trap, s.Task)
+		p.add(join(path, "task"), "%q is not in the bank", task)
+	case trap != "" && !slices.ContainsFunc(t.Traps, func(tr Trap) bool { return tr.ID == trap }):
+		p.add(join(path, "expected.trap"), "%q is not a trap of the task %q", trap, task)
 	}
-	return p.err()
 }
 
 func checkHeader(p *problems, format, want string, version *int) {
@@ -171,7 +177,7 @@ func checkErasures(p *problems, s *Sample, spans map[string]strokeSpan) map[stri
 
 func checkPlanned(p *problems, path string, pl PlannedErasure, lines int) {
 	if pl.Line < 1 || pl.Line > lines {
-		p.add(path+".line", "%d is not a line of the sample, 1…%d", pl.Line, lines)
+		p.add(path+".line", "%d is not a line of the sheet, 1…%d", pl.Line, lines)
 	}
 	if pl.Erased != ErasedMistake && pl.Erased != ErasedCorrectStep {
 		p.add(path+".erased", "%q is not %q or %q", pl.Erased, ErasedMistake, ErasedCorrectStep)
@@ -212,6 +218,9 @@ func checkLines(p *problems, s *Sample, spans map[string]strokeSpan, erased map[
 		if answers != 1 {
 			p.add("lines", "one line is the answer, not %d", answers)
 		}
+	}
+	if n := len(s.Lines); s.Scenario == ScenarioAnswerNotLast && n > 0 && s.Lines[n-1].Answer {
+		p.add(fmt.Sprintf("lines[%d]", n-1), "is the answer and the last line, but on a sheet of the scenario %q a line follows the answer", ScenarioAnswerNotLast)
 	}
 	return used
 }
@@ -273,7 +282,7 @@ func checkExpected(p *problems, s *Sample) {
 	case e.FirstError != nil:
 		n := *e.FirstError
 		if n < 1 || n > len(s.Lines) {
-			p.add("expected.first_error", "%d is not a line of the sample, 1…%d", n, len(s.Lines))
+			p.add("expected.first_error", "%d is not a line of the sheet, 1…%d", n, len(s.Lines))
 		} else if s.Lines[n-1].CrossedOut {
 			p.add("expected.first_error", "line %d is crossed out: it is not part of the solution", n)
 		}

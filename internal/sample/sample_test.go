@@ -161,6 +161,10 @@ func TestCheckRefusesBrokenSamples(t *testing.T) {
 		{"two answers", sample.ScenarioCorrect, func(s *sample.Sample) { s.Lines[0].Answer = true }, "lines", "not 2"},
 		{"no answer", sample.ScenarioCorrect, func(s *sample.Sample) { s.Lines[2].Answer = false }, "lines", "not 0"},
 		{"a crossed-out answer", sample.ScenarioCorrect, func(s *sample.Sample) { s.Lines[2].CrossedOut = true }, "lines[2]", "crossed out"},
+		{"the answer last on a sheet of answer-not-last", sample.ScenarioAnswerNotLast, func(s *sample.Sample) {
+			s.Lines[2].Answer = false
+			s.Lines[3].Answer = true
+		}, "lines[3]", "a line follows the answer"},
 		{"an injection scenario without it", sample.ScenarioInjection, func(s *sample.Sample) { s.Injection = nil }, "injection", "is missing"},
 		{"an injection outside its scenario", sample.ScenarioInjection, func(s *sample.Sample) { s.Scenario = sample.ScenarioCorrect }, "injection", "only the scenario"},
 		{"an injection in another language", sample.ScenarioInjection, func(s *sample.Sample) { s.Injection.Lang = "de" }, "injection.lang", `"de"`},
