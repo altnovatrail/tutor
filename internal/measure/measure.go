@@ -5,6 +5,7 @@
 package measure
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -261,20 +262,24 @@ type Result struct {
 	Stopped  string  `json:"stopped,omitempty"`
 }
 
-// The records of the log, a JSON object a line. The first tells the run, then one tells each
-// sheet, one each call, and the last how the run ended.
+// The records of a run's log, a JSON object a line, each with its kind. The first tells the run,
+// then one tells each sheet, one each call, and the last how the run ended. A call of form D that
+// form B stands for has same_as and nothing else of a call's own (New).
 type (
-	runRecord struct {
+	// RunRecord tells the run: its part, judges and repeats, its cap and estimate, and the
+	// fingerprint of its prompt (judge.Fingerprint).
+	RunRecord struct {
 		Kind     string        `json:"kind"`
 		Time     time.Time     `json:"time"`
 		Part     string        `json:"part"`
-		Judges   []judgeRecord `json:"judges"`
+		Judges   []JudgeRecord `json:"judges"`
 		Repeats  int           `json:"repeats"`
 		MaxUSD   float64       `json:"max_usd"`
 		Estimate Estimate      `json:"estimate"`
 		Prompt   string        `json:"prompt"`
 	}
-	judgeRecord struct {
+	// JudgeRecord is a judge as the run's record tells it: its model and prices.
+	JudgeRecord struct {
 		Name       string  `json:"name"`
 		Model      string  `json:"model"`
 		Effort     string  `json:"effort"`
@@ -282,7 +287,10 @@ type (
 		InputUSD   float64 `json:"input_usd_per_mtok"`
 		OutputUSD  float64 `json:"output_usd_per_mtok"`
 	}
-	sheetRecord struct {
+	// SheetRecord tells a sheet: its number and file, its task and scenario, the outcome and the
+	// first error its markup says, its frames and the agreement of the journal's lines with its
+	// markup.
+	SheetRecord struct {
 		Kind       string            `json:"kind"`
 		Sheet      int               `json:"sheet"`
 		File       string            `json:"file"`
@@ -293,10 +301,14 @@ type (
 		Frames     int               `json:"frames"`
 		Lines      journal.Agreement `json:"lines"`
 	}
-	callRecord struct {
+	// CallRecord tells a call: the answer as the model gave it, its verdict and box, the line of
+	// the markup the box hits, the failure if it failed, and what it took. A call whose request
+	// could not be built was not asked, and says so.
+	CallRecord struct {
 		Kind string `json:"kind"`
 		Call
 		SameAs         judge.Form `json:"same_as,omitempty"`
+		NotAsked       bool       `json:"not_asked,omitempty"`
 		Answer         string     `json:"answer,omitempty"`
 		Verdict        string     `json:"verdict,omitempty"`
 		Box            *judge.Box `json:"box,omitempty"`
@@ -311,12 +323,76 @@ type (
 		LatencyMs      int64      `json:"latency_ms,omitempty"`
 		CostUSD        float64    `json:"cost_usd,omitempty"`
 	}
-	endRecord struct {
+	// EndRecord tells how the run ended.
+	EndRecord struct {
 		Kind string    `json:"kind"`
 		Time time.Time `json:"time"`
 		Result
 	}
 )
+
+// Log is a run's log read back: the run, its sheets, its calls in the order they were made, and how
+// the run ended, or nil when the log stops before the end: a run that broke off.
+type Log struct {
+	Run    RunRecord
+	Sheets []SheetRecord
+	Calls  []CallRecord
+	End    *EndRecord
+}
+
+// ReadLog reads a run's log back: every line a record of a kind it knows, the run's first and the
+// end, if there is one, last. A last line cut off half written is a run that broke off as it wrote
+// it, and the log is read without it.
+func ReadLog(r io.Reader) (*Log, error) {
+	var l Log
+	sc := bufio.NewScanner(r)
+	sc.Buffer(make([]byte, 0, 64*1024), 16*1024*1024)
+	var lines [][]byte
+	for sc.Scan() {
+		lines = append(lines, slices.Clone(sc.Bytes()))
+	}
+	if err := sc.Err(); err != nil {
+		return nil, err
+	}
+	if n := len(lines); n > 1 && !json.Valid(lines[n-1]) {
+		lines = lines[:n-1]
+	}
+	for i, line := range lines {
+		n := i + 1
+		var kind struct{ Kind string }
+		if err := json.Unmarshal(line, &kind); err != nil {
+			return nil, fmt.Errorf("line %d of the log is not a record: %w", n, err)
+		}
+		if (n == 1) != (kind.Kind == "run") || l.End != nil {
+			return nil, fmt.Errorf("line %d of the log is a %q record out of its place", n, kind.Kind)
+		}
+		var err error
+		switch kind.Kind {
+		case "run":
+			err = json.Unmarshal(line, &l.Run)
+		case "sheet":
+			var rec SheetRecord
+			err = json.Unmarshal(line, &rec)
+			l.Sheets = append(l.Sheets, rec)
+		case "call":
+			var rec CallRecord
+			err = json.Unmarshal(line, &rec)
+			l.Calls = append(l.Calls, rec)
+		case "end":
+			l.End = &EndRecord{}
+			err = json.Unmarshal(line, l.End)
+		default:
+			err = fmt.Errorf("no record of the kind %q", kind.Kind)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("line %d of the log: %w", n, err)
+		}
+	}
+	if l.Run.Kind == "" {
+		return nil, fmt.Errorf("the log is empty")
+	}
+	return &l, nil
+}
 
 // Do runs the calls in order, asking each question of ask, and logs every answer to log as it
 // comes. Before each call it reserves the call's worst case: a call that could take what the run
@@ -326,13 +402,13 @@ type (
 // the run stops then, since an answer it cannot keep is lost.
 func (r *Run) Do(ctx context.Context, ask Asker, maxUSD float64, log io.Writer, now func() time.Time) (Result, error) {
 	w := &writer{log: log}
-	var judges []judgeRecord
+	var judges []JudgeRecord
 	for _, j := range r.judges {
-		judges = append(judges, judgeRecord{Name: j.Name, Model: j.Model.ID, Effort: j.Effort, NoThinking: j.NoThinking, InputUSD: j.Model.Input, OutputUSD: j.Model.Output})
+		judges = append(judges, JudgeRecord{Name: j.Name, Model: j.Model.ID, Effort: j.Effort, NoThinking: j.NoThinking, InputUSD: j.Model.Input, OutputUSD: j.Model.Output})
 	}
-	w.put(runRecord{Kind: "run", Time: now().UTC(), Part: r.part, Judges: judges, Repeats: r.repeats, MaxUSD: maxUSD, Estimate: r.Estimate(), Prompt: judge.Fingerprint()})
+	w.put(RunRecord{Kind: "run", Time: now().UTC(), Part: r.part, Judges: judges, Repeats: r.repeats, MaxUSD: maxUSD, Estimate: r.Estimate(), Prompt: judge.Fingerprint()})
 	for _, sh := range r.sheets {
-		rec := sheetRecord{Kind: "sheet", Sheet: sh.Number, File: sh.File, Task: sh.Sample.Task, Scenario: sh.Sample.Scenario,
+		rec := SheetRecord{Kind: "sheet", Sheet: sh.Number, File: sh.File, Task: sh.Sample.Task, Scenario: sh.Sample.Scenario,
 			Outcome: sh.Sample.Expected.Outcome, Frames: len(sh.shown.Frames), Lines: journal.Agree(sh.Sample, sh.shown.Journal)}
 		if fe := sh.Sample.Expected.FirstError; fe != nil {
 			rec.FirstError = *fe
@@ -345,7 +421,7 @@ func (r *Run) Do(ctx context.Context, ask Asker, maxUSD float64, log io.Writer, 
 			break
 		}
 		if st.sameAs != "" {
-			w.put(callRecord{Kind: "call", Call: st.Call, SameAs: st.sameAs})
+			w.put(CallRecord{Kind: "call", Call: st.Call, SameAs: st.sameAs})
 			continue
 		}
 		if ctx.Err() != nil {
@@ -363,17 +439,17 @@ func (r *Run) Do(ctx context.Context, ask Asker, maxUSD float64, log io.Writer, 
 		res.SpentUSD += rec.CostUSD
 		w.put(rec)
 	}
-	w.put(endRecord{Kind: "end", Time: now().UTC(), Result: res})
+	w.put(EndRecord{Kind: "end", Time: now().UTC(), Result: res})
 	return res, w.err
 }
 
 // call asks one question and turns the answer into its record; asked is false when the request
 // could not be built, and nothing was asked.
-func (r *Run) call(ctx context.Context, ask Asker, st step) (rec callRecord, asked bool) {
+func (r *Run) call(ctx context.Context, ask Asker, st step) (rec CallRecord, asked bool) {
 	req, err := st.Form.Request(st.sheet.Task, st.sheet.shown)
-	rec = callRecord{Kind: "call", Call: st.Call}
+	rec = CallRecord{Kind: "call", Call: st.Call}
 	if err != nil {
-		rec.Error = err.Error()
+		rec.Error, rec.NotAsked = err.Error(), true
 		return rec, false
 	}
 	req.MaxOutputTokens, req.Effort, req.NoThinking = MaxOutputTokens, st.judge.Effort, st.judge.NoThinking
