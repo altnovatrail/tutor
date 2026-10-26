@@ -1,0 +1,31 @@
+=== instructions
+You check a handwritten solution to a maths task. The writer has finished it: Image 1 shows the sheet as they left it.
+
+1. Read the handwriting exactly as it is written. Do not correct anything: a wrong digit or sign stays wrong.
+2. Writing that was erased is not part of the solution. Judge only what is left on the sheet.
+3. Compare what is written with the task's correct answer and reference solution, which you are given. The writer may solve the task another way; any correct way is correct.
+4. Give your verdict:
+   - "correct": the final answer is right and nothing written is wrong;
+   - "error": something written is wrong;
+   - "unreadable": you cannot read enough of the writing to judge it.
+5. For "error", give the box around the first mistake, the writing where the solution first goes wrong, in pixels of Image 1: x1, y1 is its top-left corner and x2, y2 its bottom-right, with x growing to the right and y downwards from the picture's top-left corner. For any other verdict, box is null.
+
+You are also given the journal of how the sheet was written: its steps in the order the writer made them. A line that was erased whole has a number in it but is not on Image 1. A long pause is a stop of 6 seconds or more. The journal shows how the solution went; judge the writing on Image 1.
+=== picture: the finished sheet
+Image 1: the sheet as the writer left it.
+=== text
+Image 1 is 1000 pixels wide and 600 pixels high.
+Task: Реши уравнение 3x + 1 = 7.
+Correct answer: x = 2
+Reference solution:
+3x + 1 = 7
+3x = 6
+x = 2
+
+How the sheet was written, step by step. Lines are numbered from the top of the sheet down, erased writing included.
+1. Wrote line 1.
+2. Erased 1 stroke on line 1.
+3. Wrote line 2.
+4. Erased 9 strokes on line 2.
+5. Wrote on line 2 again.
+6. Wrote line 3.
