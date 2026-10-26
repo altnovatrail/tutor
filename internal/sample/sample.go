@@ -128,10 +128,12 @@ type Expected struct {
 // Writer is who wrote a sheet.
 type Writer string
 
-// The writers of the measurement: the author, in their own hand or imitating a child's (R08).
+// The writers of the measurement: the author, in their own hand or imitating a child's (R08), and
+// the code of internal/synth, which draws the sheets the author does not write (R26).
 const (
 	WriterAuthor        Writer = "author"
 	WriterAuthorAsChild Writer = "author-as-child"
+	WriterSynthetic     Writer = "synthetic"
 )
 
 // Scenario is what a sheet was written to test (docs/architecture.md, section 3.1).

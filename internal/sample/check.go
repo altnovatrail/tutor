@@ -16,8 +16,8 @@ func (s *Sample) Check() error {
 	if s.Task == "" {
 		p.add("task", "is missing: the ID of the task in the bank")
 	}
-	if !slices.Contains([]Writer{WriterAuthor, WriterAuthorAsChild}, s.Writer) {
-		p.add("writer", "%q is not %q or %q", s.Writer, WriterAuthor, WriterAuthorAsChild)
+	if !slices.Contains([]Writer{WriterAuthor, WriterAuthorAsChild, WriterSynthetic}, s.Writer) {
+		p.add("writer", "%q is not %q, %q or %q", s.Writer, WriterAuthor, WriterAuthorAsChild, WriterSynthetic)
 	}
 	if !slices.Contains(Scenarios, s.Scenario) {
 		p.add("scenario", "%q is not one of %q", s.Scenario, Scenarios)

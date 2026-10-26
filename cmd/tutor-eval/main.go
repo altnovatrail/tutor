@@ -42,6 +42,9 @@ const usage = `usage:
                                                       and each is saved as a sample
   tutor-eval check FILE...   check samples, banks and sheet plans; samples and plans against
                              a bank given with them
+  tutor-eval draw [-seed N] [-dir D] [-bank F] [-plan F]
+                             draw by code every sheet of the plan not recorded yet, and save it
+                             with the writer "synthetic"
   tutor-eval sheets [-dir D] [-bank F] [-plan F]
                              the summary of the recorded sheets against the plan, without the
                              handwriting
@@ -97,6 +100,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 			return exitUsage
 		}
 		return check(operands, stdout, stderr)
+	case "draw":
+		return runDraw(operands, stdout, stderr, time.Now)
 	case "sheets":
 		return runSheets(operands, stdout, stderr)
 	case "split":

@@ -66,12 +66,17 @@ func TestGroup(t *testing.T) {
 		strokes []sample.Stroke
 		want    [][]string
 	}{
-		{"strokes less than the gap apart", []sample.Stroke{stroke("a", 100, 130), stroke("b", 141.9, 170)}, [][]string{{"a", "b"}}},
-		{"strokes the gap apart", []sample.Stroke{stroke("a", 100, 130), stroke("b", 142, 170)}, [][]string{{"a"}, {"b"}}},
-		{"overlapping strokes", []sample.Stroke{stroke("a", 100, 130), stroke("b", 120, 150)}, [][]string{{"a", "b"}}},
-		{"strokes joined through another", []sample.Stroke{stroke("a", 100, 130), stroke("c", 200, 230), stroke("b", 125, 205)}, [][]string{{"a", "c", "b"}}},
+		// Strokes 30 high: a new line starts at a step of 15 between middles.
+		{"middles less than the step apart", []sample.Stroke{stroke("a", 100, 130), stroke("b", 114.9, 144.9)}, [][]string{{"a", "b"}}},
+		{"middles the step apart", []sample.Stroke{stroke("a", 100, 130), stroke("b", 115, 145)}, [][]string{{"a"}, {"b"}}},
+		{"the step follows the handwriting, never below the gap", []sample.Stroke{stroke("a", 100, 104), stroke("b", 111.9, 115.9), stroke("c", 124, 128)}, [][]string{{"a", "b"}, {"c"}}},
+		{"tall digits reaching each other's line", []sample.Stroke{
+			stroke("a1", 100, 130), stroke("a4", 95, 140), stroke("b1", 150, 180), stroke("b4", 138, 182),
+		}, [][]string{{"a1", "a4"}, {"b1", "b4"}}},
 		{"lines top to bottom, written bottom first", []sample.Stroke{stroke("low", 300, 330), stroke("high", 100, 130)}, [][]string{{"high"}, {"low"}}},
-		{"a line in the order of writing", []sample.Stroke{stroke("x", 100, 130), stroke("power", 90, 105)}, [][]string{{"x", "power"}}},
+		{"an exponent on its line, in the order of writing", []sample.Stroke{stroke("x", 100, 130), stroke("power", 90, 105)}, [][]string{{"x", "power"}}},
+		{"a slip between two lines goes to the nearer", []sample.Stroke{stroke("a", 100, 130), stroke("b", 200, 230), stroke("slip", 140, 146)}, [][]string{{"a", "slip"}, {"b"}}},
+		{"a stray stroke far from the lines stays a line", []sample.Stroke{stroke("a", 100, 130), stroke("b", 200, 230), stroke("stray", 400, 404)}, [][]string{{"a"}, {"b"}, {"stray"}}},
 		{"a stroke of one point", []sample.Stroke{{ID: "dot", Points: []sample.Point{{X: 5, Y: 115}}}, stroke("a", 100, 130)}, [][]string{{"dot", "a"}}},
 		{"a stroke without points", []sample.Stroke{{ID: "none"}, stroke("a", 100, 130)}, [][]string{{"a"}}},
 		{"no strokes", nil, nil},

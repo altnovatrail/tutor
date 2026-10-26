@@ -121,6 +121,9 @@ func TestSummary(t *testing.T) {
 	off := *samples[1]
 	off.Expected.Trap = ""
 	save(t, dir, &plan.Sheets[1], &off, at.Add(time.Hour))
+	drawn := *samples[2]
+	drawn.Writer = sample.WriterSynthetic
+	save(t, dir, &plan.Sheets[2], &drawn, at.Add(time.Hour))
 	if err := os.WriteFile(filepath.Join(dir, "notes.txt"), nil, 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -130,14 +133,15 @@ func TestSummary(t *testing.T) {
 	}
 	want := strings.Join([]string{
 		"Sheets: 7 of the plan's 7 recorded, 7 of them passing the check.",
-		"Files: 9 for these sheets, and the last of each counts.",
-		"Saved more than once: 1 (2 files), 2 (2 files).",
+		"Files: 10 for these sheets, and the last of each counts.",
+		"Saved more than once: 1 (2 files), 2 (2 files), 3 (2 files).",
 		"Not read: 1 other file, no saved sheet of this plan.",
 		"By task: synthetic-calculation-01 2 of 2, synthetic-free-01 1 of 1, synthetic-linear-01 4 of 4.",
 		"By scenario: correct 1 of 1, error 1 of 1, similar-digits 1 of 1, answer-not-last 1 of 1, mirrored-digits 1 of 1, erasure-fixed 1 of 1, erasure-broken 1 of 1.",
 		"By outcome as marked: correct 5 of 5, error 2 of 2.",
 		"Planned erasures: 2. Slips: 1 erasure on 1 sheet.",
 		"With frames, that is with an erasure: 2 sheets.",
+		"Drawn by code, the writer synthetic: 3.",
 		"Written with a mouse, pressure 0.5 at every point: 1.",
 		"Marked off the plan: 2 (expected.trap).",
 	}, "\n") + "\n"
