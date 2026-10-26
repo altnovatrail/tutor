@@ -33,19 +33,18 @@ type Task struct {
 	FalseKeys []FalseKey `json:"false_keys"`
 }
 
-// TaskKind is the kind of a task, which says how its lines are checked (docs/architecture.md,
-// section 3.1).
+// TaskKind is the kind of a task, one of the measurement's three (docs/architecture.md, section
+// 3.1). No code checks the lines of any kind: the line check went with R19, and the markup says
+// where the first error is, whatever the kind (R24).
 type TaskKind string
 
 // The kinds of task.
 const (
-	// KindLinearEquation: a linear equation in one unknown. A line is correct when it has the same
-	// solutions as the equation.
+	// KindLinearEquation: a linear equation in one unknown.
 	KindLinearEquation TaskKind = "linear-equation"
-	// KindCalculation: a chain of calculations, grades 1–6. A line is correct when its value is.
+	// KindCalculation: a chain of calculations, grades 1–6.
 	KindCalculation TaskKind = "calculation"
-	// KindFreeSolution: a free solution of an olympiad task. The program checks the answer by the
-	// key, and the markup says where the first error is.
+	// KindFreeSolution: a free solution of an olympiad task.
 	KindFreeSolution TaskKind = "free-solution"
 )
 
