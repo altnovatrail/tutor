@@ -64,7 +64,7 @@ const goodAnswer = `{"id":"resp_1","object":"response","status":"completed","mod
 var request = provider.Request{
 	Instructions: "Read and judge.",
 	Text:         "Task: 3x + 1 = 7",
-	PNG:          []byte("png"),
+	Images:       []provider.Image{{PNG: []byte("png")}},
 	SchemaName:   "verdict",
 	Schema:       map[string]any{"type": "object"},
 }
@@ -159,5 +159,27 @@ func TestNoAnswer(t *testing.T) {
 				t.Errorf("error = %v, want ErrNoAnswer", err)
 			}
 		})
+	}
+}
+
+// The adapter sends one picture at most, after its label, and refuses more before it calls the API.
+func TestImages(t *testing.T) {
+	c, sent := fakeAPI(t, reply{body: goodAnswer})
+	r := request
+	r.Images = []provider.Image{{PNG: []byte("one")}, {PNG: []byte("two")}}
+	if _, err := c.Ask(context.Background(), r); err == nil || !strings.Contains(err.Error(), "a request of 2 pictures, and the adapter sends 1 at most") {
+		t.Errorf("two pictures: %v, want them refused", err)
+	}
+	if n := len(sent()); n != 0 {
+		t.Fatalf("the refused request reached the API %d times", n)
+	}
+	r.Images = []provider.Image{{Label: "Image 1: the sheet.", PNG: []byte("one")}}
+	if _, err := c.Ask(context.Background(), r); err != nil {
+		t.Fatal(err)
+	}
+	body := sent()[0]
+	label, image, text := strings.Index(body, `"text":"Image 1: the sheet."`), strings.Index(body, `"type":"input_image"`), strings.Index(body, `"text":"Task: 3x + 1 = 7"`)
+	if label < 0 || image < 0 || text < 0 || label > image || image > text {
+		t.Errorf("the request holds the label at %d, the picture at %d and the text at %d; want them in that order:\n%s", label, image, text, body)
 	}
 }

@@ -230,8 +230,8 @@ func TestCheckAndMark(t *testing.T) {
 	}
 	asked := good.requests()[0]
 	if !strings.HasPrefix(asked.Text, "The picture is 100 pixels wide and 60 pixels high.\n") || !strings.Contains(asked.Text, "Correct answer: x = 2") ||
-		len(asked.PNG) == 0 || asked.Schema == nil || asked.Effort != "high" || asked.NoThinking {
-		t.Errorf("the model was asked %+v, want the picture's size, the task's answer, the picture, the schema and the effort", asked)
+		len(asked.Images) != 1 || len(asked.Images[0].PNG) == 0 || asked.Images[0].Label != "" || asked.Schema == nil || asked.Effort != "high" || asked.NoThinking {
+		t.Errorf("the model was asked %+v, want the picture's size, the task's answer, one picture without a label, the schema and the effort", asked)
 	}
 
 	attempt := out["attempt"].(string)
