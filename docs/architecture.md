@@ -1105,7 +1105,7 @@ just board
   - `claude-haiku-5-5` — снятие «Not sooner than October 7, 2027»;
   - `claude-opus-5-5` — «Not sooner than September 22, 2027»;
   - `claude-fable-5-1` — «Not sooner than September 1, 2027».
-- [Pricing](https://platform.claude.com/docs/en/about-claude/pricing), за 1 млн токенов: Haiku 5.5 — $0.10 вход и $0.50 выход (запрос до 100 000 токенов); Opus 5.5 — $4 и $20; Fable 5.1 — $10 и $50. Размышления оплачиваются как выход; batch — «a 50% discount».
+- [Pricing](https://platform.claude.com/docs/en/about-claude/pricing), за 1 млн токенов: Haiku 5.5 — $0.10 вход и $0.50 выход (запрос до 100 000 токенов); Opus 5.5 — $4 и $20; Fable 5.1 — $10 и $50. Цены Haiku 5.5 и Opus 5.5 сверены снова 2026-10-26, перед разработочным прогоном T27: те же. Размышления оплачиваются как выход; batch — «a 50% discount».
 - [Vision](https://platform.claude.com/docs/en/build-with-claude/vision): картинка стоит «⌈width / 28⌉ × ⌈height / 28⌉ visual tokens».
 - Там же, сверено 2026-10-21. Картинок в одном запросе — «600 per request on the API, for all other models», а у моделей с окном 200k — «100 per request on the API». Окно у Haiku 5.5 и Opus 5.5 — «1M tokens» ([Models overview](https://platform.claude.com/docs/en/about-claude/models/overview)), значит, им — 600. Если картинок больше 20, каждая — не больше 2000 px: «resize each image so that neither dimension exceeds 2000 px, or keep the request to 20 or fewer image and document blocks». Картинку 1000×1000 px модель не уменьшает: в таблице уменьшения у обоих уровней — «Not resized».
 - [Prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching), сверено 2026-10-25 по тексту страницы (T41):

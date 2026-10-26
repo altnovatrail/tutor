@@ -69,15 +69,15 @@ const base = `You check a handwritten solution to a maths task. The writer has f
 // itself how its lines are numbered (journal.Journal.Text); its block names the pause the journal
 // tells.
 var (
-	journalBlock = fmt.Sprintf("You are also given the journal of how the sheet was written: its steps in the order the writer made them. A line that was erased whole has a number in it but is not on Image 1. A long pause is a stop of %d seconds or more. The journal shows how the solution went; judge the writing on Image 1.", journal.Pause/1000)
-	framesBlock  = "You are also given frames, the images after Image 1: each shows the sheet just before an erasure, with the writing the erasure then took away still on it. A frame shows how the solution went; what was erased is still not part of the solution, and the box is in pixels of Image 1."
+	journalBlock = fmt.Sprintf("You are also given the journal of how the sheet was written: its steps in the order the writer made them. A line that was erased whole has a number in it but is not on Image 1. A long pause is a stop of %d seconds or more. The journal shows how the solution went; judge the writing on Image 1. A mistake the writer erased and wrote again is not a mistake of the solution.", journal.Pause/1000)
+	framesBlock  = "You are also given frames, the images after Image 1: each shows the sheet just before an erasure, with the writing the erasure then took away still on it. A frame shows how the solution went; what was erased is still not part of the solution, and the box is in pixels of Image 1. A mistake that a frame shows and Image 1 no longer has is no mistake: judge only what Image 1 shows."
 	bothBlock    = journalBlock + "\n\n" + framesBlock + "\n\nThe journal says which step each frame stands just before."
 )
 
 // The labels of the pictures and the text of a request around the task.
 const (
 	finalLabel = "Image 1: the sheet as the writer left it."
-	frameLabel = "Image %d: frame %d, the sheet just before an erasure."
+	frameLabel = "Image %d: frame %d, an earlier state of the sheet, just before an erasure. What the erasure took away is not on Image 1 and is not part of the solution."
 	textFormat = "Image 1 is %d pixels wide and %d pixels high.\nTask: %s\nCorrect answer: %s\nReference solution:\n%s"
 )
 
