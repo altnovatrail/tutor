@@ -1,9 +1,9 @@
-// Package sample is the format of the reading measurement's samples and of its bank of tasks:
-// their types, how they are read from JSON and how they are checked. A sample is one sheet of
-// handwriting: every stroke with the time and pressure of its points, in the order it was
-// written, every erasure, and the markup made while writing. The bank holds the tasks the
+// Package sample is the format of the reading measurement's samples, of its bank of tasks and of
+// its sheet plan: their types, how they are read from JSON and how they are checked. A sample is
+// one sheet of handwriting: every stroke with the time and pressure of its points, in the order
+// it was written, every erasure, and the markup made while writing. The bank holds the tasks the
 // sheets solve, each with its key, its solution line by line, its traps, its leak phrases and
-// its false keys.
+// its false keys. The plan says what the writer writes on each sheet, and with it the markup.
 //
 // The format is tutor's own until spec's eval protocol replaces it (В7 in RUN.md); its fields
 // are explained in docs/architecture.md, section 3.1. A reader takes only the version it knows
@@ -23,6 +23,7 @@ import (
 const (
 	SampleFormat = "tutor-sample"
 	BankFormat   = "tutor-bank"
+	PlanFormat   = "tutor-sheet-plan"
 	Version      = 0
 )
 
@@ -217,7 +218,20 @@ func ReadBank(r io.Reader) (*Bank, error) {
 	return &b, nil
 }
 
-// Marshal writes a sample or a bank as indented JSON, ending with a newline.
+// ReadPlan reads a sheet plan from JSON and checks it on its own; CheckWithBank checks it against
+// the bank. An error from a plan that fails the check is a *FormatError.
+func ReadPlan(r io.Reader) (*Plan, error) {
+	var pl Plan
+	if err := readStrict(r, "plan", &pl); err != nil {
+		return nil, readError("plan", err)
+	}
+	if err := pl.Check(); err != nil {
+		return nil, err
+	}
+	return &pl, nil
+}
+
+// Marshal writes a sample, a bank or a plan as indented JSON, ending with a newline.
 func Marshal(v any) ([]byte, error) {
 	data, err := json.MarshalIndent(v, "", "  ")
 	if err != nil {
@@ -244,7 +258,7 @@ type Problem struct {
 
 // FormatError lists every problem a check found, not only the first.
 type FormatError struct {
-	// What names the file's kind: "sample" or "bank".
+	// What names the file's kind: "sample", "bank" or "plan".
 	What     string
 	Problems []Problem
 }

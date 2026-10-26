@@ -1,7 +1,7 @@
 // Command tutor-eval is tutor's eval runner: it runs the AI capabilities on eval samples, on the
 // same code that api calls, and reports how they did. Its runs come with the measurement's
-// runner. Until then it checks the files of samples and banks, and writes synthetic ones: run it
-// without arguments for its commands.
+// runner. Until then it checks the files of samples, banks and sheet plans, and writes synthetic
+// ones: run it without arguments for its commands.
 package main
 
 import (
@@ -33,7 +33,8 @@ const (
 const usage = `usage:
   tutor-eval board [-addr A] [-dir D] [-max-usd N]   the check board: solve tasks by hand, the models
                                                       judge, you mark whether they were right
-  tutor-eval check FILE...   check samples and banks; samples against a bank given with them
+  tutor-eval check FILE...   check samples, banks and sheet plans; samples and plans against
+                             a bank given with them
   tutor-eval synth DIR       write the synthetic bank and one synthetic sample per scenario
   tutor-eval -version        print the version
 `
@@ -91,14 +92,20 @@ func run(args []string, stdout, stderr io.Writer) int {
 	}
 }
 
-// check reads every file, tells a sample from a bank by its "format" field, and checks each. A
-// sample is also checked against a bank given in the same call; with no bank, its task is not.
+// check reads every file, tells a sample, a bank and a plan apart by the "format" field, and
+// checks each. A sample or a plan is also checked against a bank given in the same call; with no
+// bank, its tasks are not.
 func check(paths []string, stdout, stderr io.Writer) int {
+	// A read is a sample or a plan that passed its own check. What in it depends on the bank is
+	// checked once every file is read, wherever the bank stands among them.
 	type read struct {
-		path   string
-		sample *sample.Sample
+		path      string
+		what      string                   // what it is, for the line that says it is ok
+		withBank  func(*sample.Bank) error // its check against the bank
+		inBank    string                   // what that line says once the bank has passed it
+		unchecked string                   // what it says when there is no bank to check against
 	}
-	var samples []read
+	var reads []read
 	var bank *sample.Bank
 	bankPath, bankBroken := "", false
 	failed := false
@@ -126,7 +133,26 @@ func check(paths []string, stdout, stderr io.Writer) int {
 				fail(path, err)
 				continue
 			}
-			samples = append(samples, read{path, s})
+			reads = append(reads, read{
+				path:      path,
+				what:      "sample of the scenario " + string(s.Scenario),
+				withBank:  s.CheckWithBank,
+				inBank:    "task " + s.Task,
+				unchecked: "its task is not checked",
+			})
+		case sample.PlanFormat:
+			pl, err := sample.ReadPlan(bytes.NewReader(data))
+			if err != nil {
+				fail(path, err)
+				continue
+			}
+			reads = append(reads, read{
+				path:      path,
+				what:      "plan of " + count(len(pl.Sheets), "sheet"),
+				withBank:  pl.CheckWithBank,
+				inBank:    "its tasks and traps are in the bank",
+				unchecked: "its tasks are not checked",
+			})
 		case sample.BankFormat:
 			b, err := sample.ReadBank(bytes.NewReader(data))
 			switch {
@@ -137,27 +163,27 @@ func check(paths []string, stdout, stderr io.Writer) int {
 				fail(path, fmt.Errorf("a second bank: %s is the bank of this check", bankPath))
 			default:
 				bank, bankPath = b, path
-				if _, err := fmt.Fprintf(stdout, "%s: ok, bank of %d tasks\n", path, len(b.Tasks)); err != nil {
+				if _, err := fmt.Fprintf(stdout, "%s: ok, bank of %s\n", path, count(len(b.Tasks), "task")); err != nil {
 					return exitFail
 				}
 			}
 		default:
-			fail(path, fmt.Errorf("format %q is neither %q nor %q", head.Format, sample.SampleFormat, sample.BankFormat))
+			fail(path, fmt.Errorf("format %q is not %q, %q or %q", head.Format, sample.SampleFormat, sample.BankFormat, sample.PlanFormat))
 		}
 	}
-	for _, r := range samples {
-		note := "its task is not checked: no bank was given"
+	for _, r := range reads {
+		note := r.unchecked + ": no bank was given"
 		if bankBroken {
-			note = "its task is not checked: the bank is invalid"
+			note = r.unchecked + ": the bank is invalid"
 		}
 		if bank != nil {
-			if err := r.sample.CheckWithBank(bank); err != nil {
+			if err := r.withBank(bank); err != nil {
 				fail(r.path, err)
 				continue
 			}
-			note = "task " + r.sample.Task
+			note = r.inBank
 		}
-		if _, err := fmt.Fprintf(stdout, "%s: ok, sample of the scenario %s, %s\n", r.path, r.sample.Scenario, note); err != nil {
+		if _, err := fmt.Fprintf(stdout, "%s: ok, %s, %s\n", r.path, r.what, note); err != nil {
 			return exitFail
 		}
 	}
@@ -165,6 +191,14 @@ func check(paths []string, stdout, stderr io.Writer) int {
 		return exitFail
 	}
 	return exitOK
+}
+
+// count writes a number with a noun, in the singular for one: "1 sheet", "40 sheets".
+func count(n int, noun string) string {
+	if n == 1 {
+		return "1 " + noun
+	}
+	return fmt.Sprintf("%d %ss", n, noun)
 }
 
 // writeSynth writes the synthetic bank and samples into dir, creating it if need be. It never

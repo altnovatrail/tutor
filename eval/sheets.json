@@ -1,0 +1,781 @@
+{
+  "format": "tutor-sheet-plan",
+  "version": 0,
+  "sheets": [
+    {
+      "number": 1,
+      "task": "posts",
+      "scenario": "correct",
+      "lines": [
+        "20 : 5 = 4",
+        "4 + 1 = 5",
+        "Ответ: 5 столбов"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 2,
+      "task": "equation-4",
+      "scenario": "erasure-fixed",
+      "lines": [
+        "5x − 4 = 2x + 8",
+        "5x − 2x = 8 + 4",
+        "3x = 12",
+        "x = 4"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "mistake",
+        "text": "5x − 2x = 8 − 4",
+        "replacement": "5x − 2x = 8 + 4",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 3,
+      "task": "chain-1",
+      "scenario": "error",
+      "lines": [
+        "17 + 49 = 66",
+        "66 − 14 = 52",
+        "52 × 2 = 104"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "order-of-operations"
+      },
+      "erasure": null
+    },
+    {
+      "number": 4,
+      "task": "equation-2",
+      "scenario": "correct",
+      "lines": [
+        "2(x − 3) = 10",
+        "x − 3 = 5",
+        "x = 8"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 5,
+      "task": "chain-3",
+      "scenario": "error",
+      "lines": [
+        "120 − 4 = 116",
+        "18 + 7 = 25",
+        "116 × 25 = 2900"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 1,
+        "trap": "order-of-operations"
+      },
+      "erasure": null
+    },
+    {
+      "number": 6,
+      "task": "logs",
+      "scenario": "erasure-fixed",
+      "lines": [
+        "6 − 1 = 5",
+        "5 × 2 = 10",
+        "Ответ: 10 минут"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": {
+        "line": 1,
+        "erased": "mistake",
+        "text": "6 × 2 = 12",
+        "replacement": "6 − 1 = 5",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 7,
+      "task": "chain-2",
+      "scenario": "error",
+      "lines": [
+        "47 + 19 = 56",
+        "56 : 6 = 9 (ост. 2)"
+      ],
+      "answer": 2,
+      "expected": {
+        "outcome": "error",
+        "first_error": 1,
+        "trap": "carry"
+      },
+      "erasure": null
+    },
+    {
+      "number": 8,
+      "task": "rabbits",
+      "scenario": "correct",
+      "lines": [
+        "5 × 2 = 10",
+        "14 − 10 = 4",
+        "4 : 2 = 2",
+        "Ответ: 2 кролика"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 9,
+      "task": "equation-3",
+      "scenario": "erasure-broken",
+      "lines": [
+        "9 − (x − 2) = 4",
+        "9 − x + 2 = 4",
+        "11 − x = 4",
+        "x = 15"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "error",
+        "first_error": 4,
+        "trap": "unknown-subtrahend"
+      },
+      "erasure": {
+        "line": 4,
+        "erased": "correct-step",
+        "text": "7",
+        "replacement": "15",
+        "part_of_line": true
+      }
+    },
+    {
+      "number": 10,
+      "task": "equation-1",
+      "scenario": "answer-not-last",
+      "lines": [
+        "3x + 1 = 7",
+        "3x = 6",
+        "x = 2",
+        "Проверка: 3 × 2 + 1 = 7"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 11,
+      "task": "chain-1",
+      "scenario": "correct",
+      "lines": [
+        "14 × 2 = 28",
+        "17 + 49 − 28 = 38"
+      ],
+      "answer": 2,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 12,
+      "task": "equation-3",
+      "scenario": "error",
+      "lines": [
+        "9 − (x − 2) = 4",
+        "9 − x − 2 = 4",
+        "7 − x = 4",
+        "x = 3"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "minus-before-brackets"
+      },
+      "erasure": null
+    },
+    {
+      "number": 13,
+      "task": "posts",
+      "scenario": "answer-not-last",
+      "lines": [
+        "20 : 5 = 4",
+        "4 + 1 = 5",
+        "Ответ: 5 столбов",
+        "Проверка: 4 × 5 = 20"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 14,
+      "task": "rabbits",
+      "scenario": "erasure-broken",
+      "lines": [
+        "5 × 2 = 10",
+        "14 − 10 = 4",
+        "4 : 4 = 1",
+        "Ответ: 1 кролик"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "error",
+        "first_error": 3,
+        "trap": "extra-legs-by-four"
+      },
+      "erasure": {
+        "line": 3,
+        "erased": "correct-step",
+        "text": "4 : 2 = 2",
+        "replacement": "4 : 4 = 1",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 15,
+      "task": "logs",
+      "scenario": "error",
+      "lines": [
+        "6 × 2 = 12",
+        "Ответ: 12 минут"
+      ],
+      "answer": 2,
+      "expected": {
+        "outcome": "error",
+        "first_error": 1,
+        "trap": "parts-for-cuts"
+      },
+      "erasure": null
+    },
+    {
+      "number": 16,
+      "task": "equation-2",
+      "scenario": "correct",
+      "lines": [
+        "2(x − 3) = 10",
+        "2x − 6 = 10",
+        "2x = 16",
+        "x = 8"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 17,
+      "task": "equation-4",
+      "scenario": "error",
+      "lines": [
+        "5x − 4 = 2x + 8",
+        "5x − 2x = 8 + 4",
+        "3x = 12",
+        "x = 12"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "error",
+        "first_error": 4,
+        "trap": "one-side-division"
+      },
+      "erasure": null
+    },
+    {
+      "number": 18,
+      "task": "chain-2",
+      "scenario": "correct",
+      "lines": [
+        "47 + 19 = 66",
+        "66 : 6 = 11",
+        "Ответ: 11"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 19,
+      "task": "equation-1",
+      "scenario": "erasure-fixed",
+      "lines": [
+        "3x + 1 = 7",
+        "3x = 6",
+        "x = 2"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "mistake",
+        "text": "3x = 7 + 1",
+        "replacement": "3x = 6",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 20,
+      "task": "chain-3",
+      "scenario": "erasure-broken",
+      "lines": [
+        "18 + 7 = 25",
+        "4 × 25 = 80",
+        "120 − 80 = 40"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "arithmetic"
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "correct-step",
+        "text": "100",
+        "replacement": "80",
+        "part_of_line": true
+      }
+    },
+    {
+      "number": 21,
+      "task": "equation-1",
+      "scenario": "error",
+      "lines": [
+        "3x + 1 = 7",
+        "3x = 7 + 1",
+        "3x = 8",
+        "x = 8/3"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "sign-on-transfer"
+      },
+      "erasure": null
+    },
+    {
+      "number": 22,
+      "task": "rabbits",
+      "scenario": "erasure-fixed",
+      "lines": [
+        "5 × 2 = 10",
+        "14 − 10 = 4",
+        "4 : 2 = 2",
+        "Ответ: 2 кролика"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": {
+        "line": 3,
+        "erased": "mistake",
+        "text": "4 : 4 = 1",
+        "replacement": "4 : 2 = 2",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 23,
+      "task": "equation-3",
+      "scenario": "correct",
+      "lines": [
+        "9 − (x − 2) = 4",
+        "11 − x = 4",
+        "x = 11 − 4",
+        "x = 7"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 24,
+      "task": "chain-1",
+      "scenario": "erasure-fixed",
+      "lines": [
+        "17 + 49 = 66",
+        "14 × 2 = 28",
+        "66 − 28 = 38"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "mistake",
+        "text": "66 − 14 = 52",
+        "replacement": "14 × 2 = 28",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 25,
+      "task": "equation-2",
+      "scenario": "error",
+      "lines": [
+        "2(x − 3) = 10",
+        "x − 3 = 5",
+        "x = 2"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 3,
+        "trap": "sign-on-transfer"
+      },
+      "erasure": null
+    },
+    {
+      "number": 26,
+      "task": "equation-4",
+      "scenario": "erasure-broken",
+      "lines": [
+        "5x − 4 = 2x + 8",
+        "5x − 2x = 8 − 4",
+        "3x = 4",
+        "x = 4/3"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "sign-on-transfer"
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "correct-step",
+        "text": "5x − 2x = 8 + 4",
+        "replacement": "5x − 2x = 8 − 4",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 27,
+      "task": "logs",
+      "scenario": "correct",
+      "lines": [
+        "6 − 1 = 5",
+        "5 × 2 = 10",
+        "Ответ: 10 минут"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 28,
+      "task": "chain-2",
+      "scenario": "error",
+      "lines": [
+        "47 + 19 = 66",
+        "66 : 6 = 10"
+      ],
+      "answer": 2,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "arithmetic"
+      },
+      "erasure": null
+    },
+    {
+      "number": 29,
+      "task": "chain-3",
+      "scenario": "correct",
+      "lines": [
+        "18 + 7 = 25",
+        "4 × 25 = 100",
+        "120 − 100 = 20"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 30,
+      "task": "posts",
+      "scenario": "erasure-broken",
+      "lines": [
+        "20 : 5 = 4",
+        "Ответ: 4 столба"
+      ],
+      "answer": 2,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "gaps-for-posts"
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "correct-step",
+        "text": "4 + 1 = 5",
+        "replacement": "Ответ: 4 столба",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 31,
+      "task": "rabbits",
+      "scenario": "error",
+      "lines": [
+        "5 × 4 = 20",
+        "20 − 14 = 6",
+        "6 : 2 = 3",
+        "Ответ: 3 кролика"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "error",
+        "first_error": 4,
+        "trap": "wrong-animal"
+      },
+      "erasure": null
+    },
+    {
+      "number": 32,
+      "task": "equation-4",
+      "scenario": "correct",
+      "lines": [
+        "5x − 4 = 2x + 8",
+        "3x = 12",
+        "x = 4"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 33,
+      "task": "logs",
+      "scenario": "erasure-broken",
+      "lines": [
+        "6 + 1 = 7",
+        "7 × 2 = 14",
+        "Ответ: 14 минут"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 1,
+        "trap": "cuts-plus-one"
+      },
+      "erasure": {
+        "line": 1,
+        "erased": "correct-step",
+        "text": "6 − 1 = 5",
+        "replacement": "6 + 1 = 7",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 34,
+      "task": "equation-3",
+      "scenario": "erasure-fixed",
+      "lines": [
+        "9 − (x − 2) = 4",
+        "9 − x + 2 = 4",
+        "11 − x = 4",
+        "x = 7"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "mistake",
+        "text": "9 − x − 2 = 4",
+        "replacement": "9 − x + 2 = 4",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 35,
+      "task": "equation-1",
+      "scenario": "correct",
+      "lines": [
+        "3x + 1 = 7",
+        "3x = 7 − 1",
+        "3x = 6",
+        "x = 2"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 36,
+      "task": "chain-2",
+      "scenario": "erasure-fixed",
+      "lines": [
+        "47 + 19 = 66",
+        "66 : 6 = 11"
+      ],
+      "answer": 2,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": {
+        "line": 1,
+        "erased": "mistake",
+        "text": "56",
+        "replacement": "66",
+        "part_of_line": true
+      }
+    },
+    {
+      "number": 37,
+      "task": "chain-1",
+      "scenario": "correct",
+      "lines": [
+        "14 × 2 = 28",
+        "17 + 49 = 66",
+        "66 − 28 = 38"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 38,
+      "task": "chain-3",
+      "scenario": "error",
+      "lines": [
+        "18 + 7 = 15",
+        "4 × 15 = 60",
+        "120 − 60 = 60"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 1,
+        "trap": "carry"
+      },
+      "erasure": null
+    },
+    {
+      "number": 39,
+      "task": "equation-2",
+      "scenario": "erasure-broken",
+      "lines": [
+        "2(x − 3) = 10",
+        "2x − 3 = 10",
+        "2x = 13",
+        "x = 13/2"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "bracket-first-term"
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "correct-step",
+        "text": "2x − 6 = 10",
+        "replacement": "2x − 3 = 10",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 40,
+      "task": "posts",
+      "scenario": "error",
+      "lines": [
+        "20 : 5 = 4",
+        "4 + 2 = 6",
+        "Ответ: 6 столбов"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "both-ends-added"
+      },
+      "erasure": null
+    }
+  ]
+}
