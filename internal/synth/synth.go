@@ -2,7 +2,14 @@
 // recording page until the measurement's own bank exists. No handwriting is in the repository
 // (RULES.md, Hard rules): the strokes here are drawn by code, from a simple vector font, with
 // time, pressure and a little jitter, so that they look like what a pen gives without being
-// anyone's hand. Every sample is the same each time it is drawn.
+// anyone's hand. Every sample is the same each time it is drawn, on any machine.
+//
+// A product that goes into a sum is rounded on its own, float64(…). Go may otherwise fuse a
+// multiplication and an addition into one instruction where the processor has one, as arm64
+// does, and a point would then come out a little different from one architecture to another;
+// the golden pictures of internal/render are drawn from these samples. A length is a square
+// root of rounded squares for the same reason: math.Hypot is assembly on amd64 and Go elsewhere,
+// and the two need not give the same bits.
 package synth
 
 import (
@@ -18,7 +25,7 @@ import (
 // The size of the synthetic sheet, in logical units, and the layout of its lines.
 const (
 	sheetWidth  = 1000
-	sheetHeight = 1400
+	sheetHeight = 600
 	charHeight  = 36  // the height of a digit
 	charAdvance = 26  // from one character to the next
 	lineStep    = 80  // from one line to the next
@@ -316,7 +323,7 @@ func (w *writer) text(s string, x, y float64) []string {
 				if mirror {
 					gx = 1 - gx
 				}
-				points[i] = pt{x + jx + gx*charHeight*0.55, y + jy + p.y*charHeight}
+				points[i] = pt{x + jx + float64(gx*charHeight*0.55), y + jy + float64(p.y*charHeight)}
 			}
 			ids = append(ids, w.stroke(points))
 			w.pause(120 + w.rng.Int64N(130))
@@ -331,7 +338,11 @@ func (w *writer) scribble(s string, x, y float64) []string {
 	var points []pt
 	n := int(width(s) / 9)
 	for i := 0; i <= n; i++ {
-		points = append(points, pt{x + float64(i)*9, y + charHeight*(0.2+0.6*float64(i%2)) + w.jitter(4)})
+		lift := 0.2 // of the height of a digit: low and high in turn
+		if i%2 == 1 {
+			lift += 0.6
+		}
+		points = append(points, pt{x + float64(i*9), y + float64(charHeight*lift) + w.jitter(4)})
 	}
 	return []string{w.stroke(points)}
 }
@@ -340,7 +351,7 @@ func (w *writer) scribble(s string, x, y float64) []string {
 // pressure wandering. It returns the stroke's ID.
 func (w *writer) stroke(poly []pt) string {
 	id := fmt.Sprintf("s-%04d", len(w.s.Strokes)+1)
-	pressure := 0.45 + 0.2*w.rng.Float64()
+	pressure := 0.45 + float64(0.2*w.rng.Float64())
 	var points []sample.Point
 	add := func(p pt) {
 		pressure = math.Min(0.95, math.Max(0.05, pressure+w.jitter(0.03)))
@@ -355,10 +366,11 @@ func (w *writer) stroke(poly []pt) string {
 	add(poly[0])
 	for i := 1; i < len(poly); i++ {
 		a, b := poly[i-1], poly[i]
-		steps := int(math.Ceil(math.Hypot(b.x-a.x, b.y-a.y) / pointStep))
+		dx, dy := b.x-a.x, b.y-a.y
+		steps := int(math.Ceil(math.Sqrt(float64(dx*dx)+float64(dy*dy)) / pointStep))
 		for k := 1; k <= steps; k++ {
 			f := float64(k) / float64(steps)
-			add(pt{a.x + (b.x-a.x)*f, a.y + (b.y-a.y)*f})
+			add(pt{a.x + float64(dx*f), a.y + float64(dy*f)})
 		}
 	}
 	for i := range points {
@@ -372,9 +384,14 @@ func (w *writer) stroke(poly []pt) string {
 
 func (w *writer) pause(ms int64) { w.t += ms }
 
-func (w *writer) jitter(d float64) float64 { return (w.rng.Float64()*2 - 1) * d }
+// jitter is a random shift of at most d either way. The random number is rounded too: the
+// product inside it would otherwise fuse with what follows (see the package's comment).
+func (w *writer) jitter(d float64) float64 {
+	r := float64(w.rng.Float64())
+	return float64((float64(r*2) - 1) * d)
+}
 
 // width is how wide a string is drawn.
-func width(s string) float64 { return float64(utf8.RuneCountInString(s)) * charAdvance }
+func width(s string) float64 { return float64(utf8.RuneCountInString(s) * charAdvance) }
 
 func clamp(v, lo, hi float64) float64 { return math.Min(hi, math.Max(lo, v)) }

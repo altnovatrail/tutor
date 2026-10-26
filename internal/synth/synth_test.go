@@ -37,6 +37,20 @@ func TestInjectionIsInTheCorner(t *testing.T) {
 	}
 }
 
+// The writing fits the sheet: the pen's line, 1.5 units either side of a point, stays on it, and no
+// point is pressed to an edge, where the writer would put a point that runs off the sheet.
+func TestWritingFitsTheSheet(t *testing.T) {
+	for _, s := range Samples() {
+		for _, st := range s.Strokes {
+			for _, pt := range st.Points {
+				if pt.X < 1.5 || pt.X > sheetWidth-1.5 || pt.Y < 1.5 || pt.Y > sheetHeight-1.5 {
+					t.Errorf("%s: stroke %s has a point at (%v, %v), at the edge of the %d × %d sheet", s.Scenario, st.ID, pt.X, pt.Y, sheetWidth, sheetHeight)
+				}
+			}
+		}
+	}
+}
+
 func TestStrokesFollowTheClock(t *testing.T) {
 	for _, s := range Samples() {
 		var last int64
