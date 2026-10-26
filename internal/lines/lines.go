@@ -1,7 +1,7 @@
 // Package lines finds the lines of a sheet: the strokes that stand at one height, told apart by
 // the gaps between them down the sheet. The record mode of the board proposes a sheet's lines with
 // it and finds on which line an erasure took its strokes (R25), and the journal of the writing
-// process is to group the strokes with it too.
+// process groups with it all the strokes of a sheet, the erased ones too (internal/journal).
 package lines
 
 import (
