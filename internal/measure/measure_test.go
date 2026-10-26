@@ -283,3 +283,49 @@ func TestLogFails(t *testing.T) {
 		t.Errorf("a run with a failing log ended %+v, %v", res, err)
 	}
 }
+
+// A run's log reads back as it was written, and a log whose last line was cut off half written
+// reads without that line; a log out of order, of an unknown kind or empty does not.
+func TestReadLog(t *testing.T) {
+	r, err := measure.New("test", sheets(t), measure.Judges(), 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var log bytes.Buffer
+	res, err := r.Do(context.Background(), measure.Stub, 10, &log, clock)
+	if err != nil {
+		t.Fatal(err)
+	}
+	l, err := measure.ReadLog(bytes.NewReader(log.Bytes()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if l.Run.Part != "test" || len(l.Run.Judges) != 3 || len(l.Sheets) != 7 || l.End == nil || l.End.Calls != res.Calls || l.Run.Prompt != judge.Fingerprint() {
+		t.Errorf("the log reads back as %+v with %d sheets and %d calls", l.Run, len(l.Sheets), len(l.Calls))
+	}
+	made := 0
+	for _, c := range l.Calls {
+		if c.SameAs == "" {
+			made++
+		}
+	}
+	if made != res.Calls {
+		t.Errorf("%d calls read back, %d made", made, res.Calls)
+	}
+	lines := strings.SplitAfter(log.String(), "\n")
+	for name, text := range map[string]string{
+		"empty":           "",
+		"a sheet first":   lines[1],
+		"after the end":   log.String() + lines[1],
+		"an unknown kind": lines[0] + `{"kind": "pause"}` + "\n" + lines[1],
+		"not JSON":        lines[0] + "a pause\n" + lines[1],
+	} {
+		if _, err := measure.ReadLog(strings.NewReader(text)); err == nil {
+			t.Errorf("%s: read", name)
+		}
+	}
+	cut, err := measure.ReadLog(strings.NewReader(lines[0] + lines[1] + lines[2][:10]))
+	if err != nil || len(cut.Sheets) != 1 || cut.End != nil {
+		t.Errorf("a log cut off in its third line reads as %+v, %v", cut, err)
+	}
+}

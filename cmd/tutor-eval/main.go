@@ -1,7 +1,8 @@
 // Command tutor-eval is tutor's eval runner: it runs the AI capabilities on eval samples, on the
 // same code that api calls, and reports how they did. Its run command runs the measurement of the
-// writing process (R24); its other commands serve the board, check the files of samples, banks
-// and sheet plans, and write synthetic ones: run it without arguments for its commands.
+// writing process (R24), and its report command reports on a run; its other commands serve the
+// board, check the files of samples, banks and sheet plans, and write synthetic ones: run it
+// without arguments for its commands.
 package main
 
 import (
@@ -49,6 +50,8 @@ const usage = `usage:
   tutor-eval run -part dev|test [-repeats N] [-max-usd N] [-log F] [-stub] [-dir D] [-bank F] [-plan F]
                              run the measurement on a part: the estimate first, then calls
                              to Claude once you type yes, and a log of every answer
+  tutor-eval report LOG      the report of a run from its log, asking no model: the criterion
+                             and the numbers in Markdown and CSV, beside the log
   tutor-eval synth DIR       write the synthetic bank and one synthetic sample per scenario
   tutor-eval -version        print the version
 `
@@ -100,6 +103,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return runSplit(operands, stdout, stderr)
 	case "run":
 		return runRun(context.Background(), operands, os.Stdin, stdout, stderr, os.Getenv, time.Now)
+	case "report":
+		return runReport(operands, stdout, stderr)
 	case "synth":
 		if len(operands) != 1 {
 			_, _ = fmt.Fprintln(stderr, "tutor-eval synth: give one directory")

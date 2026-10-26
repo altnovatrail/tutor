@@ -40,7 +40,7 @@ Once the sheets are written and split into a development and a test part (`tutor
 just measure -part dev
 ```
 
-It first says how many calls the run makes and what they are expected to cost, and starts only when you type yes. It starts no call that could take it past its cap, $3 for the development part and $6 for the test, and logs every answer in `samples/runs`, outside git. With `-stub` it asks no model: a stub answers by the markup, and the run needs no key.
+It first says how many calls the run makes and what they are expected to cost, and starts only when you type yes. It starts no call that could take it past its cap, $3 for the development part and $6 for the test, and logs every answer in `samples/runs`, outside git. With `-stub` it asks no model: a stub answers by the markup, and the run needs no key. `go run ./cmd/tutor-eval report LOG` then turns the log into the report, asking no model: whether the writing process helps each judge, by the criterion of section 3.1 of [docs/architecture.md](docs/architecture.md), and the other numbers, in Markdown and CSV beside the log.
 
 How it works is section 3.3 of [docs/architecture.md](docs/architecture.md). The plan is [RUN.md](RUN.md); detailing, the first epic, waits for the measurement's conclusions.
 
