@@ -163,8 +163,8 @@ func TestPageTasksAndModels(t *testing.T) {
 	}
 	rec, _ = call(t, h, "GET", "/api/tasks", nil)
 	var tasks []map[string]any
-	if err := json.Unmarshal(rec.Body.Bytes(), &tasks); err != nil || len(tasks) != 5 {
-		t.Fatalf("GET /api/tasks = %s, want five tasks", rec.Body)
+	if err := json.Unmarshal(rec.Body.Bytes(), &tasks); err != nil || len(tasks) != 11 {
+		t.Fatalf("GET /api/tasks = %s, want eleven tasks", rec.Body)
 	}
 	for _, task := range tasks {
 		if _, leaked := task["key"]; leaked || strings.Contains(rec.Body.String(), "x = 2") {
