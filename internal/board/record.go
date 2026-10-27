@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"sync"
 	"time"
 
@@ -185,7 +186,8 @@ type ProposeRequest struct {
 // differs from its plan sheet, such as by a line more. On a sheet of a plan of parts its lines are
 // the parts: each group of strokes the rule of the eval protocol finds (lines.Groups) is one, in
 // the order their first strokes were written, as a device groups them (R30). A drawing drawn
-// after a pause comes as two groups, and the author joins them.
+// after a pause comes as two groups, and the author joins them. A plan sheet of one part, a free
+// solution, takes the whole sheet.
 //
 // On a sheet whose plan sheet plans an erasure, Planned is the index of the erasure the board
 // takes for it: of the moves of the eraser, the one that took the most strokes from the plan's
@@ -260,9 +262,13 @@ func (rc *Recorder) propose(w http.ResponseWriter, r *http.Request) {
 
 // proposeParts proposes the parts of a sheet of a plan of parts: a part to each group of strokes,
 // in the order their first strokes were written, with the texts and the answer of the plan sheet's
-// parts in their order.
+// parts in their order. A plan sheet of one part takes the whole sheet as that part, as the author
+// writes a free solution (R28, the 2026-10-27 amendment).
 func proposeParts(sh *sample.PlanSheet, req ProposeRequest) Proposal {
 	found := lines.Groups(req.Strokes, req.Erasures)
+	if len(sh.Parts) == 1 && len(found) > 1 {
+		found = []lines.StrokeGroup{whole(found, req.Strokes)}
+	}
 	p := Proposal{Lines: make([]sample.Line, len(found)), Expected: sh.Expected, Differences: []Note{}}
 	for i, g := range found {
 		p.Lines[i] = sample.Line{Strokes: g.Strokes, Answer: i+1 == sh.Answer}
@@ -289,6 +295,20 @@ func proposeParts(sh *sample.PlanSheet, req ProposeRequest) Proposal {
 		p.Planned, p.Differences = plannedOf(took, req.Undone, fmt.Sprintf("part %d", pe.Line), "the parts of the sheet", p.Differences)
 	}
 	return p
+}
+
+// whole joins groups of strokes into one, its strokes in the order they were written.
+func whole(groups []lines.StrokeGroup, strokes []sample.Stroke) lines.StrokeGroup {
+	order := make(map[string]int, len(strokes))
+	for i, st := range strokes {
+		order[st.ID] = i
+	}
+	var all []string
+	for _, g := range groups {
+		all = append(all, g.Strokes...)
+	}
+	slices.SortFunc(all, func(a, b string) int { return order[a] - order[b] })
+	return lines.StrokeGroup{Strokes: all}
 }
 
 // plannedOf picks the erasure the board takes for the planned one of a plan sheet: of the moves of

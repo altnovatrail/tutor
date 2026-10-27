@@ -23,8 +23,8 @@ const (
 )
 
 // TestFreeSheetPlans checks the plans of the free-form measurement the way the author does, with
-// their bank; that each file is the plan as it is written; that the author's sheets are three
-// sheets of code under other numbers, one to a layout, as T54 chose; and that the tables of
+// their bank; that each file is the plan as it is written; that the author's sheets are three free
+// solutions, one to a layout (the 2026-10-27 amendment to R28); and that the tables of
 // docs/free-sheets.md are the bank and the plans, byte for byte, and so are the two tables of
 // the sheets' composition in section 3.4 of docs/architecture.md.
 func TestFreeSheetPlans(t *testing.T) {
@@ -40,8 +40,7 @@ func TestFreeSheetPlans(t *testing.T) {
 	free, author := partsPlanFile(t, freePlan), partsPlanFile(t, authorPlan)
 	freeRules(t, free)
 	layouts := layoutsOf(t, free)
-	copies := copiesOf(t, free, author)
-	authorsTrio(t, author, layouts)
+	authorsFree(t, author, layouts)
 	if t.Failed() {
 		t.FailNow() // the tables are built from what the checks above hold
 	}
@@ -52,9 +51,9 @@ func TestFreeSheetPlans(t *testing.T) {
 		freeTaskTable(t, bank, layouts),
 		composition,
 		places,
-		partsTable(t, free, nil),
+		partsTable(t, free),
 		drawingTable(t, free),
-		partsTable(t, author, copies),
+		authorTable(t, author, layouts),
 	} {
 		sameTable(t, freeSheetsDoc, doc, freePlan+" and "+authorPlan, built)
 	}
@@ -156,53 +155,40 @@ func layoutsOf(t *testing.T, plan *sample.Plan) map[string]string {
 	return layouts
 }
 
-// copiesOf finds the sheet of code each of the author's sheets copies: the one sheet that is the
-// same but for its number.
-func copiesOf(t *testing.T, free, author *sample.Plan) []int {
-	t.Helper()
-	copies := make([]int, len(author.Sheets))
-	for i, a := range author.Sheets {
-		var found []int
-		for _, c := range free.Sheets {
-			n := c.Number
-			c.Number = a.Number
-			if reflect.DeepEqual(c, a) {
-				found = append(found, n)
-			}
-		}
-		if len(found) != 1 {
-			t.Errorf("the author's sheet %d is a copy of %d sheets of code, %v, not of one", a.Number, len(found), found)
-			continue
-		}
-		copies[i] = found[0]
-	}
-	return copies
-}
+// authorFree is the one part of each of the author's sheets: the whole free solution, as the
+// author writes it, without parts to mark.
+var authorFree = sample.PlanPart{Kind: sample.PartText, Place: sample.PlaceWide, Text: "свободное решение целиком"}
 
-// authorsTrio checks the author's three sheets against T54 (section 3.4): one to a layout — the
-// number line erasure-fixed with the erasure in the drawing, the drawing erasure-broken with the
-// erasure in the drawing, and the working at the side an error in a column, with no erasure.
-func authorsTrio(t *testing.T, author *sample.Plan, layouts map[string]string) {
+// authorsFree checks the author's three sheets (the 2026-10-27 amendment to R28): one to a layout,
+// in the order of section 3.4 — the number line, the drawing and the working at the side — each a
+// correct free solution of its task, the whole sheet one part, with no planned erasure.
+func authorsFree(t *testing.T, author *sample.Plan, layouts map[string]string) {
 	t.Helper()
-	want := []string{
-		layoutNumberLine + ", erasure-fixed, erased in the drawing",
-		"рисунок, erasure-broken, erased in the drawing",
-		layoutSide + ", error, first error at the side",
-	}
+	want := []string{layoutNumberLine, "рисунок", layoutSide}
 	var got []string
 	for _, sh := range author.Sheets {
-		s := group(layouts[sh.Task]) + ", " + string(sh.Scenario)
-		if e := sh.Erasure; e != nil {
-			s += ", erased " + partPlace(sh, e.Line)
+		got = append(got, group(layouts[sh.Task]))
+		if sh.Scenario != sample.ScenarioCorrect || sh.Answer != 1 || sh.Erasure != nil || sh.Expected != (sample.Expected{Outcome: sample.OutcomeCorrect}) ||
+			len(sh.Parts) != 1 || !reflect.DeepEqual(sh.Parts[0], authorFree) {
+			t.Errorf("the author's sheet %d = %+v, want a correct free solution, the whole sheet one part %+v", sh.Number, sh, authorFree)
 		}
-		if n := sh.Expected.FirstError; n != nil && sh.Erasure == nil {
-			s += ", first error " + partPlace(sh, *n)
-		}
-		got = append(got, s)
 	}
 	if !slices.Equal(got, want) {
-		t.Errorf("the author's sheets are %q, want %q", got, want)
+		t.Errorf("the author's sheets are laid out as %q, want %q", got, want)
 	}
+}
+
+// authorTable writes the table «Листы автора» of docs/free-sheets.md: a sheet to a line, with its
+// task, the layout of the task's sheets of code, its scenario and its one part.
+func authorTable(t *testing.T, author *sample.Plan, layouts map[string]string) string {
+	t.Helper()
+	var b strings.Builder
+	b.WriteString("| № | Задача | Раскладка у листов кода | Сценарий | Часть на листе |\n")
+	b.WriteString("|---|---|---|---|---|\n")
+	for _, sh := range author.Sheets {
+		fmt.Fprintf(&b, "| %d | %s | %s | %s | %s |\n", sh.Number, cell(t, sh.Task), layouts[sh.Task], cell(t, string(sh.Scenario)), partCell(t, sh.Parts[0]))
+	}
+	return strings.TrimSuffix(b.String(), "\n")
 }
 
 // partPlace says where part n of a sheet stands, in the words of the test. The part is one of the
@@ -325,27 +311,18 @@ func dash(n int) string {
 
 // partsTable writes the table of the sheets of a plan of parts, as docs/free-sheets.md has it: a
 // line to a sheet, its parts numbered and joined by "; ", each with its kind and place and its
-// text in backquotes. With copies, the plan is the author's, and each sheet names the sheet of
-// code it copies.
-func partsTable(t *testing.T, plan *sample.Plan, copies []int) string {
+// text in backquotes.
+func partsTable(t *testing.T, plan *sample.Plan) string {
 	t.Helper()
 	var b strings.Builder
-	if copies != nil {
-		b.WriteString("| № | Лист кода | Задача | Сценарий | Части на листе | Ответ | Первая ошибка | Стирание по сценарию |\n")
-		b.WriteString("|---|---|---|---|---|---|---|---|\n")
-	} else {
-		b.WriteString("| № | Задача | Сценарий | Части на листе | Ответ | Первая ошибка | Стирание по сценарию |\n")
-		b.WriteString("|---|---|---|---|---|---|---|\n")
-	}
-	for i, sh := range plan.Sheets {
+	b.WriteString("| № | Задача | Сценарий | Части на листе | Ответ | Первая ошибка | Стирание по сценарию |\n")
+	b.WriteString("|---|---|---|---|---|---|---|\n")
+	for _, sh := range plan.Sheets {
 		parts := make([]string, len(sh.Parts))
 		for j, p := range sh.Parts {
 			parts[j] = fmt.Sprintf("%d) %s", j+1, partCell(t, p))
 		}
 		b.WriteString("| " + strconv.Itoa(sh.Number) + " |")
-		if copies != nil {
-			b.WriteString(" " + strconv.Itoa(copies[i]) + " |")
-		}
 		fmt.Fprintf(&b, " %s | %s | %s | %d | %s | %s |\n", cell(t, sh.Task), cell(t, string(sh.Scenario)), strings.Join(parts, "; "), sh.Answer, firstErrorCell(t, sh.Expected), erasureCell(t, sh))
 	}
 	return strings.TrimSuffix(b.String(), "\n")

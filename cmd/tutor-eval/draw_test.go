@@ -228,14 +228,15 @@ func TestDrawRefuses(t *testing.T) {
 	}
 }
 
-// The command draws the free-form plan, 40 sheets of parts, and the author's three: they pass the
-// summary with the plan's markup, and each has its picture, and a frame before its planned erasure.
+// The command draws the free-form plan, 40 sheets of parts, and the author's three, each one part:
+// they pass the summary with the plan's markup, and each has its picture, and a frame before its
+// planned erasure.
 func TestDrawSheetsOfParts(t *testing.T) {
 	root := t.TempDir()
 	for _, c := range []struct {
 		plan                   string
 		sheets, erasures, pics int
-	}{{"../../eval/free-sheets.json", 40, 16, 56}, {"../../eval/free-author.json", 3, 2, 5}} {
+	}{{"../../eval/free-sheets.json", 40, 16, 56}, {"../../eval/free-author.json", 3, 0, 3}} {
 		name := strings.TrimSuffix(filepath.Base(c.plan), ".json")
 		dir, pics := filepath.Join(root, name), filepath.Join(root, name+"-png")
 		files := []string{"-dir", dir, "-bank", freeBank, "-plan", c.plan}
