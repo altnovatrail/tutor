@@ -74,3 +74,54 @@ func ErasureLine(s *sample.Sample, e sample.Erasure) int {
 	}
 	return 0
 }
+
+// ErasurePart is the place of an erasure on the plane, for a sheet whose markup is made of parts,
+// as a plan of version 1 makes it (T56): the number of the part most of the erasure's strokes stood
+// on, the earlier in the markup of two that hold as many, or 0 when none of them stood on a part.
+// An erased stroke stood on the part that holds the stroke on the sheet nearest to it, when their
+// boxes come within the rule of groups' place, GroupAcross across and GroupDown down. Near is the
+// larger of the two gaps between the boxes, and of two parts as near, the earlier in the markup
+// takes it: an axis, an arc, a bar or a brace touches more than one part. The rule's time does not
+// count, as a part written again after a pause has no neighbours in time, and strokes of no part
+// do not count either.
+func ErasurePart(s *sample.Sample, e sample.Erasure) int {
+	pieces := make(map[string]piece, len(s.Strokes))
+	for i, st := range s.Strokes {
+		if p, ok := pieceOf(st, i); ok {
+			pieces[st.ID] = p
+		}
+	}
+	stood := make([]int, len(s.Lines)+1) // by the number of the part, from 1
+	for _, id := range e.Strokes {
+		erased, ok := pieces[id]
+		if !ok {
+			continue
+		}
+		part, nearest := 0, int64(0)
+		for n, l := range s.Lines {
+			for _, sid := range l.Strokes {
+				p, ok := pieces[sid]
+				if !ok {
+					continue
+				}
+				across, down := gap(erased.minX, erased.maxX, p.minX, p.maxX), gap(erased.minY, erased.maxY, p.minY, p.maxY)
+				if across > 10*GroupAcross || down > 10*GroupDown {
+					continue
+				}
+				if d := max(across, down); part == 0 || d < nearest {
+					part, nearest = n+1, d
+				}
+			}
+		}
+		if part > 0 {
+			stood[part]++
+		}
+	}
+	most := 0
+	for n := 1; n < len(stood); n++ {
+		if stood[n] > 0 && (most == 0 || stood[n] > stood[most]) {
+			most = n
+		}
+	}
+	return most
+}

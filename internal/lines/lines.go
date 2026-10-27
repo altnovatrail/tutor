@@ -2,6 +2,11 @@
 // the gaps between them down the sheet. The record mode of the board proposes a sheet's lines with
 // it and finds on which line an erasure took its strokes (R25), and the journal of the writing
 // process groups with it all the strokes of a sheet, the erased ones too (internal/journal).
+//
+// It also finds the groups of strokes a device finds, by the eval protocol's rule of groups
+// (R24 canvas; R30 in docs/decisions.md), and where an erasure stood on the plane on a sheet
+// whose markup is made of parts. A free-form solution — a number line, a drawing, a note at the
+// side — has no lines down the sheet, so that is what its sheets go by.
 package lines
 
 import (
