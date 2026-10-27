@@ -1,0 +1,332 @@
+{
+  "format": "tutor-sheet-plan",
+  "version": 1,
+  "sheets": [
+    {
+      "number": 1,
+      "task": "grasshopper",
+      "scenario": "erasure-fixed",
+      "parts": [
+        {
+          "kind": "drawing",
+          "place": "wide",
+          "text": "числовая прямая: прыжки вправо 3 → 7 → 11 → 15 и прыжок влево 15 → 10",
+          "figure": {
+            "number_line": {
+              "from": 0,
+              "to": 16,
+              "step": 1,
+              "labels": [
+                0,
+                3,
+                7,
+                10,
+                11,
+                15
+              ],
+              "jumps": [
+                {
+                  "from": 3,
+                  "to": 7
+                },
+                {
+                  "from": 7,
+                  "to": 11
+                },
+                {
+                  "from": 11,
+                  "to": 15
+                },
+                {
+                  "from": 15,
+                  "to": 10
+                }
+              ]
+            },
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        },
+        {
+          "kind": "text",
+          "place": "left",
+          "text": "3 + 4 + 4 + 4 = 15",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        },
+        {
+          "kind": "text",
+          "place": "left",
+          "text": "15 − 5 = 10",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        },
+        {
+          "kind": "text",
+          "place": "left",
+          "text": "Ответ: в точке 10",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        }
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": {
+        "line": 1,
+        "erased": "mistake",
+        "text": "7 → 13",
+        "replacement": "7 → 11",
+        "part_of_line": true,
+        "figure": {
+          "number_line": {
+            "from": 0,
+            "to": 16,
+            "step": 1,
+            "labels": [
+              0,
+              3,
+              7,
+              13
+            ],
+            "jumps": [
+              {
+                "from": 3,
+                "to": 7
+              },
+              {
+                "from": 7,
+                "to": 13
+              }
+            ]
+          },
+          "row": null,
+          "scheme": null,
+          "column": null
+        }
+      }
+    },
+    {
+      "number": 2,
+      "task": "stamps",
+      "scenario": "erasure-broken",
+      "parts": [
+        {
+          "kind": "drawing",
+          "place": "left",
+          "text": "схема: отрезок младшего □ длиннее на 6 и отрезок старшего △, вместе 20",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": {
+              "segments": [
+                {
+                  "label": "□",
+                  "pieces": [
+                    {
+                      "length": 7,
+                      "label": ""
+                    },
+                    {
+                      "length": 6,
+                      "label": "6"
+                    }
+                  ]
+                },
+                {
+                  "label": "△",
+                  "pieces": [
+                    {
+                      "length": 7,
+                      "label": ""
+                    }
+                  ]
+                }
+              ],
+              "total": "20"
+            },
+            "column": null
+          }
+        },
+        {
+          "kind": "text",
+          "place": "left",
+          "text": "(20 − 6) : 2 = 7",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        },
+        {
+          "kind": "text",
+          "place": "left",
+          "text": "7 + 6 = 13",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        },
+        {
+          "kind": "text",
+          "place": "left",
+          "text": "Ответ: 13 марок",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        }
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "error",
+        "first_error": 1,
+        "trap": "longer-segment"
+      },
+      "erasure": {
+        "line": 1,
+        "erased": "correct-step",
+        "text": "△ длиннее на 6",
+        "replacement": "□ длиннее на 6",
+        "part_of_line": true,
+        "figure": {
+          "number_line": null,
+          "row": null,
+          "scheme": {
+            "segments": [
+              {
+                "label": "□",
+                "pieces": [
+                  {
+                    "length": 7,
+                    "label": ""
+                  }
+                ]
+              },
+              {
+                "label": "△",
+                "pieces": [
+                  {
+                    "length": 7,
+                    "label": ""
+                  },
+                  {
+                    "length": 6,
+                    "label": "6"
+                  }
+                ]
+              }
+            ],
+            "total": "20"
+          },
+          "column": null
+        }
+      }
+    },
+    {
+      "number": 3,
+      "task": "album",
+      "scenario": "error",
+      "parts": [
+        {
+          "kind": "text",
+          "place": "right",
+          "text": "14 × 3 = 42",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": {
+              "top": "14",
+              "op": "×",
+              "bottom": "3",
+              "result": "42"
+            }
+          }
+        },
+        {
+          "kind": "text",
+          "place": "right",
+          "text": "42 × 5 = 210",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": {
+              "top": "42",
+              "op": "×",
+              "bottom": "5",
+              "result": "210"
+            }
+          }
+        },
+        {
+          "kind": "text",
+          "place": "right",
+          "text": "14 × 2 = 28",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": {
+              "top": "14",
+              "op": "×",
+              "bottom": "2",
+              "result": "28"
+            }
+          }
+        },
+        {
+          "kind": "text",
+          "place": "left",
+          "text": "210 + 28 = 238",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        },
+        {
+          "kind": "text",
+          "place": "left",
+          "text": "Ответ: 238 рублей",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        }
+      ],
+      "answer": 5,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "swapped-counts"
+      },
+      "erasure": null
+    }
+  ]
+}
