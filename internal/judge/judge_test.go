@@ -273,8 +273,9 @@ func TestFreeWriting(t *testing.T) {
 		"□ or △",
 		"a mistake in a drawing is a mistake",
 		"The reference solution tells its drawings in words.",
-		"the writing or the drawing where the solution first goes wrong",
-		"in the order of the solution's steps, wherever they stand on the sheet",
+		"the writing or the drawing that is wrong",
+		"the one that comes first in the order of the solution's steps, wherever it stands on the sheet",
+		"A right step before the mistake is not the mistake",
 	} {
 		for _, f := range judge.Forms {
 			if !strings.Contains(f.Instructions(judge.V2), phrase) {
@@ -448,5 +449,15 @@ func TestFrozen(t *testing.T) {
 	const frozen = "6a98139b3dbd6748f2552db5ec4ee91c72136724b0ffb7aebd461f6108e76b41"
 	if got := judge.Fingerprint(judge.V1); got != frozen {
 		t.Errorf("the prompt's fingerprint is %s, not the one frozen after T27, %s", got, frozen)
+	}
+}
+
+// Version 2 of the prompt is frozen after the three dev rounds of T66, before its test part runs:
+// any change to a word a judge of free writing reads, the words of the journal of parts among them,
+// changes the fingerprint, and this test fails.
+func TestFrozenV2(t *testing.T) {
+	const frozen = "505a799f4bfb663e289a168cfc764dcdc4f6b85658aef73f3c194a0fe6d8b293"
+	if got := judge.Fingerprint(judge.V2); got != frozen {
+		t.Errorf("the fingerprint of version 2 is %s, not the one frozen after the dev rounds of T66, %s", got, frozen)
 	}
 }
