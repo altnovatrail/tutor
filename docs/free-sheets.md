@@ -116,7 +116,7 @@
 
 ## Листы кода
 
-Листы рисует `tutor-eval draw` в каталог `synthetic/free`, с `writer` `synthetic` (T59, T60).
+Листы рисует `tutor-eval draw -seed 1` в каталог `synthetic/free`, с `writer` `synthetic` (T59, T60).
 
 | № | Задача | Сценарий | Части на листе | Ответ | Первая ошибка | Стирание по сценарию |
 |---|---|---|---|---|---|---|

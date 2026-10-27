@@ -23,9 +23,10 @@ const (
 	partsPlan       = "../../internal/sample/testdata/parts-plan.json"
 )
 
-// tutor-eval check reads a plan of parts against its bank. draw refuses one with a drawing, which
-// code does not draw yet, and the commands that do not know parts yet refuse one, as they did
-// before plans of parts came. None of them makes anything.
+// tutor-eval check reads a plan of parts against its bank, and draw draws its sheets: the number
+// line with a jump erased, the row with the first error in the drawing, the scheme with □ and △ and
+// the columns with a number erased. The commands that do not know parts yet refuse one, as they did
+// before plans of parts came, and make nothing.
 func TestPlanOfParts(t *testing.T) {
 	code, out, errs := runIt("check", freeBank, partsPlan)
 	if want := freeBank + ": ok, bank of 6 tasks\n" + partsPlan + ": ok, plan of 4 sheets, its tasks and traps are in the bank\n"; code != exitOK || out != want {
@@ -36,9 +37,6 @@ func TestPlanOfParts(t *testing.T) {
 	files := []string{"-dir", dir, "-bank", freeBank, "-plan", partsPlan}
 	refused := " is a plan of version 1, with parts, and "
 	var stdout, stderr bytes.Buffer
-	if code := runDraw(files, &stdout, &stderr, time.Now); code != exitFail || !strings.Contains(stderr.String(), partsPlan+": sheet 1: part 1 is a drawing, a number_line, which code does not draw yet") {
-		t.Errorf("draw = %d %q", code, stderr.String())
-	}
 	if code, _, errs := runMeasure("yes\n", append([]string{"-part", "dev", "-stub"}, files...)...); code != exitFail || !strings.Contains(errs, refused+"the measurement runs on sheets") {
 		t.Errorf("run = %d %q", code, errs)
 	}
@@ -52,25 +50,14 @@ func TestPlanOfParts(t *testing.T) {
 		t.Errorf("a command that refused the plan made %s: %v", dir, err)
 	}
 
-	// Sheets the directory holds, draw keeps and does not need to draw: with the three drawings
-	// there, it draws the sheet of columns.
-	_, plan, err := readPlan(freeBank, partsPlan)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		t.Fatal(err)
-	}
-	at := time.Date(2026, 10, 27, 9, 0, 0, 0, time.UTC)
-	for i := range 3 {
-		if err := os.WriteFile(filepath.Join(dir, sample.SheetFile(&plan.Sheets[i], at)), []byte("the author's sheet"), 0o600); err != nil {
-			t.Fatal(err)
-		}
-	}
 	stdout.Reset()
 	stderr.Reset()
-	if code := runDraw(files, &stdout, &stderr, time.Now); code != exitOK || !strings.Contains(stdout.String(), "Drawn by code: 1 sheet, sheets 4, into") {
+	if code := runDraw(files, &stdout, &stderr, time.Now); code != exitOK || !strings.Contains(stdout.String(), "Drawn by code: 4 sheets, sheets 1, 2, 3, 4, into") {
 		t.Errorf("draw = %d %q %q", code, stdout.String(), stderr.String())
+	}
+	var summary bytes.Buffer
+	if code := runSheets(files, &summary, &stderr); code != exitOK || !strings.Contains(summary.String(), "Sheets: 4 of the plan's 4 recorded, 4 of them passing the check.") || !strings.Contains(summary.String(), "Marked off the plan: none.") {
+		t.Errorf("sheets = %d\n%s%s", code, summary.String(), stderr.String())
 	}
 }
 

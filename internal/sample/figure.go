@@ -39,8 +39,11 @@ func checkPart(p *problems, path string, part PlanPart) bool {
 		p.add(path+".kind", "%q is not %q or %q", part.Kind, PartText, PartDrawing)
 		return false
 	}
-	if part.Place != PlaceLeft && part.Place != PlaceRight && part.Place != PlaceWide {
+	switch {
+	case part.Place != PlaceLeft && part.Place != PlaceRight && part.Place != PlaceWide:
 		p.add(path+".place", "%q is not %q, %q or %q", part.Place, PlaceLeft, PlaceRight, PlaceWide)
+	case part.Kind == PartDrawing && part.Place == PlaceRight:
+		p.add(path+".place", "is %q, a note at the side, and a drawing stands in the main column or across the sheet", PlaceRight)
 	}
 	checkFigure(p, path+".figure", part.Figure, part.Kind)
 	if c := part.Figure.Column; c != nil && part.Kind == PartText {

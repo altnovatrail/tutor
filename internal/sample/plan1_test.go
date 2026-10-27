@@ -175,6 +175,7 @@ func TestCheckRefusesBrokenPartsPlans(t *testing.T) {
 		// Parts and their figures.
 		{"an unknown kind", func(pl *sample.Plan) { pl.Sheets[0].Parts[1].Kind = "note" }, "sheets[0].parts[1].kind", `"note" is not "text" or "drawing"`, false},
 		{"an unknown place", func(pl *sample.Plan) { pl.Sheets[0].Parts[1].Place = "middle" }, "sheets[0].parts[1].place", `"middle" is not "left", "right" or "wide"`, false},
+		{"a drawing at the side", func(pl *sample.Plan) { pl.Sheets[0].Parts[0].Place = sample.PlaceRight }, "sheets[0].parts[0].place", `is "right", a note at the side, and a drawing stands in the main column or across the sheet`, false},
 		{"a drawing without its figure", func(pl *sample.Plan) { pl.Sheets[0].Parts[0].Figure.NumberLine = nil }, "sheets[0].parts[0].figure", "sets 0 of number_line, row and scheme", false},
 		{"a drawing of two figures", func(pl *sample.Plan) { pl.Sheets[0].Parts[0].Figure.Row = &sample.Row{Object: sample.ObjectHouse} }, "sheets[0].parts[0].figure", "sets 2 of number_line, row and scheme", false},
 		{"text with a drawing", func(pl *sample.Plan) {

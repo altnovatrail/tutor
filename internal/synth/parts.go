@@ -1,7 +1,6 @@
 package synth
 
 import (
-	"fmt"
 	"math/rand/v2"
 	"strings"
 	"unicode/utf8"
@@ -29,31 +28,17 @@ const (
 	rowStep = 1.3
 )
 
-// Drawable says why code cannot draw a plan sheet yet, or nil when it can. Of a sheet of parts it
-// draws text and columns; a drawing — a number line, a row of objects, a scheme — comes with T60
-// in RUN.md.
-func Drawable(sh *sample.PlanSheet) error {
-	for i, p := range sh.Parts {
-		if name := p.Figure.Drawing(); name != "" {
-			return fmt.Errorf("part %d is a drawing, a %s, which code does not draw yet", i+1, name)
-		}
-	}
-	return nil
-}
-
 // sheetOfParts draws a sheet of a plan of parts in the plan's order, each part where its place puts
 // it: the main column on the left, top to bottom; the columns at the side in a row to its right,
 // beside the part of the main column written before them, or at the top; a wide part across the
-// sheet. The planned erasure goes in the order the plan gives, as on a sheet of lines.
+// sheet. A drawing is drawn thing by thing (figures.go). The planned erasure goes in the order the
+// plan gives, as on a sheet of lines.
 func sheetOfParts(sh *sample.PlanSheet, seed uint64) *sample.Sample {
-	if err := Drawable(sh); err != nil {
-		panic(fmt.Sprintf("synth: plan sheet %d: %v", sh.Number, err))
-	}
 	w := sheetWriter(sh, seed)
 	h, main := w.partsHand(sh)
 	w.pointMs = h.pointMs
 	w.t = 800 + w.rng.Int64N(2000)
-	spots := layout(h, sh, main)
+	spots := w.layout(h, sh, main)
 	for i, p := range sh.Parts {
 		if i > 0 {
 			w.pause(partPause + w.rng.Int64N(2400))
@@ -64,6 +49,8 @@ func sheetOfParts(sh *sample.PlanSheet, seed uint64) *sample.Sample {
 		x, y := spots[i].x+w.jitter(h.height*0.3), spots[i].y+w.jitter(h.height*0.1)
 		var ids []string
 		switch {
+		case p.Figure.Drawing() != "":
+			ids = w.drawing(h, sh, i, spots[i].x, y) // across the place it was laid out for
 		case p.Figure.Column != nil:
 			ids = w.column(h, sh, i, x, y)
 		case erasureIn(sh, i) != nil:
@@ -106,16 +93,58 @@ func (w *writer) partsHand(sh *sample.PlanSheet) (h hand, main float64) {
 	h, spacing := w.pickHand(0.015, 60, 40)
 	h.advance = min(float64(h.height*h.shape)*spacing, maxAdvance)
 	main, side := widths(sh)
-	if room := float64(sheetWidth-30) - h.left; float64(h.advance*(main+side)) > room {
+	room := float64(sheetWidth-30) - h.left
+	if float64(h.advance*(main+side)) > room {
 		h.advance = room / (main + side)
+	}
+	// A drawing of the main column takes up to drawingWidth units of it, beside any notes at the side.
+	if side > 0 && drawsInMain(sh) {
+		h.advance = min(h.advance, (room-drawingWidth)/side)
+		main = max(main, drawingWidth/h.advance)
 	}
 	h.height = h.advance / float64(h.shape*spacing)
 	h.step = h.height * (1.9 + float64(0.5*w.rng.Float64()))
-	if n := mainParts(sh); n > 1 {
-		// The last part of the main column, its tails too, ends above the bottom of the sheet.
-		h.step = min(h.step, (float64(sheetHeight-20)-h.top-float64(1.5*h.height))/float64(n-1))
+	// The last part of the main column, its tails too, ends above the bottom of the sheet: the
+	// drawings take their own height, and the lines share what is left.
+	// If even lines a step of 1.6 heights apart do not fit, the hand is made smaller.
+	for range 8 {
+		lines, drawn := w.mainColumn(h, sh)
+		room := float64(sheetHeight-20) - h.top - drawn
+		if lines > 0 {
+			h.step = min(h.step, room/float64(lines))
+		}
+		if lines == 0 || h.step >= float64(h.height*1.6) {
+			break
+		}
+		h.height, h.advance, h.step = float64(h.height*0.9), float64(h.advance*0.9), float64(h.step*0.9)
 	}
 	return h, main
+}
+
+// mainColumn is what the main column takes down the sheet: how many of its steps a hand's step
+// sets — one after each line but the last — and how much the rest takes, the drawings and the
+// last part, in sheet units.
+func (w *writer) mainColumn(h hand, sh *sample.PlanSheet) (steps int, rest float64) {
+	last := -1
+	for i, p := range sh.Parts {
+		if p.Place != sample.PlaceRight {
+			last = i
+		}
+	}
+	for i, p := range sh.Parts {
+		switch {
+		case p.Place == sample.PlaceRight:
+		case i == last && p.Figure.Drawing() == "":
+			rest += noteHeight(h, p)
+		case i == last:
+			rest += w.sketch(h, sh, i, h.left, 0).height()
+		case p.Figure.Drawing() != "" || p.Figure.Column != nil:
+			rest += w.partHeight(h, sh, i)
+		default:
+			steps++
+		}
+	}
+	return steps, rest
 }
 
 // widths are how wide, in advances, the widest text of the main column is, and the widest row of
@@ -137,6 +166,16 @@ func widths(sh *sample.PlanSheet) (main, side float64) {
 		side = max(side, sideGap+row)
 	}
 	return main, side
+}
+
+// drawsInMain reports whether a drawing of a sheet stands in its main column, not across the sheet.
+func drawsInMain(sh *sample.PlanSheet) bool {
+	for _, p := range sh.Parts {
+		if p.Figure.Drawing() != "" && p.Place == sample.PlaceLeft {
+			return true
+		}
+	}
+	return false
 }
 
 // textWidth is how wide a string is written, in advances, at the widest a hand writes it: a space
@@ -194,24 +233,13 @@ func erasureIn(sh *sample.PlanSheet, i int) *sample.PlanErasure {
 	return nil
 }
 
-// mainParts is how many parts stand in the main column or across the sheet, one under another.
-func mainParts(sh *sample.PlanSheet) int {
-	n := 0
-	for _, p := range sh.Parts {
-		if p.Place != sample.PlaceRight {
-			n++
-		}
-	}
-	return n
-}
-
 // spot is where a part begins: the top left corner of its first character.
 type spot struct{ x, y float64 }
 
 // layout puts the parts of a sheet on it, as sheetOfParts says; main is the width of the main
 // column, in advances. A row at the side stands below the rows at the side before it, and a wide
 // part below them all, so that nothing is written over what is already there.
-func layout(h hand, sh *sample.PlanSheet, main float64) []spot {
+func (w *writer) layout(h hand, sh *sample.PlanSheet, main float64) []spot {
 	sideX := h.left + float64(h.advance*(main+sideGap))
 	spots := make([]spot, len(sh.Parts))
 	y := h.top      // where the next part of the main column goes
@@ -235,7 +263,7 @@ func layout(h hand, sh *sample.PlanSheet, main float64) []spot {
 		}
 		spots[i] = spot{h.left, y}
 		beside = y
-		y += partHeight(h, p)
+		y += w.partHeight(h, sh, i)
 		if p.Place == sample.PlaceWide {
 			beside, free = y, max(free, y) // what comes after it stands below it
 		}
@@ -252,8 +280,12 @@ func noteHeight(h hand, p sample.PlanPart) float64 {
 }
 
 // partHeight is how far down the next part of the main column stands from the top of this one: a
-// step of the hand, or more when the part is taller than one, as a column is.
-func partHeight(h hand, p sample.PlanPart) float64 {
+// step of the hand for a line, and for a drawing or a column its height and half a digit's.
+func (w *writer) partHeight(h hand, sh *sample.PlanSheet, i int) float64 {
+	p := sh.Parts[i]
+	if p.Figure.Drawing() != "" {
+		return w.sketch(h, sh, i, h.left, 0).height() + float64(h.height*0.5)
+	}
 	return max(h.step, noteHeight(h, p)+float64(h.height*0.5))
 }
 

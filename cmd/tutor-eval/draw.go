@@ -21,9 +21,8 @@ import (
 // not hold yet, and saves each as the record mode would, with the writer "synthetic" (R26). The
 // sheets the author wrote stay as they are, and so does every file already there. The same seed
 // draws the same sheets. With -png it also saves the pictures of each sheet it draws, in a
-// directory of their own, so that the author and the executor can look at them. Of a plan of parts
-// it draws the sheets code can draw (synth.Drawable): a sheet it is to draw and cannot, it names,
-// and makes nothing.
+// directory of their own, so that the author and the executor can look at them. It draws the
+// sheets of a plan of parts too: text, columns and drawings (T59, T60).
 func runDraw(args []string, stdout, stderr io.Writer, now func() time.Time) int {
 	flags := flag.NewFlagSet("tutor-eval draw", flag.ContinueOnError)
 	var f sheetFlags
@@ -44,9 +43,6 @@ func runDraw(args []string, stdout, stderr io.Writer, now func() time.Time) int 
 		}
 	}
 	bank, plan, err := readPlan(f.bank, f.plan)
-	if err == nil {
-		err = drawable(f.plan, f.dir, plan, bank)
-	}
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval draw: %v\n", err)
 		return exitFail
@@ -121,30 +117,6 @@ func runDraw(args []string, stdout, stderr io.Writer, now func() time.Time) int 
 		return exitFail
 	}
 	return exitOK
-}
-
-// drawable refuses a plan with a sheet code cannot draw yet among those it is to draw, the sheets
-// the directory does not hold, and names the first such sheet and why. It reads the directory only
-// when there is one, so that a refusal makes nothing.
-func drawable(planPath, dir string, plan *sample.Plan, bank *sample.Bank) error {
-	held := map[int]bool{}
-	if _, err := os.Stat(dir); err == nil {
-		r, err := sheets.Read(dir, plan, bank)
-		if err != nil {
-			return err
-		}
-		for _, sh := range r.Sheets {
-			held[sh.Plan.Number] = sh.File != ""
-		}
-	}
-	for i := range plan.Sheets {
-		if sh := &plan.Sheets[i]; !held[sh.Number] {
-			if err := synth.Drawable(sh); err != nil {
-				return fmt.Errorf("%s: sheet %d: %w", planPath, sh.Number, err)
-			}
-		}
-	}
-	return nil
 }
 
 // picturesDir refuses a directory for the pictures that is not named, that is the directory of the
