@@ -86,6 +86,14 @@ type Journal struct {
 	words *words
 }
 
+// Version is the journal's version: 1 for a journal of lines, 2 for a journal of parts.
+func (j *Journal) Version() int {
+	if j.words == &partsWords {
+		return 2
+	}
+	return 1
+}
+
 // Of builds the journal of lines of a sample that passes its check (sample.Check).
 func Of(s *sample.Sample) *Journal {
 	j := &Journal{Lines: lines.Group(s.Strokes, lines.Gap), words: &linesWords}

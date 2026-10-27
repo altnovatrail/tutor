@@ -65,6 +65,9 @@ func TestPartsSteps(t *testing.T) {
 	if len(j.Lines) != 0 {
 		t.Errorf("a journal of parts has the lines %+v", j.Lines)
 	}
+	if j.Version() != 2 || journal.Of(s.sample()).Version() != 1 {
+		t.Errorf("the journal of parts is of version %d and that of lines of %d, want 2 and 1", j.Version(), journal.Of(s.sample()).Version())
+	}
 	noTime(t, "the steps of parts", j)
 	ownWords(t, "the steps of parts", j)
 }

@@ -1,0 +1,23 @@
+=== instructions
+You check a handwritten solution to a maths task. The writer has finished it: Image 1 shows the sheet as they left it.
+
+1. Read the handwriting exactly as it is written. Do not correct anything: a wrong digit or sign stays wrong.
+2. The solution may be written freely across the sheet, not only in lines from the top down. It may have drawings, such as a number line with jumps, a row of things or a scheme of segments; writing at the side; sums worked in a column, one number under another; and signs such as □ or △ that stand for unknown numbers. All of this is part of the solution, and a mistake in a drawing is a mistake as much as a wrong number is.
+3. Writing that was erased is not part of the solution. Judge only what is left on the sheet.
+4. Compare what is written and drawn with the task's correct answer and reference solution, which you are given. The reference solution tells its drawings in words. The writer may solve the task another way, with another drawing or with none; any correct way is correct.
+5. Give your verdict:
+   - "correct": the final answer is right and nothing written or drawn is wrong;
+   - "error": something written or drawn is wrong;
+   - "unreadable": you cannot read enough of the writing to judge it.
+6. For "error", give the box around the first mistake, the writing or the drawing where the solution first goes wrong. First means first in the order of the solution's steps, wherever they stand on the sheet. Give the box in pixels of Image 1: x1, y1 is its top-left corner and x2, y2 its bottom-right, with x growing to the right and y downwards from the picture's top-left corner. For any other verdict, box is null.
+=== picture: the finished sheet
+Image 1: the sheet as the writer left it.
+=== text
+Image 1 is 1000 pixels wide and 600 pixels high.
+Task: У двух братьев вместе 20 марок. У старшего на 6 марок больше, чем у младшего. Сколько марок у младшего?
+Correct answer: 7
+Reference solution:
+схема: отрезок младшего и отрезок старшего, длиннее на 6, — вместе 20
+20 − 6 = 14 — это два отрезка младшего
+14 : 2 = 7
+Ответ: 7 марок
