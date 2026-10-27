@@ -19,15 +19,24 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"math"
+	"strconv"
 )
 
-// The names and the version a file declares in its "format" and "version" fields.
+// The names and the version a file declares in its "format" and "version" fields. Every format is
+// of Version, and a sheet plan may be of PlanParts too.
 const (
 	SampleFormat = "tutor-sample"
 	BankFormat   = "tutor-bank"
 	PlanFormat   = "tutor-sheet-plan"
 	Version      = 0
+	// PlanParts is the version of the sheet plan whose sheets are made of parts — text, drawings
+	// and notes at the side — rather than of lines alone (T56).
+	PlanParts = 1
 )
+
+// planVersions are the versions of the sheet plan this reader knows.
+var planVersions = []int{Version, PlanParts}
 
 // Sample is one sheet of handwriting with its markup.
 type Sample struct {
@@ -223,16 +232,56 @@ func ReadBank(r io.Reader) (*Bank, error) {
 }
 
 // ReadPlan reads a sheet plan from JSON and checks it on its own; CheckWithBank checks it against
-// the bank. An error from a plan that fails the check is a *FormatError.
+// the bank. It reads the version the plan declares first, and then the plan as strictly as any
+// file, in the shape of that version. An error from a plan that fails the check is a *FormatError.
 func ReadPlan(r io.Reader) (*Plan, error) {
-	var pl Plan
-	if err := readStrict(r, "plan", &pl); err != nil {
+	data, err := io.ReadAll(r)
+	if err != nil {
 		return nil, readError("plan", err)
+	}
+	pl := &Plan{}
+	switch format, v, ok := peekVersion(data); {
+	case ok && v == PlanParts:
+		var f plan1
+		if err := readStrict(bytes.NewReader(data), "plan", &f); err != nil {
+			return nil, readError("plan", err)
+		}
+		pl = f.plan()
+	case ok && v != Version:
+		// The shape of a version this reader does not know is not its to judge; what the file says
+		// it is, is.
+		p := &problems{what: "plan"}
+		if format != PlanFormat {
+			p.add("format", "is %q, not %q", format, PlanFormat)
+		}
+		p.add("version", "%d is not supported; this reader knows %s", v, versions(planVersions))
+		return nil, p.err()
+	default:
+		if err := readStrict(bytes.NewReader(data), "plan", pl); err != nil {
+			return nil, readError("plan", err)
+		}
 	}
 	if err := pl.Check(); err != nil {
 		return nil, err
 	}
-	return &pl, nil
+	return pl, nil
+}
+
+// peekVersion reads a file loosely, for the format and the version it declares alone. The version
+// is the number under the key "version", spelt exactly so, when its value is whole: 1.0 too, which
+// the strict reader of that version then names. With no such number, it reports false, and the
+// reader of version 0 names what is wrong with the file as it always has.
+func peekVersion(data []byte) (format string, version int, ok bool) {
+	var head map[string]json.RawMessage
+	if json.Unmarshal(data, &head) != nil {
+		return "", 0, false
+	}
+	_ = json.Unmarshal(head["format"], &format) // a format that is no string, the strict reader names
+	f, err := strconv.ParseFloat(string(head["version"]), 64)
+	if err != nil || f != math.Trunc(f) || math.Abs(f) > math.MaxInt32 {
+		return format, 0, false
+	}
+	return format, int(f), true
 }
 
 // Marshal writes a sample, a bank, a plan or a split as indented JSON, ending with a newline.

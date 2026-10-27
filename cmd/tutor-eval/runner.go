@@ -150,6 +150,9 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 // very file the split took.
 func partSheets(f sheetFlags, part string) ([]measure.Sheet, error) {
 	bank, plan, err := readPlan(f.bank, f.plan)
+	if err == nil {
+		err = linesOnly(f.plan, plan, "the measurement runs on")
+	}
 	if err != nil {
 		return nil, err
 	}
