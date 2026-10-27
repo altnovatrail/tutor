@@ -2,8 +2,11 @@ package report_test
 
 import (
 	"bytes"
+	"fmt"
 	"math"
 	"math/rand/v2"
+	"os"
+	"slices"
 	"strings"
 	"testing"
 
@@ -352,5 +355,162 @@ func TestFewAndUnasked(t *testing.T) {
 	}
 	if c := r.Cells[0]; c.TimeP50 != 1000 || !near(c.MeanUSD, 0.01) {
 		t.Errorf("form A's time and cost take the call not asked: %+v", c)
+	}
+}
+
+// The log of a stub run in the format of E2, written before the runner knew free writing: a log of
+// E2 tells no version of the prompt, no writer, layout or place of the first error. The report
+// reads it as it did, byte for byte, the Markdown and the CSV both (testdata/e2-stub.*).
+func TestLogOfE2(t *testing.T) {
+	data, err := os.ReadFile("testdata/e2-stub.jsonl")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, field := range []string{`"prompt_version"`, `"writer"`, `"layout"`, `"first_error_in"`} {
+		if bytes.Contains(data, []byte(field)) {
+			t.Fatalf("the log of E2 has the field %s, which the runner of E2 did not write", field)
+		}
+	}
+	l, err := measure.ReadLog(bytes.NewReader(data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if measure.PromptOf(l.Run) != judge.V1 {
+		t.Errorf("the log of E2 is of version %d of the prompt, want 1", measure.PromptOf(l.Run))
+	}
+	r, err := report.New(l)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var md, csv bytes.Buffer
+	if err := r.Markdown(&md, "e2-stub.jsonl"); err != nil {
+		t.Fatal(err)
+	}
+	if err := r.CSV(&csv); err != nil {
+		t.Fatal(err)
+	}
+	for name, got := range map[string][]byte{"testdata/e2-stub.md": md.Bytes(), "testdata/e2-stub.csv": csv.Bytes()} {
+		want, err := os.ReadFile(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(got, want) {
+			t.Errorf("the report of the log of E2 is not %s:\n%s", name, got)
+		}
+	}
+	if r.Free || strings.Contains(md.String(), "Free writing") {
+		t.Error("the report of a log of E2 tells free writing")
+	}
+}
+
+// free builds a log of free writing by one judge, once: a correct sheet with a number line, by the
+// author, and two sheets with a mistake, in a drawing and at the side, where form D boxes the first
+// error and form A says "correct".
+func free() *builder {
+	b := newLog(1, "opus")
+	b.log.Run.PromptVersion, b.log.Run.Part = judge.V2, "all"
+	b.sheet(1, sample.OutcomeCorrect, 0)
+	b.log.Sheets[0].Writer, b.log.Sheets[0].Task, b.log.Sheets[0].Layout = sample.WriterAuthor, "grasshopper", sample.LayoutNumberLine
+	for n, at := range map[int]struct {
+		task   string
+		layout sample.Layout
+		region sample.Region
+	}{2: {"stamps", sample.LayoutScheme, sample.RegionDrawing}, 3: {"album", sample.LayoutSide, sample.RegionSide}} {
+		b.sheet(n, sample.OutcomeError, 1)
+		sh := &b.log.Sheets[len(b.log.Sheets)-1]
+		sh.Writer, sh.Task, sh.Layout, sh.FirstErrorIn = sample.WriterSynthetic, at.task, at.layout, at.region
+	}
+	slices.SortFunc(b.log.Sheets, func(x, y measure.SheetRecord) int { return x.Sheet - y.Sheet })
+	b.answer(1, judge.FormA, "opus", 1, true)
+	b.answer(1, judge.FormB, "opus", 1, true)
+	b.same(1, "opus", 1)
+	for _, n := range []int{2, 3} {
+		for _, f := range judge.Forms {
+			b.answer(n, f, "opus", 1, f != judge.FormA)
+			if c := &b.log.Calls[len(b.log.Calls)-1]; f != judge.FormA {
+				c.Box = &judge.Box{X1: 1, Y1: 1, X2: 2, Y2: 2}
+			}
+		}
+	}
+	return b
+}
+
+// A sheet with a mistake whose place the log does not tell, marked off its plan, is of the group
+// "off the plan", and a layout the report does not know is a group of its own: no sheet drops out
+// of a breakdown. A run of lines over all the sheets is titled so.
+func TestFreeGroups(t *testing.T) {
+	b := free()
+	b.log.Sheets[2].FirstErrorIn, b.log.Sheets[2].Layout = "", "spiral"
+	r := b.report(t)
+	var firsts, layouts []string
+	for _, row := range r.ByFirstError {
+		firsts = append(firsts, row.Group)
+	}
+	for _, row := range r.ByLayout {
+		layouts = append(layouts, row.Group)
+	}
+	if want := []string{"in the drawing", "off the plan"}; !slices.Equal(firsts, want) {
+		t.Errorf("by the first error: %q, want %q", firsts, want)
+	}
+	if want := []string{"number line", "drawing", "spiral"}; !slices.Equal(layouts, want) {
+		t.Errorf("by layout: %q, want %q", layouts, want)
+	}
+	lines := newLog(1, "opus")
+	lines.log.Run.Part = "all"
+	lines.sheet(1, sample.OutcomeCorrect, 0)
+	lines.answer(1, judge.FormA, "opus", 1, true)
+	var md bytes.Buffer
+	if err := lines.report(t).Markdown(&md, "run.jsonl"); err != nil || !strings.HasPrefix(md.String(), "# The measurement of the writing process: all the sheets\n") {
+		t.Errorf("a run of lines over all the sheets is titled\n%s", md.String())
+	}
+}
+
+// The report of a run of free writing tells the boxes on the sheets with a mistake and D against A
+// on them, the answers by layout and by where the first error stands, and sheet by sheet.
+func TestFreeWriting(t *testing.T) {
+	r := free().report(t)
+	if !r.Free {
+		t.Fatal("a log of version 2 of the prompt is not reported as free writing")
+	}
+	if a, d := r.Boxes[0], r.Boxes[3]; a.Form != judge.FormA || a.Answers != 2 || a.Errors != 0 || d.Form != judge.FormD || d.Answers != 2 || d.Errors != 2 || d.Boxed != 2 || d.Hit != 2 {
+		t.Errorf("the boxes of forms A and D are %+v and %+v", a, d)
+	}
+	if c := r.OnMistakes[0]; c.Nonzero != 2 || !near(c.Sum, 2) {
+		t.Errorf("D against A on the sheets with a mistake is %+v, want +2 over 2 sheets", c)
+	}
+	var layouts []string
+	for _, row := range r.ByLayout {
+		layouts = append(layouts, fmt.Sprintf("%s %d %v %v", row.Group, row.Sheets, row.Right, row.Answers))
+	}
+	if want := []string{"number line 1 [1 1 0 1] [1 1 0 1]", "drawing 1 [0 1 1 1] [1 1 1 1]", "at the side 1 [0 1 1 1] [1 1 1 1]"}; !slices.Equal(layouts, want) {
+		t.Errorf("by layout: %q, want %q", layouts, want)
+	}
+	var firsts []string
+	for _, row := range r.ByFirstError {
+		firsts = append(firsts, row.Group)
+	}
+	if want := []string{"in the drawing", "at the side"}; !slices.Equal(firsts, want) {
+		t.Errorf("by the first error: %q, want %q", firsts, want)
+	}
+	if len(r.BySheet) != 3 || r.BySheet[0].Sheet.Sheet != 1 || r.BySheet[0].Answers != [4]int{1, 1, 0, 1} {
+		t.Errorf("by sheet: %+v", r.BySheet)
+	}
+	var md bytes.Buffer
+	if err := r.Markdown(&md, "free.jsonl"); err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{
+		"# The measurement of free writing: all the sheets",
+		"of the prompt abababababab, version 2.",
+		"| opus | D | 2 | 2 | 2 | 2 |",
+		"| opus | +2.00 | 2 | 0.25 | 1 |",
+		"| number line | 1 | opus | 1 of 1 | 1 of 1 | — | 1 of 1 |",
+		"| in the drawing | 1 | opus | 0 of 1 | 1 of 1 | 1 of 1 | 1 of 1 |",
+		"| 1 | author | grasshopper | correct | number line | — | opus | 1 of 1 | 1 of 1 | — | 1 of 1 |",
+		"| 2 | synthetic | stamps | error | drawing | part 2, in the drawing | opus | 0 of 1 | 1 of 1 | 1 of 1 | 1 of 1 |",
+	} {
+		if !strings.Contains(md.String(), want) {
+			t.Errorf("the report lacks %q:\n%s", want, md.String())
+		}
 	}
 }

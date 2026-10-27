@@ -113,22 +113,12 @@ const (
 	layoutSide       = "запись сбоку"
 )
 
-// layoutOf names the layout of a sheet by its parts, or "" when none shows one.
+// layoutOf names the layout of a sheet by its parts (sample.PlanSheet.Layout), or "" when none
+// shows one.
 func layoutOf(sh sample.PlanSheet) string {
-	var layout string
-	for _, p := range sh.Parts {
-		switch f := p.Figure; {
-		case f.NumberLine != nil:
-			return layoutNumberLine
-		case f.Row != nil:
-			return layoutRow
-		case f.Scheme != nil:
-			return layoutScheme
-		case f.Column != nil:
-			layout = layoutSide
-		}
-	}
-	return layout
+	return map[sample.Layout]string{
+		sample.LayoutNumberLine: layoutNumberLine, sample.LayoutRow: layoutRow, sample.LayoutScheme: layoutScheme, sample.LayoutSide: layoutSide,
+	}[sh.Layout()]
 }
 
 // group is the layout without what it draws: the composition by layouts joins the two drawings.
@@ -191,16 +181,10 @@ func authorTable(t *testing.T, author *sample.Plan, layouts map[string]string) s
 	return strings.TrimSuffix(b.String(), "\n")
 }
 
-// partPlace says where part n of a sheet stands, in the words of the test. The part is one of the
-// sheet's: tutor-eval check has passed the plan before.
+// partPlace says where part n of a sheet stands (sample.PlanSheet.Region), in the words of the
+// test. The part is one of the sheet's: tutor-eval check has passed the plan before.
 func partPlace(sh sample.PlanSheet, n int) string {
-	switch p := sh.Parts[n-1]; {
-	case p.Kind == sample.PartDrawing:
-		return "in the drawing"
-	case p.Place == sample.PlaceRight:
-		return "at the side"
-	}
-	return "in the text"
+	return map[sample.Region]string{sample.RegionDrawing: "in the drawing", sample.RegionSide: "at the side", sample.RegionText: "in the text"}[sh.Region(n)]
 }
 
 // whereRu says the same as partPlace in the words of section 3.4: «в рисунке», «в тексте»,

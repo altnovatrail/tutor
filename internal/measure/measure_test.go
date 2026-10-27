@@ -6,7 +6,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
+	"os"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -51,7 +54,7 @@ func near(a, b float64) bool { return math.Abs(a-b) < 1e-9 }
 // form B, as the table of the estimate there says.
 func TestEstimate(t *testing.T) {
 	all := sheets(t)
-	r, err := measure.New("test", all[:1], []measure.Judge{judgeNamed("opus-high")}, 1)
+	r, err := measure.New("test", all[:1], []measure.Judge{judgeNamed("opus-high")}, 1, judge.V1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -60,14 +63,14 @@ func TestEstimate(t *testing.T) {
 	}
 	// All seven sheets by the three judges, twice: A and B of every sheet, C and D of the two with
 	// frames; the D of the other five is their B.
-	r, err = measure.New("test", all, measure.Judges(), 2)
+	r, err = measure.New("test", all, measure.Judges(), 2, judge.V1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if e := r.Estimate(); e.Calls != 2*3*(5*2+2*4) {
 		t.Errorf("the run makes %d calls, want %d", e.Calls, 2*3*(5*2+2*4))
 	}
-	if _, err := measure.New("test", all, measure.Judges(), 0); err == nil {
+	if _, err := measure.New("test", all, measure.Judges(), 0, judge.V1); err == nil {
 		t.Error("a run of no repeats is planned")
 	}
 }
@@ -94,7 +97,7 @@ func clock() time.Time { return time.Date(2026, 10, 26, 12, 0, 0, 0, time.UTC) }
 // frames points at its B, and the run costs what the estimate said.
 func TestRunOnTheStub(t *testing.T) {
 	all := sheets(t)
-	r, err := measure.New("test", all, measure.Judges(), 1)
+	r, err := measure.New("test", all, measure.Judges(), 1, judge.V1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -156,7 +159,7 @@ func TestRunOnTheStub(t *testing.T) {
 // cap, and says so.
 func TestCap(t *testing.T) {
 	opus := judgeNamed("opus-high")
-	r, err := measure.New("test", sheets(t), []measure.Judge{opus}, 1)
+	r, err := measure.New("test", sheets(t), []measure.Judge{opus}, 1, judge.V1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -189,7 +192,7 @@ func TestCap(t *testing.T) {
 
 // A run whose context ends stops before the next call.
 func TestInterrupted(t *testing.T) {
-	r, err := measure.New("test", sheets(t), measure.Judges(), 1)
+	r, err := measure.New("test", sheets(t), measure.Judges(), 1, judge.V1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -205,7 +208,7 @@ func TestInterrupted(t *testing.T) {
 // known counts at its worst. An answer off the schema is logged with the reader's error.
 func TestFailures(t *testing.T) {
 	opus := judgeNamed("opus-high")
-	r, err := measure.New("test", sheets(t)[:1], []measure.Judge{opus}, 1)
+	r, err := measure.New("test", sheets(t)[:1], []measure.Judge{opus}, 1, judge.V1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -246,7 +249,7 @@ func TestFailures(t *testing.T) {
 func TestStubWithoutVerdict(t *testing.T) {
 	s := synth.Sample(sample.ScenarioNearlyEmpty)
 	bank := synth.Bank()
-	r, err := measure.New("test", []measure.Sheet{{Number: 1, File: "x.json", Sample: s, Task: &bank.Tasks[0]}}, []measure.Judge{judgeNamed("opus-high")}, 1)
+	r, err := measure.New("test", []measure.Sheet{{Number: 1, File: "x.json", Sample: s, Task: &bank.Tasks[0]}}, []measure.Judge{judgeNamed("opus-high")}, 1, judge.V1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -274,7 +277,7 @@ func (f *failing) Write(p []byte) (int, error) {
 
 // A log that cannot be written stops the run: an answer it cannot keep is lost.
 func TestLogFails(t *testing.T) {
-	r, err := measure.New("test", sheets(t), measure.Judges(), 1)
+	r, err := measure.New("test", sheets(t), measure.Judges(), 1, judge.V1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -287,7 +290,7 @@ func TestLogFails(t *testing.T) {
 // A run's log reads back as it was written, and a log whose last line was cut off half written
 // reads without that line; a log out of order, of an unknown kind or empty does not.
 func TestReadLog(t *testing.T) {
-	r, err := measure.New("test", sheets(t), measure.Judges(), 1)
+	r, err := measure.New("test", sheets(t), measure.Judges(), 1, judge.V1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -327,5 +330,104 @@ func TestReadLog(t *testing.T) {
 	cut, err := measure.ReadLog(strings.NewReader(lines[0] + lines[1] + lines[2][:10]))
 	if err != nil || len(cut.Sheets) != 1 || cut.End != nil {
 		t.Errorf("a log cut off in its third line reads as %+v, %v", cut, err)
+	}
+}
+
+// freeSheets are sheets of the plan of free writing, drawn with seed 1, by their numbers, with
+// their sheets of the plan.
+func freeSheets(t *testing.T, numbers ...int) []measure.Sheet {
+	t.Helper()
+	open := func(path string) *os.File {
+		f, err := os.Open(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = f.Close() })
+		return f
+	}
+	plan, err := sample.ReadPlan(open("../../eval/free-sheets.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	bank, err := sample.ReadBank(open("../../eval/free-bank.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var out []measure.Sheet
+	for _, n := range numbers {
+		sh := &plan.Sheets[n-1]
+		s := synth.Sheet(sh, 1)
+		i := slices.IndexFunc(bank.Tasks, func(task sample.Task) bool { return task.ID == s.Task })
+		out = append(out, measure.Sheet{Number: n, File: fmt.Sprintf("%02d.json", n), Sample: s, Task: &bank.Tasks[i], Plan: sh})
+	}
+	return out
+}
+
+// A run of free writing asks in version 2 of the prompt: its estimate is of version 2, and its log
+// tells the version, and of each sheet who wrote it, its layout and where its first error stands.
+// The stub's box on a sheet with a mistake hits the part of the first error.
+func TestFreeWritingRun(t *testing.T) {
+	// Sheet 1, grasshopper, correct; sheet 2, album, its first error in part 2, at the side;
+	// sheet 3, houses, erasure-fixed, with a frame (docs/free-sheets.md).
+	free := freeSheets(t, 1, 2, 3)
+	opus := judgeNamed("opus-high")
+	r, err := measure.New("all", free[:1], []measure.Judge{opus}, 1, judge.V2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Opus 5.5: 2 050 tokens in and 50 out for form A, and 360 more in with the journal.
+	if e := r.Estimate(); e.Calls != 2 || !near(e.USD, (2050*4+50*20)/1e6+(2410*4+50*20)/1e6) {
+		t.Errorf("the estimate of one sheet without frames by Opus in version 2 is %+v", e)
+	}
+	r, err = measure.New("all", free, []measure.Judge{opus}, 1, judge.V2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var log bytes.Buffer
+	if _, err := r.Do(context.Background(), measure.Stub, 10, &log, clock); err != nil {
+		t.Fatal(err)
+	}
+	l, err := measure.ReadLog(bytes.NewReader(log.Bytes()))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if l.Run.PromptVersion != judge.V2 || measure.PromptOf(l.Run) != judge.V2 || l.Run.Prompt != judge.Fingerprint(judge.V2) || l.Run.Part != "all" {
+		t.Errorf("the run is %+v, want version 2 of the prompt and its fingerprint", l.Run)
+	}
+	want := []struct {
+		layout sample.Layout
+		first  int
+		in     sample.Region
+		frames int
+	}{{sample.LayoutNumberLine, 0, "", 0}, {sample.LayoutSide, 2, sample.RegionSide, 0}, {sample.LayoutRow, 0, "", 1}}
+	for i, sh := range l.Sheets {
+		if w := want[i]; sh.Writer != sample.WriterSynthetic || sh.Layout != w.layout || sh.FirstError != w.first || sh.FirstErrorIn != w.in || sh.Frames != w.frames {
+			t.Errorf("sheet %d is %+v, want %+v", sh.Sheet, sh, w)
+		}
+	}
+	for _, c := range l.Calls {
+		if c.Sheet == 2 && c.SameAs == "" && (c.Verdict != judge.Error || c.Hit != 2) {
+			t.Errorf("the stub on sheet 2 in form %s says %q and hits part %d, want error on part 2", c.Form, c.Verdict, c.Hit)
+		}
+	}
+	if _, err := measure.New("all", free, []measure.Judge{opus}, 1, 3); err == nil {
+		t.Error("a run is planned in a version 3 of the prompt")
+	}
+
+	// A sheet marked off its plan, its first error on another part, has its layout, and no place
+	// of the first error: the plan does not tell it.
+	off := freeSheets(t, 2)
+	first := 4
+	off[0].Sample.Expected.FirstError = &first
+	r, err = measure.New("all", off, []measure.Judge{opus}, 1, judge.V2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	log.Reset()
+	if _, err := r.Do(context.Background(), measure.Stub, 10, &log, clock); err != nil {
+		t.Fatal(err)
+	}
+	if l, err = measure.ReadLog(bytes.NewReader(log.Bytes())); err != nil || l.Sheets[0].Layout != sample.LayoutSide || l.Sheets[0].FirstErrorIn != "" || l.Sheets[0].FirstError != 4 {
+		t.Errorf("a sheet marked off its plan is %+v, %v", l.Sheets, err)
 	}
 }

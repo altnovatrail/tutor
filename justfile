@@ -73,6 +73,13 @@ measure *args:
     export TUTOR_ANTHROPIC_API_KEY
     exec go run ./cmd/tutor-eval run {{ args }}
 
+# This recipe is measure on the 40 sheets that code draws for free writing, in synthetic/free, out
+# of git, and it asks for the key as measure does; the run logs in synthetic/runs. Its arguments go
+# to tutor-eval run: -part dev, -part test or -part all, and the rest.
+# Run the measurement of free writing on the sheets of code, after its estimate and your yes (T65 in RUN.md).
+free *args:
+    just measure -dir synthetic/free -bank eval/free-bank.json -plan eval/free-sheets.json {{ args }}
+
 # Run lint, the linters and the formatting check, under the name go.yml runs.
 ci-lint: lint
 

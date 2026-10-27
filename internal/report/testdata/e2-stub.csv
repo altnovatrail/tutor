@@ -1,0 +1,13 @@
+judge,form,answers,right,false_correct,false_alarms,unreadable,failed,fixed_alarms,fixed_answers,broken_right,broken_answers,repeats_disagree,repeated_sheets,time_p50_ms,time_p95_ms,first_token_p50_ms,first_token_p95_ms,cost_usd
+opus-high,A,14,14,0,0,0,0,0,2,2,2,0,7,0,0,0,0,0.008400
+opus-high,B,14,14,0,0,0,0,0,2,2,2,0,7,0,0,0,0,0.010000
+opus-high,C,4,4,0,0,0,0,0,2,2,2,0,2,0,0,0,0,0.013320
+opus-high,D,14,14,0,0,0,0,0,2,2,2,0,7,0,0,0,0,0.014920
+haiku-low,A,14,14,0,0,0,0,0,2,2,2,0,7,0,0,0,0,0.000335
+haiku-low,B,14,14,0,0,0,0,0,2,2,2,0,7,0,0,0,0,0.000375
+haiku-low,C,4,4,0,0,0,0,0,2,2,2,0,2,0,0,0,0,0.000458
+haiku-low,D,14,14,0,0,0,0,0,2,2,2,0,7,0,0,0,0,0.000498
+haiku-low-no-thinking,A,14,14,0,0,0,0,0,2,2,2,0,7,0,0,0,0,0.000210
+haiku-low-no-thinking,B,14,14,0,0,0,0,0,2,2,2,0,7,0,0,0,0,0.000250
+haiku-low-no-thinking,C,4,4,0,0,0,0,0,2,2,2,0,2,0,0,0,0,0.000333
+haiku-low-no-thinking,D,14,14,0,0,0,0,0,2,2,2,0,7,0,0,0,0,0.000373

@@ -93,16 +93,6 @@ func readPlan(bankPath, planPath string) (*sample.Bank, *sample.Plan, error) {
 	return bank, plan, nil
 }
 
-// linesOnly refuses a plan of parts for a command that does not know parts yet: before plans of
-// version 1 came, such a command took none, as their version was unknown to the reader. what says
-// what the command does with sheets.
-func linesOnly(planPath string, plan *sample.Plan, what string) error {
-	if plan.HasParts() {
-		return fmt.Errorf("%s is a plan of version %d, with parts, and %s sheets of plans of version %d alone", planPath, sample.PlanParts, what, sample.Version)
-	}
-	return nil
-}
-
 // runSheets prints the summary of the sheets the record mode saved, against the plan: what is
 // recorded, what passes, by task, scenario and outcome, and nothing of the handwriting (R24). With
 // the split made, it says so.

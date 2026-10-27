@@ -1,7 +1,8 @@
 // Package measure runs the measurement of the writing process (R24): every sheet of a part in every
 // form it has, by every judge, repeated. Before the run it counts the calls and estimates what
 // they cost; during it, it starts no call whose worst case could take the run past its cap; and it
-// logs every answer, a JSON object a line, outside git (R05).
+// logs every answer, a JSON object a line, outside git (R05). A run asks in one version of the
+// judge's prompt: version 1 on the sheets of lines of E2, version 2 on free writing (T65).
 package measure
 
 import (
@@ -31,13 +32,17 @@ const (
 	callTimeout = 10 * time.Minute
 )
 
-// The input tokens a call is expected to take, for the estimate: about 1 850 for form A, about 400
-// more with the journal and about 820 more for each frame (docs/architecture.md, 3.1, «Смета»).
-const (
-	inputA       = 1850
-	inputJournal = 400
-	inputFrame   = 820
-)
+// The input tokens a call is expected to take, for the estimate, by the version of the prompt. Of
+// version 1: about 1 850 for form A, about 400 more with the journal and about 820 more for each
+// frame (docs/architecture.md, 3.1, «Смета»). Of version 2, by the measure of T63 from the test of
+// E2 — 1.3 tokens a word, number or sign of the instructions and 1.575 of the journal: its
+// instructions are about 150 of them longer, and its journal block and journal of parts about 130
+// and 120 of them, so about 2 050 for form A and 360 more with the journal (architecture 3.1,
+// «Раннер»). A frame is the same picture in both.
+var inputs = map[judge.Version]struct{ a, journal, frame int }{
+	judge.V1: {a: 1850, journal: 400, frame: 820},
+	judge.V2: {a: 2050, journal: 360, frame: 820},
+}
 
 // Judge is a configuration of the judge (R24): a Claude model at an effort level, thinking or not,
 // and the output tokens a call is expected to take, for the estimate (architecture 3.1).
@@ -72,25 +77,29 @@ func (j Judge) cost(in, out int64) float64 {
 // worst is the most a call of the judge can cost.
 func (j Judge) worst() float64 { return j.cost(inputBudget, MaxOutputTokens) }
 
-// expected is the input tokens a call of a form is expected to take, with the frames it shows.
-func expected(f judge.Form, frames int) int64 {
-	n := inputA
+// expected is the input tokens a call of a form is expected to take in a version of the prompt,
+// with the frames it shows.
+func expected(v judge.Version, f judge.Form, frames int) int64 {
+	in := inputs[v]
+	n := in.a
 	if f.Journal() {
-		n += inputJournal
+		n += in.journal
 	}
 	if f.Frames() {
-		n += inputFrame * frames
+		n += in.frame * frames
 	}
 	return int64(n)
 }
 
 // Sheet is a sheet of the part: its number in the plan and its file, its sample, which passes its
-// check, and its task.
+// check, its task, and its sheet of the plan, which tells the layout of free writing and where its
+// first error stands; a sheet without one tells neither.
 type Sheet struct {
 	Number int
 	File   string
 	Sample *sample.Sample
 	Task   *sample.Task
+	Plan   *sample.PlanSheet
 }
 
 // Call is one call of a run: a sheet by its number, a form, a judge by its name and the repeat,
@@ -102,10 +111,12 @@ type Call struct {
 	Repeat int        `json:"repeat"`
 }
 
-// Question is what a call asks: the judge, the form, the sheet's sample and the request.
+// Question is what a call asks: the judge, the form and the version of the prompt, the sheet's
+// sample and the request.
 type Question struct {
 	Judge   Judge
 	Form    judge.Form
+	Version judge.Version
 	Sample  *sample.Sample
 	Request provider.Request
 }
@@ -155,7 +166,7 @@ func Stub(_ context.Context, q Question) (provider.Response, error) {
 	return provider.Response{
 		JSON:         string(data),
 		Model:        q.Judge.Model.ID,
-		InputTokens:  expected(q.Form, frames),
+		InputTokens:  expected(q.Version, q.Form, frames),
 		OutputTokens: int64(q.Judge.Output),
 	}, nil
 }
@@ -193,17 +204,19 @@ type Run struct {
 	steps   []step
 }
 
-// New plans a run of the part's sheets by the judges, repeated: it draws what the forms show of
-// every sheet and puts the calls in order, repeat by repeat, so that a run cut short has the same
-// repeats of every sheet. Of each sheet, by each judge, it asks forms A and B and, with frames, C
-// and D. A sheet without frames has no C, and its D is its B (architecture 3.1): the run does not
-// ask it again, and the log says so.
-func New(part string, sheets []Sheet, judges []Judge, repeats int) (*Run, error) {
+// New plans a run of the part's sheets by the judges in a version of the prompt, repeated: it
+// draws what the forms show of every sheet and puts the calls in order, repeat by repeat, so that
+// a run cut short has the same repeats of every sheet. Of each sheet, by each judge, it asks forms
+// A and B and, with frames, C and D. A sheet without frames has no C, and its D is its B
+// (architecture 3.1): the run does not ask it again, and the log says so.
+func New(part string, sheets []Sheet, judges []Judge, repeats int, v judge.Version) (*Run, error) {
 	if repeats < 1 {
 		return nil, fmt.Errorf("measure: %d repeats", repeats)
 	}
-	// The prompt of E2: which version a plan of free writing takes is T65's.
-	r := &Run{version: judge.V1, part: part, judges: judges, repeats: repeats}
+	if _, ok := inputs[v]; !ok {
+		return nil, fmt.Errorf("measure: no version %d of the prompt", v)
+	}
+	r := &Run{version: v, part: part, judges: judges, repeats: repeats}
 	for _, sh := range sheets {
 		shown, err := judge.Prepare(sh.Sample, r.version)
 		if err != nil {
@@ -251,7 +264,7 @@ func (r *Run) Estimate() Estimate {
 			continue
 		}
 		e.Calls++
-		e.USD += st.judge.cost(expected(st.Form, len(st.sheet.shown.Frames)), int64(st.judge.Output))
+		e.USD += st.judge.cost(expected(r.version, st.Form, len(st.sheet.shown.Frames)), int64(st.judge.Output))
 		e.WorstUSD += st.judge.worst()
 	}
 	return e
@@ -270,16 +283,18 @@ type Result struct {
 // form B stands for has same_as and nothing else of a call's own (New).
 type (
 	// RunRecord tells the run: its part, judges and repeats, its cap and estimate, and the
-	// fingerprint of its prompt (judge.Fingerprint).
+	// fingerprint and the version of its prompt (judge.Fingerprint). The logs of E2 tell no
+	// version: their prompt is version 1 (PromptOf).
 	RunRecord struct {
-		Kind     string        `json:"kind"`
-		Time     time.Time     `json:"time"`
-		Part     string        `json:"part"`
-		Judges   []JudgeRecord `json:"judges"`
-		Repeats  int           `json:"repeats"`
-		MaxUSD   float64       `json:"max_usd"`
-		Estimate Estimate      `json:"estimate"`
-		Prompt   string        `json:"prompt"`
+		Kind          string        `json:"kind"`
+		Time          time.Time     `json:"time"`
+		Part          string        `json:"part"`
+		Judges        []JudgeRecord `json:"judges"`
+		Repeats       int           `json:"repeats"`
+		MaxUSD        float64       `json:"max_usd"`
+		Estimate      Estimate      `json:"estimate"`
+		Prompt        string        `json:"prompt"`
+		PromptVersion judge.Version `json:"prompt_version,omitempty"`
 	}
 	// JudgeRecord is a judge as the run's record tells it: its model and prices.
 	JudgeRecord struct {
@@ -290,19 +305,25 @@ type (
 		InputUSD   float64 `json:"input_usd_per_mtok"`
 		OutputUSD  float64 `json:"output_usd_per_mtok"`
 	}
-	// SheetRecord tells a sheet: its number and file, its task and scenario, the outcome and the
-	// first error its markup says, its frames and the agreement of the journal's lines with its
-	// markup.
+	// SheetRecord tells a sheet: its number and file, who wrote it, its task and scenario, the
+	// outcome and the first error its markup says, its frames and the agreement of the journal's
+	// lines with its markup. Of free writing, lines tells the parts of the journal against those of
+	// the markup, under the name the logs of E2 have, and the record tells the layout of the sheet
+	// and where its first error stands, unless the sheet is marked off its plan. The logs of E2 tell
+	// none of the three.
 	SheetRecord struct {
-		Kind       string            `json:"kind"`
-		Sheet      int               `json:"sheet"`
-		File       string            `json:"file"`
-		Task       string            `json:"task"`
-		Scenario   sample.Scenario   `json:"scenario"`
-		Outcome    sample.Outcome    `json:"outcome"`
-		FirstError int               `json:"first_error,omitempty"`
-		Frames     int               `json:"frames"`
-		Lines      journal.Agreement `json:"lines"`
+		Kind         string            `json:"kind"`
+		Sheet        int               `json:"sheet"`
+		File         string            `json:"file"`
+		Writer       sample.Writer     `json:"writer,omitempty"`
+		Task         string            `json:"task"`
+		Scenario     sample.Scenario   `json:"scenario"`
+		Outcome      sample.Outcome    `json:"outcome"`
+		FirstError   int               `json:"first_error,omitempty"`
+		Frames       int               `json:"frames"`
+		Lines        journal.Agreement `json:"lines"`
+		Layout       sample.Layout     `json:"layout,omitempty"`
+		FirstErrorIn sample.Region     `json:"first_error_in,omitempty"`
 	}
 	// CallRecord tells a call: the answer as the model gave it, its verdict and box, the line of
 	// the markup the box hits, the failure if it failed, and what it took. A call whose request
@@ -333,6 +354,23 @@ type (
 		Result
 	}
 )
+
+// byPlan reports whether a sample's markup has the parts and the first error of its sheet of the
+// plan, so that the plan tells where its first error stands. A sheet the board saved marked off
+// the plan may not (sheets.Differences): where its first error stands, the log does not say.
+func byPlan(s *sample.Sample, sh *sample.PlanSheet) bool {
+	pe, se := sh.Expected.FirstError, s.Expected.FirstError
+	return len(s.Lines) == len(sh.Parts) && pe != nil && se != nil && *pe == *se
+}
+
+// PromptOf is the version of the prompt a run asked in: that its record tells, or version 1 for a
+// log of E2, which tells none.
+func PromptOf(r RunRecord) judge.Version {
+	if r.PromptVersion == 0 {
+		return judge.V1
+	}
+	return r.PromptVersion
+}
 
 // Log is a run's log read back: the run, its sheets, its calls in the order they were made, and how
 // the run ended, or nil when the log stops before the end: a run that broke off.
@@ -409,12 +447,20 @@ func (r *Run) Do(ctx context.Context, ask Asker, maxUSD float64, log io.Writer, 
 	for _, j := range r.judges {
 		judges = append(judges, JudgeRecord{Name: j.Name, Model: j.Model.ID, Effort: j.Effort, NoThinking: j.NoThinking, InputUSD: j.Model.Input, OutputUSD: j.Model.Output})
 	}
-	w.put(RunRecord{Kind: "run", Time: now().UTC(), Part: r.part, Judges: judges, Repeats: r.repeats, MaxUSD: maxUSD, Estimate: r.Estimate(), Prompt: judge.Fingerprint(r.version)})
+	w.put(RunRecord{Kind: "run", Time: now().UTC(), Part: r.part, Judges: judges, Repeats: r.repeats, MaxUSD: maxUSD, Estimate: r.Estimate(),
+		Prompt: judge.Fingerprint(r.version), PromptVersion: r.version})
 	for _, sh := range r.sheets {
-		rec := SheetRecord{Kind: "sheet", Sheet: sh.Number, File: sh.File, Task: sh.Sample.Task, Scenario: sh.Sample.Scenario,
+		rec := SheetRecord{Kind: "sheet", Sheet: sh.Number, File: sh.File, Writer: sh.Sample.Writer, Task: sh.Sample.Task, Scenario: sh.Sample.Scenario,
 			Outcome: sh.Sample.Expected.Outcome, Frames: len(sh.shown.Frames), Lines: journal.Agree(sh.Sample, sh.shown.Journal)}
-		if fe := sh.Sample.Expected.FirstError; fe != nil {
+		fe := sh.Sample.Expected.FirstError
+		if fe != nil {
 			rec.FirstError = *fe
+		}
+		if sh.Plan != nil {
+			rec.Layout = sh.Plan.Layout()
+			if fe != nil && byPlan(sh.Sample, sh.Plan) {
+				rec.FirstErrorIn = sh.Plan.Region(*fe)
+			}
 		}
 		w.put(rec)
 	}
@@ -459,7 +505,7 @@ func (r *Run) call(ctx context.Context, ask Asker, st step) (rec CallRecord, ask
 	ctx, cancel := context.WithTimeout(ctx, callTimeout)
 	defer cancel()
 	start := time.Now()
-	resp, err := ask(ctx, Question{Judge: st.judge, Form: st.Form, Sample: st.sheet.Sample, Request: req})
+	resp, err := ask(ctx, Question{Judge: st.judge, Form: st.Form, Version: r.version, Sample: st.sheet.Sample, Request: req})
 	rec.LatencyMs = time.Since(start).Milliseconds()
 	rec.ModelID, rec.InputTokens, rec.OutputTokens, rec.ThinkingTokens = resp.Model, resp.InputTokens, resp.OutputTokens, resp.ThinkingTokens
 	rec.FirstTokenMs, rec.Retries = resp.FirstToken.Milliseconds(), resp.Retries

@@ -124,7 +124,7 @@ const freeBase = `You check a handwritten solution to a maths task. The writer h
    - "correct": the final answer is right and nothing written or drawn is wrong;
    - "error": something written or drawn is wrong;
    - "unreadable": you cannot read enough of the writing to judge it.
-6. For "error", give the box around the first mistake, the writing or the drawing where the solution first goes wrong. First means first in the order of the solution's steps, wherever they stand on the sheet. Give the box in pixels of Image 1: x1, y1 is its top-left corner and x2, y2 its bottom-right, with x growing to the right and y downwards from the picture's top-left corner. For any other verdict, box is null.`
+6. For "error", give the box around the first mistake: the writing or the drawing that is wrong. If more than one thing is wrong, box the one that comes first in the order of the solution's steps, wherever it stands on the sheet. A right step before the mistake is not the mistake: box the wrong writing or drawing itself, tightly, without the writing above or below it. Give the box in pixels of Image 1: x1, y1 is its top-left corner and x2, y2 its bottom-right, with x growing to the right and y downwards from the picture's top-left corner. For any other verdict, box is null.`
 
 // The blocks of version 2. The journal of parts says itself what its parts are and how they are
 // numbered (journal.OfParts); its block says what of it is not on Image 1 and what its places mean.
