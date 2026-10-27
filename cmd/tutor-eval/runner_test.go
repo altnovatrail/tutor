@@ -42,7 +42,7 @@ func TestRunOnTheStub(t *testing.T) {
 		!strings.Contains(out, "The stub answers them by the markup and asks no one") || !strings.Contains(out, "Type yes to start the run: 42 calls made, ") {
 		t.Errorf("the run says\n%s", out)
 	}
-	log := filepath.Join(filepath.Dir(where[1]), "runs", "20261026-123000-000-test.jsonl")
+	log := filepath.Join(filepath.Dir(where[1]), "runs", "20261026-123000-000-judge-sheets-test.jsonl")
 	if !strings.HasSuffix(out, "spent. The log: "+log+"\n") {
 		t.Errorf("the run ends\n%s\nwant the log at %s", out, log)
 	}
@@ -178,6 +178,7 @@ func TestRunRefuses(t *testing.T) {
 	}{
 		{[]string{"-stub"}, exitUsage, `-part is ""`},
 		{[]string{"-part", "every", "-stub"}, exitUsage, `-part is "every": give dev, test or all`},
+		{[]string{"-part", "test", "-stub", "-kind", "reading"}, exitUsage, `-kind is "reading": give judge`},
 		{[]string{"-part", "test", "-stub", "-repeats", "0"}, exitUsage, "-repeats must be 1 or more"},
 		{[]string{"-part", "test", "-stub", "-max-usd", "0"}, exitUsage, "-max-usd above 0"},
 		{[]string{"-part", "test"}, exitUsage, "TUTOR_ANTHROPIC_API_KEY is not set"},

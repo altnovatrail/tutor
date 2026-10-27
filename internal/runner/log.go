@@ -1,0 +1,71 @@
+package runner
+
+import (
+	"bufio"
+	"bytes"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"io"
+	"slices"
+)
+
+// ReadLog reads a run's log back: every line a record of its kind, the run's first and the end,
+// if there is one, last. A last line cut off half written is a run that broke off as it wrote it,
+// and the log is read without it. The kind of the run reads its records with read, which is given
+// every record but the end, by its kind, in order; ReadLog reads the end itself and gives it, or
+// nil when the log stops before the end: a run that broke off.
+func ReadLog(r io.Reader, read func(kind string, line []byte) error) (*End, error) {
+	sc := bufio.NewScanner(r)
+	sc.Buffer(make([]byte, 0, 64*1024), 16*1024*1024)
+	var lines [][]byte
+	for sc.Scan() {
+		lines = append(lines, slices.Clone(sc.Bytes()))
+	}
+	if err := sc.Err(); err != nil {
+		return nil, err
+	}
+	if len(lines) == 0 {
+		return nil, errors.New("the log is empty")
+	}
+	if n := len(lines); n > 1 && !json.Valid(lines[n-1]) {
+		lines = lines[:n-1]
+	}
+	var end *End
+	for i, line := range lines {
+		n := i + 1
+		var kind struct{ Kind string }
+		if err := json.Unmarshal(line, &kind); err != nil {
+			return nil, fmt.Errorf("line %d of the log is not a record: %w", n, err)
+		}
+		if (n == 1) != (kind.Kind == "run") || end != nil {
+			return nil, fmt.Errorf("line %d of the log is a %q record out of its place", n, kind.Kind)
+		}
+		var err error
+		if kind.Kind == "end" {
+			end = &End{}
+			err = json.Unmarshal(line, end)
+		} else {
+			err = read(kind.Kind, line)
+		}
+		if err != nil {
+			return nil, fmt.Errorf("line %d of the log: %w", n, err)
+		}
+	}
+	return end, nil
+}
+
+// CallKind is the kind of call a run's log is of, as the record of the run, its first line, tells
+// it: "" for a log that tells none, which is the judge's, as the logs of E2 and T66 are. A first
+// line that is no record tells none either, and the reader of the judge's log says what is wrong
+// with it.
+func CallKind(log []byte) string {
+	first, _, _ := bytes.Cut(log, []byte("\n"))
+	var run struct {
+		CallKind string `json:"call_kind"`
+	}
+	if json.Unmarshal(first, &run) != nil {
+		return ""
+	}
+	return run.CallKind
+}

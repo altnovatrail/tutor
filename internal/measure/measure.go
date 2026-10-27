@@ -1,36 +1,27 @@
-// Package measure runs the measurement of the writing process (R24): every sheet of a part in every
-// form it has, by every judge, repeated. Before the run it counts the calls and estimates what
-// they cost; during it, it starts no call whose worst case could take the run past its cap; and it
-// logs every answer, a JSON object a line, outside git (R05). A run asks in one version of the
-// judge's prompt: version 1 on the sheets of lines of E2, version 2 on free writing (T65).
+// Package measure is the judge's kind of call on the runner (T67): the measurement of the writing
+// process (R24). Its run asks every sheet of a part in every form it has, by every judge,
+// repeated, in one version of the judge's prompt: version 1 on the sheets of lines of E2, version
+// 2 on free writing (T65). The package plans the run, says how each call is asked and logged, and
+// reads the run's log back; the runner estimates the run, holds its cap, asks the calls and writes
+// the log (internal/runner). The log is as E2 and T66 wrote it.
 package measure
 
 import (
-	"bufio"
-	"context"
 	"encoding/json"
 	"fmt"
 	"io"
-	"slices"
 	"time"
 
 	"github.com/altnovatrail/tutor/internal/journal"
 	"github.com/altnovatrail/tutor/internal/judge"
+	"github.com/altnovatrail/tutor/internal/runner"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/provider"
-	"github.com/altnovatrail/tutor/provider/claude"
 )
 
-const (
-	// MaxOutputTokens is the most a call may write, thinking included: the same for every judge,
-	// as on the board, so that they are compared under one limit (R19).
-	MaxOutputTokens = 16000
-	// inputBudget is a generous count of a call's input tokens, for its worst case: a request with
-	// three pictures of the sheet, the instructions and the journal comes to about 4 000.
-	inputBudget = 8000
-	// callTimeout is how long one call may take, as on the board.
-	callTimeout = 10 * time.Minute
-)
+// inputBudget is a generous count of a call's input tokens, for its worst case: a request with
+// three pictures of the sheet, the instructions and the journal comes to about 4 000.
+const inputBudget = 8000
 
 // The input tokens a call is expected to take, for the estimate, by the version of the prompt. Of
 // version 1: about 1 850 for form A, about 400 more with the journal and about 820 more for each
@@ -44,38 +35,30 @@ var inputs = map[judge.Version]struct{ a, journal, frame int }{
 	judge.V2: {a: 2050, journal: 360, frame: 820},
 }
 
-// Judge is a configuration of the judge (R24): a Claude model at an effort level, thinking or not,
-// and the output tokens a call is expected to take, for the estimate (architecture 3.1).
+// Judge is a configuration of the judge (R24): a configuration of the runner, and the output tokens
+// a call is expected to take, for the estimate (architecture 3.1).
 type Judge struct {
-	Name       string
-	Model      claude.Model
-	Effort     string
-	NoThinking bool
-	Output     int
+	runner.Config
+	Output int
 }
 
-// Judges are the three judges of the measurement: Opus 5.5 at high, Haiku 5.5 at low, and Haiku
-// 5.5 at low without thinking (R24). A call is expected to write about 50 tokens, and Haiku with
-// thinking about 300 (architecture 3.1).
+// Judges are the three judges of the measurement, the three configurations of the runner: Opus 5.5
+// at high, Haiku 5.5 at low, and Haiku 5.5 at low without thinking (R24). A call is expected to
+// write about 50 tokens, and Haiku with thinking about 300 (architecture 3.1). A configuration
+// without its output here is a mistake of the code, and Judges panics on it rather than estimate
+// its calls at nothing.
 func Judges() []Judge {
-	model := func(id string) claude.Model {
-		i := slices.IndexFunc(claude.Models, func(m claude.Model) bool { return m.ID == id })
-		return claude.Models[i]
+	outputs := map[string]int{"opus-high": 50, "haiku-low": 300, "haiku-low-no-thinking": 50}
+	var out []Judge
+	for _, c := range runner.Configs() {
+		n, ok := outputs[c.Name]
+		if !ok {
+			panic("measure: no output tokens for the configuration " + c.Name)
+		}
+		out = append(out, Judge{Config: c, Output: n})
 	}
-	return []Judge{
-		{Name: "opus-high", Model: model("claude-opus-5-5"), Effort: "high", Output: 50},
-		{Name: "haiku-low", Model: model("claude-haiku-5-5"), Effort: "low", Output: 300},
-		{Name: "haiku-low-no-thinking", Model: model("claude-haiku-5-5"), Effort: "low", NoThinking: true, Output: 50},
-	}
+	return out
 }
-
-// cost is what a call of the judge costs for its tokens, in US dollars.
-func (j Judge) cost(in, out int64) float64 {
-	return (float64(in)*j.Model.Input + float64(out)*j.Model.Output) / 1e6
-}
-
-// worst is the most a call of the judge can cost.
-func (j Judge) worst() float64 { return j.cost(inputBudget, MaxOutputTokens) }
 
 // expected is the input tokens a call of a form is expected to take in a version of the prompt,
 // with the frames it shows.
@@ -111,41 +94,30 @@ type Call struct {
 	Repeat int        `json:"repeat"`
 }
 
-// Question is what a call asks: the judge, the form and the version of the prompt, the sheet's
-// sample and the request.
-type Question struct {
-	Judge   Judge
-	Form    judge.Form
-	Version judge.Version
-	Sample  *sample.Sample
-	Request provider.Request
+// prepared is a sheet of the run with what the forms show of it.
+type prepared struct {
+	Sheet
+	shown *judge.Sheet
 }
 
-// Asker asks a question: of the judge's model, or of Stub, which answers by the markup.
-type Asker func(ctx context.Context, q Question) (provider.Response, error)
-
-// Models asks the judges' models with the Anthropic key.
-func Models(key string) Asker {
-	clients := map[string]*claude.Client{}
-	return func(ctx context.Context, q Question) (provider.Response, error) {
-		c, ok := clients[q.Judge.Model.ID]
-		if !ok {
-			c = claude.New(key, q.Judge.Model)
-			clients[q.Judge.Model.ID] = c
-		}
-		return c.Ask(ctx, q.Request)
-	}
+// step is a call of the judge on the runner: a sheet in a form, by a judge, in a repeat.
+type step struct {
+	Call
+	sheet *prepared
 }
 
-// Stub answers as a judge that is always right would, by the markup of the sheet: "correct" on a
+// Request is the request of the call's form on its sheet.
+func (s *step) Request() (provider.Request, error) {
+	return s.Form.Request(s.sheet.Task, s.sheet.shown)
+}
+
+// Right is the answer of a judge that is always right, by the markup of the sheet: "correct" on a
 // correct sheet, "unreadable" on an unreadable one, and on a sheet with a mistake "error" with the
 // box round the points of the line of the first error. A sheet of another outcome, such as one
-// without an answer, has no verdict of the judge's, and the stub fails on it. Its tokens are those
-// the estimate expects, so that a run on it costs what the estimate says. It asks no one: a run on
-// it needs no key and no network.
-func Stub(_ context.Context, q Question) (provider.Response, error) {
+// without an answer, has no verdict of the judge's, and the stub fails on it.
+func (s *step) Right() (string, error) {
 	var answer judge.Answer
-	switch e := q.Sample.Expected; e.Outcome {
+	switch e := s.sheet.Sample.Expected; e.Outcome {
 	case sample.OutcomeCorrect:
 		answer.Verdict = judge.Correct
 	case sample.OutcomeUnreadable:
@@ -153,55 +125,39 @@ func Stub(_ context.Context, q Question) (provider.Response, error) {
 	case sample.OutcomeError:
 		answer.Verdict = judge.Error
 		if e.FirstError != nil {
-			answer.Box = judge.Around(q.Sample, *e.FirstError)
+			answer.Box = judge.Around(s.sheet.Sample, *e.FirstError)
 		}
 	default:
-		return provider.Response{}, fmt.Errorf("measure: the stub has no verdict for a sheet of the outcome %q", e.Outcome)
+		return "", fmt.Errorf("measure: the stub has no verdict for a sheet of the outcome %q", e.Outcome)
 	}
 	data, err := json.Marshal(answer)
-	if err != nil {
-		return provider.Response{}, err
+	return string(data), err
+}
+
+// Record is the call's record: the answer as the model gave it, its verdict and box, and the line
+// of the markup the box hits. An answer off the schema is logged with the reader's error.
+func (s *step) Record(o runner.Outcome) any {
+	rec := CallRecord{Kind: "call", Call: s.Call, NotAsked: o.NotAsked, Answer: o.Answer, Error: o.Error, Usage: o.Usage}
+	if o.NotAsked || o.Error != "" {
+		return rec
 	}
-	frames := len(q.Request.Images) - 1
-	return provider.Response{
-		JSON:         string(data),
-		Model:        q.Judge.Model.ID,
-		InputTokens:  expected(q.Version, q.Form, frames),
-		OutputTokens: int64(q.Judge.Output),
-	}, nil
-}
-
-// Estimate is what a run takes before it starts: the calls, what they are expected to cost, and
-// the most they could cost, in US dollars.
-type Estimate struct {
-	Calls    int     `json:"calls"`
-	USD      float64 `json:"usd"`
-	WorstUSD float64 `json:"worst_usd"`
-}
-
-// step is a call of the plan, or a form D that its form B stands for.
-type step struct {
-	Call
-	sheet  *prepared
-	judge  Judge
-	sameAs judge.Form
-}
-
-// prepared is a sheet of the run with what the forms show of it.
-type prepared struct {
-	Sheet
-	shown *judge.Sheet
+	a, err := judge.Read(o.Answer)
+	if err != nil {
+		rec.Error = err.Error()
+		return rec
+	}
+	rec.Verdict, rec.Box = a.Verdict, a.Box
+	if a.Box != nil {
+		rec.Hit = judge.Hit(s.sheet.Sample, *a.Box)
+	}
+	return rec
 }
 
 // Run is a run of the measurement, planned: its sheets drawn, its calls in order, all in one version
-// of the judge's prompt.
+// of the judge's prompt. The runner estimates it and does it.
 type Run struct {
-	version judge.Version
-	part    string
-	judges  []Judge
-	repeats int
-	sheets  []prepared
-	steps   []step
+	runner.Run
+	framed int
 }
 
 // New plans a run of the part's sheets by the judges in a version of the prompt, repeated: it
@@ -216,28 +172,39 @@ func New(part string, sheets []Sheet, judges []Judge, repeats int, v judge.Versi
 	if _, ok := inputs[v]; !ok {
 		return nil, fmt.Errorf("measure: no version %d of the prompt", v)
 	}
-	r := &Run{version: v, part: part, judges: judges, repeats: repeats}
+	r := &Run{}
+	var all []*prepared
 	for _, sh := range sheets {
-		shown, err := judge.Prepare(sh.Sample, r.version)
+		shown, err := judge.Prepare(sh.Sample, v)
 		if err != nil {
 			return nil, fmt.Errorf("measure: sheet %d: %w", sh.Number, err)
 		}
-		r.sheets = append(r.sheets, prepared{Sheet: sh, shown: shown})
+		p := &prepared{Sheet: sh, shown: shown}
+		all = append(all, p)
+		if len(shown.Frames) > 0 {
+			r.framed++
+		}
+		r.Items = append(r.Items, sheetRecord(p))
+	}
+	var judged []JudgeRecord
+	for _, j := range judges {
+		judged = append(judged, JudgeRecord{Name: j.Name, Model: j.Model.ID, Effort: j.Effort, NoThinking: j.NoThinking, InputUSD: j.Model.Input, OutputUSD: j.Model.Output})
+	}
+	r.Record = func(h runner.Head) any {
+		return RunRecord{Kind: "run", Time: h.Time, Part: part, Judges: judged, Repeats: repeats, MaxUSD: h.MaxUSD, Estimate: h.Estimate,
+			Prompt: judge.Fingerprint(v), PromptVersion: v}
 	}
 	for rep := 1; rep <= repeats; rep++ {
-		for i := range r.sheets {
-			sh := &r.sheets[i]
+		for _, sh := range all {
 			for _, j := range judges {
 				for _, f := range judge.Forms {
-					st := step{Call: Call{Sheet: sh.Number, Form: f, Judge: j.Name, Repeat: rep}, sheet: sh, judge: j}
+					c := Call{Sheet: sh.Number, Form: f, Judge: j.Name, Repeat: rep}
 					switch {
 					case len(sh.shown.Frames) > 0 || !f.Frames():
+						r.Steps = append(r.Steps, runner.Step{Config: j.Config, In: expected(v, f, len(sh.shown.Frames)), Out: int64(j.Output), WorstIn: inputBudget, Call: &step{Call: c, sheet: sh}})
 					case f == judge.FormD:
-						st.sameAs = judge.FormB
-					default:
-						continue
+						r.Steps = append(r.Steps, runner.Step{Config: j.Config, Note: CallRecord{Kind: "call", Call: c, SameAs: judge.FormB}})
 					}
-					r.steps = append(r.steps, st)
 				}
 			}
 		}
@@ -246,55 +213,43 @@ func New(part string, sheets []Sheet, judges []Judge, repeats int, v judge.Versi
 }
 
 // Framed counts the sheets of the run that have frames.
-func (r *Run) Framed() int {
-	n := 0
-	for _, sh := range r.sheets {
-		if len(sh.shown.Frames) > 0 {
-			n++
+func (r *Run) Framed() int { return r.framed }
+
+// sheetRecord is the record that tells a sheet of the run.
+func sheetRecord(sh *prepared) SheetRecord {
+	rec := SheetRecord{Kind: "sheet", Sheet: sh.Number, File: sh.File, Writer: sh.Sample.Writer, Task: sh.Sample.Task, Scenario: sh.Sample.Scenario,
+		Outcome: sh.Sample.Expected.Outcome, Frames: len(sh.shown.Frames), Lines: journal.Agree(sh.Sample, sh.shown.Journal)}
+	fe := sh.Sample.Expected.FirstError
+	if fe != nil {
+		rec.FirstError = *fe
+	}
+	if sh.Plan != nil {
+		rec.Layout = sh.Plan.Layout()
+		if fe != nil && byPlan(sh.Sample, sh.Plan) {
+			rec.FirstErrorIn = sh.Plan.Region(*fe)
 		}
 	}
-	return n
-}
-
-// Estimate is what the run is expected to take.
-func (r *Run) Estimate() Estimate {
-	var e Estimate
-	for _, st := range r.steps {
-		if st.sameAs != "" {
-			continue
-		}
-		e.Calls++
-		e.USD += st.judge.cost(expected(r.version, st.Form, len(st.sheet.shown.Frames)), int64(st.judge.Output))
-		e.WorstUSD += st.judge.worst()
-	}
-	return e
-}
-
-// Result is how a run ended: the calls it made and what they cost, and why it stopped short, if it
-// did: the cap, or an interruption.
-type Result struct {
-	Calls    int     `json:"calls"`
-	SpentUSD float64 `json:"spent_usd"`
-	Stopped  string  `json:"stopped,omitempty"`
+	return rec
 }
 
 // The records of a run's log, a JSON object a line, each with its kind. The first tells the run,
 // then one tells each sheet, one each call, and the last how the run ended. A call of form D that
-// form B stands for has same_as and nothing else of a call's own (New).
+// form B stands for has same_as and nothing else of a call's own (New). The judge's record of the
+// run tells no kind of call: a log without one is the judge's (runner.CallKind).
 type (
 	// RunRecord tells the run: its part, judges and repeats, its cap and estimate, and the
 	// fingerprint and the version of its prompt (judge.Fingerprint). The logs of E2 tell no
 	// version: their prompt is version 1 (PromptOf).
 	RunRecord struct {
-		Kind          string        `json:"kind"`
-		Time          time.Time     `json:"time"`
-		Part          string        `json:"part"`
-		Judges        []JudgeRecord `json:"judges"`
-		Repeats       int           `json:"repeats"`
-		MaxUSD        float64       `json:"max_usd"`
-		Estimate      Estimate      `json:"estimate"`
-		Prompt        string        `json:"prompt"`
-		PromptVersion judge.Version `json:"prompt_version,omitempty"`
+		Kind          string          `json:"kind"`
+		Time          time.Time       `json:"time"`
+		Part          string          `json:"part"`
+		Judges        []JudgeRecord   `json:"judges"`
+		Repeats       int             `json:"repeats"`
+		MaxUSD        float64         `json:"max_usd"`
+		Estimate      runner.Estimate `json:"estimate"`
+		Prompt        string          `json:"prompt"`
+		PromptVersion judge.Version   `json:"prompt_version,omitempty"`
 	}
 	// JudgeRecord is a judge as the run's record tells it: its model and prices.
 	JudgeRecord struct {
@@ -331,28 +286,17 @@ type (
 	CallRecord struct {
 		Kind string `json:"kind"`
 		Call
-		SameAs         judge.Form `json:"same_as,omitempty"`
-		NotAsked       bool       `json:"not_asked,omitempty"`
-		Answer         string     `json:"answer,omitempty"`
-		Verdict        string     `json:"verdict,omitempty"`
-		Box            *judge.Box `json:"box,omitempty"`
-		Hit            int        `json:"hit,omitempty"`
-		Error          string     `json:"error,omitempty"`
-		ModelID        string     `json:"model_id,omitempty"`
-		InputTokens    int64      `json:"input_tokens,omitempty"`
-		OutputTokens   int64      `json:"output_tokens,omitempty"`
-		ThinkingTokens int64      `json:"thinking_tokens,omitempty"`
-		FirstTokenMs   int64      `json:"first_token_ms,omitempty"`
-		Retries        int        `json:"retries,omitempty"`
-		LatencyMs      int64      `json:"latency_ms,omitempty"`
-		CostUSD        float64    `json:"cost_usd,omitempty"`
+		SameAs   judge.Form `json:"same_as,omitempty"`
+		NotAsked bool       `json:"not_asked,omitempty"`
+		Answer   string     `json:"answer,omitempty"`
+		Verdict  string     `json:"verdict,omitempty"`
+		Box      *judge.Box `json:"box,omitempty"`
+		Hit      int        `json:"hit,omitempty"`
+		Error    string     `json:"error,omitempty"`
+		runner.Usage
 	}
 	// EndRecord tells how the run ended.
-	EndRecord struct {
-		Kind string    `json:"kind"`
-		Time time.Time `json:"time"`
-		Result
-	}
+	EndRecord = runner.End
 )
 
 // byPlan reports whether a sample's markup has the parts and the first error of its sheet of the
@@ -381,171 +325,31 @@ type Log struct {
 	End    *EndRecord
 }
 
-// ReadLog reads a run's log back: every line a record of a kind it knows, the run's first and the
-// end, if there is one, last. A last line cut off half written is a run that broke off as it wrote
-// it, and the log is read without it.
+// ReadLog reads the log of a run of the judge back, as runner.ReadLog reads a log: every line a
+// record of a kind it knows, the run's first and the end, if there is one, last, and a last line
+// cut off half written left out.
 func ReadLog(r io.Reader) (*Log, error) {
 	var l Log
-	sc := bufio.NewScanner(r)
-	sc.Buffer(make([]byte, 0, 64*1024), 16*1024*1024)
-	var lines [][]byte
-	for sc.Scan() {
-		lines = append(lines, slices.Clone(sc.Bytes()))
-	}
-	if err := sc.Err(); err != nil {
-		return nil, err
-	}
-	if n := len(lines); n > 1 && !json.Valid(lines[n-1]) {
-		lines = lines[:n-1]
-	}
-	for i, line := range lines {
-		n := i + 1
-		var kind struct{ Kind string }
-		if err := json.Unmarshal(line, &kind); err != nil {
-			return nil, fmt.Errorf("line %d of the log is not a record: %w", n, err)
-		}
-		if (n == 1) != (kind.Kind == "run") || l.End != nil {
-			return nil, fmt.Errorf("line %d of the log is a %q record out of its place", n, kind.Kind)
-		}
-		var err error
-		switch kind.Kind {
+	end, err := runner.ReadLog(r, func(kind string, line []byte) error {
+		switch kind {
 		case "run":
-			err = json.Unmarshal(line, &l.Run)
+			return json.Unmarshal(line, &l.Run)
 		case "sheet":
 			var rec SheetRecord
-			err = json.Unmarshal(line, &rec)
+			err := json.Unmarshal(line, &rec)
 			l.Sheets = append(l.Sheets, rec)
+			return err
 		case "call":
 			var rec CallRecord
-			err = json.Unmarshal(line, &rec)
+			err := json.Unmarshal(line, &rec)
 			l.Calls = append(l.Calls, rec)
-		case "end":
-			l.End = &EndRecord{}
-			err = json.Unmarshal(line, l.End)
-		default:
-			err = fmt.Errorf("no record of the kind %q", kind.Kind)
+			return err
 		}
-		if err != nil {
-			return nil, fmt.Errorf("line %d of the log: %w", n, err)
-		}
+		return fmt.Errorf("no record of the kind %q", kind)
+	})
+	if err != nil {
+		return nil, err
 	}
-	if l.Run.Kind == "" {
-		return nil, fmt.Errorf("the log is empty")
-	}
+	l.End = end
 	return &l, nil
-}
-
-// Do runs the calls in order, asking each question of ask, and logs every answer to log as it
-// comes. Before each call it reserves the call's worst case: a call that could take what the run
-// has spent past maxUSD is not started, and the run stops there. A context that ends stops the run
-// too. A failed call is logged with its error and counts as an answer, and its tokens are billed;
-// a call whose bill is not known counts at its worst. The error is a log that cannot be written:
-// the run stops then, since an answer it cannot keep is lost.
-func (r *Run) Do(ctx context.Context, ask Asker, maxUSD float64, log io.Writer, now func() time.Time) (Result, error) {
-	w := &writer{log: log}
-	var judges []JudgeRecord
-	for _, j := range r.judges {
-		judges = append(judges, JudgeRecord{Name: j.Name, Model: j.Model.ID, Effort: j.Effort, NoThinking: j.NoThinking, InputUSD: j.Model.Input, OutputUSD: j.Model.Output})
-	}
-	w.put(RunRecord{Kind: "run", Time: now().UTC(), Part: r.part, Judges: judges, Repeats: r.repeats, MaxUSD: maxUSD, Estimate: r.Estimate(),
-		Prompt: judge.Fingerprint(r.version), PromptVersion: r.version})
-	for _, sh := range r.sheets {
-		rec := SheetRecord{Kind: "sheet", Sheet: sh.Number, File: sh.File, Writer: sh.Sample.Writer, Task: sh.Sample.Task, Scenario: sh.Sample.Scenario,
-			Outcome: sh.Sample.Expected.Outcome, Frames: len(sh.shown.Frames), Lines: journal.Agree(sh.Sample, sh.shown.Journal)}
-		fe := sh.Sample.Expected.FirstError
-		if fe != nil {
-			rec.FirstError = *fe
-		}
-		if sh.Plan != nil {
-			rec.Layout = sh.Plan.Layout()
-			if fe != nil && byPlan(sh.Sample, sh.Plan) {
-				rec.FirstErrorIn = sh.Plan.Region(*fe)
-			}
-		}
-		w.put(rec)
-	}
-	var res Result
-	for _, st := range r.steps {
-		if w.err != nil {
-			break
-		}
-		if st.sameAs != "" {
-			w.put(CallRecord{Kind: "call", Call: st.Call, SameAs: st.sameAs})
-			continue
-		}
-		if ctx.Err() != nil {
-			res.Stopped = "interrupted"
-			break
-		}
-		if res.SpentUSD+st.judge.worst() > maxUSD {
-			res.Stopped = fmt.Sprintf("the cap: $%.4f spent of $%.2f, and the next call can cost up to $%.4f", res.SpentUSD, maxUSD, st.judge.worst())
-			break
-		}
-		rec, asked := r.call(ctx, ask, st)
-		if asked {
-			res.Calls++
-		}
-		res.SpentUSD += rec.CostUSD
-		w.put(rec)
-	}
-	w.put(EndRecord{Kind: "end", Time: now().UTC(), Result: res})
-	return res, w.err
-}
-
-// call asks one question and turns the answer into its record; asked is false when the request
-// could not be built, and nothing was asked.
-func (r *Run) call(ctx context.Context, ask Asker, st step) (rec CallRecord, asked bool) {
-	req, err := st.Form.Request(st.sheet.Task, st.sheet.shown)
-	rec = CallRecord{Kind: "call", Call: st.Call}
-	if err != nil {
-		rec.Error, rec.NotAsked = err.Error(), true
-		return rec, false
-	}
-	req.MaxOutputTokens, req.Effort, req.NoThinking = MaxOutputTokens, st.judge.Effort, st.judge.NoThinking
-	ctx, cancel := context.WithTimeout(ctx, callTimeout)
-	defer cancel()
-	start := time.Now()
-	resp, err := ask(ctx, Question{Judge: st.judge, Form: st.Form, Version: r.version, Sample: st.sheet.Sample, Request: req})
-	rec.LatencyMs = time.Since(start).Milliseconds()
-	rec.ModelID, rec.InputTokens, rec.OutputTokens, rec.ThinkingTokens = resp.Model, resp.InputTokens, resp.OutputTokens, resp.ThinkingTokens
-	rec.FirstTokenMs, rec.Retries = resp.FirstToken.Milliseconds(), resp.Retries
-	rec.CostUSD = st.judge.cost(resp.InputTokens, resp.OutputTokens)
-	if err != nil {
-		rec.Error = err.Error()
-		if !provider.Billed(resp, err) {
-			// The bill of such a call is not known, though the model may have spent tokens, as on
-			// the board: it counts at the most it could cost, so that the cap still holds.
-			rec.CostUSD = st.judge.worst()
-			rec.Error += "; the call is counted at the most it could cost"
-		}
-		return rec, true
-	}
-	rec.Answer = resp.JSON
-	a, err := judge.Read(resp.JSON)
-	if err != nil {
-		rec.Error = err.Error()
-		return rec, true
-	}
-	rec.Verdict, rec.Box = a.Verdict, a.Box
-	if a.Box != nil {
-		rec.Hit = judge.Hit(st.sheet.Sample, *a.Box)
-	}
-	return rec, true
-}
-
-// writer writes the records of the log, a JSON object a line, and keeps the first error.
-type writer struct {
-	log io.Writer
-	err error
-}
-
-func (w *writer) put(v any) {
-	if w.err != nil {
-		return
-	}
-	data, err := json.Marshal(v)
-	if err == nil {
-		_, err = w.log.Write(append(data, '\n'))
-	}
-	w.err = err
 }

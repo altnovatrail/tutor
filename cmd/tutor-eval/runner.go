@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"io/fs"
+	"maps"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -17,6 +18,7 @@ import (
 
 	"github.com/altnovatrail/tutor/internal/judge"
 	"github.com/altnovatrail/tutor/internal/measure"
+	"github.com/altnovatrail/tutor/internal/runner"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/sheets"
 )
@@ -26,18 +28,27 @@ import (
 // split, which is how the author's three sheets of free writing run (3.4; T77).
 var partCaps = map[string]float64{"dev": 3, "test": 6, "all": 2}
 
-// runRun runs the measurement over a part of the split, or over all the sheets of the plan: every
-// sheet in every form it has, by the three judges, repeated (R24). The prompt is that of the plan:
-// version 1 on a plan of lines, version 2 on a plan of parts, of free writing (T65). It first says how many calls the run makes and what
-// they are expected to cost, and starts only once the author types yes (rule 4 of RUN.md); till
-// then Ctrl-C ends it as any command, and from then on it stops the run before the next call. The
-// log goes next to the sheets, out of git. A run on the author's sheets, in samples, the author
+// plans are the kinds of call that run asks, by -kind, each with how it plans a run over a part and
+// says what the run asks (T67): so far the judge alone. The kinds of epic E4 come with their tasks,
+// reading first (T68).
+var plans = map[string]func(f sheetFlags, part string, repeats int) (*runner.Run, string, error){
+	"judge": planJudge,
+}
+
+// runRun runs the calls of a kind over a part of the split, or over all the sheets of the plan. Of
+// the judge, the measurement of the writing process: every sheet in every form it has, by the three
+// judges, repeated (R24), in the prompt of the plan: version 1 on a plan of lines, version 2 on a
+// plan of parts, of free writing (T65). It first says how many calls the run makes and what they
+// are expected to cost, and starts only once the author types yes (rule 4 of RUN.md); till then
+// Ctrl-C ends it as any command, and from then on it stops the run before the next call. The log
+// goes next to the sheets, out of git, named by the time, the kind, the set of sheets and the part. A run on the author's sheets, in samples, the author
 // starts, and no agent reads them (R05); on sheets drawn by code, in synthetic, the executor starts
 // it within the task's ceiling (R28).
 func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer, getenv func(string) string, now func() time.Time) int {
 	flags := flag.NewFlagSet("tutor-eval run", flag.ContinueOnError)
 	var f sheetFlags
 	f.add(flags)
+	kind := flags.String("kind", "judge", "the kind of call to run: judge")
 	part := flags.String("part", "", "the part of the split to run, dev or test, or all for every sheet of the plan, without the split")
 	repeats := flags.Int("repeats", 3, "how many times each sheet is asked in each form by each judge")
 	maxUSD := flags.Float64("max-usd", 0, "start no call that could take the run past this many US dollars; $3 for dev, $6 for test and $2 for all by default")
@@ -48,6 +59,11 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	}
 	set := given(flags)
 	if !f.usable("tutor-eval run", stderr) {
+		return exitUsage
+	}
+	plan, ok := plans[*kind]
+	if !ok {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -kind is %q: give %s\n", *kind, strings.Join(slices.Sorted(maps.Keys(plans)), " or "))
 		return exitUsage
 	}
 	planned, ok := partCaps[*part]
@@ -62,32 +78,35 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		_, _ = fmt.Fprintln(stderr, "tutor-eval run: -repeats must be 1 or more, and -max-usd above 0")
 		return exitUsage
 	}
-	ask := measure.Stub
+	ask := runner.Stub
 	if !*stub {
 		key := getenv(anthropicKeyVar)
 		if key == "" {
 			_, _ = fmt.Fprintf(stderr, "tutor-eval run: %s is not set: the run asks Claude; with -stub it asks no one\n", anthropicKeyVar)
 			return exitUsage
 		}
-		ask = measure.Models(key)
+		ask = runner.Models(key)
 	}
 
-	chosen, version, err := partSheets(f, *part)
+	// What follows the plan is the same for every kind.
+	r, what, err := plan(f, *part, *repeats)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: %v\n", err)
 		return exitFail
 	}
-	r, err := measure.New(*part, chosen, measure.Judges(), *repeats, version)
-	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval run: %v\n", err)
-		return exitFail
-	}
-	// The log is a new file, named to the millisecond: whatever keeps it from being written is said
-	// before the author is asked.
+	// The log is a new file, named to the millisecond, and by the kind, the set of sheets, which is
+	// the name of their directory, and the part, so that the logs of two sets in one runs directory
+	// are told apart: whatever keeps it from being written is said before the author is asked.
 	path := *logPath
 	if path == "" {
 		at := now().UTC()
-		path = filepath.Join(filepath.Dir(filepath.Clean(f.dir)), "runs", fmt.Sprintf("%s-%03d-%s.jsonl", at.Format("20060102-150405"), at.Nanosecond()/int(time.Millisecond), *part))
+		dir := filepath.Clean(f.dir)
+		abs, err := filepath.Abs(dir)
+		if err != nil {
+			_, _ = fmt.Fprintf(stderr, "tutor-eval run: %v\n", err)
+			return exitFail
+		}
+		path = filepath.Join(filepath.Dir(dir), "runs", fmt.Sprintf("%s-%03d-%s-%s-%s.jsonl", at.Format("20060102-150405"), at.Nanosecond()/int(time.Millisecond), *kind, filepath.Base(abs), *part))
 	}
 	// A run on the author's sheets logs in samples alone: its log holds every answer as the model
 	// gave it, and nothing of the author's sheets goes to the folder agents work with.
@@ -105,12 +124,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	}
 
 	e := r.Estimate()
-	what := fmt.Sprintf("The %s part", *part)
-	if *part == "all" {
-		what = "All the sheets"
-	}
-	say := fmt.Sprintf("%s: %s, %d of them with frames, by %d judges, %s, in version %d of the prompt.\n%s, expected to cost $%.2f, and at most $%.2f if every call took its worst. The cap is $%.2f.\n",
-		what, count(len(chosen), "sheet"), r.Framed(), len(measure.Judges()), count(*repeats, "repeat"), version, count(e.Calls, "call"), e.USD, e.WorstUSD, *maxUSD)
+	say := what + fmt.Sprintf("%s, expected to cost $%.2f, and at most $%.2f if every call took its worst. The cap is $%.2f.\n", count(e.Calls, "call"), e.USD, e.WorstUSD, *maxUSD)
 	if *maxUSD > planned {
 		say += fmt.Sprintf("That is above the $%.2f that architecture 3.1 and 3.4 plan for -part %s.\n", planned, *part)
 	}
@@ -154,6 +168,25 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		return exitFail
 	}
 	return exitOK
+}
+
+// planJudge plans a run of the judge over a part, and says what it asks: its sheets, how many of
+// them have frames, the judges, the repeats and the version of the prompt.
+func planJudge(f sheetFlags, part string, repeats int) (*runner.Run, string, error) {
+	chosen, version, err := partSheets(f, part)
+	if err != nil {
+		return nil, "", err
+	}
+	r, err := measure.New(part, chosen, measure.Judges(), repeats, version)
+	if err != nil {
+		return nil, "", err
+	}
+	what := fmt.Sprintf("The %s part", part)
+	if part == "all" {
+		what = "All the sheets"
+	}
+	return &r.Run, fmt.Sprintf("%s: %s, %d of them with frames, by %d judges, %s, in version %d of the prompt.\n",
+		what, count(len(chosen), "sheet"), r.Framed(), len(measure.Judges()), count(repeats, "repeat"), version), nil
 }
 
 // partSheets reads the sheets of a part of the split, each recorded, passing its check, and the

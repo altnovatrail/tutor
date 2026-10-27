@@ -68,7 +68,7 @@ func TestPlanOfParts(t *testing.T) {
 	if code != exitOK || !strings.HasPrefix(out, "All the sheets: 4 sheets, 2 of them with frames, by 3 judges, 1 repeat, in version 2 of the prompt.\n") {
 		t.Fatalf("run -part all = %d\n%s%s", code, out, errs)
 	}
-	log := filepath.Join(filepath.Dir(dir), "runs", "20261026-123000-000-all.jsonl")
+	log := filepath.Join(filepath.Dir(dir), "runs", "20261026-123000-000-judge-sheets-all.jsonl")
 	stdout.Reset()
 	if code := runReport([]string{log}, &stdout, &stderr); code != exitOK {
 		t.Fatalf("report = %d %s", code, stderr.String())
