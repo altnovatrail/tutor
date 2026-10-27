@@ -16,6 +16,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/judge"
 	"github.com/altnovatrail/tutor/internal/runner"
 	"github.com/altnovatrail/tutor/internal/sample"
+	"github.com/altnovatrail/tutor/internal/sheets"
 	"github.com/altnovatrail/tutor/provider"
 )
 
@@ -76,14 +77,9 @@ func expected(v judge.Version, f judge.Form, frames int) int64 {
 
 // Sheet is a sheet of the part: its number in the plan and its file, its sample, which passes its
 // check, its task, and its sheet of the plan, which tells the layout of free writing and where its
-// first error stands; a sheet without one tells neither.
-type Sheet struct {
-	Number int
-	File   string
-	Sample *sample.Sample
-	Task   *sample.Task
-	Plan   *sample.PlanSheet
-}
+// first error stands; a sheet without one tells neither. The judge runs on one set, and its log
+// tells no set.
+type Sheet = sheets.Chosen
 
 // Call is one call of a run: a sheet by its number, a form, a judge by its name and the repeat,
 // from 1.

@@ -34,6 +34,18 @@ type Sheet struct {
 	Problems []string
 }
 
+// Chosen is a sheet that a run asks of (T67, T68): its set, the name of its directory of sheets,
+// its number in the plan and its file, its sample, which passes its check, its task, and its sheet
+// of the plan.
+type Chosen struct {
+	Set    string
+	Number int
+	File   string
+	Sample *sample.Sample
+	Task   *sample.Task
+	Plan   *sample.PlanSheet
+}
+
 // Recorded is the directory of sheets read against the plan.
 type Recorded struct {
 	Sheets []Sheet

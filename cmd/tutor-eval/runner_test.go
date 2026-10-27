@@ -178,7 +178,7 @@ func TestRunRefuses(t *testing.T) {
 	}{
 		{[]string{"-stub"}, exitUsage, `-part is ""`},
 		{[]string{"-part", "every", "-stub"}, exitUsage, `-part is "every": give dev, test or all`},
-		{[]string{"-part", "test", "-stub", "-kind", "reading"}, exitUsage, `-kind is "reading": give judge`},
+		{[]string{"-part", "test", "-stub", "-kind", "hint"}, exitUsage, `-kind is "hint": give judge or reading`},
 		{[]string{"-part", "test", "-stub", "-repeats", "0"}, exitUsage, "-repeats must be 1 or more"},
 		{[]string{"-part", "test", "-stub", "-max-usd", "0"}, exitUsage, "-max-usd above 0"},
 		{[]string{"-part", "test"}, exitUsage, "TUTOR_ANTHROPIC_API_KEY is not set"},
