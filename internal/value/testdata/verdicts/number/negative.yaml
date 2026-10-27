@@ -1,0 +1,21 @@
+# A negative number: the minus sign U+2212 and the dashes are the hyphen-minus.
+item:
+  answer_slots:
+    - binding: anywhere
+      check: {kind: number, key: "-3"}
+readings:
+  - answer_slots:
+      - {value: "-3", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "−3", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "–3", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "3", verdict: not_yet}
+    verdict: not_yet
+  - answer_slots:
+      - {value: "- 3", verdict: unreadable, reason: notation}
+    verdict: unreadable

@@ -1,0 +1,25 @@
+=== instructions
+You read a learner's handwritten work on a maths task. Image 1 shows the sheet as the learner left it. Write down what is on it, as it is written: your answer is an observation, and a program decides from it whether the answer is right. Do not decide it yourself, do not correct a mistake and do not finish what is unfinished.
+
+1. Split the work into parts, in the order the solution is read: a line of writing, a calculation, a sum worked in a column, a note at the side, a drawing. Leave out writing that is crossed out.
+2. For writing, "kind" is "text", and "text" is the part exactly as it is written: every digit, sign and word, a wrong one too. A sum worked in a column goes in one line, as "14 × 3 = 42". Signs such as □ or △ that stand for unknown numbers stay as they are.
+3. For a drawing, such as a number line with jumps, a row of things or a scheme of segments, "kind" is "drawing", and "text" tells in a few words what it shows, with every number and label written on it in the order they stand: "number line: jumps 3 → 7 → 11".
+4. "legible" is false when you cannot make out the part for sure. "other_readings" lists the other ways the part could be read where a digit, a number or a sign of it could be read otherwise; it is empty when there are none.
+5. "results" are the final answers that the work gives. For each, "part" is the number of its part, counting from 1, and "value" is the number of the answer as it is written, without the unknown and the = before it and without the words, units or remarks after it: for "x = 2" the value is "2", and for "Ответ: 5 столбов" it is "5". "other_values" lists the other numbers the answer could be read as; it is empty when there are none. When the work gives no final answer, "results" is empty; when it gives more than one, give each.
+
+You are also given a key and a solution of the task, in the block <key_and_solution>. Read only what Image 1 shows.
+=== picture: the finished sheet
+Image 1: the sheet as the learner left it.
+=== text
+Image 1 is 1000 pixels wide and 600 pixels high.
+Task: У двух братьев вместе 20 марок. У старшего на 6 марок больше, чем у младшего. Сколько марок у младшего?
+
+<key_and_solution>
+This is not what the learner wrote.
+Key: 7
+Solution:
+схема: отрезок младшего и отрезок старшего, длиннее на 6, — вместе 20
+20 − 6 = 14 — это два отрезка младшего
+14 : 2 = 7
+Ответ: 7 марок
+</key_and_solution>

@@ -1,0 +1,25 @@
+# Numbers are compared exactly, never through floating point, and a value in notation is 16
+# characters long at most. A superscript digit is not in notation: NFKC would make 7² into 72.
+item:
+  answer_slots:
+    - binding: anywhere
+      check: {kind: number, key: "9007199254740992"}
+readings:
+  - answer_slots:
+      - {value: "9007199254740992", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "9007199254740993", verdict: not_yet}
+    verdict: not_yet
+  - answer_slots:
+      - {value: "90071992547409920", verdict: unreadable, reason: notation}
+    verdict: unreadable
+  - answer_slots:
+      - {value: "1 000", verdict: unreadable, reason: notation}
+    verdict: unreadable
+  - answer_slots:
+      - {value: "1,000", verdict: unreadable, reason: notation}
+    verdict: unreadable
+  - answer_slots:
+      - {value: "7²", verdict: unreadable, reason: notation}
+    verdict: unreadable

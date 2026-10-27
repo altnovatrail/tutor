@@ -1,0 +1,44 @@
+# The units that may follow a number: the longest that fits is dropped, with a space before it or
+# none, in any letter case, and only when a number stands before it. The wrong values 6 and 8 show a
+# trap, and a value read matches them as it matches the key, units and all.
+item:
+  answer_slots:
+    - binding: anywhere
+      check:
+        kind: number
+        key: "7"
+        units: [rung, rungs]
+        trap_values:
+          - {value: "6", trap: off-by-one}
+          - {value: "8", trap: off-by-one}
+readings:
+  - answer_slots:
+      - {value: "7 rungs", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "7rungs", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "7 Rung", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "7 rungs.", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "6 rungs", verdict: not_yet, trap: off-by-one}
+    verdict: not_yet
+  - answer_slots:
+      - {value: "8", verdict: not_yet, trap: off-by-one}
+    verdict: not_yet
+  - answer_slots:
+      - {value: "9 rungs", verdict: not_yet}
+    verdict: not_yet
+  - answer_slots:
+      - {value: "rungs", verdict: unreadable, reason: notation}
+    verdict: unreadable
+  - answer_slots:
+      - {value: "7 steps", verdict: unreadable, reason: notation}
+    verdict: unreadable
+  - answer_slots:
+      - {value: "rungs 7", verdict: unreadable, reason: notation}
+    verdict: unreadable
