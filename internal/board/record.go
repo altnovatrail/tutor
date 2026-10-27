@@ -287,7 +287,8 @@ type Saved struct {
 // how its markup differs from its plan sheet; a sheet with problems has no differences named.
 // ErasureLines says, for each erasure in its order, on which line of the markup most of its
 // strokes stood, the higher of two that hold as many, or 0 when none did: the page shows it by the
-// erasure, and gives it whatever the markup's problems.
+// erasure, and gives it whatever the markup's problems. On a sheet of a plan of parts it is the
+// part, by the place of the strokes on the plane (sheets.ErasurePlace).
 type Checked struct {
 	Problems     []Note `json:"problems"`
 	Differences  []Note `json:"differences"`
@@ -317,7 +318,7 @@ func (rc *Recorder) check(w http.ResponseWriter, r *http.Request) {
 	var loose sample.Sample
 	if json.Unmarshal(req.Sample, &loose) == nil {
 		for _, e := range loose.Erasures {
-			c.ErasureLines = append(c.ErasureLines, lines.ErasureLine(&loose, e))
+			c.ErasureLines = append(c.ErasureLines, sheets.ErasurePlace(sh, &loose, e))
 		}
 	}
 	writeJSON(w, http.StatusOK, c)
