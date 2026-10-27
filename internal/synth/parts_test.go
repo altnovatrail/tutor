@@ -3,7 +3,6 @@ package synth_test
 import (
 	"os"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/altnovatrail/tutor/internal/lines"
@@ -39,26 +38,24 @@ func freeMeasurement(t *testing.T) (*sample.Bank, []*sample.Plan) {
 	return bank, plans
 }
 
-// drawable returns the sheets of the plans that code draws already: those without drawings.
-func drawable(plans []*sample.Plan) []*sample.PlanSheet {
+// sheetsOf returns the sheets of the plans.
+func sheetsOf(plans []*sample.Plan) []*sample.PlanSheet {
 	var out []*sample.PlanSheet
 	for _, pl := range plans {
 		for i := range pl.Sheets {
-			if synth.Drawable(&pl.Sheets[i]) == nil {
-				out = append(out, &pl.Sheets[i])
-			}
+			out = append(out, &pl.Sheets[i])
 		}
 	}
 	return out
 }
 
-// Every sheet of the free-form plans without a drawing — 13 of the code's and one of the author's —
-// drawn with each seed, passes the check with the bank, has the plan's markup and is drawn by code.
+// Every sheet of the free-form plans — the code's 40 and the author's three — drawn with each seed,
+// passes the check with the bank, has the plan's markup and is drawn by code.
 func TestSheetOfPartsDrawsThePlan(t *testing.T) {
 	bank, plans := freeMeasurement(t)
-	todo := drawable(plans)
-	if len(todo) != 14 {
-		t.Fatalf("%d sheets without drawings, want 13 of the code's plan and one of the author's", len(todo))
+	todo := sheetsOf(plans)
+	if len(todo) != 43 {
+		t.Fatalf("%d sheets, want the code's 40 and the author's three", len(todo))
 	}
 	for _, sh := range todo {
 		for _, seed := range []uint64{1, 2, 77} {
@@ -81,12 +78,14 @@ func TestSheetOfPartsDrawsThePlan(t *testing.T) {
 }
 
 // The groups a device would find hold the parts of the plan, by construction (R30 in
-// docs/decisions.md): no group holds strokes of two parts, a part without its planned erasure is
-// one group, and a part with it one or two, as the fix after a pause may be a group of its own. So
-// this holds on a hundred seeds, not only on those of the test above.
+// docs/decisions.md): no group holds strokes of two parts, and a part without its planned erasure
+// is one group. A part with it is one or two, as the fix after a pause may be a group of its own,
+// and a scheme with it up to three: its brace stands apart once the erasure takes the piece near
+// it, as nothing else near holds it. So this holds on a hundred seeds, not only on those
+// of the test above.
 func TestGroupsHoldTheParts(t *testing.T) {
 	_, plans := freeMeasurement(t)
-	for _, sh := range drawable(plans) {
+	for _, sh := range sheetsOf(plans) {
 		for seed := uint64(1); seed <= 100; seed++ {
 			s := synth.Sheet(sh, seed)
 			partOf := map[string]int{}
@@ -112,6 +111,9 @@ func TestGroupsHoldTheParts(t *testing.T) {
 				most := 1
 				if e := sh.Erasure; e != nil && e.Line == n {
 					most = 2
+					if e.Figure != nil && e.Figure.Scheme != nil {
+						most = 3
+					}
 				}
 				if groupsOf[n] < 1 || groupsOf[n] > most {
 					t.Errorf("sheet %d, seed %d: part %d is %d groups, want 1 to %d", sh.Number, seed, n, groupsOf[n], most)
@@ -159,29 +161,10 @@ func notesAtTheSide(t *testing.T, sh *sample.PlanSheet, s *sample.Sample, seed u
 	}
 }
 
-// A sheet with a drawing is one code cannot draw yet, and the reason names the drawing.
-func TestDrawableNamesTheDrawing(t *testing.T) {
-	_, plans := freeMeasurement(t)
-	sh := &plans[0].Sheets[0] // the grasshopper on a number line
-	err := synth.Drawable(sh)
-	if err == nil || !strings.Contains(err.Error(), "part 1 is a drawing, a number_line") {
-		t.Errorf("Drawable = %v, want the number line of part 1 named", err)
-	}
-	defer func() {
-		if r := recover(); r == nil {
-			t.Error("Sheet drew a sheet with a drawing")
-		}
-	}()
-	synth.Sheet(sh, 1)
-}
-
 // A seed draws the same sheet of parts each time, and another seed another sheet.
 func TestSheetOfPartsIsTheSameEachTime(t *testing.T) {
 	_, plans := freeMeasurement(t)
-	sh := &plans[0].Sheets[1] // the album, with columns at the side
-	if err := synth.Drawable(sh); err != nil {
-		t.Fatalf("sheet 2 of the code's plan: %v", err)
-	}
+	sh := &plans[0].Sheets[6] // the grasshopper, with a jump erased in the number line
 	a, b := synth.Sheet(sh, 5), synth.Sheet(sh, 5)
 	if !reflect.DeepEqual(a, b) {
 		t.Error("the same seed draws two different sheets")
