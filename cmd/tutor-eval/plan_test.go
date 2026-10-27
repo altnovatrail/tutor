@@ -73,68 +73,112 @@ func TestSheetPlan(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	doc, err := os.ReadFile(sheetsDoc)
-	if err != nil {
-		t.Fatal(err)
-	}
-	built := strings.Split(sheetTable(t, plan), "\n")
-	written := tableIn(string(doc), built[0])
-	if written == nil {
-		t.Fatalf("%s has no table headed %q", sheetsDoc, built[0])
-	}
-	for i := range max(len(built), len(written)) {
-		var b, w string
-		if i < len(built) {
-			b = built[i]
-		}
-		if i < len(written) {
-			w = written[i]
-		}
-		if b != w {
-			t.Fatalf("line %d of the sheet table differs:\n%s has    %q\n%s gives %q", i+1, sheetsDoc, w, measurementPlan, b)
-		}
-	}
+	sameTable(t, sheetsDoc, readDoc(t, sheetsDoc), measurementPlan, sheetTable(t, plan))
 }
 
 // sheetTable writes the table «Листы» of docs/sheets.md from a plan, as the document has it: a
 // line to a sheet, every text in backquotes, the lines of a sheet joined by "; ", and a dash
-// where the sheet has no first error or no planned erasure. A text with a vertical bar or a
-// backquote would break its cell, and the test stops on it.
+// where the sheet has no first error or no planned erasure.
 func sheetTable(t *testing.T, plan *sample.Plan) string {
 	t.Helper()
-	erased := map[sample.Erased]string{sample.ErasedMistake: "ошибка", sample.ErasedCorrectStep: "верный шаг"}
-	code := func(s string) string {
-		if strings.ContainsAny(s, "|`") {
-			t.Fatalf("%q cannot stand in a cell of the sheet table: it holds a vertical bar or a backquote", s)
-		}
-		return "`" + s + "`"
-	}
 	var b strings.Builder
 	b.WriteString("| № | Задача | Сценарий | Строки на листе | Ответ | Первая ошибка | Стирание по сценарию |\n")
 	b.WriteString("|---|---|---|---|---|---|---|\n")
 	for _, sh := range plan.Sheets {
 		lines := make([]string, len(sh.Lines))
 		for i, l := range sh.Lines {
-			lines[i] = code(l)
-		}
-		firstError := "—"
-		if e := sh.Expected; e.FirstError != nil {
-			firstError = strconv.Itoa(*e.FirstError)
-			if e.Trap != "" {
-				firstError += ": " + code(e.Trap)
-			}
-		}
-		erasure := "—"
-		if e := sh.Erasure; e != nil {
-			erasure = fmt.Sprintf("%d: %s %s → %s", e.Line, erased[e.Erased], code(e.Text), code(e.Replacement))
-			if e.PartOfLine {
-				erasure += ", часть строки"
-			}
+			lines[i] = cell(t, l)
 		}
 		fmt.Fprintf(&b, "| %d | %s | %s | %s | %d | %s | %s |\n",
-			sh.Number, code(sh.Task), code(string(sh.Scenario)), strings.Join(lines, "; "), sh.Answer, firstError, erasure)
+			sh.Number, cell(t, sh.Task), cell(t, string(sh.Scenario)), strings.Join(lines, "; "), sh.Answer, firstErrorCell(t, sh.Expected), erasureCell(t, sh))
 	}
 	return strings.TrimSuffix(b.String(), "\n")
+}
+
+// cell writes a text of a sheet plan in backquotes, for a table of docs/sheets.md or
+// docs/free-sheets.md. A text with a vertical bar, a backquote or a semicolon would break its cell
+// or the list of lines or parts in it, and the test stops on it.
+func cell(t *testing.T, s string) string {
+	t.Helper()
+	if strings.ContainsAny(s, "|`;") {
+		t.Fatalf("%q cannot stand in a cell of a table of sheets: it holds a vertical bar, a backquote or a semicolon", s)
+	}
+	return "`" + s + "`"
+}
+
+// firstErrorCell writes a sheet's first error: the number of its line or part and the trap, or a
+// dash for none.
+func firstErrorCell(t *testing.T, e sample.Expected) string {
+	t.Helper()
+	if e.FirstError == nil {
+		return "—"
+	}
+	s := strconv.Itoa(*e.FirstError)
+	if e.Trap != "" {
+		s += ": " + cell(t, e.Trap)
+	}
+	return s
+}
+
+// erasureCell writes a sheet's planned erasure: the line or part written in place of the erased,
+// what was erased and its text and, after the arrow, what replaced it, and then where it stands
+// when it takes less than a line: in a drawing, in a column or in a part of a line. A dash stands
+// for none.
+func erasureCell(t *testing.T, sh sample.PlanSheet) string {
+	t.Helper()
+	e := sh.Erasure
+	if e == nil {
+		return "—"
+	}
+	erased := map[sample.Erased]string{sample.ErasedMistake: "ошибка", sample.ErasedCorrectStep: "верный шаг"}
+	s := fmt.Sprintf("%d: %s %s → %s", e.Line, erased[e.Erased], cell(t, e.Text), cell(t, e.Replacement))
+	var part sample.PlanPart
+	if e.Line >= 1 && e.Line <= len(sh.Parts) {
+		part = sh.Parts[e.Line-1]
+	}
+	switch {
+	case part.Kind == sample.PartDrawing:
+		return s + ", в рисунке"
+	case part.Figure.Column != nil:
+		return s + ", в столбике"
+	case e.PartOfLine:
+		return s + ", часть строки"
+	}
+	return s
+}
+
+// sameTable checks that a Markdown document holds a table built from a file, byte for byte. It
+// finds the table by its header line; with none, it shows the table built.
+func sameTable(t *testing.T, docPath, doc, from, built string) {
+	t.Helper()
+	lines := strings.Split(built, "\n")
+	written := tableIn(doc, lines[0])
+	if written == nil {
+		t.Errorf("%s has no table headed %q; built from %s, it is\n%s", docPath, lines[0], from, built)
+		return
+	}
+	for i := range max(len(lines), len(written)) {
+		var b, w string
+		if i < len(lines) {
+			b = lines[i]
+		}
+		if i < len(written) {
+			w = written[i]
+		}
+		if b != w {
+			t.Errorf("line %d of the table headed %q differs:\n%s has    %q\n%s gives %q", i+1, lines[0], docPath, w, from, b)
+			return
+		}
+	}
+}
+
+func readDoc(t *testing.T, path string) string {
+	t.Helper()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(data)
 }
 
 // tableIn returns the lines of the table in a Markdown document that starts with the given
