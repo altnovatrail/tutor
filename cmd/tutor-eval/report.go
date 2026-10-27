@@ -11,11 +11,13 @@ import (
 	"github.com/altnovatrail/tutor/internal/measure"
 	"github.com/altnovatrail/tutor/internal/newfile"
 	"github.com/altnovatrail/tutor/internal/report"
+	"github.com/altnovatrail/tutor/internal/runner"
 )
 
-// runReport turns the log of a run into its report, asking no model (R24): the criterion and the
-// numbers of architecture 3.1 in Markdown, and the answers by judge and form in CSV, next to the
-// log under its name, as new files. A report holds no handwriting: numbers, sheets by their
+// runReport turns the log of a run into its report, asking no model, by the kind of call the log
+// is of (T67). Of the judge, whose log tells no kind (R24): the criterion and the numbers of
+// architecture 3.1 in Markdown, and the answers by judge and form in CSV, next to the log under its
+// name, as new files. A report holds no handwriting: numbers, sheets by their
 // numbers and scenarios, and the names of judges and forms.
 func runReport(args []string, stdout, stderr io.Writer) int {
 	const use = "usage: tutor-eval report LOG"
@@ -28,13 +30,16 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 		return exitUsage
 	}
 	path := args[0]
-	f, err := os.Open(path)
+	data, err := os.ReadFile(path)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval report: %v\n", err)
 		return exitFail
 	}
-	l, err := measure.ReadLog(f)
-	_ = f.Close()
+	if kind := runner.CallKind(data); kind != "" {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval report: %s: a log of the kind of call %q, and the report knows the judge alone so far\n", path, kind)
+		return exitFail
+	}
+	l, err := measure.ReadLog(bytes.NewReader(data))
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval report: %s: %v\n", path, err)
 		return exitFail

@@ -6,9 +6,11 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"math"
 	"os"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -16,10 +18,13 @@ import (
 
 	"github.com/altnovatrail/tutor/internal/judge"
 	"github.com/altnovatrail/tutor/internal/measure"
+	"github.com/altnovatrail/tutor/internal/runner"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/synth"
 	"github.com/altnovatrail/tutor/provider"
 )
+
+var update = flag.Bool("update", false, "write the golden logs anew")
 
 // sheets are the synthetic sheets a plan can hold, as a part of a run: five without frames, and
 // erasure-fixed with two and erasure-broken with one.
@@ -48,6 +53,18 @@ func judgeNamed(name string) measure.Judge {
 }
 
 func near(a, b float64) bool { return math.Abs(a-b) < 1e-9 }
+
+// Every judge has the output tokens a call is expected to take: about 50, and Haiku with thinking
+// about 300 (architecture 3.1).
+func TestJudges(t *testing.T) {
+	var got []string
+	for _, j := range measure.Judges() {
+		got = append(got, fmt.Sprintf("%s %d", j.Name, j.Output))
+	}
+	if s := strings.Join(got, ", "); s != "opus-high 50, haiku-low 300, haiku-low-no-thinking 50" {
+		t.Errorf("the judges are %s", s)
+	}
+}
 
 // The estimate counts the calls and what they cost by the prices of provider/claude and the
 // expected tokens of architecture 3.1: Opus 5.5 at high costs $0.0084 for form A and $0.0100 for
@@ -102,7 +119,7 @@ func TestRunOnTheStub(t *testing.T) {
 		t.Fatal(err)
 	}
 	var log bytes.Buffer
-	res, err := r.Do(context.Background(), measure.Stub, 10, &log, clock)
+	res, err := r.Do(context.Background(), runner.Stub, 10, &log, clock)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -155,55 +172,6 @@ func TestRunOnTheStub(t *testing.T) {
 	}
 }
 
-// The run reserves the worst case of every call: it starts no call that could take it past its
-// cap, and says so.
-func TestCap(t *testing.T) {
-	opus := judgeNamed("opus-high")
-	r, err := measure.New("test", sheets(t), []measure.Judge{opus}, 1, judge.V1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	worst := (8000*4 + 16000*20) / 1e6
-	var log bytes.Buffer
-	res, err := r.Do(context.Background(), measure.Stub, worst+0.03, &log, clock)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if res.Calls == 0 || res.Calls >= r.Estimate().Calls || !strings.HasPrefix(res.Stopped, "the cap") {
-		t.Fatalf("the run ended %+v, want it stopped by the cap after a few of its %d calls", res, r.Estimate().Calls)
-	}
-	if res.SpentUSD+worst <= worst+0.03 {
-		t.Errorf("the run stopped at $%.4f, when the next call could still be afforded", res.SpentUSD)
-	}
-	recs := records(t, log.Bytes())
-	var last map[string]any
-	for _, rec := range recs {
-		if rec["kind"] == "call" && rec["same_as"] == nil {
-			last = rec
-		}
-	}
-	if res.SpentUSD-last["cost_usd"].(float64)+worst > worst+0.03 {
-		t.Errorf("the last call was started past the cap")
-	}
-	if end := recs[len(recs)-1]; end["stopped"] != res.Stopped {
-		t.Errorf("the log ends %v", end)
-	}
-}
-
-// A run whose context ends stops before the next call.
-func TestInterrupted(t *testing.T) {
-	r, err := measure.New("test", sheets(t), measure.Judges(), 1, judge.V1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	var log bytes.Buffer
-	if res, err := r.Do(ctx, measure.Stub, 10, &log, clock); err != nil || res.Calls != 0 || res.Stopped != "interrupted" {
-		t.Errorf("an interrupted run ended %+v, %v", res, err)
-	}
-}
-
 // A failed call is logged with its error, and its tokens are billed; a call whose bill is not
 // known counts at its worst. An answer off the schema is logged with the reader's error.
 func TestFailures(t *testing.T) {
@@ -212,8 +180,8 @@ func TestFailures(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	broke := func(_ context.Context, q measure.Question) (provider.Response, error) {
-		if q.Form == judge.FormA {
+	broke := func(_ context.Context, _ runner.Step, req provider.Request) (provider.Response, error) {
+		if req.Instructions == judge.FormA.Instructions(judge.V1) {
 			return provider.Response{InputTokens: 1000, OutputTokens: 20, Partial: true}, errors.New("the stream broke")
 		}
 		return provider.Response{JSON: `{"verdict": "so_far_correct", "box": null}`, InputTokens: 1000, OutputTokens: 10}, nil
@@ -254,7 +222,7 @@ func TestStubWithoutVerdict(t *testing.T) {
 		t.Fatal(err)
 	}
 	var log bytes.Buffer
-	res, err := r.Do(context.Background(), measure.Stub, 10, &log, clock)
+	res, err := r.Do(context.Background(), runner.Stub, 10, &log, clock)
 	if err != nil || res.Calls != 2 || res.Stopped != "" {
 		t.Fatalf("the run ended %+v, %v", res, err)
 	}
@@ -262,28 +230,6 @@ func TestStubWithoutVerdict(t *testing.T) {
 		if msg, _ := rec["error"].(string); rec["kind"] == "call" && rec["same_as"] == nil && !strings.Contains(msg, "no verdict for a sheet of the outcome") {
 			t.Errorf("the call is logged %v", rec)
 		}
-	}
-}
-
-type failing struct{ after int }
-
-func (f *failing) Write(p []byte) (int, error) {
-	if f.after == 0 {
-		return 0, errors.New("the disk is full")
-	}
-	f.after--
-	return len(p), nil
-}
-
-// A log that cannot be written stops the run: an answer it cannot keep is lost.
-func TestLogFails(t *testing.T) {
-	r, err := measure.New("test", sheets(t), measure.Judges(), 1, judge.V1)
-	if err != nil {
-		t.Fatal(err)
-	}
-	res, err := r.Do(context.Background(), measure.Stub, 10, &failing{after: 9}, clock)
-	if err == nil || res.Calls > 2 {
-		t.Errorf("a run with a failing log ended %+v, %v", res, err)
 	}
 }
 
@@ -295,7 +241,7 @@ func TestReadLog(t *testing.T) {
 		t.Fatal(err)
 	}
 	var log bytes.Buffer
-	res, err := r.Do(context.Background(), measure.Stub, 10, &log, clock)
+	res, err := r.Do(context.Background(), runner.Stub, 10, &log, clock)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -384,7 +330,7 @@ func TestFreeWritingRun(t *testing.T) {
 		t.Fatal(err)
 	}
 	var log bytes.Buffer
-	if _, err := r.Do(context.Background(), measure.Stub, 10, &log, clock); err != nil {
+	if _, err := r.Do(context.Background(), runner.Stub, 10, &log, clock); err != nil {
 		t.Fatal(err)
 	}
 	l, err := measure.ReadLog(bytes.NewReader(log.Bytes()))
@@ -424,10 +370,50 @@ func TestFreeWritingRun(t *testing.T) {
 		t.Fatal(err)
 	}
 	log.Reset()
-	if _, err := r.Do(context.Background(), measure.Stub, 10, &log, clock); err != nil {
+	if _, err := r.Do(context.Background(), runner.Stub, 10, &log, clock); err != nil {
 		t.Fatal(err)
 	}
 	if l, err = measure.ReadLog(bytes.NewReader(log.Bytes())); err != nil || l.Sheets[0].Layout != sample.LayoutSide || l.Sheets[0].FirstErrorIn != "" || l.Sheets[0].FirstError != 4 {
 		t.Errorf("a sheet marked off its plan is %+v, %v", l.Sheets, err)
+	}
+}
+
+// The log a run on the stub writes is the same, byte for byte, as its golden: of the sheets of
+// lines in version 1 of the prompt, and of three sheets of free writing in version 2. The goldens
+// were written by the runner before it was split into the runner of every kind and the judge's
+// kind (T67), so they hold the judge's log as E2 and T66 wrote it. With -update the test writes
+// them anew.
+func TestLogGolden(t *testing.T) {
+	for _, c := range []struct {
+		name   string
+		part   string
+		sheets []measure.Sheet
+		v      judge.Version
+	}{
+		{"stub-v1.jsonl", "test", sheets(t), judge.V1},
+		{"stub-v2.jsonl", "all", freeSheets(t, 1, 2, 3), judge.V2},
+	} {
+		r, err := measure.New(c.part, c.sheets, measure.Judges(), 1, c.v)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var log bytes.Buffer
+		if _, err := r.Do(context.Background(), runner.Stub, 10, &log, clock); err != nil {
+			t.Fatal(err)
+		}
+		path := filepath.Join("testdata", c.name)
+		if *update {
+			if err := os.WriteFile(path, log.Bytes(), 0o644); err != nil {
+				t.Fatal(err)
+			}
+			continue
+		}
+		want, err := os.ReadFile(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.Equal(log.Bytes(), want) {
+			t.Errorf("the log of the run is not %s; with -update the test writes it anew", path)
+		}
 	}
 }

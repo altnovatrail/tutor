@@ -68,4 +68,13 @@ func TestReportRefuses(t *testing.T) {
 	if code, _, errs := runIt("report", bad); code != exitFail || !strings.Contains(errs, "out of its place") {
 		t.Errorf("a log that does not start with its run: %d, %s", code, errs)
 	}
+	// A log of another kind of call than the judge is not read as the judge's: its report comes
+	// with its kind.
+	other := filepath.Join(t.TempDir(), "reading.jsonl")
+	if err := os.WriteFile(other, []byte("{\"kind\": \"run\", \"call_kind\": \"reading\"}\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if code, _, errs := runIt("report", other); code != exitFail || !strings.Contains(errs, "a log of the kind of call \"reading\"") {
+		t.Errorf("a log of reading: %d, %s", code, errs)
+	}
 }

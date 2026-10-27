@@ -1,6 +1,7 @@
 // Command tutor-eval is tutor's eval runner: it runs the AI capabilities on eval samples, on the
-// same code that api calls, and reports how they did. Its run command runs the measurement of the
-// writing process (R24), and its report command reports on a run; its other commands serve the
+// same code that api calls, and reports how they did. Its run command runs the calls of a kind on
+// the runner, so far the judge of the measurement of the writing process (R24), and its report
+// command reports on a run by the kind of its log; its other commands serve the
 // board, check the files of samples, banks and sheet plans, and write synthetic ones: run it
 // without arguments for its commands.
 package main
@@ -51,11 +52,14 @@ const usage = `usage:
                              handwriting
   tutor-eval split -seed N [-dev K] [-dir D] [-bank F] [-plan F]
                              divide the recorded sheets into development and test, once
-  tutor-eval run -part dev|test [-repeats N] [-max-usd N] [-log F] [-stub] [-dir D] [-bank F] [-plan F]
-                             run the measurement on a part: the estimate first, then calls
-                             to Claude once you type yes, and a log of every answer
-  tutor-eval report LOG      the report of a run from its log, asking no model: the criterion
-                             and the numbers in Markdown and CSV, beside the log
+  tutor-eval run -part dev|test|all [-kind judge] [-repeats N] [-max-usd N] [-log F] [-stub]
+                 [-dir D] [-bank F] [-plan F]
+                             run the calls of a kind on a part of the split, or on all the
+                             sheets: the estimate first, then calls to Claude once you type
+                             yes, and a log of every answer
+  tutor-eval report LOG      the report of a run from its log, by its kind, asking no model:
+                             of the judge, the criterion and the numbers in Markdown and CSV,
+                             beside the log
   tutor-eval synth DIR       write the synthetic bank and one synthetic sample per scenario
   tutor-eval -version        print the version
 `
