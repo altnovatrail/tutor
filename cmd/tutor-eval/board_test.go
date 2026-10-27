@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 
@@ -36,6 +37,8 @@ func TestBoardCommand(t *testing.T) {
 		{"no cap", []string{"-max-usd", "0"}, keys, nil, exitUsage, false, "-max-usd must be above 0"},
 		{"a stray argument", []string{"extra"}, keys, nil, exitUsage, false, "unexpected arguments"},
 		{"the port is taken", nil, keys, errors.New("address already in use"), exitFail, true, "address already in use"},
+		// Handwriting goes to samples alone, never to the folder agents work with.
+		{"the synthetic folder", []string{"-dir", "../../synthetic/board"}, keys, nil, exitUsage, false, "outside its samples folder"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -136,6 +139,7 @@ func TestBoardRecordCommand(t *testing.T) {
 		{"a directory that cannot be made", append([]string{"-record", "-dir", filepath.Join(blocker, "sheets")}, files...), nil, exitFail, false, "tutor-eval board: mkdir "},
 		// The tests run in cmd/tutor-eval, where samples/sheets is not the samples folder at the root.
 		{"the default directory", append([]string{"-record"}, files...), nil, exitUsage, false, "cmd/tutor-eval/samples/sheets is in the git work tree"},
+		{"the synthetic folder", append([]string{"-record", "-dir", "../../synthetic/sheets"}, files...), nil, exitUsage, false, "outside its samples folder"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -169,21 +173,50 @@ func TestBoardRecordCommand(t *testing.T) {
 
 func TestCheckIgnored(t *testing.T) {
 	// The tests run in cmd/tutor-eval, two levels below the root of tutor, whose .gitignore ignores
-	// the samples folder at the root only.
-	if err := checkIgnored("../../samples/board"); err != nil {
+	// the samples and synthetic folders at the root only.
+	if err := checkIgnored("../../samples/board", samplesFolder); err != nil {
 		t.Errorf("the samples folder at the root: %v, want it taken", err)
 	}
-	if err := checkIgnored("samples/board"); err == nil || !strings.Contains(err.Error(), "outside its samples folder") {
+	if err := checkIgnored("samples/board", samplesFolder); err == nil || !strings.Contains(err.Error(), "outside its samples folder") {
 		t.Errorf("a samples folder below the root = %v, want it refused", err)
 	}
-	if err := checkIgnored(t.TempDir()); err != nil {
+	if err := checkIgnored(t.TempDir(), samplesFolder); err != nil {
 		t.Errorf("a folder outside any work tree: %v, want it taken", err)
 	}
 	// A folder whose name only starts like the samples folder is not in it.
-	if err := checkIgnored("../../samples-copy/board"); err == nil {
+	if err := checkIgnored("../../samples-copy/board", samplesFolder); err == nil {
 		t.Error("a folder beside the samples folder was taken")
 	}
-	if err := checkIgnored("../../samples"); err != nil {
+	if err := checkIgnored("../../samples", samplesFolder); err != nil {
 		t.Errorf("the samples folder itself: %v, want it taken", err)
+	}
+
+	// The board writes handwriting, which goes to samples alone; what code draws may go to either.
+	if err := checkIgnored("../../synthetic/board", samplesFolder); err == nil || !strings.Contains(err.Error(), "outside its samples folder") {
+		t.Errorf("the synthetic folder for the board = %v, want it refused", err)
+	}
+	for _, dir := range []string{"../../synthetic/lines", "../../synthetic", "../../samples/sheets"} {
+		if err := checkIgnored(dir, samplesFolder, syntheticFolder); err != nil {
+			t.Errorf("%s for the sheets drawn: %v, want it taken", dir, err)
+		}
+	}
+	for _, dir := range []string{"synthetic/lines", "../../synthetic-copy/lines", "../../eval"} {
+		if err := checkIgnored(dir, samplesFolder, syntheticFolder); err == nil || !strings.Contains(err.Error(), "outside its samples and synthetic folders") {
+			t.Errorf("%s for the sheets drawn = %v, want it refused", dir, err)
+		}
+	}
+}
+
+// The folders checkIgnored takes are the ones tutor's .gitignore ignores, at the root alone.
+func TestIgnoredFolders(t *testing.T) {
+	data, err := os.ReadFile("../../.gitignore")
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.Split(string(data), "\n")
+	for _, folder := range []string{samplesFolder, syntheticFolder} {
+		if !slices.Contains(lines, "/"+folder+"/") {
+			t.Errorf(".gitignore has no line /%s/", folder)
+		}
 	}
 }

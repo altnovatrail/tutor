@@ -28,8 +28,9 @@ var partCaps = map[string]float64{"dev": 3, "test": 6}
 // has, by the three judges, repeated (R24). It first says how many calls the run makes and what
 // they are expected to cost, and starts only once the author types yes (rule 4 of RUN.md); till
 // then Ctrl-C ends it as any command, and from then on it stops the run before the next call. The
-// log goes next to the sheets, out of git; the sheets themselves the author's run reads, and no
-// agent (R05).
+// log goes next to the sheets, out of git. A run on the author's sheets, in samples, the author
+// starts, and no agent reads them (R05); on sheets drawn by code, in synthetic, the executor starts
+// it within the task's ceiling (R28).
 func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer, getenv func(string) string, now func() time.Time) int {
 	flags := flag.NewFlagSet("tutor-eval run", flag.ContinueOnError)
 	var f sheetFlags
@@ -37,13 +38,12 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	part := flags.String("part", "", "the part of the split to run: dev or test")
 	repeats := flags.Int("repeats", 3, "how many times each sheet is asked in each form by each judge")
 	maxUSD := flags.Float64("max-usd", 0, "start no call that could take the run past this many US dollars; $3 for dev and $6 for test by default")
-	logPath := flags.String("log", "", "the log of the run, a new file out of git; by default in runs next to the directory of the sheets")
+	logPath := flags.String("log", "", "the log of the run, a new file out of git: in samples or synthetic, and in samples alone for sheets there; by default in runs next to the directory of the sheets")
 	stub := flags.Bool("stub", false, "ask no model: a stub answers by the markup, and the run needs no key and no network")
 	if code, ok := parse(flags, args, stderr); !ok {
 		return code
 	}
-	set := map[string]bool{}
-	flags.Visit(func(fl *flag.Flag) { set[fl.Name] = true })
+	set := given(flags)
 	if !f.usable("tutor-eval run", stderr) {
 		return exitUsage
 	}
@@ -86,7 +86,13 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		at := now().UTC()
 		path = filepath.Join(filepath.Dir(filepath.Clean(f.dir)), "runs", fmt.Sprintf("%s-%03d-%s.jsonl", at.Format("20060102-150405"), at.Nanosecond()/int(time.Millisecond), *part))
 	}
-	if err := checkIgnored(filepath.Dir(path)); err != nil {
+	// A run on the author's sheets logs in samples alone: its log holds every answer as the model
+	// gave it, and nothing of the author's sheets goes to the folder agents work with.
+	folders := []string{samplesFolder, syntheticFolder}
+	if f.folder == samplesFolder {
+		folders = folders[:1]
+	}
+	if err := checkIgnored(filepath.Dir(path), folders[0], folders[1:]...); err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: %v\n", err)
 		return exitFail
 	}

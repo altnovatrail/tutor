@@ -15,25 +15,48 @@ import (
 	"github.com/altnovatrail/tutor/internal/sheets"
 )
 
-// sheetFlags are the flags that tutor-eval sheets and split share: the directory of the sheets,
-// the bank and the plan.
+// sheetFlags are the flags that the commands of the sheets — draw, sheets, split and run — share:
+// the directory of the sheets, the bank and the plan, and once usable has passed the directory, the
+// ignored folder it is in, or "" outside any work tree.
 type sheetFlags struct {
 	dir, bank, plan string
+	folder          string
 }
 
 func (f *sheetFlags) add(flags *flag.FlagSet) {
-	flags.StringVar(&f.dir, "dir", sheetsDir, "the directory of the sheets the record mode saved, out of git")
+	flags.StringVar(&f.dir, "dir", sheetsDir, "the directory of the sheets, out of git: in samples, or in synthetic for sheets drawn by code")
 	flags.StringVar(&f.bank, "bank", "eval/bank.json", "the bank of tasks")
 	flags.StringVar(&f.plan, "plan", "eval/sheets.json", "the sheet plan")
 }
 
-// usable refuses an empty -dir: a command of the sheets reads them from a directory it is given.
+// usable refuses an empty -dir, since a command of the sheets reads them from a directory it is
+// given, and a directory it may not take: one in the work tree outside samples and synthetic
+// (checkIgnored), or either folder itself, since a run logs beside the directory of its sheets.
 func (f *sheetFlags) usable(name string, stderr io.Writer) bool {
 	if f.dir == "" {
 		_, _ = fmt.Fprintf(stderr, "%s: -dir is empty: name the directory of the sheets, or leave the flag out for %s\n", name, sheetsDir)
 		return false
 	}
+	err := checkIgnored(f.dir, samplesFolder, syntheticFolder)
+	if err == nil {
+		var abs, root string
+		abs, root, f.folder, err = placeOf(f.dir)
+		if err == nil && f.folder != "" && abs == filepath.Join(root, f.folder) {
+			err = fmt.Errorf("%s is the %s folder itself: give -dir a folder in it, such as %s/lines, since a run logs beside the directory of its sheets", abs, f.folder, f.folder)
+		}
+	}
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "%s: %v\n", name, err)
+		return false
+	}
 	return true
+}
+
+// given is the set of the flags the command line set.
+func given(flags *flag.FlagSet) map[string]bool {
+	set := map[string]bool{}
+	flags.Visit(func(fl *flag.Flag) { set[fl.Name] = true })
+	return set
 }
 
 // parse reads a command's flags and refuses arguments besides them. It returns false with the exit
@@ -143,14 +166,8 @@ func runSplit(args []string, stdout, stderr io.Writer) int {
 	if !f.usable("tutor-eval split", stderr) {
 		return exitUsage
 	}
-	seeded := false
-	flags.Visit(func(fl *flag.Flag) { seeded = seeded || fl.Name == "seed" })
-	if !seeded {
+	if !given(flags)["seed"] {
 		_, _ = fmt.Fprintln(stderr, "tutor-eval split: -seed is missing: the split is made once, with a seed you choose")
-		return exitUsage
-	}
-	if err := checkIgnored(f.dir); err != nil {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval split: %v\n", err)
 		return exitUsage
 	}
 	path := filepath.Join(f.dir, sheets.SplitFile)

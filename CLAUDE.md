@@ -42,4 +42,14 @@ A command that walks the whole tree, such as `grep -r` or `find .`, names no fol
 
 The go command given `./...`, the tools that load packages through it (golangci-lint, govulncheck, go-licenses) and `golangci-lint fmt` are the one exception, so the recipes of the `justfile` may run as they are. They read the names in each folder, `samples/` among them, but open only `.go` files, of which there are none there, and print nothing from it (R14 in docs/decisions.md). If a `.go` file ever lands in `samples/`, the exception no longer holds.
 
-Inside the container these are rules, not an access boundary. So whatever needs the samples, the paid runs among them, is run by the author, and only the summary report, without handwriting, reaches the repository. Tests run on synthetic strokes that the code draws.
+Inside the container these are rules, not an access boundary. So whatever needs the samples, the paid runs among them, is run by the author, and only the summary report, without handwriting, reaches the repository. Tests run on synthetic strokes that the code draws. The sheets that code draws for a measurement are no one's handwriting either: they go to `synthetic/`, below.
+
+## synthetic/
+
+`synthetic/` holds what code draws for eval, and the runs on it: the sheets `tutor-eval draw` draws, their pictures and splits, and the logs and reports of the runs (R26, R28; architecture 3.4). No one's handwriting is in it, so it is open to every agent: read, list, write and run there as the task needs. Two things keep it so:
+- no handwriting goes there, the author's or anyone's, and nothing is copied there from `samples/`. The board and its record mode write only to `samples/` and refuse any other folder in the work tree, `synthetic/` among them. `draw`, `sheets`, `split` and `run` take a folder in either, but a run on sheets in `samples/` logs there alone (R05, R28);
+- `/synthetic/` is in `.gitignore`, and nothing there is committed: the same seed draws the same sheets again.
+
+The folder's name holds no word that the deny rules of `.claude/settings.json` match, so a command that names it runs. But the board, `draw`, `sheets`, `split` and `run`, and the recipes `just board`, `just record` and `just measure`, have their default directories in `samples/`: a command that falls back to one writes or reads there without naming it, past the deny rules. So give each such command its `-dir`, and `-log` where it takes one: in `synthetic/` for the commands of the sheets, and outside the work tree for a test of the board.
+
+A paid run on `synthetic/` the executor starts itself, within the ceiling its task names: that ceiling is the author's confirmation under rule 4 of RUN.md (R28). The day's prices are checked on Anthropic's Pricing page before each run. The key for eval stays outside the repository, in `~/.config/tutor/anthropic.key`: the run gets it in its own environment, `TUTOR_ANTHROPIC_API_KEY="$(cat ~/.config/tutor/anthropic.key)"`, and no command prints it.
