@@ -749,3 +749,201 @@ func saved(name string) bool {
 	_, ok := sample.ParseSheetFile(name)
 	return ok
 }
+
+// The plan of the author's free-form sheets and the bank of free-form tasks, as seen from this
+// package's directory: three sheets of parts, a number line, a scheme and columns at the side (T57).
+const (
+	authorPlan = "../../eval/free-author.json"
+	freeBank   = "../../eval/free-bank.json"
+)
+
+// partsRecorder starts the record mode of the plan of the author's free-form sheets in a new
+// directory, its clock standing at one moment, and returns it with its handler.
+func partsRecorder(t *testing.T) (*Recorder, http.Handler) {
+	t.Helper()
+	read := func(path string) *os.File {
+		f, err := os.Open(path)
+		if err != nil {
+			t.Fatal(err)
+		}
+		t.Cleanup(func() { _ = f.Close() })
+		return f
+	}
+	bank, err := sample.ReadBank(read(freeBank))
+	if err != nil {
+		t.Fatal(err)
+	}
+	plan, err := sample.ReadPlan(read(authorPlan))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rc, err := NewRecorder(bank, plan, t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	rc.now = func() time.Time { return time.Date(2026, 10, 27, 18, 0, 0, 0, time.UTC) }
+	return rc, rc.Handler(boardAddr)
+}
+
+// The plan view of a plan of parts carries each sheet's parts, with their kind and place, and a plan
+// of lines carries none.
+func TestRecordPlanViewParts(t *testing.T) {
+	rc, h := partsRecorder(t)
+	rec, _ := call(t, h, "GET", "/api/record/plan", nil)
+	var view PlanView
+	if err := json.Unmarshal(rec.Body.Bytes(), &view); err != nil || rec.Code != http.StatusOK {
+		t.Fatalf("GET /api/record/plan = %d %s", rec.Code, rec.Body)
+	}
+	for i, sh := range view.Sheets {
+		want := rc.plan.Sheets[i].Parts
+		if len(sh.Parts) != len(want) || len(want) == 0 {
+			t.Fatalf("sheet %d: %d parts in the view, want the plan's %d", sh.Number, len(sh.Parts), len(want))
+		}
+		for j, p := range sh.Parts {
+			if p.Kind != want[j].Kind || p.Place != want[j].Place || p.Text != want[j].Text || !slices.Equal(sh.Lines, rc.plan.Sheets[i].Lines) {
+				t.Errorf("sheet %d, part %d = %s %s %q, want the plan's %+v", sh.Number, j+1, p.Kind, p.Place, p.Text, want[j])
+			}
+		}
+	}
+	_, lines := recorder(t)
+	if rec, _ := call(t, lines, "GET", "/api/record/plan", nil); !strings.Contains(rec.Body.String(), `"parts":[]`) {
+		t.Errorf("the plan view of a plan of lines = %s, want no parts", rec.Body)
+	}
+}
+
+// On a sheet of parts the board proposes a part to each group of strokes, in the order of first
+// writing, with the plan's texts and answer. On the sheets code draws for the author's plan no group
+// holds strokes of two parts, and a part without the planned erasure is one group; a drawing redrawn
+// after the erasure comes as more, one after another, and joined they are the markup code drew,
+// which saves without differences. The planned erasure is the one on the plan's part, by the place
+// of its strokes on the plane.
+func TestRecordProposeParts(t *testing.T) {
+	rc, h := partsRecorder(t)
+	ran, split := 0, 0 // the sheets tried, and those whose groups are more than their parts
+	for _, sh := range rc.plan.Sheets {
+		for _, seed := range []uint64{1, 2, 77} {
+			t.Run(fmt.Sprintf("sheet %d seed %d", sh.Number, seed), func(t *testing.T) {
+				ran++
+				s := synth.Sheet(&sh, seed)
+				undone := make([]bool, len(s.Erasures))
+				planned := -1
+				for i, e := range s.Erasures {
+					undone[i] = e.Planned == nil // code's slips stand for what Undo takes away
+					if e.Planned != nil {
+						planned = i
+					}
+				}
+				rec, proposed := call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: sh.Number, Strokes: s.Strokes, Erasures: s.Erasures, Undone: undone})
+				var p Proposal
+				if err := json.Unmarshal(rec.Body.Bytes(), &p); err != nil || rec.Code != http.StatusOK {
+					t.Fatalf("propose = %d %s", rec.Code, rec.Body)
+				}
+				partOf := map[string]int{}
+				for k, l := range s.Lines {
+					for _, id := range l.Strokes {
+						partOf[id] = k
+					}
+				}
+				order := map[string]int{}
+				for i, st := range s.Strokes {
+					order[st.ID] = i
+				}
+				joined := make([][]string, len(s.Lines))
+				groups := make([]int, len(s.Lines))
+				last := -1
+				for i, l := range p.Lines {
+					k := partOf[l.Strokes[0]]
+					for _, id := range l.Strokes {
+						if partOf[id] != k {
+							t.Fatalf("group %d holds strokes of parts %d and %d", i+1, k+1, partOf[id]+1)
+						}
+					}
+					if k < last || (k != last && k != last+1) {
+						t.Fatalf("group %d is of part %d after a group of part %d: the groups of a part do not come one after another", i+1, k+1, last+1)
+					}
+					last = k
+					groups[k]++
+					joined[k] = append(joined[k], l.Strokes...)
+					if want := sh.Lines[min(i, len(sh.Lines)-1)]; i < len(sh.Lines) && l.Text != want {
+						t.Errorf("group %d has the text %q, want the plan's %q", i+1, l.Text, want)
+					}
+				}
+				for k, n := range groups {
+					if n != 1 && (sh.Erasure == nil || sh.Erasure.Line != k+1) {
+						t.Errorf("part %d without the planned erasure is %d groups, want one", k+1, n)
+					}
+					slices.SortFunc(joined[k], func(a, b string) int { return order[a] - order[b] })
+					if !slices.Equal(joined[k], s.Lines[k].Strokes) {
+						t.Errorf("part %d joined = %v, want the strokes code drew %v", k+1, joined[k], s.Lines[k].Strokes)
+					}
+				}
+				switch {
+				case len(p.Lines) > len(sh.Lines):
+					split++
+					noted(t, proposed["differences"], "sample.lines", fmt.Sprintf("the sheet has %d parts, and its plan sheet %d: a part drawn on after a pause of more than 2 seconds comes as two groups, so join them", len(p.Lines), len(sh.Lines)))
+				case len(p.Differences) != 0:
+					t.Errorf("differences = %v, want none", p.Differences)
+				}
+				if sh.Erasure != nil && (p.Planned == nil || *p.Planned != planned) {
+					t.Errorf("planned = %v, want the erasure %d", p.Planned, planned)
+				}
+
+				s.Writer = sample.WriterAuthor
+				_, out := call(t, h, "POST", "/api/record/check", saveBody(sh.Number, raw(t, s)))
+				if sh.Erasure != nil {
+					if got := out["erasure_lines"].([]any); int(got[planned].(float64)) != sh.Erasure.Line {
+						t.Errorf("erasure lines = %v, want the planned one on part %d", got, sh.Erasure.Line)
+					}
+				}
+				rec, out = call(t, h, "POST", "/api/record/save", saveBody(sh.Number, raw(t, s)))
+				if rec.Code != http.StatusOK || len(out["differences"].([]any)) != 0 {
+					t.Errorf("save = %d %v, want the sheet saved without differences", rec.Code, out)
+				}
+			})
+		}
+	}
+	if ran == 3*len(rc.plan.Sheets) && split == 0 {
+		t.Error("no sheet came in more groups than parts, so joining them is not tested")
+	}
+}
+
+// A sheet of parts with a part missing, or with nothing written, is named in parts, with what to do.
+func TestRecordProposePartsNames(t *testing.T) {
+	rc, h := partsRecorder(t)
+	sh := rc.plan.Sheets[2] // the columns at the side, without an erasure
+	s := synth.Sheet(&sh, 1)
+	drop := map[string]bool{}
+	for _, id := range s.Lines[len(s.Lines)-1].Strokes {
+		drop[id] = true
+	}
+	var kept []sample.Stroke
+	for _, st := range s.Strokes {
+		if !drop[st.ID] {
+			kept = append(kept, st)
+		}
+	}
+	_, out := call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: sh.Number, Strokes: kept, Erasures: s.Erasures})
+	noted(t, out["differences"], "sample.lines", fmt.Sprintf("the sheet has %d parts, and its plan sheet %d: two parts written close together without a pause come as one group", len(sh.Lines)-1, len(sh.Lines)))
+	_, out = call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: sh.Number})
+	noted(t, out["differences"], "sample.lines", "the sheet has no parts yet")
+
+	// A planned erasure on a sheet without a move of the eraser is named on its part.
+	first := rc.plan.Sheets[0]
+	drawn := synth.Sheet(&first, 1)
+	_, out = call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: first.Number, Strokes: drawn.Strokes})
+	noted(t, out["differences"], "sample.erasures", fmt.Sprintf("its plan sheet plans an erasure on part %d", first.Erasure.Line))
+
+	// Two moves of the eraser on its parts: the one that took more strokes is taken, whatever group
+	// they stood on, and the sheet is named, as the planned erasure is one move.
+	slipID := drawn.Lines[len(drawn.Lines)-1].Strokes[0]
+	moves := append(slices.Clone(drawn.Erasures), sample.Erasure{TMs: 1 << 40, Strokes: []string{slipID}})
+	rec, out := call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: first.Number, Strokes: drawn.Strokes, Erasures: moves})
+	var p Proposal
+	if err := json.Unmarshal(rec.Body.Bytes(), &p); err != nil || p.Planned == nil || *p.Planned != 0 {
+		t.Errorf("planned = %v (%v), want the first move, which took more strokes", p.Planned, err)
+	}
+	noted(t, out["differences"], "sample.erasures", "2 moves of the eraser took strokes from the parts of the sheet, and the planned erasure is one move")
+	if p, _ := call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: first.Number, Strokes: drawn.Strokes, Erasures: moves, Undone: []bool{false, true}}); p.Code != http.StatusOK || strings.Contains(p.Body.String(), "moves of the eraser") {
+		t.Errorf("with the second by Undo = %d %s, want nothing named", p.Code, p.Body)
+	}
+}

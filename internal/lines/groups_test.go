@@ -354,3 +354,30 @@ func TestErasurePart(t *testing.T) {
 		t.Errorf("ErasureLine = %d, want 1, the line the bands give", got)
 	}
 }
+
+// PartsTaken counts, for each erasure, the strokes it took from each part by the place on the plane,
+// and names the part most of them stood on, the earlier of two that hold as many.
+func TestPartsTaken(t *testing.T) {
+	line := row("a", 3, 100, 100, 30, 20, 0, 400)
+	axis := stroke("axis", 100, 400, 820, 400, 5000, 6000)
+	s := &sample.Sample{
+		Strokes: joined(line, []sample.Stroke{axis,
+			stroke("arc", 100, 360, 235, 400, 8000, 8500), stroke("arc2", 300, 360, 435, 400, 8600, 9000),
+			stroke("x1", 100, 100, 130, 130, 9100, 9200), stroke("far", 400, 550, 420, 570, 9300, 9400)}),
+		Lines: []sample.Line{{Strokes: []string{"a1", "a2", "a3"}}, {Strokes: []string{"axis"}}},
+	}
+	got := PartsTaken(s, []sample.Erasure{
+		{TMs: 9500, Strokes: []string{"arc", "arc2", "x1"}},
+		{TMs: 9600, Strokes: []string{"x1", "arc"}},
+		{TMs: 9700, Strokes: []string{"far", "gone"}},
+	})
+	want := []Taken{{From: map[int]int{1: 1, 2: 2}, Line: 2}, {From: map[int]int{1: 1, 2: 1}, Line: 1}, {From: map[int]int{}, Line: 0}}
+	if !reflect.DeepEqual(got, want) {
+		t.Errorf("PartsTaken = %+v, want %+v", got, want)
+	}
+	for i, e := range []sample.Erasure{{Strokes: []string{"arc", "arc2", "x1"}}, {Strokes: []string{"x1", "arc"}}} {
+		if n := ErasurePart(s, e); n != want[i].Line {
+			t.Errorf("ErasurePart of erasure %d = %d, want PartsTaken's %d", i, n, want[i].Line)
+		}
+	}
+}

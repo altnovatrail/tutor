@@ -23,10 +23,10 @@ const (
 	partsPlan       = "../../internal/sample/testdata/parts-plan.json"
 )
 
-// tutor-eval check reads a plan of parts against its bank, and draw draws its sheets: the number
-// line with a jump erased, the row with the first error in the drawing, the scheme with □ and △ and
-// the columns with a number erased. The commands that do not know parts yet refuse one, as they did
-// before plans of parts came, and make nothing.
+// tutor-eval check reads a plan of parts against its bank, the record mode of the board takes it,
+// and draw draws its sheets: the number line with a jump erased, the row with the first error in the
+// drawing, the scheme with □ and △ and the columns with a number erased. The measurement, which does
+// not know parts yet, refuses one, as it did before plans of parts came, and makes nothing.
 func TestPlanOfParts(t *testing.T) {
 	code, out, errs := runIt("check", freeBank, partsPlan)
 	if want := freeBank + ": ok, bank of 6 tasks\n" + partsPlan + ": ok, plan of 4 sheets, its tasks and traps are in the bank\n"; code != exitOK || out != want {
@@ -40,14 +40,19 @@ func TestPlanOfParts(t *testing.T) {
 	if code, _, errs := runMeasure("yes\n", append([]string{"-part", "dev", "-stub"}, files...)...); code != exitFail || !strings.Contains(errs, refused+"the measurement runs on sheets") {
 		t.Errorf("run = %d %q", code, errs)
 	}
+	if _, err := os.Stat(dir); !os.IsNotExist(err) {
+		t.Errorf("a command that refused the plan made %s: %v", dir, err)
+	}
+
 	stderr.Reset()
 	served := false
 	serve := func(*http.Server) error { served = true; return nil }
-	if code := runBoard(append([]string{"-record"}, files...), &stdout, &stderr, func(string) string { return "" }, serve); code != exitFail || served || !strings.Contains(stderr.String(), refused+"the record mode writes sheets") {
-		t.Errorf("board -record = %d, served %v, %q", code, served, stderr.String())
+	recorded := filepath.Join(t.TempDir(), "recorded")
+	if code := runBoard([]string{"-record", "-dir", recorded, "-bank", freeBank, "-plan", partsPlan}, &stdout, &stderr, func(string) string { return "" }, serve); code != exitOK || !served || !strings.Contains(stdout.String(), "Sheets go to "+recorded) {
+		t.Errorf("board -record = %d, served %v, %q %q", code, served, stdout.String(), stderr.String())
 	}
-	if _, err := os.Stat(dir); !os.IsNotExist(err) {
-		t.Errorf("a command that refused the plan made %s: %v", dir, err)
+	if _, err := os.Stat(recorded); err != nil {
+		t.Errorf("the record mode did not make its directory: %v", err)
 	}
 
 	stdout.Reset()
