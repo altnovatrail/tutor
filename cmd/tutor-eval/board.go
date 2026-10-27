@@ -220,6 +220,9 @@ func recordMode(f boardFlags, stderr io.Writer) (http.Handler, string, int) {
 		return nil, "", exitUsage
 	}
 	bank, plan, err := readPlan(f.bank, f.plan)
+	if err == nil {
+		err = linesOnly(f.plan, plan, "the record mode writes")
+	}
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %v\n", err)
 		return nil, "", exitFail

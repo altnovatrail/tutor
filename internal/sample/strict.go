@@ -105,12 +105,17 @@ func walk(dec *json.Decoder, t reflect.Type, path string, p *problems) error {
 	return nil
 }
 
-// walkObject reads the fields of an object whose '{' has been read.
+// walkObject reads the fields of an object whose '{' has been read. A field the JSON never holds —
+// unexported, or tagged exactly "-", as encoding/json reads that tag — is no field of the object:
+// it is what the type keeps in memory alone.
 func walkObject(dec *json.Decoder, t reflect.Type, path string, p *problems) error {
 	fields := make(map[string]reflect.Type, t.NumField())
 	var order []string
 	for i := range t.NumField() {
 		f := t.Field(i)
+		if !f.IsExported() || f.Tag.Get("json") == "-" {
+			continue
+		}
 		name, _, _ := strings.Cut(f.Tag.Get("json"), ",")
 		fields[name] = f.Type
 		order = append(order, name)

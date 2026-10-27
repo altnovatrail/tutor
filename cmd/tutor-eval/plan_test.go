@@ -3,20 +3,54 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"net/http"
 	"os"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
 // The sheet plan of the reading measurement and the document that shows it as a table
-// (docs/architecture.md, section 3.1), as seen from this package's directory.
+// (docs/architecture.md, section 3.1), and the golden plan of parts of internal/sample, as seen from
+// this package's directory.
 const (
 	measurementPlan = "../../eval/sheets.json"
 	sheetsDoc       = "../../docs/sheets.md"
+	partsPlan       = "../../internal/sample/testdata/parts-plan.json"
 )
+
+// tutor-eval check reads a plan of parts against its bank. The commands that do not know parts yet
+// refuse one, as they did before plans of parts came, and make nothing.
+func TestPlanOfParts(t *testing.T) {
+	code, out, errs := runIt("check", freeBank, partsPlan)
+	if want := freeBank + ": ok, bank of 6 tasks\n" + partsPlan + ": ok, plan of 4 sheets, its tasks and traps are in the bank\n"; code != exitOK || out != want {
+		t.Errorf("check = %d %q %q, want %q", code, out, errs, want)
+	}
+
+	dir := filepath.Join(t.TempDir(), "sheets")
+	files := []string{"-dir", dir, "-bank", freeBank, "-plan", partsPlan}
+	refused := " is a plan of version 1, with parts, and "
+	var stdout, stderr bytes.Buffer
+	if code := runDraw(files, &stdout, &stderr, time.Now); code != exitFail || !strings.Contains(stderr.String(), partsPlan+refused+"draw draws sheets of plans of version 0 alone") {
+		t.Errorf("draw = %d %q", code, stderr.String())
+	}
+	if code, _, errs := runMeasure("yes\n", append([]string{"-part", "dev", "-stub"}, files...)...); code != exitFail || !strings.Contains(errs, refused+"the measurement runs on sheets") {
+		t.Errorf("run = %d %q", code, errs)
+	}
+	stderr.Reset()
+	served := false
+	serve := func(*http.Server) error { served = true; return nil }
+	if code := runBoard(append([]string{"-record"}, files...), &stdout, &stderr, func(string) string { return "" }, serve); code != exitFail || served || !strings.Contains(stderr.String(), refused+"the record mode writes sheets") {
+		t.Errorf("board -record = %d, served %v, %q", code, served, stderr.String())
+	}
+	if _, err := os.Stat(dir); !os.IsNotExist(err) {
+		t.Errorf("a command that refused the plan made %s: %v", dir, err)
+	}
+}
 
 // TestSheetPlan checks the measurement's plan the way the author does, against its bank, and that
 // the table «Листы» of docs/sheets.md is the plan, byte for byte: the table built from the file

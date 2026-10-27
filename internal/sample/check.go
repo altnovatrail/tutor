@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"slices"
+	"strings"
 )
 
 // Check checks a sample on its own and returns a *FormatError listing every problem, or nil.
@@ -51,16 +52,33 @@ func checkInBank(p *problems, path, task, trap string, b *Bank) {
 	}
 }
 
-func checkHeader(p *problems, format, want string, version *int) {
+// checkHeader checks the format a file declares and its version, one of the versions known, or
+// Version when none is given.
+func checkHeader(p *problems, format, want string, version *int, known ...int) {
 	if format != want {
 		p.add("format", "is %q, not %q", format, want)
 	}
+	if len(known) == 0 {
+		known = []int{Version}
+	}
 	switch {
 	case version == nil:
-		p.add("version", "is missing; this reader knows version %d", Version)
-	case *version != Version:
-		p.add("version", "%d is not supported; this reader knows version %d", *version, Version)
+		p.add("version", "is missing; this reader knows %s", versions(known))
+	case !slices.Contains(known, *version):
+		p.add("version", "%d is not supported; this reader knows %s", *version, versions(known))
 	}
+}
+
+// versions names the versions a reader knows: "version 0", or "versions 0 and 1".
+func versions(known []int) string {
+	if len(known) == 1 {
+		return fmt.Sprintf("version %d", known[0])
+	}
+	names := make([]string, len(known))
+	for i, v := range known {
+		names[i] = fmt.Sprint(v)
+	}
+	return fmt.Sprintf("versions %s and %s", strings.Join(names[:len(names)-1], ", "), names[len(names)-1])
 }
 
 // strokeSpan is when a stroke was written, from its first point to its last. A stroke without

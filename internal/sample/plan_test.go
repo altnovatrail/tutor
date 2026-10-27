@@ -73,7 +73,7 @@ func TestCheckRefusesBrokenPlans(t *testing.T) {
 		// The plan's own rules.
 		{"another format", func(pl *sample.Plan) { pl.Format = sample.SampleFormat }, "format", `not "tutor-sheet-plan"`},
 		{"no version", func(pl *sample.Plan) { pl.Version = nil }, "version", "is missing"},
-		{"a newer version", func(pl *sample.Plan) { pl.Version = intp(1) }, "version", "1 is not supported"},
+		{"a newer version", func(pl *sample.Plan) { pl.Version = intp(2) }, "version", "2 is not supported; this reader knows versions 0 and 1"},
 		{"no sheets", func(pl *sample.Plan) { pl.Sheets = []sample.PlanSheet{} }, "sheets", "are missing"},
 		{"sheets out of order", func(pl *sample.Plan) { pl.Sheets[1].Number = 3 }, "sheets[1].number", "numbered in order from 1"},
 		{"a sheet without lines", func(pl *sample.Plan) { pl.Sheets[0].Lines = []string{} }, "sheets[0].lines", "are missing"},

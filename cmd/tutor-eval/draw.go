@@ -42,6 +42,9 @@ func runDraw(args []string, stdout, stderr io.Writer, now func() time.Time) int 
 		}
 	}
 	bank, plan, err := readPlan(f.bank, f.plan)
+	if err == nil {
+		err = linesOnly(f.plan, plan, "draw draws")
+	}
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval draw: %v\n", err)
 		return exitFail
