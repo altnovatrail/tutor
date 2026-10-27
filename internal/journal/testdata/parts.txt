@@ -1,0 +1,332 @@
+# The journals of parts of the sheets of eval/free-sheets.json, drawn with seed 1, with the marks
+# of the frames (internal/journal, TestPartsCodeSheets). After each sheet's number, task and
+# scenario: how many parts of its markup the journal finds with just their strokes.
+
+## 01 grasshopper correct: 4 of 4 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top centre).
+2. Wrote part 2 (middle left).
+3. Wrote part 3 (middle left).
+4. Wrote part 4 (bottom left).
+
+## 02 album error: 5 of 5 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top right).
+2. Wrote part 2 (top right).
+3. Wrote part 3 (top right).
+4. Wrote part 4 (top left).
+5. Wrote part 5 (top left).
+
+## 03 houses erasure-fixed: 2 of 3 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote erased writing 1 (top left).
+3. Erased 2 strokes of erased writing 1. Frame 1 shows the sheet just before this.
+4. Wrote part 2 (top centre).
+5. Wrote part 3 (middle left).
+6. Wrote part 4 (middle left).
+
+## 04 backwards erasure-broken: 2 of 3 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote part 2 (centre).
+3. Erased 3 strokes of part 2. Frame 1 shows the sheet just before this.
+4. Wrote part 3 (middle right).
+5. Wrote part 4 (middle left).
+
+## 05 stamps correct: 4 of 4 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote part 2 (top left).
+3. Wrote part 3 (middle left).
+4. Wrote part 4 (middle left).
+
+## 06 pages error: 3 of 3 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote part 2 (top right).
+3. Wrote part 3 (top left).
+
+## 07 grasshopper erasure-fixed: 3 of 4 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top centre).
+2. Erased 3 strokes of part 1. Frame 1 shows the sheet just before this.
+3. Wrote part 2 (top centre).
+4. Wrote part 3 (middle left).
+5. Wrote part 4 (middle left).
+6. Wrote part 5 (middle left).
+
+## 08 stamps erasure-broken: 3 of 4 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote part 2 (top centre).
+3. Wrote erased writing 1 (top left).
+4. Erased 1 stroke of part 2 and 1 of erased writing 1. Frame 1 shows the sheet just before this.
+5. Wrote part 3 (top left).
+6. Wrote part 4 (top left).
+7. Long pause.
+8. Wrote part 5 (middle left).
+9. Wrote part 6 (middle left).
+
+## 09 album correct: 5 of 5 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top centre).
+2. Wrote part 2 (top centre).
+3. Long pause.
+4. Wrote part 3 (top right).
+5. Wrote part 4 (top left).
+6. Wrote part 5 (top left).
+
+## 10 houses error: 3 of 3 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top centre).
+2. Wrote part 2 (top left).
+3. Wrote part 3 (middle left).
+
+## 11 backwards correct: 4 of 4 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote part 2 (top left).
+3. Long pause.
+4. Wrote part 3 (centre).
+5. Wrote part 4 (bottom left).
+
+## 12 grasshopper error: 2 of 2 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top centre).
+2. Wrote part 2 (middle left).
+
+## 13 pages erasure-broken: 4 of 5 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Long pause.
+3. Wrote part 2 (top left).
+4. Wrote erased writing 1 (top centre).
+5. Erased 1 stroke of part 2 and 1 of erased writing 1. Frame 1 shows the sheet just before this.
+6. Wrote part 3 (top centre).
+7. Wrote part 4 (centre).
+8. Wrote part 5 (middle left).
+9. Wrote part 6 (middle left).
+
+## 14 stamps erasure-fixed: 2 of 3 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote part 2 (top centre).
+3. Wrote erased writing 1 (top left).
+4. Erased 1 stroke of part 2 and 1 of erased writing 1. Frame 1 shows the sheet just before this.
+5. Wrote part 3 (top left).
+6. Wrote part 4 (middle left).
+7. Wrote part 5 (middle left).
+
+## 15 album correct: 5 of 5 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote part 2 (top centre).
+3. Wrote part 3 (top right).
+4. Wrote part 4 (top right).
+5. Wrote part 5 (top left).
+
+## 16 backwards error: 3 of 3 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top centre).
+2. Wrote part 2 (middle left).
+3. Long pause.
+4. Wrote part 3 (middle left).
+
+## 17 houses erasure-broken: 3 of 3 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote erased writing 1 (top left).
+3. Erased 10 strokes of erased writing 1. Frame 1 shows the sheet just before this.
+4. Wrote part 2 (top left).
+5. Wrote part 3 (middle left).
+
+## 18 pages erasure-fixed: 5 of 6 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote part 2 (top centre).
+3. Wrote part 3 (top right).
+4. Erased 2 strokes of part 3. Frame 1 shows the sheet just before this.
+5. Wrote part 4 (middle right).
+6. Wrote part 5 (middle right).
+7. Wrote part 6 (middle left).
+8. Long pause.
+9. Wrote part 7 (middle left).
+
+## 19 houses correct: 2 of 2 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Long pause.
+3. Wrote part 2 (middle left).
+
+## 20 stamps error: 3 of 3 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote part 2 (middle left).
+3. Wrote part 3 (middle left).
+
+## 21 album erasure-broken: 4 of 5 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top right).
+2. Wrote part 2 (top right).
+3. Erased 1 stroke of part 2. Frame 1 shows the sheet just before this.
+4. Wrote part 3 (top right).
+5. Long pause.
+6. Wrote part 4 (top right).
+7. Wrote part 5 (top left).
+8. Wrote part 6 (top left).
+
+## 22 grasshopper correct: 2 of 2 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top centre).
+2. Wrote part 2 (middle left).
+
+## 23 houses error: 2 of 2 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top centre).
+2. Wrote part 2 (middle left).
+
+## 24 backwards erasure-fixed: 4 of 4 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Long pause.
+3. Wrote part 2 (top centre).
+4. Wrote erased writing 1 (middle left).
+5. Erased 12 strokes of erased writing 1. Frame 1 shows the sheet just before this.
+6. Wrote part 3 (middle left).
+7. Wrote part 4 (middle left).
+
+## 25 pages correct: 5 of 5 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote part 2 (top left).
+3. Wrote part 3 (top centre).
+4. Wrote part 4 (top right).
+5. Wrote part 5 (middle left).
+
+## 26 grasshopper erasure-broken: 2 of 3 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top centre).
+2. Erased 3 strokes of part 1. Frame 1 shows the sheet just before this.
+3. Wrote part 2 (top centre).
+4. Wrote part 3 (middle left).
+5. Long pause.
+6. Wrote part 4 (middle left).
+
+## 27 stamps error: 4 of 4 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote part 2 (middle left).
+3. Wrote part 3 (middle left).
+4. Wrote part 4 (middle left).
+
+## 28 houses erasure-fixed: 3 of 3 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote erased writing 1 (top left).
+3. Erased 8 strokes of erased writing 1. Frame 1 shows the sheet just before this.
+4. Wrote part 2 (top left).
+5. Wrote part 3 (middle left).
+
+## 29 backwards correct: 4 of 4 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top centre).
+2. Wrote part 2 (middle left).
+3. Wrote part 3 (middle left).
+4. Wrote part 4 (bottom left).
+
+## 30 pages error: 6 of 6 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote part 2 (top left).
+3. Wrote part 3 (top right).
+4. Long pause.
+5. Wrote part 4 (top right).
+6. Wrote part 5 (middle left).
+7. Long pause.
+8. Wrote part 6 (middle left).
+
+## 31 album erasure-fixed: 4 of 5 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote part 2 (top centre).
+3. Wrote part 3 (top right).
+4. Erased 1 stroke of part 3. Frame 1 shows the sheet just before this.
+5. Wrote part 4 (top right).
+6. Long pause.
+7. Wrote part 5 (top left).
+8. Wrote part 6 (middle left).
+
+## 32 backwards error: 4 of 4 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Long pause.
+3. Wrote part 2 (top left).
+4. Long pause.
+5. Wrote part 3 (centre).
+6. Long pause.
+7. Wrote part 4 (middle left).
+
+## 33 houses correct: 3 of 3 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote part 2 (top left).
+3. Wrote part 3 (middle left).
+
+## 34 album erasure-broken: 5 of 5 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote erased writing 1 (top left).
+2. Erased 9 strokes of erased writing 1. Frame 1 shows the sheet just before this.
+3. Wrote part 1 (top left).
+4. Wrote part 2 (top centre).
+5. Wrote part 3 (top centre).
+6. Wrote part 4 (top left).
+7. Long pause.
+8. Wrote part 5 (middle left).
+
+## 35 grasshopper error: 4 of 4 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Long pause.
+3. Wrote part 2 (top left).
+4. Wrote part 3 (centre).
+5. Wrote part 4 (bottom left).
+
+## 36 stamps correct: 3 of 3 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote part 2 (middle left).
+3. Wrote part 3 (middle left).
+
+## 37 backwards erasure-broken: 4 of 4 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote erased writing 1 (top left).
+3. Erased 8 strokes of erased writing 1. Frame 1 shows the sheet just before this.
+4. Wrote part 2 (top left).
+5. Wrote part 3 (centre).
+6. Wrote part 4 (middle left).
+
+## 38 album error: 5 of 5 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top centre).
+2. Wrote part 2 (top right).
+3. Wrote part 3 (top right).
+4. Wrote part 4 (top left).
+5. Wrote part 5 (top left).
+
+## 39 pages correct: 4 of 4 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top centre).
+2. Wrote part 2 (top right).
+3. Wrote part 3 (top left).
+4. Wrote part 4 (top left).
+
+## 40 grasshopper erasure-fixed: 4 of 4 parts
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote erased writing 1 (top left).
+2. Erased 11 strokes of erased writing 1. Frame 1 shows the sheet just before this.
+3. Wrote part 1 (top left).
+4. Wrote part 2 (top left).
+5. Wrote part 3 (centre).
+6. Wrote part 4 (bottom left).

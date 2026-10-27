@@ -1,12 +1,17 @@
 // Package journal tells how a sheet was written, for the forms of the measurement that show the
 // model the writing process (R11, R24): a journal of numbered steps in English, and up to two
 // frames of the sheet just before erasures. It builds both from the strokes and the erasures
-// alone, as a device would, without the markup. The lines are those lines.Group finds among all
-// the strokes, the erased ones too, numbered from the top of the sheet down.
+// alone, as a device would, without the markup.
 //
-// The journal tells in which order the lines were written, the long pauses, how many strokes each
-// erasure took and from which line, and the returns to lines written before. It holds no time, no
-// pressure, no coordinates and nothing of what was erased (R11).
+// A journal comes in two versions, each with its own words. A journal of lines (Of), version 1,
+// is that of the measurement of E2: its lines are those lines.Group finds among all the strokes,
+// the erased ones too, numbered from the top of the sheet down. A journal of parts (OfParts),
+// version 2, is that of free writing (T63): its parts are the stroke groups lines.Groups finds,
+// numbered in the order they were first written, each named by where it stands on the sheet.
+//
+// The journal tells in which order the lines or the parts were written, the long pauses, how many
+// strokes each erasure took and from which, and the returns to those written before. It holds no
+// time, no pressure, no coordinates and nothing of what was erased (R11).
 package journal
 
 import (
@@ -35,19 +40,21 @@ const (
 type Kind int
 
 const (
-	Wrote  Kind = iota // writing on a line not written on before
-	Again              // writing on the line written on last, after an erasure or a pause
-	Back               // writing on a line written on before, coming from another line
-	Erased             // an erasure, or erasures one after another from the same one line
+	Wrote  Kind = iota // writing on a line or a part not written on before
+	Again              // writing on the one written on last, after an erasure or a pause
+	Back               // writing on one written on before, coming from another
+	Erased             // an erasure, or erasures one after another from the same one
 	Paused             // a pause of Pause or longer
 )
 
 // Step is one step of the journal.
 type Step struct {
 	Kind Kind
-	// Line is the number of the line written on, in a step of writing.
+	// Line is the number of the line written on, in a step of writing; in a journal of parts, the
+	// place of the part in Parts, from 1.
 	Line int
-	// Taken is how many strokes the erasures of the step took, by the number of their line.
+	// Taken is how many strokes the erasures of the step took, by the number of their line, or by
+	// the place of their part in Parts.
 	Taken map[int]int
 	// Erasures are the indexes, in the sample, of the erasures the step tells.
 	Erasures []int
@@ -55,34 +62,47 @@ type Step struct {
 	Frame int
 }
 
-// Frame is a frame of the sheet just before an erasure (R11): the first erasure of a line, of the
-// lines most strokes were erased from.
+// Frame is a frame of the sheet just before an erasure (R11): the first erasure of a line or a
+// part, of those most strokes were erased from.
 type Frame struct {
 	Erasure int // the erasure's index in the sample: render.Before draws the frame
 	Step    int // the index of the step of the journal the frame stands just before
-	Line    int // the line the frame is for
-	Strokes int // how many strokes the erasures took from the line, in all
+	Line    int // the line the frame is for, or the place of its part in Parts
+	Strokes int // how many strokes the erasures took from the line or the part, in all
 }
 
 // Journal is how a sheet was written.
 type Journal struct {
-	// Lines are the lines of all the strokes, the erased ones too, from the top of the sheet down.
+	// Lines are the lines of all the strokes, the erased ones too, from the top of the sheet down,
+	// in a journal of lines.
 	Lines []lines.Line
+	// Parts are the parts of a journal of parts, in the order they were first written.
+	Parts []Part
 	// Steps are all the steps of the writing; the text tells the first MaxSteps of them.
 	Steps []Step
 	// Frames are the frames before erasures, in the order of the writing.
 	Frames []Frame
+	// words are the words of its text, those of its version.
+	words *words
 }
 
-// Of builds the journal of a sample that passes its check (sample.Check).
+// Of builds the journal of lines of a sample that passes its check (sample.Check).
 func Of(s *sample.Sample) *Journal {
-	j := &Journal{Lines: lines.Group(s.Strokes, lines.Gap)}
-	b := &builder{lineOf: map[string]int{}, written: map[int]bool{}}
+	j := &Journal{Lines: lines.Group(s.Strokes, lines.Gap), words: &linesWords}
+	lineOf := map[string]int{}
 	for i, l := range j.Lines {
 		for _, id := range l.Strokes {
-			b.lineOf[id] = i + 1
+			lineOf[id] = i + 1
 		}
 	}
+	j.walk(s, lineOf)
+	return j
+}
+
+// walk tells the steps and the frames of the writing, with the number of the line or the part of
+// each stroke.
+func (j *Journal) walk(s *sample.Sample, lineOf map[string]int) {
+	b := &builder{lineOf: lineOf, written: map[int]bool{}}
 	var strokes []sample.Stroke
 	for _, st := range s.Strokes {
 		if len(st.Points) > 0 {
@@ -107,7 +127,6 @@ func Of(s *sample.Sample) *Journal {
 	for n, f := range j.Frames {
 		j.Steps[f.Step].Frame = n + 1
 	}
-	return j
 }
 
 // first reports whether an erasure comes before a stroke.
@@ -119,9 +138,9 @@ func first(e sample.Erasure, st sample.Stroke) bool {
 // builder turns the strokes and erasures, in the order of the writing, into steps.
 type builder struct {
 	steps   []Step
-	lineOf  map[string]int // the number of the line of each stroke
-	written map[int]bool   // the lines written on so far
-	last    int            // the line written on last, 0 before any
+	lineOf  map[string]int // the number of the line or the part of each stroke
+	written map[int]bool   // the lines or the parts written on so far
+	last    int            // the one written on last, 0 before any
 	end     int64          // when the latest stroke or erasure ended
 	begun   bool           // whether any came yet
 }
@@ -221,8 +240,9 @@ func frames(steps []Step) []Frame {
 	return chosen
 }
 
-// The words of the journal's text: its first line, the phrase of each kind of step with the
-// numbers it takes, the marks of the frames and the end of a journal cut short.
+// The words of a journal of lines' text: its first line, the phrase of each kind of step with the
+// numbers it takes, the marks of the frames and the end of a journal cut short. A journal of parts
+// shares the pause, the erasure, the marks, the end and the joins of a list.
 const (
 	header    = "How the sheet was written, step by step. Lines are numbered from the top of the sheet down, erased writing included."
 	wrote     = "Wrote line %d."
@@ -243,21 +263,31 @@ const (
 	and       = " and "
 )
 
-// Words are all the words a journal's text is made of. A change to any of them changes what a
-// judge reads, so the fingerprint of the measurement's prompt holds them (internal/judge).
+// Words are all the words a journal of lines' text is made of. A change to any of them changes
+// what a judge reads, so the fingerprint of the measurement's prompt holds them (internal/judge).
 func Words() []string {
 	return []string{header, wrote, again, back, paused, erased, oneStroke, strokesOn, moreOn, frame, leftOne, left, frameLeft, leftIt, leftOf, comma, and}
 }
 
+// words are what the text of one version of a journal has of its own: its first line and how it
+// tells a step. The marks of the frames and the end of a journal cut short both versions share.
+type words struct {
+	header string
+	step   func(j *Journal, st Step) string
+}
+
+var linesWords = words{header: header, step: func(_ *Journal, st Step) string { return st.text() }}
+
 // Text is the journal in English: a sentence on how to read it, then one numbered step a line, the
 // first MaxSteps steps, and how many it leaves out. With marks, a step that a frame stands just
 // before says so, by the frame's number, and so does the end for a frame among the steps left out.
+// Each version tells it in its own words.
 func (j *Journal) Text(marks bool) string {
 	var b strings.Builder
-	b.WriteString(header + "\n")
+	b.WriteString(j.words.header + "\n")
 	told := j.Steps[:min(len(j.Steps), MaxSteps)]
 	for i, st := range told {
-		fmt.Fprintf(&b, "%d. %s", i+1, st.text())
+		fmt.Fprintf(&b, "%d. %s", i+1, j.words.step(j, st))
 		if marks && st.Frame > 0 {
 			fmt.Fprintf(&b, frame, st.Frame)
 		}
@@ -305,10 +335,15 @@ func (st Step) text() string {
 			parts = append(parts, fmt.Sprintf(strokesOn, k, line))
 		}
 	}
-	if n := len(parts); n > 1 {
-		parts = []string{strings.Join(parts[:n-1], comma) + and + parts[n-1]}
+	return fmt.Sprintf(erased, list(parts))
+}
+
+// list joins the items of a list in words: "a", "a and b", "a, b and c".
+func list(items []string) string {
+	if n := len(items); n > 1 {
+		return strings.Join(items[:n-1], comma) + and + items[n-1]
 	}
-	return fmt.Sprintf(erased, parts[0])
+	return items[0]
 }
 
 // Agreement is how the lines of a journal agree with the lines of a sample's markup: of the
@@ -317,12 +352,14 @@ func (st Step) text() string {
 // the journal puts on a line does not count against it. The markup of a sheet starts from the lines
 // the board proposes with lines.Group (R25), so the agreement is higher than it would be with a
 // markup made apart, the more so on sheets saved before the board could edit the lines (T51).
+// Of a journal of parts, it compares the parts with the parts of the markup, which the board
+// proposes from lines.Groups (T61).
 type Agreement struct {
 	Marked int `json:"marked"`
 	Same   int `json:"same"`
 }
 
-// Agree finds how the lines of the journal of a sample agree with its markup.
+// Agree finds how the lines or the parts of the journal of a sample agree with its markup.
 func Agree(s *sample.Sample, j *Journal) Agreement {
 	held := map[string]bool{} // the strokes the markup's lines hold
 	for _, l := range s.Lines {
@@ -331,8 +368,8 @@ func Agree(s *sample.Sample, j *Journal) Agreement {
 		}
 	}
 	found := map[string]bool{}
-	for _, l := range j.Lines {
-		found[key(l.Strokes, held)] = true
+	for _, ids := range j.strokeSets() {
+		found[key(ids, held)] = true
 	}
 	a := Agreement{Marked: len(s.Lines)}
 	for _, l := range s.Lines {
@@ -341,6 +378,22 @@ func Agree(s *sample.Sample, j *Journal) Agreement {
 		}
 	}
 	return a
+}
+
+// strokeSets are the strokes of each line of a journal of lines, or of each part of a journal of
+// parts.
+func (j *Journal) strokeSets() [][]string {
+	var sets [][]string
+	if j.words == &partsWords {
+		for _, p := range j.Parts {
+			sets = append(sets, p.Group.Strokes)
+		}
+		return sets
+	}
+	for _, l := range j.Lines {
+		sets = append(sets, l.Strokes)
+	}
+	return sets
 }
 
 // key names a set of strokes by those of them the markup's lines hold.

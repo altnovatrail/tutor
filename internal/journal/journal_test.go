@@ -72,10 +72,10 @@ func TestSynthetic(t *testing.T) {
 }
 
 // noTime checks that the text of a journal names no moment and no point of the sheet: each
-// number in it counts steps, lines, strokes or frames, all of them small.
+// number in it counts steps, lines or parts, strokes or frames, all of them small.
 func noTime(t *testing.T, name string, j *journal.Journal) {
 	t.Helper()
-	most := max(len(j.Steps), len(j.Lines), journal.MaxFrames)
+	most := max(len(j.Steps), len(j.Lines), len(j.Parts), journal.MaxFrames)
 	for _, st := range j.Steps {
 		for _, k := range st.Taken {
 			most = max(most, k)
