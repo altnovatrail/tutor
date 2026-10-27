@@ -14,7 +14,7 @@
 
 The AI side of the NovaTrail tutor: it reads the learner's work, handwriting or text, into an observation, reviews the working for the first mistake, assesses an essay against the module author's rubric, and words the hint for the rung of the hint ladder that the platform's program chose. It holds the platform's prompts, one per AI capability and each with its own eval set, the adapters to AI providers, the exact models admitted for each capability, and the one function that admits an AI route for the learner's age category before every request; it reports each call's usage, by which api counts the platform AI quotas, and its eval runner is a CLI on the same code. It is a library inside api: it decides no verdict, picks no lesson or task and stores nothing, and its requests carry no identifier of the learner or the account: on the own-key route only the key itself goes along, to its own provider, which ties each call to the key owner's account.
 
-A component of [NovaTrail](https://github.com/altnovatrail/spec/tree/v0.2.39), a universal open platform for adaptive learning, interactive lessons and AI tutoring. It belongs to stage 2, First slice with learners, with canvas, api, app, skill-map and infra; together with canvas it brings the stage's first code, which for tutor is the check board below.
+A component of [NovaTrail](https://github.com/altnovatrail/spec/tree/v0.2.40), a universal open platform for adaptive learning, interactive lessons and AI tutoring. It belongs to stage 2, First slice with learners, with canvas, api, app, skill-map and infra; together with canvas it brings the stage's first code, which for tutor is the check board below.
 
 ## Status
 
@@ -33,6 +33,8 @@ just record
 ```
 
 Pick a sheet of the plan, write what it shows with a pen or a mouse, press Done, check the markup the plan filled in and press Save. If the board grouped the strokes into lines wrongly, pick strokes on the sheet and move them to another line, or join two lines. The board checks the markup after every change, and its words show beside the fields. On a sheet with a planned erasure, the board takes the move of the eraser on the plan's line for it, and you check that too. The sheet is saved with every stroke's points, their time and pressure, and every erasure, as a sample in `samples/sheets`, outside git.
+
+The three free-form sheets of epic E4 that you write yourself are made of parts: a number line, a drawing, notes at the side. `just free-record` starts the same mode on them and saves them in `samples/free`. After Done the board frames each group of strokes as a part, in the order you wrote them. A drawing you drew on after a pause comes in two frames, so join them; to move strokes to another part, drag a rectangle around them to pick them.
 
 The sheets you do not write, code draws: `go run ./cmd/tutor-eval draw` draws every sheet of the plan that has no file yet, saves it beside yours with the writer `synthetic`, and leaves yours as they are. With `-png DIR` it also saves, in DIR, the final picture of each sheet it draws and its frame before each erasure. For epic E4, code draws into `synthetic/`, out of git too. No handwriting is in it, so coding agents work with it and run the measurements on it themselves, and the board never writes there: your handwriting stays in `samples/`.
 
@@ -54,7 +56,7 @@ The documents are in Russian.
 - [docs/decisions.md](docs/decisions.md) — the decision log: what was decided, why, and what was rejected.
 - [RUN.md](RUN.md) — the work plan, in epics.
 
-The working rules, for people and coding agents alike, are in [CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md). The platform's shared vocabulary, formats, contracts and decisions are in [spec](https://github.com/altnovatrail/spec/tree/v0.2.39), checked out here as a git submodule at `v0.2.39`: clone this repository with `git clone --recurse-submodules`.
+The working rules, for people and coding agents alike, are in [CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md). The platform's shared vocabulary, formats, contracts and decisions are in [spec](https://github.com/altnovatrail/spec/tree/v0.2.40), checked out here as a git submodule at `v0.2.40`: clone this repository with `git clone --recurse-submodules`.
 
 ## License
 

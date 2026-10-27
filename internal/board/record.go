@@ -91,13 +91,15 @@ type PlanView struct {
 }
 
 // SheetView is a plan sheet with what the page needs besides: the statement of its task and its
-// traps, for the author to pick the trap a mistake falls into, and how many times it has been
-// saved.
+// traps, for the author to pick the trap a mistake falls into, how many times it has been saved,
+// and, on a sheet of a plan of parts, its parts, whose kind and place the page shows. A sheet of
+// lines has none.
 type SheetView struct {
 	sample.PlanSheet
-	Statement string        `json:"statement"`
-	Traps     []sample.Trap `json:"traps"`
-	Saved     int           `json:"saved"`
+	Statement string            `json:"statement"`
+	Traps     []sample.Trap     `json:"traps"`
+	Saved     int               `json:"saved"`
+	Parts     []sample.PlanPart `json:"parts"`
 }
 
 func (rc *Recorder) planHandler(w http.ResponseWriter, _ *http.Request) {
@@ -109,7 +111,8 @@ func (rc *Recorder) planHandler(w http.ResponseWriter, _ *http.Request) {
 	view := PlanView{Sheet: sample.Sheet{Width: sheetWidth, Height: sheetHeight}, Sheets: make([]SheetView, len(rc.plan.Sheets))}
 	for i, sh := range rc.plan.Sheets {
 		task := rc.bank.Task(sh.Task)
-		view.Sheets[i] = SheetView{PlanSheet: sh, Statement: task.Statement, Traps: append([]sample.Trap{}, task.Traps...), Saved: saved[sh.Number]}
+		view.Sheets[i] = SheetView{PlanSheet: sh, Statement: task.Statement, Traps: append([]sample.Trap{}, task.Traps...), Saved: saved[sh.Number],
+			Parts: append([]sample.PlanPart{}, sh.Parts...)}
 	}
 	writeJSON(w, http.StatusOK, view)
 }
@@ -179,12 +182,18 @@ type ProposeRequest struct {
 // Proposal is the markup the board proposes for a sheet. Its lines are found among the strokes
 // still on the sheet, by the gaps between them (lines.Group), and take the texts and the answer of
 // the plan sheet's lines in their order. With them come the plan sheet's outcome and how the sheet
-// differs from its plan sheet, such as by a line more.
+// differs from its plan sheet, such as by a line more. On a sheet of a plan of parts its lines are
+// the parts: each group of strokes the rule of the eval protocol finds (lines.Groups) is one, in
+// the order their first strokes were written, as a device groups them (R30). A drawing drawn
+// after a pause comes as two groups, and the author joins them.
 //
 // On a sheet whose plan sheet plans an erasure, Planned is the index of the erasure the board
 // takes for it: of the moves of the eraser, the one that took the most strokes from the plan's
 // line, the earlier of two that took as many. A stroke stood on the line its band stands on
-// (lines.On). Planned is null when none took any.
+// (lines.On). On a sheet of parts it is the move that took the most strokes from any of its parts,
+// by their place on the plane (lines.PartsTaken): until the author joins the groups of a part, the
+// number of a group is not yet the number of the plan's part, and slips on such a sheet are Undo's
+// alone. Planned is null when none took any.
 type Proposal struct {
 	Lines       []sample.Line   `json:"lines"`
 	Expected    sample.Expected `json:"expected"`
@@ -199,6 +208,10 @@ func (rc *Recorder) propose(w http.ResponseWriter, r *http.Request) {
 	}
 	sh := rc.sheet(w, req.Number)
 	if sh == nil {
+		return
+	}
+	if len(sh.Parts) > 0 {
+		writeJSON(w, http.StatusOK, proposeParts(sh, req))
 		return
 	}
 	byID := make(map[string]sample.Stroke, len(req.Strokes))
@@ -234,38 +247,79 @@ func (rc *Recorder) propose(w http.ResponseWriter, r *http.Request) {
 		p.Differences = append(p.Differences, Note{"sample.lines", fmt.Sprintf("the sheet has %d lines, and its plan sheet %d: a long stroke may join two lines, or a line is not written", n, want)})
 	}
 	if pe := sh.Erasure; pe != nil {
-		p.Planned, p.Differences = plannedOf(lines.TakenFrom(byID, req.Erasures, found), req.Undone, pe.Line, p.Differences)
+		taken := lines.TakenFrom(byID, req.Erasures, found)
+		took := make([]int, len(taken))
+		for i, t := range taken {
+			took[i] = t.From[pe.Line]
+		}
+		at := fmt.Sprintf("line %d", pe.Line)
+		p.Planned, p.Differences = plannedOf(took, req.Undone, at, at, p.Differences)
 	}
 	writeJSON(w, http.StatusOK, p)
 }
 
-// plannedOf picks the erasure the board takes for the planned one of a plan sheet, whose line is
-// line: of the moves of the eraser — Undo makes slips — the one that took the most strokes from the
-// line, the earlier of two that took as many. It names a sheet with no move of the eraser and one
-// where more than one took strokes from the line, as the planned erasure is one move (R25).
-func plannedOf(erasures []lines.Taken, undone []bool, line int, notes []Note) (*int, []Note) {
-	var planned *int
-	moves, from := 0, 0
-	for i, t := range erasures {
+// proposeParts proposes the parts of a sheet of a plan of parts: a part to each group of strokes,
+// in the order their first strokes were written, with the texts and the answer of the plan sheet's
+// parts in their order.
+func proposeParts(sh *sample.PlanSheet, req ProposeRequest) Proposal {
+	found := lines.Groups(req.Strokes, req.Erasures)
+	p := Proposal{Lines: make([]sample.Line, len(found)), Expected: sh.Expected, Differences: []Note{}}
+	for i, g := range found {
+		p.Lines[i] = sample.Line{Strokes: g.Strokes, Answer: i+1 == sh.Answer}
+		if i < len(sh.Lines) {
+			p.Lines[i].Text = sh.Lines[i]
+		}
+	}
+	switch n, want := len(found), len(sh.Lines); {
+	case n == 0:
+		p.Differences = append(p.Differences, Note{"sample.lines", fmt.Sprintf("the sheet has no parts yet, and its plan sheet %d", want)})
+	case n > want:
+		p.Differences = append(p.Differences, Note{"sample.lines", fmt.Sprintf("the sheet has %d parts, and its plan sheet %d: a part drawn on after a pause of more than %d seconds comes as two groups, so join them, or a stray stroke stands on its own", n, want, lines.GroupPause/1000)})
+	case n < want:
+		p.Differences = append(p.Differences, Note{"sample.lines", fmt.Sprintf("the sheet has %d parts, and its plan sheet %d: two parts written close together without a pause come as one group, so pick the strokes of one and move them to a new part, or a part is not written", n, want)})
+	}
+	if pe := sh.Erasure; pe != nil {
+		taken := lines.PartsTaken(&sample.Sample{Strokes: req.Strokes, Lines: p.Lines}, req.Erasures)
+		took := make([]int, len(taken))
+		for i, t := range taken {
+			for _, k := range t.From {
+				took[i] += k
+			}
+		}
+		p.Planned, p.Differences = plannedOf(took, req.Undone, fmt.Sprintf("part %d", pe.Line), "the parts of the sheet", p.Differences)
+	}
+	return p
+}
+
+// plannedOf picks the erasure the board takes for the planned one of a plan sheet: of the moves of
+// the eraser — Undo makes slips — the one that took the most strokes from where it counts, took
+// holding how many each erasure took from there, the earlier of two that took as many. It names a
+// sheet with no move of the eraser and one where more than one took strokes from there, as the
+// planned erasure is one move (R25). planned names the plan's place of the erasure, such as
+// "line 2", and from where the strokes count.
+func plannedOf(took []int, undone []bool, planned, from string, notes []Note) (*int, []Note) {
+	var picked *int
+	moves, taking := 0, 0
+	for i, n := range took {
 		if i < len(undone) && undone[i] {
 			continue
 		}
 		moves++
-		if t.From[line] == 0 {
+		if n == 0 {
 			continue
 		}
-		from++
-		if planned == nil || t.From[line] > erasures[*planned].From[line] {
-			planned = &i
+		taking++
+		if picked == nil || n > took[*picked] {
+			picked = &i
 		}
 	}
 	switch {
 	case moves == 0:
-		notes = append(notes, Note{"sample.erasures", fmt.Sprintf("the sheet has no move of the eraser, and its plan sheet plans an erasure on line %d: Undo makes slips only, so write the sheet again, erasing in one move of the eraser", line)})
-	case from > 1:
-		notes = append(notes, Note{"sample.erasures", fmt.Sprintf("%d moves of the eraser took strokes from line %d, and the planned erasure is one move: if the eraser was lifted midway, write the sheet again", from, line)})
+		notes = append(notes, Note{"sample.erasures", fmt.Sprintf("the sheet has no move of the eraser, and its plan sheet plans an erasure on %s: Undo makes slips only, so write the sheet again, erasing in one move of the eraser", planned)})
+	case taking > 1:
+		notes = append(notes, Note{"sample.erasures", fmt.Sprintf("%d moves of the eraser took strokes from %s, and the planned erasure is one move: if the eraser was lifted midway, write the sheet again", taking, from)})
 	}
-	return planned, notes
+	return picked, notes
 }
 
 // SaveRequest is a sheet to save: the number of its plan sheet and the sample document, which the

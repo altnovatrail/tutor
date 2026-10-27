@@ -53,6 +53,12 @@ board *args:
 record *args:
     go run ./cmd/tutor-eval board -record {{ args }}
 
+# This recipe asks for no key either. The sheets of the author's free-form plan, three sheets of
+# parts, go to samples/free, out of git. Its arguments go to tutor-eval board.
+# Start the record mode on the free-form sheets of epic E4 (T61 in RUN.md).
+free-record *args:
+    go run ./cmd/tutor-eval board -record -dir samples/free -bank eval/free-bank.json -plan eval/free-author.json {{ args }}
+
 # This recipe asks for the Anthropic key for eval if it is not set yet, without showing it, so that
 # no key lands in the shell's history; with -stub the run needs none, and Enter skips it. Its
 # arguments go to tutor-eval run: -part dev or -part test, and the rest.
