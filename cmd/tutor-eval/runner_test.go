@@ -38,7 +38,7 @@ func TestRunOnTheStub(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("the run ends %d: %s%s", code, out, errs)
 	}
-	if !strings.HasPrefix(out, "The test part: 5 sheets, 2 of them with frames, by 3 judges, 1 repeat.\n42 calls, expected to cost $0.16, ") ||
+	if !strings.HasPrefix(out, "The test part: 5 sheets, 2 of them with frames, by 3 judges, 1 repeat, in version 1 of the prompt.\n42 calls, expected to cost $0.16, ") ||
 		!strings.Contains(out, "The stub answers them by the markup and asks no one") || !strings.Contains(out, "Type yes to start the run: 42 calls made, ") {
 		t.Errorf("the run says\n%s", out)
 	}
@@ -86,17 +86,19 @@ func TestRunNotConfirmed(t *testing.T) {
 	}
 }
 
-// A run that its cap stops says so and fails.
+// A run that its cap stops says so and fails: a cap below the estimate is told before the author is
+// asked.
 func TestRunCap(t *testing.T) {
 	where := splitSheets(t)
 	log := filepath.Join(t.TempDir(), "run.jsonl")
 	code, out, errs := runMeasure("yes\n", append([]string{"-part", "test", "-stub", "-max-usd", "0.4", "-log", log}, where...)...)
-	if code != exitFail || !strings.Contains(errs, "stopped short by the cap") || !strings.Contains(out, "The cap is $0.40.") || strings.Contains(out, "above the") {
+	if code != exitFail || !strings.Contains(errs, "stopped short by the cap") || !strings.Contains(out, "The cap is $0.40.") || strings.Contains(out, "That is above the") ||
+		!strings.Contains(out, "The estimate is above the cap: the run will stop short of its calls unless -max-usd gives it more.") {
 		t.Errorf("a capped run ends %d:\n%s%s", code, out, errs)
 	}
 	// A cap above the plan's is the author's to give, and the run says so before asking.
 	code, out, _ = runMeasure("no\n", append([]string{"-part", "test", "-stub", "-max-usd", "60"}, where...)...)
-	if code != exitOK || !strings.Contains(out, "That is above the $6.00 that architecture 3.1 plans for the test part.") {
+	if code != exitOK || !strings.Contains(out, "That is above the $6.00 that architecture 3.1 and 3.4 plan for -part test.") {
 		t.Errorf("a run with a cap of $60 says\n%s", out)
 	}
 }
@@ -175,7 +177,7 @@ func TestRunRefuses(t *testing.T) {
 		says string
 	}{
 		{[]string{"-stub"}, exitUsage, `-part is ""`},
-		{[]string{"-part", "all", "-stub"}, exitUsage, `-part is "all"`},
+		{[]string{"-part", "every", "-stub"}, exitUsage, `-part is "every": give dev, test or all`},
 		{[]string{"-part", "test", "-stub", "-repeats", "0"}, exitUsage, "-repeats must be 1 or more"},
 		{[]string{"-part", "test", "-stub", "-max-usd", "0"}, exitUsage, "-max-usd above 0"},
 		{[]string{"-part", "test"}, exitUsage, "TUTOR_ANTHROPIC_API_KEY is not set"},

@@ -25,8 +25,9 @@ const (
 
 // tutor-eval check reads a plan of parts against its bank, the record mode of the board takes it,
 // and draw draws its sheets: the number line with a jump erased, the row with the first error in the
-// drawing, the scheme with □ and △ and the columns with a number erased. The measurement, which does
-// not know parts yet, refuses one, as it did before plans of parts came, and makes nothing.
+// drawing, the scheme with □ and △ and the columns with a number erased. The measurement runs all of
+// them on the stub in version 2 of the prompt, without a split, and the report tells free writing;
+// with a sheet not recorded, it does not start.
 func TestPlanOfParts(t *testing.T) {
 	code, out, errs := runIt("check", freeBank, partsPlan)
 	if want := freeBank + ": ok, bank of 6 tasks\n" + partsPlan + ": ok, plan of 4 sheets, its tasks and traps are in the bank\n"; code != exitOK || out != want {
@@ -35,16 +36,14 @@ func TestPlanOfParts(t *testing.T) {
 
 	dir := filepath.Join(t.TempDir(), "sheets")
 	files := []string{"-dir", dir, "-bank", freeBank, "-plan", partsPlan}
-	refused := " is a plan of version 1, with parts, and "
 	var stdout, stderr bytes.Buffer
-	if code, _, errs := runMeasure("yes\n", append([]string{"-part", "dev", "-stub"}, files...)...); code != exitFail || !strings.Contains(errs, refused+"the measurement runs on sheets") {
-		t.Errorf("run = %d %q", code, errs)
+	if code, _, errs := runMeasure("yes\n", append([]string{"-part", "all", "-stub"}, files...)...); code != exitFail || !strings.Contains(errs, dir) {
+		t.Errorf("run before any sheet is drawn = %d %q", code, errs)
 	}
 	if _, err := os.Stat(dir); !os.IsNotExist(err) {
-		t.Errorf("a command that refused the plan made %s: %v", dir, err)
+		t.Errorf("a run that did not start made %s: %v", dir, err)
 	}
 
-	stderr.Reset()
 	served := false
 	serve := func(*http.Server) error { served = true; return nil }
 	recorded := filepath.Join(t.TempDir(), "recorded")
@@ -63,6 +62,36 @@ func TestPlanOfParts(t *testing.T) {
 	var summary bytes.Buffer
 	if code := runSheets(files, &summary, &stderr); code != exitOK || !strings.Contains(summary.String(), "Sheets: 4 of the plan's 4 recorded, 4 of them passing the check.") || !strings.Contains(summary.String(), "Marked off the plan: none.") {
 		t.Errorf("sheets = %d\n%s%s", code, summary.String(), stderr.String())
+	}
+
+	code, out, errs = runMeasure("yes\n", append([]string{"-part", "all", "-stub", "-repeats", "1"}, files...)...)
+	if code != exitOK || !strings.HasPrefix(out, "All the sheets: 4 sheets, 2 of them with frames, by 3 judges, 1 repeat, in version 2 of the prompt.\n") {
+		t.Fatalf("run -part all = %d\n%s%s", code, out, errs)
+	}
+	log := filepath.Join(filepath.Dir(dir), "runs", "20261026-123000-000-all.jsonl")
+	stdout.Reset()
+	if code := runReport([]string{log}, &stdout, &stderr); code != exitOK {
+		t.Fatalf("report = %d %s", code, stderr.String())
+	}
+	md, err := os.ReadFile(strings.TrimSuffix(log, ".jsonl") + ".md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"# The measurement of free writing: all the sheets", ", version 2. ", "### Boxes on the sheets with a mistake", "### By sheet"} {
+		if !strings.Contains(string(md), want) {
+			t.Errorf("the report lacks %q:\n%s", want, md)
+		}
+	}
+
+	drawn, err := filepath.Glob(filepath.Join(dir, "04-*.json"))
+	if err != nil || len(drawn) != 1 {
+		t.Fatalf("sheet 4 is drawn as %v, %v", drawn, err)
+	}
+	if err := os.Remove(drawn[0]); err != nil {
+		t.Fatal(err)
+	}
+	if code, _, errs := runMeasure("yes\n", append([]string{"-part", "all", "-stub"}, files...)...); code != exitFail || !strings.Contains(errs, "sheet 4 is not recorded") {
+		t.Errorf("run -part all without sheet 4 = %d %q", code, errs)
 	}
 }
 

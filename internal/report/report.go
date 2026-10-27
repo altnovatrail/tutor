@@ -2,6 +2,11 @@
 // docs/architecture.md, 3.1, «Замер хода решения»), asking no model, and writes them as Markdown
 // and CSV. A report holds no handwriting: numbers, the numbers and scenarios of sheets, and the
 // names of judges and forms.
+//
+// The report of a run of free writing, in version 2 of the judge's prompt, tells more (T65; 3.4,
+// «Замер свободной записи»): the boxes on the sheets with a mistake and form D against form A on
+// them, the data for R52 spec; the answers by layout and by where the first error stands; and the
+// answers sheet by sheet. The report of a log of E2 is as it was.
 package report
 
 import (
@@ -51,6 +56,43 @@ type Report struct {
 	Cells []Cell
 	// Agreements are those of every other judge with the first of the run, in "correct".
 	Agreements []Agreement
+
+	// Free tells a run of free writing, in version 2 of the prompt; the rest only such a run has.
+	Free bool
+	// Boxes are the boxes of the answers on the sheets with a mistake, by judge and form, and
+	// OnMistakes form D against form A on those sheets, a judge each: the data for R52 spec.
+	Boxes      []Boxes
+	OnMistakes []Comparison
+	// ByLayout and ByFirstError are the right answers by the layout of a sheet and by where its first
+	// error stands, a judge each, and BySheet those of every sheet by every judge.
+	ByLayout, ByFirstError []Breakdown
+	BySheet                []SheetRow
+}
+
+// Boxes is what a judge's answers in a form on the sheets with a mistake come to: of the answers,
+// how many say "error", how many of those give a box, and how many boxes are on the first error,
+// that is, right answers.
+type Boxes struct {
+	Judge                       string
+	Form                        judge.Form
+	Answers, Errors, Boxed, Hit int
+}
+
+// Breakdown is the right answers of a judge, of its answers, in each form, over the sheets of a
+// group: a layout, or where the first error stands.
+type Breakdown struct {
+	Group          string
+	Judge          string
+	Sheets         int
+	Right, Answers [4]int // by the forms in their order
+}
+
+// SheetRow is the right answers of a sheet by a judge, of its answers, in each form, repeats
+// together.
+type SheetRow struct {
+	Sheet          *measure.SheetRecord
+	Judge          string
+	Right, Answers [4]int // by the forms in their order
 }
 
 // Test is the exact one-sided sign-permutation test of a sum of differences over sheets (R03,
@@ -162,7 +204,121 @@ func New(l *measure.Log) (*Report, error) {
 	for _, j := range r.judges[1:] {
 		r.Agreements = append(r.Agreements, r.agree(j, r.judges[0]))
 	}
+	if r.Free = measure.PromptOf(l.Run) == judge.V2; r.Free {
+		r.free(all)
+	}
 	return r, nil
+}
+
+// The groups of the breakdowns, by their names in the report and in their order: a sheet's layout,
+// its two drawings one group, and where its first error stands. A sheet that shows no layout, such
+// as an author's free solution, is of the group "none", and a sheet with a mistake whose place the
+// log does not tell, marked off its plan, of "off the plan". A layout or a place the report does
+// not know is a group of its own, by its name in the log, after the others: no sheet drops out.
+var (
+	layoutGroups = map[sample.Layout]string{sample.LayoutNumberLine: "number line", sample.LayoutRow: "drawing", sample.LayoutScheme: "drawing", sample.LayoutSide: "at the side", "": "none"}
+	layoutOrder  = []string{"number line", "drawing", "at the side", "none"}
+	regionGroups = map[sample.Region]string{sample.RegionDrawing: "in the drawing", sample.RegionText: "in the text", sample.RegionSide: "at the side", "": "off the plan"}
+	regionOrder  = []string{"in the drawing", "in the text", "at the side", "off the plan"}
+)
+
+// layoutGroup and regionGroup name the group of a layout and of a place.
+func layoutGroup(l sample.Layout) string {
+	if g, ok := layoutGroups[l]; ok {
+		return g
+	}
+	return string(l)
+}
+
+func regionGroup(r sample.Region) string {
+	if g, ok := regionGroups[r]; ok {
+		return g
+	}
+	return string(r)
+}
+
+// free counts what only a run of free writing tells, over the sheets.
+func (r *Report) free(all []int) {
+	mistakes := r.numbers(func(sh *measure.SheetRecord) bool { return sh.Outcome == sample.OutcomeError })
+	for _, j := range r.judges {
+		for _, f := range judge.Forms {
+			b := Boxes{Judge: j, Form: f}
+			for _, n := range mistakes {
+				for _, a := range r.answersOf(n, f, j) {
+					b.Answers++
+					if a.Error != "" || a.Verdict != judge.Error {
+						continue
+					}
+					b.Errors++
+					if a.Box != nil {
+						b.Boxed++
+					}
+					if right(r.sheets[n], a) {
+						b.Hit++
+					}
+				}
+			}
+			r.Boxes = append(r.Boxes, b)
+		}
+		r.OnMistakes = append(r.OnMistakes, r.compare(j, judge.FormD, judge.FormA, mistakes))
+	}
+	// group breaks the sheets of a set down by the name of their group, the known groups in their
+	// order and the others after them.
+	group := func(set []int, order []string, name func(*measure.SheetRecord) string) []Breakdown {
+		names := slices.Clone(order)
+		for _, n := range set {
+			if g := name(r.sheets[n]); !slices.Contains(names, g) {
+				names = append(names, g)
+			}
+		}
+		var out []Breakdown
+		for _, g := range names {
+			sheets := slices.DeleteFunc(slices.Clone(set), func(n int) bool { return name(r.sheets[n]) != g })
+			if len(sheets) == 0 {
+				continue
+			}
+			for _, j := range r.judges {
+				b := Breakdown{Group: g, Judge: j, Sheets: len(sheets)}
+				for _, n := range sheets {
+					got, asked := r.rights(n, j)
+					b.Right, b.Answers = add(b.Right, b.Answers, got, asked)
+				}
+				out = append(out, b)
+			}
+		}
+		return out
+	}
+	r.ByLayout = group(all, layoutOrder, func(sh *measure.SheetRecord) string { return layoutGroup(sh.Layout) })
+	r.ByFirstError = group(mistakes, regionOrder, func(sh *measure.SheetRecord) string { return regionGroup(sh.FirstErrorIn) })
+	for _, n := range all {
+		for _, j := range r.judges {
+			row := SheetRow{Sheet: r.sheets[n], Judge: j}
+			row.Right, row.Answers = r.rights(n, j)
+			r.BySheet = append(r.BySheet, row)
+		}
+	}
+}
+
+// rights counts the right answers of a sheet by a judge, and its answers, in each form.
+func (r *Report) rights(n int, j string) (ok, of [4]int) {
+	for i, f := range judge.Forms {
+		for _, a := range r.answersOf(n, f, j) {
+			of[i]++
+			if right(r.sheets[n], a) {
+				ok[i]++
+			}
+		}
+	}
+	return ok, of
+}
+
+// add adds the counts of a sheet to those of a group.
+func add(ok, of, sheetOK, sheetOf [4]int) ([4]int, [4]int) {
+	for i := range ok {
+		ok[i] += sheetOK[i]
+		of[i] += sheetOf[i]
+	}
+	return ok, of
 }
 
 // numbers lists the sheets that pass the test, by their number.
@@ -424,7 +580,14 @@ func (r *Report) agree(j, with string) Agreement {
 func (r *Report) Markdown(w io.Writer, logName string) error {
 	l := r.log
 	var b strings.Builder
-	fmt.Fprintf(&b, "# The measurement of the writing process: the %s part\n\n", l.Run.Part)
+	title, of := "the writing process", fmt.Sprintf("the %s part", l.Run.Part)
+	if r.Free {
+		title = "free writing"
+	}
+	if l.Run.Part == "all" {
+		of = "all the sheets"
+	}
+	fmt.Fprintf(&b, "# The measurement of %s: %s\n\n", title, of)
 	var judges []string
 	for _, j := range l.Run.Judges {
 		thinking := ""
@@ -444,8 +607,12 @@ func (r *Report) Markdown(w io.Writer, logName string) error {
 			}
 		}
 	}
+	prompt := short(l.Run.Prompt)
+	if r.Free {
+		prompt += ", version 2"
+	}
 	fmt.Fprintf(&b, "The log %s, of the prompt %s. Judges: %s. Repeats: %d. Sheets: %d, %d of them with frames. Calls: %d made, %d of them failed; $%.2f spent of the $%.2f cap.\n",
-		logName, short(l.Run.Prompt), strings.Join(judges, "; "), l.Run.Repeats, len(r.sheets), framed, made, failed, spent, l.Run.MaxUSD)
+		logName, prompt, strings.Join(judges, "; "), l.Run.Repeats, len(r.sheets), framed, made, failed, spent, l.Run.MaxUSD)
 	switch {
 	case l.End == nil:
 		b.WriteString("\n**The log has no end: the run broke off, and the report is of what it holds.**\n")
@@ -495,8 +662,64 @@ func (r *Report) Markdown(w io.Writer, logName string) error {
 			fmt.Fprintf(&b, "| %s | %d | %d | %d of %d |\n", a.Judge, a.Correct, a.Both, a.Unreadable, a.Answers)
 		}
 	}
+	if r.Free {
+		r.freeMarkdown(&b)
+	}
 	_, err := io.WriteString(w, b.String())
 	return err
+}
+
+// freeMarkdown writes what only the report of a run of free writing has.
+func (r *Report) freeMarkdown(b *strings.Builder) {
+	b.WriteString("\n## Free writing\n\n### Boxes on the sheets with a mistake\n\n| Judge | Form | Answers | \"error\" | With a box | Box on the first error |\n|---|---|---|---|---|---|\n")
+	for _, c := range r.Boxes {
+		fmt.Fprintf(b, "| %s | %s | %d | %d | %d | %d |\n", c.Judge, c.Form, c.Answers, c.Errors, c.Boxed, c.Hit)
+	}
+	b.WriteString("\nA box is on the first error when the part of the markup it holds the most points of is the part of the first error, the drawing whole if the mistake is in a drawing. These and the test below are the data for R52 spec: whether to come back to the writing process.\n")
+	b.WriteString("\n### Form D against form A on the sheets with a mistake\n\n| Judge | Σd | Sheets with d ≠ 0 | p, helps | p, harms |\n|---|---|---|---|---|\n")
+	for _, c := range r.OnMistakes {
+		fmt.Fprintf(b, "| %s | %+.2f | %d | %s | %s |\n", c.Judge, c.Sum, c.Nonzero, p(c.Helps), p(c.Harms))
+	}
+	breakdown := func(title, by string, rows []Breakdown) {
+		fmt.Fprintf(b, "\n### %s\n\nRight answers of the answers, by form.\n\n| %s | Sheets | Judge | A | B | C | D |\n|---|---|---|---|---|---|---|\n", title, by)
+		for _, row := range rows {
+			fmt.Fprintf(b, "| %s | %d | %s | %s |\n", row.Group, row.Sheets, row.Judge, ofForms(row.Right, row.Answers))
+		}
+		if len(rows) == 0 {
+			b.WriteString("| none | 0 | | | | | |\n")
+		}
+	}
+	breakdown("By layout", "Layout", r.ByLayout)
+	breakdown("By where the first error stands", "First error", r.ByFirstError)
+	b.WriteString("\n### By sheet\n\nRight answers of the answers, by form, repeats together; on a sheet without frames, form D is form B and form C is not asked.\n\n| Sheet | Writer | Task | Scenario | Layout | First error | Judge | A | B | C | D |\n|---|---|---|---|---|---|---|---|---|---|---|\n")
+	for _, row := range r.BySheet {
+		sh := row.Sheet
+		first := "—"
+		if sh.FirstError > 0 {
+			first = fmt.Sprintf("part %d, %s", sh.FirstError, regionGroup(sh.FirstErrorIn))
+		}
+		fmt.Fprintf(b, "| %d | %s | %s | %s | %s | %s | %s | %s |\n", sh.Sheet, orDash(string(sh.Writer)), sh.Task, sh.Scenario, layoutGroup(sh.Layout), first, row.Judge, ofForms(row.Right, row.Answers))
+	}
+}
+
+// ofForms writes the right answers of the answers in each form, a cell each, or a dash for a form
+// with no answers.
+func ofForms(right, answers [4]int) string {
+	cells := make([]string, len(right))
+	for i := range right {
+		cells[i] = "—"
+		if answers[i] > 0 {
+			cells[i] = fmt.Sprintf("%d of %d", right[i], answers[i])
+		}
+	}
+	return strings.Join(cells, " | ")
+}
+
+func orDash(s string) string {
+	if s == "" {
+		return "—"
+	}
+	return s
 }
 
 // CSV writes the answers by judge and form, a row each.

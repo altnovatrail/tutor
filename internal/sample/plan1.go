@@ -129,6 +129,64 @@ func (pl *Plan) HasParts() bool {
 	return pl != nil && pl.Version != nil && *pl.Version == PlanParts
 }
 
+// Layout is the layout of a sheet of free writing (architecture 3.4): the task sets it, and a
+// drawing or a column on the sheet shows it.
+type Layout string
+
+// The layouts of a sheet of free writing.
+const (
+	LayoutNumberLine Layout = "number-line"
+	LayoutRow        Layout = "row"
+	LayoutScheme     Layout = "scheme"
+	LayoutSide       Layout = "side"
+)
+
+// Layout is the layout of a sheet by its parts: the drawing it has, or else the side if it
+// calculates in a column, or "" when none of its parts shows one, as on a sheet of lines or on an
+// author's free solution, the whole sheet one part (R28).
+func (sh *PlanSheet) Layout() Layout {
+	var layout Layout
+	for _, p := range sh.Parts {
+		switch f := p.Figure; {
+		case f.NumberLine != nil:
+			return LayoutNumberLine
+		case f.Row != nil:
+			return LayoutRow
+		case f.Scheme != nil:
+			return LayoutScheme
+		case f.Column != nil:
+			layout = LayoutSide
+		}
+	}
+	return layout
+}
+
+// Region is where a part of a sheet stands, as the measurement of free writing tells the place of
+// the first error and of the planned erasure (T54): in a drawing, in the text of the main column,
+// or at the side.
+type Region string
+
+// The regions of a sheet.
+const (
+	RegionDrawing Region = "drawing"
+	RegionText    Region = "text"
+	RegionSide    Region = "side"
+)
+
+// Region is where part n of a sheet of parts stands, from 1, or "" when the sheet has no part n.
+func (sh *PlanSheet) Region(n int) Region {
+	if n < 1 || n > len(sh.Parts) {
+		return ""
+	}
+	switch p := sh.Parts[n-1]; {
+	case p.Kind == PartDrawing:
+		return RegionDrawing
+	case p.Place == PlaceRight:
+		return RegionSide
+	}
+	return RegionText
+}
+
 // SetParts gives a sheet of a plan of version PlanParts its parts, and their texts as its lines.
 func (sh *PlanSheet) SetParts(parts []PlanPart) {
 	sh.Parts = parts
