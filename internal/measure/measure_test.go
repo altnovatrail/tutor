@@ -111,8 +111,8 @@ func TestRunOnTheStub(t *testing.T) {
 	if recs[0]["kind"] != "run" || recs[len(recs)-1]["kind"] != "end" {
 		t.Fatalf("the log runs from %v to %v", recs[0]["kind"], recs[len(recs)-1]["kind"])
 	}
-	if recs[0]["prompt"] != judge.Fingerprint() {
-		t.Errorf("the run's record names the prompt %v, want its fingerprint %s", recs[0]["prompt"], judge.Fingerprint())
+	if recs[0]["prompt"] != judge.Fingerprint(judge.V1) {
+		t.Errorf("the run's record names the prompt %v, want its fingerprint %s", recs[0]["prompt"], judge.Fingerprint(judge.V1))
 	}
 	expected := map[float64]map[string]any{}
 	calls, same := 0, 0
@@ -300,7 +300,7 @@ func TestReadLog(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if l.Run.Part != "test" || len(l.Run.Judges) != 3 || len(l.Sheets) != 7 || l.End == nil || l.End.Calls != res.Calls || l.Run.Prompt != judge.Fingerprint() {
+	if l.Run.Part != "test" || len(l.Run.Judges) != 3 || len(l.Sheets) != 7 || l.End == nil || l.End.Calls != res.Calls || l.Run.Prompt != judge.Fingerprint(judge.V1) {
 		t.Errorf("the log reads back as %+v with %d sheets and %d calls", l.Run, len(l.Sheets), len(l.Calls))
 	}
 	made := 0

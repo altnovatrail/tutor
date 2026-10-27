@@ -182,8 +182,10 @@ type prepared struct {
 	shown *judge.Sheet
 }
 
-// Run is a run of the measurement, planned: its sheets drawn, its calls in order.
+// Run is a run of the measurement, planned: its sheets drawn, its calls in order, all in one version
+// of the judge's prompt.
 type Run struct {
+	version judge.Version
 	part    string
 	judges  []Judge
 	repeats int
@@ -200,9 +202,10 @@ func New(part string, sheets []Sheet, judges []Judge, repeats int) (*Run, error)
 	if repeats < 1 {
 		return nil, fmt.Errorf("measure: %d repeats", repeats)
 	}
-	r := &Run{part: part, judges: judges, repeats: repeats}
+	// The prompt of E2: which version a plan of free writing takes is T65's.
+	r := &Run{version: judge.V1, part: part, judges: judges, repeats: repeats}
 	for _, sh := range sheets {
-		shown, err := judge.Prepare(sh.Sample)
+		shown, err := judge.Prepare(sh.Sample, r.version)
 		if err != nil {
 			return nil, fmt.Errorf("measure: sheet %d: %w", sh.Number, err)
 		}
@@ -406,7 +409,7 @@ func (r *Run) Do(ctx context.Context, ask Asker, maxUSD float64, log io.Writer, 
 	for _, j := range r.judges {
 		judges = append(judges, JudgeRecord{Name: j.Name, Model: j.Model.ID, Effort: j.Effort, NoThinking: j.NoThinking, InputUSD: j.Model.Input, OutputUSD: j.Model.Output})
 	}
-	w.put(RunRecord{Kind: "run", Time: now().UTC(), Part: r.part, Judges: judges, Repeats: r.repeats, MaxUSD: maxUSD, Estimate: r.Estimate(), Prompt: judge.Fingerprint()})
+	w.put(RunRecord{Kind: "run", Time: now().UTC(), Part: r.part, Judges: judges, Repeats: r.repeats, MaxUSD: maxUSD, Estimate: r.Estimate(), Prompt: judge.Fingerprint(r.version)})
 	for _, sh := range r.sheets {
 		rec := SheetRecord{Kind: "sheet", Sheet: sh.Number, File: sh.File, Task: sh.Sample.Task, Scenario: sh.Sample.Scenario,
 			Outcome: sh.Sample.Expected.Outcome, Frames: len(sh.shown.Frames), Lines: journal.Agree(sh.Sample, sh.shown.Journal)}

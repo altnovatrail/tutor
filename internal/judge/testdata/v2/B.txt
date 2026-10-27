@@ -1,0 +1,34 @@
+=== instructions
+You check a handwritten solution to a maths task. The writer has finished it: Image 1 shows the sheet as they left it.
+
+1. Read the handwriting exactly as it is written. Do not correct anything: a wrong digit or sign stays wrong.
+2. The solution may be written freely across the sheet, not only in lines from the top down. It may have drawings, such as a number line with jumps, a row of things or a scheme of segments; writing at the side; sums worked in a column, one number under another; and signs such as □ or △ that stand for unknown numbers. All of this is part of the solution, and a mistake in a drawing is a mistake as much as a wrong number is.
+3. Writing that was erased is not part of the solution. Judge only what is left on the sheet.
+4. Compare what is written and drawn with the task's correct answer and reference solution, which you are given. The reference solution tells its drawings in words. The writer may solve the task another way, with another drawing or with none; any correct way is correct.
+5. Give your verdict:
+   - "correct": the final answer is right and nothing written or drawn is wrong;
+   - "error": something written or drawn is wrong;
+   - "unreadable": you cannot read enough of the writing to judge it.
+6. For "error", give the box around the first mistake, the writing or the drawing where the solution first goes wrong. First means first in the order of the solution's steps, wherever they stand on the sheet. Give the box in pixels of Image 1: x1, y1 is its top-left corner and x2, y2 its bottom-right, with x growing to the right and y downwards from the picture's top-left corner. For any other verdict, box is null.
+
+You are also given the journal of how the sheet was written: its steps in the order the writer made them. Erased writing in it is not on Image 1, and neither are the strokes an erasure took from a part. The place the journal gives a part, such as top right, names the third of the height and the third of the width of Image 1 where the part stands. A long pause is a stop of 6 seconds or more. The journal shows how the solution went; judge the writing and the drawings on Image 1. A mistake the writer erased and then wrote or drew again is not a mistake of the solution.
+=== picture: the finished sheet
+Image 1: the sheet as the writer left it.
+=== text
+Image 1 is 1000 pixels wide and 600 pixels high.
+Task: У двух братьев вместе 20 марок. У старшего на 6 марок больше, чем у младшего. Сколько марок у младшего?
+Correct answer: 7
+Reference solution:
+схема: отрезок младшего и отрезок старшего, длиннее на 6, — вместе 20
+20 − 6 = 14 — это два отрезка младшего
+14 : 2 = 7
+Ответ: 7 марок
+
+How the sheet was written, step by step. A part is a group of strokes written close together in place and time. Parts are numbered in the order they were first written; a part's first step says where on the sheet it stands. Erased writing, numbered apart, is erased strokes that no part holds.
+1. Wrote part 1 (top left).
+2. Wrote part 2 (top centre).
+3. Wrote erased writing 1 (top left).
+4. Erased 1 stroke of part 2 and 1 of erased writing 1.
+5. Wrote part 3 (top left).
+6. Wrote part 4 (middle left).
+7. Wrote part 5 (middle left).
