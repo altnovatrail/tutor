@@ -1,0 +1,49 @@
+# A number in any of its notations, compared by its value: a decimal with a point, a simple fraction,
+# a full-width digit and the vulgar fraction ½, which NFKC makes 1⁄2. A vulgar fraction that a number
+# touches, as in 1½, becomes U+FFFD at step 1, since NFKC would make it 11⁄2. The trap value 1/4
+# matches 0.25 by value.
+item:
+  answer_slots:
+    - binding: anywhere
+      check:
+        kind: number
+        key: "0.5"
+        trap_values:
+          - {value: "1/4", trap: part-whole-swap}
+readings:
+  - answer_slots:
+      - {value: "0.5", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "0.50", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "1/2", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "3 / 6", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "½", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "０.5", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "0.25", verdict: not_yet, trap: part-whole-swap}
+    verdict: not_yet
+  - answer_slots:
+      - {value: ".5", verdict: unreadable, reason: notation}
+    verdict: unreadable
+  - answer_slots:
+      - {value: "0,5", verdict: unreadable, reason: notation}
+    verdict: unreadable
+  - answer_slots:
+      - {value: "1/0", verdict: unreadable, reason: notation}
+    verdict: unreadable
+  - answer_slots:
+      - {value: "1 1/2", verdict: unreadable, reason: notation}
+    verdict: unreadable
+  - answer_slots:
+      - {value: "1½", verdict: unreadable, reason: notation}
+    verdict: unreadable

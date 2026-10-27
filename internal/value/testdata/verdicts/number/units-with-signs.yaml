@@ -1,0 +1,28 @@
+# Units that hold a superscript digit or end in a full stop: they go through the steps the value
+# goes through, so cm² and min. match as written, while a plain 2 is not the superscript one.
+item:
+  line:
+    - text: "A rectangle of 3 cm by 4 cm has an area of"
+    - binding: box
+      check: {kind: number, key: "12", units: ["cm²"]}
+    - text: ", and a walk of 25 minutes after 3:15 ends at"
+    - binding: box
+      check: {kind: number, key: "40", units: [min., minutes]}
+    - text: past three.
+readings:
+  - answer_slots:
+      - {value: "12 cm²", verdict: correct}
+      - {value: "40 min.", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "12cm²", verdict: correct}
+      - {value: "40 min", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "12 cm2", verdict: unreadable, reason: notation}
+      - {value: "40 minutes", verdict: correct}
+    verdict: unreadable
+  - answer_slots:
+      - {value: "12²", verdict: unreadable, reason: notation}
+      - {value: "min.", verdict: unreadable, reason: notation}
+    verdict: unreadable

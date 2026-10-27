@@ -1,0 +1,39 @@
+# Two boxes of one line: the item is right when both are, not yet right when either is clearly wrong,
+# whatever the other holds, and unreadable otherwise. Each box knows a wrong value and its trap.
+item:
+  line:
+    - text: "47 ÷ 6 ="
+    - binding: box
+      check:
+        kind: number
+        key: "7"
+        trap_values:
+          - {value: "8", trap: times-table-slip}
+    - text: r
+    - binding: box
+      check:
+        kind: number
+        key: "5"
+        trap_values:
+          - {value: "11", trap: remainder-too-big}
+readings:
+  - answer_slots:
+      - {value: "7", verdict: correct}
+      - {value: "5", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "8", verdict: not_yet, trap: times-table-slip}
+      - {value: "5", verdict: correct}
+    verdict: not_yet
+  - answer_slots:
+      - {value: "8", verdict: not_yet, trap: times-table-slip}
+      - {value: null, verdict: unreadable, reason: blank}
+    verdict: not_yet
+  - answer_slots:
+      - {value: "6", verdict: not_yet}
+      - {value: "11", verdict: not_yet, trap: remainder-too-big}
+    verdict: not_yet
+  - answer_slots:
+      - {value: "7", verdict: correct}
+      - {value: "five", verdict: unreadable, reason: notation}
+    verdict: unreadable

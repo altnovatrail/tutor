@@ -1,0 +1,40 @@
+# A whole number: the value is compared with the key as a number, whatever white space, a leading =
+# or the punctuation at its end; a number in another notation is not read.
+item:
+  answer_slots:
+    - binding: anywhere
+      check: {kind: number, key: "7"}
+readings:
+  - answer_slots:
+      - {value: "7", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: " = 7. ", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "7?!", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "6", verdict: not_yet}
+    verdict: not_yet
+  - answer_slots:
+      - {value: "07", verdict: unreadable, reason: notation}
+    verdict: unreadable
+  - answer_slots:
+      - {value: "+7", verdict: unreadable, reason: notation}
+    verdict: unreadable
+  - answer_slots:
+      - {value: "7e0", verdict: unreadable, reason: notation}
+    verdict: unreadable
+  - answer_slots:
+      - {value: "seven", verdict: unreadable, reason: notation}
+    verdict: unreadable
+  - answer_slots:
+      - {value: "6 7", verdict: unreadable, reason: notation}
+    verdict: unreadable
+  - answer_slots:
+      - {value: "", verdict: unreadable, reason: blank}
+    verdict: unreadable
+  - answer_slots:
+      - {value: null, verdict: unreadable, reason: blank}
+    verdict: unreadable
