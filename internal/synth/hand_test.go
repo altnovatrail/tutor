@@ -1,6 +1,8 @@
 package synth_test
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"os"
 	"reflect"
 	"testing"
@@ -132,5 +134,24 @@ func TestSheetIsTheSameEachTime(t *testing.T) {
 	}
 	if reflect.DeepEqual(a.Strokes, synth.Sheet(sh, 6).Strokes) {
 		t.Error("two seeds draw the same strokes")
+	}
+}
+
+// The sheets of E2's plan come out byte for byte as they did before the sheets of parts came: the
+// set synthetic/lines is drawn from them with seed 1, and the groups of TestSheetDrawsThePlan hold
+// on their seeds, not by construction (R30 in docs/decisions.md). A product is rounded on its own,
+// float64(…), so that the hash holds on every machine (see the package's comment).
+func TestSheetsOfLinesAsBefore(t *testing.T) {
+	_, plan := measurement(t)
+	h := sha256.New()
+	for i := range plan.Sheets {
+		data, err := sample.Marshal(synth.Sheet(&plan.Sheets[i], 1))
+		if err != nil {
+			t.Fatal(err)
+		}
+		h.Write(data)
+	}
+	if got, want := fmt.Sprintf("%x", h.Sum(nil)), "ecb2a5fb86587d9de7fb8a5f537257204a0e5849bf31c8b907a20db5e395d0c4"; got != want {
+		t.Errorf("the 40 sheets of E2's plan with seed 1 hash to %s, want %s", got, want)
 	}
 }

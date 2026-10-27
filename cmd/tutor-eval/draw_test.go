@@ -226,3 +226,60 @@ func TestDrawRefuses(t *testing.T) {
 		}
 	}
 }
+
+// The command draws a plan of parts whose sheets have no drawings: the sheets of the free-form
+// plan without one, renumbered in a plan of their own, pass the summary with the plan's markup, and
+// each has its picture, and a frame before its planned erasure.
+func TestDrawSheetsOfParts(t *testing.T) {
+	_, plan, err := readPlan(freeBank, "../../eval/free-sheets.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	text := *plan
+	text.Sheets = nil
+	erasures := 0
+	for _, sh := range plan.Sheets {
+		if synth.Drawable(&sh) == nil {
+			sh.Number = len(text.Sheets) + 1
+			text.Sheets = append(text.Sheets, sh)
+			if sh.Erasure != nil {
+				erasures++
+			}
+		}
+	}
+	if len(text.Sheets) != 13 || erasures != 5 {
+		t.Fatalf("%d sheets without drawings, %d with a planned erasure; want 13 and 5", len(text.Sheets), erasures)
+	}
+	data, err := sample.Marshal(&text)
+	if err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	planPath := filepath.Join(root, "text.json")
+	if err := os.WriteFile(planPath, data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	dir, pics := filepath.Join(root, "sheets"), filepath.Join(root, "png")
+	files := []string{"-dir", dir, "-bank", freeBank, "-plan", planPath}
+	var out, errs bytes.Buffer
+	if code := runDraw(append(files, "-png", pics), &out, &errs, time.Now); code != exitOK {
+		t.Fatalf("draw = %d, %s", code, errs.String())
+	}
+	if want := "Pictures of the sheets drawn: 18 files"; !strings.Contains(out.String(), want) {
+		t.Errorf("draw printed\n%s\nwant %q", out.String(), want)
+	}
+	var summary bytes.Buffer
+	errs.Reset()
+	if code := runSheets(files, &summary, &errs); code != exitOK {
+		t.Fatalf("sheets = %d, %s", code, errs.String())
+	}
+	for _, want := range []string{
+		"Sheets: 13 of the plan's 13 recorded, 13 of them passing the check.",
+		"Planned erasures: 5. Slips: 0 erasures on 0 sheets.",
+		"Marked off the plan: none.",
+	} {
+		if !strings.Contains(summary.String(), want) {
+			t.Errorf("the summary\n%s\nwant it to hold %q", summary.String(), want)
+		}
+	}
+}

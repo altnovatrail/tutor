@@ -2,7 +2,6 @@ package synth
 
 import (
 	"fmt"
-	"math/rand/v2"
 	"strings"
 	"unicode/utf8"
 
@@ -29,6 +28,29 @@ var letters = map[rune]glyph{
 	'с': {{{0.85, 0.52}, {0.5, 0.45}, {0.15, 0.6}, {0.12, 0.82}, {0.45, 1}, {0.85, 0.93}}},
 	'т': {{{0.08, 0.45}, {0.92, 0.45}}, {{0.5, 0.45}, {0.5, 1}}},
 	'у': {{{0.12, 0.45}, {0.5, 0.95}}, {{0.88, 0.45}, {0.35, 1.35}, {0.15, 1.3}}},
+	// The rest of the small letters, so that no word of a plan comes out a squiggle, and the signs
+	// the author wrote for the unknowns in the pilot, a square and a triangle (T54).
+	'г': {{{0.2, 1}, {0.2, 0.45}, {0.85, 0.45}}},
+	'д': {{{0.05, 1.2}, {0.05, 0.95}, {0.95, 0.95}, {0.95, 1.2}}, {{0.15, 0.95}, {0.32, 0.45}, {0.8, 0.45}, {0.8, 0.95}}},
+	'ё': {{{0.15, 0.72}, {0.85, 0.72}, {0.75, 0.5}, {0.45, 0.45}, {0.15, 0.6}, {0.15, 0.85}, {0.45, 1}, {0.85, 0.92}}, {{0.33, 0.3}}, {{0.67, 0.3}}},
+	'ж': {{{0.05, 0.45}, {0.38, 0.72}, {0.05, 1}}, {{0.5, 0.45}, {0.5, 1}}, {{0.95, 0.45}, {0.62, 0.72}, {0.95, 1}}},
+	'з': {{{0.15, 0.52}, {0.5, 0.45}, {0.8, 0.56}, {0.5, 0.72}, {0.85, 0.86}, {0.5, 1}, {0.12, 0.94}}},
+	'й': {{{0.15, 0.45}, {0.15, 1}, {0.85, 0.45}, {0.85, 1}}, {{0.32, 0.28}, {0.5, 0.36}, {0.68, 0.28}}},
+	'п': {{{0.15, 1}, {0.15, 0.45}, {0.85, 0.45}, {0.85, 1}}},
+	'ф': {{{0.5, 0.1}, {0.5, 1.32}}, {{0.5, 0.5}, {0.2, 0.55}, {0.08, 0.72}, {0.2, 0.92}, {0.5, 0.97}, {0.8, 0.92}, {0.92, 0.72}, {0.8, 0.55}, {0.5, 0.5}}},
+	'х': {{{0.1, 0.45}, {0.9, 1}}, {{0.9, 0.45}, {0.1, 1}}},
+	'ц': {{{0.15, 0.45}, {0.15, 0.95}, {0.8, 0.95}, {0.8, 0.45}}, {{0.8, 0.95}, {0.95, 0.95}, {0.95, 1.2}}},
+	'ч': {{{0.15, 0.45}, {0.15, 0.68}, {0.4, 0.78}, {0.85, 0.72}}, {{0.85, 0.45}, {0.85, 1}}},
+	'ш': {{{0.08, 0.45}, {0.08, 1}, {0.92, 1}, {0.92, 0.45}}, {{0.5, 0.45}, {0.5, 1}}},
+	'щ': {{{0.08, 0.45}, {0.08, 0.95}, {0.85, 0.95}, {0.85, 0.45}}, {{0.46, 0.45}, {0.46, 0.95}}, {{0.85, 0.95}, {0.97, 0.95}, {0.97, 1.2}}},
+	'ъ': {{{0.05, 0.45}, {0.3, 0.45}, {0.3, 1}, {0.75, 1}, {0.9, 0.88}, {0.75, 0.72}, {0.3, 0.72}}},
+	'ы': {{{0.1, 0.45}, {0.1, 1}, {0.45, 1}, {0.6, 0.88}, {0.45, 0.72}, {0.1, 0.72}}, {{0.85, 0.45}, {0.85, 1}}},
+	'ь': {{{0.2, 0.45}, {0.2, 1}, {0.7, 1}, {0.88, 0.88}, {0.7, 0.72}, {0.2, 0.72}}},
+	'э': {{{0.15, 0.52}, {0.5, 0.45}, {0.85, 0.6}, {0.88, 0.82}, {0.5, 1}, {0.15, 0.93}}, {{0.4, 0.72}, {0.86, 0.72}}},
+	'ю': {{{0.1, 0.45}, {0.1, 1}}, {{0.1, 0.72}, {0.35, 0.72}}, {{0.65, 0.45}, {0.42, 0.55}, {0.35, 0.72}, {0.42, 0.9}, {0.65, 1}, {0.88, 0.9}, {0.95, 0.72}, {0.88, 0.55}, {0.65, 0.45}}},
+	'я': {{{0.85, 1}, {0.85, 0.45}, {0.4, 0.45}, {0.2, 0.58}, {0.4, 0.72}, {0.85, 0.72}}, {{0.45, 0.72}, {0.15, 1}}},
+	'□': {{{0.1, 0.2}, {0.9, 0.2}, {0.9, 1}, {0.1, 1}, {0.1, 0.2}}},
+	'△': {{{0.5, 0.15}, {0.95, 1}, {0.05, 1}, {0.5, 0.15}}},
 }
 
 // hand is how one synthetic sheet is written: the size and the slant of the writing, where its
@@ -51,34 +73,23 @@ type hand struct {
 // the plan's order and, on a sheet of an erasure scenario, the planned erasure in the order the
 // plan gives — the lines before it, the writing to erase, one move of the eraser, what is written
 // in its place and the rest of the lines. Its markup is the plan's, and its writer is "synthetic".
-// It panics on a plan sheet the plan's check refuses, such as one without lines.
+// A sheet of a plan of parts is written part by part, each where its place puts it (sheetOfParts).
+// It panics on a plan sheet the plan's check refuses, such as one without lines, and on one code
+// cannot draw yet (Drawable).
 func Sheet(sh *sample.PlanSheet, seed uint64) *sample.Sample {
+	if len(sh.Parts) > 0 {
+		return sheetOfParts(sh, seed)
+	}
 	if len(sh.Lines) == 0 {
 		panic(fmt.Sprintf("synth: plan sheet %d has no lines", sh.Number))
 	}
-	v := sample.Version
-	w := &writer{
-		s: &sample.Sample{
-			Format:   sample.SampleFormat,
-			Version:  &v,
-			Sheet:    sample.Sheet{Width: sheetWidth, Height: sheetHeight},
-			Task:     sh.Task,
-			Writer:   sample.WriterSynthetic,
-			Scenario: sh.Scenario,
-			Strokes:  []sample.Stroke{},
-			Erasures: []sample.Erasure{},
-			Lines:    []sample.Line{},
-			Expected: sh.Expected,
-		},
-		task: sh.Task,
-		rng:  rand.New(rand.NewPCG(seed, uint64(sh.Number))),
-	}
+	w := sheetWriter(sh, seed)
 	h := w.newHand(sh)
 	w.pointMs = h.pointMs
 	w.t = 800 + w.rng.Int64N(2000)
 
 	for i, text := range sh.Lines {
-		y := h.top + float64(i)*h.step + w.jitter(h.height*0.15)
+		y := h.top + float64(float64(i)*h.step) + w.jitter(h.height*0.15)
 		x := h.left + w.jitter(h.height*0.4)
 		if i > 0 {
 			w.pause(1200 + w.rng.Int64N(3300))
@@ -100,30 +111,38 @@ func Sheet(sh *sample.PlanSheet, seed uint64) *sample.Sample {
 // newHand picks the hand of a sheet, so that its longest line fits across the sheet and its lines
 // fit down it.
 func (w *writer) newHand(sh *sample.PlanSheet) hand {
-	h := hand{
-		height:  32 + 14*w.rng.Float64(),
-		shape:   0.5 + 0.12*w.rng.Float64(),
-		slant:   -0.05 + 0.3*w.rng.Float64(),
-		tilt:    w.jitter(0.025),
-		left:    40 + 120*w.rng.Float64(),
-		top:     40 + 50*w.rng.Float64(),
-		pointMs: 6 + w.rng.Int64N(6),
-	}
+	h, spacing := w.pickHand(0.025, 120, 50)
 	longest := 0
 	for _, l := range sh.Lines {
 		longest = max(longest, utf8.RuneCountInString(l))
 	}
-	spacing := 1.25 + 0.15*w.rng.Float64() // the advance, of the width of a character
 	if room := float64(sheetWidth-40) - h.left; float64(longest)*h.height*h.shape*spacing > room {
 		h.height = room / (float64(longest) * h.shape * spacing)
 	}
 	h.advance = h.height * h.shape * spacing
-	h.step = h.height * (1.9 + 0.7*w.rng.Float64())
+	h.step = h.height * (1.9 + float64(0.7*w.rng.Float64()))
 	if n := len(sh.Lines); n > 1 {
 		// The last line, its tails too, ends above the bottom of the sheet.
-		h.step = min(h.step, (float64(sheetHeight-20)-h.top-1.5*h.height)/float64(n-1))
+		h.step = min(h.step, (float64(sheetHeight-20)-h.top-float64(1.5*h.height))/float64(n-1))
 	}
 	return h
+}
+
+// pickHand draws the size, the slant, the place and the speed of a hand: how much its lines climb
+// or fall at most, per unit to the right, how far right of 40 units they start at most and how far
+// down of 40 units the first one starts, and the spacing of its characters — the advance, of the
+// width of a character. Each sheet fits the hand to itself after.
+func (w *writer) pickHand(tilt, left, top float64) (h hand, spacing float64) {
+	h = hand{
+		height:  32 + float64(14*w.rng.Float64()),
+		shape:   0.5 + float64(0.12*w.rng.Float64()),
+		slant:   -0.05 + float64(0.3*w.rng.Float64()),
+		tilt:    w.jitter(tilt),
+		left:    40 + float64(left*w.rng.Float64()),
+		top:     40 + float64(top*w.rng.Float64()),
+		pointMs: 6 + w.rng.Int64N(6),
+	}
+	return h, 1.25 + float64(0.15*w.rng.Float64())
 }
 
 // erasing writes the line of a planned erasure: the erased writing, one move of the eraser over it
@@ -161,7 +180,7 @@ func (w *writer) write(h hand, s string, x, y float64) ([]string, float64) {
 	drift := 0.0
 	for _, r := range s {
 		if r == ' ' {
-			x += h.advance * 0.5
+			x += float64(h.advance * 0.5)
 			continue
 		}
 		g, ok := font[r]
@@ -171,9 +190,9 @@ func (w *writer) write(h hand, s string, x, y float64) ([]string, float64) {
 		if !ok {
 			g = squiggle
 		}
-		size := h.height * (0.92 + 0.16*w.rng.Float64())
+		size := h.height * (0.92 + float64(0.16*w.rng.Float64()))
 		drift = clamp(drift+w.jitter(h.height*0.04), -h.height*0.12, h.height*0.12)
-		top := y + drift + h.tilt*(x-h.left) + (h.height - size)
+		top := y + drift + float64(h.tilt*(x-h.left)) + (h.height - size)
 		for _, poly := range g {
 			points := make([]pt, len(poly))
 			for i, p := range poly {
@@ -186,7 +205,7 @@ func (w *writer) write(h hand, s string, x, y float64) ([]string, float64) {
 			w.pause(60 + w.rng.Int64N(200))
 		}
 		w.pause(90 + w.rng.Int64N(260))
-		x += h.advance * (0.9 + 0.2*w.rng.Float64())
+		x += float64(h.advance * (0.9 + float64(0.2*w.rng.Float64())))
 	}
 	return ids, x
 }

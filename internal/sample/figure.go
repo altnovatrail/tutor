@@ -242,7 +242,7 @@ func checkErasedFigure(p *problems, path string, e *PlanErasure, part PlanPart) 
 	if len(p.list) > before {
 		return
 	}
-	switch b, f := e.Figure.drawing(), part.Figure.drawing(); {
+	switch b, f := e.Figure.Drawing(), part.Figure.Drawing(); {
 	case b != f:
 		p.add(path+".figure", "is a %s, and part %d a %s: an erasure in a drawing leaves the same drawing", b, e.Line, f)
 	case !e.Figure.sameFrame(part.Figure):
@@ -252,8 +252,8 @@ func checkErasedFigure(p *problems, path string, e *PlanErasure, part PlanPart) 
 	}
 }
 
-// drawing names the drawing a figure sets.
-func (f Figure) drawing() string {
+// Drawing names the drawing a figure sets, as the plan's field does, or is empty for text.
+func (f Figure) Drawing() string {
 	switch {
 	case f.NumberLine != nil:
 		return "number_line"
