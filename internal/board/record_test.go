@@ -750,16 +750,18 @@ func saved(name string) bool {
 	return ok
 }
 
-// The plan of the author's free-form sheets and the bank of free-form tasks, as seen from this
-// package's directory: three sheets of parts, a number line, a scheme and columns at the side (T57).
+// The plans of the free-form measurement and their bank, as seen from this package's directory: the
+// 40 sheets of parts code draws (T57), and the author's three free solutions, each one part (R28,
+// the 2026-10-27 amendment).
 const (
+	freePlan   = "../../eval/free-sheets.json"
 	authorPlan = "../../eval/free-author.json"
 	freeBank   = "../../eval/free-bank.json"
 )
 
-// partsRecorder starts the record mode of the plan of the author's free-form sheets in a new
-// directory, its clock standing at one moment, and returns it with its handler.
-func partsRecorder(t *testing.T) (*Recorder, http.Handler) {
+// partsRecorder starts the record mode of a plan of the free-form measurement in a new directory,
+// its clock standing at one moment, and returns it with its handler.
+func partsRecorder(t *testing.T, planPath string) (*Recorder, http.Handler) {
 	t.Helper()
 	read := func(path string) *os.File {
 		f, err := os.Open(path)
@@ -773,7 +775,7 @@ func partsRecorder(t *testing.T) (*Recorder, http.Handler) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	plan, err := sample.ReadPlan(read(authorPlan))
+	plan, err := sample.ReadPlan(read(planPath))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -788,7 +790,7 @@ func partsRecorder(t *testing.T) (*Recorder, http.Handler) {
 // The plan view of a plan of parts carries each sheet's parts, with their kind and place, and a plan
 // of lines carries none.
 func TestRecordPlanViewParts(t *testing.T) {
-	rc, h := partsRecorder(t)
+	rc, h := partsRecorder(t, freePlan)
 	rec, _ := call(t, h, "GET", "/api/record/plan", nil)
 	var view PlanView
 	if err := json.Unmarshal(rec.Body.Bytes(), &view); err != nil || rec.Code != http.StatusOK {
@@ -812,15 +814,18 @@ func TestRecordPlanViewParts(t *testing.T) {
 }
 
 // On a sheet of parts the board proposes a part to each group of strokes, in the order of first
-// writing, with the plan's texts and answer. On the sheets code draws for the author's plan no group
-// holds strokes of two parts, and a part without the planned erasure is one group; a drawing redrawn
-// after the erasure comes as more, one after another, and joined they are the markup code drew,
-// which saves without differences. The planned erasure is the one on the plan's part, by the place
-// of its strokes on the plane.
+// writing, with the plan's texts and answer. On sheets 7, 8 and 2 that code draws — a number line
+// and a scheme with an erasure in the drawing, and columns with an error — no group holds strokes
+// of two parts, and a part without the planned erasure is one group; a drawing redrawn after the
+// erasure comes as more, one after another, and joined they are the markup code drew, which saves
+// without differences. The planned erasure is the one on the plan's part, by the place of its
+// strokes on the plane.
 func TestRecordProposeParts(t *testing.T) {
-	rc, h := partsRecorder(t)
+	rc, h := partsRecorder(t, freePlan)
 	ran, split := 0, 0 // the sheets tried, and those whose groups are more than their parts
-	for _, sh := range rc.plan.Sheets {
+	numbers := []int{7, 8, 2}
+	for _, n := range numbers {
+		sh := rc.plan.Sheets[n-1]
 		for _, seed := range []uint64{1, 2, 77} {
 			t.Run(fmt.Sprintf("sheet %d seed %d", sh.Number, seed), func(t *testing.T) {
 				ran++
@@ -902,15 +907,15 @@ func TestRecordProposeParts(t *testing.T) {
 			})
 		}
 	}
-	if ran == 3*len(rc.plan.Sheets) && split == 0 {
+	if ran == 3*len(numbers) && split == 0 {
 		t.Error("no sheet came in more groups than parts, so joining them is not tested")
 	}
 }
 
 // A sheet of parts with a part missing, or with nothing written, is named in parts, with what to do.
 func TestRecordProposePartsNames(t *testing.T) {
-	rc, h := partsRecorder(t)
-	sh := rc.plan.Sheets[2] // the columns at the side, without an erasure
+	rc, h := partsRecorder(t, freePlan)
+	sh := rc.plan.Sheets[1] // sheet 2, the columns at the side, without an erasure
 	s := synth.Sheet(&sh, 1)
 	drop := map[string]bool{}
 	for _, id := range s.Lines[len(s.Lines)-1].Strokes {
@@ -928,7 +933,7 @@ func TestRecordProposePartsNames(t *testing.T) {
 	noted(t, out["differences"], "sample.lines", "the sheet has no parts yet")
 
 	// A planned erasure on a sheet without a move of the eraser is named on its part.
-	first := rc.plan.Sheets[0]
+	first := rc.plan.Sheets[6] // sheet 7, the number line with an arc erased
 	drawn := synth.Sheet(&first, 1)
 	_, out = call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: first.Number, Strokes: drawn.Strokes})
 	noted(t, out["differences"], "sample.erasures", fmt.Sprintf("its plan sheet plans an erasure on part %d", first.Erasure.Line))
@@ -945,5 +950,55 @@ func TestRecordProposePartsNames(t *testing.T) {
 	noted(t, out["differences"], "sample.erasures", "2 moves of the eraser took strokes from the parts of the sheet, and the planned erasure is one move")
 	if p, _ := call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: first.Number, Strokes: drawn.Strokes, Erasures: moves, Undone: []bool{false, true}}); p.Code != http.StatusOK || strings.Contains(p.Body.String(), "moves of the eraser") {
 		t.Errorf("with the second by Undo = %d %s, want nothing named", p.Code, p.Body)
+	}
+}
+
+// On the author's sheets, free solutions of one part, the board proposes the whole sheet as that
+// part, whatever its groups, with the plan's text, the answer and the outcome correct; its erasures
+// are slips, by the eraser or by Undo alike, and the sheet saves as proposed, without differences.
+func TestRecordAuthorFree(t *testing.T) {
+	codeRec, _ := partsRecorder(t, freePlan)
+	rc, h := partsRecorder(t, authorPlan)
+	for i, sh := range rc.plan.Sheets {
+		code := codeRec.plan.Sheets[[]int{7, 8, 2}[i]-1] // a sheet of code of the same task, as written by hand
+		if code.Task != sh.Task {
+			t.Fatalf("sheet %d of code solves %q, and the author's sheet %d %q", code.Number, code.Task, sh.Number, sh.Task)
+		}
+		s := synth.Sheet(&code, 1)
+		visible := map[string]bool{}
+		for _, l := range s.Lines {
+			for _, id := range l.Strokes {
+				visible[id] = true
+			}
+		}
+		var want []string
+		for _, st := range s.Strokes {
+			if visible[st.ID] {
+				want = append(want, st.ID)
+			}
+		}
+		for j := range s.Erasures {
+			s.Erasures[j].Planned = nil // a slip, as the author may erase anything
+		}
+		undone := make([]bool, len(s.Erasures))
+		if len(undone) > 0 {
+			undone[0] = true
+		}
+		rec, out := call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: sh.Number, Strokes: s.Strokes, Erasures: s.Erasures, Undone: undone})
+		var p Proposal
+		if err := json.Unmarshal(rec.Body.Bytes(), &p); err != nil || rec.Code != http.StatusOK {
+			t.Fatalf("propose = %d %s", rec.Code, rec.Body)
+		}
+		if len(p.Lines) != 1 || !slices.Equal(p.Lines[0].Strokes, want) || p.Lines[0].Text != sh.Lines[0] || !p.Lines[0].Answer ||
+			p.Planned != nil || len(p.Differences) != 0 || p.Expected.Outcome != sample.OutcomeCorrect {
+			t.Errorf("sheet %d: the proposal = %v, want the whole sheet one part, the answer, nothing planned and nothing named", sh.Number, out)
+		}
+
+		s.Task, s.Scenario, s.Writer, s.Expected = sh.Task, sh.Scenario, sample.WriterAuthor, sh.Expected
+		s.Lines = p.Lines
+		rec, out = call(t, h, "POST", "/api/record/save", saveBody(sh.Number, raw(t, s)))
+		if rec.Code != http.StatusOK || len(out["differences"].([]any)) != 0 {
+			t.Errorf("sheet %d: save = %d %v, want it saved without differences", sh.Number, rec.Code, out)
+		}
 	}
 }
