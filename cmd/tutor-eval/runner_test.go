@@ -101,6 +101,72 @@ func TestRunCap(t *testing.T) {
 	}
 }
 
+// The log goes out of git: a run refuses a log in the work tree outside samples and synthetic, and
+// says so before the author is asked.
+func TestRunLogInTheWorkTree(t *testing.T) {
+	where := splitSheets(t)
+	code, out, errs := runMeasure("yes\n", append([]string{"-part", "test", "-stub", "-log", "runs/run.jsonl"}, where...)...)
+	if code != exitFail || out != "" || !strings.Contains(errs, "cmd/tutor-eval/runs is in the git work tree") {
+		t.Errorf("a run with its log in cmd/tutor-eval ends %d: %s%s", code, out, errs)
+	}
+	if _, err := os.Stat("runs"); !os.IsNotExist(err) {
+		t.Errorf("a refused run made runs in cmd/tutor-eval: %v", err)
+	}
+}
+
+// A run on the author's sheets, in samples, logs there alone: nothing of them goes to synthetic, the
+// folder agents work with. One on sheets in synthetic logs in either. A work tree of its own, with
+// both folders, stands for tutor's.
+func TestRunLogFolder(t *testing.T) {
+	tree := t.TempDir()
+	where := splitSheets(t)
+	for _, p := range []string{".git", samplesFolder} {
+		if err := os.Mkdir(filepath.Join(tree, p), 0o700); err != nil {
+			t.Fatal(err)
+		}
+	}
+	mine := filepath.Join(tree, samplesFolder, "sheets")
+	if err := os.Rename(where[1], mine); err != nil {
+		t.Fatal(err)
+	}
+	files := where[2:]
+	for _, c := range []struct {
+		dir, log string
+		code     int
+		says     string
+	}{
+		{mine, filepath.Join(tree, syntheticFolder, "runs", "run.jsonl"), exitFail, "outside its samples folder"},
+		{mine, "", exitOK, "The run is not started."},
+	} {
+		args := append([]string{"-part", "dev", "-stub", "-dir", c.dir}, files...)
+		if c.log != "" {
+			args = append(args, "-log", c.log)
+		}
+		code, out, errs := runMeasure("no\n", args...)
+		if code != c.code || !strings.Contains(out+errs, c.says) {
+			t.Errorf("a run on %s logged in %q ends %d: %s%s; want %d and %q", c.dir, c.log, code, out, errs, c.code, c.says)
+		}
+	}
+
+	drawn := filepath.Join(tree, syntheticFolder, "lines")
+	if err := os.MkdirAll(filepath.Dir(drawn), 0o700); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(mine, drawn); err != nil {
+		t.Fatal(err)
+	}
+	args := append([]string{"-part", "dev", "-stub", "-dir", drawn, "-log", filepath.Join(tree, samplesFolder, "runs", "run.jsonl")}, files...)
+	if code, out, errs := runMeasure("no\n", args...); code != exitOK || !strings.HasSuffix(out, "The run is not started.\n") {
+		t.Errorf("a run on sheets in synthetic logged in samples ends %d: %s%s", code, out, errs)
+	}
+
+	// The folder itself is no directory of sheets: a run would log beside it, outside the folder.
+	code, _, errs := runIt(append([]string{"sheets", "-dir", filepath.Join(tree, syntheticFolder)}, files...)...)
+	if code != exitUsage || !strings.Contains(errs, "is the synthetic folder itself") {
+		t.Errorf("sheets in the synthetic folder itself = %d %q", code, errs)
+	}
+}
+
 func TestRunRefuses(t *testing.T) {
 	where := recordedSheets(t)
 	for _, c := range []struct {

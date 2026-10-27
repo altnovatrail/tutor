@@ -34,7 +34,7 @@ just record
 
 Pick a sheet of the plan, write what it shows with a pen or a mouse, press Done, check the markup the plan filled in and press Save. If the board grouped the strokes into lines wrongly, pick strokes on the sheet and move them to another line, or join two lines. The board checks the markup after every change, and its words show beside the fields. On a sheet with a planned erasure, the board takes the move of the eraser on the plan's line for it, and you check that too. The sheet is saved with every stroke's points, their time and pressure, and every erasure, as a sample in `samples/sheets`, outside git.
 
-The sheets you do not write, code draws: `go run ./cmd/tutor-eval draw` draws every sheet of the plan that has no file yet, saves it beside yours with the writer `synthetic`, and leaves yours as they are.
+The sheets you do not write, code draws: `go run ./cmd/tutor-eval draw` draws every sheet of the plan that has no file yet, saves it beside yours with the writer `synthetic`, and leaves yours as they are. With `-png DIR` it also saves, in DIR, the final picture of each sheet it draws and its frame before each erasure. For epic E4, code draws into `synthetic/`, out of git too. No handwriting is in it, so coding agents work with it and run the measurements on it themselves, and the board never writes there: your handwriting stays in `samples/`.
 
 Once the sheets are written and split into a development and a test part (`tutor-eval sheets`, then `tutor-eval split` once), the measurement runs on a part:
 
@@ -42,7 +42,7 @@ Once the sheets are written and split into a development and a test part (`tutor
 just measure -part dev
 ```
 
-It first says how many calls the run makes and what they are expected to cost, and starts only when you type yes. It starts no call that could take it past its cap, $3 for the development part and $6 for the test, and logs every answer in `samples/runs`, outside git. With `-stub` it asks no model: a stub answers by the markup, and the run needs no key. `go run ./cmd/tutor-eval report LOG` then turns the log into the report, asking no model: whether the writing process helps each judge, by the criterion of section 3.1 of [docs/architecture.md](docs/architecture.md), and the other numbers, in Markdown and CSV beside the log.
+It first says how many calls the run makes and what they are expected to cost, and starts only when you type yes. It starts no call that could take it past its cap, $3 for the development part and $6 for the test, and logs every answer in `runs` beside the folder of the sheets, outside git. With `-stub` it asks no model: a stub answers by the markup, and the run needs no key. `go run ./cmd/tutor-eval report LOG` then turns the log into the report, asking no model: whether the writing process helps each judge, by the criterion of section 3.1 of [docs/architecture.md](docs/architecture.md), and the other numbers, in Markdown and CSV beside the log.
 
 How it works is section 3.3 of [docs/architecture.md](docs/architecture.md), and the plan of epic E4's measurements is its section 3.4. The plan is [RUN.md](RUN.md); detailing, the first epic, waits for epic E4.
 

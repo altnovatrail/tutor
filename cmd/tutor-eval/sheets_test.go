@@ -143,6 +143,7 @@ func TestSplitRefuses(t *testing.T) {
 		{"a broken plan", []string{"split", "-seed", "1", "-dir", where[1], "-bank", where[3], "-plan", where[3]}, exitFail, where[3] + ": "},
 		// The tests run in cmd/tutor-eval, where samples/sheets is not the samples folder at the root.
 		{"the default directory", []string{"split", "-seed", "1", "-bank", where[3], "-plan", where[5]}, exitUsage, "cmd/tutor-eval/samples/sheets is in the git work tree"},
+		{"the summary of the default directory", []string{"sheets", "-bank", where[3], "-plan", where[5]}, exitUsage, "cmd/tutor-eval/samples/sheets is in the git work tree"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -2,3 +2,8 @@
 # of every stroke. They stay out of git, and no agent opens them: CLAUDE.md, .claude/settings.json
 # and docs/architecture.md, section 3.1 (R05).
 /samples/
+
+# What code draws — sheets, their pictures and splits — and the runs on them: no handwriting. They
+# stay out of git too, and agents work with them: CLAUDE.md and docs/architecture.md, section 3.4
+# (R28).
+/synthetic/

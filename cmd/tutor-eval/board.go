@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"time"
 
@@ -56,37 +57,67 @@ func choices(getenv func(string) string, stderr io.Writer) []board.Choice {
 	return offered
 }
 
-// checkIgnored refuses a directory for what the board writes — the pictures of the check board or
-// the sheets of the record mode — that lies in a git work tree outside the samples folder at its
-// root, the one folder tutor's .gitignore ignores (R05), since the author's handwriting would be
-// one `git add` away from the repository. It runs before the directory is created. The default
-// -dir works from the root alone. A directory outside any work tree has nothing to guard.
-func checkIgnored(dir string) error {
-	abs, err := filepath.Abs(dir)
-	if err != nil {
+// The folders at the root of tutor that its .gitignore ignores. samples holds the author's
+// handwriting, and no agent opens it (R05). synthetic holds what code draws and the runs on it,
+// with no handwriting, and agents work with it (R28).
+const (
+	samplesFolder   = "samples"
+	syntheticFolder = "synthetic"
+)
+
+// checkIgnored refuses a directory for what a command writes or reads that lies in a git work tree
+// outside the folders named, at the root of the tree. The board and its record mode name samples
+// alone: the author's handwriting goes nowhere else, neither one `git add` away from the repository
+// nor into the folder agents work with. The commands of the sheets — draw, sheets, split and run —
+// name synthetic too. It runs before the directory is created, and the default directories work
+// from the root alone. A directory outside any work tree has nothing to guard.
+func checkIgnored(dir, folder string, more ...string) error {
+	abs, root, in, err := placeOf(dir)
+	folders := append([]string{folder}, more...)
+	if err != nil || root == "" || slices.Contains(folders, in) {
 		return err
 	}
-	for root := abs; ; {
+	where := "its " + folder + " folder"
+	if len(more) > 0 {
+		where = "its " + strings.Join(folders, " and ") + " folders"
+	}
+	return fmt.Errorf("%s is in the git work tree %s outside %s: run tutor-eval from the root of tutor, or give it a folder in %s", abs, root, where, strings.Join(folders, " or "))
+}
+
+// placeOf finds where a directory lies: its absolute path, the root of the git work tree it is in,
+// or "" outside any, and the ignored folder at that root it is in, or "" if neither.
+func placeOf(dir string) (abs, root, folder string, err error) {
+	if abs, err = filepath.Abs(dir); err != nil {
+		return "", "", "", err
+	}
+	for root = abs; ; {
 		if _, err := os.Stat(filepath.Join(root, ".git")); err == nil {
-			rel, err := filepath.Rel(filepath.Join(root, "samples"), abs)
-			if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-				return fmt.Errorf("%s is in the git work tree %s outside its samples folder, which git does not ignore: run the board from the root of tutor, or give -dir a folder in samples", abs, root)
+			for _, f := range []string{samplesFolder, syntheticFolder} {
+				if within(filepath.Join(root, f), abs) {
+					return abs, root, f, nil
+				}
 			}
-			return nil
+			return abs, root, "", nil
 		}
 		parent := filepath.Dir(root)
 		if parent == root {
-			return nil
+			return abs, "", "", nil
 		}
 		root = parent
 	}
 }
 
+// within reports whether the absolute path is base itself or lies inside it.
+func within(base, path string) bool {
+	rel, err := filepath.Rel(base, path)
+	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
+}
+
 // The directories each mode of the board writes to by default, in the samples folder at the root
 // of tutor, which git ignores (R05).
 const (
-	boardDir  = "samples/board"
-	sheetsDir = "samples/sheets"
+	boardDir  = samplesFolder + "/board"
+	sheetsDir = samplesFolder + "/sheets"
 )
 
 // boardFlags are the flags of tutor-eval board, and which of them the command line set.
@@ -112,8 +143,7 @@ func runBoard(args []string, stdout, stderr io.Writer, getenv func(string) strin
 	if code, ok := parse(flags, args, stderr); !ok {
 		return code
 	}
-	f.set = map[string]bool{}
-	flags.Visit(func(fl *flag.Flag) { f.set[fl.Name] = true })
+	f.set = given(flags)
 	if f.set["dir"] && f.dir == "" {
 		_, _ = fmt.Fprintln(stderr, "tutor-eval board: -dir is empty: name the directory, or leave the flag out for the default")
 		return exitUsage
@@ -164,7 +194,7 @@ func checkBoard(f boardFlags, getenv func(string) string, stderr io.Writer) (htt
 		return nil, "", exitUsage
 	}
 	dir := cmp.Or(f.dir, boardDir)
-	if err := checkIgnored(dir); err != nil {
+	if err := checkIgnored(dir, samplesFolder); err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %v\n", err)
 		return nil, "", exitUsage
 	}
@@ -185,7 +215,7 @@ func recordMode(f boardFlags, stderr io.Writer) (http.Handler, string, int) {
 		return nil, "", exitUsage
 	}
 	dir := cmp.Or(f.dir, sheetsDir)
-	if err := checkIgnored(dir); err != nil {
+	if err := checkIgnored(dir, samplesFolder); err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %v\n", err)
 		return nil, "", exitUsage
 	}
