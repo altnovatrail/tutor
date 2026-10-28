@@ -1,6 +1,6 @@
 # The hint: the dev part
 
-The log hint-stub.jsonl, of the prompt f53ff9e1255c, version 1. Tutors: opus-high (claude-opus-5-5, high); haiku-low (claude-haiku-5-5, low); haiku-low-no-thinking (claude-haiku-5-5, low, without thinking). Repeats: 1. Rungs: 1, 2, 3. Languages: ru, en. Sheets with a mistake: 6 (lines 2, free 3, near 1). Calls: 108 made, 0 of them failed; $0.52 spent of the $10.00 cap.
+The log hint-stub.jsonl, of the prompt d8a2f994b155, version 1. Tutors: opus-high (claude-opus-5-5, high); haiku-low (claude-haiku-5-5, low); haiku-low-no-thinking (claude-haiku-5-5, low, without thinking). Repeats: 1. Rungs: 1, 2, 3. Languages: ru, en. Sheets with a mistake: 6 (lines 2, free 3, near 1). Calls: 108 made, 0 of them failed; $0.52 spent of the $10.00 cap.
 
 ## Leaks, before the check and after it, and the fallback texts
 
