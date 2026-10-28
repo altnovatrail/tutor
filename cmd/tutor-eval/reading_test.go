@@ -146,7 +146,7 @@ func TestSetsRefused(t *testing.T) {
 		{[]string{"-set", sets[1], "-set", elsewhere}, exitUsage, "lie in one folder"},
 		{[]string{"-kind", "judge", "-set", sets[0], "-set", sets[1]}, exitUsage, "the judge runs on one set of sheets, and 2 are given"},
 		{[]string{"-reads", "keys,frames", "-set", sets[0]}, exitUsage, `-reads is "keys,frames"`},
-		{[]string{"-kind", "judge", "-reads", "keys", "-set", sets[0]}, exitUsage, "-reads is for -kind reading, and the judge reads nothing of it"},
+		{[]string{"-kind", "judge", "-reads", "keys", "-set", sets[0]}, exitUsage, "-reads is for -kind reading or workbook, and the judge reads nothing of it"},
 	} {
 		args := append([]string{"-kind", "reading", "-part", "dev", "-stub"}, c.args...)
 		if code, _, errs := runMeasure("yes\n", args...); code != c.code || !strings.Contains(errs, c.says) {

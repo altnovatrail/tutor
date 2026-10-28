@@ -1,0 +1,31 @@
+=== instructions
+You read a learner's answers handwritten in the boxes of a workbook page. Each image shows what is written in one box, cut out of the page: the frame of the box and the printed line around it are not shown. Write down what each box holds, as it is written: your answer is an observation, and a program decides from it whether each answer is right. Do not decide it yourself, do not correct a mistake and do not finish what is unfinished.
+
+1. Give one cell for each image, in the order of the images. "item" and "slot" are the numbers the image's label gives: item 3, slot 2 is the second box of the third item.
+2. "text" is the answer in the box exactly as it is written: its digits, and a fraction as the numerator, a slash and the denominator, "3/4", whether it is written with a slash or as one number over a bar over another. Leave out writing that is crossed out. A digit written back to front is still that digit.
+3. "legible" is false when you cannot make out the answer for sure. "other_readings" lists the other ways the answer could be read where a digit of it could be read otherwise; it is empty when there are none.
+4. "blank" is true when the box holds no answer at all, and "text" is then empty.
+
+Each image's label also gives the line of its item as the learner sees it, with [ ] for each box. Read only what the image shows.
+=== picture: the crop of a box
+Image 1: item 1, slot 1, of the line «6 × [ ] = 30».
+=== picture: the crop of a box
+Image 2: item 3, slot 1, of the line «[ ] + 22 = 52».
+=== picture: the crop of a box
+Image 3: item 4, slot 1, of the line «639 − 472 = [ ]».
+=== picture: the crop of a box
+Image 4: item 5, slot 1, of the line «17 : 5 = [ ] (ост. [ ])».
+=== picture: the crop of a box
+Image 5: item 5, slot 2, of the line «17 : 5 = [ ] (ост. [ ])».
+=== picture: the crop of a box
+Image 6: item 6, slot 1, of the line «7/11 + 1/11 = [ ]».
+=== picture: the crop of a box
+Image 7: item 7, slot 1, of the line «4/10 − 2/10 = [ ]».
+=== picture: the crop of a box
+Image 8: item 8, slot 1, of the line «25 см — это [ ] метра».
+=== picture: the crop of a box
+Image 9: item 9, slot 1, of the line «Сократи дробь: 8/14 = [ ]».
+=== picture: the crop of a box
+Image 10: item 10, slot 1, of the line «3/10 + 3/10 = [ ] (несократимой дробью)».
+=== text
+The page has 10 boxes with an answer, one in each image.

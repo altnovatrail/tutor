@@ -20,9 +20,11 @@ import (
 	"github.com/altnovatrail/tutor/internal/judge"
 	"github.com/altnovatrail/tutor/internal/measure"
 	"github.com/altnovatrail/tutor/internal/reading"
+	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/runner"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/sheets"
+	"github.com/altnovatrail/tutor/internal/workbook"
 )
 
 // The caps of the parts, in US dollars: $3 for the development and $6 for the test
@@ -31,24 +33,33 @@ import (
 var partCaps = map[string]float64{"dev": 3, "test": 6, "all": 2}
 
 // plans are the kinds of call that run asks, by -kind, each with how it plans a run over a part of
-// its sets of sheets and says what the run asks (T67): the judge, the reading (T68) and the hint
-// (T74). The other kinds of epic E4 come with their tasks.
+// its sets of sheets and says what the run asks (T67): the judge, the reading (T68), the hint (T74)
+// and the reading of the workbook (T79), which reads the pages of the workbook and no sheets. The
+// other kinds of epic E4 come with their tasks.
 var plans = map[string]struct {
 	plan func(sets []sheetFlags, part string, o options) (*runner.Run, string, error)
 	// several is whether the kind runs over several sets: the judge runs on one, since its
 	// criterion counts the test part of one set (R28).
 	several bool
+	// pages is whether the kind reads the pages of the workbook and no sets of sheets: its run takes
+	// -workbook and -seed, and logs in synthetic (T79).
+	pages bool
 }{
-	"judge":   {plan: planJudge},
-	"reading": {plan: planReading, several: true},
-	"hint":    {plan: planHint, several: true},
+	"judge":    {plan: planJudge},
+	"reading":  {plan: planReading, several: true},
+	"hint":     {plan: planHint, several: true},
+	"workbook": {plan: planWorkbook, pages: true},
 }
 
 // options are what a run is asked besides its sets and part: how many times each call is repeated,
-// and what a reading reads (T69).
+// what a reading reads (T69), and for the workbook, the file of its pages, the seed they are drawn
+// from and what its reading reads (T79).
 type options struct {
-	repeats int
-	reads   reading.Reads
+	repeats       int
+	reads         reading.Reads
+	workbook      string
+	seed          uint64
+	workbookReads workbook.Reads
 }
 
 // setsFlag is the flag -set, given once for each set of sheets: its directory, bank and plan.
@@ -76,37 +87,52 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	flags := flag.NewFlagSet("tutor-eval run", flag.ContinueOnError)
 	var f sheetFlags
 	f.add(flags)
-	kind := flags.String("kind", "judge", "the kind of call to run: judge, reading or hint")
+	kind := flags.String("kind", "judge", "the kind of call to run: judge, reading, hint or workbook")
 	var setValues setsFlag
 	flags.Var(&setValues, "set", "a set of sheets, DIR,BANK,PLAN, in place of -dir, -bank and -plan; given once for each set, for a reading or a hint over several")
-	part := flags.String("part", "", "the part of the split to run, dev or test, or all for every sheet of the plan, without the split")
+	part := flags.String("part", "", "the part of the split to run, dev or test, or all for every sheet of the plan, without the split; for the workbook, its pages of that part, or all")
 	repeats := flags.Int("repeats", 3, "how many times each call is repeated: of every judge and every tutor of the hint, and of every reader but Opus, which reads once")
-	readsList := flags.String("reads", "keys", "what a reading reads, joined by commas: keys, the finished sheet without a key, with the right key and with the false keys; heights, at 16, 24 and 48 px; states, the sheet as it was while it was written")
+	readsList := flags.String("reads", "keys", "what a reading reads, joined by commas: keys, the finished sheet without a key, with the right key and with the false keys; heights, at 16, 24 and 48 px; states, the sheet as it was while it was written. For the workbook, captions, its pages at 32 px with and without the lines of the items, by default, and heights, at 16, 24 and 48 px")
+	pagesFile := flags.String("workbook", workbookFile, "for -kind workbook, the file of the pages of the workbook")
+	seed := flags.Uint64("seed", 1, "for -kind workbook, the number the hands of the pages come from")
 	maxUSD := flags.Float64("max-usd", 0, "start no call that could take the run past this many US dollars; $3 for dev, $6 for test and $2 for all by default")
-	logPath := flags.String("log", "", "the log of the run, a new file out of git: in samples or synthetic, and in samples alone for sheets there; by default in runs next to the directory of the sheets")
+	logPath := flags.String("log", "", "the log of the run, a new file out of git: in samples or synthetic, and in samples alone for sheets there; by default in runs next to the directory of the sheets, and for the workbook in synthetic/runs")
 	stub := flags.Bool("stub", false, "ask no model: a stub answers by the markup, and the run needs no key and no network")
 	if code, ok := parse(flags, args, stderr); !ok {
 		return code
 	}
 	set := given(flags)
-	sets, ok := setsOf(f, setValues, set, stderr)
-	if !ok {
-		return exitUsage
-	}
 	k, ok := plans[*kind]
 	if !ok {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -kind is %q: give %s\n", *kind, strings.Join(slices.Sorted(maps.Keys(plans)), " or "))
 		return exitUsage
 	}
+	o := options{repeats: *repeats, workbook: *pagesFile, seed: *seed}
+	var sets []sheetFlags
+	if k.pages {
+		if o.workbookReads, ok = workbookFlags(set, *readsList, stderr); !ok {
+			return exitUsage
+		}
+	} else {
+		if set["workbook"] || set["seed"] {
+			_, _ = fmt.Fprintf(stderr, "tutor-eval run: -workbook and -seed are for -kind workbook, and the %s reads sheets\n", *kind)
+			return exitUsage
+		}
+		if sets, ok = setsOf(f, setValues, set, stderr); !ok {
+			return exitUsage
+		}
+	}
 	reads, err := reading.ParseReads(*readsList)
 	switch {
+	case k.pages:
 	case set["reads"] && *kind != "reading":
-		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -reads is for -kind reading, and the %s reads nothing of it\n", *kind)
+		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -reads is for -kind reading or workbook, and the %s reads nothing of it\n", *kind)
 		return exitUsage
 	case err != nil:
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -reads is %q: give keys, heights or states, joined by commas\n", *readsList)
 		return exitUsage
 	}
+	o.reads = reads
 	if len(sets) > 1 && !k.several {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: the %s runs on one set of sheets, and %d are given: its criterion counts the test part of one set\n", *kind, len(sets))
 		return exitUsage
@@ -134,7 +160,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	}
 
 	// What follows the plan is the same for every kind.
-	r, what, err := k.plan(sets, *part, options{repeats: *repeats, reads: reads})
+	r, what, err := k.plan(sets, *part, o)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: %v\n", err)
 		return exitFail
@@ -143,19 +169,26 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	// name of its directory, joined by "+", and the part, so that the logs of two sets in one runs
 	// directory are told apart: whatever keeps it from being written is said before the author is
 	// asked.
+	// The pages of the workbook are code's, and their run logs in synthetic alone.
 	path := *logPath
 	if path == "" {
 		at := now().UTC()
-		var names []string
-		for _, s := range sets {
-			names = append(names, setName(s))
+		dir, names := filepath.Join(syntheticFolder, "runs"), []string{strings.TrimSuffix(filepath.Base(*pagesFile), filepath.Ext(*pagesFile))}
+		if !k.pages {
+			dir, names = filepath.Join(filepath.Dir(filepath.Clean(sets[0].dir)), "runs"), nil
+			for _, s := range sets {
+				names = append(names, setName(s))
+			}
 		}
-		path = filepath.Join(filepath.Dir(filepath.Clean(sets[0].dir)), "runs", fmt.Sprintf("%s-%03d-%s-%s-%s.jsonl", at.Format("20060102-150405"), at.Nanosecond()/int(time.Millisecond), *kind, strings.Join(names, "+"), *part))
+		path = filepath.Join(dir, fmt.Sprintf("%s-%03d-%s-%s-%s.jsonl", at.Format("20060102-150405"), at.Nanosecond()/int(time.Millisecond), *kind, strings.Join(names, "+"), *part))
 	}
 	// A run on the author's sheets logs in samples alone: its log holds every answer as the model
 	// gave it, and nothing of the author's sheets goes to the folder agents work with.
 	folders := []string{samplesFolder, syntheticFolder}
-	if sets[0].folder == samplesFolder {
+	switch {
+	case k.pages:
+		folders = folders[1:]
+	case sets[0].folder == samplesFolder:
 		folders = folders[:1]
 	}
 	if err := checkIgnored(filepath.Dir(path), folders[0], folders[1:]...); err != nil {
@@ -212,6 +245,27 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		return exitFail
 	}
 	return exitOK
+}
+
+// workbookFlags checks the flags of a run of the reading of the workbook, which reads the pages of
+// the workbook and no sets of sheets, and says why it refuses: what it reads, captions by default,
+// and no flag of the sheets.
+func workbookFlags(set map[string]bool, list string, stderr io.Writer) (workbook.Reads, bool) {
+	for _, name := range []string{"set", "dir", "bank", "plan"} {
+		if set[name] {
+			_, _ = fmt.Fprintf(stderr, "tutor-eval run: -%s names sheets, and the workbook reads its pages: give -workbook and -seed\n", name)
+			return workbook.Reads{}, false
+		}
+	}
+	if !set["reads"] {
+		list = "captions"
+	}
+	reads, err := workbook.ParseReads(list)
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -reads is %q: for the workbook, give captions or heights, joined by commas\n", list)
+		return reads, false
+	}
+	return reads, true
 }
 
 // setsOf are the sets of sheets of a run: those -set gives, each DIR,BANK,PLAN, or else the one of
@@ -378,6 +432,39 @@ func planHint(sets []sheetFlags, part string, o options) (*runner.Run, string, e
 	return r, fmt.Sprintf("%s: %s with a mistake of %d in %s (%s), each at %d rungs in %d languages, by %s in %s, in version %d of the hint's prompt.\n",
 		partName(part), count(len(wrong), "sheet"), taken, count(len(sets), "set"), strings.Join(counts, ", "), len(hint.Rungs()), len(hint.Langs()),
 		strings.Join(by, ", "), count(o.repeats, "repeat"), hint.Version), nil
+}
+
+// planWorkbook plans a run of the reading of the workbook over the pages of a part, drawn from the
+// seed, and says what it asks: the pages, the readers and repeats, what is read, and the version of
+// the prompt (T79). It reads no sheets.
+func planWorkbook(_ []sheetFlags, part string, o options) (*runner.Run, string, error) {
+	wb, err := readWorkbook(o.workbook)
+	if err != nil {
+		return nil, "", err
+	}
+	pages := workbook.Pages(wb, part)
+	readers := workbook.Readers()
+	r, err := workbook.New(part, o.workbook, o.seed, pages, readers, o.repeats, o.workbookReads)
+	if err != nil {
+		return nil, "", err
+	}
+	var once, repeated []string
+	for _, rd := range readers {
+		if rd.Once {
+			once = append(once, rd.Name)
+		} else {
+			repeated = append(repeated, rd.Name)
+		}
+	}
+	var what []string
+	if o.workbookReads.Captions {
+		what = append(what, fmt.Sprintf("bare and with the lines of the items at %d px, by %s once and %s in %s", render.Digit, strings.Join(once, " and "), strings.Join(repeated, " and "), count(o.repeats, "repeat")))
+	}
+	if o.workbookReads.Heights {
+		what = append(what, fmt.Sprintf("bare at 16, 24 and 48 px, once by %s", strings.Join(repeated, " and ")))
+	}
+	return r, fmt.Sprintf("%s: %s of the workbook %s, drawn with the seed %d, %s, a call a page, in version %d of the prompt of the workbook.\n",
+		partName(part), count(len(pages), "page"), o.workbook, o.seed, strings.Join(what, "; and "), workbook.Version), nil
 }
 
 // partName is what the run says of its part.

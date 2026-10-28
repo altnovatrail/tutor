@@ -70,9 +70,10 @@ func CallKind(log []byte) string {
 	return run.CallKind
 }
 
-// Records are the log of a run of a kind of call read back: the run, its sheets and its calls in
-// the order they were made, each as the kind's own record, and how the run ended, or nil when the
-// log stops before the end.
+// Records are the log of a run of a kind of call read back: the run, its items, which are the
+// sheets of the run or the pages of the workbook (ReadItems), and its calls in the order they were
+// made, each as the kind's own record, and how the run ended, or nil when the log stops before the
+// end.
 type Records[R, S, C any] struct {
 	Run    R
 	Sheets []S
@@ -80,11 +81,18 @@ type Records[R, S, C any] struct {
 	End    *End
 }
 
-// ReadRecords reads the log of a run of a kind of call back, as ReadLog reads a log, each record
-// into the kind's own type: the run's, which must tell that kind of call, named so in what it says,
-// and the sheets' and the calls'. A log of another kind of call is refused, and so is a record of
-// a kind the log has no place for.
+// ReadRecords reads the log of a run of a kind of call over sheets back, as ReadLog reads a log, each
+// record into the kind's own type: the run's, which must tell that kind of call, named so in what it
+// says, and the sheets' and the calls'. A log of another kind of call is refused, and so is a record
+// of a kind the log has no place for.
 func ReadRecords[R, S, C any](r io.Reader, callKind, name string) (*Records[R, S, C], error) {
+	return ReadItems[R, S, C](r, callKind, name, "sheet")
+}
+
+// ReadItems is ReadRecords for a kind whose items are records of another kind than "sheet", as the
+// pages of the workbook are, "page" (T79): a record of the kind of item goes to the Sheets of the
+// log, and one of the other kind has no place in it.
+func ReadItems[R, S, C any](r io.Reader, callKind, name, item string) (*Records[R, S, C], error) {
 	var l Records[R, S, C]
 	end, err := ReadLog(r, func(kind string, line []byte) error {
 		switch kind {
@@ -99,7 +107,7 @@ func ReadRecords[R, S, C any](r io.Reader, callKind, name string) (*Records[R, S
 				return fmt.Errorf("a log of the kind of call %q, not of the %s", head.CallKind, name)
 			}
 			return json.Unmarshal(line, &l.Run)
-		case "sheet":
+		case item:
 			var rec S
 			err := json.Unmarshal(line, &rec)
 			l.Sheets = append(l.Sheets, rec)
