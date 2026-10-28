@@ -7,9 +7,10 @@ type glyph [][]pt
 
 type pt struct{ x, y float64 }
 
-// font holds the characters of the bank's notation. Any other character, such as a letter of an
-// inscription, is drawn as a squiggle: the tests need strokes where the text is, not a legible
-// alphabet.
+// font holds the characters of the bank's notation. The writer of the fixed scenarios (text) draws
+// any other character, such as a letter of an inscription, as a squiggle: the tests need strokes
+// where the text is, not a legible alphabet. The writer of the sheets of a plan (write) draws the
+// Cyrillic and Latin letters too (glyphOf), and a squiggle only for a character none of them has.
 var font = map[rune]glyph{
 	'0': {{{0.5, 0}, {0.15, 0.2}, {0.08, 0.5}, {0.15, 0.8}, {0.5, 1}, {0.85, 0.8}, {0.92, 0.5}, {0.85, 0.2}, {0.5, 0}}},
 	'1': {{{0.25, 0.25}, {0.6, 0}, {0.6, 1}}},
