@@ -201,6 +201,9 @@ type writer struct {
 	rng    *rand.Rand
 	t      int64 // the clock, in ms since the sheet was opened
 	mirror bool  // draw 2, 5, 7 and 9 mirrored
+	// lean is the digit the next line written draws leaning toward the digit of its pair, on a
+	// sheet of the scenario "similar-digits", or nil.
+	lean *lean
 	// pointMs is the time between two points of a stroke.
 	pointMs int64
 }
