@@ -190,3 +190,12 @@ func TestGolden(t *testing.T) {
 		t.Errorf("the fingerprint is %q", fp)
 	}
 }
+
+// Version 1 of the prompt is frozen after the dev round of T80, before its test part runs: any
+// change to a word a reader reads changes the fingerprint, and this test fails.
+func TestFrozenV1(t *testing.T) {
+	const frozen = "40a9244ba646d1edef4c99c6dc5060b5b38ccab74ad56ddf76792545b6590e8d"
+	if got := workbook.Fingerprint(); got != frozen || workbook.Version != 1 {
+		t.Errorf("the fingerprint of version %d is %s, not the one frozen after the dev round of T80, %s", workbook.Version, got, frozen)
+	}
+}

@@ -14,6 +14,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/report"
 	"github.com/altnovatrail/tutor/internal/runner"
+	"github.com/altnovatrail/tutor/internal/workbook"
 )
 
 // runReport turns the log of a run into its report, asking no model, by the kind of call the log
@@ -22,7 +23,9 @@ import (
 // threshold of R03 a reader each, the readings by reader and condition and the rule of two readers
 // in Markdown, and the readings in CSV. Of the hint (T75): the leaks before the check and after it,
 // the form, the fallback texts and the place by tutor, language and rung in Markdown and CSV, and
-// about 30 hints for the author to read in a third file, .hints.md. They go next to the log under
+// about 30 hints for the author to read in a third file, .hints.md. Of the workbook (T80): the boxes
+// by reader, condition and group, the items, the line of the item against none and the other
+// heights in Markdown, and the boxes in CSV. They go next to the log under
 // its name, as new files. A report holds no handwriting: numbers, sheets by their sets, numbers and
 // scenarios, the names of judges, forms, readers, conditions and tutors, and of the hint the tasks'
 // statements, the plan's texts and the words the models wrote.
@@ -114,7 +117,7 @@ type withHints interface {
 }
 
 // reportOf builds the report of a log by the kind of call it is of: the judge's, whose log tells no
-// kind, the reading's (T71) or the hint's (T75).
+// kind, the reading's (T71), the hint's (T75) or the workbook's (T80).
 func reportOf(data []byte) (written, error) {
 	switch kind := runner.CallKind(data); kind {
 	case "":
@@ -139,8 +142,14 @@ func reportOf(data []byte) (written, error) {
 			return nil, err
 		}
 		return report.NewHint(l)
+	case workbook.CallKind:
+		l, err := workbook.ReadLog(bytes.NewReader(data))
+		if err != nil {
+			return nil, err
+		}
+		return report.NewWorkbook(l)
 	default:
-		return nil, fmt.Errorf("a log of the kind of call %q, and the report knows the judge, the reading and the hint", kind)
+		return nil, fmt.Errorf("a log of the kind of call %q, and the report knows the judge, the reading, the hint and the workbook", kind)
 	}
 }
 
