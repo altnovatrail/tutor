@@ -74,9 +74,18 @@ type hand struct {
 // plan gives — the lines before it, the writing to erase, one move of the eraser, what is written
 // in its place and the rest of the lines. Its markup is the plan's, and its writer is "synthetic".
 // A sheet of a plan of parts is written part by part, each where its place puts it (sheetOfParts).
+// On a sheet of the scenario "similar-digits", the last digit of the answer line leans toward the
+// digit of its pair (SimilarShift); a digit of no pair, an answer line with the planned erasure and
+// a sheet of parts do not lean.
 // It panics on a plan sheet the plan's check refuses, such as one without lines, and on one code
 // cannot draw yet (Drawable).
 func Sheet(sh *sample.PlanSheet, seed uint64) *sample.Sample {
+	return sheetLeaning(sh, seed, SimilarShift)
+}
+
+// sheetLeaning is Sheet with the digit of the answer of a sheet of the scenario "similar-digits"
+// leaning the share shift toward the digit of its pair.
+func sheetLeaning(sh *sample.PlanSheet, seed uint64, shift float64) *sample.Sample {
 	if len(sh.Parts) > 0 {
 		return sheetOfParts(sh, seed)
 	}
@@ -101,7 +110,13 @@ func Sheet(sh *sample.PlanSheet, seed uint64) *sample.Sample {
 		if e := sh.Erasure; e != nil && e.Line == i+1 {
 			ids = w.erasing(h, sh, text, x, y)
 		} else {
+			if sh.Scenario == sample.ScenarioSimilarDigits && i+1 == sh.Answer {
+				if at, toward, ok := SimilarDigit(text); ok {
+					w.lean = &lean{at: at, toward: toward, shift: shift}
+				}
+			}
 			ids, _ = w.write(h, text, x, y)
+			w.lean = nil
 		}
 		w.s.Lines = append(w.s.Lines, sample.Line{Text: text, Strokes: ids, Answer: i+1 == sh.Answer})
 	}
@@ -178,7 +193,9 @@ func (w *writer) erasing(h hand, sh *sample.PlanSheet, line string, x, y float64
 func (w *writer) write(h hand, s string, x, y float64) ([]string, float64) {
 	var ids []string
 	drift := 0.0
+	n := -1 // the place of the character among those of the line
 	for _, r := range s {
+		n++
 		if r == ' ' {
 			x += float64(h.advance * 0.5)
 			continue
@@ -189,6 +206,9 @@ func (w *writer) write(h hand, s string, x, y float64) ([]string, float64) {
 		}
 		if !ok {
 			g = squiggle
+		}
+		if w.lean != nil && n == w.lean.at {
+			g = shifted(g, font[w.lean.toward], w.lean.shift)
 		}
 		size := h.height * (0.92 + float64(0.16*w.rng.Float64()))
 		drift = clamp(drift+w.jitter(h.height*0.04), -h.height*0.12, h.height*0.12)
