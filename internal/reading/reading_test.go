@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -12,6 +13,7 @@ import (
 	"testing"
 
 	"github.com/altnovatrail/tutor/internal/reading"
+	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/synth"
 	"github.com/altnovatrail/tutor/internal/value"
@@ -305,7 +307,7 @@ func TestGolden(t *testing.T) {
 		if p.sample.Expected.Outcome != sample.OutcomeCorrect {
 			t.Fatalf("%s: the sheet is not correct, and has no false key", c.dir)
 		}
-		sh, err := reading.Prepare(p.sample)
+		sh, err := reading.Prepare(render.Shown(p.sample, math.MaxInt64), render.Digit)
 		if err != nil {
 			t.Fatal(err)
 		}

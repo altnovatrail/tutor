@@ -54,11 +54,11 @@ const usage = `usage:
   tutor-eval split -seed N [-dev K] [-dir D] [-bank F] [-plan F]
                              divide the recorded sheets into development and test, once
   tutor-eval run -part dev|test|all [-kind judge|reading] [-repeats N] [-max-usd N] [-log F]
-                 [-stub] [-dir D] [-bank F] [-plan F] [-set D,B,P]...
+                 [-stub] [-dir D] [-bank F] [-plan F] [-set D,B,P]... [-reads keys,heights,states]
                              run the calls of a kind on a part of the split, or on all the
                              sheets, of one set or, for a reading, of each -set: the estimate
                              first, then calls to Claude once you type yes, and a log of every
-                             answer
+                             answer; a reading reads what -reads names, keys by default
   tutor-eval report LOG      the report of a run from its log, by its kind, asking no model:
                              of the judge, the criterion and the numbers in Markdown and CSV,
                              beside the log

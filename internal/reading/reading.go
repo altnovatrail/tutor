@@ -70,25 +70,30 @@ func Fingerprint() string {
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join(words, "\x00"))))
 }
 
-// Sheet is what a reading shows of a sheet: the PNG of the finished sheet, as the judge's form A
-// shows it (render.Final), and its size. Its height of digits is the sheet's: the cut-out at the
-// heights of R51 spec comes with T69.
+// Sheet is what a reading shows of a sheet: the PNG of the crop of the work, cut by the rule of the
+// eval protocol with its digits a given height (render.CropOf), and the crop's numbers, without the
+// frames of the groups, which a reading does not show (T69).
 type Sheet struct {
-	Final         []byte
-	Width, Height int
+	PNG  []byte
+	Crop *render.Crop
 }
 
-// Prepare draws what a reading shows of a sample that passes its check.
-func Prepare(s *sample.Sample) (*Sheet, error) {
-	final, err := render.Final(s)
+// Prepare cuts and draws what a reading shows of the strokes a sheet shows, with its digits digit
+// px high: the strokes of the finished sheet (render.Shown), or those of a state of it.
+func Prepare(strokes []sample.Stroke, digit int) (*Sheet, error) {
+	c, err := render.CropOf(strokes, nil, digit)
 	if err != nil {
 		return nil, err
 	}
-	png, err := render.PNG(final)
+	img, err := c.Draw(strokes)
 	if err != nil {
 		return nil, err
 	}
-	return &Sheet{Final: png, Width: final.Bounds().Dx(), Height: final.Bounds().Dy()}, nil
+	png, err := render.PNG(img)
+	if err != nil {
+		return nil, err
+	}
+	return &Sheet{PNG: png, Crop: c}, nil
 }
 
 // Request is what a reading asks of a model about a sheet of a task, given a key and solution or
@@ -96,13 +101,13 @@ func Prepare(s *sample.Sample) (*Sheet, error) {
 // picture, the task as the learner sees it, its statement, and the block of the key. The model,
 // its effort, whether it thinks and how many tokens it may write the caller sets.
 func Request(t *sample.Task, sh *Sheet, g *Given) provider.Request {
-	text := fmt.Sprintf(textFormat, sh.Width, sh.Height, t.Statement)
+	text := fmt.Sprintf(textFormat, sh.Crop.Width, sh.Crop.Height, t.Statement)
 	if g != nil {
 		text += "\n\n" + fmt.Sprintf(keyFormat, g.Key, strings.Join(g.Solution, "\n"))
 	}
 	return provider.Request{
 		Instructions: Instructions(g != nil),
-		Images:       []provider.Image{{Label: finalLabel, PNG: sh.Final}},
+		Images:       []provider.Image{{Label: finalLabel, PNG: sh.PNG}},
 		Text:         text,
 		SchemaName:   "observation",
 		Schema:       Schema,

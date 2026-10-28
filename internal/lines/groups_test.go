@@ -290,8 +290,8 @@ func TestGroupLabels(t *testing.T) {
 // tenths, and 0.049999999999999996 units, 0.49999999999999994 tenths, are 0.
 func TestTenths(t *testing.T) {
 	for v, want := range map[float64]int64{100.05: 1001, 50: 500, 50.02: 500, 50.06: 501, 0.049999999999999996: 0, 0.05: 1, -0.05: 0, -0.051: -1} {
-		if got := tenths(v); got != want {
-			t.Errorf("tenths(%v) = %d, want %d", v, got, want)
+		if got := Tenths(v); got != want {
+			t.Errorf("Tenths(%v) = %d, want %d", v, got, want)
 		}
 	}
 }

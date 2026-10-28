@@ -84,6 +84,59 @@ type Journal struct {
 	Frames []Frame
 	// words are the words of its text, those of its version.
 	words *words
+	// lineOf is the number of the line or the part of each stroke.
+	lineOf map[string]int
+}
+
+// LineOf is the number of the line a stroke stands on, from 1, in a journal of lines, or the place
+// of its part in Parts, from 1, in a journal of parts; 0 for a stroke of no line or part.
+func (j *Journal) LineOf(id string) int { return j.lineOf[id] }
+
+// Event is one event of the writing: a stroke, or an erasure by its index in the sample.
+type Event struct {
+	Stroke  *sample.Stroke // nil for an erasure
+	Erasure int
+}
+
+// Start and End are when an event began and ended: a stroke at its first point and its last, an
+// erasure at its moment.
+func (e Event) Start(s *sample.Sample) int64 {
+	if e.Stroke != nil {
+		return e.Stroke.Points[0].TMs
+	}
+	return s.Erasures[e.Erasure].TMs
+}
+
+func (e Event) End(s *sample.Sample) int64 {
+	if e.Stroke != nil {
+		return e.Stroke.Points[len(e.Stroke.Points)-1].TMs
+	}
+	return s.Erasures[e.Erasure].TMs
+}
+
+// Writing is the strokes with points and the erasures of a sample that passes its check, in the
+// order of the writing. Strokes and erasures each go in the order of the clock; merged, they are
+// the writing. An erasure goes before a stroke begun at its very moment, unless it takes that
+// stroke away: the stroke is then the next one, as on the frames of internal/render.
+func Writing(s *sample.Sample) []Event {
+	var strokes []*sample.Stroke
+	for i := range s.Strokes {
+		if len(s.Strokes[i].Points) > 0 {
+			strokes = append(strokes, &s.Strokes[i])
+		}
+	}
+	var out []Event
+	k, e := 0, 0
+	for k < len(strokes) || e < len(s.Erasures) {
+		if e < len(s.Erasures) && (k == len(strokes) || first(s.Erasures[e], *strokes[k])) {
+			out = append(out, Event{Erasure: e})
+			e++
+		} else {
+			out = append(out, Event{Stroke: strokes[k]})
+			k++
+		}
+	}
+	return out
 }
 
 // Version is the journal's version: 1 for a journal of lines, 2 for a journal of parts.
@@ -110,24 +163,13 @@ func Of(s *sample.Sample) *Journal {
 // walk tells the steps and the frames of the writing, with the number of the line or the part of
 // each stroke.
 func (j *Journal) walk(s *sample.Sample, lineOf map[string]int) {
+	j.lineOf = lineOf
 	b := &builder{lineOf: lineOf, written: map[int]bool{}}
-	var strokes []sample.Stroke
-	for _, st := range s.Strokes {
-		if len(st.Points) > 0 {
-			strokes = append(strokes, st)
-		}
-	}
-	// Strokes and erasures each go in the order of the clock; merged, they are the writing. An
-	// erasure goes before a stroke begun at its very moment, unless it takes that stroke away: the
-	// stroke is then the next one, as on the frames of internal/render.
-	k, e := 0, 0
-	for k < len(strokes) || e < len(s.Erasures) {
-		if e < len(s.Erasures) && (k == len(strokes) || first(s.Erasures[e], strokes[k])) {
-			b.erasure(e, s.Erasures[e])
-			e++
+	for _, ev := range Writing(s) {
+		if ev.Stroke != nil {
+			b.stroke(*ev.Stroke)
 		} else {
-			b.stroke(strokes[k])
-			k++
+			b.erasure(ev.Erasure, s.Erasures[ev.Erasure])
 		}
 	}
 	j.Steps = b.steps

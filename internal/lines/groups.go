@@ -158,7 +158,7 @@ func gap(low, high, otherLow, otherHigh int64) int64 {
 // greatest rounded.
 func pieceOf(st sample.Stroke, at int) (p piece, ok bool) {
 	for i, pt := range st.Points {
-		x, y := tenths(pt.X), tenths(pt.Y)
+		x, y := Tenths(pt.X), Tenths(pt.Y)
 		if i == 0 {
 			p = piece{at: at, minX: x, minY: y, maxX: x, maxY: y, start: pt.TMs, end: pt.TMs}
 			continue
@@ -169,10 +169,11 @@ func pieceOf(st sample.Stroke, at int) (p piece, ok bool) {
 	return p, len(st.Points) > 0
 }
 
-// tenths is a place in whole tenths of a unit, as a sample file keeps them, rounded half up: 100.05
+// Tenths is a place in whole tenths of a unit, as a sample file keeps them, rounded half up: 100.05
 // units are 1000.5 tenths, which make 1001. The product is rounded on its own, float64(…), so that
-// it fuses with nothing (see internal/synth).
-func tenths(v float64) int64 { return roundHalfUp(float64(v * 10)) }
+// it fuses with nothing (see internal/synth). The groups and the crop (internal/render) count in
+// them, as canvas's do (R24 and R25 canvas).
+func Tenths(v float64) int64 { return roundHalfUp(float64(v * 10)) }
 
 // roundHalfUp rounds to the nearest whole number and a half up, exactly as JavaScript's Math.round,
 // by which canvas counts, for every finite number. math.Floor(x + 0.5) would not: at

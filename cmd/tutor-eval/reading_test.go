@@ -74,6 +74,49 @@ func TestReadingOverSets(t *testing.T) {
 	}
 }
 
+// A reading of the other heights and of the states alone, on the stub: Haiku reads them once and
+// without a key, and Opus not at all, and the estimate says so; a state whose answer is not written
+// yet has no result.
+func TestReadingHeightsAndStates(t *testing.T) {
+	parent, sets := drawnSets(t)
+	code, out, errs := runMeasure("yes\n", "-kind", "reading", "-part", "dev", "-stub", "-reads", "heights,states", "-set", sets[1])
+	if code != exitOK {
+		t.Fatalf("the run ends %d: %s%s", code, out, errs)
+	}
+	if !strings.HasPrefix(out, "The dev part: 10 sheets of 1 set (free 10), once by haiku-low and haiku-low-no-thinking without a key, ") || !strings.Contains(out, " at other heights of digits and ") {
+		t.Errorf("the run says\n%s", out)
+	}
+	data, err := os.ReadFile(filepath.Join(parent, "runs", "20261026-123000-000-reading-free-dev.jsonl"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	l, err := reading.ReadLog(bytes.NewReader(data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Join(l.Run.Reads, ",") != "heights,states" || len(l.Calls) == 0 {
+		t.Fatalf("the log tells %+v and %d calls", l.Run, len(l.Calls))
+	}
+	sheet := map[int]reading.SheetRecord{}
+	for _, sh := range l.Sheets {
+		sheet[sh.Sheet] = sh
+	}
+	for _, c := range l.Calls {
+		if c.Reader == "opus-high" || c.Condition != reading.NoKey || c.Digit == 32 && c.State == 0 {
+			t.Errorf("the call %+v", c.Call)
+		}
+		if c.State > 0 {
+			sh := sheet[c.Sheet]
+			st := sh.States[c.State-1]
+			for i, p := range sh.Markup.Parts {
+				if p.Answer && st.Parts[i] != "done" && c.Verdict != "unreadable" {
+					t.Errorf("the state %+v before its answer is written: %s", c.Call, c.Verdict)
+				}
+			}
+		}
+	}
+}
+
 // The sets of a run are refused when -set is not DIR,BANK,PLAN, when it comes with -dir, when two
 // sets share a name or do not lie in one folder, and when the judge is given more than one.
 func TestSetsRefused(t *testing.T) {
@@ -89,6 +132,8 @@ func TestSetsRefused(t *testing.T) {
 		{[]string{"-set", sets[0], "-set", sets[0]}, exitUsage, "two sets are named lines"},
 		{[]string{"-set", sets[1], "-set", elsewhere}, exitUsage, "lie in one folder"},
 		{[]string{"-kind", "judge", "-set", sets[0], "-set", sets[1]}, exitUsage, "the judge runs on one set of sheets, and 2 are given"},
+		{[]string{"-reads", "keys,frames", "-set", sets[0]}, exitUsage, `-reads is "keys,frames"`},
+		{[]string{"-kind", "judge", "-reads", "keys", "-set", sets[0]}, exitUsage, "-reads is for -kind reading, and the judge reads nothing of it"},
 	} {
 		args := append([]string{"-kind", "reading", "-part", "dev", "-stub"}, c.args...)
 		if code, _, errs := runMeasure("yes\n", args...); code != c.code || !strings.Contains(errs, c.says) {

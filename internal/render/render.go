@@ -10,6 +10,10 @@
 //
 // It draws a sample that passes its check (sample.Check), on a sheet of at most MaxSide units a
 // side, and refuses any other.
+//
+// It cuts the crop of a sheet for checking too, by the rule of the eval protocol (crop.go): the work
+// with its margins, scaled so that its digits stand a given height, and drawn by the same whole
+// numbers, in 48ths of a pixel, with a line of the crop's own width.
 package render
 
 import (
@@ -31,26 +35,60 @@ const Ink = 0x11
 const MaxSide = 2048
 
 const (
-	sub  = 16 // the sixteenths of a pixel the drawing works in
-	grid = 4  // the samples of a pixel on each axis
-	half = 24 // half the width of the pen's line, 3 px, in sixteenths
-	// reach is how far a sample lies from the centre of its pixel at most, √(6² + 6²) sixteenths,
-	// rounded up. A pixel whose centre is farther than half + reach from a piece of a line has no
-	// sample on the line, and one whose centre is within half − reach has all of them on it.
-	reach = 9
-	full  = 1<<(grid*grid) - 1 // a pixel the line covers whole
+	grid = 4                  // the samples of a pixel on each axis
+	full = 1<<(grid*grid) - 1 // a pixel the line covers whole
 )
+
+// pen is how a line is drawn: the parts of a pixel its places are in, half the width of its line
+// in them, how far a sample lies from the centre of its pixel at most, in them and rounded up, and
+// the grey of its ink. A pixel whose centre is farther than half + reach from a piece of a line has
+// no sample on the line, and one whose centre is within half − reach has all of them on it.
+type pen struct {
+	sub, half, reach int64
+	ink              uint8
+}
+
+// board is the board's pen: places in sixteenths of a pixel, the line 3 px wide, and a sample at
+// most √(6² + 6²) sixteenths from the centre of its pixel.
+var board = pen{sub: 16, half: 24, reach: 9, ink: Ink}
 
 // At draws the sheet as it stood at the moment t of its clock: the points written by then, without
 // the strokes the erasures made by then took away. What happened at t itself is on it.
 func At(s *sample.Sample, t int64) (*image.Gray, error) {
+	return draw(s, Shown(s, t))
+}
+
+// Shown is what the sheet shows at the moment t of its clock, as At draws it: of each stroke no
+// erasure made by then took away, the points written by then; a stroke with none of them is left
+// out. The strokes go in the sample's order.
+func Shown(s *sample.Sample, t int64) []sample.Stroke {
 	var made []sample.Erasure
 	for _, e := range s.Erasures {
 		if e.TMs <= t {
 			made = append(made, e)
 		}
 	}
-	return draw(s, t, erased(made))
+	return shown(s, t, erased(made))
+}
+
+// shown is what the sheet shows at the moment t without the strokes gone: of each other stroke,
+// the points written by t. A stroke's points go in the order of its clock (internal/sample checks
+// it).
+func shown(s *sample.Sample, t int64, gone map[string]bool) []sample.Stroke {
+	var out []sample.Stroke
+	for _, st := range s.Strokes {
+		if gone[st.ID] {
+			continue
+		}
+		n := 0
+		for n < len(st.Points) && st.Points[n].TMs <= t {
+			n++
+		}
+		if n > 0 {
+			out = append(out, sample.Stroke{ID: st.ID, Points: st.Points[:n]})
+		}
+	}
+	return out
 }
 
 // Final draws the sheet as it was finished: every stroke that no erasure took away.
@@ -61,6 +99,15 @@ func Final(s *sample.Sample) (*image.Gray, error) { return At(s, math.MaxInt64) 
 // before it took away. A stroke that begins at the erasure's very moment and that it does not take
 // away is the next stroke, written after it.
 func Before(s *sample.Sample, i int) (*image.Gray, error) {
+	strokes, err := ShownBefore(s, i)
+	if err != nil {
+		return nil, err
+	}
+	return draw(s, strokes)
+}
+
+// ShownBefore is what the sheet shows just before its erasure i, as Before draws it.
+func ShownBefore(s *sample.Sample, i int) ([]sample.Stroke, error) {
 	if i < 0 || i >= len(s.Erasures) {
 		return nil, fmt.Errorf("render: the sample has %d erasures, and no erasure %d", len(s.Erasures), i)
 	}
@@ -71,7 +118,7 @@ func Before(s *sample.Sample, i int) (*image.Gray, error) {
 			gone[st.ID] = true
 		}
 	}
-	return draw(s, e.TMs, gone)
+	return shown(s, e.TMs, gone), nil
 }
 
 // PNG encodes a picture as PNG.
@@ -89,7 +136,7 @@ func PNG(img image.Image) ([]byte, error) {
 // (oversized_image: error). The board's sheet, 1000 × 600, costs 792.
 func Tokens(w, h int) int { return ((w + 27) / 28) * ((h + 27) / 28) }
 
-// point is a point of a stroke in sixteenths of a pixel.
+// point is a point of a stroke in the parts of a pixel its pen works in.
 type point struct{ x, y int64 }
 
 // erased is the set of the strokes the erasures take away.
@@ -103,7 +150,8 @@ func erased(es []sample.Erasure) map[string]bool {
 	return gone
 }
 
-func draw(s *sample.Sample, t int64, gone map[string]bool) (*image.Gray, error) {
+// draw draws the strokes on the sheet with the board's pen.
+func draw(s *sample.Sample, strokes []sample.Stroke) (*image.Gray, error) {
 	w, h := s.Sheet.Width, s.Sheet.Height
 	if !(w > 0 && w <= MaxSide && h > 0 && h <= MaxSide) {
 		return nil, fmt.Errorf("render: the sheet is %v × %v, and the renderer draws sheets above 0 and up to %d a side", w, h, MaxSide)
@@ -112,23 +160,16 @@ func draw(s *sample.Sample, t int64, gone map[string]bool) (*image.Gray, error) 
 	for i := range img.Pix {
 		img.Pix[i] = 0xff
 	}
-	for _, st := range s.Strokes {
-		if gone[st.ID] {
-			continue
-		}
+	for _, st := range strokes {
 		var pts []point
-		// A stroke's points go in the order of its clock (internal/sample checks it).
 		for _, p := range st.Points {
-			if p.TMs > t {
-				break
-			}
 			if !(p.X >= 0 && p.X <= w && p.Y >= 0 && p.Y <= h) {
 				return nil, fmt.Errorf("render: the stroke %q has a point off the sheet, (%v, %v)", st.ID, p.X, p.Y)
 			}
-			pts = append(pts, point{int64(math.Round(p.X * sub)), int64(math.Round(p.Y * sub))})
+			pts = append(pts, point{int64(math.Round(p.X * float64(board.sub))), int64(math.Round(p.Y * float64(board.sub)))})
 		}
 		if len(pts) > 0 {
-			stroke(img, pts)
+			board.stroke(img, pts)
 		}
 	}
 	return img, nil
@@ -138,15 +179,15 @@ func draw(s *sample.Sample, t int64, gone map[string]bool) (*image.Gray, error) 
 // of them, which makes the ends and the joins round. A stroke of one point is a dot. A sample the
 // line covers counts once, however many of its pieces cover it, so the line keeps one shade where
 // it goes over itself.
-func stroke(img *image.Gray, pts []point) {
+func (p pen) stroke(img *image.Gray, pts []point) {
 	b := img.Bounds()
 	lo, hi := pts[0], pts[0]
-	for _, p := range pts[1:] {
-		lo = point{min(lo.x, p.x), min(lo.y, p.y)}
-		hi = point{max(hi.x, p.x), max(hi.y, p.y)}
+	for _, q := range pts[1:] {
+		lo = point{min(lo.x, q.x), min(lo.y, q.y)}
+		hi = point{max(hi.x, q.x), max(hi.y, q.y)}
 	}
-	x0, y0 := max(pixel(lo.x-half), b.Min.X), max(pixel(lo.y-half), b.Min.Y)
-	x1, y1 := min(pixel(hi.x+half)+1, b.Max.X), min(pixel(hi.y+half)+1, b.Max.Y)
+	x0, y0 := max(p.pixel(lo.x-p.half), b.Min.X), max(p.pixel(lo.y-p.half), b.Min.Y)
+	x1, y1 := min(p.pixel(hi.x+p.half)+1, b.Max.X), min(p.pixel(hi.y+p.half)+1, b.Max.Y)
 	if x0 >= x1 || y0 >= y1 {
 		return
 	}
@@ -160,25 +201,25 @@ func stroke(img *image.Gray, pts []point) {
 	}
 	for _, pc := range pieces {
 		a, c := pc[0], pc[1]
-		px0, py0 := max(pixel(min(a.x, c.x)-half), x0), max(pixel(min(a.y, c.y)-half), y0)
-		px1, py1 := min(pixel(max(a.x, c.x)+half)+1, x1), min(pixel(max(a.y, c.y)+half)+1, y1)
+		px0, py0 := max(p.pixel(min(a.x, c.x)-p.half), x0), max(p.pixel(min(a.y, c.y)-p.half), y0)
+		px1, py1 := min(p.pixel(max(a.x, c.x)+p.half)+1, x1), min(p.pixel(max(a.y, c.y)+p.half)+1, y1)
 		for py := py0; py < py1; py++ {
 			for px := px0; px < px1; px++ {
 				k := (py-y0)*(x1-x0) + px - x0
-				cx, cy := int64(px)*sub+sub/2, int64(py)*sub+sub/2
+				cx, cy := int64(px)*p.sub+p.sub/2, int64(py)*p.sub+p.sub/2
 				switch {
-				case cover[k] == full || !near(cx, cy, a, c, half+reach):
+				case cover[k] == full || !near(cx, cy, a, c, p.half+p.reach):
 					continue
-				case near(cx, cy, a, c, half-reach):
+				case near(cx, cy, a, c, p.half-p.reach):
 					cover[k] = full
 					continue
 				}
 				var mask uint16
 				for j := range grid {
-					qy := int64(py)*sub + sub/grid/2 + int64(j)*sub/grid
+					qy := int64(py)*p.sub + p.sub/grid/2 + int64(j)*p.sub/grid
 					for i := range grid {
-						qx := int64(px)*sub + sub/grid/2 + int64(i)*sub/grid
-						if near(qx, qy, a, c, half) {
+						qx := int64(px)*p.sub + p.sub/grid/2 + int64(i)*p.sub/grid
+						if near(qx, qy, a, c, p.half) {
 							mask |= 1 << (j*grid + i)
 						}
 					}
@@ -194,13 +235,15 @@ func stroke(img *image.Gray, pts []point) {
 				continue
 			}
 			o := &img.Pix[img.PixOffset(px, py)]
-			*o = uint8((int(*o)*(grid*grid-n) + Ink*n + grid*grid/2) / (grid * grid))
+			*o = uint8((int(*o)*(grid*grid-n) + int(p.ink)*n + grid*grid/2) / (grid * grid))
 		}
 	}
 }
 
 // near reports whether the point q lies within r of the piece from a to c. On a sheet of up to
-// MaxSide a side, no product here leaves 64 bits: the largest, cross², stays under 2⁶².
+// MaxSide a side, in sixteenths of a pixel or, on a crop, in 48ths of one, no product here but
+// cross² leaves 64 bits, and r²·l2 stays under 2⁶². A cross of 2³¹ or more is then farther than r,
+// and cross² is not taken: on the board's sheet it never comes so far.
 func near(qx, qy int64, a, c point, r int64) bool {
 	dx, dy := c.x-a.x, c.y-a.y
 	px, py := qx-a.x, qy-a.y
@@ -214,13 +257,16 @@ func near(qx, qy int64, a, c point, r int64) bool {
 		return ex*ex+ey*ey <= r*r
 	}
 	cross := px*dy - py*dx
+	if cross >= 1<<31 || cross <= -(1<<31) {
+		return false
+	}
 	return cross*cross <= r*r*l2
 }
 
-// pixel is the pixel a coordinate in sixteenths falls in, below zero too.
-func pixel(v int64) int {
+// pixel is the pixel a coordinate in the pen's parts of a pixel falls in, below zero too.
+func (p pen) pixel(v int64) int {
 	if v < 0 {
-		return int((v - sub + 1) / sub)
+		return int((v - p.sub + 1) / p.sub)
 	}
-	return int(v / sub)
+	return int(v / p.sub)
 }
