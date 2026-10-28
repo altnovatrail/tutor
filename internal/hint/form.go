@@ -30,8 +30,30 @@ const (
 // Form is what a hint breaks of its form, in the order of the constants above; nil when it keeps
 // it. A hint is exactly one question in no more than two sentences, of 1 to MaxWords words, and its
 // letters are of the script of its language: Cyrillic in Russian, where a Latin letter the statement
-// shows itself, such as the x of an equation, may stand too, and Latin in English. The text is read
-// after NFKC, so that "…" is three points and a full-width "?" a question mark.
+// shows itself, such as the x of an equation, may stand too, and Latin in English. Its sentences,
+// questions and words are counted as Count counts them.
+func Form(text string, lang sample.Lang, statement string) []string {
+	runes := []rune(norm.NFKC.String(text))
+	sentences, questions, words := count(runes)
+	var out []string
+	if questions != 1 {
+		out = append(out, BreachQuestions)
+	}
+	if sentences > 2 {
+		out = append(out, BreachSentences)
+	}
+	if words < 1 || words > MaxWords {
+		out = append(out, BreachWords)
+	}
+	if !ofScript(runes, lang, statement) {
+		out = append(out, BreachScript)
+	}
+	return out
+}
+
+// Count counts the sentences, the questions and the words of a text, read after NFKC, so that "…"
+// is three points and a full-width "?" a question mark. The feedback on an essay is counted so too
+// (T83).
 //
 // A word is a run of letters, marks and numbers (leak.IsWord), and a point, comma or slash between
 // two digits joins them: 0.5 and 4/3 are a word each. A sentence ends at a run of ".", "!" and "?",
@@ -39,10 +61,13 @@ const (
 // end; a question is a sentence whose run holds a "?". Its tail without a point is a sentence too,
 // and a run with no word before it ends none. So "0.5" ends nothing, but an abbreviation such as
 // «т. е.» ends a sentence: a limit of the rule.
-func Form(text string, lang sample.Lang, statement string) []string {
-	runes := []rune(norm.NFKC.String(text))
-	sentences, questions := 0, 0
-	words, inWord, hasWord := 0, false, false
+func Count(text string) (sentences, questions, words int) {
+	return count([]rune(norm.NFKC.String(text)))
+}
+
+// count is Count of a text read after NFKC, as runes.
+func count(runes []rune) (sentences, questions, words int) {
+	inWord, hasWord := false, false
 	for i := 0; i < len(runes); i++ {
 		r := runes[i]
 		switch {
@@ -76,20 +101,7 @@ func Form(text string, lang sample.Lang, statement string) []string {
 	if hasWord {
 		sentences++
 	}
-	var out []string
-	if questions != 1 {
-		out = append(out, BreachQuestions)
-	}
-	if sentences > 2 {
-		out = append(out, BreachSentences)
-	}
-	if words < 1 || words > MaxWords {
-		out = append(out, BreachWords)
-	}
-	if !ofScript(runes, lang, statement) {
-		out = append(out, BreachScript)
-	}
-	return out
+	return sentences, questions, words
 }
 
 // inNumber is whether the character at i is a point, a comma or a slash between two digits.

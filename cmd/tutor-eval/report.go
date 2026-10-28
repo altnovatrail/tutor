@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/altnovatrail/tutor/internal/essay"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/measure"
 	"github.com/altnovatrail/tutor/internal/newfile"
@@ -25,8 +26,9 @@ import (
 // the form, the fallback texts and the place by tutor, language and rung in Markdown and CSV, and
 // about 30 hints for the author to read in a third file, .hints.md. Of the workbook (T80): the boxes
 // by reader, condition and group, the items, the line of the item against none and the other
-// heights in Markdown, and the boxes in CSV. They go next to the log under
-// its name, as new files. A report holds no handwriting: numbers, sheets by their sets, numbers and
+// heights in Markdown, and the boxes in CSV. Of the essays (T83): the criteria by reader, the
+// reading and the feedback in Markdown, every judgement in CSV, and the feedback for the author to
+// read in a third file, .feedback.md. They go next to the log under its name, as new files. A report holds no handwriting: numbers, sheets by their sets, numbers and
 // scenarios, the names of judges, forms, readers, conditions and tutors, and of the hint the tasks'
 // statements, the plan's texts and the words the models wrote.
 func runReport(args []string, stdout, stderr io.Writer) int {
@@ -64,16 +66,20 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 		path string
 		data []byte
 	}{{base + ".md", md.Bytes()}, {base + ".csv", table.Bytes()}}
-	if h, ok := r.(withHints); ok {
-		var hints bytes.Buffer
-		if err := h.Hints(&hints, filepath.Base(path)); err != nil {
+	var toRead, what string
+	if x, ok := r.(withReading); ok {
+		var text bytes.Buffer
+		suffix, label, write := x.Readable()
+		what = label
+		if err := write(&text, filepath.Base(path)); err != nil {
 			_, _ = fmt.Fprintf(stderr, "tutor-eval report: %v\n", err)
 			return exitFail
 		}
+		toRead = base + suffix
 		outputs = append(outputs, struct {
 			path string
 			data []byte
-		}{base + ".hints.md", hints.Bytes()})
+		}{toRead, text.Bytes()})
 	}
 	for _, o := range outputs {
 		if _, err := os.Lstat(o.path); err == nil {
@@ -94,8 +100,8 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 	var b strings.Builder
 	b.WriteString(r.Summary())
 	fmt.Fprintf(&b, "The report: %s and %s\n", outputs[0].path, outputs[1].path)
-	if len(outputs) == 3 {
-		fmt.Fprintf(&b, "The hints to read: %s\n", outputs[2].path)
+	if toRead != "" {
+		fmt.Fprintf(&b, "%s: %s\n", what, toRead)
 	}
 	if _, err := io.WriteString(stdout, b.String()); err != nil {
 		return exitFail
@@ -111,13 +117,15 @@ type written interface {
 	Summary() string
 }
 
-// withHints is a report with hints for the author to read, in a third file: the hint's.
-type withHints interface {
-	Hints(w io.Writer, logName string) error
+// withReading is a report with a third file for the author to read, beside the log under the
+// suffix it names, which the terminal names by its label: the hints of the hint's, .hints.md (T75), and the feedback of the essays',
+// .feedback.md (T83).
+type withReading interface {
+	Readable() (suffix, label string, write func(w io.Writer, logName string) error)
 }
 
 // reportOf builds the report of a log by the kind of call it is of: the judge's, whose log tells no
-// kind, the reading's (T71), the hint's (T75) or the workbook's (T80).
+// kind, the reading's (T71), the hint's (T75), the workbook's (T80) or the essays' (T83).
 func reportOf(data []byte) (written, error) {
 	switch kind := runner.CallKind(data); kind {
 	case "":
@@ -148,8 +156,14 @@ func reportOf(data []byte) (written, error) {
 			return nil, err
 		}
 		return report.NewWorkbook(l)
+	case essay.CallKind:
+		l, err := essay.ReadLog(bytes.NewReader(data))
+		if err != nil {
+			return nil, err
+		}
+		return report.NewEssays(l)
 	default:
-		return nil, fmt.Errorf("a log of the kind of call %q, and the report knows the judge, the reading, the hint and the workbook", kind)
+		return nil, fmt.Errorf("a log of the kind of call %q, and the report knows the judge, the reading, the hint, the workbook and the essays", kind)
 	}
 }
 
