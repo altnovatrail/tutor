@@ -12,13 +12,19 @@ import (
 // The pairs of similar digits are each the other's, and a sheet of the near set leans the last
 // digit of its answer line toward the digit of its pair.
 func TestSimilar(t *testing.T) {
-	for r, s := range similar {
+	pairs := 0
+	for _, r := range "0123456789" {
+		s, ok := Similar(r)
+		if !ok {
+			continue
+		}
+		pairs++
 		if back, ok := Similar(s); !ok || back != r {
 			t.Errorf("%c leans toward %c, and %c toward %c", r, s, s, back)
 		}
 	}
-	if _, ok := Similar('0'); ok {
-		t.Error("0 has a pair")
+	if _, ok := Similar('0'); ok || pairs != 8 {
+		t.Errorf("0 has a pair, or %d digits have one, not 8", pairs)
 	}
 	for _, c := range []struct {
 		line   string
@@ -43,7 +49,11 @@ func TestSimilar(t *testing.T) {
 // the digit of its pair, the stroke taken the way nearer the first: 4 written from its foot and 9
 // toward it. Every digit of a pair is one stroke, which is what lets them mix.
 func TestShifted(t *testing.T) {
-	for from, to := range similar {
+	for _, from := range "0123456789" {
+		to, ok := Similar(from)
+		if !ok {
+			continue
+		}
 		if len(font[from]) != 1 || len(font[to]) != 1 {
 			t.Fatalf("%c or %c is drawn in more strokes than one", from, to)
 		}

@@ -204,6 +204,9 @@ type writer struct {
 	// lean is the digit the next line written draws leaning toward the digit of its pair, on a
 	// sheet of the scenario "similar-digits", or nil.
 	lean *lean
+	// flip is the place, among the characters of the next string written, of the digit it draws
+	// mirrored, in a box of the workbook (T78), or nil.
+	flip *int
 	// pointMs is the time between two points of a stroke.
 	pointMs int64
 }
@@ -362,8 +365,8 @@ func (w *writer) stroke(poly []pt) string {
 	add := func(p pt) {
 		pressure = math.Min(0.95, math.Max(0.05, pressure+w.jitter(0.03)))
 		points = append(points, sample.Point{
-			X:        clamp(p.x+w.jitter(0.6), 0, sheetWidth),
-			Y:        clamp(p.y+w.jitter(0.6), 0, sheetHeight),
+			X:        clamp(p.x+w.jitter(0.6), 0, w.s.Sheet.Width),
+			Y:        clamp(p.y+w.jitter(0.6), 0, w.s.Sheet.Height),
 			TMs:      w.t,
 			Pressure: math.Round(pressure*1000) / 1000,
 		})

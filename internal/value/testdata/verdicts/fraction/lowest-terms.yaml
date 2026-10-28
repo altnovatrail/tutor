@@ -1,0 +1,35 @@
+# A fraction asked in lowest terms: a fraction of the right value that can be reduced is not yet
+# right. ¾ is 3⁄4 under NFKC, and the fraction slash is the slash. The trap value 6/8 matches every
+# fraction of the key's value but the key, as 9/12, and 1/2 is wrong and shows no trap.
+item:
+  line:
+    - text: "6/8 ="
+    - binding: box
+      check:
+        kind: fraction
+        key: "3/4"
+        form: reduced
+        trap_values:
+          - {value: "6/8", trap: not-in-lowest-terms}
+readings:
+  - answer_slots:
+      - {value: "3/4", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "3 / 4", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "¾", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "6/8", verdict: not_yet, trap: not-in-lowest-terms}
+    verdict: not_yet
+  - answer_slots:
+      - {value: "9/12", verdict: not_yet, trap: not-in-lowest-terms}
+    verdict: not_yet
+  - answer_slots:
+      - {value: "1/2", verdict: not_yet}
+    verdict: not_yet
+  - answer_slots:
+      - {value: "0.75", verdict: unreadable, reason: notation}
+    verdict: unreadable

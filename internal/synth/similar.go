@@ -3,6 +3,8 @@ package synth
 import (
 	"math"
 	"slices"
+
+	"github.com/altnovatrail/tutor/internal/sample"
 )
 
 // SimilarShift is how far toward the digit of its pair the digit of a sheet of the scenario
@@ -12,15 +14,10 @@ import (
 // R36, amendment of 2026-10-28). The near set is drawn and split with it, and is not drawn again.
 const SimilarShift = 0.1
 
-// similar are the pairs of digits a hand writes alike, each the other's: so the digit of a key and
-// the digit of its near key, which a sheet of the near set mixes (T70).
-var similar = map[rune]rune{'1': '7', '7': '1', '4': '9', '9': '4', '3': '8', '8': '3', '5': '6', '6': '5'}
-
-// Similar is the digit of a digit's pair, and false for a digit of no pair or no digit at all.
-func Similar(r rune) (rune, bool) {
-	s, ok := similar[r]
-	return s, ok
-}
+// Similar is the digit of a digit's pair, and false for a digit of no pair or no digit at all: the
+// pairs of digits a hand writes alike, each the other's (sample.PairOf), so the digit of a key
+// and the digit of its near key, which a sheet of the near set mixes (T70).
+func Similar(r rune) (rune, bool) { return sample.PairOf(r) }
 
 // SimilarDigit is the digit a sheet of the scenario "similar-digits" draws shifted in its answer
 // line: the last digit of the line, by its place among the characters of the line, and the digit
@@ -37,7 +34,7 @@ func SimilarDigit(line string) (at int, toward rune, ok bool) {
 	if at < 0 {
 		return 0, 0, false
 	}
-	toward, ok = similar[last]
+	toward, ok = Similar(last)
 	return at, toward, ok
 }
 

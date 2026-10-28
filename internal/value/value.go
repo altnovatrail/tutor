@@ -1,8 +1,10 @@
-// Package value is the check of the kind number of the module format (R56 spec; the format text of
-// spec, section 15, «Checks»): it reads a value as it is written in the steps the format gives,
-// takes it only in a notation of the kind, and compares it with the key as a rational number,
-// exactly. A value equal to a trap value names the trap. The reading's verdict of a sheet comes to
-// this check once the observation has a final answer to judge (T68; docs/architecture.md, 3.4).
+// Package value is the checks of the kinds number and fraction of the module format (R56 spec; the
+// format text of spec, section 15, «Checks»): it reads a value as it is written in the steps the
+// format gives, takes it only in a notation of the kind, and compares it with the key as a rational
+// number, exactly; a fraction asked in lowest terms is right only in them. A value equal to a trap
+// value names the trap. The reading's verdict of a sheet comes to the check of number once the
+// observation has a final answer to judge (T68; docs/architecture.md, 3.4), and a box of a page of
+// the workbook to the check of its kind (T78).
 //
 // The normalization follows Unicode 17.0.0, the version of the tables of Go 1.27 and of
 // golang.org/x/text v0.42.0 (norm.Version); the format's test vectors use only characters that
@@ -102,6 +104,73 @@ func (n Number) read(value string) (*big.Rat, Reason) {
 		return nil, Notation
 	}
 	return r, ""
+}
+
+// Form is the form a check of the kind fraction asks the fraction in.
+type Form string
+
+// The forms of a fraction: any fraction of the key's value, or only the one in lowest terms.
+const (
+	AnyForm Form = "any"
+	Reduced Form = "reduced"
+)
+
+// Fraction is a check of the kind fraction: the key, a simple fraction, the form asked, and the
+// trap values. A form not given is AnyForm.
+type Fraction struct {
+	Key   string
+	Form  Form
+	Traps []Trap
+}
+
+// Check judges the value read in an answer slot, nil when nothing was read. A key that is not a
+// simple fraction, or one asked in lowest terms that is not in them, is no key the check can
+// compare with, and neither is a form other than AnyForm and Reduced: the slot is unchecked, as the
+// format would not take such a check (task.fraction-key).
+func (f Fraction) Check(value *string) Slot {
+	if value == nil {
+		return Slot{Verdict: Unreadable, Reason: Blank}
+	}
+	if f.Form != "" && f.Form != AnyForm && f.Form != Reduced {
+		return Slot{Verdict: Unchecked}
+	}
+	v, lowest, reason := readFraction(*value)
+	if reason != "" {
+		return Slot{Verdict: Unreadable, Reason: reason}
+	}
+	key, keyLowest, reason := readFraction(f.Key)
+	if reason != "" || f.Form == Reduced && !keyLowest {
+		return Slot{Verdict: Unchecked}
+	}
+	if v.Cmp(key) == 0 && (f.Form != Reduced || lowest) {
+		return Slot{Verdict: Correct}
+	}
+	slot := Slot{Verdict: NotYet}
+	for _, t := range f.Traps {
+		if tv, _, reason := readFraction(t.Value); reason == "" && tv.Cmp(v) == 0 {
+			slot.Trap = t.Trap
+			break
+		}
+	}
+	return slot
+}
+
+// readFraction reads a value as the kind fraction reads it, in steps 1 to 5 and 7 and the notation
+// of a simple fraction: the number, whether the fraction is in lowest terms, or why it is
+// unreadable.
+func readFraction(value string) (*big.Rat, bool, Reason) {
+	text, ok := Read(value, nil)
+	if !ok {
+		return nil, false, Blank
+	}
+	if utf8.RuneCountInString(text) > maxLength || !fraction.MatchString(text) {
+		return nil, false, Notation
+	}
+	top, bottom, _ := strings.Cut(strings.ReplaceAll(text, " ", ""), "/")
+	n, _ := new(big.Int).SetString(top, 10)
+	d, _ := new(big.Int).SetString(bottom, 10)
+	lowest := new(big.Int).GCD(nil, nil, new(big.Int).Abs(n), d).Cmp(big.NewInt(1)) == 0
+	return new(big.Rat).SetFrac(n, d), lowest, ""
 }
 
 // Item is the verdict of an item, made of the verdicts of its answer slots: correct when every one

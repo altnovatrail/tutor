@@ -42,8 +42,8 @@ const usage = `usage:
   tutor-eval board -record [-addr A] [-dir D] [-bank F] [-plan F]
                                                       the record mode: write the sheets of the plan,
                                                       and each is saved as a sample
-  tutor-eval check FILE...   check samples, banks and sheet plans; samples and plans against
-                             a bank given with them
+  tutor-eval check FILE...   check samples, banks, sheet plans and the pages of the workbook;
+                             samples and plans against a bank given with them
   tutor-eval draw [-seed N] [-png D] [-dir D] [-bank F] [-plan F]
                              draw by code every sheet of the plan not recorded yet, and save it
                              with the writer "synthetic"; with -png, its pictures too, in a
@@ -66,6 +66,10 @@ const usage = `usage:
                              R03, with the numbers in Markdown and CSV; of the hint, the leaks,
                              the form, the fallback texts and the place in Markdown and CSV, and
                              about 30 hints to read in .hints.md; beside the log
+  tutor-eval workbook [-file F] [-seed N] [-png D]
+                             check the pages of the workbook, draw them in memory and sum up
+                             their boxes and the crops of the filled ones at each height; with
+                             -png, save each crop at 32 px, what a reading sees, in synthetic
   tutor-eval synth DIR       write the synthetic bank and one synthetic sample per scenario
   tutor-eval -version        print the version
 `
@@ -121,6 +125,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return runRun(context.Background(), operands, os.Stdin, stdout, stderr, os.Getenv, time.Now)
 	case "report":
 		return runReport(operands, stdout, stderr)
+	case "workbook":
+		return runWorkbook(operands, stdout, stderr)
 	case "synth":
 		if len(operands) != 1 {
 			_, _ = fmt.Fprintln(stderr, "tutor-eval synth: give one directory")
@@ -208,8 +214,20 @@ func check(paths []string, stdout, stderr io.Writer) int {
 					return exitFail
 				}
 			}
+		case sample.WorkbookFormat:
+			wb, err := sample.ReadWorkbook(bytes.NewReader(data))
+			if err == nil {
+				err = synth.CheckLayout(wb)
+			}
+			if err != nil {
+				fail(path, err)
+				continue
+			}
+			if _, err := fmt.Fprintf(stdout, "%s: ok, workbook of %s\n", path, workbookSize(wb)); err != nil {
+				return exitFail
+			}
 		default:
-			fail(path, fmt.Errorf("format %q is not %q, %q or %q", head.Format, sample.SampleFormat, sample.BankFormat, sample.PlanFormat))
+			fail(path, fmt.Errorf("format %q is not %q, %q, %q or %q", head.Format, sample.SampleFormat, sample.BankFormat, sample.PlanFormat, sample.WorkbookFormat))
 		}
 	}
 	for _, r := range reads {
