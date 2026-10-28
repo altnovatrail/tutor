@@ -80,6 +80,37 @@ measure *args:
 free *args:
     just measure -dir synthetic/free -bank eval/free-bank.json -plan eval/free-sheets.json {{ args }}
 
+# This recipe asks for the Anthropic key for eval if it is not set yet, as measure does; with -stub
+# the runs need none. It runs the judge, version 2, and the reading — without a key, with the
+# right and the false keys, at the other heights of digits and on the states — over all the
+# author's three sheets of free writing in samples/free, each after its estimate and your yes, and
+# prints each report on the terminal. The logs and the reports go to samples/runs, out of git, and
+# the reports hold no handwriting. Each run is capped at $1, so that both stay within the $2 of
+# T77. Its arguments go to both runs, such as -stub or another -max-usd. A run you say no to, or one
+# that stops short, does not keep the other from running, and the report is of the logs there are.
+# Run the judge and the reading on the author's three sheets (T77 in RUN.md).
+live *args:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -z "${TUTOR_ANTHROPIC_API_KEY:-}" ]; then
+        read -rsp 'Anthropic key for eval, or Enter with -stub: ' TUTOR_ANTHROPIC_API_KEY
+        echo >&2
+    fi
+    export TUTOR_ANTHROPIC_API_KEY
+    stamp="$(date -u +%Y%m%d-%H%M%S)"
+    judge="samples/runs/${stamp}-live-judge.jsonl"
+    reading="samples/runs/${stamp}-live-reading.jsonl"
+    status=0
+    go run ./cmd/tutor-eval run -part all -max-usd 1 -dir samples/free -bank eval/free-bank.json -plan eval/free-author.json -log "$judge" {{ args }} || status=1
+    go run ./cmd/tutor-eval run -kind reading -part all -max-usd 1 -reads keys,heights,states -set samples/free,eval/free-bank.json,eval/free-author.json -log "$reading" {{ args }} || status=1
+    for log in "$judge" "$reading"; do
+        if [ -f "$log" ]; then
+            go run ./cmd/tutor-eval report "$log" || status=1
+            if [ -f "${log%.jsonl}.md" ]; then cat "${log%.jsonl}.md"; fi
+        fi
+    done
+    exit "$status"
+
 # Run lint, the linters and the formatting check, under the name go.yml runs.
 ci-lint: lint
 
