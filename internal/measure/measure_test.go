@@ -55,13 +55,13 @@ func judgeNamed(name string) measure.Judge {
 func near(a, b float64) bool { return math.Abs(a-b) < 1e-9 }
 
 // Every judge has the output tokens a call is expected to take: about 50, and Haiku with thinking
-// about 300 (architecture 3.1).
+// about 300 (architecture 3.1); and so have the four the extended measurement adds (R50).
 func TestJudges(t *testing.T) {
 	var got []string
 	for _, j := range measure.Judges() {
 		got = append(got, fmt.Sprintf("%s %d", j.Name, j.Output))
 	}
-	if s := strings.Join(got, ", "); s != "opus-high 50, haiku-low 300, haiku-low-no-thinking 50" {
+	if s := strings.Join(got, ", "); s != "opus-high 50, haiku-low 300, haiku-low-no-thinking 50, opus-medium 50, sonnet-low 200, sonnet-low-no-thinking 50, haiku-medium 400" {
 		t.Errorf("the judges are %s", s)
 	}
 }
@@ -80,14 +80,14 @@ func TestEstimate(t *testing.T) {
 	}
 	// All seven sheets by the three judges, twice: A and B of every sheet, C and D of the two with
 	// frames; the D of the other five is their B.
-	r, err = measure.New("test", all, measure.Judges(), 2, judge.V1)
+	r, err = measure.New("test", all, e4Judges(), 2, judge.V1)
 	if err != nil {
 		t.Fatal(err)
 	}
 	if e := r.Estimate(); e.Calls != 2*3*(5*2+2*4) {
 		t.Errorf("the run makes %d calls, want %d", e.Calls, 2*3*(5*2+2*4))
 	}
-	if _, err := measure.New("test", all, measure.Judges(), 0, judge.V1); err == nil {
+	if _, err := measure.New("test", all, e4Judges(), 0, judge.V1); err == nil {
 		t.Error("a run of no repeats is planned")
 	}
 }
@@ -114,7 +114,7 @@ func clock() time.Time { return time.Date(2026, 10, 26, 12, 0, 0, 0, time.UTC) }
 // frames points at its B, and the run costs what the estimate said.
 func TestRunOnTheStub(t *testing.T) {
 	all := sheets(t)
-	r, err := measure.New("test", all, measure.Judges(), 1, judge.V1)
+	r, err := measure.New("test", all, e4Judges(), 1, judge.V1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -236,7 +236,7 @@ func TestStubWithoutVerdict(t *testing.T) {
 // A run's log reads back as it was written, and a log whose last line was cut off half written
 // reads without that line; a log out of order, of an unknown kind or empty does not.
 func TestReadLog(t *testing.T) {
-	r, err := measure.New("test", sheets(t), measure.Judges(), 1, judge.V1)
+	r, err := measure.New("test", sheets(t), e4Judges(), 1, judge.V1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -393,7 +393,7 @@ func TestLogGolden(t *testing.T) {
 		{"stub-v1.jsonl", "test", sheets(t), judge.V1},
 		{"stub-v2.jsonl", "all", freeSheets(t, 1, 2, 3), judge.V2},
 	} {
-		r, err := measure.New(c.part, c.sheets, measure.Judges(), 1, c.v)
+		r, err := measure.New(c.part, c.sheets, e4Judges(), 1, c.v)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -416,4 +416,9 @@ func TestLogGolden(t *testing.T) {
 			t.Errorf("the log of the run is not %s; with -update the test writes it anew", path)
 		}
 	}
+}
+
+// e4Judges are the judges of the three configurations of E4, which these tests were written for.
+func e4Judges() []measure.Judge {
+	return runner.E4(measure.Judges(), func(j measure.Judge) runner.Config { return j.Config })
 }

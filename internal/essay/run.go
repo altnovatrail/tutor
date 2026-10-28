@@ -20,12 +20,15 @@ const CallKind = "essay"
 // expected to take, for the estimate.
 type Reader = runner.Reader
 
-// Readers are the three configurations of the runner. The text of an essay, six judgements and the
+// Readers are the configurations of the runner. The text of an essay, six judgements and the
 // feedback come to about 600 tokens; Haiku with thinking writes about 600 more, and Opus at high
 // effort about 1 500. Opus assesses in every repeat, not once: a judgement by a rubric changes from
-// call to call more than the reading of a digit (R45).
+// call to call more than the reading of a digit (R45). The four the extended measurement adds (R50) are estimated so: Opus at medium as at high, Sonnet with thinking between Haiku and Opus, without thinking as Haiku without it, and Haiku at medium above Haiku at low.
 func Readers() []Reader {
-	return runner.ReadersOf("essay", map[string]int{"opus-high": 2100, "haiku-low": 1200, "haiku-low-no-thinking": 600})
+	return runner.ReadersOf("essay", map[string]int{
+		"opus-high": 2100, "haiku-low": 1200, "haiku-low-no-thinking": 600,
+		"opus-medium": 2100, "sonnet-low": 1500, "sonnet-low-no-thinking": 600, "haiku-medium": 1600,
+	})
 }
 
 // The input tokens a call is expected to take, for the estimate: the instructions, the schema, the

@@ -18,7 +18,7 @@ import (
 // first repeat. The pages are those of the part.
 func TestNew(t *testing.T) {
 	wb := theWorkbook(t)
-	readers := workbook.Readers()
+	readers := e4Readers()
 	for _, c := range []struct {
 		part  string
 		reads workbook.Reads
@@ -60,7 +60,7 @@ func TestNew(t *testing.T) {
 // to.
 func TestRunOnTheStub(t *testing.T) {
 	wb := theWorkbook(t)
-	r, err := workbook.New("dev", "eval/workbook.json", 1, workbook.Pages(wb, "dev"), workbook.Readers(), 1, workbook.Reads{Captions: true, Heights: true})
+	r, err := workbook.New("dev", "eval/workbook.json", 1, workbook.Pages(wb, "dev"), e4Readers(), 1, workbook.Reads{Captions: true, Heights: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -117,7 +117,7 @@ func TestNewAsksNothingIdle(t *testing.T) {
 		}
 		empty.Items[i].Boxes = boxes
 	}
-	readers := workbook.Readers()
+	readers := e4Readers()
 	if _, err := workbook.New("dev", "", 1, []*sample.WorkbookPage{&empty}, readers, 3, workbook.Reads{Captions: true}); err == nil || !strings.Contains(err.Error(), "asks nothing") {
 		t.Errorf("a run of a page with no filled box: %v", err)
 	}
@@ -148,4 +148,9 @@ func TestNewAsksNothingIdle(t *testing.T) {
 	if _, err := workbook.New("dev", "", 1, workbook.Pages(wb, "dev"), readers[:1], 1, workbook.Reads{Heights: true}); err == nil {
 		t.Error("heights by Opus alone, who reads none of them, are planned")
 	}
+}
+
+// e4Readers are the readers of the three configurations of E4, which these tests were written for.
+func e4Readers() []workbook.Reader {
+	return runner.E4(workbook.Readers(), func(rd workbook.Reader) runner.Config { return rd.Config })
 }

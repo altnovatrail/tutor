@@ -57,16 +57,18 @@ const usage = `usage:
                              divide the recorded sheets into development and test, once
   tutor-eval run -part dev|test|all [-kind judge|reading|hint|workbook|essay] [-repeats N]
                  [-max-usd N] [-log F] [-stub] [-dir D] [-bank F] [-plan F] [-set D,B,P]...
-                 [-reads LIST] [-workbook F] [-essays F] [-seed N]
+                 [-reads LIST] [-workbook F] [-essays F] [-seed N] [-readers LIST]
                              run the calls of a kind on a part of the split, or on all the
                              sheets, of one set or, for a reading or a hint, of each -set: the
                              estimate first, then calls to Claude once you type yes, and a log of
-                             every answer; a reading reads what -reads names, keys by default, and
-                             a hint is asked of the sheets with a mistake, at every rung in Russian
-                             and English, and checked for leaks and its form; the workbook reads
-                             the pages of a part of -workbook, a call a page, captions by default,
-                             and logs in synthetic/runs; the essay assesses the essays of a part
-                             of -essays by their rubric, a call an essay, and logs there too
+                             every answer; -readers names the configurations asked, the three of
+                             E4 by default; a reading reads what -reads names, keys by default,
+                             and a hint is asked of the sheets with a mistake, at every rung in
+                             Russian and English, and checked for leaks and its form; the
+                             workbook reads the pages of a part of -workbook, a call a page,
+                             captions by default or bare alone, and logs in synthetic/runs; the
+                             essay assesses the essays of a part of -essays by their rubric, a
+                             call an essay, and logs there too
   tutor-eval report LOG      the report of a run from its log, by its kind, asking no model:
                              of the judge, the criterion, and of the reading, the threshold of
                              R03, with the numbers in Markdown and CSV; of the hint, the leaks,

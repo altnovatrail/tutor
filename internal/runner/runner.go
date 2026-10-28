@@ -12,6 +12,7 @@ import (
 	"fmt"
 	"io"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/altnovatrail/tutor/provider"
@@ -35,8 +36,10 @@ type Config struct {
 	NoThinking bool
 }
 
-// Configs are the three configurations of the measurements: Opus 5.5 at high, Haiku 5.5 at low,
-// and Haiku 5.5 at low without thinking (R24; architecture 3.4).
+// Configs are the configurations of the measurements: the three of E4 first — Opus 5.5 at high,
+// Haiku 5.5 at low, and Haiku 5.5 at low without thinking (R24; architecture 3.4) —, then the four
+// the extended measurement adds: Opus 5.5 at medium, Sonnet 5.5 at low with thinking and without,
+// and Haiku 5.5 at medium (R50). A run asks those it names, the three of E4 by default (E4Configs).
 func Configs() []Config {
 	model := func(id string) claude.Model {
 		i := slices.IndexFunc(claude.Models, func(m claude.Model) bool { return m.ID == id })
@@ -46,7 +49,60 @@ func Configs() []Config {
 		{Name: "opus-high", Model: model("claude-opus-5-5"), Effort: "high"},
 		{Name: "haiku-low", Model: model("claude-haiku-5-5"), Effort: "low"},
 		{Name: "haiku-low-no-thinking", Model: model("claude-haiku-5-5"), Effort: "low", NoThinking: true},
+		{Name: "opus-medium", Model: model("claude-opus-5-5"), Effort: "medium"},
+		{Name: "sonnet-low", Model: model("claude-sonnet-5-5"), Effort: "low"},
+		{Name: "sonnet-low-no-thinking", Model: model("claude-sonnet-5-5"), Effort: "low", NoThinking: true},
+		{Name: "haiku-medium", Model: model("claude-haiku-5-5"), Effort: "medium"},
 	}
+}
+
+// E4Configs are the names of the three configurations of E4, which a run asks unless it names others.
+var E4Configs = []string{"opus-high", "haiku-low", "haiku-low-no-thinking"}
+
+// ConfigNames are the names of the configurations, in their order.
+func ConfigNames() []string {
+	var names []string
+	for _, c := range Configs() {
+		names = append(names, c.Name)
+	}
+	return names
+}
+
+// E4 are the members of all of the three configurations of E4: the readers, judges or tutors of a
+// kind that a run asks by default, and those the tests of the kinds were written for.
+func E4[T any](all []T, config func(T) Config) []T {
+	out, err := Chosen(all, config, E4Configs)
+	if err != nil {
+		panic(err)
+	}
+	return out
+}
+
+// Chosen are the members of all whose configurations names names, in the order of all: the readers,
+// judges or tutors of a kind that a run asks. A name of no configuration is a mistake, and the error
+// says which names there are.
+func Chosen[T any](all []T, config func(T) Config, names []string) ([]T, error) {
+	known := ConfigNames()
+	seen := map[string]bool{}
+	for _, name := range names {
+		if !slices.Contains(known, name) {
+			return nil, fmt.Errorf("no configuration %q: give %s", name, strings.Join(known, ", "))
+		}
+		if seen[name] {
+			return nil, fmt.Errorf("the configuration %q is named twice", name)
+		}
+		seen[name] = true
+	}
+	if len(names) == 0 {
+		return nil, fmt.Errorf("no configuration is named")
+	}
+	var out []T
+	for _, m := range all {
+		if seen[config(m).Name] {
+			out = append(out, m)
+		}
+	}
+	return out, nil
 }
 
 // Cost is what a call of the configuration costs for its tokens, in US dollars.

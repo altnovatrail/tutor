@@ -125,7 +125,7 @@ func TestHint(t *testing.T) {
 			t.Errorf("the hints lack %q:\n%s", want, hints.String())
 		}
 	}
-	if s := r.Summary(); !strings.Contains(s, "opus-high: leaked before the check 1 of 3, after it 0; form broken 1 of 3; fallback 3 of 4; box on the first error 2 of 3.") {
+	if s := r.Summary(); !strings.Contains(s, "opus-high: leaked before the check 1 of 3, after it 0; form broken 1 of 3, by R70 spec 1; fallback 3 of 4; box on the first error 2 of 3.") {
 		t.Errorf("the summary:\n%s", s)
 	}
 }
@@ -194,7 +194,7 @@ func TestHintLogOfTheStub(t *testing.T) {
 	} {
 		chosen = append(chosen, chosenOf(t, set.name, set.plan, set.bank, set.numbers...)...)
 	}
-	r, err := hint.New("dev", []string{"lines", "free", "near"}, chosen, hint.Tutors(), 1)
+	r, err := hint.New("dev", []string{"lines", "free", "near"}, chosen, runner.E4(hint.Tutors(), func(tu hint.Tutor) runner.Config { return tu.Config }), 1)
 	if err != nil {
 		t.Fatal(err)
 	}

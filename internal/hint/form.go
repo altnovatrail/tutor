@@ -51,6 +51,32 @@ func Form(text string, lang sample.Lang, statement string) []string {
 	return out
 }
 
+// PlatformWords is the most words R70 spec lets a hint have in its language, by the numbers of T76:
+// 30 in Russian and 35 in English. A language the measurement did not measure has no limit, 0. The
+// prompt and Form keep MaxWords, the limit of the measurement, which its prompt names (R39; R50).
+func PlatformWords(lang sample.Lang) int {
+	switch lang {
+	case sample.LangRussian:
+		return 30
+	case sample.LangEnglish:
+		return 35
+	}
+	return 0
+}
+
+// PlatformBroken is whether a hint breaks the form R70 spec sets, given what Form found it breaks:
+// the same rules, with PlatformWords in place of MaxWords. Its words are counted as Count counts them.
+func PlatformBroken(text string, lang sample.Lang, breaches []string) bool {
+	for _, b := range breaches {
+		if b != BreachWords {
+			return true
+		}
+	}
+	_, _, words := Count(text)
+	limit := PlatformWords(lang)
+	return words < 1 || limit > 0 && words > limit
+}
+
 // Count counts the sentences, the questions and the words of a text, read after NFKC, so that "…"
 // is three points and a full-width "?" a question mark. The feedback on an essay is counted so too
 // (T83).

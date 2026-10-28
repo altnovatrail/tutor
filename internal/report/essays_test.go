@@ -85,7 +85,7 @@ func TestEssaysReport(t *testing.T) {
 		"# The essays: the test part",
 		"| opus-high | all | 6 | 1 of 5, ≤ ",
 		"| opus-high | title | 3 | 1 of 2, ≤ ",
-		"| opus-high | 4 | 1 | 1 of 2 | 1 of 32 | 1 of 2 | 1 of 1 | 1 of 2 | 3 | 0 | 0 | 1 | 0 | 3.0 | 6 | 0.02500 |",
+		"| opus-high | 4 | 1 | 1 of 2 | 1 of 32 | 1 of 2 | 1 of 1 | 1 of 2 | 3 | 0 | 0 | 1 | 0 | 1 | 3.0 | 6 | 0.02500 |",
 	} {
 		if !strings.Contains(md.String(), want) {
 			t.Errorf("the report lacks %q:\n%s", want, md.String())
@@ -114,6 +114,13 @@ func TestEssaysReport(t *testing.T) {
 	}
 	if strings.Contains(fb.String(), "## Essay 2\n\n- Unmet by the plan: title.\n- Judged otherwise: title judged met.\n- The call failed") {
 		t.Error("the feedback shows a call of the second repeat")
+	}
+	// A feedback breaks the rule of R70 spec as it breaks the measurement's, but for its 80 words: the
+	// quote of the first feedback, and the third, of more words than that.
+	long := essaysLog()
+	long.Calls[2].FeedbackWords = essay.PlatformWords + 1
+	if r, _ := NewEssays(long); r.Readers[0].PlatformBroken != 2 || r.Readers[0].MostWords != essay.PlatformWords+1 || !strings.Contains(r.Summary(), "that of R70 spec, with 80 words, 2") {
+		t.Errorf("a feedback of %d words: %+v", essay.PlatformWords+1, r.Readers[0])
 	}
 	// A call of an essay the log does not tell is in no count and no feedback.
 	stray := essaysLog()

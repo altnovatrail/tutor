@@ -240,7 +240,7 @@ func TestReadingLogOfTheStub(t *testing.T) {
 	}{{"lines", "../../eval/sheets.json", "../../eval/bank.json", []int{1, 7, 11, 21}}, {"free", "../../eval/free-sheets.json", "../../eval/free-bank.json", []int{1, 2, 14}}} {
 		chosen = append(chosen, chosenOf(t, set.name, set.plan, set.bank, set.numbers...)...)
 	}
-	r, err := reading.New("dev", []string{"lines", "free"}, chosen, reading.Readers(), 2, reading.Reads{Keys: true, Heights: true, States: true})
+	r, err := reading.New("dev", []string{"lines", "free"}, chosen, runner.E4(reading.Readers(), func(rd reading.Reader) runner.Config { return rd.Config }), 2, reading.Reads{Keys: true, Heights: true, States: true})
 	if err != nil {
 		t.Fatal(err)
 	}

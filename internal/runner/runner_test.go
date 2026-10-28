@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"math"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -105,17 +106,23 @@ func records(t *testing.T, log []byte) []map[string]any {
 	return out
 }
 
-// The three configurations are those of R24. The worst case of a call is the most input tokens
-// its kind gives and the output limit, at the model's prices, and at least the expected input.
+// The configurations are the three of R24 and the four of R50, each with its model's effort and
+// able to answer as it is asked: without thinking only where the model can turn it off. The worst
+// case of a call is the most input tokens its kind gives and the output limit, at the model's
+// prices, and at least the expected input.
 func TestConfigs(t *testing.T) {
 	var names []string
 	for _, c := range runner.Configs() {
 		names = append(names, c.Name+" "+c.Model.ID+" "+c.Effort)
-		if c.NoThinking != (c.Name == "haiku-low-no-thinking") {
+		if c.NoThinking != strings.HasSuffix(c.Name, "-no-thinking") {
 			t.Errorf("%s thinks: %v", c.Name, !c.NoThinking)
 		}
+		if c.NoThinking && !slices.Contains(c.Model.NoThinkingEfforts(), c.Effort) {
+			t.Errorf("%s cannot answer without thinking at %s", c.Name, c.Effort)
+		}
 	}
-	if got := strings.Join(names, ", "); got != "opus-high claude-opus-5-5 high, haiku-low claude-haiku-5-5 low, haiku-low-no-thinking claude-haiku-5-5 low" {
+	if got := strings.Join(names, ", "); got != "opus-high claude-opus-5-5 high, haiku-low claude-haiku-5-5 low, haiku-low-no-thinking claude-haiku-5-5 low, "+
+		"opus-medium claude-opus-5-5 medium, sonnet-low claude-sonnet-5-5 low, sonnet-low-no-thinking claude-sonnet-5-5 low, haiku-medium claude-haiku-5-5 medium" {
 		t.Errorf("the configurations are %s", got)
 	}
 	if w := asked(opus, 1).Worst(); !near(w, worst) || !near(opus.Cost(1000, 50), (1000*4+50*20)/1e6) {
@@ -379,8 +386,9 @@ func TestReadRecords(t *testing.T) {
 // for those named so; a configuration the kind forgot is a mistake of the code. A reader's record
 // tells its model and prices.
 func TestReadersOf(t *testing.T) {
-	readers := runner.ReadersOf("test", map[string]int{"opus-high": 7, "haiku-low": 8, "haiku-low-no-thinking": 9}, "opus-high")
-	if len(readers) != 3 || !readers[0].Once || readers[1].Once || readers[0].Output != 7 || readers[2].Output != 9 {
+	readers := runner.ReadersOf("test", map[string]int{"opus-high": 7, "haiku-low": 8, "haiku-low-no-thinking": 9,
+		"opus-medium": 1, "sonnet-low": 2, "sonnet-low-no-thinking": 3, "haiku-medium": 4}, "opus-high")
+	if len(readers) != 7 || readers[6].Output != 4 || readers[3].Once || !readers[0].Once || readers[1].Once || readers[0].Output != 7 || readers[2].Output != 9 {
 		t.Errorf("ReadersOf = %+v", readers)
 	}
 	if rec := readers[1].Record(); rec.Name != "haiku-low" || rec.Model != readers[1].Model.ID || rec.InputUSD != readers[1].Model.Input || rec.Once {
@@ -392,4 +400,26 @@ func TestReadersOf(t *testing.T) {
 		}
 	}()
 	runner.ReadersOf("test", map[string]int{"opus-high": 7})
+}
+
+// A run asks the configurations it names, in the order of Configs whatever the order of the names;
+// a name of no configuration, a name given twice and no name at all are refused.
+func TestChosen(t *testing.T) {
+	name := func(c runner.Config) runner.Config { return c }
+	got, err := runner.Chosen(runner.Configs(), name, []string{"haiku-medium", "opus-high"})
+	if err != nil || len(got) != 2 || got[0].Name != "opus-high" || got[1].Name != "haiku-medium" {
+		t.Errorf("Chosen = %v, %v", got, err)
+	}
+	if e4, err := runner.Chosen(runner.Configs(), name, runner.E4Configs); err != nil || len(e4) != 3 || e4[2].Name != "haiku-low-no-thinking" {
+		t.Errorf("the configurations of E4 are %v, %v", e4, err)
+	}
+	for names, says := range map[string]string{"gpt-6": `no configuration "gpt-6": give opus-high`, "sonnet-low,sonnet-low": "named twice", "": "no configuration is named"} {
+		list := []string{}
+		if names != "" {
+			list = strings.Split(names, ",")
+		}
+		if _, err := runner.Chosen(runner.Configs(), name, list); err == nil || !strings.Contains(err.Error(), says) {
+			t.Errorf("Chosen(%q) = %v, want %q", names, err, says)
+		}
+	}
 }

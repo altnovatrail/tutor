@@ -13,7 +13,7 @@ import (
 // once. A run of no repeat or of no essay is not planned.
 func TestNew(t *testing.T) {
 	es := readEssays(t)
-	readers := Readers()
+	readers := e4Readers()
 	for _, c := range []struct {
 		part          string
 		essays, calls int
@@ -45,7 +45,7 @@ func TestNew(t *testing.T) {
 // keeps the rule of the feedback.
 func TestRunOnTheStub(t *testing.T) {
 	es := readEssays(t)
-	r, err := New("dev", "eval/essays.json", 1, es, Essays(es, "dev"), Readers(), 2)
+	r, err := New("dev", "eval/essays.json", 1, es, Essays(es, "dev"), e4Readers(), 2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,7 +95,7 @@ func TestRunOnTheStub(t *testing.T) {
 // reading and no feedback; one not asked says so.
 func TestRecordOfFailures(t *testing.T) {
 	es := readEssays(t)
-	r, err := New("dev", "", 1, es, Essays(es, "dev")[:1], Readers()[:1], 1)
+	r, err := New("dev", "", 1, es, Essays(es, "dev")[:1], e4Readers()[:1], 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,4 +106,9 @@ func TestRecordOfFailures(t *testing.T) {
 			t.Errorf("%+v comes to %+v", o, rec)
 		}
 	}
+}
+
+// e4Readers are the readers of the three configurations of E4, which these tests were written for.
+func e4Readers() []Reader {
+	return runner.E4(Readers(), func(rd Reader) runner.Config { return rd.Config })
 }

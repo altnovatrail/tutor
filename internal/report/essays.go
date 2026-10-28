@@ -37,11 +37,13 @@ type EssaysReader struct {
 	Paired, Unstable int
 	Reading          essay.Reading
 	// Feedbacks are the calls with feedback, Breaches how many of them break each part of its rule,
+	// PlatformBroken how many break the rule R70 spec sets, with its 80 words (essay.PlatformBroken),
 	// and MeanWords and MostWords its words.
-	Feedbacks int
-	Breaches  map[string]int
-	MeanWords float64
-	MostWords int
+	Feedbacks      int
+	Breaches       map[string]int
+	PlatformBroken int
+	MeanWords      float64
+	MostWords      int
 }
 
 // EssaysCell is a reader's judgements of a criterion, or of all of them: the false alarms among the
@@ -144,6 +146,9 @@ func (r *Essays) reader(name string) EssaysReader {
 			rd.Feedbacks++
 			words += c.FeedbackWords
 			rd.MostWords = max(rd.MostWords, c.FeedbackWords)
+			if essay.PlatformBroken(c.Breaches, c.FeedbackWords) {
+				rd.PlatformBroken++
+			}
 			for _, b := range c.Breaches {
 				rd.Breaches[b]++
 			}
@@ -272,15 +277,15 @@ func (r *Essays) Markdown(w io.Writer, logName string) error {
 	}
 	b.WriteString("\nA false alarm is a criterion judged unmet that the essay meets, counted among the judgements of criteria the essay meets: the main measure of О-22. A missed \"unmet\" is a criterion judged met that the essay does not meet, counted among the judgements of criteria it does not meet. The truth is the plan's. κ is Cohen's, over every judgement of the criterion, in every repeat. A criterion is unchecked when its call failed, or the answer judges it not once or more than once. A share's bound is the one-sided upper bound of 95 % over the essays, Clopper–Pearson on n / Deff.\n")
 
-	b.WriteString("\n## Repeats, reading and feedback\n\n| Reader | Calls | Failed | Criteria judged both ways | Word errors | Misspellings kept | Small starts kept | Unended kept | Feedbacks | Sentences | Words | Quote | Script | Words, mean | Words, most | Cost, $ |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n")
+	b.WriteString("\n## Repeats, reading and feedback\n\n| Reader | Calls | Failed | Criteria judged both ways | Word errors | Misspellings kept | Small starts kept | Unended kept | Feedbacks | Sentences | Words | Quote | Script | Broken by R70 spec | Words, mean | Words, most | Cost, $ |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n")
 	for _, rd := range r.Readers {
-		fmt.Fprintf(&b, "| %s | %d | %d | %d of %d | %d of %d | %d of %d | %d of %d | %s | %d | %d | %d | %d | %d | %.1f | %d | %.5f |\n",
+		fmt.Fprintf(&b, "| %s | %d | %d | %d of %d | %d of %d | %d of %d | %d of %d | %s | %d | %d | %d | %d | %d | %d | %.1f | %d | %.5f |\n",
 			rd.Name, rd.Calls, rd.Failed, rd.Unstable, rd.Paired, rd.Reading.WordErrors, rd.Reading.Words, rd.Reading.MisspelledKept, rd.Reading.Misspelled,
 			rd.Reading.LowerStartsKept, rd.Reading.LowerStarts, r.unended(rd.Name), rd.Feedbacks,
-			rd.Breaches[essay.BreachSentences], rd.Breaches[essay.BreachWords], rd.Breaches[essay.BreachQuote], rd.Breaches[essay.BreachScript], rd.MeanWords, rd.MostWords, rd.MeanUSD)
+			rd.Breaches[essay.BreachSentences], rd.Breaches[essay.BreachWords], rd.Breaches[essay.BreachQuote], rd.Breaches[essay.BreachScript], rd.PlatformBroken, rd.MeanWords, rd.MostWords, rd.MeanUSD)
 	}
-	fmt.Fprintf(&b, "\nCriteria judged both ways: of the criteria of an essay judged in two repeats or more, those judged met in one and unmet in another. Word errors: the edit distance in words between the essay as written, its title and text, and the text the model read, in small letters and without the marks around the words, of the essay's words. Kept: what the learner wrote wrong that the model read as it is written — the words spelled wrong, the sentences that begin with a small letter and the last sentence without its mark. The feedback's rule (R05 spec): at most %d sentences and %d words, and a quoted span of %d words or more only as the essay writes it; the columns count the feedbacks that break each part, and a feedback in another script than Latin breaks the last.\n",
-		essay.MaxSentences, essay.MaxWords, essay.QuoteWords)
+	fmt.Fprintf(&b, "\nCriteria judged both ways: of the criteria of an essay judged in two repeats or more, those judged met in one and unmet in another. Word errors: the edit distance in words between the essay as written, its title and text, and the text the model read, in small letters and without the marks around the words, of the essay's words. Kept: what the learner wrote wrong that the model read as it is written — the words spelled wrong, the sentences that begin with a small letter and the last sentence without its mark. The feedback's rule (R05 spec): at most %d sentences and %d words, and a quoted span of %d words or more only as the essay writes it; the columns count the feedbacks that break each part, and a feedback in another script than Latin breaks the last. R70 spec sets the same rule with %d words, and «Broken by R70 spec» counts the feedbacks that break it.\n",
+		essay.MaxSentences, essay.MaxWords, essay.QuoteWords, essay.PlatformWords)
 	_, err := io.WriteString(w, b.String())
 	return err
 }
@@ -337,8 +342,8 @@ func (r *Essays) Summary() string {
 				broke++
 			}
 		}
-		fmt.Fprintf(&b, "%s: false alarms %s, missed \"unmet\" %s, κ %s; word errors %d of %d; feedbacks breaking the rule %d of %d.\n",
-			rd.Name, rd.All.FalseAlarm, rd.All.Missed, rd.All.kappaText(), rd.Reading.WordErrors, rd.Reading.Words, broke, rd.Feedbacks)
+		fmt.Fprintf(&b, "%s: false alarms %s, missed \"unmet\" %s, κ %s; word errors %d of %d; feedbacks breaking the rule %d of %d, that of R70 spec, with %d words, %d.\n",
+			rd.Name, rd.All.FalseAlarm, rd.All.Missed, rd.All.kappaText(), rd.Reading.WordErrors, rd.Reading.Words, broke, rd.Feedbacks, essay.PlatformWords, rd.PlatformBroken)
 	}
 	return b.String()
 }

@@ -41,7 +41,8 @@ type Hint struct {
 //     Phrase the hints it found each in; After, of the calls asked: it found one in what the learner
 //     reads, which is nothing by construction;
 //   - Broken, of the hints that came: the hint breaks its form, Questions, Sentences, Words and Script
-//     the hints that break each rule;
+//     the hints that break each rule; PlatformBroken, the form R70 spec sets, with its limits of words
+//     by language (hint.PlatformBroken);
 //   - FellBack, of the calls asked: the learner reads the fallback text, Failed, Leak and Form by its
 //     cause;
 //   - OnError, of the hints that came: the box hits the part of the first error; NoBox gave none;
@@ -54,7 +55,7 @@ type HintCell struct {
 	Calls, Came                              int
 	Leaked                                   Share
 	Key, Phrase, After                       int
-	Broken                                   Share
+	Broken, PlatformBroken                   Share
 	Questions, Sentences, Words, Script      int
 	FellBack                                 Share
 	Failed, Leak, Form                       int
@@ -142,12 +143,12 @@ func came(c *hint.CallRecord) bool { return !c.NotAsked && c.Error == "" }
 // all its calls.
 func (r *Hint) cell(tutor string, lang sample.Lang, rung hint.Rung) HintCell {
 	c := HintCell{Tutor: tutor, Lang: lang, Rung: rung}
-	var leaked, broken, fell, hit, cameOf, askedOf []int
+	var leaked, broken, platform, fell, hit, cameOf, askedOf []int
 	var times []int64
 	spent := 0.0
 	for _, id := range r.order {
 		sh := r.sheets[id]
-		var l, b, f, h, n, a int
+		var l, b, pb, f, h, n, a int
 		for _, call := range r.byTutor[tutor][id] {
 			if rung != 0 && (call.Rung != rung || call.Lang != lang) {
 				continue
@@ -185,6 +186,9 @@ func (r *Hint) cell(tutor string, lang sample.Lang, rung hint.Rung) HintCell {
 			if len(call.Form) > 0 {
 				b++
 			}
+			if hint.PlatformBroken(call.Hint, call.Lang, call.Form) {
+				pb++
+			}
 			for _, br := range call.Form {
 				switch br {
 				case hint.BreachQuestions:
@@ -219,10 +223,10 @@ func (r *Hint) cell(tutor string, lang sample.Lang, rung hint.Rung) HintCell {
 			continue
 		}
 		c.Calls, c.Came = c.Calls+a, c.Came+n
-		leaked, broken, fell, hit = append(leaked, l), append(broken, b), append(fell, f), append(hit, h)
+		leaked, broken, platform, fell, hit = append(leaked, l), append(broken, b), append(platform, pb), append(fell, f), append(hit, h)
 		cameOf, askedOf = append(cameOf, n), append(askedOf, a)
 	}
-	c.Leaked, c.Broken, c.FellBack, c.OnError = share(leaked, cameOf), share(broken, cameOf), share(fell, askedOf), share(hit, cameOf)
+	c.Leaked, c.Broken, c.PlatformBroken, c.FellBack, c.OnError = share(leaked, cameOf), share(broken, cameOf), share(platform, cameOf), share(fell, askedOf), share(hit, cameOf)
 	c.TimeP50, c.TimeP95 = percentile(times, 0.50), percentile(times, 0.95)
 	if c.Calls > 0 {
 		c.MeanUSD = spent / float64(c.Calls)
@@ -320,12 +324,12 @@ func (r *Hint) Markdown(w io.Writer, logName string) error {
 	b.WriteString("\nThe leak check is the program's, as api runs it before the tutor's words reach the device (the format text of spec, «The leak check»): it searches a hint for the task's key by its value, unless the statement shows the key, and for its leak phrases. A leak before the check is a hint that came in which it found either; after the check is what the learner reads — the hint, or the fallback text of the rung —, in which it finds nothing by construction. What the check does not search for, such as a number in words or the answer put another way, only a reader finds. The learner reads the fallback text when the call failed or its answer was off the schema, when the check found a leak, or when the hint breaks its form; a hint that leaks and breaks its form falls back for the leak. Each share is bounded at 95 % over the sheets.\n")
 
 	b.WriteString("\n## The form\n\n")
-	b.WriteString("| Tutor | Language | Rung | Hints that came | Broken | Not one question | Over two sentences | Words | Script |\n|---|---|---|---|---|---|---|---|---|\n")
+	b.WriteString("| Tutor | Language | Rung | Hints that came | Broken | Not one question | Over two sentences | Words | Script | Broken by R70 spec |\n|---|---|---|---|---|---|---|---|---|---|\n")
 	for _, c := range r.Cells {
 		lang, rung := c.where()
-		fmt.Fprintf(&b, "| %s | %s | %s | %d | %s | %d | %d | %d | %d |\n", c.Tutor, lang, rung, c.Came, c.Broken, c.Questions, c.Sentences, c.Words, c.Script)
+		fmt.Fprintf(&b, "| %s | %s | %s | %d | %s | %d | %d | %d | %d | %s |\n", c.Tutor, lang, rung, c.Came, c.Broken, c.Questions, c.Sentences, c.Words, c.Script, c.PlatformBroken)
 	}
-	fmt.Fprintf(&b, "\nA hint is exactly one question in no more than two sentences, of 1 to %d words, in the letters of its language: Cyrillic in Russian, where a Latin letter the statement shows may stand too, and Latin in English (R39).\n", hint.MaxWords)
+	fmt.Fprintf(&b, "\nA hint is exactly one question in no more than two sentences, of 1 to %d words, in the letters of its language: Cyrillic in Russian, where a Latin letter the statement shows may stand too, and Latin in English (R39). R70 spec sets the same rules with %d words in Russian and %d in English, which the last column counts.\n", hint.MaxWords, hint.PlatformWords(sample.LangRussian), hint.PlatformWords(sample.LangEnglish))
 
 	b.WriteString("\n## The place and the trap\n\n")
 	b.WriteString("| Tutor | Language | Rung | Hints that came | Box on the first error | No box | The sheet's trap, on sheets with one | No trap, on sheets without |\n|---|---|---|---|---|---|---|---|\n")
@@ -364,14 +368,14 @@ func (r *Hint) Markdown(w io.Writer, logName string) error {
 // rung.
 func (r *Hint) CSV(w io.Writer) error {
 	cw := csv.NewWriter(w)
-	rows := [][]string{{"tutor", "lang", "rung", "calls", "came", "leaked", "leaked_upper", "key", "phrase", "leaked_after", "broken", "broken_upper",
+	rows := [][]string{{"tutor", "lang", "rung", "calls", "came", "leaked", "leaked_upper", "key", "phrase", "leaked_after", "broken", "broken_upper", "broken_r70", "broken_r70_upper",
 		"questions", "sentences", "words", "script", "fallback", "fallback_upper", "failed", "fallback_leak", "fallback_form",
 		"box_on_error", "box_on_error_upper", "no_box", "trap_right", "trap_of", "no_trap_right", "no_trap_of", "time_p50_ms", "time_p95_ms", "cost_usd"}}
 	f := func(v float64) string { return strconv.FormatFloat(v, 'f', 4, 64) }
 	for _, c := range r.Cells {
 		lang, rung := c.where()
 		rows = append(rows, []string{c.Tutor, lang, rung, itoa(c.Calls), itoa(c.Came), itoa(c.Leaked.Events), f(c.Leaked.Upper), itoa(c.Key), itoa(c.Phrase), itoa(c.After),
-			itoa(c.Broken.Events), f(c.Broken.Upper), itoa(c.Questions), itoa(c.Sentences), itoa(c.Words), itoa(c.Script),
+			itoa(c.Broken.Events), f(c.Broken.Upper), itoa(c.PlatformBroken.Events), f(c.PlatformBroken.Upper), itoa(c.Questions), itoa(c.Sentences), itoa(c.Words), itoa(c.Script),
 			itoa(c.FellBack.Events), f(c.FellBack.Upper), itoa(c.Failed), itoa(c.Leak), itoa(c.Form),
 			itoa(c.OnError.Events), f(c.OnError.Upper), itoa(c.NoBox), itoa(c.TrapRight), itoa(c.TrapOf), itoa(c.NoTrapRight), itoa(c.NoTrapOf),
 			strconv.FormatInt(c.TimeP50, 10), strconv.FormatInt(c.TimeP95, 10), strconv.FormatFloat(c.MeanUSD, 'f', 6, 64)})
@@ -388,8 +392,8 @@ func (r *Hint) Summary() string {
 	var b strings.Builder
 	for _, c := range r.Cells {
 		if c.All() {
-			fmt.Fprintf(&b, "%s: leaked before the check %d of %d, after it %d; form broken %d of %d; fallback %d of %d; box on the first error %d of %d.\n",
-				c.Tutor, c.Leaked.Events, c.Came, c.After, c.Broken.Events, c.Came, c.FellBack.Events, c.Calls, c.OnError.Events, c.Came)
+			fmt.Fprintf(&b, "%s: leaked before the check %d of %d, after it %d; form broken %d of %d, by R70 spec %d; fallback %d of %d; box on the first error %d of %d.\n",
+				c.Tutor, c.Leaked.Events, c.Came, c.After, c.Broken.Events, c.Came, c.PlatformBroken.Events, c.FellBack.Events, c.Calls, c.OnError.Events, c.Came)
 		}
 	}
 	return b.String()

@@ -25,12 +25,15 @@ const CallKind = "workbook"
 // does in the reduced matrix, without the other heights of digits (R08; R28).
 type Reader = runner.Reader
 
-// Readers are the three readers, the three configurations of the runner by their names. The cells
-// of a page of ten filled boxes come to about 400 tokens; Haiku with thinking writes about 500
-// more, and Opus at high effort about 800. Opus reads each condition once, and not the other
-// heights (runner.ReadersOf).
+// Readers are the readers, the configurations of the runner by their names. The cells of a page of
+// ten filled boxes come to about 400 tokens; Haiku with thinking writes about 500 more, and Opus at
+// high effort about 800. Opus reads each condition once, and not the other heights
+// (runner.ReadersOf). The four the extended measurement adds (R50) are estimated so: Opus at medium as at high, Sonnet with thinking between Haiku and Opus, without thinking as Haiku without it, and Haiku at medium above Haiku at low.
 func Readers() []Reader {
-	return runner.ReadersOf("workbook", map[string]int{"opus-high": 1200, "haiku-low": 900, "haiku-low-no-thinking": 400}, "opus-high")
+	return runner.ReadersOf("workbook", map[string]int{
+		"opus-high": 1200, "haiku-low": 900, "haiku-low-no-thinking": 400,
+		"opus-medium": 1200, "sonnet-low": 1000, "sonnet-low-no-thinking": 400, "haiku-medium": 1200,
+	}, "opus-high", "opus-medium")
 }
 
 // The input tokens a call is expected to take, for the estimate: the instructions, the schema and
@@ -44,24 +47,27 @@ const (
 	inputBudget     = 8000
 )
 
-// Reads are what a run reads of its pages: the pages at 32 px, bare and captioned, captions; and
-// the bare pages at the other heights of digits, heights, read once, by the readers that do not
-// read once (R08; R28).
+// Reads are what a run reads of its pages: the pages at 32 px, bare and captioned, captions; the
+// bare pages at 32 px alone, bare, as the platform reads them, with no line of the item (the
+// 2026-10-28 amendment to R53 spec; R50); and the bare pages at the other heights of digits,
+// heights, read once, by the readers that do not read once (R08; R28).
 type Reads struct {
-	Captions, Heights bool
+	Bare, Captions, Heights bool
 }
 
-// ParseReads reads what a run reads from a list of captions and heights, joined by commas.
+// ParseReads reads what a run reads from a list of bare, captions and heights, joined by commas.
 func ParseReads(list string) (Reads, error) {
 	var r Reads
 	for _, name := range strings.Split(list, ",") {
 		switch name {
+		case "bare":
+			r.Bare = true
 		case "captions":
 			r.Captions = true
 		case "heights":
 			r.Heights = true
 		default:
-			return r, fmt.Errorf("workbook: %q is nothing a run reads: give captions or heights, joined by commas", name)
+			return r, fmt.Errorf("workbook: %q is nothing a run reads: give bare, captions or heights, joined by commas", name)
 		}
 	}
 	return r, nil
@@ -70,6 +76,9 @@ func ParseReads(list string) (Reads, error) {
 // Names are what a run reads, by name, in their order.
 func (r Reads) Names() []string {
 	var out []string
+	if r.Bare {
+		out = append(out, "bare")
+	}
 	if r.Captions {
 		out = append(out, "captions")
 	}
@@ -142,8 +151,8 @@ func Pages(wb *sample.Workbook, part string) []*sample.WorkbookPage {
 // repeat by repeat, so that a run cut short has the same repeats of every page. A page with no
 // filled box goes to no model: its boxes are blank, and their verdicts need no call. Of each page,
 // by each reader, as reads says:
-//   - captions: the crops at 32 px, bare and captioned. A reader that reads once asks only in the
-//     first repeat;
+//   - bare: the crops at 32 px, bare. A reader that reads once asks only in the first repeat;
+//   - captions: the crops at 32 px, bare and captioned, so too;
 //   - heights: the bare crops at 16, 24 and 48 px, in the first repeat, by the readers that do not
 //     read once.
 func New(part, file string, seed uint64, pages []*sample.WorkbookPage, readers []Reader, repeats int, reads Reads) (*runner.Run, error) {
@@ -157,6 +166,9 @@ func New(part, file string, seed uint64, pages []*sample.WorkbookPage, readers [
 		return nil, fmt.Errorf("workbook: no page of the part %s", part)
 	}
 	heights := reads.Heights && slices.ContainsFunc(readers, func(rd Reader) bool { return !rd.Once })
+	// What the run reads, as its record tells it: the other heights only where a reader reads them.
+	read := reads
+	read.Heights = heights
 	r := &runner.Run{}
 	type planned struct {
 		page  *sample.WorkbookPage
@@ -180,15 +192,16 @@ func New(part, file string, seed uint64, pages []*sample.WorkbookPage, readers [
 		all = append(all, p)
 		r.Items = append(r.Items, pageRecord(pg, p.cells[render.Digit]))
 	}
-	// The run's record names the readers it asks: without captions, not the readers that read once.
+	// The run's record names the readers it asks: reading only the other heights, not the readers
+	// that read once.
 	var records []ReaderRecord
 	for _, rd := range readers {
-		if reads.Captions || !rd.Once {
+		if reads.Bare || reads.Captions || !rd.Once {
 			records = append(records, rd.Record())
 		}
 	}
 	r.Record = func(h runner.Head) any {
-		return RunRecord{Kind: "run", CallKind: CallKind, Time: h.Time, Part: part, File: file, Seed: seed, Readers: records, Repeats: repeats, Reads: reads.Names(),
+		return RunRecord{Kind: "run", CallKind: CallKind, Time: h.Time, Part: part, File: file, Seed: seed, Readers: records, Repeats: repeats, Reads: read.Names(),
 			MaxUSD: h.MaxUSD, Estimate: h.Estimate, Prompt: Fingerprint(), PromptVersion: Version}
 	}
 	add := func(rd Reader, rep int, p planned, c Condition, digit int) {
@@ -211,8 +224,10 @@ func New(part, file string, seed uint64, pages []*sample.WorkbookPage, readers [
 				if rd.Once && rep > 1 {
 					continue
 				}
-				if reads.Captions {
+				if reads.Bare || reads.Captions {
 					add(rd, rep, p, Bare, render.Digit)
+				}
+				if reads.Captions {
 					add(rd, rep, p, Captioned, render.Digit)
 				}
 				if rep == 1 && !rd.Once && heights {

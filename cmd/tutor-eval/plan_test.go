@@ -65,7 +65,7 @@ func TestPlanOfParts(t *testing.T) {
 	}
 
 	code, out, errs = runMeasure("yes\n", append([]string{"-part", "all", "-stub", "-repeats", "1"}, files...)...)
-	if code != exitOK || !strings.HasPrefix(out, "All the sheets: 4 sheets, 2 of them with frames, by 3 judges, 1 repeat, in version 2 of the prompt.\n") {
+	if code != exitOK || !strings.HasPrefix(out, "All the sheets: 4 sheets, 2 of them with frames, by 3 judges (opus-high, haiku-low, haiku-low-no-thinking), 1 repeat, in version 2 of the prompt.\n") {
 		t.Fatalf("run -part all = %d\n%s%s", code, out, errs)
 	}
 	log := filepath.Join(filepath.Dir(dir), "runs", "20261026-123000-000-judge-sheets-all.jsonl")
