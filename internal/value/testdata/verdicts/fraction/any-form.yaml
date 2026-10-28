@@ -1,0 +1,22 @@
+# A fraction of any form: every simple fraction of the key's value is right, but a whole number or a
+# decimal is not in notation.
+item:
+  answer_slots:
+    - binding: anywhere
+      check: {kind: fraction, key: "1/4"}
+readings:
+  - answer_slots:
+      - {value: "1/4", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "2/8", verdict: correct}
+    verdict: correct
+  - answer_slots:
+      - {value: "1/3", verdict: not_yet}
+    verdict: not_yet
+  - answer_slots:
+      - {value: "0.25", verdict: unreadable, reason: notation}
+    verdict: unreadable
+  - answer_slots:
+      - {value: "1", verdict: unreadable, reason: notation}
+    verdict: unreadable

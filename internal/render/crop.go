@@ -28,9 +28,9 @@ const (
 	cropFlat = 15
 	// cropCeiling is the highest median the scale takes, in units: a drawing alone stays a drawing.
 	cropCeiling = 100
-	// cropSide is the least width and height of a crop, px: Claude may err on images under 200
+	// CropSide is the least width and height of a crop, px: Claude may err on images under 200
 	// pixels.
-	cropSide = 200
+	CropSide = 200
 	// cropEdge and cropTokens are the longest side, px, and the most visual tokens, ⌈w / 28⌉ ×
 	// ⌈h / 28⌉ (Tokens): what every model of Claude takes without scaling the image down.
 	cropEdge   = 1568
@@ -217,10 +217,10 @@ func sizeOf(box extent, unit, drawn int64) size {
 	h := ceilDiv((box.maxY-box.minY)*drawn, unit) + 2*CropMargin
 	return size{
 		drawn:  drawn,
-		width:  max(w, cropSide),
-		height: max(h, cropSide),
-		top:    CropMargin + max(cropSide-h, 0)/2,
-		left:   CropMargin + max(cropSide-w, 0)/2,
+		width:  max(w, CropSide),
+		height: max(h, CropSide),
+		top:    CropMargin + max(CropSide-h, 0)/2,
+		left:   CropMargin + max(CropSide-w, 0)/2,
 	}
 }
 

@@ -1,0 +1,5026 @@
+{
+  "format": "tutor-workbook",
+  "version": 0,
+  "pages": [
+    {
+      "number": 1,
+      "part": "dev",
+      "items": [
+        {
+          "text": "6 × [ ] = 30",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "5",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "24",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "5",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "30 : 5 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "6",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "7",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 22 = 52",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "30",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "74",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "30",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "639 − 472 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "167",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "247",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "167",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "17 : 5 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "3",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "2",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "8",
+              "crossed": null,
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "2",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "7",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "2",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "7/11 + 1/11 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "8/11",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "8/22",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "8/11",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "4/10 − 2/10 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "2/10",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "6/10",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "2/10",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "25 см — это [ ] метра",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/4",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "25/10",
+                    "trap": "ten-centimetres"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "25/10",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 8/14 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "4/7",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "8/14",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "4/14",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "4/7",
+              "crossed": "8/14",
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "3/10 + 3/10 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "3/5",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "6/10",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "6/20",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "3/5",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "part": "dev",
+      "items": [
+        {
+          "text": "7 × [ ] = 56",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "8",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "49",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "8",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "18 : 6 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "3",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "4",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "3",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 29 = 61",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "32",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "90",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "527 − 232 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "295",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "315",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "296",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "29 : 4 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "7",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "6",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "7",
+              "crossed": null,
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "1",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "5",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "4/8 + 1/8 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "5/8",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "5/16",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "5/16",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "6/7 − 3/7 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "3/7",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "9/7",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "3/7",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "200 г — это [ ] кг",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/5",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "200/100",
+                    "trap": "hundred-grams"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "1/5",
+              "crossed": "200/100",
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 14/16 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "7/8",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "14/16",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "7/16",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "7/8",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "1/6 + 1/6 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/3",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "2/6",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "2/12",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "1/3",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 3,
+      "part": "dev",
+      "items": [
+        {
+          "text": "6 × [ ] = 54",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "9",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "48",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "9",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "6 : 3 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "2",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "3",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "2",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 38 = 62",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "24",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "100",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "29",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "320 − 206 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "114",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "126",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "28 : 9 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "3",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "2",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "3",
+              "crossed": "2",
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "1",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "10",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "3/10 + 2/10 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "5/10",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "5/20",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "5/10",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "5/11 − 3/11 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "2/11",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "8/11",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "2/11",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "4 см — это [ ] метра",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/25",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "4/10",
+                    "trap": "ten-centimetres"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "1/25",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 4/16 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/4",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "4/16",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "1/16",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "4/16",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "1/6 + 3/6 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "2/3",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "4/6",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "4/12",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "2/3",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "part": "dev",
+      "items": [
+        {
+          "text": "3 × [ ] = 12",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "4",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "9",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "4",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "14 : 7 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "2",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "3",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "3",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 25 = 53",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "28",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "78",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "28",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "377 − 186 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "191",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "211",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "191",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "54 : 8 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "6",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "5",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "6",
+              "crossed": null,
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "6",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "14",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "7/9 + 1/9 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "8/9",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "8/18",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "8/4",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "4/5 − 2/5 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "2/5",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "6/5",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "2/5",
+              "crossed": "6/5",
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "12 минут — это [ ] часа",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/5",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "12/100",
+                    "trap": "hundred-minutes"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/5",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 6/12 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/2",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "6/12",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "1/12",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/2",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "1/4 + 1/4 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/2",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "2/4",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "2/8",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/2",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 5,
+      "part": "dev",
+      "items": [
+        {
+          "text": "4 × [ ] = 36",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "9",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "32",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "9",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "28 : 4 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "7",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "8",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "7",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 30 = 71",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "41",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "101",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "707 − 192 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "515",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "695",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "515",
+              "crossed": "695",
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "52 : 6 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "8",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "7",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "8",
+              "crossed": null,
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "4",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "10",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "10",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "2/8 + 5/8 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "7/8",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "7/16",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "7/3",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "3/5 − 1/5 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "2/5",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "4/5",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "2/5",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "30 минут — это [ ] часа",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/2",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "30/100",
+                    "trap": "hundred-minutes"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "1/2",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 6/10 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "3/5",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "6/10",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "3/10",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "3/5",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "3/12 + 7/12 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "5/6",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "10/12",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "10/24",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "5/6",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 6,
+      "part": "test",
+      "items": [
+        {
+          "text": "3 × [ ] = 15",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "5",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "12",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "5",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "24 : 4 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "6",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "7",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "6",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 22 = 55",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "33",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "77",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "33",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "306 − 193 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "113",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "293",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "113",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "88 : 9 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "9",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "8",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "9",
+              "crossed": null,
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "7",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "16",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "7",
+              "crossed": "16",
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "4/8 + 2/8 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "6/8",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "6/16",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "6/3",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "8/10 − 7/10 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/10",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "15/10",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "50 см — это [ ] метра",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/2",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "50/10",
+                    "trap": "ten-centimetres"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "50/10",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 6/24 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/4",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "6/24",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "1/24",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "1/4",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "3/12 + 1/12 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/3",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "4/12",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "4/24",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/3",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 7,
+      "part": "test",
+      "items": [
+        {
+          "text": "7 × [ ] = 28",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "4",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "21",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "9",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "9 : 3 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "3",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "4",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "3",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 14 = 49",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "35",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "63",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "35",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "312 − 115 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "197",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "203",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "197",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "57 : 9 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "6",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "5",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "5",
+              "crossed": null,
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "3",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "12",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "1/8 + 4/8 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "5/8",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "5/16",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "5/8",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "8/10 − 5/10 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "3/10",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "13/10",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "3/10",
+              "crossed": "13/10",
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "100 г — это [ ] кг",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/10",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "100/100",
+                    "trap": "hundred-grams"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/10",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 4/18 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "2/9",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "4/18",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "2/18",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "2/9",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "4/10 + 4/10 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "4/5",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "8/10",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "8/20",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "4/5",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 8,
+      "part": "test",
+      "items": [
+        {
+          "text": "4 × [ ] = 20",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "5",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "16",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "5",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "12 : 4 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "3",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "4",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "4",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 20 = 57",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "37",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "77",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "642 − 515 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "127",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "133",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "127",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "36 : 8 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "4",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "3",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "9",
+              "crossed": null,
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "4",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "12",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "4",
+              "crossed": "12",
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "5/12 + 1/12 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "6/12",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "6/24",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "6/12",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "5/9 − 3/9 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "2/9",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "8/9",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "2/9",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "36 минут — это [ ] часа",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "3/5",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "36/100",
+                    "trap": "hundred-minutes"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "3/5",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 5/10 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/2",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "5/10",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "1/10",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/2",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "3/10 + 1/10 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "2/5",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "4/10",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "4/20",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "2/5",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 9,
+      "part": "test",
+      "items": [
+        {
+          "text": "5 × [ ] = 30",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "6",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "25",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "25",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "36 : 6 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "6",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "7",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "6",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 24 = 38",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "14",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "62",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "14",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "381 − 253 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "128",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "132",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "128",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "48 : 5 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "9",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "8",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "9",
+              "crossed": null,
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "3",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "8",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "3",
+              "crossed": "8",
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "5/11 + 4/11 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "9/11",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "9/22",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "9/11",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "7/8 − 6/8 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/8",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "13/8",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/8",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "20 см — это [ ] метра",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/5",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "20/10",
+                    "trap": "ten-centimetres"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "1/6",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 15/18 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "5/6",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "15/18",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "5/18",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "5/6",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "1/12 + 9/12 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "5/6",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "10/12",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "10/24",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 10,
+      "part": "test",
+      "items": [
+        {
+          "text": "2 × [ ] = 6",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "3",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "4",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "3",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "6 : 2 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "3",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "4",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "3",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 15 = 61",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "46",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "76",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "45",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "670 − 282 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "388",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "412",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "388",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "31 : 4 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "7",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "6",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "6",
+              "crossed": null,
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "3",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "7",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "3",
+              "crossed": "7",
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "4/6 + 1/6 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "5/6",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "5/12",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "5/6",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "4/11 − 3/11 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/11",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "7/11",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/11",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "75 см — это [ ] метра",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "3/4",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "75/10",
+                    "trap": "ten-centimetres"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "3/4",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 3/12 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/4",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "3/12",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "1/12",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "9/12 + 1/12 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "5/6",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "10/12",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "10/24",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "5/6",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 11,
+      "part": "test",
+      "items": [
+        {
+          "text": "4 × [ ] = 16",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "4",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "12",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "4",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "24 : 6 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "4",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "5",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "4",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 25 = 52",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "27",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "77",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "27",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "735 − 494 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "241",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "361",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "241",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "80 : 9 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "8",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "7",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "8",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "17",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "8",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "5/7 + 1/7 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "6/7",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "6/14",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "6/7",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "9/11 − 1/11 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "8/11",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "10/11",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "8/11",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "15 минут — это [ ] часа",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/4",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "15/100",
+                    "trap": "hundred-minutes"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "15/100",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 21/27 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "7/9",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "21/27",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "7/27",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "7/4",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "3/6 + 1/6 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "2/3",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "4/6",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "4/12",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "2/3",
+              "crossed": "4/6",
+              "fraction": "inline"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 12,
+      "part": "test",
+      "items": [
+        {
+          "text": "9 × [ ] = 45",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "5",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "36",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "5",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "12 : 2 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "6",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "7",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "6",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 43 = 69",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "26",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "112",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "26",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "624 − 378 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "246",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "354",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "246",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "34 : 7 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "4",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "3",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "4",
+              "crossed": null,
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "6",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "13",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "13",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "1/11 + 2/11 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "3/11",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "3/22",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "3/11",
+              "crossed": "3/22",
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "4/8 − 2/8 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "2/8",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "6/8",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "2/8",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "10 минут — это [ ] часа",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/6",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "10/100",
+                    "trap": "hundred-minutes"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "1/5",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 25/30 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "5/6",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "25/30",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "5/30",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "5/6",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "7/10 + 1/10 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "4/5",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "8/10",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "8/20",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 13,
+      "part": "test",
+      "items": [
+        {
+          "text": "9 × [ ] = 81",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "9",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "72",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "9",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "63 : 9 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "7",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "8",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "7",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 24 = 52",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "28",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "76",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "28",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "330 − 116 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "214",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "226",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "214",
+              "crossed": "226",
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "38 : 7 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "5",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "4",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "6",
+              "crossed": null,
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "3",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "10",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "10",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "1/5 + 2/5 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "3/5",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "3/10",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "3/5",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "8/11 − 1/11 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "7/11",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "9/11",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "7/11",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "250 г — это [ ] кг",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/4",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "250/100",
+                    "trap": "hundred-grams"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/4",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 3/9 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/3",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "3/9",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "1/9",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "1/12 + 5/12 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/2",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "6/12",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "6/24",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/2",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 14,
+      "part": "test",
+      "items": [
+        {
+          "text": "7 × [ ] = 49",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "7",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "42",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "42",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "15 : 3 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "5",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "6",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "5",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 12 = 39",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "27",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "51",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "21",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "547 − 266 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "281",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "321",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "281",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "34 : 8 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "4",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "3",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "4",
+              "crossed": null,
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "2",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "10",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "2",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "6/9 + 2/9 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "8/9",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "8/18",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "8/9",
+              "crossed": "8/18",
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "4/5 − 1/5 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "3/5",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "5/5",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "5 см — это [ ] метра",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/20",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "5/10",
+                    "trap": "ten-centimetres"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/20",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 5/20 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/4",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "5/20",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "1/20",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/4",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "1/6 + 2/6 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/2",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "3/6",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "3/12",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/2",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 15,
+      "part": "test",
+      "items": [
+        {
+          "text": "5 × [ ] = 40",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "8",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "35",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "8",
+              "crossed": "35",
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "48 : 6 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "8",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "9",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "8",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 35 = 72",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "37",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "107",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "31",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "604 − 280 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "324",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "484",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "484",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "35 : 4 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "8",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "7",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "8",
+              "crossed": null,
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "3",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "7",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "3",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "4/10 + 3/10 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "7/10",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "7/20",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "4/9 − 3/9 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/9",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "7/9",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "1/9",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "6 минут — это [ ] часа",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/10",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "6/100",
+                    "trap": "hundred-minutes"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "1/10",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 3/6 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/2",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "3/6",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "1/6",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/2",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "1/8 + 5/8 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "3/4",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "6/8",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "6/16",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "3/4",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 16,
+      "part": "test",
+      "items": [
+        {
+          "text": "7 × [ ] = 42",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "6",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "35",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "12 : 3 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "4",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "5",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "4",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 32 = 62",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "30",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "94",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "30",
+              "crossed": "94",
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "945 − 384 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "561",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "641",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "567",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "19 : 4 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "4",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "3",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "4",
+              "crossed": null,
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "3",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "7",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "3",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "5/8 + 2/8 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "7/8",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "7/16",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "7/8",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "3/8 − 2/8 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/8",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "5/8",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/8",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "45 минут — это [ ] часа",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "3/4",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "45/100",
+                    "trap": "hundred-minutes"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "3/4",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 6/30 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/5",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "6/30",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "1/30",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "6/30",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "4/12 + 4/12 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "2/3",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "8/12",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "8/24",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "2/3",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 17,
+      "part": "test",
+      "items": [
+        {
+          "text": "9 × [ ] = 27",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "3",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "18",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "3",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "35 : 7 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "5",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "6",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "5",
+              "crossed": "6",
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 41 = 55",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "14",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "96",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "14",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "551 − 228 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "323",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "337",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "323",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "44 : 7 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "6",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "5",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "6",
+              "crossed": null,
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "2",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "9",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "3/6 + 2/6 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "5/6",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "5/12",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "5/6",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "3/6 − 2/6 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/6",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "5/6",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/6",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "24 минут — это [ ] часа",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "2/5",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "24/100",
+                    "trap": "hundred-minutes"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "2/5",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 4/8 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/2",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "4/8",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "1/8",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "7/2",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "4/9 + 2/9 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "2/3",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "6/9",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "6/18",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "6/9",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 18,
+      "part": "test",
+      "items": [
+        {
+          "text": "6 × [ ] = 24",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "4",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "18",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "4",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "18 : 3 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "6",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "7",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "6",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 37 = 80",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "43",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "117",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "117",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "617 − 253 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "364",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "444",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "364",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "22 : 6 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "3",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "2",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "3",
+              "crossed": "2",
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "4",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "10",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "9",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "1/7 + 3/7 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "4/7",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "4/14",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "4/7",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "7/11 − 2/11 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "5/11",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "9/11",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "5/11",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "48 минут — это [ ] часа",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "4/5",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "48/100",
+                    "trap": "hundred-minutes"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "4/5",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 15/25 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "3/5",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "15/25",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "3/25",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "2/6 + 2/6 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "2/3",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "4/6",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "4/12",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "2/3",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 19,
+      "part": "test",
+      "items": [
+        {
+          "text": "9 × [ ] = 72",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "8",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "63",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "8",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "40 : 5 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "8",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "9",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "8",
+              "crossed": "9",
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 36 = 81",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "45",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "117",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "45",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "504 − 391 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "113",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "293",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "118",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "27 : 6 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "4",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "3",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "3",
+              "crossed": null,
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "3",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "9",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "3",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "2/9 + 4/9 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "6/9",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "6/18",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "3/11 − 2/11 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/11",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "5/11",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/11",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "500 г — это [ ] кг",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/2",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "500/100",
+                    "trap": "hundred-grams"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/2",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 18/24 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "3/4",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "18/24",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "3/24",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "3/4",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "2/8 + 4/8 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "3/4",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "6/8",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "6/16",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "3/4",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 20,
+      "part": "test",
+      "items": [
+        {
+          "text": "2 × [ ] = 14",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "7",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "12",
+                    "trap": "wrong-operation"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "7",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "8 : 2 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "4",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "5",
+                    "trap": "table-neighbour"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "4",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "[ ] + 17 = 39",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "22",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "56",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "rewritten",
+              "written": "22",
+              "crossed": "56",
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "575 − 209 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "366",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "374",
+                    "trap": "no-borrow"
+                  }
+                ]
+              },
+              "scenario": "similar-digits",
+              "written": "366",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "17 : 4 = [ ] (ост. [ ])",
+          "boxes": [
+            {
+              "check": {
+                "kind": "number",
+                "key": "4",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "3",
+                    "trap": "quotient-too-small"
+                  }
+                ]
+              },
+              "scenario": "blank",
+              "written": null,
+              "crossed": null,
+              "fraction": null
+            },
+            {
+              "check": {
+                "kind": "number",
+                "key": "1",
+                "form": null,
+                "trap_values": [
+                  {
+                    "value": "5",
+                    "trap": "remainder-too-big"
+                  }
+                ]
+              },
+              "scenario": "near-key",
+              "written": "7",
+              "crossed": null,
+              "fraction": null
+            }
+          ]
+        },
+        {
+          "text": "1/7 + 4/7 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "5/7",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "5/14",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "mirrored",
+              "written": "5/7",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "6/7 − 2/7 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "4/7",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "8/7",
+                    "trap": "adds-instead"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "4/7",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "10 см — это [ ] метра",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/10",
+                "form": "any",
+                "trap_values": [
+                  {
+                    "value": "10/10",
+                    "trap": "ten-centimetres"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "1/10",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        },
+        {
+          "text": "Сократи дробь: 12/18 = [ ]",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "2/3",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "12/18",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "2/18",
+                    "trap": "reduces-numerator-only"
+                  }
+                ]
+              },
+              "scenario": "correct",
+              "written": "2/3",
+              "crossed": null,
+              "fraction": "inline"
+            }
+          ]
+        },
+        {
+          "text": "2/6 + 1/6 = [ ] (несократимой дробью)",
+          "boxes": [
+            {
+              "check": {
+                "kind": "fraction",
+                "key": "1/2",
+                "form": "reduced",
+                "trap_values": [
+                  {
+                    "value": "3/6",
+                    "trap": "not-in-lowest-terms"
+                  },
+                  {
+                    "value": "3/12",
+                    "trap": "adds-denominators"
+                  }
+                ]
+              },
+              "scenario": "error",
+              "written": "3/6",
+              "crossed": null,
+              "fraction": "stacked"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

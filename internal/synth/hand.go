@@ -213,11 +213,16 @@ func (w *writer) write(h hand, s string, x, y float64) ([]string, float64) {
 		size := h.height * (0.92 + float64(0.16*w.rng.Float64()))
 		drift = clamp(drift+w.jitter(h.height*0.04), -h.height*0.12, h.height*0.12)
 		top := y + drift + float64(h.tilt*(x-h.left)) + (h.height - size)
+		flip := w.flip != nil && n == *w.flip
 		for _, poly := range g {
 			points := make([]pt, len(poly))
 			for i, p := range poly {
+				gx := p.x
+				if flip {
+					gx = 1 - gx
+				}
 				points[i] = pt{
-					x + float64(p.x*size*h.shape) + float64(h.slant*(1-p.y)*size) + w.jitter(size*0.03),
+					x + float64(gx*size*h.shape) + float64(h.slant*(1-p.y)*size) + w.jitter(size*0.03),
 					top + float64(p.y*size) + w.jitter(size*0.03),
 				}
 			}

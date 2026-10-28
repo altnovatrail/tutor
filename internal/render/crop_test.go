@@ -121,7 +121,7 @@ func readCropVectors(t *testing.T) (cropVectors, []vectorCase) {
 func TestCropVectors(t *testing.T) {
 	v, cases := readCropVectors(t)
 	r := v.Rule
-	if got := []int{r.Margin, r.Flat, r.Ceiling, r.Side, r.Edge, r.Tokens, r.Patch}; !slices.Equal(got, []int{CropMargin, cropFlat, cropCeiling, cropSide, cropEdge, cropTokens, 28}) {
+	if got := []int{r.Margin, r.Flat, r.Ceiling, r.Side, r.Edge, r.Tokens, r.Patch}; !slices.Equal(got, []int{CropMargin, cropFlat, cropCeiling, CropSide, cropEdge, cropTokens, 28}) {
 		t.Errorf("the vectors' rule is %v", got)
 	}
 	if !slices.Equal(r.Heights, Heights()) {
