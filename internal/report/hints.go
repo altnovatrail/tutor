@@ -81,6 +81,11 @@ func (r *Hint) ToRead() []*hint.CallRecord {
 	return out
 }
 
+// Readable names the hints for the author to read: the third file of the report, .hints.md.
+func (r *Hint) Readable() (suffix, label string, write func(io.Writer, string) error) {
+	return ".hints.md", "The hints to read", r.Hints
+}
+
 // Hints writes the hints to read, each with its sheet and task as the plan and the bank tell them —
 // the statement, the key, what the leak check searches for and the text the plan gives the first
 // error —, the hint, what the checks found and what the learner reads.

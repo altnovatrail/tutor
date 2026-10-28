@@ -230,3 +230,46 @@ func whyUnmet(e *sample.Essay, id string) string {
 	}
 	return ""
 }
+
+// A run of the assessment by the rubric reads the essays of a part, a call an essay, by every reader
+// in every repeat; its report counts no false alarm on the stub and writes the feedback to read. It
+// takes no flag of the sheets, no file of the workbook and no -reads.
+func TestRunEssays(t *testing.T) {
+	dir := t.TempDir()
+	log := filepath.Join(dir, "essays.jsonl")
+	code, out, errs := runMeasure("yes\n", "-kind", "essay", "-essays", theEssays, "-part", "dev", "-stub", "-repeats", "2", "-log", log)
+	if code != exitOK || !strings.HasPrefix(out, "The dev part: 5 essays of "+theEssays+", drawn with the seed 1, at 32 px, by opus-high and haiku-low and haiku-low-no-thinking in 2 repeats, a call an essay, in version 1 of the prompt of the assessment by the rubric.\n30 calls, expected to cost $") {
+		t.Fatalf("the run ends %d:\n%s%s", code, out, errs)
+	}
+	// The test part of the essays is planned at $8, not the $6 of the sheets (R45).
+	if code, out, _ := runMeasure("no\n", "-kind", "essay", "-essays", theEssays, "-part", "test", "-stub", "-log", filepath.Join(dir, "test.jsonl")); code != exitOK || !strings.Contains(out, "The cap is $8.00.\n") || strings.Contains(out, "above the") {
+		t.Errorf("the test part of the essays: %d\n%s", code, out)
+	}
+	data, err := os.ReadFile(log)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n := strings.Count(string(data), `"kind":"essay"`); n != 5 || strings.Count(string(data), `"kind":"call"`) != 30 {
+		t.Errorf("the log holds %d essays:\n%.300s", n, data)
+	}
+	code, out, errs = runIt("report", log)
+	if code != exitOK || !strings.Contains(out, "haiku-low: false alarms 0 of 48") || !strings.HasSuffix(out, "The feedback to read: "+filepath.Join(dir, "essays.feedback.md")+"\n") {
+		t.Errorf("the report of the essays ends %d: %s%s", code, out, errs)
+	}
+	for _, c := range []struct {
+		args []string
+		says string
+	}{
+		{[]string{"-dir", "x"}, "-dir names sheets, and the essay reads its own file"},
+		{[]string{"-workbook", theWorkbook}, "-workbook is not for -kind essay"},
+		{[]string{"-reads", "captions"}, "-reads is for -kind reading or workbook"},
+	} {
+		args := append([]string{"-kind", "essay", "-part", "dev", "-stub"}, c.args...)
+		if code, _, errs := runMeasure("yes\n", args...); code != exitUsage || !strings.Contains(errs, c.says) {
+			t.Errorf("%v: ends %d, %q; want %q", c.args, code, errs, c.says)
+		}
+	}
+	if code, _, errs := runMeasure("yes\n", "-kind", "essay", "-essays", theWorkbook, "-part", "dev", "-stub", "-log", filepath.Join(dir, "x.jsonl")); code != exitFail || !strings.Contains(errs, `unknown field "pages"`) {
+		t.Errorf("a run of the essays on the workbook ends %d, %q", code, errs)
+	}
+}

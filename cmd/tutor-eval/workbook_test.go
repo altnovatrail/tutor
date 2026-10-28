@@ -286,7 +286,8 @@ func TestRunWorkbook(t *testing.T) {
 		args []string
 		says string
 	}{
-		{[]string{"-dir", "x"}, "-dir names sheets, and the workbook reads its pages"},
+		{[]string{"-dir", "x"}, "-dir names sheets, and the workbook reads its own file"},
+		{[]string{"-essays", theEssays}, "-essays is not for -kind workbook"},
 		{[]string{"-set", "a,b,c"}, "-set names sheets"},
 		{[]string{"-reads", "keys"}, `-reads is "keys": for the workbook, give captions or heights`},
 		// The tests run in cmd/tutor-eval, where synthetic is a folder git does not ignore.
@@ -297,7 +298,7 @@ func TestRunWorkbook(t *testing.T) {
 			t.Errorf("%v: ends %d, %q; want %q", c.args, code, errs, c.says)
 		}
 	}
-	if code, _, errs := runMeasure("yes\n", "-part", "dev", "-stub", "-seed", "2"); code != exitUsage || !strings.Contains(errs, "-workbook and -seed are for -kind workbook") {
+	if code, _, errs := runMeasure("yes\n", "-part", "dev", "-stub", "-seed", "2"); code != exitUsage || !strings.Contains(errs, "-workbook, -essays and -seed are for -kind workbook and essay") {
 		t.Errorf("the judge with -seed ends %d, %q", code, errs)
 	}
 	if _, err := os.Stat("synthetic"); !os.IsNotExist(err) {
