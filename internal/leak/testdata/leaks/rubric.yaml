@@ -1,0 +1,25 @@
+# A rubric has no key, and with no leak phrases nothing is searched for: feedback on an essay is
+# checked in other ways (architecture 3.6).
+task:
+  id: an-essay
+  statement:
+    - text: Write about a day you remember.
+  canvas:
+    kind: handwriting_sheet
+    grid: lines
+  items:
+    - answer_slots:
+        - binding: sheet
+          check:
+            kind: rubric
+            criteria:
+              - text: The first sentence makes the reader want to go on.
+  skills:
+    primary: [writing-a-first-sentence]
+  band: first-steps
+  difficulty: 1
+texts:
+  - text: "Your first sentence makes me want to go on."
+    leaks: []
+  - text: "7"
+    leaks: []

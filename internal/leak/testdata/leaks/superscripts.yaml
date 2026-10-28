@@ -1,0 +1,32 @@
+# A superscript or a subscript digit is no digit: it becomes U+FFFD before NFKC, as in section 15,
+# so that 7² is the number 7 and not 72.
+task:
+  id: days-and-hours
+  statement:
+    - text: a) How many days are in a week? b) How many hours are in three days?
+  canvas:
+    kind: handwriting_sheet
+  items:
+    - text: a)
+      answer_slots:
+        - binding: zone
+          zone: {left: 100, top: 200, width: 300, height: 200}
+          check: {kind: number, key: "7"}
+    - text: b)
+      answer_slots:
+        - binding: zone
+          zone: {left: 100, top: 600, width: 300, height: 200}
+          check: {kind: number, key: "72"}
+  solution:
+    - text: "A week has 7 days, and three days have 3 × 24 = 72 hours."
+  skills:
+    primary: [time-calendar]
+  band: grades-3-4
+  difficulty: 2
+texts:
+  - text: "7\u00B2 = 49"
+    leaks: ["7"]
+  - text: "72"
+    leaks: ["72"]
+  - text: "x\u2082"
+    leaks: []

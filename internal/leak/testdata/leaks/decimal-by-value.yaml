@@ -1,0 +1,38 @@
+# A number is compared by its value, whichever of the notations writes it: a simple fraction, with
+# spaces around its slash or none, a decimal, and the vulgar fraction ½. A decimal comma and a
+# point with no digit before it are not read as one number.
+task:
+  id: half-of-one
+  statement:
+    - text: What is half of one?
+  canvas:
+    kind: handwriting_sheet
+  items:
+    - answer_slots:
+        - binding: anywhere
+          check: {kind: number, key: "0.5"}
+  solution:
+    - text: "Half of one is 1 ÷ 2 = 0.5."
+  skills:
+    primary: [fractions-parts]
+  band: grades-3-4
+  difficulty: 2
+texts:
+  - text: "1/2"
+    leaks: ["0.5"]
+  - text: "2 / 4"
+    leaks: ["0.5"]
+  - text: "\u00BD"
+    leaks: ["0.5"]
+  - text: "0.50"
+    leaks: ["0.5"]
+  - text: "3/6 of it"
+    leaks: ["0.5"]
+  - text: "0,5"
+    leaks: []
+  - text: ".5"
+    leaks: []
+  - text: "1/20"
+    leaks: []
+  - text: "1/0 and 5"
+    leaks: []

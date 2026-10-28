@@ -5,8 +5,9 @@
 // the finished sheet, the task, its key and solution and the traps the task names, in a block of
 // data (R02 spec; R57 spec), the rung, the language and the presentation style; it sees neither the
 // writing process (R11; R52 spec), nor the reading's observation, nor the trap the sheet was planned
-// with, which is the report's reference (R38). The program checks the words for a leak before they
-// reach the learner, and gives a fallback text in their place (T75): the hint only words them.
+// with, which is the report's reference (R38). The program checks the words for a leak and their
+// form before they reach the learner, and gives the fallback text of the rung in their place when
+// they fail (T75; R39): the hint only words them.
 package hint
 
 import (
@@ -62,7 +63,7 @@ const instructions = `You are the tutor of a learner who solves a maths task by 
    - rung 3: a similar case, simpler than the task, put as a question for the learner to work out.
 6. The hint keeps to these rules:
    - it never gives the answer, nor anything that gives it away: no number or step of the solution that the learner has not written, and not what the wrong step should have given;
-   - it is one question, in no more than two short sentences;
+   - it is one question, in no more than two short sentences and 30 words;
    - it begins with what the learner already got right;
    - it points to the place in the work where the mistake is;
    - it speaks only of the task;

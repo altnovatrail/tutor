@@ -88,8 +88,9 @@ func TestNew(t *testing.T) {
 }
 
 // A run on the stub goes the whole way: the log tells the run with its tutors, rungs, languages,
-// style and prompt, each sheet with its first error, trap and crop, and each call with a box that
-// hits the first error and the sheet's trap. A log of another kind is no log of the hint.
+// style and prompt, each sheet with its first error, trap, statement, what the leak check searches
+// for and crop, and each call with a box that hits the first error and the sheet's trap, and a hint
+// that passes its checks, so that the learner reads it. A log of another kind is no log of the hint.
 func TestRunOnTheStub(t *testing.T) {
 	lines := chosen(t, "lines", linesPlan, linesBank, 3, 9)
 	free := chosen(t, "free", freePlan, freeBank, 2, 8, 12)
@@ -114,27 +115,34 @@ func TestRunOnTheStub(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if l.Run.Prompt != hint.Fingerprint() || l.Run.PromptVersion != hint.Version || len(l.Run.Sets) != 3 || len(l.Run.Tutors) != 3 || len(l.Run.Rungs) != 3 ||
+	if l.Run.Prompt != hint.Fingerprint() || l.Run.PromptVersion != hint.Version || !l.Run.Checked || len(l.Run.Sets) != 3 || len(l.Run.Tutors) != 3 || len(l.Run.Rungs) != 3 ||
 		len(l.Run.Langs) != 2 || l.Run.Style != hint.Style || len(l.Sheets) != 6 || l.End == nil || l.End.Stopped != "" {
 		t.Errorf("the log reads back as %+v with %d sheets", l.Run, len(l.Sheets))
 	}
 	sheetOf := map[string]hint.SheetRecord{}
 	for _, sh := range l.Sheets {
 		sheetOf[fmt.Sprintf("%s/%d", sh.Set, sh.Sheet)] = sh
-		if sh.Outcome != sample.OutcomeError || sh.FirstError == 0 || sh.Key == "" || sh.Digit != 32 || sh.Width < 200 || sh.Height < 200 {
+		if sh.Outcome != sample.OutcomeError || sh.FirstError == 0 || sh.FirstErrorText == "" || sh.Key == "" || sh.Statement == "" || len(sh.Phrases) == 0 ||
+			sh.Digit != 32 || sh.Width < 200 || sh.Height < 200 {
 			t.Errorf("the sheet %s/%d is told %+v", sh.Set, sh.Sheet, sh)
 		}
 	}
 	if s := sheetOf["free/12"]; s.Layout != sample.LayoutNumberLine || s.FirstErrorIn != sample.RegionDrawing || s.Trap != "jump-length" {
 		t.Errorf("free/12 is told %+v", s)
 	}
-	if s := sheetOf["lines/3"]; s.Layout != "" || s.FirstErrorIn != "" || s.Trap != "order-of-operations" {
+	if s := sheetOf["near/12"]; len(s.SearchedKeys) != 0 {
+		t.Errorf("the key of posts, which its statement shows, is searched for: %+v", s)
+	}
+	if s := sheetOf["lines/3"]; s.Layout != "" || s.FirstErrorIn != "" || s.Trap != "order-of-operations" || len(s.SearchedKeys) != 1 {
 		t.Errorf("lines/3 is told %+v", s)
 	}
 	for _, c := range l.Calls {
 		sh := sheetOf[fmt.Sprintf("%s/%d", c.Set, c.Sheet)]
 		if c.Hit != sh.FirstError || c.Place == nil || c.Box == nil || c.Trap != sh.Trap || c.Hint == "" || c.Error != "" || c.InputTokens == 0 {
 			t.Errorf("the call %+v is logged %+v", c.Call, c)
+		}
+		if c.Leaked() || c.Form != nil || c.Fallback != "" || c.Shown != c.Hint || c.ShownLeaks != nil {
+			t.Errorf("the stub's hint of %+v is checked %+v", c.Call, c)
 		}
 	}
 	if len(l.Calls) != res.Calls {
@@ -179,5 +187,54 @@ func TestRecord(t *testing.T) {
 	}
 	if _, err := r.Steps[0].Call.Right(); err == nil {
 		t.Error("the stub boxes a sheet without a first error")
+	}
+}
+
+// A hint goes through the leak check of its sheet's task and the check of its form, as api checks
+// it: one that passes both is what the learner reads; one that leaks, one that breaks its form and
+// one that did not come give the learner the fallback text of the rung, whose own check finds
+// nothing. A hint that does both falls back for the leak. A call not asked has no fallback.
+func TestChecked(t *testing.T) {
+	// Sheet 12 of free writing is the grasshopper's: the key 10, which its statement does not show,
+	// and the leak phrases «15 − 5», «в точке 15» and «at 15».
+	free := chosen(t, "free", freePlan, freeBank, 12)
+	r, err := hint.New("dev", []string{"free"}, free, hint.Tutors()[:1], 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ru1, en3 := r.Steps[0].Call, r.Steps[5].Call
+	answer := func(hint string) runner.Outcome {
+		return runner.Outcome{Answer: fmt.Sprintf(`{"box": null, "trap": null, "hint": %q}`, hint)}
+	}
+	for _, c := range []struct {
+		name     string
+		call     runner.Call
+		outcome  runner.Outcome
+		keys     string
+		phrases  string
+		form     string
+		fallback string
+		rung     hint.Rung
+		lang     sample.Lang
+	}{
+		{"passes", ru1, answer("Начало верное. Где кончается третий прыжок?"), "", "", "", "", 1, sample.LangRussian},
+		{"the key", ru1, answer("Кузнечик в точке 10?"), "10", "", "", hint.FallbackLeak, 1, sample.LangRussian},
+		{"a phrase", en3, answer("Is he at 15 before the jump back?"), "", "at 15", "", hint.FallbackLeak, 3, sample.LangEnglish},
+		{"the form", ru1, answer("Посмотри на прыжки. Сколько их? Посчитай."), "", "", hint.BreachSentences, hint.FallbackForm, 1, sample.LangRussian},
+		{"both", en3, answer("It is 15 - 5 = 10. Count. Right?"), "10", "15 − 5", hint.BreachSentences, hint.FallbackLeak, 3, sample.LangEnglish},
+		{"off the schema", ru1, runner.Outcome{Answer: `{"hint": 1}`}, "", "", "", hint.FallbackFailed, 1, sample.LangRussian},
+		{"failed", en3, runner.Outcome{Error: "timeout"}, "", "", "", hint.FallbackFailed, 3, sample.LangEnglish},
+	} {
+		rec := c.call.Record(c.outcome).(hint.CallRecord)
+		want := rec.Hint
+		if c.fallback != "" {
+			want = hint.Fallback(c.rung, c.lang)
+		}
+		if strings.Join(rec.LeakedKeys, ",") != c.keys || strings.Join(rec.LeakedPhrases, ",") != c.phrases || strings.Join(rec.Form, ",") != c.form || rec.Fallback != c.fallback || rec.Shown != want || rec.ShownLeaks != nil {
+			t.Errorf("%s: logged %+v", c.name, rec)
+		}
+	}
+	if rec := ru1.Record(runner.Outcome{NotAsked: true, Error: "no request"}).(hint.CallRecord); rec.Fallback != "" || rec.Shown != "" {
+		t.Errorf("a call not asked is logged %+v", rec)
 	}
 }

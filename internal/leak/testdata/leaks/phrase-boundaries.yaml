@@ -1,0 +1,35 @@
+# A leak phrase is found where no letter or digit stands right outside an end of it that is a
+# letter or a digit, and its white space is any white space. It is matched as written, so x=7 is not
+# x = 7.
+task:
+  id: odd-number
+  statement:
+    - text: Write an odd number of rungs.
+  canvas:
+    kind: handwriting_sheet
+  items:
+    - answer_slots:
+        - binding: anywhere
+          check: {kind: predicate, predicate: "value % 2 == 1"}
+  solution:
+    - text: "An odd number leaves 1 when shared by 2, such as 7."
+  leak_phrases: [odd, "7 rungs", x = 7]
+  skills:
+    primary: [parity-alternation]
+  band: grades-3-4
+  difficulty: 2
+texts:
+  - text: "It is odd."
+    leaks: ["odd"]
+  - text: "even/odd"
+    leaks: ["odd"]
+  - text: "7\u00A0RUNGS"
+    leaks: ["7 rungs"]
+  - text: "the odds"
+    leaks: []
+  - text: "17 rungs"
+    leaks: []
+  - text: "x=7"
+    leaks: []
+  - text: "oddly"
+    leaks: []

@@ -68,11 +68,11 @@ func TestReportRefuses(t *testing.T) {
 	if code, _, errs := runIt("report", bad); code != exitFail || !strings.Contains(errs, "out of its place") {
 		t.Errorf("a log that does not start with its run: %d, %s", code, errs)
 	}
-	// A log of a kind of call the report does not know is not read as the judge's, one of the hint
-	// waits for its report, and one of the reading with no sheets makes no report.
+	// A log of a kind of call the report does not know is not read as the judge's, and one of the
+	// hint or the reading with no sheets makes no report.
 	for _, c := range []struct{ kind, says string }{
 		{"rubric", "a log of the kind of call \"rubric\""},
-		{"hint", "a log of the hint, whose report comes with its check of leaks and form, T75"},
+		{"hint", "the log has no tutors or no sheets"},
 		{"reading", "the log has no readers or no sheets"},
 	} {
 		other := filepath.Join(t.TempDir(), c.kind+".jsonl")

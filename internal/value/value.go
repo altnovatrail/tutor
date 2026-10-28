@@ -97,7 +97,7 @@ func (n Number) read(value string) (*big.Rat, Reason) {
 	if !ok {
 		return nil, Blank
 	}
-	r, ok := rational(text)
+	r, ok := Rational(text)
 	if !ok {
 		return nil, Notation
 	}
@@ -182,10 +182,10 @@ func steps1To5(text string) string {
 // by the simple lowercase mapping of each character.
 func withoutUnit(text string, units []string) string {
 	runes := []rune(text)
-	lowered := lowercase(runes)
+	lowered := Lowercase(runes)
 	var fit []rune
 	for _, u := range units {
-		unit := lowercase([]rune(strings.Trim(steps1To5(u), " ")))
+		unit := Lowercase([]rune(strings.Trim(steps1To5(u), " ")))
 		if len(unit) > len(fit) && len(unit) <= len(lowered) && slices.Equal(lowered[len(lowered)-len(unit):], unit) {
 			fit = unit
 		}
@@ -200,9 +200,9 @@ func withoutUnit(text string, units []string) string {
 	return strings.TrimSuffix(before, " ")
 }
 
-// lowercase maps each character to its simple lowercase mapping, as unicode.ToLower does: a
+// Lowercase maps each character to its simple lowercase mapping, as unicode.ToLower does: a
 // character at a time, so that no context, such as a final sigma, counts.
-func lowercase(runes []rune) []rune {
+func Lowercase(runes []rune) []rune {
 	out := make([]rune, len(runes))
 	for i, r := range runes {
 		out[i] = unicode.ToLower(r)
@@ -220,9 +220,9 @@ var (
 	fraction = regexp.MustCompile(`^-?(0|[1-9][0-9]*) ?/ ?[1-9][0-9]*$`)
 )
 
-// rational is a text in a notation of number as a rational number, exactly, and false when the
+// Rational is a text in a notation of number as a rational number, exactly, and false when the
 // text is in none.
-func rational(text string) (*big.Rat, bool) {
+func Rational(text string) (*big.Rat, bool) {
 	if utf8.RuneCountInString(text) > maxLength {
 		return nil, false
 	}

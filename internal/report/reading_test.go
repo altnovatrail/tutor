@@ -20,7 +20,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/value"
 )
 
-var update = flag.Bool("update", false, "write the golden log and report of the reading anew")
+var update = flag.Bool("update", false, "write the golden logs and reports of the reading and the hint anew")
 
 // readingLog builds the log of a run of the reading by hand: three readers, Opus once and two
 // Haiku, and sheets of the set "s" by their outcomes.
@@ -264,7 +264,26 @@ func TestReadingLogOfTheStub(t *testing.T) {
 	if err := rep.CSV(&csv); err != nil {
 		t.Fatal(err)
 	}
-	files := map[string][]byte{"testdata/reading-stub.jsonl": log.Bytes(), "testdata/reading-stub.md": md.Bytes(), "testdata/reading-stub.csv": csv.Bytes()}
+	goldens(t, map[string][]byte{"testdata/reading-stub.jsonl": log.Bytes(), "testdata/reading-stub.md": md.Bytes(), "testdata/reading-stub.csv": csv.Bytes()})
+	for _, th := range rep.Thresholds {
+		if !th.Holds() || th.Passes() || th.Sum != 0 {
+			t.Errorf("on the stub of the dev part, %+v", th)
+		}
+	}
+	for _, p := range rep.Pairs {
+		if p.Released != p.Sheets || p.Sheets != 7 {
+			t.Errorf("on the stub, the pair %+v", p)
+		}
+	}
+	if s := rep.Summary(); strings.Count(s, "the threshold holds here; only the test part decides") != 3 {
+		t.Errorf("the summary:\n%s", s)
+	}
+}
+
+// goldens holds files to the golden ones under their names, byte for byte, or with -update writes
+// them anew.
+func goldens(t *testing.T, files map[string][]byte) {
+	t.Helper()
 	for name, got := range files {
 		if *update {
 			if err := os.WriteFile(name, got, 0o644); err != nil {
@@ -279,19 +298,6 @@ func TestReadingLogOfTheStub(t *testing.T) {
 		if !bytes.Equal(got, want) {
 			t.Errorf("%s differs:\n%s", name, got)
 		}
-	}
-	for _, th := range rep.Thresholds {
-		if !th.Holds() || th.Passes() || th.Sum != 0 {
-			t.Errorf("on the stub of the dev part, %+v", th)
-		}
-	}
-	for _, p := range rep.Pairs {
-		if p.Released != p.Sheets || p.Sheets != 7 {
-			t.Errorf("on the stub, the pair %+v", p)
-		}
-	}
-	if s := rep.Summary(); strings.Count(s, "the threshold holds here; only the test part decides") != 3 {
-		t.Errorf("the summary:\n%s", s)
 	}
 }
 

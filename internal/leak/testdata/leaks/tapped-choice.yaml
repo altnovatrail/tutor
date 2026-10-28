@@ -1,0 +1,34 @@
+# The key of a choice by tapping is one of its item's options, so it is never searched for: a leak
+# phrase keeps it instead, whole, so that a longer word does not hold it.
+task:
+  id: best-first-sentence
+  statement:
+    - text: Which first sentence makes a reader want to go on?
+  canvas:
+    kind: handwriting_sheet
+    grid: lines
+  items:
+    - answer_slots:
+        - binding: choice
+          options:
+            - It was a day like any other.
+            - The door was open, and nobody had opened it.
+          check:
+            kind: choice
+            key: The door was open, and nobody had opened it.
+  solution:
+    - text: The second sentence leaves a question that only the story can answer.
+  leak_phrases: [The door was open]
+  skills:
+    primary: [choosing-a-first-sentence]
+  band: first-steps
+  difficulty: 1
+texts:
+  - text: "The door was open, and nobody had opened it."
+    leaks: ["The door was open"]
+  - text: "the DOOR was open"
+    leaks: ["The door was open"]
+  - text: "the door was opened"
+    leaks: []
+  - text: "It was a day like any other."
+    leaks: []

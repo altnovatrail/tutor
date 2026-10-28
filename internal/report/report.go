@@ -580,45 +580,26 @@ func (r *Report) agree(j, with string) Agreement {
 func (r *Report) Markdown(w io.Writer, logName string) error {
 	l := r.log
 	var b strings.Builder
-	title, of := "the writing process", fmt.Sprintf("the %s part", l.Run.Part)
+	title := "the writing process"
 	if r.Free {
 		title = "free writing"
 	}
-	if l.Run.Part == "all" {
-		of = "all the sheets"
-	}
-	fmt.Fprintf(&b, "# The measurement of %s: %s\n\n", title, of)
+	fmt.Fprintf(&b, "# The measurement of %s: %s\n\n", title, partOf(l.Run.Part))
 	var judges []string
 	for _, j := range l.Run.Judges {
-		thinking := ""
-		if j.NoThinking {
-			thinking = ", without thinking"
-		}
-		judges = append(judges, fmt.Sprintf("%s (%s, %s%s)", j.Name, j.Model, j.Effort, thinking))
+		judges = append(judges, configName(j.Name, j.Model, j.Effort, j.NoThinking))
 	}
 	framed := len(r.numbers(func(sh *measure.SheetRecord) bool { return sh.Frames > 0 }))
-	made, failed, spent := 0, 0, 0.0
-	for _, c := range l.Calls {
-		if c.SameAs == "" && !c.NotAsked {
-			made++
-			spent += c.CostUSD
-			if c.Error != "" {
-				failed++
-			}
-		}
-	}
+	made, failed, spent := tally(l.Calls, func(c *measure.CallRecord) (bool, bool, float64) {
+		return c.SameAs == "" && !c.NotAsked, c.Error != "", c.CostUSD
+	})
 	prompt := short(l.Run.Prompt)
 	if r.Free {
 		prompt += ", version 2"
 	}
 	fmt.Fprintf(&b, "The log %s, of the prompt %s. Judges: %s. Repeats: %d. Sheets: %d, %d of them with frames. Calls: %d made, %d of them failed; $%.2f spent of the $%.2f cap.\n",
 		logName, prompt, strings.Join(judges, "; "), l.Run.Repeats, len(r.sheets), framed, made, failed, spent, l.Run.MaxUSD)
-	switch {
-	case l.End == nil:
-		b.WriteString("\n**The log has no end: the run broke off, and the report is of what it holds.**\n")
-	case l.End.Stopped != "":
-		fmt.Fprintf(&b, "\n**The run stopped short, by %s: the report is of what it holds.**\n", l.End.Stopped)
-	}
+	b.WriteString(endNote(l.End))
 
 	b.WriteString("\n## Does the writing process help? Form D against form A\n\n")
 	b.WriteString("| Judge | Σd | Sheets with d ≠ 0 | p, helps | p, harms | False \"correct\", A → D | False alarms, A → D | Outcome | Passes Holm |\n|---|---|---|---|---|---|---|---|---|\n")

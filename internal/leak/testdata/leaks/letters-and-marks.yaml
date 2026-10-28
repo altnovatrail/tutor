@@ -1,0 +1,30 @@
+# A mark is a character of a word, so a phrase is not found where a vowel sign or an accent goes on
+# the word, and a phrase is found in any letter case. NFKC composes e and the combining acute.
+task:
+  id: words
+  statement:
+    - text: Write a number.
+  canvas:
+    kind: handwriting_sheet
+  items:
+    - answer_slots:
+        - binding: anywhere
+          check: {kind: predicate, predicate: "value > 0"}
+  solution:
+    - text: "Any number above zero is right, such as 1."
+  leak_phrases: ["कित", cafe, семь]
+  skills:
+    primary: [arithmetic-tricks]
+  band: grades-3-4
+  difficulty: 2
+texts:
+  - text: "कित"
+    leaks: ["कित"]
+  - text: "Семь."
+    leaks: ["семь"]
+  - text: "किताब"
+    leaks: []
+  - text: "café"
+    leaks: []
+  - text: "cafe\u0301"
+    leaks: []

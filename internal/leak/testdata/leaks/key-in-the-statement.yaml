@@ -1,0 +1,28 @@
+# A key that the statement shows is not searched for: a chicken has 2 legs, and there are 2 rabbits.
+# The leak phrases give the answer away instead, in any letter case and white space.
+task:
+  id: heads-and-legs
+  statement:
+    - text: A farmyard has chickens and rabbits, 6 heads and 16 legs in all. A chicken has 2 legs, and a rabbit has 4. How many rabbits are there?
+  canvas:
+    kind: handwriting_sheet
+  items:
+    - answer_slots:
+        - binding: anywhere
+          check: {kind: number, key: "2"}
+  solution:
+    - text: "If all 6 were chickens, they would have 12 legs. The 4 legs more are 2 rabbits."
+  leak_phrases: ["2 rabbits", two rabbits]
+  skills:
+    primary: [arithmetic-tricks]
+  band: grades-3-4
+  difficulty: 2
+texts:
+  - text: "So there are 2 rabbits."
+    leaks: ["2 rabbits"]
+  - text: "Two  Rabbits!"
+    leaks: ["two rabbits"]
+  - text: "A chicken has 2 legs."
+    leaks: []
+  - text: "rabbits: 2"
+    leaks: []

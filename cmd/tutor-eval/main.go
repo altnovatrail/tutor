@@ -1,8 +1,8 @@
 // Command tutor-eval is tutor's eval runner: it runs the AI capabilities on eval samples, on the
 // same code that api calls, and reports how they did. Its run command runs the calls of a kind on
 // the runner: the judge of the measurement of the writing process (R24), the reading of a sheet
-// into an observation (T68), or the hint (T74), and its report
-// command reports on a run by the kind of its log; its other commands serve the
+// into an observation (T68), or the hint (T74), which the run checks for leaks and its form (T75),
+// and its report command reports on a run by the kind of its log; its other commands serve the
 // board, check the files of samples, banks and sheet plans, and write synthetic ones: run it
 // without arguments for its commands.
 package main
@@ -60,10 +60,12 @@ const usage = `usage:
                              estimate first, then calls to Claude once you type yes, and a log of
                              every answer; a reading reads what -reads names, keys by default, and
                              a hint is asked of the sheets with a mistake, at every rung in Russian
-                             and English
+                             and English, and checked for leaks and its form
   tutor-eval report LOG      the report of a run from its log, by its kind, asking no model:
-                             of the judge, the criterion and the numbers in Markdown and CSV,
-                             beside the log
+                             of the judge, the criterion, and of the reading, the threshold of
+                             R03, with the numbers in Markdown and CSV; of the hint, the leaks,
+                             the form, the fallback texts and the place in Markdown and CSV, and
+                             about 30 hints to read in .hints.md; beside the log
   tutor-eval synth DIR       write the synthetic bank and one synthetic sample per scenario
   tutor-eval -version        print the version
 `

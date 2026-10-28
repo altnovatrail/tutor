@@ -1,0 +1,29 @@
+# A sign that its item does not show is searched for, and a sign is found right beside a digit: its
+# ends are no letters or digits. NFKC makes the full-width sign the sign; ≤ is another one.
+task:
+  id: compare
+  statement:
+    - text: Compare the two numbers.
+  canvas:
+    kind: workbook
+  items:
+    - line:
+        - text: "56"
+        - binding: box
+          check: {kind: choice, options: ["<", ">", "="], key: "<"}
+        - text: "65"
+  solution:
+    - text: "56 has 5 tens and 65 has 6, so 56 < 65."
+  skills:
+    primary: [numbers-to-1000]
+  band: grade-3
+  difficulty: 1
+texts:
+  - text: "56 < 65"
+    leaks: ["<"]
+  - text: "56<=65"
+    leaks: ["<"]
+  - text: "\uFF1C"
+    leaks: ["<"]
+  - text: "56 \u2264 65"
+    leaks: []

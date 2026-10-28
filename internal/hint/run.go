@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/altnovatrail/tutor/internal/judge"
+	"github.com/altnovatrail/tutor/internal/leak"
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/runner"
@@ -69,10 +70,23 @@ type Call struct {
 	Repeat int         `json:"repeat"`
 }
 
-// prepared is a sheet of the run with its crop at 32 px, which every hint of it shows.
+// prepared is a sheet of the run with its crop at 32 px, which every hint of it shows, and the leak
+// check of its task, which every hint of it goes through.
 type prepared struct {
 	sheets.Chosen
 	shown *reading.Sheet
+	check *leak.Check
+}
+
+// LeakTask is a task of a bank as the leak check reads it: its statement, one paragraph, one item
+// whose answer slot checks a number, the key's value (reading.KeyOf), and its leak phrases. The
+// bank has no item text, line or options, so only the statement can show the key (R39).
+func LeakTask(t *sample.Task) leak.Task {
+	return leak.Task{
+		Statement: []string{t.Statement},
+		Items:     []leak.Item{{Keys: []leak.Key{{Kind: leak.Number, Value: reading.KeyOf(t.Key)}}}},
+		Phrases:   t.Leaks,
+	}
 }
 
 // step is a call of the hint on the runner.
@@ -128,17 +142,24 @@ func (s *step) Right() (string, error) {
 }
 
 // Record is the call's record: the answer as the model gave it, its box, the box's place on the
-// crop in thousandths and the part of the markup it hits, its trap and its hint. An answer off the
-// schema is a failure of the call, logged with the reader's error.
+// crop in thousandths and the part of the markup it hits, its trap and its hint; and the hint
+// checked as api checks it before the tutor's words reach the device (architecture 3.5 spec; R39):
+// what the leak check finds in it, what it breaks of its form, and what the learner reads — the
+// hint, or the fallback text of the rung and why. An answer off the schema is a failure of the
+// call, logged with the reader's error, and so is the learner's fallback. A call not asked has
+// none.
 func (s *step) Record(o runner.Outcome) any {
 	rec := CallRecord{Kind: "call", Call: s.Call, NotAsked: o.NotAsked, Answer: o.Answer, Error: o.Error, Usage: o.Usage}
-	if o.NotAsked || o.Error != "" {
+	if o.NotAsked {
 		return rec
+	}
+	if o.Error != "" {
+		return s.shown(rec, FallbackFailed)
 	}
 	a, err := Read(o.Answer, s.sheet.Task.Traps)
 	if err != nil {
 		rec.Error = err.Error()
-		return rec
+		return s.shown(rec, FallbackFailed)
 	}
 	rec.Box, rec.Trap, rec.Hint = a.Box, a.Trap, a.Hint
 	if a.Box != nil {
@@ -147,6 +168,27 @@ func (s *step) Record(o runner.Outcome) any {
 		if ok {
 			rec.Place = &place
 		}
+	}
+	rec.LeakedKeys, rec.LeakedPhrases = s.sheet.check.Split(a.Hint)
+	rec.Form = Form(a.Hint, s.Lang, s.sheet.Task.Statement)
+	switch {
+	case rec.Leaked():
+		return s.shown(rec, FallbackLeak)
+	case len(rec.Form) > 0:
+		return s.shown(rec, FallbackForm)
+	}
+	return s.shown(rec, "")
+}
+
+// shown completes a call's record with what the learner reads: the hint, or, for a cause, the
+// fallback text of the call's rung in its language; and what the leak check finds in that, after
+// the check. A hint the learner reads passed the check, and a fallback text holds no number and
+// none of the tasks' phrases, so it is nothing by construction: the record shows it is.
+func (s *step) shown(rec CallRecord, cause string) CallRecord {
+	rec.Fallback, rec.Shown = cause, rec.Hint
+	if cause != "" {
+		rec.Shown = Fallback(s.Rung, s.Lang)
+		rec.ShownLeaks = s.sheet.check.Find(rec.Shown)
 	}
 	return rec
 }
@@ -172,7 +214,7 @@ func New(part string, sets []string, chosen []sheets.Chosen, tutors []Tutor, rep
 		if err != nil {
 			return nil, fmt.Errorf("hint: sheet %d of %s: %w", sh.Number, sh.Set, err)
 		}
-		p := &prepared{Chosen: sh, shown: shown}
+		p := &prepared{Chosen: sh, shown: shown, check: leak.New(LeakTask(sh.Task))}
 		all = append(all, p)
 		r.Items = append(r.Items, sheetRecord(p))
 	}
@@ -182,7 +224,7 @@ func New(part string, sets []string, chosen []sheets.Chosen, tutors []Tutor, rep
 	}
 	r.Record = func(h runner.Head) any {
 		return RunRecord{Kind: "run", CallKind: CallKind, Time: h.Time, Part: part, Sets: sets, Tutors: records, Repeats: repeats, Rungs: Rungs(), Langs: Langs(), Style: Style,
-			MaxUSD: h.MaxUSD, Estimate: h.Estimate, Prompt: Fingerprint(), PromptVersion: Version}
+			MaxUSD: h.MaxUSD, Estimate: h.Estimate, Prompt: Fingerprint(), PromptVersion: Version, Checked: true}
 	}
 	for rep := 1; rep <= repeats; rep++ {
 		for _, sh := range all {
@@ -204,9 +246,13 @@ func New(part string, sets []string, chosen []sheets.Chosen, tutors []Tutor, rep
 func sheetRecord(sh *prepared) SheetRecord {
 	s, c := sh.Sample, sh.shown.Crop
 	rec := SheetRecord{Kind: "sheet", Set: sh.Set, Sheet: sh.Number, File: sh.File, Writer: s.Writer, Task: s.Task, Scenario: s.Scenario,
-		Outcome: s.Expected.Outcome, Trap: s.Expected.Trap, Key: sh.Task.Key, Digit: c.Digit, Drawn: c.Drawn, Width: c.Width, Height: c.Height}
+		Outcome: s.Expected.Outcome, Trap: s.Expected.Trap, Key: sh.Task.Key, Statement: sh.Task.Statement, SearchedKeys: sh.check.Keys(), Phrases: sh.check.Phrases(),
+		Digit: c.Digit, Drawn: c.Drawn, Width: c.Width, Height: c.Height}
 	if fe := s.Expected.FirstError; fe != nil {
 		rec.FirstError = *fe
+		if *fe >= 1 && *fe <= len(s.Lines) {
+			rec.FirstErrorText = s.Lines[*fe-1].Text
+		}
 		// Where the first error stands the plan tells only of a sheet whose parts are the plan's and
 		// whose first error is the plan's, as in the judge's log (measure.sheetRecord).
 		if sh.Plan != nil && len(s.Lines) == len(sh.Plan.Parts) && sh.Plan.Expected.FirstError != nil && *sh.Plan.Expected.FirstError == *fe {
@@ -224,7 +270,9 @@ func sheetRecord(sh *prepared) SheetRecord {
 // kind of call, hint, so that tutor-eval report tells its log from the others.
 type (
 	// RunRecord tells the run: its part and sets, its tutors and repeats, the rungs, languages and
-	// style of its hints, its cap and estimate, and the fingerprint and the version of its prompt.
+	// style of its hints, its cap and estimate, the fingerprint and the version of its prompt, and
+	// that it checks every hint for leaks and its form (T75): a log of T74 does not, and its calls
+	// tell nothing of what the checks would find.
 	RunRecord struct {
 		Kind          string          `json:"kind"`
 		CallKind      string          `json:"call_kind"`
@@ -240,6 +288,7 @@ type (
 		Estimate      runner.Estimate `json:"estimate"`
 		Prompt        string          `json:"prompt"`
 		PromptVersion int             `json:"prompt_version"`
+		Checked       bool            `json:"checked"`
 	}
 	// TutorRecord is a tutor as the run's record tells it: its model and prices.
 	TutorRecord struct {
@@ -251,47 +300,65 @@ type (
 		OutputUSD  float64 `json:"output_usd_per_mtok"`
 	}
 	// SheetRecord tells a sheet: its set, number and file, who wrote it, its task, scenario and
-	// outcome, its layout of free writing, its first error, by the number of its part or line and,
-	// on a sheet of parts, where it stands, the trap the sheet was planned with, which the report
-	// holds the model's trap against, the key, and its crop: the height of digits asked for and
-	// drawn at, and the size.
+	// outcome, its layout of free writing, its first error, by the number of its part or line, the
+	// text the plan gives it and, on a sheet of parts, where it stands, the trap the sheet was
+	// planned with, which the report holds the model's trap against, the key, the statement, what
+	// the leak check searches every hint for — the key, unless the statement shows it, and apart
+	// from it the leak phrases —, and its crop: the height of digits asked for and drawn at, and the size. The texts
+	// are the plan's and the bank's, not handwriting.
 	SheetRecord struct {
-		Kind         string          `json:"kind"`
-		Set          string          `json:"set"`
-		Sheet        int             `json:"sheet"`
-		File         string          `json:"file"`
-		Writer       sample.Writer   `json:"writer,omitempty"`
-		Task         string          `json:"task"`
-		Scenario     sample.Scenario `json:"scenario"`
-		Outcome      sample.Outcome  `json:"outcome"`
-		Layout       sample.Layout   `json:"layout,omitempty"`
-		FirstError   int             `json:"first_error"`
-		FirstErrorIn sample.Region   `json:"first_error_in,omitempty"`
-		Trap         string          `json:"trap"`
-		Key          string          `json:"key"`
-		Digit        int             `json:"digit"`
-		Drawn        int             `json:"drawn"`
-		Width        int             `json:"width"`
-		Height       int             `json:"height"`
+		Kind           string          `json:"kind"`
+		Set            string          `json:"set"`
+		Sheet          int             `json:"sheet"`
+		File           string          `json:"file"`
+		Writer         sample.Writer   `json:"writer,omitempty"`
+		Task           string          `json:"task"`
+		Scenario       sample.Scenario `json:"scenario"`
+		Outcome        sample.Outcome  `json:"outcome"`
+		Layout         sample.Layout   `json:"layout,omitempty"`
+		FirstError     int             `json:"first_error"`
+		FirstErrorIn   sample.Region   `json:"first_error_in,omitempty"`
+		FirstErrorText string          `json:"first_error_text,omitempty"`
+		Trap           string          `json:"trap"`
+		Key            string          `json:"key"`
+		Statement      string          `json:"statement"`
+		SearchedKeys   []string        `json:"searched_keys"`
+		Phrases        []string        `json:"leak_phrases"`
+		Digit          int             `json:"digit"`
+		Drawn          int             `json:"drawn"`
+		Width          int             `json:"width"`
+		Height         int             `json:"height"`
 	}
 	// CallRecord tells a call: the answer as the model gave it, its box in pixels of the crop, the
 	// box's place in thousandths of the crop and the part it hits, 0 for none, its trap and its hint,
-	// the failure if it failed, and what it took. A call whose request could not be built was not
-	// asked, and says so.
+	// the failure if it failed, and what it took; and its hint checked: the keys and, apart, the leak
+	// phrases the leak check found in it, what it breaks of its form, why the learner reads the
+	// fallback text instead, if they do, what the learner reads, and what the leak check finds in a
+	// fallback text. A call whose request could not
+	// be built was not asked, and says so: it has no fallback either.
 	CallRecord struct {
 		Kind string `json:"kind"`
 		Call
-		NotAsked bool       `json:"not_asked,omitempty"`
-		Answer   string     `json:"answer,omitempty"`
-		Box      *judge.Box `json:"box,omitempty"`
-		Place    *[4]int64  `json:"place,omitempty"`
-		Hit      int        `json:"hit"`
-		Trap     string     `json:"trap,omitempty"`
-		Hint     string     `json:"hint,omitempty"`
-		Error    string     `json:"error,omitempty"`
+		NotAsked      bool       `json:"not_asked,omitempty"`
+		Answer        string     `json:"answer,omitempty"`
+		Box           *judge.Box `json:"box,omitempty"`
+		Place         *[4]int64  `json:"place,omitempty"`
+		Hit           int        `json:"hit"`
+		Trap          string     `json:"trap,omitempty"`
+		Hint          string     `json:"hint,omitempty"`
+		Error         string     `json:"error,omitempty"`
+		LeakedKeys    []string   `json:"leaked_keys,omitempty"`
+		LeakedPhrases []string   `json:"leaked_phrases,omitempty"`
+		Form          []string   `json:"form,omitempty"`
+		Fallback      string     `json:"fallback,omitempty"`
+		Shown         string     `json:"shown,omitempty"`
+		ShownLeaks    []string   `json:"shown_leaks,omitempty"`
 		runner.Usage
 	}
 )
+
+// Leaked is whether the leak check found a key or a leak phrase in the call's hint.
+func (c *CallRecord) Leaked() bool { return len(c.LeakedKeys) > 0 || len(c.LeakedPhrases) > 0 }
 
 // Log is a run's log read back: the run, its sheets, its calls in the order they were made, and how
 // the run ended, or nil when the log stops before the end.

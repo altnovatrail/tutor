@@ -17,7 +17,8 @@ import (
 
 // Answer is what a model said: the box round the first mistake, in pixels of the crop, or nil when
 // it found none; the trap of the task the mistake falls into, or "" for none; and the hint the
-// learner reads. Whether the hint keeps the rules of its form and leaks nothing is T75's to check.
+// learner reads. Whether the hint keeps the rules of its form and leaks nothing the run checks
+// (Form; leak.Check).
 type Answer struct {
 	Box  *judge.Box `json:"box"`
 	Trap string     `json:"trap"`
