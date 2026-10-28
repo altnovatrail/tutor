@@ -2,7 +2,6 @@ package main
 
 import (
 	"bytes"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -21,9 +20,12 @@ import (
 // is of (T67). Of the judge, whose log tells no kind (R24): the criterion and the numbers of
 // architecture 3.1 in Markdown, and the answers by judge and form in CSV. Of the reading (T71): the
 // threshold of R03 a reader each, the readings by reader and condition and the rule of two readers
-// in Markdown, and the readings in CSV. Both go next to the log under its name, as new files. A
-// report holds no handwriting: numbers, sheets by their sets, numbers and scenarios, and the names
-// of judges, forms, readers and conditions.
+// in Markdown, and the readings in CSV. Of the hint (T75): the leaks before the check and after it,
+// the form, the fallback texts and the place by tutor, language and rung in Markdown and CSV, and
+// about 30 hints for the author to read in a third file, .hints.md. They go next to the log under
+// its name, as new files. A report holds no handwriting: numbers, sheets by their sets, numbers and
+// scenarios, the names of judges, forms, readers, conditions and tutors, and of the hint the tasks'
+// statements, the plan's texts and the words the models wrote.
 func runReport(args []string, stdout, stderr io.Writer) int {
 	const use = "usage: tutor-eval report LOG"
 	switch {
@@ -59,6 +61,17 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 		path string
 		data []byte
 	}{{base + ".md", md.Bytes()}, {base + ".csv", table.Bytes()}}
+	if h, ok := r.(withHints); ok {
+		var hints bytes.Buffer
+		if err := h.Hints(&hints, filepath.Base(path)); err != nil {
+			_, _ = fmt.Fprintf(stderr, "tutor-eval report: %v\n", err)
+			return exitFail
+		}
+		outputs = append(outputs, struct {
+			path string
+			data []byte
+		}{base + ".hints.md", hints.Bytes()})
+	}
 	for _, o := range outputs {
 		if _, err := os.Lstat(o.path); err == nil {
 			_, _ = fmt.Fprintf(stderr, "tutor-eval report: %s exists: a report is written once, beside its log\n", o.path)
@@ -67,7 +80,7 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 	}
 	for i, o := range outputs {
 		if err := newfile.Write(o.path, o.data, 0o644); err != nil {
-			// A report is the two files or none: the next try finds no half of it.
+			// A report is all its files or none: the next try finds no part of it.
 			for _, done := range outputs[:i] {
 				_ = os.Remove(done.path)
 			}
@@ -78,6 +91,9 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 	var b strings.Builder
 	b.WriteString(r.Summary())
 	fmt.Fprintf(&b, "The report: %s and %s\n", outputs[0].path, outputs[1].path)
+	if len(outputs) == 3 {
+		fmt.Fprintf(&b, "The hints to read: %s\n", outputs[2].path)
+	}
 	if _, err := io.WriteString(stdout, b.String()); err != nil {
 		return exitFail
 	}
@@ -92,8 +108,13 @@ type written interface {
 	Summary() string
 }
 
+// withHints is a report with hints for the author to read, in a third file: the hint's.
+type withHints interface {
+	Hints(w io.Writer, logName string) error
+}
+
 // reportOf builds the report of a log by the kind of call it is of: the judge's, whose log tells no
-// kind, or the reading's (T71). The hint's log it does not report yet (T74).
+// kind, the reading's (T71) or the hint's (T75).
 func reportOf(data []byte) (written, error) {
 	switch kind := runner.CallKind(data); kind {
 	case "":
@@ -113,9 +134,13 @@ func reportOf(data []byte) (written, error) {
 		}
 		return report.NewReading(l)
 	case hint.CallKind:
-		return nil, errors.New("a log of the hint, whose report comes with its check of leaks and form, T75")
+		l, err := hint.ReadLog(bytes.NewReader(data))
+		if err != nil {
+			return nil, err
+		}
+		return report.NewHint(l)
 	default:
-		return nil, fmt.Errorf("a log of the kind of call %q, and the report knows the judge and the reading", kind)
+		return nil, fmt.Errorf("a log of the kind of call %q, and the report knows the judge, the reading and the hint", kind)
 	}
 }
 

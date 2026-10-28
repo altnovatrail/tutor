@@ -1,0 +1,23 @@
+# A number is read whole, however long, and compared exactly: leading zeros do not change it, and
+# a number one more is another.
+task:
+  id: power-of-two
+  statement:
+    - text: What is 2 to the power 53?
+  canvas:
+    kind: handwriting_sheet
+  items:
+    - answer_slots:
+        - binding: anywhere
+          check: {kind: number, key: "9007199254740992"}
+  solution:
+    - text: "Doubling 1 fifty-three times gives 9007199254740992."
+  skills:
+    primary: [arithmetic-tricks]
+  band: grades-3-4
+  difficulty: 2
+texts:
+  - text: "0009007199254740992"
+    leaks: ["9007199254740992"]
+  - text: "9007199254740993"
+    leaks: []

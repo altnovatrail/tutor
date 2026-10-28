@@ -471,49 +471,19 @@ func (p Pair) P() float64 {
 func (r *Reading) Markdown(w io.Writer, logName string) error {
 	l := r.log
 	var b strings.Builder
-	of := fmt.Sprintf("the %s part", l.Run.Part)
-	if l.Run.Part == "all" {
-		of = "all the sheets"
-	}
-	fmt.Fprintf(&b, "# The reading: %s\n\n", of)
+	fmt.Fprintf(&b, "# The reading: %s\n\n", partOf(l.Run.Part))
 	var readers []string
 	for _, rd := range r.readers {
-		thinking := ""
-		if rd.NoThinking {
-			thinking = ", without thinking"
-		}
-		once := ""
+		var more []string
 		if rd.Once {
-			once = ", once"
+			more = append(more, "once")
 		}
-		readers = append(readers, fmt.Sprintf("%s (%s, %s%s%s)", rd.Name, rd.Model, rd.Effort, thinking, once))
+		readers = append(readers, configName(rd.Name, rd.Model, rd.Effort, rd.NoThinking, more...))
 	}
-	sets := map[string]int{}
-	for _, id := range r.order {
-		sets[id.set]++
-	}
-	var setNames []string
-	for _, s := range l.Run.Sets {
-		setNames = append(setNames, fmt.Sprintf("%s %d", s, sets[s]))
-	}
-	made, failed, spent := 0, 0, 0.0
-	for _, c := range l.Calls {
-		if !c.NotAsked {
-			made++
-			spent += c.CostUSD
-			if c.Error != "" {
-				failed++
-			}
-		}
-	}
+	made, failed, spent := tally(l.Calls, func(c *reading.CallRecord) (bool, bool, float64) { return !c.NotAsked, c.Error != "", c.CostUSD })
 	fmt.Fprintf(&b, "The log %s, of the prompt %s, version %d. Readers: %s. Repeats: %d. Reads: %s. Sheets: %d (%s). Calls: %d made, %d of them failed; $%.2f spent of the $%.2f cap.\n",
-		logName, short(l.Run.Prompt), l.Run.PromptVersion, strings.Join(readers, "; "), l.Run.Repeats, strings.Join(l.Run.Reads, ", "), len(r.order), strings.Join(setNames, ", "), made, failed, spent, l.Run.MaxUSD)
-	switch {
-	case l.End == nil:
-		b.WriteString("\n**The log has no end: the run broke off, and the report is of what it holds.**\n")
-	case l.End.Stopped != "":
-		fmt.Fprintf(&b, "\n**The run stopped short, by %s: the report is of what it holds.**\n", l.End.Stopped)
-	}
+		logName, short(l.Run.Prompt), l.Run.PromptVersion, strings.Join(readers, "; "), l.Run.Repeats, strings.Join(l.Run.Reads, ", "), len(r.order), setsOf(l.Run.Sets, r.order), made, failed, spent, l.Run.MaxUSD)
+	b.WriteString(endNote(l.End))
 
 	b.WriteString("\n## Does the key make the reading worse? The threshold of R03 (Т-23)\n\n")
 	b.WriteString("| Reader | Sheets | Σd | Sheets with d ≠ 0 | p, worse | Under the right key | Under a false key, on correct sheets | Sheets with a new false \"correct\" | Under no key, against the right key | One call admissible |\n|---|---|---|---|---|---|---|---|---|---|\n")

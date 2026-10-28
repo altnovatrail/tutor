@@ -1,0 +1,29 @@
+# Digits grouped by a space or a comma, an exponent and a number in words are not read as the key:
+# a task that wants them caught writes them in its leak phrases.
+task:
+  id: grams
+  statement:
+    - text: How many grams are in a kilogram?
+  canvas:
+    kind: handwriting_sheet
+  items:
+    - answer_slots:
+        - binding: anywhere
+          check: {kind: number, key: "1000"}
+  solution:
+    - text: "A kilogram is 1000 grams."
+  skills:
+    primary: [arithmetic-tricks]
+  band: grades-3-4
+  difficulty: 2
+texts:
+  - text: "1000"
+    leaks: ["1000"]
+  - text: "1 000"
+    leaks: []
+  - text: "1,000"
+    leaks: []
+  - text: "1e3"
+    leaks: []
+  - text: "one thousand"
+    leaks: []

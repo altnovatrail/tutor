@@ -1,0 +1,46 @@
+# A key of a number is found where a number of the text has its value: a number begins at a digit
+# that no letter or digit stands right before, and none stands right after it; the whole run of a
+# token that is no number is passed over, so the 7 of A4.7 is not read.
+task:
+  id: gaps-ladder
+  statement:
+    - text: How many rungs are there?
+  canvas:
+    kind: handwriting_sheet
+  items:
+    - answer_slots:
+        - binding: anywhere
+          check: {kind: number, key: "7"}
+  solution:
+    - text: "The ladder has one more rung than gaps: 7 rungs."
+  skills:
+    primary: [counting-gaps]
+  band: grades-3-4
+  difficulty: 2
+texts:
+  - text: "There are 7 rungs."
+    leaks: ["7"]
+  - text: "07:30"
+    leaks: ["7"]
+  - text: "It is 7."
+    leaks: ["7"]
+  - text: "-7 degrees"
+    leaks: ["7"]
+  - text: "5-7"
+    leaks: ["7"]
+  - text: "(7)"
+    leaks: ["7"]
+  - text: "Count 17 rungs."
+    leaks: []
+  - text: "7x + 1"
+    leaks: []
+  - text: "x7"
+    leaks: []
+  - text: "the 7th rung"
+    leaks: []
+  - text: "7.5"
+    leaks: []
+  - text: "7rungs"
+    leaks: []
+  - text: "A4.7"
+    leaks: []

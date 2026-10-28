@@ -1,0 +1,31 @@
+# Numbers are compared by their magnitude, whatever the sign: a key of -3 is found in 3, in the
+# minus sign and the dashes, in a full-width digit, and in 5-3.
+task:
+  id: colder
+  statement:
+    - text: It was 2 degrees, and it got 5 degrees colder. How warm is it now?
+  canvas:
+    kind: handwriting_sheet
+  items:
+    - answer_slots:
+        - binding: anywhere
+          check: {kind: number, key: "-3"}
+  solution:
+    - text: "2 − 5 = −3: it is 3 degrees below zero."
+  skills:
+    primary: [arithmetic-tricks]
+  band: grades-3-4
+  difficulty: 2
+texts:
+  - text: "\u22123"
+    leaks: ["-3"]
+  - text: "\u20133"
+    leaks: ["-3"]
+  - text: "\uFF13 degrees"
+    leaks: ["-3"]
+  - text: "5-3=2"
+    leaks: ["-3"]
+  - text: "-30"
+    leaks: []
+  - text: "3.5"
+    leaks: []

@@ -1,0 +1,36 @@
+# A mixed number is not read as one number: 1 1/2 is 1 and 1/2. A vulgar fraction that a digit
+# touches becomes U+FFFD, so 1½ is the number 1, and ½ alone is 1/2.
+task:
+  id: halves
+  statement:
+    - text: a) How many hours are 90 minutes? b) Write five and a half as a fraction.
+  canvas:
+    kind: handwriting_sheet
+  items:
+    - text: a)
+      answer_slots:
+        - binding: zone
+          zone: {left: 100, top: 200, width: 300, height: 200}
+          check: {kind: number, key: "3/2"}
+    - text: b)
+      answer_slots:
+        - binding: zone
+          zone: {left: 100, top: 600, width: 300, height: 200}
+          check: {kind: number, key: "11/2"}
+  solution:
+    - text: "90 minutes are 90/60 = 3/2 hours, and five and a half is 11/2."
+  skills:
+    primary: [fractions-parts]
+  band: grades-3-4
+  difficulty: 2
+texts:
+  - text: "1 1/2"
+    leaks: []
+  - text: "1\u00BD"
+    leaks: []
+  - text: "\u00BD"
+    leaks: []
+  - text: "3/2"
+    leaks: ["3/2"]
+  - text: "11/2"
+    leaks: ["11/2"]

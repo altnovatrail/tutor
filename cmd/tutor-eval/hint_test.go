@@ -14,8 +14,9 @@ import (
 
 // A hint goes over three sets in one run, on the stub, and asks only the sheets with a mistake: the
 // estimate names them by set, with the rungs, the languages and the tutors; the log beside the sets
-// is named by the kind and the sets; and every call boxes the first error of its sheet. The report
-// does not read the log yet, and a hint takes no -reads.
+// is named by the kind and the sets; and every call boxes the first error of its sheet, with a hint
+// the learner reads. The report writes its three files beside the log, once, and a hint takes no
+// -reads.
 func TestHintOverSets(t *testing.T) {
 	parent, sets := drawnSets(t, drawnSet{"lines", measurementBank, measurementPlan}, drawnSet{"free", freeBank, freePlan}, drawnSet{"near", nearBank, nearPlan})
 	code, out, errs := runMeasure("yes\n", "-kind", "hint", "-part", "dev", "-stub", "-repeats", "1", "-set", sets[0], "-set", sets[1], "-set", sets[2])
@@ -45,12 +46,25 @@ func TestHintOverSets(t *testing.T) {
 		t.Errorf("the log tells %+v, %d sheets and %d calls", l.Run, len(l.Sheets), len(l.Calls))
 	}
 	for _, c := range l.Calls {
-		if c.Hit != first[fmt.Sprint(c.Set, "/", c.Sheet)] || c.Error != "" {
+		if c.Hit != first[fmt.Sprint(c.Set, "/", c.Sheet)] || c.Error != "" || c.Fallback != "" || c.Shown != c.Hint {
 			t.Errorf("the call %+v hits %d: %s", c.Call, c.Hit, c.Error)
 		}
 	}
-	if code, out, errs := runIt("report", log); code != exitFail || !strings.Contains(errs, "T75") {
+	base := strings.TrimSuffix(log, ".jsonl")
+	code, out, errs = runIt("report", log)
+	if code != exitOK || !strings.Contains(out, "opus-high: leaked before the check 0 of") || !strings.HasSuffix(out, "The hints to read: "+base+".hints.md\n") {
 		t.Errorf("the report of a hint: %d %s%s", code, out, errs)
+	}
+	for _, ext := range []string{".md", ".csv", ".hints.md"} {
+		if _, err := os.Stat(base + ext); err != nil {
+			t.Errorf("the report wrote no %s: %v", ext, err)
+		}
+	}
+	if err := os.Remove(base + ".md"); err != nil {
+		t.Fatal(err)
+	}
+	if code, _, errs := runIt("report", log); code != exitFail || !strings.Contains(errs, ".csv exists") {
+		t.Errorf("a report over one that is there: %d %s", code, errs)
 	}
 	if code, _, errs := runMeasure("yes\n", "-kind", "hint", "-part", "dev", "-stub", "-reads", "keys", "-set", sets[0]); code != exitUsage || !strings.Contains(errs, "-reads is for -kind reading") {
 		t.Errorf("a hint with -reads: %d %s", code, errs)

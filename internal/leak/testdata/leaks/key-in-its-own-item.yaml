@@ -1,0 +1,31 @@
+# Only the texts of its own item free a key: 3 stands in the first line, so its key is not searched
+# for, but 6 does not stand in the second, and its key is, even though the first line shows it.
+task:
+  id: add-and-take
+  statement:
+    - text: Write the missing numbers.
+  canvas:
+    kind: workbook
+  items:
+    - line:
+        - text: "3 +"
+        - binding: box
+          check: {kind: number, key: "3"}
+        - text: "= 6"
+    - line:
+        - binding: box
+          check: {kind: number, key: "6"}
+        - text: "− 3 = 3"
+  solution:
+    - text: "3 + 3 = 6, and 6 − 3 = 3."
+  skills:
+    primary: [adding-within-1000]
+  band: grade-3
+  difficulty: 1
+texts:
+  - text: "3 + 3 = 6"
+    leaks: ["6"]
+  - text: "6"
+    leaks: ["6"]
+  - text: "Take 3 away from 9."
+    leaks: []

@@ -1,0 +1,34 @@
+# A key of a fraction is found by its value too, so a fraction that can be reduced shows it, and so
+# does a decimal. A leak phrase is found in any letter case, and only as it is written.
+task:
+  id: pizza-left
+  statement:
+    - text: Write the fraction in lowest terms.
+  canvas:
+    kind: workbook
+  items:
+    - line:
+        - text: "2 of 8 slices of the pizza are left: that is"
+        - binding: box
+          check: {kind: fraction, key: "1/4", form: reduced}
+        - text: of the pizza.
+  solution:
+    - text: "2 of 8 slices is 2/8 of the pizza, and dividing both 2 and 8 by 2 gives 1/4."
+  leak_phrases: [a quarter]
+  skills:
+    primary: [fractions-of-a-whole]
+  band: grade-3
+  difficulty: 3
+texts:
+  - text: "2/8 of the pizza"
+    leaks: ["1/4"]
+  - text: "0.25"
+    leaks: ["1/4"]
+  - text: "1/4"
+    leaks: ["1/4"]
+  - text: "A QUARTER of it"
+    leaks: ["a quarter"]
+  - text: "4 slices"
+    leaks: []
+  - text: "one quarter"
+    leaks: []

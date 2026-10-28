@@ -1,0 +1,30 @@
+# A predicate has no key, so only its leak phrases are searched for, and they are matched as
+# written, not by value: 12 is found in 12.5, and 012 would not be.
+task:
+  id: divisible-by-3-and-4
+  statement:
+    - text: Write a number from 1 to 50 that divides by 3 and by 4.
+  canvas:
+    kind: handwriting_sheet
+  items:
+    - answer_slots:
+        - binding: anywhere
+          check: {kind: predicate, predicate: "1 <= value and value <= 50 and value % 12 == 0"}
+  solution:
+    - text: "A number that divides by 3 and by 4 divides by 12: 12, 24, 36 or 48."
+  leak_phrases: ["12", "24"]
+  skills:
+    primary: [number-divisibility]
+  band: grades-3-4
+  difficulty: 2
+texts:
+  - text: "12"
+    leaks: ["12"]
+  - text: "12.5"
+    leaks: ["12"]
+  - text: "24"
+    leaks: ["24"]
+  - text: "36"
+    leaks: []
+  - text: "012"
+    leaks: []
