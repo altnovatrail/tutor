@@ -37,9 +37,7 @@ func TestPlansHaveTheirLetters(t *testing.T) {
 		}
 	}
 	for _, r := range text.String() {
-		_, inFont := font[r]
-		_, inLetters := letters[r]
-		if r != ' ' && !inFont && !inLetters {
+		if r != ' ' && glyphOf(r) == nil {
 			t.Errorf("%q has no glyph", r)
 		}
 	}

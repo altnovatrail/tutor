@@ -98,14 +98,7 @@ func sheetLeaning(sh *sample.PlanSheet, seed uint64, shift float64) *sample.Samp
 	w.t = 800 + w.rng.Int64N(2000)
 
 	for i, text := range sh.Lines {
-		y := h.top + float64(float64(i)*h.step) + w.jitter(h.height*0.15)
-		x := h.left + w.jitter(h.height*0.4)
-		if i > 0 {
-			w.pause(1200 + w.rng.Int64N(3300))
-			if w.rng.Float64() < 0.2 {
-				w.pause(6000 + w.rng.Int64N(6000)) // a long stop, such as the journal names
-			}
-		}
+		x, y := w.nextLine(h, i)
 		var ids []string
 		if e := sh.Erasure; e != nil && e.Line == i+1 {
 			ids = w.erasing(h, sh, text, x, y)
@@ -123,22 +116,40 @@ func sheetLeaning(sh *sample.PlanSheet, seed uint64, shift float64) *sample.Samp
 	return w.s
 }
 
-// newHand picks the hand of a sheet, so that its longest line fits across the sheet and its lines
-// fit down it.
-func (w *writer) newHand(sh *sample.PlanSheet) hand {
+// nextLine is where the line i of a sheet starts, its top left corner, and the pause before it: the
+// lines go top to bottom a step apart, each a little off its place, and before every line but the
+// first the writer stops, now and then for long.
+func (w *writer) nextLine(h hand, i int) (x, y float64) {
+	y = h.top + float64(float64(i)*h.step) + w.jitter(h.height*0.15)
+	x = h.left + w.jitter(h.height*0.4)
+	if i > 0 {
+		w.pause(1200 + w.rng.Int64N(3300))
+		if w.rng.Float64() < 0.2 {
+			w.pause(6000 + w.rng.Int64N(6000)) // a long stop, such as the journal names
+		}
+	}
+	return x, y
+}
+
+// newHand picks the hand of a sheet of the board, so that its longest line fits across the sheet
+// and its lines fit down it.
+func (w *writer) newHand(sh *sample.PlanSheet) hand { return w.handOn(sh, sheetWidth, sheetHeight) }
+
+// handOn is newHand on a sheet of the size given.
+func (w *writer) handOn(sh *sample.PlanSheet, width, height float64) hand {
 	h, spacing := w.pickHand(0.025, 120, 50)
 	longest := 0
 	for _, l := range sh.Lines {
 		longest = max(longest, utf8.RuneCountInString(l))
 	}
-	if room := float64(sheetWidth-40) - h.left; float64(longest)*h.height*h.shape*spacing > room {
+	if room := float64(width-40) - h.left; float64(longest)*h.height*h.shape*spacing > room {
 		h.height = room / (float64(longest) * h.shape * spacing)
 	}
 	h.advance = h.height * h.shape * spacing
 	h.step = h.height * (1.9 + float64(0.7*w.rng.Float64()))
 	if n := len(sh.Lines); n > 1 {
 		// The last line, its tails too, ends above the bottom of the sheet.
-		h.step = min(h.step, (float64(sheetHeight-20)-h.top-float64(1.5*h.height))/float64(n-1))
+		h.step = min(h.step, (float64(height-20)-h.top-float64(1.5*h.height))/float64(n-1))
 	}
 	return h
 }
@@ -200,11 +211,8 @@ func (w *writer) write(h hand, s string, x, y float64) ([]string, float64) {
 			x += float64(h.advance * 0.5)
 			continue
 		}
-		g, ok := font[r]
-		if !ok {
-			g, ok = letters[r]
-		}
-		if !ok {
+		g := glyphOf(r)
+		if g == nil {
 			g = squiggle
 		}
 		if w.lean != nil && n == w.lean.at {
