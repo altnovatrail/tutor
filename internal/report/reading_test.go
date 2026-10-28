@@ -15,6 +15,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/runner"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/sheets"
+	"github.com/altnovatrail/tutor/internal/states"
 	"github.com/altnovatrail/tutor/internal/synth"
 	"github.com/altnovatrail/tutor/internal/value"
 )
@@ -239,7 +240,7 @@ func TestReadingLogOfTheStub(t *testing.T) {
 	}{{"lines", "../../eval/sheets.json", "../../eval/bank.json", []int{1, 7, 11, 21}}, {"free", "../../eval/free-sheets.json", "../../eval/free-bank.json", []int{1, 2, 14}}} {
 		chosen = append(chosen, chosenOf(t, set.name, set.plan, set.bank, set.numbers...)...)
 	}
-	r, err := reading.New("dev", []string{"lines", "free"}, chosen, reading.Readers(), 2, reading.Reads{Keys: true})
+	r, err := reading.New("dev", []string{"lines", "free"}, chosen, reading.Readers(), 2, reading.Reads{Keys: true, Heights: true, States: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -317,4 +318,181 @@ func chosenOf(t *testing.T, set, planPath, bankPath string, numbers ...int) []sh
 		out = append(out, sheets.Chosen{Set: set, Number: n, File: "sheet.json", Sample: synth.Sheet(sh, 1), Task: bank.Task(sh.Task), Plan: sh})
 	}
 	return out
+}
+
+// heightCall adds a reading without a key of a finished sheet at a height, the first repeat.
+func (b *readingLog) heightCall(sheet, digit, drawn int, verdict value.Verdict) *reading.CallRecord {
+	c := b.call(sheet, "haiku-low", reading.NoKey, 1, verdict, "", false)
+	c.Digit, c.Drawn = digit, drawn
+	return c
+}
+
+// A height against 32 px, paired by sheet: at 16 px Haiku gives false alarms on five correct sheets
+// that it read right at 32 px, and the test finds it worse; at 24 px it says "correct" on a sheet
+// with a mistake where it said "not yet" at 32 px, a new false "correct". Neither is advised, so the
+// advice is 32 px, and only the test part decides it. Sheets with small letters are told apart, and
+// a crop drawn smaller than asked is counted.
+func TestReadingHeights(t *testing.T) {
+	b := newReadingLog(sample.OutcomeCorrect, sample.OutcomeCorrect, sample.OutcomeCorrect, sample.OutcomeCorrect, sample.OutcomeCorrect, sample.OutcomeError)
+	b.l.Sheets[0].Markup.Parts[0].Text = "Ответ: 5 столбов"
+	for sheet := 1; sheet <= 5; sheet++ {
+		b.call(sheet, "haiku-low", reading.NoKey, 1, value.Correct, "5", false)
+		b.heightCall(sheet, 16, 16, value.NotYet)
+		b.heightCall(sheet, 24, 24, value.Correct)
+	}
+	b.call(6, "haiku-low", reading.NoKey, 1, value.NotYet, "6", false)
+	b.heightCall(6, 16, 16, value.NotYet)
+	b.heightCall(6, 24, 22, value.Correct)
+	r := b.report(t)
+	find := func(digit int, group string) report.Height {
+		for _, h := range r.Heights {
+			if h.Reader == "haiku-low" && h.Digit == digit && h.Group == group {
+				return h
+			}
+		}
+		t.Fatalf("no height %d of %s", digit, group)
+		return report.Height{}
+	}
+	if h := find(16, report.AllSheets); h.Sheets != 6 || h.Errors != 5 || h.At32 != 0 || h.Test.Nonzero != 5 || h.NotWorse() {
+		t.Errorf("16 px: %+v", h)
+	}
+	if h := find(24, report.AllSheets); h.NewFalseCorrect != 1 || h.Smaller != 1 || h.NotWorse() {
+		t.Errorf("24 px: %+v", h)
+	}
+	if small, none := find(16, report.SmallLetters), find(16, report.NoSmall); small.Sheets != 1 || none.Sheets != 5 {
+		t.Errorf("by small letters: %d and %d sheets", small.Sheets, none.Sheets)
+	}
+	if digit, decided, read := r.Advice(); digit != 32 || !decided || !read {
+		t.Errorf("the advice %d, decided %v, read %v", digit, decided, read)
+	}
+	// At 24 px without the new false "correct", 24 px is advised; on the dev part it is not decided;
+	// without heights there is no advice to give.
+	b.l.Calls[len(b.l.Calls)-1].Verdict = string(value.NotYet)
+	if digit, _, _ := b.report(t).Advice(); digit != 24 {
+		t.Errorf("the advice %d, want 24", digit)
+	}
+	b.l.Run.Part = "dev"
+	if _, decided, _ := b.report(t).Advice(); decided {
+		t.Error("the dev part decides the advice")
+	}
+	// A reader that read some height but not 24 px leaves 24 px unadvised.
+	other := b.call(1, "haiku-low-no-thinking", reading.NoKey, 1, value.Correct, "", false)
+	other.Digit, other.Drawn = 48, 48
+	if digit, _, _ := b.report(t).Advice(); digit != 32 {
+		t.Errorf("the advice %d with a reader that did not read 24 px, want 32", digit)
+	}
+	if _, _, read := newReadingLog(sample.OutcomeCorrect).report(t).Advice(); read {
+		t.Error("a run without heights advises one")
+	}
+}
+
+// The states of a sheet, read without a key: a verdict before the answer is written is out of
+// place, and so is a result then; a part only begun read as written whole is counted; the parts
+// written whole are read or not; a state after a line and at a pause at once counts in both kinds;
+// where the answer is written, the verdict is right or not.
+func TestReadingStates(t *testing.T) {
+	b := newReadingLog(sample.OutcomeCorrect, sample.OutcomeError)
+	for i := range b.l.Sheets {
+		b.l.Sheets[i].Markup.Parts = []reading.MarkedPart{{Kind: reading.KindText, Text: "2 + 3 = 5"}, {Kind: reading.KindText, Text: "Ответ: 5", Answer: true}}
+		b.l.Sheets[i].States = []states.State{
+			{Event: 3, Line: 1, Pause: 2, Parts: []states.Progress{states.Done, states.Begun}},
+			{Event: 5, Erasure: 1, Parts: []states.Progress{states.Done, states.Done}},
+		}
+	}
+	state := func(sheet, n int, verdict value.Verdict, answer string) {
+		c := b.call(sheet, "haiku-low", reading.NoKey, 1, verdict, "", false)
+		c.State, c.Answer = n, answer
+	}
+	both := `{"parts": [{"kind": "text", "text": "2+3=5", "legible": true, "other_readings": []}, {"kind": "text", "text": "Ответ: 5", "legible": true, "other_readings": []}], "results": [{"part": 2, "value": "5", "other_values": []}]}`
+	none := `{"parts": [{"kind": "text", "text": "2 + 3 = 6", "legible": true, "other_readings": []}], "results": []}`
+	state(1, 1, value.Correct, both)    // early, invented, the begun answer read as written whole
+	state(2, 1, value.Unreadable, none) // in place; the written part misread
+	state(1, 2, value.Correct, both)    // the answer written, right
+	state(2, 2, value.Correct, both)    // the answer written, a false "correct"
+	r := b.report(t)
+	cells := map[string]report.StateCell{}
+	for _, c := range r.States {
+		cells[c.Kind] = c
+	}
+	for _, kind := range []string{report.AfterLine, report.AtPause} {
+		c := cells[kind]
+		if c.Calls != 2 || c.Early.Events != 1 || c.Early.Of != 2 || c.Invented != 1 || c.NotDone != 2 || c.BegunAsDone != 1 || c.Begun != 2 || c.DoneRead != 1 || c.DoneOf != 2 {
+			t.Errorf("%s: %+v", kind, c)
+		}
+	}
+	if c := cells[report.BeforeErasure]; c.Calls != 2 || c.AnswerDone != 2 || c.Right != 1 || c.Early.Of != 0 || c.DoneRead != 4 || c.DoneOf != 4 {
+		t.Errorf("before an erasure: %+v", c)
+	}
+	// A state that still shows what is erased later gives no verdict to score; a failed call counts
+	// in no share; a begun part is not read as written whole by the part that reads a part written
+	// whole.
+	b.l.Sheets[1].States[1].Erased = 2
+	b.l.Calls[1].Error = "cut off"
+	b.l.Sheets[0].Markup.Parts[1].Text = "2 + 3 = 5"
+	cells = map[string]report.StateCell{}
+	for _, c := range b.report(t).States {
+		cells[c.Kind] = c
+	}
+	if c := cells[report.BeforeErasure]; c.AnswerDone != 1 || c.Erasing != 1 || c.Right != 1 {
+		t.Errorf("before an erasure, with what is erased later: %+v", c)
+	}
+	if c := cells[report.AfterLine]; c.Failed != 1 || c.NotDone != 1 || c.Begun != 1 || c.BegunAsDone != 0 {
+		t.Errorf("after a line, with a failed call: %+v", c)
+	}
+}
+
+// A log whose states do not tell every part of the markup, or whose call names a state the sheet
+// does not tell, makes no report.
+func TestReadingRefusesStates(t *testing.T) {
+	b := newReadingLog(sample.OutcomeCorrect)
+	b.l.Sheets[0].States = []states.State{{Event: 1, Parts: []states.Progress{states.Done, states.Done}}}
+	if _, err := report.NewReading(&b.l); err == nil {
+		t.Error("a state of two parts on a markup of one: a report")
+	}
+	b = newReadingLog(sample.OutcomeCorrect)
+	b.call(1, "haiku-low", reading.NoKey, 1, value.Correct, "5", false).State = 1
+	if _, err := report.NewReading(&b.l); err == nil {
+		t.Error("a call of a state the sheet does not tell: a report")
+	}
+}
+
+// The readings of a sheet by each policy: the mean, the median and the most over the sheets, and
+// their price by the mean cost of a call, of the states for a reader that read them and of the
+// readings without a key for one that did not.
+func TestReadingPolicies(t *testing.T) {
+	b := newReadingLog(sample.OutcomeCorrect, sample.OutcomeCorrect, sample.OutcomeError)
+	for i, p := range []states.Policies{{AfterLine: 2, Pause400: 9}, {AfterLine: 4, Pause400: 3, Pause6000: 1}, {AfterLine: 3, Pause2000: 2}} {
+		b.l.Sheets[i].Policies = p
+	}
+	b.call(1, "opus-high", reading.NoKey, 1, value.Correct, "5", false).CostUSD = 0.02
+	c := b.call(1, "haiku-low", reading.NoKey, 1, value.Correct, "5", false)
+	c.State, c.CostUSD = 1, 0.001
+	b.l.Sheets[0].States = []states.State{{Event: 1, Line: 1, Parts: []states.Progress{states.Done}}}
+	r := b.report(t)
+	if p := r.Policies[0]; p.Name != "after each line" || p.Mean != 3 || p.Median != 3 || p.Most != 4 {
+		t.Errorf("after each line: %+v", p)
+	}
+	if p := r.Policies[1]; p.Mean != 4 || p.Median != 3 || p.Most != 9 {
+		t.Errorf("at each pause of 0.4 s: %+v", p)
+	}
+	b.l.Sheets = append(b.l.Sheets, reading.SheetRecord{Kind: "sheet", Set: "s", Sheet: 4, Outcome: sample.OutcomeCorrect, Policies: states.Policies{AfterLine: 4}})
+	if p := b.report(t).Policies[0]; p.Median != 3.5 {
+		t.Errorf("the median of 2, 3, 4 and 4 readings is %v, want 3.5", p.Median)
+	}
+	if p := newReadingLog(sample.OutcomeCorrect).report(t).Policies; p != nil {
+		t.Errorf("a log that tells no states nor readings by a policy has the policies %+v", p)
+	}
+	costs := map[string]report.Cost{}
+	for _, c := range r.Costs {
+		costs[c.Reader] = c
+	}
+	if c := costs["opus-high"]; c.PerCall != 0.02 || !strings.Contains(c.From, "without a key") {
+		t.Errorf("Opus: %+v", c)
+	}
+	if c := costs["haiku-low"]; c.PerCall != 0.001 || c.From != "its states" {
+		t.Errorf("Haiku: %+v", c)
+	}
+	if _, ok := costs["haiku-low-no-thinking"]; ok {
+		t.Error("a reader that read nothing has a cost")
+	}
 }

@@ -363,3 +363,34 @@ func PartsRead(o *Observation, m Marked) (read, of int) {
 	}
 	return read, of
 }
+
+// ReadsAs reports whether an observation has a part of writing that reads as the text, compared as
+// squash compares: so a part the writer had only begun is read as if it were written whole (О-21;
+// T72).
+func ReadsAs(o *Observation, text string) bool {
+	if o == nil {
+		return false
+	}
+	want := squash(text)
+	return slices.ContainsFunc(o.Parts, func(p Part) bool { return p.Kind == KindText && squash(p.Text) == want })
+}
+
+// Rest is an observation without the parts of writing that read the parts of writing of the
+// markup, matched as PartsRead matches them: what of the observation is left once the markup is
+// read in it.
+func Rest(o *Observation, m Marked) *Observation {
+	if o == nil {
+		return nil
+	}
+	rest := &Observation{Parts: slices.Clone(o.Parts), Results: o.Results}
+	for _, p := range m.Parts {
+		if p.Kind != KindText || p.CrossedOut || p.Illegible {
+			continue
+		}
+		want := squash(p.Text)
+		if i := slices.IndexFunc(rest.Parts, func(q Part) bool { return q.Kind == KindText && squash(q.Text) == want }); i >= 0 {
+			rest.Parts = slices.Delete(rest.Parts, i, i+1)
+		}
+	}
+	return rest
+}
