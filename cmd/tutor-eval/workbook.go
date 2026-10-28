@@ -38,10 +38,7 @@ func runWorkbook(args []string, stdout, stderr io.Writer) int {
 			return exitUsage
 		}
 	}
-	wb, err := readFile(*file, sample.ReadWorkbook)
-	if err == nil {
-		err = synth.CheckLayout(wb)
-	}
+	wb, err := readWorkbook(*file)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval workbook: %v\n", err)
 		return exitFail
@@ -85,6 +82,16 @@ func runWorkbook(args []string, stdout, stderr io.Writer) int {
 		return exitFail
 	}
 	return exitOK
+}
+
+// readWorkbook reads the pages of the workbook and checks them, the format and the layout of every
+// page, as every command of the workbook takes them.
+func readWorkbook(path string) (*sample.Workbook, error) {
+	wb, err := readFile(path, sample.ReadWorkbook)
+	if err == nil {
+		err = synth.CheckLayout(wb)
+	}
+	return wb, err
 }
 
 // workbookPicturesDir refuses a directory for the crops that is not named, or that lies in the work

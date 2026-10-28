@@ -23,11 +23,7 @@ const CallKind = "reading"
 // Reader is a configuration of the reader: a configuration of the runner, the output tokens a call
 // is expected to take, for the estimate, and whether it reads once whatever the repeats, as Opus
 // does in the reduced matrix, without the other heights of digits and the states (R08; R28).
-type Reader struct {
-	runner.Config
-	Output int
-	Once   bool
-}
+type Reader = runner.Reader
 
 // Readers are the three readers, the three configurations of the runner by their names. An
 // observation of a sheet comes to about 200 tokens, and Haiku with thinking writes about 300 more;
@@ -36,19 +32,7 @@ type Reader struct {
 // here is a mistake of the code, and Readers panics on it rather than estimate its calls at
 // nothing or repeat it unasked.
 func Readers() []Reader {
-	readers := map[string]struct {
-		output int
-		once   bool
-	}{"opus-high": {200, true}, "haiku-low": {500, false}, "haiku-low-no-thinking": {200, false}}
-	var out []Reader
-	for _, c := range runner.Configs() {
-		rd, ok := readers[c.Name]
-		if !ok {
-			panic("reading: no reader for the configuration " + c.Name)
-		}
-		out = append(out, Reader{Config: c, Output: rd.output, Once: rd.once})
-	}
-	return out
+	return runner.ReadersOf("reading", map[string]int{"opus-high": 200, "haiku-low": 500, "haiku-low-no-thinking": 200}, "opus-high")
 }
 
 // FalseKeyed reports whether a sheet is read with false keys: a correct sheet whose task has them.
@@ -219,7 +203,7 @@ func New(part string, sets []string, chosen []sheets.Chosen, readers []Reader, r
 	}
 	var records []ReaderRecord
 	for _, rd := range readers {
-		records = append(records, ReaderRecord{Name: rd.Name, Model: rd.Model.ID, Effort: rd.Effort, NoThinking: rd.NoThinking, Once: rd.Once, InputUSD: rd.Model.Input, OutputUSD: rd.Model.Output})
+		records = append(records, rd.Record())
 	}
 	r.Record = func(h runner.Head) any {
 		return RunRecord{Kind: "run", CallKind: CallKind, Time: h.Time, Part: part, Sets: sets, Readers: records, Repeats: repeats, Reads: reads.Names(), MaxUSD: h.MaxUSD, Estimate: h.Estimate,
@@ -418,15 +402,7 @@ type (
 	}
 	// ReaderRecord is a reader as the run's record tells it: its model and prices, and whether it
 	// reads once.
-	ReaderRecord struct {
-		Name       string  `json:"name"`
-		Model      string  `json:"model"`
-		Effort     string  `json:"effort"`
-		NoThinking bool    `json:"no_thinking,omitempty"`
-		Once       bool    `json:"once,omitempty"`
-		InputUSD   float64 `json:"input_usd_per_mtok"`
-		OutputUSD  float64 `json:"output_usd_per_mtok"`
-	}
+	ReaderRecord = runner.ReaderRecord
 	// SheetRecord tells a sheet: its set, number and file, who wrote it, its task, scenario and
 	// outcome, its layout of free writing, the key of its check and those of its false keys, and its
 	// markup: the parts and the value of the answer, by which the report measures the reading. They

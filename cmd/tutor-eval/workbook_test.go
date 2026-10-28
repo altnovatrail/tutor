@@ -262,3 +262,42 @@ func verdictCell(v value.Slot) string {
 	}
 	return name
 }
+
+// A run of the reading of the workbook on the stub goes the whole way, a call a page, and logs the
+// pages and the calls; it takes no sheets, logs in synthetic by default, and reads captions and
+// heights alone.
+func TestRunWorkbook(t *testing.T) {
+	log := filepath.Join(t.TempDir(), "workbook.jsonl")
+	code, out, errs := runMeasure("yes\n", "-kind", "workbook", "-workbook", theWorkbook, "-part", "dev", "-stub", "-repeats", "1", "-log", log)
+	if code != exitOK || !strings.HasPrefix(out, "The dev part: 5 pages of the workbook "+theWorkbook+", drawn with the seed 1, bare and with the lines of the items at 32 px, by opus-high once and haiku-low and haiku-low-no-thinking in 1 repeat, a call a page, in version 1 of the prompt of the workbook.\n30 calls, expected to cost $") {
+		t.Fatalf("the run ends %d:\n%s%s", code, out, errs)
+	}
+	data, err := os.ReadFile(log)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if n := strings.Count(string(data), `"kind":"page"`); n != 5 || strings.Count(string(data), `"kind":"call"`) != 30 {
+		t.Errorf("the log holds %d pages:\n%.300s", n, data)
+	}
+	for _, c := range []struct {
+		args []string
+		says string
+	}{
+		{[]string{"-dir", "x"}, "-dir names sheets, and the workbook reads its pages"},
+		{[]string{"-set", "a,b,c"}, "-set names sheets"},
+		{[]string{"-reads", "keys"}, `-reads is "keys": for the workbook, give captions or heights`},
+		// The tests run in cmd/tutor-eval, where synthetic is a folder git does not ignore.
+		{nil, "cmd/tutor-eval/synthetic/runs is in the git work tree"},
+	} {
+		args := append([]string{"-kind", "workbook", "-workbook", theWorkbook, "-part", "dev", "-stub"}, c.args...)
+		if code, _, errs := runMeasure("yes\n", args...); code == exitOK || !strings.Contains(errs, c.says) {
+			t.Errorf("%v: ends %d, %q; want %q", c.args, code, errs, c.says)
+		}
+	}
+	if code, _, errs := runMeasure("yes\n", "-part", "dev", "-stub", "-seed", "2"); code != exitUsage || !strings.Contains(errs, "-workbook and -seed are for -kind workbook") {
+		t.Errorf("the judge with -seed ends %d, %q", code, errs)
+	}
+	if _, err := os.Stat("synthetic"); !os.IsNotExist(err) {
+		t.Errorf("a refused run made synthetic in cmd/tutor-eval: %v", err)
+	}
+}

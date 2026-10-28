@@ -374,3 +374,22 @@ func TestReadRecords(t *testing.T) {
 		}
 	}
 }
+
+// The readers of a kind are one for each configuration, with the output the kind expects and once
+// for those named so; a configuration the kind forgot is a mistake of the code. A reader's record
+// tells its model and prices.
+func TestReadersOf(t *testing.T) {
+	readers := runner.ReadersOf("test", map[string]int{"opus-high": 7, "haiku-low": 8, "haiku-low-no-thinking": 9}, "opus-high")
+	if len(readers) != 3 || !readers[0].Once || readers[1].Once || readers[0].Output != 7 || readers[2].Output != 9 {
+		t.Errorf("ReadersOf = %+v", readers)
+	}
+	if rec := readers[1].Record(); rec.Name != "haiku-low" || rec.Model != readers[1].Model.ID || rec.InputUSD != readers[1].Model.Input || rec.Once {
+		t.Errorf("the record of haiku-low is %+v", rec)
+	}
+	defer func() {
+		if recover() == nil {
+			t.Error("a configuration without its reader is taken")
+		}
+	}()
+	runner.ReadersOf("test", map[string]int{"opus-high": 7})
+}
