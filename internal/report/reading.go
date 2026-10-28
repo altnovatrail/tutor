@@ -14,9 +14,10 @@ import (
 	"github.com/altnovatrail/tutor/internal/value"
 )
 
-// Reading is what a run of the reading comes to (T71; docs/architecture.md, 3.4, «Чтение в
-// наблюдение»): the threshold of R03 for every reader, the readings by reader and condition, and
-// the rule of two readers (R08). It holds no handwriting: numbers, the sets and numbers of sheets,
+// Reading is what a run of the reading comes to (T71, T72; docs/architecture.md, 3.4, «Чтение в
+// наблюдение»): the threshold of R03 for every reader, the readings by reader and condition, the
+// rule of two readers (R08), the other heights of digits, the states and the readings by each
+// policy of reading on its own (О-8, О-21). It holds no handwriting: numbers, the sets and numbers of sheets,
 // and the names of readers and conditions.
 type Reading struct {
 	log     *reading.Log
@@ -26,6 +27,13 @@ type Reading struct {
 	// byCall are the calls of the finished sheets at 32 px that were asked, by reader and condition,
 	// and by sheet.
 	byCall map[readerCondition]map[sheetID][]*reading.CallRecord
+	// atHeight are the readings without a key of the finished sheets in the first repeat at the
+	// other heights, by reader and height and by sheet; ofStates the readings of the states that
+	// were asked, by reader.
+	atHeight map[readerDigit]map[sheetID]*reading.CallRecord
+	ofStates map[string][]*reading.CallRecord
+	// heightReaders are the readers that read some other height.
+	heightReaders []string
 
 	// Thresholds are the threshold of R03, a reader each.
 	Thresholds []Threshold
@@ -33,6 +41,20 @@ type Reading struct {
 	Cells []ReadingCell
 	// Pairs are the strong reader, Opus, with each fast one (R08).
 	Pairs []Pair
+	// Heights are the other heights of digits against 32 px, a reader, a height and a group of
+	// sheets each; States the readings of the states, a reader and a kind each; Policies the
+	// readings of a sheet by each policy of reading on its own, and Costs the price of a call of
+	// each reader (T72).
+	Heights  []Height
+	States   []StateCell
+	Policies []Policy
+	Costs    []Cost
+}
+
+// readerDigit is a reader at a height of digits.
+type readerDigit struct {
+	reader string
+	digit  int
 }
 
 // readerCondition is a reader in a condition.
@@ -181,9 +203,6 @@ func failed(c *reading.CallRecord) bool { return c.Error != "" }
 // under is whether a call read anything under the key.
 func under(c *reading.CallRecord) bool { return c.UnderKey.Result || len(c.UnderKey.Parts) > 0 }
 
-// finished is whether a call read the finished sheet at the main height of digits.
-func finished(c *reading.CallRecord) bool { return c.State == 0 && c.Digit == render.Digit }
-
 // NewReading builds the report of a run of the reading from its log. It refuses a log without
 // readers or sheets, and one whose calls name a sheet, a reader or a condition the log does not
 // have.
@@ -198,6 +217,11 @@ func NewReading(l *reading.Log) (*Reading, error) {
 		if _, ok := r.sheets[id]; ok {
 			return nil, fmt.Errorf("report: the sheet %s is in the log twice", id)
 		}
+		for n, st := range sh.States {
+			if len(st.Parts) != len(sh.Markup.Parts) {
+				return nil, fmt.Errorf("report: the state %d of the sheet %s tells %d parts, and its markup has %d", n+1, id, len(st.Parts), len(sh.Markup.Parts))
+			}
+		}
 		r.sheets[id] = sh
 		r.order = append(r.order, id)
 	}
@@ -206,6 +230,7 @@ func NewReading(l *reading.Log) (*Reading, error) {
 		names[rd.Name] = true
 	}
 	r.byCall = map[readerCondition]map[sheetID][]*reading.CallRecord{}
+	r.atHeight, r.ofStates = map[readerDigit]map[sheetID]*reading.CallRecord{}, map[string][]*reading.CallRecord{}
 	for i := range l.Calls {
 		c := &l.Calls[i]
 		id := sheetID{c.Set, c.Sheet}
@@ -217,7 +242,22 @@ func NewReading(l *reading.Log) (*Reading, error) {
 		case c.Condition != reading.NoKey && c.Condition != reading.RightKey && c.Condition != reading.FalseKey:
 			return nil, fmt.Errorf("report: a call in the condition %q", c.Condition)
 		}
-		if !finished(c) || c.NotAsked {
+		switch {
+		case c.State > len(r.sheets[id].States) || c.State < 0:
+			return nil, fmt.Errorf("report: a call of the state %d of the sheet %s, which tells %d", c.State, id, len(r.sheets[id].States))
+		case c.NotAsked:
+			continue
+		case c.State > 0:
+			r.ofStates[c.Reader] = append(r.ofStates[c.Reader], c)
+			continue
+		case c.Digit != render.Digit:
+			if c.Condition == reading.NoKey && c.Repeat == 1 {
+				rd := readerDigit{c.Reader, c.Digit}
+				if r.atHeight[rd] == nil {
+					r.atHeight[rd] = map[sheetID]*reading.CallRecord{}
+				}
+				r.atHeight[rd][id] = c
+			}
 			continue
 		}
 		rc := readerCondition{c.Reader, c.Condition}
@@ -234,6 +274,7 @@ func NewReading(l *reading.Log) (*Reading, error) {
 			}
 		}
 	}
+	r.Heights, r.States, r.Policies, r.Costs = r.heights(), r.stateCells(), r.policies(), r.costs()
 	for _, strong := range r.readers {
 		if !strong.Once {
 			continue
@@ -375,20 +416,12 @@ func share(events, of []int) Share {
 
 func (r *Reading) pair(strong, fast string) Pair {
 	p := Pair{Strong: strong, Fast: fast}
-	first := func(cs []*reading.CallRecord) *reading.CallRecord {
-		for _, c := range cs {
-			if c.Repeat == 1 {
-				return c
-			}
-		}
-		return nil
-	}
 	s, f := r.calls(strong, reading.NoKey), r.calls(fast, reading.NoKey)
 	add := func(to *Errors, e Errors) {
 		to.FalseCorrect, to.FalseAlarm, to.Extra = to.FalseCorrect+e.FalseCorrect, to.FalseAlarm+e.FalseAlarm, to.Extra+e.Extra
 	}
 	for _, id := range r.order {
-		a, b := first(s[id]), first(f[id])
+		a, b := firstOf(s[id]), firstOf(f[id])
 		if a == nil || b == nil {
 			continue
 		}
@@ -511,6 +544,8 @@ func (r *Reading) Markdown(w io.Writer, logName string) error {
 		}
 		b.WriteString("\nA sheet is released when both readers give one result and its values, read as the check of the kind number reads them, and their verdicts are one; otherwise it is \"unreadable\". A reader alone is counted as false \"correct\" / false alarms / extra \"unreadable\" on the same sheets. p of the hybrid is the share of sheets the fast reader does not confirm \"correct\" on, which go on to the strong one (architecture 2.6).\n")
 	}
+
+	r.markdownUnfinished(&b)
 
 	b.WriteString("\n## Time and cost of a call\n\n| Reader | Condition | Time p50, ms | Time p95, ms | Cost, $ |\n|---|---|---|---|---|\n")
 	for _, c := range r.Cells {
