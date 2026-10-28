@@ -1,0 +1,10 @@
+reader,condition,calls,right,false_correct,false_correct_of,false_correct_upper,false_alarms,false_alarms_of,false_alarms_upper,extra_unreadable,extra_unreadable_of,extra_unreadable_upper,failed,under_key,parts_read,parts_of,time_p50_ms,time_p95_ms,cost_usd
+opus-high,none,7,7,0,3,0.6316,0,4,0.5271,0,7,0.3482,0,0,21,21,0,0,0.009781
+opus-high,right,7,7,0,3,0.6316,0,4,0.5271,0,7,0.3482,0,0,21,21,0,0,0.010381
+opus-high,false,4,4,0,0,1.0000,0,4,0.5271,0,4,0.5271,0,0,10,10,0,0,0.010658
+haiku-low,none,14,14,0,6,0.3930,0,8,0.3123,0,14,0.1926,0,0,42,42,0,0,0.000395
+haiku-low,right,14,14,0,6,0.3930,0,8,0.3123,0,14,0.1926,0,0,42,42,0,0,0.000410
+haiku-low,false,8,8,0,0,1.0000,0,8,0.3123,0,8,0.3123,0,0,20,20,0,0,0.000416
+haiku-low-no-thinking,none,14,14,0,6,0.3930,0,8,0.3123,0,14,0.1926,0,0,42,42,0,0,0.000245
+haiku-low-no-thinking,right,14,14,0,6,0.3930,0,8,0.3123,0,14,0.1926,0,0,42,42,0,0,0.000260
+haiku-low-no-thinking,false,8,8,0,0,1.0000,0,8,0.3123,0,8,0.3123,0,0,20,20,0,0,0.000266

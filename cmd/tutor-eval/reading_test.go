@@ -69,8 +69,14 @@ func TestReadingOverSets(t *testing.T) {
 			t.Errorf("the call %+v is %s (%s), under %+v", c.Call, c.Verdict, c.Reason, c.UnderKey)
 		}
 	}
-	if code, _, errs := runIt("report", log); code != exitFail || !strings.Contains(errs, `a log of the kind of call "reading"`) {
-		t.Errorf("the report of a reading: %d %s", code, errs)
+	code, out, errs = runIt("report", log)
+	if code != exitOK || strings.Count(out, "the threshold holds here; only the test part decides") != 3 {
+		t.Errorf("the report of a reading: %d %s%s", code, out, errs)
+	}
+	for _, ext := range []string{".md", ".csv"} {
+		if _, err := os.Stat(strings.TrimSuffix(log, ".jsonl") + ext); err != nil {
+			t.Errorf("the report of a reading: %v", err)
+		}
 	}
 }
 
