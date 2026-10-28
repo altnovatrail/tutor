@@ -336,3 +336,30 @@ func UnderKey(o *Observation, m Marked, g Given) Under {
 	}
 	return u
 }
+
+// PartsRead is how many of the parts of writing of the markup that are neither crossed out nor
+// written illegibly on purpose an observation reads exactly as written, compared as squash compares,
+// and how many there are: each part of writing of the observation counts for one part of the markup
+// at most. An illegible part has no text to read, and a reader that guesses it is not right for it. The accuracy of the
+// reading of a sheet is the one over the other (T71; docs/architecture.md, 3.1).
+func PartsRead(o *Observation, m Marked) (read, of int) {
+	var seen []string
+	if o != nil {
+		for _, p := range o.Parts {
+			if p.Kind == KindText {
+				seen = append(seen, squash(p.Text))
+			}
+		}
+	}
+	for _, p := range m.Parts {
+		if p.Kind != KindText || p.CrossedOut || p.Illegible {
+			continue
+		}
+		of++
+		if i := slices.Index(seen, squash(p.Text)); i >= 0 {
+			read++
+			seen = slices.Delete(seen, i, i+1)
+		}
+	}
+	return read, of
+}

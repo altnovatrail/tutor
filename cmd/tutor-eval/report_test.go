@@ -68,13 +68,18 @@ func TestReportRefuses(t *testing.T) {
 	if code, _, errs := runIt("report", bad); code != exitFail || !strings.Contains(errs, "out of its place") {
 		t.Errorf("a log that does not start with its run: %d, %s", code, errs)
 	}
-	// A log of another kind of call than the judge is not read as the judge's: its report comes
-	// with its kind.
-	other := filepath.Join(t.TempDir(), "reading.jsonl")
-	if err := os.WriteFile(other, []byte("{\"kind\": \"run\", \"call_kind\": \"reading\"}\n"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-	if code, _, errs := runIt("report", other); code != exitFail || !strings.Contains(errs, "a log of the kind of call \"reading\"") {
-		t.Errorf("a log of reading: %d, %s", code, errs)
+	// A log of a kind of call the report does not know is not read as the judge's, and one of the
+	// reading with no sheets makes no report.
+	for _, c := range []struct{ kind, says string }{
+		{"hint", "a log of the kind of call \"hint\""},
+		{"reading", "the log has no readers or no sheets"},
+	} {
+		other := filepath.Join(t.TempDir(), c.kind+".jsonl")
+		if err := os.WriteFile(other, []byte("{\"kind\": \"run\", \"call_kind\": \""+c.kind+"\"}\n"), 0o600); err != nil {
+			t.Fatal(err)
+		}
+		if code, _, errs := runIt("report", other); code != exitFail || !strings.Contains(errs, c.says) {
+			t.Errorf("a log of %s: %d, %s", c.kind, code, errs)
+		}
 	}
 }
