@@ -15,8 +15,8 @@ import (
 )
 
 // The test vectors of verdicts of the kinds number and fraction are copies of
-// format/vectors/verdicts/number and format/vectors/verdicts/fraction of spec at v0.2.43 (commit
-// 8cc3536), where they last changed in b217758, under Apache-2.0 as spec is. CI checks the
+// format/vectors/verdicts/number and format/vectors/verdicts/fraction of spec at v0.3.2 (commit
+// 9d64b22), where they last changed in b217758, under Apache-2.0 as spec is. CI checks the
 // repository out without the spec submodule, so the copies are what it tests; TestCopies holds
 // them to spec's wherever the submodule is there.
 const vectors = "testdata/verdicts"
