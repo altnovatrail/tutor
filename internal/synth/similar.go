@@ -7,9 +7,10 @@ import (
 
 // SimilarShift is how far toward the digit of its pair the digit of a sheet of the scenario
 // "similar-digits" is drawn: 0 is the digit as the font has it, 1 the digit of its pair. The
-// development of the reading sets it, the largest share at which Opus without a key still reads
-// nine sheets in ten right (T70, T73).
-const SimilarShift = 0.3
+// development of the reading set it on 2026-10-28: the largest of 0.5, 0.4, 0.3, 0.2 and 0.1 at
+// which Opus without a key read 11 of the 12 sheets of the plan, drawn with the seed 2, right (T73;
+// R36, amendment of 2026-10-28). The near set is drawn and split with it, and is not drawn again.
+const SimilarShift = 0.1
 
 // similar are the pairs of digits a hand writes alike, each the other's: so the digit of a key and
 // the digit of its near key, which a sheet of the near set mixes (T70).
