@@ -12,14 +12,21 @@ import (
 	"github.com/altnovatrail/tutor/internal/reading"
 )
 
-// drawnSets draws by code the sheets of the plan of E2 and of the plan of free writing, each in a
-// directory of its own beside the other, and splits each, as a reading over two sets takes them.
-// It gives the value of -set of each.
-func drawnSets(t *testing.T) (string, []string) {
+// drawnSet is a set of sheets a test draws: the name of its directory, its bank and its plan.
+type drawnSet struct{ name, bank, plan string }
+
+// drawnSets draws by code the sheets of the plan of each set, each in a directory of its own beside
+// the others, and splits each, as a run over several sets takes them: by default the plan of E2 and
+// the plan of free writing, as a reading over two sets takes them. It gives the value of -set of
+// each.
+func drawnSets(t *testing.T, of ...drawnSet) (string, []string) {
 	t.Helper()
+	if len(of) == 0 {
+		of = []drawnSet{{"lines", measurementBank, measurementPlan}, {"free", freeBank, freePlan}}
+	}
 	parent := t.TempDir()
 	var sets []string
-	for _, s := range []struct{ name, bank, plan string }{{"lines", measurementBank, measurementPlan}, {"free", freeBank, freePlan}} {
+	for _, s := range of {
 		dir := filepath.Join(parent, s.name)
 		args := []string{"-dir", dir, "-bank", s.bank, "-plan", s.plan}
 		var out, errs bytes.Buffer

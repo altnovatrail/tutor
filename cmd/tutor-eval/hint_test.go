@@ -12,34 +12,12 @@ import (
 	"github.com/altnovatrail/tutor/internal/hint"
 )
 
-// hintSets draws by code the sheets of the plans of E2, of free writing and of the near key, each
-// in a directory of its own beside the others, and splits each, as a hint over three sets takes
-// them. It gives the value of -set of each.
-func hintSets(t *testing.T) (string, []string) {
-	t.Helper()
-	parent := t.TempDir()
-	var sets []string
-	for _, s := range []struct{ name, bank, plan string }{{"lines", measurementBank, measurementPlan}, {"free", freeBank, freePlan}, {"near", nearBank, nearPlan}} {
-		dir := filepath.Join(parent, s.name)
-		args := []string{"-dir", dir, "-bank", s.bank, "-plan", s.plan}
-		var out, errs bytes.Buffer
-		if code := runDraw(append([]string{"-seed", "1"}, args...), &out, &errs, time.Now); code != exitOK {
-			t.Fatalf("draw %s = %d %s", s.name, code, errs.String())
-		}
-		if code, _, errs := runIt(append([]string{"split", "-seed", "7"}, args...)...); code != exitOK {
-			t.Fatalf("split %s = %d %s", s.name, code, errs)
-		}
-		sets = append(sets, strings.Join([]string{dir, s.bank, s.plan}, ","))
-	}
-	return parent, sets
-}
-
 // A hint goes over three sets in one run, on the stub, and asks only the sheets with a mistake: the
 // estimate names them by set, with the rungs, the languages and the tutors; the log beside the sets
 // is named by the kind and the sets; and every call boxes the first error of its sheet. The report
 // does not read the log yet, and a hint takes no -reads.
 func TestHintOverSets(t *testing.T) {
-	parent, sets := hintSets(t)
+	parent, sets := drawnSets(t, drawnSet{"lines", measurementBank, measurementPlan}, drawnSet{"free", freeBank, freePlan}, drawnSet{"near", nearBank, nearPlan})
 	code, out, errs := runMeasure("yes\n", "-kind", "hint", "-part", "dev", "-stub", "-repeats", "1", "-set", sets[0], "-set", sets[1], "-set", sets[2])
 	if code != exitOK {
 		t.Fatalf("the run ends %d: %s%s", code, out, errs)

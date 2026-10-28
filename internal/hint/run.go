@@ -295,44 +295,11 @@ type (
 
 // Log is a run's log read back: the run, its sheets, its calls in the order they were made, and how
 // the run ended, or nil when the log stops before the end.
-type Log struct {
-	Run    RunRecord
-	Sheets []SheetRecord
-	Calls  []CallRecord
-	End    *runner.End
-}
+type Log = runner.Records[RunRecord, SheetRecord, CallRecord]
 
 // ReadLog reads the log of a run of the hint back, as runner.ReadLog reads a log: every line a
 // record of a kind it knows, the run's first and the end, if there is one, last, and a last line
-// cut off half written left out. A log of another kind of call is refused.
+// cut off half written left out. A log of another kind of call is refused (runner.ReadRecords).
 func ReadLog(r io.Reader) (*Log, error) {
-	var l Log
-	end, err := runner.ReadLog(r, func(kind string, line []byte) error {
-		switch kind {
-		case "run":
-			if err := json.Unmarshal(line, &l.Run); err != nil {
-				return err
-			}
-			if l.Run.CallKind != CallKind {
-				return fmt.Errorf("a log of the kind of call %q, not of the hint", l.Run.CallKind)
-			}
-			return nil
-		case "sheet":
-			var rec SheetRecord
-			err := json.Unmarshal(line, &rec)
-			l.Sheets = append(l.Sheets, rec)
-			return err
-		case "call":
-			var rec CallRecord
-			err := json.Unmarshal(line, &rec)
-			l.Calls = append(l.Calls, rec)
-			return err
-		}
-		return fmt.Errorf("no record of the kind %q", kind)
-	})
-	if err != nil {
-		return nil, err
-	}
-	l.End = end
-	return &l, nil
+	return runner.ReadRecords[RunRecord, SheetRecord, CallRecord](r, CallKind, "hint")
 }

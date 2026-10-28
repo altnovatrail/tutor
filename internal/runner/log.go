@@ -69,3 +69,52 @@ func CallKind(log []byte) string {
 	}
 	return run.CallKind
 }
+
+// Records are the log of a run of a kind of call read back: the run, its sheets and its calls in
+// the order they were made, each as the kind's own record, and how the run ended, or nil when the
+// log stops before the end.
+type Records[R, S, C any] struct {
+	Run    R
+	Sheets []S
+	Calls  []C
+	End    *End
+}
+
+// ReadRecords reads the log of a run of a kind of call back, as ReadLog reads a log, each record
+// into the kind's own type: the run's, which must tell that kind of call, named so in what it says,
+// and the sheets' and the calls'. A log of another kind of call is refused, and so is a record of
+// a kind the log has no place for.
+func ReadRecords[R, S, C any](r io.Reader, callKind, name string) (*Records[R, S, C], error) {
+	var l Records[R, S, C]
+	end, err := ReadLog(r, func(kind string, line []byte) error {
+		switch kind {
+		case "run":
+			var head struct {
+				CallKind string `json:"call_kind"`
+			}
+			if err := json.Unmarshal(line, &head); err != nil {
+				return err
+			}
+			if head.CallKind != callKind {
+				return fmt.Errorf("a log of the kind of call %q, not of the %s", head.CallKind, name)
+			}
+			return json.Unmarshal(line, &l.Run)
+		case "sheet":
+			var rec S
+			err := json.Unmarshal(line, &rec)
+			l.Sheets = append(l.Sheets, rec)
+			return err
+		case "call":
+			var rec C
+			err := json.Unmarshal(line, &rec)
+			l.Calls = append(l.Calls, rec)
+			return err
+		}
+		return fmt.Errorf("no record of the kind %q", kind)
+	})
+	if err != nil {
+		return nil, err
+	}
+	l.End = end
+	return &l, nil
+}
