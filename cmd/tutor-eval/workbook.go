@@ -33,7 +33,7 @@ func runWorkbook(args []string, stdout, stderr io.Writer) int {
 	}
 	pictured := given(flags)["png"]
 	if pictured {
-		if err := workbookPicturesDir(*pngDir); err != nil {
+		if err := cropsDir(*pngDir); err != nil {
 			_, _ = fmt.Fprintf(stderr, "tutor-eval workbook: %v\n", err)
 			return exitUsage
 		}
@@ -94,10 +94,10 @@ func readWorkbook(path string) (*sample.Workbook, error) {
 	return wb, err
 }
 
-// workbookPicturesDir refuses a directory for the crops that is not named, or that lies in the work
-// tree outside synthetic: the crops are of code's writing, and the samples folder is for the
-// author's.
-func workbookPicturesDir(dir string) error {
+// cropsDir refuses a directory for the crops of the workbook or of the essays that is not named,
+// or that lies in the work tree outside synthetic: the crops are of code's writing, and the samples
+// folder is for the author's.
+func cropsDir(dir string) error {
 	if dir == "" {
 		return errors.New("-png is empty: name the directory of the crops")
 	}

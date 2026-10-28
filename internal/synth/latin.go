@@ -116,10 +116,15 @@ func spaced(h hand) hand {
 // were written. The essays of epic E4 are drawn with it (T81; T82). It panics on no lines, and on a
 // sheet the strokes of a sample cannot lie on.
 func Text(lines []string, sheet sample.Sheet, seed uint64) []sample.Stroke {
+	return textOf(lines, sheet, seed, 1)
+}
+
+// textOf is Text from the hand of a sheet of the number given: each essay is written by its own.
+func textOf(lines []string, sheet sample.Sheet, seed uint64, number int) []sample.Stroke {
 	if len(lines) == 0 {
 		panic("synth: no lines of text")
 	}
-	sh := &sample.PlanSheet{Number: 1, Lines: lines}
+	sh := &sample.PlanSheet{Number: number, Lines: lines}
 	w := sheetWriter(sh, seed)
 	w.s.Sheet = sheet
 	h := spaced(w.handOn(sh, sheet.Width, sheet.Height))
