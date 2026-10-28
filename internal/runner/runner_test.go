@@ -336,3 +336,41 @@ func TestCallKind(t *testing.T) {
 		}
 	}
 }
+
+// A log of a kind of call reads back into the kind's records: its run, its sheets and its calls in
+// order, and its end. A log of another kind of call, a record of no kind the log has a place for,
+// and a record off its type are refused.
+func TestReadRecords(t *testing.T) {
+	type (
+		run struct {
+			CallKind string `json:"call_kind"`
+			Part     string `json:"part"`
+		}
+		sheet struct{ Sheet int }
+		call  struct{ Sheet, Repeat int }
+	)
+	log := `{"kind": "run", "call_kind": "echo", "part": "dev"}
+{"kind": "sheet", "sheet": 4}
+{"kind": "call", "sheet": 4, "repeat": 1}
+{"kind": "call", "sheet": 4, "repeat": 2}
+{"kind": "end", "calls": 2}
+`
+	l, err := runner.ReadRecords[run, sheet, call](strings.NewReader(log), "echo", "echo")
+	if err != nil || l.Run.Part != "dev" || len(l.Sheets) != 1 || l.Sheets[0].Sheet != 4 || len(l.Calls) != 2 || l.Calls[1].Repeat != 2 || l.End == nil || l.End.Calls != 2 {
+		t.Fatalf("the log reads back as %+v, %v", l, err)
+	}
+	for name, c := range map[string]struct{ text, says string }{
+		"another kind":  {`{"kind": "run", "call_kind": "reading"}` + "\n", `a log of the kind of call "reading", not of the echo`},
+		"a judge's":     {`{"kind": "run", "part": "test"}` + "\n", `a log of the kind of call "", not of the echo`},
+		"a frame":       {`{"kind": "run", "call_kind": "echo"}` + "\n" + `{"kind": "frame"}` + "\n", `no record of the kind "frame"`},
+		"a run's part":  {`{"kind": "run", "call_kind": "echo", "part": 3}` + "\n", "cannot unmarshal"},
+		"a sheet's":     {`{"kind": "run", "call_kind": "echo"}` + "\n" + `{"kind": "sheet", "sheet": "4"}` + "\n", "cannot unmarshal"},
+		"a call's":      {`{"kind": "run", "call_kind": "echo"}` + "\n" + `{"kind": "call", "repeat": "1"}` + "\n", "cannot unmarshal"},
+		"a kind of run": {`{"kind": "run", "call_kind": 7}` + "\n", "cannot unmarshal"},
+		"empty":         {"", "the log is empty"},
+	} {
+		if _, err := runner.ReadRecords[run, sheet, call](strings.NewReader(c.text), "echo", "echo"); err == nil || !strings.Contains(err.Error(), c.says) {
+			t.Errorf("%s: %v, want %q", name, err, c.says)
+		}
+	}
+}

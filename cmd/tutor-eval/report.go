@@ -2,12 +2,14 @@ package main
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
 
+	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/measure"
 	"github.com/altnovatrail/tutor/internal/newfile"
 	"github.com/altnovatrail/tutor/internal/reading"
@@ -91,7 +93,7 @@ type written interface {
 }
 
 // reportOf builds the report of a log by the kind of call it is of: the judge's, whose log tells no
-// kind, or the reading's (T71).
+// kind, or the reading's (T71). The hint's log it does not report yet (T74).
 func reportOf(data []byte) (written, error) {
 	switch kind := runner.CallKind(data); kind {
 	case "":
@@ -110,6 +112,8 @@ func reportOf(data []byte) (written, error) {
 			return nil, err
 		}
 		return report.NewReading(l)
+	case hint.CallKind:
+		return nil, errors.New("a log of the hint, whose report comes with its check of leaks and form, T75")
 	default:
 		return nil, fmt.Errorf("a log of the kind of call %q, and the report knows the judge and the reading", kind)
 	}

@@ -312,22 +312,32 @@ func Read(answer string) (*Answer, error) {
 	if string(raw.Box) == "null" {
 		return a, nil
 	}
+	box, err := ReadBox(raw.Box)
+	if err != nil {
+		return nil, fmt.Errorf("judge: %w", err)
+	}
+	if a.Verdict == Error {
+		a.Box = box
+	}
+	return a, nil
+}
+
+// ReadBox reads a box of a model's answer as strictly as the schema: its four corners, x1, y1, x2
+// and y2, all of them and nothing else, put in order. The hint reads its box by it too (T74).
+func ReadBox(raw json.RawMessage) (*Box, error) {
 	var b struct {
 		X1 *int `json:"x1"`
 		Y1 *int `json:"y1"`
 		X2 *int `json:"x2"`
 		Y2 *int `json:"y2"`
 	}
-	if err := strict(raw.Box, &b); err != nil {
-		return nil, fmt.Errorf("judge: the box is off the schema: %w", err)
+	if err := strict(raw, &b); err != nil {
+		return nil, fmt.Errorf("the box is off the schema: %w", err)
 	}
 	if b.X1 == nil || b.Y1 == nil || b.X2 == nil || b.Y2 == nil {
-		return nil, errors.New("judge: the box lacks a corner")
+		return nil, errors.New("the box lacks a corner")
 	}
-	if a.Verdict == Error {
-		a.Box = &Box{X1: min(*b.X1, *b.X2), Y1: min(*b.Y1, *b.Y2), X2: max(*b.X1, *b.X2), Y2: max(*b.Y1, *b.Y2)}
-	}
-	return a, nil
+	return &Box{X1: min(*b.X1, *b.X2), Y1: min(*b.Y1, *b.Y2), X2: max(*b.X1, *b.X2), Y2: max(*b.Y1, *b.Y2)}, nil
 }
 
 // Margin is how far round a box the points of a line still count, in pixels (architecture 3.1).

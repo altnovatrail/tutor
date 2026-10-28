@@ -16,6 +16,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/judge"
 	"github.com/altnovatrail/tutor/internal/measure"
 	"github.com/altnovatrail/tutor/internal/reading"
@@ -30,8 +31,8 @@ import (
 var partCaps = map[string]float64{"dev": 3, "test": 6, "all": 2}
 
 // plans are the kinds of call that run asks, by -kind, each with how it plans a run over a part of
-// its sets of sheets and says what the run asks (T67): the judge, and the reading (T68). The other
-// kinds of epic E4 come with their tasks.
+// its sets of sheets and says what the run asks (T67): the judge, the reading (T68) and the hint
+// (T74). The other kinds of epic E4 come with their tasks.
 var plans = map[string]struct {
 	plan func(sets []sheetFlags, part string, o options) (*runner.Run, string, error)
 	// several is whether the kind runs over several sets: the judge runs on one, since its
@@ -40,6 +41,7 @@ var plans = map[string]struct {
 }{
 	"judge":   {plan: planJudge},
 	"reading": {plan: planReading, several: true},
+	"hint":    {plan: planHint, several: true},
 }
 
 // options are what a run is asked besides its sets and part: how many times each call is repeated,
@@ -66,19 +68,19 @@ func (s *setsFlag) Set(v string) error {
 // are expected to cost, and starts only once the author types yes (rule 4 of RUN.md); till then
 // Ctrl-C ends it as any command, and from then on it stops the run before the next call. The log
 // goes next to the sheets, out of git, named by the time, the kind, the sets of sheets and the part.
-// A run of the reading may go over several sets, each given by -set; they lie in one folder, the
-// samples or the synthetic, beside which the run logs. A run on the author's sheets, in samples, the author
-// starts, and no agent reads them (R05); on sheets drawn by code, in synthetic, the executor starts
-// it within the task's ceiling (R28).
+// A run of the reading or the hint may go over several sets, each given by -set; they lie in one
+// folder, the samples or the synthetic, beside which the run logs. A run on sheets drawn by code, in
+// synthetic, the executor starts within the task's ceiling (R28); one on the author's sheets, in
+// samples, goes within the task's ceiling too, and its task says who starts it (R32).
 func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer, getenv func(string) string, now func() time.Time) int {
 	flags := flag.NewFlagSet("tutor-eval run", flag.ContinueOnError)
 	var f sheetFlags
 	f.add(flags)
-	kind := flags.String("kind", "judge", "the kind of call to run: judge or reading")
+	kind := flags.String("kind", "judge", "the kind of call to run: judge, reading or hint")
 	var setValues setsFlag
-	flags.Var(&setValues, "set", "a set of sheets, DIR,BANK,PLAN, in place of -dir, -bank and -plan; given once for each set, for a reading over several")
+	flags.Var(&setValues, "set", "a set of sheets, DIR,BANK,PLAN, in place of -dir, -bank and -plan; given once for each set, for a reading or a hint over several")
 	part := flags.String("part", "", "the part of the split to run, dev or test, or all for every sheet of the plan, without the split")
-	repeats := flags.Int("repeats", 3, "how many times each call is repeated: of every judge, and of every reader but Opus, which reads once")
+	repeats := flags.Int("repeats", 3, "how many times each call is repeated: of every judge and every tutor of the hint, and of every reader but Opus, which reads once")
 	readsList := flags.String("reads", "keys", "what a reading reads, joined by commas: keys, the finished sheet without a key, with the right key and with the false keys; heights, at 16, 24 and 48 px; states, the sheet as it was while it was written")
 	maxUSD := flags.Float64("max-usd", 0, "start no call that could take the run past this many US dollars; $3 for dev, $6 for test and $2 for all by default")
 	logPath := flags.String("log", "", "the log of the run, a new file out of git: in samples or synthetic, and in samples alone for sheets there; by default in runs next to the directory of the sheets")
@@ -335,6 +337,47 @@ func planReading(sets []sheetFlags, part string, o options) (*runner.Run, string
 	}
 	return r, fmt.Sprintf("%s: %s of %s (%s), %s, in version %d of the reading's prompt.\n",
 		partName(part), count(len(all), "sheet"), count(len(sets), "set"), strings.Join(counts, ", "), strings.Join(what, "; and "), reading.Version), nil
+}
+
+// planHint plans a run of the hint over the sheets with a mistake of a part of its sets, and says
+// what it asks: the sheets with a mistake of each set, of how many, each at every rung of the
+// ladder in both languages, by the three tutors in their repeats (T74). A part with no sheet with a
+// mistake has no hint to ask, and the run is refused before the question.
+func planHint(sets []sheetFlags, part string, o options) (*runner.Run, string, error) {
+	var names, counts []string
+	var wrong []sheets.Chosen
+	taken := 0
+	for _, s := range sets {
+		name := setName(s)
+		_, chosen, err := partSheets(s, name, part)
+		if err != nil {
+			return nil, "", fmt.Errorf("%s: %w", name, err)
+		}
+		n := 0
+		for _, sh := range chosen {
+			if hint.Wrong(sh) {
+				wrong = append(wrong, sh)
+				n++
+			}
+		}
+		taken += len(chosen)
+		names, counts = append(names, name), append(counts, fmt.Sprintf("%s %d of %d", name, n, len(chosen)))
+	}
+	if len(wrong) == 0 {
+		return nil, "", fmt.Errorf("%s: no sheet with a mistake (%s), and a hint is asked only after a wrong answer", partName(part), strings.Join(counts, ", "))
+	}
+	tutors := hint.Tutors()
+	var by []string
+	for _, tu := range tutors {
+		by = append(by, tu.Name)
+	}
+	r, err := hint.New(part, names, wrong, tutors, o.repeats)
+	if err != nil {
+		return nil, "", err
+	}
+	return r, fmt.Sprintf("%s: %s with a mistake of %d in %s (%s), each at %d rungs in %d languages, by %s in %s, in version %d of the hint's prompt.\n",
+		partName(part), count(len(wrong), "sheet"), taken, count(len(sets), "set"), strings.Join(counts, ", "), len(hint.Rungs()), len(hint.Langs()),
+		strings.Join(by, ", "), count(o.repeats, "repeat"), hint.Version), nil
 }
 
 // partName is what the run says of its part.

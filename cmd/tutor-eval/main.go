@@ -1,7 +1,7 @@
 // Command tutor-eval is tutor's eval runner: it runs the AI capabilities on eval samples, on the
 // same code that api calls, and reports how they did. Its run command runs the calls of a kind on
-// the runner: the judge of the measurement of the writing process (R24), or the reading of a sheet
-// into an observation (T68), and its report
+// the runner: the judge of the measurement of the writing process (R24), the reading of a sheet
+// into an observation (T68), or the hint (T74), and its report
 // command reports on a run by the kind of its log; its other commands serve the
 // board, check the files of samples, banks and sheet plans, and write synthetic ones: run it
 // without arguments for its commands.
@@ -53,12 +53,14 @@ const usage = `usage:
                              handwriting
   tutor-eval split -seed N [-dev K] [-dir D] [-bank F] [-plan F]
                              divide the recorded sheets into development and test, once
-  tutor-eval run -part dev|test|all [-kind judge|reading] [-repeats N] [-max-usd N] [-log F]
+  tutor-eval run -part dev|test|all [-kind judge|reading|hint] [-repeats N] [-max-usd N] [-log F]
                  [-stub] [-dir D] [-bank F] [-plan F] [-set D,B,P]... [-reads keys,heights,states]
                              run the calls of a kind on a part of the split, or on all the
-                             sheets, of one set or, for a reading, of each -set: the estimate
-                             first, then calls to Claude once you type yes, and a log of every
-                             answer; a reading reads what -reads names, keys by default
+                             sheets, of one set or, for a reading or a hint, of each -set: the
+                             estimate first, then calls to Claude once you type yes, and a log of
+                             every answer; a reading reads what -reads names, keys by default, and
+                             a hint is asked of the sheets with a mistake, at every rung in Russian
+                             and English
   tutor-eval report LOG      the report of a run from its log, by its kind, asking no model:
                              of the judge, the criterion and the numbers in Markdown and CSV,
                              beside the log
