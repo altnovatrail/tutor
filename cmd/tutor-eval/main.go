@@ -4,8 +4,8 @@
 // into an observation (T68), the hint (T74), which the run checks for leaks and its form (T75), or
 // the reading of the boxes of a page of the workbook (T79),
 // and its report command reports on a run by the kind of its log; its other commands serve the
-// board, check the files of samples, banks and sheet plans, and write synthetic ones: run it
-// without arguments for its commands.
+// board, check the files of samples, banks, sheet plans, the workbook and the essays, and write
+// synthetic ones: run it without arguments for its commands.
 package main
 
 import (
@@ -43,7 +43,8 @@ const usage = `usage:
   tutor-eval board -record [-addr A] [-dir D] [-bank F] [-plan F]
                                                       the record mode: write the sheets of the plan,
                                                       and each is saved as a sample
-  tutor-eval check FILE...   check samples, banks, sheet plans and the pages of the workbook;
+  tutor-eval check FILE...   check samples, banks, sheet plans, the pages of the workbook and the
+                             essays;
                              samples and plans against a bank given with them
   tutor-eval draw [-seed N] [-png D] [-dir D] [-bank F] [-plan F]
                              draw by code every sheet of the plan not recorded yet, and save it
@@ -75,6 +76,10 @@ const usage = `usage:
                              check the pages of the workbook, draw them in memory and sum up
                              their boxes and the crops of the filled ones at each height; with
                              -png, save each crop at 32 px, what a reading sees, in synthetic
+  tutor-eval essays [-file F] [-seed N] [-png D]
+                             check the essays, draw them in memory and sum up their words,
+                             sentences, lines and unmet criteria, and the crops of their pages;
+                             with -png, save each crop at 32 px, what a model sees, in synthetic
   tutor-eval synth DIR       write the synthetic bank and one synthetic sample per scenario
   tutor-eval -version        print the version
 `
@@ -132,6 +137,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return runReport(operands, stdout, stderr)
 	case "workbook":
 		return runWorkbook(operands, stdout, stderr)
+	case "essays":
+		return runEssays(operands, stdout, stderr)
 	case "synth":
 		if len(operands) != 1 {
 			_, _ = fmt.Fprintln(stderr, "tutor-eval synth: give one directory")
@@ -231,8 +238,17 @@ func check(paths []string, stdout, stderr io.Writer) int {
 			if _, err := fmt.Fprintf(stdout, "%s: ok, workbook of %s\n", path, workbookSize(wb)); err != nil {
 				return exitFail
 			}
+		case sample.EssaysFormat:
+			es, err := sample.ReadEssays(bytes.NewReader(data))
+			if err != nil {
+				fail(path, err)
+				continue
+			}
+			if _, err := fmt.Fprintf(stdout, "%s: ok, %s\n", path, essaysSize(es)); err != nil {
+				return exitFail
+			}
 		default:
-			fail(path, fmt.Errorf("format %q is not %q, %q, %q or %q", head.Format, sample.SampleFormat, sample.BankFormat, sample.PlanFormat, sample.WorkbookFormat))
+			fail(path, fmt.Errorf("format %q is not %q, %q, %q, %q or %q", head.Format, sample.SampleFormat, sample.BankFormat, sample.PlanFormat, sample.WorkbookFormat, sample.EssaysFormat))
 		}
 	}
 	for _, r := range reads {

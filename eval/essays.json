@@ -1,0 +1,303 @@
+{
+  "format": "tutor-essays",
+  "version": 0,
+  "rubric": [
+    {
+      "id": "title",
+      "text": "It has a title on its own first line."
+    },
+    {
+      "id": "sentences",
+      "text": "It has at least five sentences."
+    },
+    {
+      "id": "capitals-and-stops",
+      "text": "Every sentence begins with a capital letter and ends with a full stop, a question mark or an exclamation mark."
+    },
+    {
+      "id": "linking-words",
+      "text": "It links its ideas with words such as because, but, so, then or first."
+    },
+    {
+      "id": "on-topic",
+      "text": "It keeps to the topic of the task."
+    },
+    {
+      "id": "spelling",
+      "text": "Common words are spelled correctly."
+    }
+  ],
+  "essays": [
+    {
+      "number": 1,
+      "part": "dev",
+      "topic": "Imagine a robot that bakes bread. Write a short essay about one day of its work.",
+      "title": "The Bread Robot",
+      "text": "The robot wakes up at four in the morning because the ovens need time to get hot. First it mixes flour, water and salt in a big bowl. Then it shapes the dough into long loaves and round buns. The kitchen smells sweet and warm. When the sun comes up, the first customers knock on the door. The robot is tired, but it is happy to see them smile.",
+      "unmet": [],
+      "misspelled": []
+    },
+    {
+      "number": 2,
+      "part": "dev",
+      "topic": "Imagine a town under the sea. Write a short essay about what a visitor sees there.",
+      "title": "Under the Waves",
+      "text": "When I swim down to the town under the sea, I see houses made of shells, streets of soft white sand and gardens full of green weed that waves slowly in the water. The fish carry letters from house to house, and a crab sweeps the square every morning with a tiny broom. I would like to stay there for a long time, but I have to go back up because I need air.",
+      "unmet": [
+        "sentences"
+      ],
+      "misspelled": []
+    },
+    {
+      "number": 3,
+      "part": "dev",
+      "topic": "Imagine an island that nobody has found yet. Write a short essay about your first morning there.",
+      "title": "My First Morning",
+      "text": "I wake up on a quiet beach. The sand is warm and the sky is pink. First I walk to the trees to look for water. I find a small river with clear, cold water. Then I see a bird with long blue feathers. It is realy beautifull. I sit on a rock and wait for the sun. Nobody knows about this place, but I am not afraid.",
+      "unmet": [
+        "spelling"
+      ],
+      "misspelled": [
+        {
+          "written": "realy",
+          "word": "really"
+        },
+        {
+          "written": "beautifull",
+          "word": "beautiful"
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "part": "dev",
+      "topic": "Imagine a tree that can talk. Write a short essay about what it tells you.",
+      "title": null,
+      "text": "The bicycle race starts at nine in the morning. Hundreds of riders wait at the line because the streets are closed for them. When the whistle blows, they rush forward. The crowd cheers loudly, but the wind is strong. Then the riders climb a steep hill near the river. The winner finishes in less than two hours.",
+      "unmet": [
+        "title",
+        "on-topic"
+      ],
+      "misspelled": []
+    },
+    {
+      "number": 5,
+      "part": "dev",
+      "topic": "Imagine an umbrella that can fly. Write a short essay about where it goes.",
+      "title": "The Flying Umbrella",
+      "text": "My red umbrella opens by itself on a windy day. It lifts me off the ground. We float over the roofs of the town. The people below look very small. the umbrella carries me to a hill far away. There it lands softly in the grass. It closes with a happy click.",
+      "unmet": [
+        "capitals-and-stops",
+        "linking-words"
+      ],
+      "misspelled": []
+    },
+    {
+      "number": 6,
+      "part": "test",
+      "topic": "Imagine a cat that lives in a lighthouse. Write a short essay about one night of its life.",
+      "title": "The Lighthouse Cat",
+      "text": "Every evening the cat climbs the long stairs of the lighthouse. At the top it sits next to the big lamp because the glass is warm. It watches the dark sea and the little boats. When a storm comes, the waves crash against the rocks. The cat is not scared, so it stays by the light all night. In the morning it sleeps on a soft blanket.",
+      "unmet": [],
+      "misspelled": []
+    },
+    {
+      "number": 7,
+      "part": "test",
+      "topic": "Imagine a library where the books whisper at night. Write a short essay about what you hear there.",
+      "title": null,
+      "text": "The library is quiet in the day, but at night the books begin to whisper. I hide behind a tall shelf and listen. An old book of maps talks about mountains and deserts. A small book of poems sings a soft song. Then a book about the sea tells a story of a lost ship. I stay until the sun rises because every book has something to say.",
+      "unmet": [
+        "title"
+      ],
+      "misspelled": []
+    },
+    {
+      "number": 8,
+      "part": "test",
+      "topic": "Imagine a dragon that is afraid of the dark. Write a short essay about how it finds its courage.",
+      "title": "The Shy Dragon",
+      "text": "The little dragon lives in a deep cave. It does not like the dark. Every night it hides under its wings. One evening a small owl visits the cave. The owl is a kind freind. It shows the dragon the stars through a hole in the roof. The dragon can't beleive its eyes. It breathes a tiny flame. Its cave is full of warm light now.",
+      "unmet": [
+        "linking-words",
+        "spelling"
+      ],
+      "misspelled": [
+        {
+          "written": "freind",
+          "word": "friend"
+        },
+        {
+          "written": "beleive",
+          "word": "believe"
+        }
+      ]
+    },
+    {
+      "number": 9,
+      "part": "test",
+      "topic": "Imagine a snowman who wants to see the summer. Write a short essay about its wish.",
+      "title": "A Balloon Ride",
+      "text": "Early in the morning we climb into the basket of a huge yellow balloon, and the pilot lights a fire that roars above our heads. Slowly we rise over fields, farms and a river that shines like silver in the sun, so the cows below look like tiny toys. When we land in a soft meadow, everyone laughs because the basket tips over and we roll out onto the grass.",
+      "unmet": [
+        "sentences",
+        "on-topic"
+      ],
+      "misspelled": []
+    },
+    {
+      "number": 10,
+      "part": "test",
+      "topic": "Imagine a city in the clouds. Write a short essay about a day you spend there.",
+      "title": "Above the Clouds",
+      "text": "The city in the clouds has houses as light as feathers. People walk on bridges made of mist. In the morning I eat breakfast on a soft white hill. Then I ride a bird to the market because there are no cars. The fruit there tastes like rain and honey. When evening comes, the clouds turn orange and gold, so the whole city glows",
+      "unmet": [
+        "capitals-and-stops"
+      ],
+      "misspelled": []
+    },
+    {
+      "number": 11,
+      "part": "test",
+      "topic": "Imagine a shoe that can walk on its own. Write a short essay about where it goes.",
+      "title": "The Walking Shoe",
+      "text": "One morning a brown shoe decides to go for a walk. First it hops down the steps of the house. Then it walks along the street and looks in the shop windows. A dog barks at it, but the shoe is brave. It visits the park because it wants to see the ducks. At sunset it comes home, tired and dusty. It sleeps well that night.",
+      "unmet": [],
+      "misspelled": []
+    },
+    {
+      "number": 12,
+      "part": "test",
+      "topic": "Imagine a garden on the roof of a tall building. Write a short essay about what grows there.",
+      "title": null,
+      "text": "High above the busy streets there is a garden on a roof. Tomatoes grow in big pots, and beans climb up long sticks. bees come from far away because the flowers are so bright. In the evening the wind is cool, but the plants are strong. The view of the city is wonderfull. I water the garden evry day.",
+      "unmet": [
+        "title",
+        "capitals-and-stops",
+        "spelling"
+      ],
+      "misspelled": [
+        {
+          "written": "wonderfull",
+          "word": "wonderful"
+        },
+        {
+          "written": "evry",
+          "word": "every"
+        }
+      ]
+    },
+    {
+      "number": 13,
+      "part": "test",
+      "topic": "Imagine a clock that runs backwards. Write a short essay about a day when it changes everything.",
+      "title": "The Fishing Boat",
+      "text": "The little fishing boat leaves the port before dawn. The sailors pull the ropes, and the sail fills with wind. First they sail past the rocks where the seals sleep. Then they throw their nets into the cold water. The work is hard, but the sea is calm today. When the nets are full, the boat turns back to the port.",
+      "unmet": [
+        "on-topic"
+      ],
+      "misspelled": []
+    },
+    {
+      "number": 14,
+      "part": "test",
+      "topic": "Imagine a whale that sings to ships. Write a short essay about its song.",
+      "title": "The Singing Whale",
+      "text": "Far out in the ocean lives a giant blue whale with a voice as deep as thunder. Every night it swims beside the big ships, singing a slow song about the moon, the stars, the warm southern seas. The sailors on the decks stop their work to listen, their eyes full of tears. The song stays in their hearts for many years.",
+      "unmet": [
+        "sentences",
+        "linking-words"
+      ],
+      "misspelled": []
+    },
+    {
+      "number": 15,
+      "part": "test",
+      "topic": "Imagine a door in the side of a mountain. Write a short essay about what is behind it.",
+      "title": null,
+      "text": "At the foot of the mountain there is a small green door. I knock three times, and it opens slowly. Behind it is a long tunnel with glowing stones on the walls. I follow the tunnel because I hear music. At the end I find a hall full of diffrent instruments. There are no peple, but the instruments play by themselves.",
+      "unmet": [
+        "title",
+        "spelling"
+      ],
+      "misspelled": [
+        {
+          "written": "diffrent",
+          "word": "different"
+        },
+        {
+          "written": "peple",
+          "word": "people"
+        }
+      ]
+    },
+    {
+      "number": 16,
+      "part": "test",
+      "topic": "Imagine a bus that can fly over the city. Write a short essay about a trip on it.",
+      "title": "The Snail's Journey",
+      "text": "A small snail starts a long journey across the garden. It moves very slowly over the wet stones. The sun is hot on its back. its shell feels heavy. A beetle passes by with a friendly nod. The snail rests under a big leaf. By evening it reaches the pond at the end of the garden.",
+      "unmet": [
+        "capitals-and-stops",
+        "linking-words",
+        "on-topic"
+      ],
+      "misspelled": []
+    },
+    {
+      "number": 17,
+      "part": "test",
+      "topic": "Imagine a small star that falls into a field. Write a short essay about what happens next.",
+      "title": "The Fallen Star",
+      "text": "Late one night a small star falls into a field of wheat. It glows softly, but it cannot fly back to the sky. A fox finds it first and sniffs it carefully. Then a sleepy owl lands beside them. The star is sad because it misses its friends. The fox and the owl carry it to the top of a hill. When the wind blows, the star rises back into the sky.",
+      "unmet": [],
+      "misspelled": []
+    },
+    {
+      "number": 18,
+      "part": "test",
+      "topic": "Imagine a bridge made of ice. Write a short essay about crossing it.",
+      "title": "The Ice Bridge",
+      "text": "The bridge over the frozen river is made of clear blue ice, and it shines like glass in the winter sun. I walk across it very carefully because the surface is slipery, but the view is so beatiful that I forget to be scared. When I reach the other side, I look back and see my footprints sparkling on the ice like tiny stars.",
+      "unmet": [
+        "sentences",
+        "spelling"
+      ],
+      "misspelled": [
+        {
+          "written": "slipery",
+          "word": "slippery"
+        },
+        {
+          "written": "beatiful",
+          "word": "beautiful"
+        }
+      ]
+    },
+    {
+      "number": 19,
+      "part": "test",
+      "topic": "Imagine a painter who paints with the wind. Write a short essay about one of the pictures.",
+      "title": null,
+      "text": "In a quiet village there is a turtle that runs a tiny shop full of buttons, ribbons and old keys. Every customer has to wait a long time because the turtle walks very slowly from the shelves to the counter. Nobody minds the wait, so the shop is always busy, and children love to watch the turtle count the coins with its small green feet.",
+      "unmet": [
+        "title",
+        "sentences",
+        "on-topic"
+      ],
+      "misspelled": []
+    },
+    {
+      "number": 20,
+      "part": "test",
+      "topic": "Imagine a map that changes every night. Write a short essay about where it takes you.",
+      "title": "The Changing Map",
+      "text": "My old map shows a different land every morning. Today it shows a desert with three red rocks. the path on the map leads to a hidden well. I walk for hours in the hot sand. The well is full of cold, sweet water. each night the map changes again. Tomorrow it might show a jungle full of parrots.",
+      "unmet": [
+        "capitals-and-stops",
+        "linking-words"
+      ],
+      "misspelled": []
+    }
+  ]
+}
