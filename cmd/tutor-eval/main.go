@@ -69,7 +69,8 @@ const usage = `usage:
                              of the judge, the criterion, and of the reading, the threshold of
                              R03, with the numbers in Markdown and CSV; of the hint, the leaks,
                              the form, the fallback texts and the place in Markdown and CSV, and
-                             about 30 hints to read in .hints.md; beside the log
+                             about 30 hints to read in .hints.md; of the workbook, the boxes, the
+                             items, the line of the item and the heights; beside the log
   tutor-eval workbook [-file F] [-seed N] [-png D]
                              check the pages of the workbook, draw them in memory and sum up
                              their boxes and the crops of the filled ones at each height; with

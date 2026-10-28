@@ -279,6 +279,9 @@ func TestRunWorkbook(t *testing.T) {
 	if n := strings.Count(string(data), `"kind":"page"`); n != 5 || strings.Count(string(data), `"kind":"call"`) != 30 {
 		t.Errorf("the log holds %d pages:\n%.300s", n, data)
 	}
+	if code, out, errs := runIt("report", log); code != exitOK || !strings.Contains(out, "haiku-low, bare: 55 of 55 readings right") {
+		t.Errorf("the report of the workbook ends %d: %s%s", code, out, errs)
+	}
 	for _, c := range []struct {
 		args []string
 		says string

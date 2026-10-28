@@ -74,6 +74,7 @@ func TestReportRefuses(t *testing.T) {
 		{"rubric", "a log of the kind of call \"rubric\""},
 		{"hint", "the log has no tutors or no sheets"},
 		{"reading", "the log has no readers or no sheets"},
+		{"workbook", "the log has no readers or no pages"},
 	} {
 		other := filepath.Join(t.TempDir(), c.kind+".jsonl")
 		if err := os.WriteFile(other, []byte("{\"kind\": \"run\", \"call_kind\": \""+c.kind+"\"}\n"), 0o600); err != nil {
