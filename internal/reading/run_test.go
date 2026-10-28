@@ -44,7 +44,7 @@ var (
 func TestNew(t *testing.T) {
 	// Sheet 1 of the plan of free writing is correct, sheet 2 has a mistake (docs/free-sheets.md).
 	free := chosen(t, "free", "../../eval/free-sheets.json", "../../eval/free-bank.json", 1, 2)
-	r, err := reading.New("dev", []string{"free"}, free, reading.Readers(), 2, keys)
+	r, err := reading.New("dev", []string{"free"}, free, e4Readers(), 2, keys)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -87,10 +87,10 @@ func TestNew(t *testing.T) {
 	if slices.Contains(order, "1/2/haiku-low/false") {
 		t.Error("a sheet with a mistake is read with a false key")
 	}
-	if _, err := reading.New("dev", nil, free, reading.Readers(), 0, keys); err == nil {
+	if _, err := reading.New("dev", nil, free, e4Readers(), 0, keys); err == nil {
 		t.Error("a run of no repeats is planned")
 	}
-	if _, err := reading.New("dev", nil, free, reading.Readers(), 1, reading.Reads{}); err == nil {
+	if _, err := reading.New("dev", nil, free, e4Readers(), 1, reading.Reads{}); err == nil {
 		t.Error("a run that reads nothing is planned")
 	}
 }
@@ -99,7 +99,7 @@ func TestNew(t *testing.T) {
 // state of each sheet, in the first repeat, after the conditions of the key.
 func TestNewHeightsAndStates(t *testing.T) {
 	free := chosen(t, "free", "../../eval/free-sheets.json", "../../eval/free-bank.json", 1, 2)
-	r, err := reading.New("dev", []string{"free"}, free, reading.Readers(), 2, all)
+	r, err := reading.New("dev", []string{"free"}, free, e4Readers(), 2, all)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -132,10 +132,17 @@ func TestNewHeightsAndStates(t *testing.T) {
 	if p := reading.PlannedOf(r); p != (reading.Planned{Heights: 12, States: n, StateCalls: 2 * n}) {
 		t.Errorf("the run is counted %+v, with %d states", p, n)
 	}
-	// Only the states, and by Opus alone: nothing to read.
-	r, err = reading.New("dev", []string{"free"}, free, reading.Readers()[:1], 1, reading.Reads{States: true})
-	if err != nil || len(r.Steps) != 0 {
-		t.Errorf("Opus reads %d states, %v", len(r.Steps), err)
+	// Only the states, and by Opus alone: a run that asks nothing is not planned. With the keys too, the
+	// record of the run tells the keys alone.
+	if _, err := reading.New("dev", []string{"free"}, free, e4Readers()[:1], 1, reading.Reads{States: true}); err == nil || !strings.Contains(err.Error(), "asks nothing") {
+		t.Errorf("Opus alone reads the states: %v", err)
+	}
+	r, err = reading.New("dev", []string{"free"}, free, e4Readers()[:1], 1, reading.Reads{Keys: true, States: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec := r.Record(runner.Head{}).(reading.RunRecord); !slices.Equal(rec.Reads, []string{"keys"}) {
+		t.Errorf("the run of Opus alone reads %v", rec.Reads)
 	}
 }
 
@@ -152,7 +159,7 @@ func TestHeightDrawnAlike(t *testing.T) {
 	s.Erasures = nil
 	s.Lines = []sample.Line{{Text: "Ответ: в точке 10", Strokes: []string{"a", "b"}, Answer: true}}
 	sh.Sample, sh.Plan = &s, nil
-	r, err := reading.New("dev", []string{"free"}, []sheets.Chosen{sh}, reading.Readers()[1:2], 1, reading.Reads{Heights: true})
+	r, err := reading.New("dev", []string{"free"}, []sheets.Chosen{sh}, e4Readers()[1:2], 1, reading.Reads{Heights: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -173,7 +180,7 @@ func TestHeightDrawnAlike(t *testing.T) {
 func TestRunOnTheStub(t *testing.T) {
 	lines := chosen(t, "lines", "../../eval/sheets.json", "../../eval/bank.json", 1, 7, 21)
 	free := chosen(t, "free", "../../eval/free-sheets.json", "../../eval/free-bank.json", 1, 2, 14)
-	r, err := reading.New("dev", []string{"lines", "free"}, append(lines, free...), reading.Readers(), 1, all)
+	r, err := reading.New("dev", []string{"lines", "free"}, append(lines, free...), e4Readers(), 1, all)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -248,7 +255,7 @@ func TestParseReads(t *testing.T) {
 // keeps the answer and the error.
 func TestOffTheSchema(t *testing.T) {
 	free := chosen(t, "free", "../../eval/free-sheets.json", "../../eval/free-bank.json", 1)
-	r, err := reading.New("dev", []string{"free"}, free, reading.Readers()[:1], 1, keys)
+	r, err := reading.New("dev", []string{"free"}, free, e4Readers()[:1], 1, keys)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -256,4 +263,9 @@ func TestOffTheSchema(t *testing.T) {
 	if rec.Verdict != "unchecked" || rec.Answer == "" || !strings.Contains(rec.Error, "not an observation") {
 		t.Errorf("an answer off the schema is logged %+v", rec)
 	}
+}
+
+// e4Readers are the readers of the three configurations of E4, which these tests were written for.
+func e4Readers() []reading.Reader {
+	return runner.E4(reading.Readers(), func(rd reading.Reader) runner.Config { return rd.Config })
 }

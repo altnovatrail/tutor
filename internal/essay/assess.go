@@ -39,6 +39,22 @@ const (
 	QuoteWords   = 4
 )
 
+// PlatformWords is the most words R70 spec lets the feedback have, raised from MaxWords by the
+// numbers of T84. The prompt and Feedback keep MaxWords, the limit of the measurement, which its
+// frozen prompt names (R45; R50).
+const PlatformWords = 80
+
+// PlatformBroken is whether a feedback breaks the rule R70 spec sets, given what Feedback found it
+// breaks and its words: the same rule, with PlatformWords in place of MaxWords.
+func PlatformBroken(breaches []string, words int) bool {
+	for _, b := range breaches {
+		if b != BreachWords {
+			return true
+		}
+	}
+	return words < 1 || words > PlatformWords
+}
+
 // The instructions of the assessment, one text for every essay.
 const instructions = `You assess a learner's short essay, handwritten in English, by the criteria of its task's rubric, and write the learner short feedback. Image 1 shows the essay as the learner left it.
 

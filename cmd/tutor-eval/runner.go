@@ -60,6 +60,7 @@ var plans = map[string]struct {
 // what a reading reads (T69), and for the workbook, the file of its pages, the seed they are drawn
 // from and what its reading reads (T79); for the essays, their file (T83).
 type options struct {
+	readers       []string
 	repeats       int
 	reads         reading.Reads
 	workbook      string
@@ -98,13 +99,14 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	flags.Var(&setValues, "set", "a set of sheets, DIR,BANK,PLAN, in place of -dir, -bank and -plan; given once for each set, for a reading or a hint over several")
 	part := flags.String("part", "", "the part of the split to run, dev or test, or all for every sheet of the plan, without the split; for the workbook and the essays, their pages and essays of that part, or all")
 	repeats := flags.Int("repeats", 3, "how many times each call is repeated: of every judge, every tutor of the hint and every assessor of the essays, and of every reader but Opus, which reads once")
-	readsList := flags.String("reads", "keys", "what a reading reads, joined by commas: keys, the finished sheet without a key, with the right key and with the false keys; heights, at 16, 24 and 48 px; states, the sheet as it was while it was written. For the workbook, captions, its pages at 32 px with and without the lines of the items, by default, and heights, at 16, 24 and 48 px")
+	readsList := flags.String("reads", "keys", "what a reading reads, joined by commas: keys, the finished sheet without a key, with the right key and with the false keys; heights, at 16, 24 and 48 px; states, the sheet as it was while it was written. For the workbook, bare, its pages at 32 px without the lines of the items; captions, with them and without, by default; and heights, at 16, 24 and 48 px")
 	pagesFile := flags.String("workbook", workbookFile, "for -kind workbook, the file of the pages of the workbook")
 	essaysPath := flags.String("essays", essaysFile, "for -kind essay, the file of the essays")
 	seed := flags.Uint64("seed", 1, "for -kind workbook and essay, the number the hands of the pages and the essays come from")
 	maxUSD := flags.Float64("max-usd", 0, "start no call that could take the run past this many US dollars; $3 for dev, $6 for test ($8 for the essays) and $2 for all by default")
 	logPath := flags.String("log", "", "the log of the run, a new file out of git: in samples or synthetic, and in samples alone for sheets there; by default in runs next to the directory of the sheets, and for the workbook and the essays in synthetic/runs")
 	stub := flags.Bool("stub", false, "ask no model: a stub answers by the markup, and the run needs no key and no network")
+	readersList := flags.String("readers", strings.Join(runner.E4Configs, ","), "the configurations to ask, joined by commas: "+strings.Join(runner.ConfigNames(), ", ")+"; the three of E4 by default")
 	if code, ok := parse(flags, args, stderr); !ok {
 		return code
 	}
@@ -114,7 +116,15 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -kind is %q: give %s\n", *kind, strings.Join(slices.Sorted(maps.Keys(plans)), " or "))
 		return exitUsage
 	}
-	o := options{repeats: *repeats, workbook: *pagesFile, essays: *essaysPath, seed: *seed}
+	var names []string
+	for _, name := range strings.Split(*readersList, ",") {
+		names = append(names, strings.TrimSpace(name))
+	}
+	o := options{readers: names, repeats: *repeats, workbook: *pagesFile, essays: *essaysPath, seed: *seed}
+	if _, err := runner.Chosen(runner.Configs(), func(c runner.Config) runner.Config { return c }, o.readers); err != nil {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -readers is %q: %v\n", *readersList, err)
+		return exitUsage
+	}
 	var sets []sheetFlags
 	if k.file != "" {
 		if !fileFlags(*kind, k.file, set, stderr) {
@@ -122,7 +132,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		}
 		if k.file == "workbook" {
 			if o.workbookReads, ok = workbookFlags(set, *readsList); !ok {
-				_, _ = fmt.Fprintf(stderr, "tutor-eval run: -reads is %q: for the workbook, give captions or heights, joined by commas\n", *readsList)
+				_, _ = fmt.Fprintf(stderr, "tutor-eval run: -reads is %q: for the workbook, give bare, captions or heights, joined by commas\n", *readsList)
 				return exitUsage
 			}
 		}
@@ -362,12 +372,20 @@ func planJudge(sets []sheetFlags, part string, o options) (*runner.Run, string, 
 	if plan.HasParts() {
 		version = judge.V2
 	}
-	r, err := measure.New(part, chosen, measure.Judges(), repeats, version)
+	judges, err := runner.Chosen(measure.Judges(), func(j measure.Judge) runner.Config { return j.Config }, o.readers)
 	if err != nil {
 		return nil, "", err
 	}
-	return &r.Run, fmt.Sprintf("%s: %s, %d of them with frames, by %d judges, %s, in version %d of the prompt.\n",
-		partName(part), count(len(chosen), "sheet"), r.Framed(), len(measure.Judges()), count(repeats, "repeat"), version), nil
+	r, err := measure.New(part, chosen, judges, repeats, version)
+	if err != nil {
+		return nil, "", err
+	}
+	var by []string
+	for _, j := range judges {
+		by = append(by, j.Name)
+	}
+	return &r.Run, fmt.Sprintf("%s: %s, %d of them with frames, by %s (%s), %s, in version %d of the prompt.\n",
+		partName(part), count(len(chosen), "sheet"), r.Framed(), count(len(judges), "judge"), strings.Join(by, ", "), count(repeats, "repeat"), version), nil
 }
 
 // planReading plans a run of the reading over a part of its sets, and says what it asks: the sheets
@@ -393,30 +411,22 @@ func planReading(sets []sheetFlags, part string, o options) (*runner.Run, string
 			keyed++
 		}
 	}
-	readers := reading.Readers()
+	readers, err := runner.Chosen(reading.Readers(), readerConfig, o.readers)
+	if err != nil {
+		return nil, "", err
+	}
 	r, err := reading.New(part, names, all, readers, repeats, o.reads)
 	if err != nil {
 		return nil, "", err
 	}
 	planned := reading.PlannedOf(r)
-	var once, repeated []string
-	for _, rd := range readers {
-		if rd.Once {
-			once = append(once, rd.Name)
-		} else {
-			repeated = append(repeated, rd.Name)
-		}
-	}
-	by := strings.Join(repeated, " and ") + " in " + count(repeats, "repeat")
-	if len(once) > 0 {
-		by = strings.Join(once, " and ") + " once, " + by
-	}
+	by, repeated := byReaders(readers, repeats)
 	var what []string
 	if o.reads.Keys {
 		what = append(what, fmt.Sprintf("by %s, without a key and with the right key, and with the false keys on %s", by, count(keyed, "correct sheet")))
 	}
-	if o.reads.Heights || o.reads.States {
-		what = append(what, fmt.Sprintf("once by %s without a key, %s at other heights of digits and %s of %s", strings.Join(repeated, " and "), count(planned.Heights, "call"), count(planned.StateCalls, "call"), count(planned.States, "state")))
+	if (o.reads.Heights || o.reads.States) && repeated != "" {
+		what = append(what, fmt.Sprintf("once by %s without a key, %s at other heights of digits and %s of %s", repeated, count(planned.Heights, "call"), count(planned.StateCalls, "call"), count(planned.States, "state")))
 	}
 	return r, fmt.Sprintf("%s: %s of %s (%s), %s, in version %d of the reading's prompt.\n",
 		partName(part), count(len(all), "sheet"), count(len(sets), "set"), strings.Join(counts, ", "), strings.Join(what, "; and "), reading.Version), nil
@@ -449,7 +459,10 @@ func planHint(sets []sheetFlags, part string, o options) (*runner.Run, string, e
 	if len(wrong) == 0 {
 		return nil, "", fmt.Errorf("%s: no sheet with a mistake (%s), and a hint is asked only after a wrong answer", partName(part), strings.Join(counts, ", "))
 	}
-	tutors := hint.Tutors()
+	tutors, err := runner.Chosen(hint.Tutors(), func(tu hint.Tutor) runner.Config { return tu.Config }, o.readers)
+	if err != nil {
+		return nil, "", err
+	}
 	var by []string
 	for _, tu := range tutors {
 		by = append(by, tu.Name)
@@ -472,25 +485,24 @@ func planWorkbook(_ []sheetFlags, part string, o options) (*runner.Run, string, 
 		return nil, "", err
 	}
 	pages := workbook.Pages(wb, part)
-	readers := workbook.Readers()
+	readers, err := runner.Chosen(workbook.Readers(), readerConfig, o.readers)
+	if err != nil {
+		return nil, "", err
+	}
 	r, err := workbook.New(part, o.workbook, o.seed, pages, readers, o.repeats, o.workbookReads)
 	if err != nil {
 		return nil, "", err
 	}
-	var once, repeated []string
-	for _, rd := range readers {
-		if rd.Once {
-			once = append(once, rd.Name)
-		} else {
-			repeated = append(repeated, rd.Name)
-		}
-	}
+	by, repeated := byReaders(readers, o.repeats)
 	var what []string
-	if o.workbookReads.Captions {
-		what = append(what, fmt.Sprintf("bare and with the lines of the items at %d px, by %s once and %s in %s", render.Digit, strings.Join(once, " and "), strings.Join(repeated, " and "), count(o.repeats, "repeat")))
+	switch {
+	case o.workbookReads.Captions:
+		what = append(what, fmt.Sprintf("bare and with the lines of the items at %d px, by %s", render.Digit, by))
+	case o.workbookReads.Bare:
+		what = append(what, fmt.Sprintf("bare at %d px, by %s", render.Digit, by))
 	}
-	if o.workbookReads.Heights {
-		what = append(what, fmt.Sprintf("bare at 16, 24 and 48 px, once by %s", strings.Join(repeated, " and ")))
+	if o.workbookReads.Heights && repeated != "" {
+		what = append(what, fmt.Sprintf("bare at 16, 24 and 48 px, once by %s", repeated))
 	}
 	return r, fmt.Sprintf("%s: %s of the workbook %s, drawn with the seed %d, %s, a call a page, in version %d of the prompt of the workbook.\n",
 		partName(part), count(len(pages), "page"), o.workbook, o.seed, strings.Join(what, "; and "), workbook.Version), nil
@@ -504,7 +516,10 @@ func planEssays(_ []sheetFlags, part string, o options) (*runner.Run, string, er
 		return nil, "", err
 	}
 	essays := essay.Essays(es, part)
-	readers := essay.Readers()
+	readers, err := runner.Chosen(essay.Readers(), readerConfig, o.readers)
+	if err != nil {
+		return nil, "", err
+	}
 	r, err := essay.New(part, o.essays, o.seed, es, essays, readers, o.repeats)
 	if err != nil {
 		return nil, "", err
@@ -516,6 +531,31 @@ func planEssays(_ []sheetFlags, part string, o options) (*runner.Run, string, er
 	return r, fmt.Sprintf("%s: %s of %s, drawn with the seed %d, at %d px, by %s in %s, a call an essay, in version %d of the prompt of the assessment by the rubric.\n",
 		partName(part), count(len(essays), "essay"), o.essays, o.seed, render.Digit, strings.Join(names, " and "), count(o.repeats, "repeat"), essay.Version), nil
 }
+
+// byReaders says who reads in a run: those that read once, and the others in their repeats; and
+// names the others alone, or none, for what only they read.
+func byReaders(readers []runner.Reader, repeats int) (by, repeated string) {
+	var once, rest []string
+	for _, rd := range readers {
+		if rd.Once {
+			once = append(once, rd.Name)
+		} else {
+			rest = append(rest, rd.Name)
+		}
+	}
+	repeated = strings.Join(rest, " and ")
+	var parts []string
+	if len(once) > 0 {
+		parts = append(parts, strings.Join(once, " and ")+" once")
+	}
+	if len(rest) > 0 {
+		parts = append(parts, repeated+" in "+count(repeats, "repeat"))
+	}
+	return strings.Join(parts, ", "), repeated
+}
+
+// readerConfig is the configuration of a reader, by which runner.Chosen takes the readers a run names.
+func readerConfig(rd runner.Reader) runner.Config { return rd.Config }
 
 // partName is what the run says of its part.
 func partName(part string) string {

@@ -263,13 +263,26 @@ func verdictCell(v value.Slot) string {
 	return name
 }
 
+// A run of the bare pages alone by the configurations named — the spaces in the list are no part of a
+// name — asks each once a page and repeat, as the platform reads them, with no line of the item (R50).
+func TestRunWorkbookBare(t *testing.T) {
+	log := filepath.Join(t.TempDir(), "workbook.jsonl")
+	code, out, errs := runMeasure("yes\n", "-kind", "workbook", "-workbook", theWorkbook, "-part", "dev", "-stub", "-repeats", "1", "-reads", "bare", "-readers", "sonnet-low, opus-medium", "-log", log)
+	if code != exitOK || !strings.Contains(out, "bare at 32 px, by opus-medium once, sonnet-low in 1 repeat, a call a page,") || !strings.Contains(out, "10 calls") {
+		t.Fatalf("the run ends %d:\n%s%s", code, out, errs)
+	}
+	if code, out, errs := runIt("report", log); code != exitOK || !strings.Contains(out, "sonnet-low, bare: 55 of 55 readings right") {
+		t.Errorf("the report of the bare pages ends %d: %s%s", code, out, errs)
+	}
+}
+
 // A run of the reading of the workbook on the stub goes the whole way, a call a page, and logs the
 // pages and the calls; it takes no sheets, logs in synthetic by default, and reads captions and
 // heights alone.
 func TestRunWorkbook(t *testing.T) {
 	log := filepath.Join(t.TempDir(), "workbook.jsonl")
 	code, out, errs := runMeasure("yes\n", "-kind", "workbook", "-workbook", theWorkbook, "-part", "dev", "-stub", "-repeats", "1", "-log", log)
-	if code != exitOK || !strings.HasPrefix(out, "The dev part: 5 pages of the workbook "+theWorkbook+", drawn with the seed 1, bare and with the lines of the items at 32 px, by opus-high once and haiku-low and haiku-low-no-thinking in 1 repeat, a call a page, in version 1 of the prompt of the workbook.\n30 calls, expected to cost $") {
+	if code != exitOK || !strings.HasPrefix(out, "The dev part: 5 pages of the workbook "+theWorkbook+", drawn with the seed 1, bare and with the lines of the items at 32 px, by opus-high once, haiku-low and haiku-low-no-thinking in 1 repeat, a call a page, in version 1 of the prompt of the workbook.\n30 calls, expected to cost $") {
 		t.Fatalf("the run ends %d:\n%s%s", code, out, errs)
 	}
 	data, err := os.ReadFile(log)
@@ -289,7 +302,7 @@ func TestRunWorkbook(t *testing.T) {
 		{[]string{"-dir", "x"}, "-dir names sheets, and the workbook reads its own file"},
 		{[]string{"-essays", theEssays}, "-essays is not for -kind workbook"},
 		{[]string{"-set", "a,b,c"}, "-set names sheets"},
-		{[]string{"-reads", "keys"}, `-reads is "keys": for the workbook, give captions or heights`},
+		{[]string{"-reads", "keys"}, `-reads is "keys": for the workbook, give bare, captions or heights`},
 		// The tests run in cmd/tutor-eval, where synthetic is a folder git does not ignore.
 		{nil, "cmd/tutor-eval/synthetic/runs is in the git work tree"},
 	} {

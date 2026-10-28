@@ -43,13 +43,17 @@ type Judge struct {
 	Output int
 }
 
-// Judges are the three judges of the measurement, the three configurations of the runner: Opus 5.5
-// at high, Haiku 5.5 at low, and Haiku 5.5 at low without thinking (R24). A call is expected to
-// write about 50 tokens, and Haiku with thinking about 300 (architecture 3.1). A configuration
-// without its output here is a mistake of the code, and Judges panics on it rather than estimate
-// its calls at nothing.
+// Judges are the judges of the measurement, the configurations of the runner: Opus 5.5 at high,
+// Haiku 5.5 at low, and Haiku 5.5 at low without thinking (R24), and the four the extended
+// measurement adds (R50). A call is expected to write about 50 tokens, Haiku with thinking about 300
+// (architecture 3.1), Sonnet with thinking about 200 and Haiku at medium about 400. A configuration
+// without its output here is a mistake of the code, and Judges panics on it rather than estimate its
+// calls at nothing.
 func Judges() []Judge {
-	outputs := map[string]int{"opus-high": 50, "haiku-low": 300, "haiku-low-no-thinking": 50}
+	outputs := map[string]int{
+		"opus-high": 50, "haiku-low": 300, "haiku-low-no-thinking": 50,
+		"opus-medium": 50, "sonnet-low": 200, "sonnet-low-no-thinking": 50, "haiku-medium": 400,
+	}
 	var out []Judge
 	for _, c := range runner.Configs() {
 		n, ok := outputs[c.Name]

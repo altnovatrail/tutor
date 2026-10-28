@@ -38,7 +38,7 @@ func TestRunOnTheStub(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("the run ends %d: %s%s", code, out, errs)
 	}
-	if !strings.HasPrefix(out, "The test part: 5 sheets, 2 of them with frames, by 3 judges, 1 repeat, in version 1 of the prompt.\n42 calls, expected to cost $0.16, ") ||
+	if !strings.HasPrefix(out, "The test part: 5 sheets, 2 of them with frames, by 3 judges (opus-high, haiku-low, haiku-low-no-thinking), 1 repeat, in version 1 of the prompt.\n42 calls, expected to cost $0.16, ") ||
 		!strings.Contains(out, "The stub answers them by the markup and asks no one") || !strings.Contains(out, "Type yes to start the run: 42 calls made, ") {
 		t.Errorf("the run says\n%s", out)
 	}
@@ -181,6 +181,8 @@ func TestRunRefuses(t *testing.T) {
 		{[]string{"-part", "test", "-stub", "-kind", "rubric"}, exitUsage, `-kind is "rubric": give essay or hint or judge or reading or workbook`},
 		{[]string{"-part", "test", "-stub", "-repeats", "0"}, exitUsage, "-repeats must be 1 or more"},
 		{[]string{"-part", "test", "-stub", "-max-usd", "0"}, exitUsage, "-max-usd above 0"},
+		{[]string{"-part", "test", "-stub", "-readers", "opus-high,gpt-6"}, exitUsage, `-readers is "opus-high,gpt-6": no configuration "gpt-6": give opus-high, haiku-low`},
+		{[]string{"-part", "test", "-stub", "-readers", ""}, exitUsage, `no configuration ""`},
 		{[]string{"-part", "test"}, exitUsage, "TUTOR_ANTHROPIC_API_KEY is not set"},
 		{[]string{"-part", "test", "-stub"}, exitFail, "the split is not made yet"},
 	} {

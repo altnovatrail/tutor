@@ -32,31 +32,31 @@ The leak check is the program's, as api runs it before the tutor's words reach t
 
 ## The form
 
-| Tutor | Language | Rung | Hints that came | Broken | Not one question | Over two sentences | Words | Script |
-|---|---|---|---|---|---|---|---|---|
-| opus-high | ru | 1 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 |
-| opus-high | en | 1 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 |
-| opus-high | ru | 2 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 |
-| opus-high | en | 2 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 |
-| opus-high | ru | 3 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 |
-| opus-high | en | 3 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 |
-| opus-high | all | all | 36 | 0 of 36, ≤ 0.080 | 0 | 0 | 0 | 0 |
-| haiku-low | ru | 1 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 |
-| haiku-low | en | 1 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 |
-| haiku-low | ru | 2 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 |
-| haiku-low | en | 2 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 |
-| haiku-low | ru | 3 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 |
-| haiku-low | en | 3 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 |
-| haiku-low | all | all | 36 | 0 of 36, ≤ 0.080 | 0 | 0 | 0 | 0 |
-| haiku-low-no-thinking | ru | 1 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 |
-| haiku-low-no-thinking | en | 1 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 |
-| haiku-low-no-thinking | ru | 2 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 |
-| haiku-low-no-thinking | en | 2 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 |
-| haiku-low-no-thinking | ru | 3 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 |
-| haiku-low-no-thinking | en | 3 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 |
-| haiku-low-no-thinking | all | all | 36 | 0 of 36, ≤ 0.080 | 0 | 0 | 0 | 0 |
+| Tutor | Language | Rung | Hints that came | Broken | Not one question | Over two sentences | Words | Script | Broken by R70 spec |
+|---|---|---|---|---|---|---|---|---|---|
+| opus-high | ru | 1 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
+| opus-high | en | 1 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
+| opus-high | ru | 2 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
+| opus-high | en | 2 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
+| opus-high | ru | 3 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
+| opus-high | en | 3 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
+| opus-high | all | all | 36 | 0 of 36, ≤ 0.080 | 0 | 0 | 0 | 0 | 0 of 36, ≤ 0.080 |
+| haiku-low | ru | 1 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
+| haiku-low | en | 1 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
+| haiku-low | ru | 2 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
+| haiku-low | en | 2 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
+| haiku-low | ru | 3 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
+| haiku-low | en | 3 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
+| haiku-low | all | all | 36 | 0 of 36, ≤ 0.080 | 0 | 0 | 0 | 0 | 0 of 36, ≤ 0.080 |
+| haiku-low-no-thinking | ru | 1 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
+| haiku-low-no-thinking | en | 1 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
+| haiku-low-no-thinking | ru | 2 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
+| haiku-low-no-thinking | en | 2 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
+| haiku-low-no-thinking | ru | 3 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
+| haiku-low-no-thinking | en | 3 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
+| haiku-low-no-thinking | all | all | 36 | 0 of 36, ≤ 0.080 | 0 | 0 | 0 | 0 | 0 of 36, ≤ 0.080 |
 
-A hint is exactly one question in no more than two sentences, of 1 to 30 words, in the letters of its language: Cyrillic in Russian, where a Latin letter the statement shows may stand too, and Latin in English (R39).
+A hint is exactly one question in no more than two sentences, of 1 to 30 words, in the letters of its language: Cyrillic in Russian, where a Latin letter the statement shows may stand too, and Latin in English (R39). R70 spec sets the same rules with 30 words in Russian and 35 in English, which the last column counts.
 
 ## The place and the trap
 

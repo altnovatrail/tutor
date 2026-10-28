@@ -127,3 +127,32 @@ func TestLeakTask(t *testing.T) {
 		t.Errorf("the equation gives %v away", got)
 	}
 }
+
+// R70 spec lets a hint have 30 words in Russian and 35 in English, and a language the measurement did
+// not measure has no limit; its other rules are those of Form. A hint of 33 words breaks the form of
+// the measurement in either language, but that of R70 spec only in Russian.
+func TestPlatformForm(t *testing.T) {
+	if hint.PlatformWords(sample.LangRussian) != 30 || hint.PlatformWords(sample.LangEnglish) != 35 || hint.PlatformWords("de") != 0 {
+		t.Errorf("the limits are %d, %d and %d", hint.PlatformWords(sample.LangRussian), hint.PlatformWords(sample.LangEnglish), hint.PlatformWords("de"))
+	}
+	en := strings.TrimSpace(strings.Repeat("one ", 32)) + " now?"
+	ru := strings.TrimSpace(strings.Repeat("раз ", 32)) + " сейчас?"
+	for _, c := range []struct {
+		text string
+		lang sample.Lang
+		want bool
+	}{
+		{en, sample.LangEnglish, false},
+		{ru, sample.LangRussian, true},
+		{"", sample.LangEnglish, true},
+		{"Look. Count. Again. Now?", sample.LangEnglish, true},
+	} {
+		breaches := hint.Form(c.text, c.lang, "")
+		if got := hint.PlatformBroken(c.text, c.lang, breaches); got != c.want {
+			t.Errorf("PlatformBroken(%q, %s, %v) = %v", c.text, c.lang, breaches, got)
+		}
+	}
+	if b := hint.Form(en, sample.LangEnglish, ""); len(b) != 1 || b[0] != hint.BreachWords {
+		t.Errorf("the form of the measurement finds %v in a hint of 33 words", b)
+	}
+}

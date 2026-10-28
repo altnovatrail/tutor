@@ -25,14 +25,16 @@ const CallKind = "reading"
 // does in the reduced matrix, without the other heights of digits and the states (R08; R28).
 type Reader = runner.Reader
 
-// Readers are the three readers, the three configurations of the runner by their names. An
-// observation of a sheet comes to about 200 tokens, and Haiku with thinking writes about 300 more;
-// Opus reads each condition once, and neither the other heights nor the states (docs/architecture.md,
-// 3.4). A configuration without its reader
-// here is a mistake of the code, and Readers panics on it rather than estimate its calls at
-// nothing or repeat it unasked.
+// Readers are the readers, the configurations of the runner by their names. An observation of a
+// sheet comes to about 200 tokens, and Haiku with thinking writes about 300 more; Opus reads each
+// condition once, and neither the other heights nor the states (docs/architecture.md, 3.4). The four the extended measurement adds (R50) are estimated so: Opus at medium as at high, Sonnet with thinking between Haiku and Opus, without thinking as Haiku without it, and Haiku at medium above Haiku at low. A
+// configuration without its reader here is a mistake of the code, and Readers panics on it rather
+// than estimate its calls at nothing or repeat it unasked.
 func Readers() []Reader {
-	return runner.ReadersOf("reading", map[string]int{"opus-high": 200, "haiku-low": 500, "haiku-low-no-thinking": 200}, "opus-high")
+	return runner.ReadersOf("reading", map[string]int{
+		"opus-high": 200, "haiku-low": 500, "haiku-low-no-thinking": 200,
+		"opus-medium": 200, "sonnet-low": 400, "sonnet-low-no-thinking": 200, "haiku-medium": 700,
+	}, "opus-high", "opus-medium")
 }
 
 // FalseKeyed reports whether a sheet is read with false keys: a correct sheet whose task has them.
@@ -192,6 +194,9 @@ func New(part string, sets []string, chosen []sheets.Chosen, readers []Reader, r
 	if !slices.ContainsFunc(readers, func(rd Reader) bool { return !rd.Once }) {
 		cut.Heights, cut.States = false, false
 	}
+	if len(cut.Names()) == 0 {
+		return nil, fmt.Errorf("reading: the run asks nothing: %s are read only by readers that do not read once", strings.Join(reads.Names(), " and "))
+	}
 	var all []sheetPlan
 	for _, sh := range chosen {
 		pl, err := plan(sh, cut)
@@ -206,7 +211,7 @@ func New(part string, sets []string, chosen []sheets.Chosen, readers []Reader, r
 		records = append(records, rd.Record())
 	}
 	r.Record = func(h runner.Head) any {
-		return RunRecord{Kind: "run", CallKind: CallKind, Time: h.Time, Part: part, Sets: sets, Readers: records, Repeats: repeats, Reads: reads.Names(), MaxUSD: h.MaxUSD, Estimate: h.Estimate,
+		return RunRecord{Kind: "run", CallKind: CallKind, Time: h.Time, Part: part, Sets: sets, Readers: records, Repeats: repeats, Reads: cut.Names(), MaxUSD: h.MaxUSD, Estimate: h.Estimate,
 			Prompt: Fingerprint(), PromptVersion: Version}
 	}
 	add := func(rd Reader, rep int, proto *step) {
