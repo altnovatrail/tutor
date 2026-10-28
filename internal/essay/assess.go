@@ -43,7 +43,7 @@ const (
 const instructions = `You assess a learner's short essay, handwritten in English, by the criteria of its task's rubric, and write the learner short feedback. Image 1 shows the essay as the learner left it.
 
 1. "text" is the essay exactly as it is written: its title, if it has one, on a line of its own, and then the text. Do not correct anything: a word spelled wrong stays as it is spelled, a small letter stays small, and a missing full stop stays missing.
-2. Judge the essay by each criterion of the rubric in the block <task_data>, and by nothing else. "criteria" has one entry for each criterion, in the order of the rubric: "id" is the criterion's ID; "met" is true when the essay meets the criterion and false when it does not; "evidence" says what in the essay you judge it by, quoting the essay where you can.
+2. Judge the essay by each criterion of the rubric in the block <task_data>, and by nothing else. "criteria" has one entry for each criterion, in the order of the rubric: "id" is the criterion's ID; "evidence" says what in the essay you judge it by, quoting the essay where you can; and "met" follows from the evidence: true when the essay meets the criterion and false when it does not.
 3. Judge only what the learner wrote, as it is written. A criterion that the essay meets is met, even if the essay could be better in other ways.
 4. "feedback" is what the learner reads: no more than three short sentences and 60 words in all. Say first what the essay does well, and then what to work on, by the criteria. Write it in English, in words that suit the learner that the request describes.
 5. The feedback never writes the essay for the learner: it gives no sentence, title or phrase to copy, and does not correct the learner's words. It may quote the learner's own words in quotation marks, exactly as they are written.
@@ -91,10 +91,10 @@ func Request(e *sample.Essay, rubric []sample.Criterion, pic *Picture) provider.
 // schemaProperties are the properties of the answer, as JSON, in the order a model writes them.
 var schemaProperties = json.RawMessage(`{
 		"text": {"type": "string"},
-		"criteria": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["id", "met", "evidence"], "properties": {
+		"criteria": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["id", "evidence", "met"], "properties": {
 			"id": {"type": "string"},
-			"met": {"type": "boolean"},
-			"evidence": {"type": "string"}
+			"evidence": {"type": "string"},
+			"met": {"type": "boolean"}
 		}}},
 		"feedback": {"type": "string"}
 	}`)
@@ -115,11 +115,12 @@ type Answer struct {
 	Feedback string      `json:"feedback"`
 }
 
-// Judgement is a model's judgement of a criterion: its ID, whether the essay meets it, and on what.
+// Judgement is a model's judgement of a criterion: its ID, on what in the essay it judges it, and
+// whether the essay meets it. The evidence comes first, so that the judgement follows from it (T84).
 type Judgement struct {
 	ID       string `json:"id"`
-	Met      bool   `json:"met"`
 	Evidence string `json:"evidence"`
+	Met      bool   `json:"met"`
 }
 
 // Read takes a model's answer apart as strictly as the schema: the text, the criteria and the

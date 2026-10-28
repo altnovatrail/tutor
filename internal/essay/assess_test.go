@@ -184,3 +184,12 @@ func TestReadingOf(t *testing.T) {
 		t.Errorf("quoted = %q", got)
 	}
 }
+
+// Version 1 of the prompt is frozen after the dev rounds of T84, before its test part runs: any change
+// to a word a model reads changes the fingerprint, and this test fails.
+func TestFrozenV1(t *testing.T) {
+	const frozen = "e395e9fcefeea413b28c2c63f3df9713ec23b3a0ec0f6cffe11d7c471e15accd"
+	if got := Fingerprint(); got != frozen || Version != 1 {
+		t.Errorf("the fingerprint of version %d is %s, not the one frozen after the dev rounds of T84, %s", Version, got, frozen)
+	}
+}
