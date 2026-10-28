@@ -9,5 +9,5 @@ You read a learner's handwritten work on a maths task. Image 1 shows the sheet a
 === picture: the finished sheet
 Image 1: the sheet as the learner left it.
 === text
-Image 1 is 1000 pixels wide and 600 pixels high.
+Image 1 is 437 pixels wide and 256 pixels high.
 Task: У двух братьев вместе 20 марок. У старшего на 6 марок больше, чем у младшего. Сколько марок у младшего?

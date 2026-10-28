@@ -33,13 +33,20 @@ var partCaps = map[string]float64{"dev": 3, "test": 6, "all": 2}
 // its sets of sheets and says what the run asks (T67): the judge, and the reading (T68). The other
 // kinds of epic E4 come with their tasks.
 var plans = map[string]struct {
-	plan func(sets []sheetFlags, part string, repeats int) (*runner.Run, string, error)
+	plan func(sets []sheetFlags, part string, o options) (*runner.Run, string, error)
 	// several is whether the kind runs over several sets: the judge runs on one, since its
 	// criterion counts the test part of one set (R28).
 	several bool
 }{
 	"judge":   {plan: planJudge},
 	"reading": {plan: planReading, several: true},
+}
+
+// options are what a run is asked besides its sets and part: how many times each call is repeated,
+// and what a reading reads (T69).
+type options struct {
+	repeats int
+	reads   reading.Reads
 }
 
 // setsFlag is the flag -set, given once for each set of sheets: its directory, bank and plan.
@@ -72,6 +79,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	flags.Var(&setValues, "set", "a set of sheets, DIR,BANK,PLAN, in place of -dir, -bank and -plan; given once for each set, for a reading over several")
 	part := flags.String("part", "", "the part of the split to run, dev or test, or all for every sheet of the plan, without the split")
 	repeats := flags.Int("repeats", 3, "how many times each call is repeated: of every judge, and of every reader but Opus, which reads once")
+	readsList := flags.String("reads", "keys", "what a reading reads, joined by commas: keys, the finished sheet without a key, with the right key and with the false keys; heights, at 16, 24 and 48 px; states, the sheet as it was while it was written")
 	maxUSD := flags.Float64("max-usd", 0, "start no call that could take the run past this many US dollars; $3 for dev, $6 for test and $2 for all by default")
 	logPath := flags.String("log", "", "the log of the run, a new file out of git: in samples or synthetic, and in samples alone for sheets there; by default in runs next to the directory of the sheets")
 	stub := flags.Bool("stub", false, "ask no model: a stub answers by the markup, and the run needs no key and no network")
@@ -86,6 +94,15 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	k, ok := plans[*kind]
 	if !ok {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -kind is %q: give %s\n", *kind, strings.Join(slices.Sorted(maps.Keys(plans)), " or "))
+		return exitUsage
+	}
+	reads, err := reading.ParseReads(*readsList)
+	switch {
+	case set["reads"] && *kind != "reading":
+		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -reads is for -kind reading, and the %s reads nothing of it\n", *kind)
+		return exitUsage
+	case err != nil:
+		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -reads is %q: give keys, heights or states, joined by commas\n", *readsList)
 		return exitUsage
 	}
 	if len(sets) > 1 && !k.several {
@@ -115,7 +132,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	}
 
 	// What follows the plan is the same for every kind.
-	r, what, err := k.plan(sets, *part, *repeats)
+	r, what, err := k.plan(sets, *part, options{repeats: *repeats, reads: reads})
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: %v\n", err)
 		return exitFail
@@ -250,7 +267,8 @@ func setName(f sheetFlags) string { return filepath.Base(absolute(f.dir)) }
 // planJudge plans a run of the judge over a part of its one set, and says what it asks: its
 // sheets, how many of them have frames, the judges, the repeats and the version of the prompt,
 // which is that of the plan.
-func planJudge(sets []sheetFlags, part string, repeats int) (*runner.Run, string, error) {
+func planJudge(sets []sheetFlags, part string, o options) (*runner.Run, string, error) {
+	repeats := o.repeats
 	plan, chosen, err := partSheets(sets[0], setName(sets[0]), part)
 	if err != nil {
 		return nil, "", err
@@ -268,9 +286,11 @@ func planJudge(sets []sheetFlags, part string, repeats int) (*runner.Run, string
 }
 
 // planReading plans a run of the reading over a part of its sets, and says what it asks: the sheets
-// of each set, the readers and their repeats, and the conditions, the false keys only on correct
-// sheets (R03; T68).
-func planReading(sets []sheetFlags, part string, repeats int) (*runner.Run, string, error) {
+// of each set, the readers and their repeats, and what it reads: the conditions, the false keys
+// only on correct sheets (R03; T68), and the other heights and the states, by the readers that do
+// not read once (T69).
+func planReading(sets []sheetFlags, part string, o options) (*runner.Run, string, error) {
+	repeats := o.repeats
 	var names, counts []string
 	var all []sheets.Chosen
 	for _, s := range sets {
@@ -289,10 +309,11 @@ func planReading(sets []sheetFlags, part string, repeats int) (*runner.Run, stri
 		}
 	}
 	readers := reading.Readers()
-	r, err := reading.New(part, names, all, readers, repeats)
+	r, err := reading.New(part, names, all, readers, repeats, o.reads)
 	if err != nil {
 		return nil, "", err
 	}
+	planned := reading.PlannedOf(r)
 	var once, repeated []string
 	for _, rd := range readers {
 		if rd.Once {
@@ -305,8 +326,15 @@ func planReading(sets []sheetFlags, part string, repeats int) (*runner.Run, stri
 	if len(once) > 0 {
 		by = strings.Join(once, " and ") + " once, " + by
 	}
-	return r, fmt.Sprintf("%s: %s of %s (%s), by %s, without a key and with the right key, and with the false keys on %s, in version %d of the reading's prompt.\n",
-		partName(part), count(len(all), "sheet"), count(len(sets), "set"), strings.Join(counts, ", "), by, count(keyed, "correct sheet"), reading.Version), nil
+	var what []string
+	if o.reads.Keys {
+		what = append(what, fmt.Sprintf("by %s, without a key and with the right key, and with the false keys on %s", by, count(keyed, "correct sheet")))
+	}
+	if o.reads.Heights || o.reads.States {
+		what = append(what, fmt.Sprintf("once by %s without a key, %s at other heights of digits and %s of %s", strings.Join(repeated, " and "), count(planned.Heights, "call"), count(planned.StateCalls, "call"), count(planned.States, "state")))
+	}
+	return r, fmt.Sprintf("%s: %s of %s (%s), %s, in version %d of the reading's prompt.\n",
+		partName(part), count(len(all), "sheet"), count(len(sets), "set"), strings.Join(counts, ", "), strings.Join(what, "; and "), reading.Version), nil
 }
 
 // partName is what the run says of its part.

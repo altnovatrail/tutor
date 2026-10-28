@@ -11,7 +11,7 @@ You are also given a key and a solution of the task, in the block <key_and_solut
 === picture: the finished sheet
 Image 1: the sheet as the learner left it.
 === text
-Image 1 is 1000 pixels wide and 600 pixels high.
+Image 1 is 349 pixels wide and 200 pixels high.
 Task: Вычисли 17 + 49 − 14 × 2.
 
 <key_and_solution>

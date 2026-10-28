@@ -9,5 +9,5 @@ You read a learner's handwritten work on a maths task. Image 1 shows the sheet a
 === picture: the finished sheet
 Image 1: the sheet as the learner left it.
 === text
-Image 1 is 1000 pixels wide and 600 pixels high.
+Image 1 is 349 pixels wide and 200 pixels high.
 Task: Вычисли 17 + 49 − 14 × 2.
