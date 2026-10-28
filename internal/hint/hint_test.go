@@ -190,3 +190,12 @@ func TestFingerprint(t *testing.T) {
 		t.Error("the instructions do not tell the block of data and the rungs")
 	}
 }
+
+// Version 1 of the prompt is frozen after the two dev rounds of T76, before its test part runs: any
+// change to a word a tutor reads changes the fingerprint, and this test fails.
+func TestFrozenV1(t *testing.T) {
+	const frozen = "d8a2f994b15559ee489b62fcfeac51544ffd3d627444d1e20bedcb63b11654cc"
+	if got := hint.Fingerprint(); got != frozen || hint.Version != 1 {
+		t.Errorf("the fingerprint of version %d is %s, not the one frozen after the dev rounds of T76, %s", hint.Version, got, frozen)
+	}
+}

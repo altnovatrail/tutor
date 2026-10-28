@@ -55,7 +55,7 @@ func TestForm(t *testing.T) {
 			t.Errorf("%q in %s: %q, want %q", c.text, c.lang, got, c.want)
 		}
 	}
-	if !strings.Contains(hint.Instructions(), fmt.Sprintf("two short sentences and %d words", hint.MaxWords)) {
+	if !strings.Contains(hint.Instructions(), fmt.Sprintf("two short sentences, no more than %d words in all", hint.MaxWords)) {
 		t.Error("the instructions do not name the limit of words")
 	}
 }
