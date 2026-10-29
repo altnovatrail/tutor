@@ -20,9 +20,15 @@ import (
 // verdict by the box's check, and each item by its boxes (R56 spec); a blank box goes to no model,
 // and its verdict is unreadable, blank (R53 spec, amendment of 2026-10-27).
 
-// Version is the version of the prompt of the reading of the workbook. It is frozen before the test
-// (T80), as the reading's was (T73).
-const Version = 1
+// Version is the version of the prompt of the reading of the workbook, frozen before the test of the
+// run that measures it, as the reading's was (T73). Version 1, frozen in T80, read a digit written
+// mirrored as that digit (R56 spec, amendment of 2026-10-28); version 2 has the reader mark it, and
+// the box is then unreadable, so that the learner writes it again (R56 spec, amendment of
+// 2026-10-29; T99). MirroredVersion is the first version that marks it.
+const (
+	Version         = 2
+	MirroredVersion = 2
+)
 
 // Condition is what a reading of a page is given besides the crops: the bare crops, or each with
 // the line of its item as the learner sees it, a caption (T80).
@@ -40,9 +46,10 @@ const (
 	base = `You read a learner's answers handwritten in the boxes of a workbook page. Each image shows what is written in one box, cut out of the page: the frame of the box and the printed line around it are not shown. Write down what each box holds, as it is written: your answer is an observation, and a program decides from it whether each answer is right. Do not decide it yourself, do not correct a mistake and do not finish what is unfinished.
 
 1. Give one cell for each image, in the order of the images. "item" and "slot" are the numbers the image's label gives: item 3, slot 2 is the second box of the third item.
-2. "text" is the answer in the box exactly as it is written: its digits, and a fraction as the numerator, a slash and the denominator, "3/4", whether it is written with a slash or as one number over a bar over another. Leave out writing that is crossed out. A digit written back to front is still that digit.
+2. "text" is the answer in the box exactly as it is written: its digits, and a fraction as the numerator, a slash and the denominator, "3/4", whether it is written with a slash or as one number over a bar over another. Leave out writing that is crossed out. Write a digit written back to front as the digit it is the right way round.
 3. "legible" is false when you cannot make out the answer for sure. "other_readings" lists the other ways the answer could be read where a digit of it could be read otherwise; it is empty when there are none.
-4. "blank" is true when the box holds no answer at all, and "text" is then empty.`
+4. "mirrored" is true when a digit in the box is written back to front, as in a mirror, and false when none is.
+5. "blank" is true when the box holds no answer at all, and "text" is then empty.`
 	captionBlock = `Each image's label also gives the line of its item as the learner sees it, with [ ] for each box. Read only what the image shows.`
 )
 
@@ -93,12 +100,13 @@ func Request(pg *sample.WorkbookPage, cells []Cell, c Condition) provider.Reques
 
 // schemaProperties are the properties of the answer, as JSON, in the order a model writes them.
 var schemaProperties = json.RawMessage(`{
-		"cells": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["item", "slot", "text", "legible", "other_readings", "blank"], "properties": {
+		"cells": {"type": "array", "items": {"type": "object", "additionalProperties": false, "required": ["item", "slot", "text", "legible", "other_readings", "mirrored", "blank"], "properties": {
 			"item": {"type": "integer"},
 			"slot": {"type": "integer"},
 			"text": {"type": "string"},
 			"legible": {"type": "boolean"},
 			"other_readings": {"type": "array", "items": {"type": "string"}},
+			"mirrored": {"type": "boolean"},
 			"blank": {"type": "boolean"}
 		}}}
 	}`)
@@ -112,13 +120,15 @@ var Schema = map[string]any{
 }
 
 // Reading is what a model read in a box: its place, the answer as it is written, whether it is
-// legible, how else it could be read, and whether the box is blank.
+// legible, how else it could be read, whether a digit of it is written mirrored, and whether the box
+// is blank.
 type Reading struct {
 	Item          int      `json:"item"`
 	Slot          int      `json:"slot"`
 	Text          string   `json:"text"`
 	Legible       bool     `json:"legible"`
 	OtherReadings []string `json:"other_readings"`
+	Mirrored      bool     `json:"mirrored"`
 	Blank         bool     `json:"blank"`
 }
 
@@ -133,6 +143,7 @@ func Read(answer string) ([]Reading, error) {
 			Text          *string   `json:"text"`
 			Legible       *bool     `json:"legible"`
 			OtherReadings *[]string `json:"other_readings"`
+			Mirrored      *bool     `json:"mirrored"`
 			Blank         *bool     `json:"blank"`
 		} `json:"cells"`
 	}
@@ -149,10 +160,10 @@ func Read(answer string) ([]Reading, error) {
 	}
 	out := []Reading{}
 	for i, c := range *raw.Cells {
-		if c.Item == nil || c.Slot == nil || c.Text == nil || c.Legible == nil || c.OtherReadings == nil || c.Blank == nil {
+		if c.Item == nil || c.Slot == nil || c.Text == nil || c.Legible == nil || c.OtherReadings == nil || c.Mirrored == nil || c.Blank == nil {
 			return nil, fmt.Errorf("workbook: cell %d lacks a field", i+1)
 		}
-		out = append(out, Reading{Item: *c.Item, Slot: *c.Slot, Text: *c.Text, Legible: *c.Legible, OtherReadings: *c.OtherReadings, Blank: *c.Blank})
+		out = append(out, Reading{Item: *c.Item, Slot: *c.Slot, Text: *c.Text, Legible: *c.Legible, OtherReadings: *c.OtherReadings, Mirrored: *c.Mirrored, Blank: *c.Blank})
 	}
 	return out, nil
 }
@@ -165,6 +176,9 @@ type Reason string
 const (
 	Illegible Reason = "illegible"
 	Ambiguous Reason = "ambiguous"
+	// Mirrored is a box with a digit the reader says is written mirrored: ambiguous by the rule of a
+	// digit written mirrored, and the learner writes it again (R56 spec, amendment of 2026-10-29).
+	Mirrored Reason = "mirrored"
 	// Missing is a filled box the answer has no cell for, and Twice one it has two cells for: both
 	// make the box unchecked, a failure of the reading.
 	Missing Reason = "missing"
@@ -187,7 +201,8 @@ type Box struct {
 //   - a blank box, which no model is shown, is unreadable, blank;
 //   - a failed call leaves every other box unchecked, and so does a box the answer has no cell for,
 //     or two;
-//   - a box read blank is unreadable, blank; one read illegible or with other readings, unreadable;
+//   - a box read blank is unreadable, blank; one with a digit read mirrored, unreadable, mirrored;
+//     one read illegible or with other readings, unreadable;
 //   - otherwise the box's check judges the answer: correct, not yet right with its trap, or
 //     unreadable when the answer is not in the notation of its kind (R56 spec).
 //
@@ -228,6 +243,8 @@ func judged(box Box, b sample.WorkbookBox, r Reading) Box {
 	switch {
 	case r.Blank:
 		box.Verdict, box.Reason = value.Unreadable, Reason(value.Blank)
+	case r.Mirrored:
+		box.Verdict, box.Reason = value.Unreadable, Mirrored
 	case !r.Legible:
 		box.Verdict, box.Reason = value.Unreadable, Illegible
 	case len(r.OtherReadings) > 0:
@@ -256,11 +273,23 @@ func Items(pg *sample.WorkbookPage, boxes []Box) []value.Verdict {
 }
 
 // Right is the answer of the reader who is always right, by what code wrote in the filled boxes of
-// the page: each read as written, legible, with no other reading.
+// the page: each read as written, legible, with no other reading, and marked mirrored when code drew
+// a digit of it mirrored.
 func Right(cells []Cell) []Reading {
 	out := []Reading{}
 	for _, c := range cells {
-		out = append(out, Reading{Item: c.Item, Slot: c.Slot, Text: *c.Box.Written, Legible: true, OtherReadings: []string{}})
+		out = append(out, Reading{Item: c.Item, Slot: c.Slot, Text: *c.Box.Written, Legible: true, OtherReadings: []string{}, Mirrored: c.Box.Scenario == sample.BoxMirrored})
 	}
 	return out
+}
+
+// Want is the verdict a right reading of a box comes to by the prompt of this version: the verdict
+// of the value written (sample.WorkbookBox.Verdict), but for a box with a digit written mirrored,
+// unreadable, mirrored, so that the learner writes it again (R56 spec, amendment of 2026-10-29).
+func Want(b sample.WorkbookBox) (value.Verdict, Reason, string) {
+	if b.Scenario == sample.BoxMirrored {
+		return value.Unreadable, Mirrored, ""
+	}
+	v := b.Verdict()
+	return v.Verdict, Reason(v.Reason), v.Trap
 }

@@ -93,6 +93,13 @@ func TestRunOnTheStub(t *testing.T) {
 		}
 		for i, b := range c.Boxes {
 			want := truth[c.Page][i]
+			if want.Scenario == sample.BoxMirrored {
+				// A digit written mirrored the right reader marks, and the learner writes it again.
+				if b.Verdict != value.Unreadable || b.Reason != workbook.Mirrored || want.Verdict != value.Correct {
+					t.Errorf("page %d, box %d.%d, %s at %d px, mirrored: %s %s, of a value %s", c.Page, b.Item, b.Slot, c.Condition, c.Digit, b.Verdict, b.Reason, want.Verdict)
+				}
+				continue
+			}
 			if b.Verdict != want.Verdict || b.Trap != want.Trap || (b.Verdict == value.Unreadable) != (want.Scenario == "blank") {
 				t.Errorf("page %d, box %d.%d, %s at %d px: %s %s, want %s %s", c.Page, b.Item, b.Slot, c.Condition, c.Digit, b.Verdict, b.Trap, want.Verdict, want.Trap)
 			}

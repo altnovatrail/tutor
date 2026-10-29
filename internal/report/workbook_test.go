@@ -2,6 +2,7 @@ package report_test
 
 import (
 	"bytes"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -203,5 +204,79 @@ func TestWorkbookRefused(t *testing.T) {
 		if _, err := report.NewWorkbook(l); err == nil {
 			t.Errorf("%s: a report", name)
 		}
+	}
+}
+
+// mirroredLog is workbookLog with a fourth item of a box with a digit written mirrored, "5" of the
+// key 5, in a log of the prompt version: bare at 32 px it is read on page 1 as unreadable and marked
+// mirrored, on page 2 as the digit and on page 3 as "not yet"; on page 1 the box written right is
+// marked mirrored too.
+func mirroredLog(version int) *workbook.Log {
+	l := workbookLog()
+	l.Run.PromptVersion = version
+	for i := range l.Sheets {
+		l.Sheets[i].Boxes = append(l.Sheets[i].Boxes, workbook.BoxRecord{Item: 4, Slot: 1, Kind: sample.KindNumber, Key: "5", Scenario: sample.BoxMirrored, Written: str("5"), Verdict: value.Correct})
+	}
+	for i := range l.Calls {
+		c := &l.Calls[i]
+		c.Boxes = append(c.Boxes, workbook.Box{Item: 4, Slot: 1, Text: str("5"), Verdict: value.Correct})
+		c.Items = append(c.Items, value.Correct)
+	}
+	for page, b := range map[int]workbook.Box{
+		1: {Item: 4, Slot: 1, Text: str("5"), Verdict: value.Unreadable, Reason: workbook.Mirrored},
+		3: {Item: 4, Slot: 1, Text: str("2"), Verdict: value.NotYet},
+	} {
+		c := call(l, page, workbook.Bare, 32)
+		c.Boxes[3], c.Items[3] = b, b.Verdict
+	}
+	c := call(l, 1, workbook.Bare, 32)
+	c.Boxes[0], c.Items[0] = workbook.Box{Item: 1, Slot: 1, Text: str("8"), Verdict: value.Unreadable, Reason: workbook.Mirrored}, value.Unreadable
+	return l
+}
+
+// The mirrored digits are counted by the rule of spec v0.3.3 in a log of every version: asked to
+// write again, read as the digit, false alarms, and other boxes marked mirrored. In a log of version
+// 2 "unreadable" on a box with one is right and not an extra "unreadable"; in one of version 1, which
+// read a mirrored digit as that digit, it is an extra one, and the digit read as the digit is right.
+func TestWorkbookMirrored(t *testing.T) {
+	for _, version := range []int{1, workbook.MirroredVersion} {
+		r, err := report.NewWorkbook(mirroredLog(version))
+		if err != nil {
+			t.Fatal(err)
+		}
+		var m report.WorkbookMirrored
+		for _, x := range r.Mirrored {
+			if x.Condition == workbook.Bare {
+				m = x
+			}
+		}
+		if m.Readings != 3 || m.Rewrite.Events != 1 || m.Rewrite.Of != 3 || m.Marked != 1 || m.AsDigit != 1 || m.FalseAlarm.Events != 1 || m.FalseAlarm.Of != 3 ||
+			m.Unchecked != 0 || m.Elsewhere.Events != 1 || m.Elsewhere.Of != 6 {
+			t.Errorf("version %d, bare, mirrored: %+v", version, m)
+		}
+		var cell report.WorkbookCell
+		for _, c := range r.Cells {
+			if c.Condition == workbook.Bare && c.Group == "scenario mirrored" {
+				cell = c
+			}
+		}
+		wantExtra := 0
+		if version < workbook.MirroredVersion {
+			wantExtra = 1
+		}
+		if cell.Readings != 3 || cell.Right != 1 || cell.FalseAlarm.Events != 1 || cell.Extra.Events != wantExtra {
+			t.Errorf("version %d, bare, scenario mirrored: %+v", version, cell)
+		}
+		var md bytes.Buffer
+		if err := r.Markdown(&md, "run.jsonl"); err != nil || !strings.Contains(md.String(), "## Mirrored digits at 32 px") ||
+			!strings.Contains(md.String(), "| haiku-low | bare | 3 | 1 of 3, ") || !strings.Contains(md.String(), fmt.Sprintf("This log's prompt is version %d.", version)) {
+			t.Errorf("version %d: the Markdown is\n%s, %v", version, md.String(), err)
+		}
+		if !strings.Contains(r.Summary(), "haiku-low, bare, mirrored digits: asked to write again 1 of 3") {
+			t.Errorf("version %d: the summary is %q", version, r.Summary())
+		}
+	}
+	if r, err := report.NewWorkbook(workbookLog()); err != nil || len(r.Mirrored) != 0 || strings.Contains(r.Summary(), "mirrored") {
+		t.Errorf("a log with no mirrored digit tells them: %+v, %v", r, err)
 	}
 }

@@ -75,6 +75,15 @@ func TestVerdicts(t *testing.T) {
 			{Item: 2, Slot: 1, Text: ptr("3/4"), Verdict: value.Unreadable, Reason: workbook.Ambiguous},
 			{Item: 3, Slot: 1, Text: ptr(""), Verdict: value.Unreadable, Reason: workbook.Reason(value.Blank)}, blank,
 		}},
+		{"a digit read mirrored, legible or not, and with other readings", []workbook.Reading{
+			{Item: 1, Slot: 1, Text: "8", Legible: true, OtherReadings: []string{}, Mirrored: true},
+			{Item: 2, Slot: 1, Text: "3/4", Legible: false, OtherReadings: []string{"3/9"}, Mirrored: true},
+			reading(3, 1, "3"),
+		}, []workbook.Box{
+			{Item: 1, Slot: 1, Text: ptr("8"), Verdict: value.Unreadable, Reason: workbook.Mirrored},
+			{Item: 2, Slot: 1, Text: ptr("3/4"), Verdict: value.Unreadable, Reason: workbook.Mirrored},
+			{Item: 3, Slot: 1, Text: ptr("3"), Verdict: value.Correct}, blank,
+		}},
 		{"a cell missing and a cell twice", []workbook.Reading{reading(1, 1, "8"), reading(1, 1, "8"), reading(3, 1, "3"), reading(9, 1, "1")}, []workbook.Box{
 			{Item: 1, Slot: 1, Verdict: value.Unchecked, Reason: workbook.Twice},
 			{Item: 2, Slot: 1, Verdict: value.Unchecked, Reason: workbook.Missing},
@@ -117,13 +126,15 @@ func show(boxes []workbook.Box) []string {
 
 // An answer is read as strictly as the schema: the cells and nothing else, every field of each.
 func TestRead(t *testing.T) {
-	got, err := workbook.Read(`{"cells": [{"item": 1, "slot": 1, "text": "8", "legible": true, "other_readings": ["3"], "blank": false}]}`)
-	if err != nil || len(got) != 1 || got[0].Text != "8" || got[0].OtherReadings[0] != "3" {
+	got, err := workbook.Read(`{"cells": [{"item": 1, "slot": 1, "text": "8", "legible": true, "other_readings": ["3"], "mirrored": true, "blank": false}]}`)
+	if err != nil || len(got) != 1 || got[0].Text != "8" || got[0].OtherReadings[0] != "3" || !got[0].Mirrored {
 		t.Fatalf("Read = %+v, %v", got, err)
 	}
 	for _, bad := range []string{
 		``, `[]`, `{}`, `{"cells": [{"item": 1}]}`, `{"cells": [], "notes": ""}`, `{"cells": []} {}`,
-		`{"cells": [{"item": 1, "slot": 1, "text": "8", "legible": true, "other_readings": [], "blank": false, "value": "8"}]}`,
+		`{"cells": [{"item": 1, "slot": 1, "text": "8", "legible": true, "other_readings": [], "mirrored": false, "blank": false, "value": "8"}]}`,
+		// the cells of version 1, which has no "mirrored"
+		`{"cells": [{"item": 1, "slot": 1, "text": "8", "legible": true, "other_readings": [], "blank": false}]}`,
 	} {
 		if _, err := workbook.Read(bad); err == nil {
 			t.Errorf("Read(%q) takes it", bad)
@@ -149,7 +160,8 @@ func written(r provider.Request) string {
 // The golden requests of the two conditions are the files testdata/bare.txt and
 // testdata/captioned.txt, on page 1 of the workbook; the author reads them there. They differ only by
 // the block of the captions and the lines of the items in the labels. The right reader's answer,
-// read, comes to the verdicts a right reading comes to.
+// read, comes to the verdicts a right reading comes to, a box with a digit written mirrored to
+// unreadable, mirrored (workbook.Want).
 func TestGolden(t *testing.T) {
 	pg := &theWorkbook(t).Pages[0]
 	cells, err := workbook.Cells(pg, 1, render.Digit)
@@ -181,9 +193,9 @@ func TestGolden(t *testing.T) {
 		}
 	}
 	for i, b := range workbook.Verdicts(pg, workbook.Right(cells)) {
-		box := pg.Items[b.Item-1].Boxes[b.Slot-1]
-		if want := box.Verdict(); b.Verdict != want.Verdict || string(b.Reason) != string(want.Reason) || b.Trap != want.Trap {
-			t.Errorf("box %d: the right reader comes to %+v, and the box to %+v", i+1, b, want)
+		verdict, reason, trap := workbook.Want(pg.Items[b.Item-1].Boxes[b.Slot-1])
+		if b.Verdict != verdict || b.Reason != reason || b.Trap != trap {
+			t.Errorf("box %d: the right reader comes to %+v, and the box to %s %s %s", i+1, b, verdict, reason, trap)
 		}
 	}
 	if fp := workbook.Fingerprint(); len(fp) != 64 || fp == "" {
@@ -191,11 +203,13 @@ func TestGolden(t *testing.T) {
 	}
 }
 
-// Version 1 of the prompt is frozen after the dev round of T80, before its test part runs: any
-// change to a word a reader reads changes the fingerprint, and this test fails.
-func TestFrozenV1(t *testing.T) {
-	const frozen = "40a9244ba646d1edef4c99c6dc5060b5b38ccab74ad56ddf76792545b6590e8d"
-	if got := workbook.Fingerprint(); got != frozen || workbook.Version != 1 {
-		t.Errorf("the fingerprint of version %d is %s, not the one frozen after the dev round of T80, %s", workbook.Version, got, frozen)
+// Version 2 of the prompt is frozen after the dev round of T99, before its test part runs: any
+// change to a word a reader reads changes the fingerprint, and this test fails. Version 1, frozen
+// after the dev round of T80, had the fingerprint 40a9244ba646d1edef4c99c6dc5060b5b38ccab74ad56ddf76792545b6590e8d;
+// its logs keep it.
+func TestFrozenV2(t *testing.T) {
+	const frozen = "885515cb2ad2a4aa3e49c1322e0d108099d66b93746309b5654cf7bacca6cf4b"
+	if got := workbook.Fingerprint(); got != frozen || workbook.Version != 2 {
+		t.Errorf("the fingerprint of version %d is %s, not the one frozen after the dev round of T99, %s", workbook.Version, got, frozen)
 	}
 }

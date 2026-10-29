@@ -32,6 +32,12 @@ type Workbook struct {
 	Captions []Caption
 	// Heights are the other heights against 32 px, bare, by reader.
 	Heights []Height
+	// Mirrored are the readings of the boxes with a digit written mirrored at 32 px by reader and
+	// condition.
+	Mirrored []WorkbookMirrored
+	// rewrite is whether the log's prompt has the reader mark a digit written mirrored, so that a
+	// box with one is right unreadable (workbook.MirroredVersion).
+	rewrite bool
 }
 
 // The groups of the boxes a cell of the report counts: all of them, each scenario, each kind of
@@ -61,6 +67,28 @@ func workbookGroups(b *workbook.BoxRecord) []string {
 		groups = append(groups, "written "+string(*b.Fraction))
 	}
 	return groups
+}
+
+// WorkbookMirrored is the readings of the boxes with a digit written mirrored by a reader in a
+// condition at 32 px, in every repeat. By the rule of spec v0.3.3 such a digit is not read as a
+// digit: the box is ambiguous, unreadable, and the learner writes it again, while a false alarm on it
+// counts against the target of 1 % (R56 spec, amendment of 2026-10-29; product 10 spec). Each share
+// is over the pages:
+//   - Rewrite is "unreadable" on such a box, among its readings, and Marked those of them the reader
+//     marked mirrored;
+//   - AsDigit is "correct": the digit read as the digit, against the rule and with no harm;
+//   - FalseAlarm is "not yet" on such a box, whose value is right;
+//   - Elsewhere is the other filled boxes the reader marked mirrored, among their readings.
+type WorkbookMirrored struct {
+	Reader     string
+	Condition  workbook.Condition
+	Readings   int
+	Rewrite    Share
+	Marked     int
+	AsDigit    int
+	FalseAlarm Share
+	Unchecked  int
+	Elsewhere  Share
 }
 
 // pageAt is a page of the log and its place among the pages.
@@ -160,20 +188,28 @@ func (e boxErrors) count() int {
 	return n
 }
 
-func boxErrorsOf(truth *workbook.BoxRecord, got workbook.Box) boxErrors {
+// boxErrorsOf are the errors of a reading of a box against the box as code wrote it. When the prompt
+// has the reader mark a digit written mirrored (rewrite), "unreadable" on a box with
+// one is right, and not an extra "unreadable": the learner writes it again. "Correct" on it is then
+// not right, and "not yet" is a false alarm still.
+func boxErrorsOf(truth *workbook.BoxRecord, got workbook.Box, rewrite bool) boxErrors {
 	var e boxErrors
+	asked := rewrite && truth.Scenario == sample.BoxMirrored
 	switch {
 	case truth.Written == nil:
 	case got.Verdict == value.Unchecked:
 		e.unchecked = true
 	case got.Verdict == value.Unreadable:
-		e.extra = true
+		e.extra = !asked
 	case truth.Verdict == value.NotYet && got.Verdict == value.Correct:
 		e.falseCorrect = true
 	case truth.Verdict == value.Correct && got.Verdict == value.NotYet:
 		e.falseAlarm = true
 	}
 	e.right = got.Verdict == truth.Verdict && got.Trap == truth.Trap
+	if asked {
+		e.right = got.Verdict == value.Unreadable
+	}
 	return e
 }
 
@@ -195,7 +231,7 @@ func NewWorkbook(l *workbook.Log) (*Workbook, error) {
 	if len(l.Run.Readers) == 0 || len(l.Sheets) == 0 {
 		return nil, fmt.Errorf("the log has no readers or no pages")
 	}
-	r := &Workbook{log: l, readers: l.Run.Readers, byPage: map[int]pageAt{}}
+	r := &Workbook{log: l, readers: l.Run.Readers, byPage: map[int]pageAt{}, rewrite: l.Run.PromptVersion >= workbook.MirroredVersion}
 	for i := range l.Sheets {
 		pg := &l.Sheets[i]
 		if _, ok := r.byPage[pg.Page]; ok {
@@ -227,6 +263,9 @@ func NewWorkbook(l *workbook.Log) (*Workbook, error) {
 			}
 			r.Cells = append(r.Cells, r.cells(rd.Name, cond, calls)...)
 			r.Items = append(r.Items, r.items(rd.Name, cond, calls))
+			if m, ok := r.mirrored(rd.Name, cond, calls); ok {
+				r.Mirrored = append(r.Mirrored, m)
+			}
 		}
 		if c, ok := r.caption(rd.Name); ok {
 			r.Captions = append(r.Captions, c)
@@ -278,7 +317,7 @@ func (r *Workbook) cells(reader string, cond workbook.Condition, calls []*workbo
 						fc: make([]int, n), fcOf: make([]int, n), fa: make([]int, n), faOf: make([]int, n), ex: make([]int, n), exOf: make([]int, n)}
 					by[g] = c
 				}
-				c.add(truth, got, pg.at)
+				c.add(truth, got, pg.at, r.rewrite)
 			}
 		}
 	}
@@ -293,9 +332,9 @@ func (r *Workbook) cells(reader string, cond workbook.Condition, calls []*workbo
 }
 
 // add counts a reading of a box of the page at its place.
-func (c *counts) add(truth *workbook.BoxRecord, got workbook.Box, at int) {
+func (c *counts) add(truth *workbook.BoxRecord, got workbook.Box, at int, rewrite bool) {
 	c.Readings++
-	e := boxErrorsOf(truth, got)
+	e := boxErrorsOf(truth, got, rewrite)
 	if readAsWritten(truth, got) {
 		c.Read++
 	}
@@ -324,6 +363,46 @@ func (c *counts) add(truth *workbook.BoxRecord, got workbook.Box, at int) {
 			c.fa[at]++
 		}
 	}
+}
+
+// mirrored counts the readings of the boxes with a digit written mirrored in the calls, and the
+// other filled boxes marked mirrored; false when no such box was read.
+func (r *Workbook) mirrored(reader string, cond workbook.Condition, calls []*workbook.CallRecord) (WorkbookMirrored, bool) {
+	m := WorkbookMirrored{Reader: reader, Condition: cond}
+	n := len(r.pages)
+	rw, fa, of, el, elOf := make([]int, n), make([]int, n), make([]int, n), make([]int, n), make([]int, n)
+	for _, call := range calls {
+		pg := r.byPage[call.Page]
+		for k, got := range call.Boxes {
+			truth := &pg.Boxes[k]
+			switch {
+			case truth.Written == nil:
+			case truth.Scenario != sample.BoxMirrored:
+				elOf[pg.at]++
+				if got.Reason == workbook.Mirrored {
+					el[pg.at]++
+				}
+			default:
+				m.Readings++
+				of[pg.at]++
+				switch got.Verdict {
+				case value.Unreadable:
+					rw[pg.at]++
+					if got.Reason == workbook.Mirrored {
+						m.Marked++
+					}
+				case value.Correct:
+					m.AsDigit++
+				case value.NotYet:
+					fa[pg.at]++
+				case value.Unchecked:
+					m.Unchecked++
+				}
+			}
+		}
+	}
+	m.Rewrite, m.FalseAlarm, m.Elsewhere = share(rw, of), share(fa, of), share(el, elOf)
+	return m, m.Readings > 0
 }
 
 // items counts the readings of the items in the calls: right when the verdict of the item is that
@@ -377,7 +456,7 @@ func (r *Workbook) pageErrors(call *workbook.CallRecord) (int, map[[2]int]bool) 
 	pg := r.byPage[call.Page]
 	n, fc := 0, map[[2]int]bool{}
 	for k, got := range call.Boxes {
-		e := boxErrorsOf(&pg.Boxes[k], got)
+		e := boxErrorsOf(&pg.Boxes[k], got, r.rewrite)
 		n += e.count()
 		if e.falseCorrect {
 			fc[[2]int{got.Item, got.Slot}] = true
@@ -511,7 +590,15 @@ func (r *Workbook) Markdown(w io.Writer, logName string) error {
 	for _, c := range r.Cells {
 		fmt.Fprintf(&b, "| %s | %s | %s | %d | %d | %d | %s | %s | %s | %d |\n", c.Reader, c.Condition, c.Group, c.Readings, c.Read, c.Right, c.FalseCorrect, c.FalseAlarm, c.Extra, c.Unchecked)
 	}
-	b.WriteString("\nA reading of a box is right when its verdict, and its trap, is the box's as written. A false \"correct\" is counted among the readings of boxes whose value is not yet right, a false alarm among those of boxes whose value is right, and an extra \"unreadable\" among the readings of filled boxes, \"unchecked\" counted with it; a blank box goes to no model, and its reading is right. Read as written: the text read is the value written, without spaces and after normalization. A share's bound is the one-sided upper bound of 95 % over the pages, Clopper–Pearson on n / Deff.\n")
+	b.WriteString("\nA reading of a box is right when its verdict, and its trap, is the box's as written; in a log of a prompt that has the reader mark a digit written mirrored, version 2 or later, \"unreadable\" on a box with one is right, and not an extra \"unreadable\". A false \"correct\" is counted among the readings of boxes whose value is not yet right, a false alarm among those of boxes whose value is right, and an extra \"unreadable\" among the readings of filled boxes, \"unchecked\" counted with it; a blank box goes to no model, and its reading is right. Read as written: the text read is the value written, without spaces and after normalization. A share's bound is the one-sided upper bound of 95 % over the pages, Clopper–Pearson on n / Deff.\n")
+
+	if len(r.Mirrored) > 0 {
+		b.WriteString("\n## Mirrored digits at 32 px\n\n| Reader | Condition | Readings | Asked to write again | Of them marked mirrored | Read as the digit | False alarms | Unchecked | Other boxes marked mirrored |\n|---|---|---|---|---|---|---|---|---|\n")
+		for _, m := range r.Mirrored {
+			fmt.Fprintf(&b, "| %s | %s | %d | %s | %d | %d | %s | %d | %s |\n", m.Reader, m.Condition, m.Readings, m.Rewrite, m.Marked, m.AsDigit, m.FalseAlarm, m.Unchecked, m.Elsewhere)
+		}
+		fmt.Fprintf(&b, "\nThe boxes with a digit written mirrored. By the rule of spec v0.3.3 such a digit is not read as a digit: the box is ambiguous, \"unreadable\", and the learner is asked to write it again, while a false alarm on it counts against the target of 1 %% (R56 spec, amendment of 2026-10-29). Asked to write again is \"unreadable\" on such a box and a false alarm \"not yet\", each among its readings; read as the digit is \"correct\". Marked mirrored is the reader saying a digit is written mirrored, which prompts of version %d and later ask; the other boxes marked mirrored are counted among the readings of the other filled boxes. This log's prompt is version %d.\n", workbook.MirroredVersion, l.Run.PromptVersion)
+	}
 
 	b.WriteString("\n## The items at 32 px\n\n| Reader | Condition | Readings | Right | False \"correct\" | False alarms |\n|---|---|---|---|---|---|\n")
 	for _, it := range r.Items {
@@ -582,6 +669,11 @@ func (r *Workbook) Summary() string {
 	for _, c := range r.Cells {
 		if c.Group == AllBoxes && c.Condition == workbook.Bare {
 			fmt.Fprintf(&b, "%s, bare: %d of %d readings right; false \"correct\" %s, false alarms %s, extra \"unreadable\" %s.\n", c.Reader, c.Right, c.Readings, c.FalseCorrect, c.FalseAlarm, c.Extra)
+		}
+	}
+	for _, m := range r.Mirrored {
+		if m.Condition == workbook.Bare {
+			fmt.Fprintf(&b, "%s, bare, mirrored digits: asked to write again %s, read as the digit %d, false alarms %s; other boxes marked mirrored %s.\n", m.Reader, m.Rewrite, m.AsDigit, m.FalseAlarm, m.Elsewhere)
 		}
 	}
 	for _, c := range r.Captions {
