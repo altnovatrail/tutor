@@ -46,10 +46,15 @@ const usage = `usage:
   tutor-eval check FILE...   check samples, banks, sheet plans, the pages of the workbook and the
                              essays;
                              samples and plans against a bank given with them
-  tutor-eval draw [-seed N] [-png D] [-dir D] [-bank F] [-plan F]
+  tutor-eval draw [-seed N] [-shift S] [-png D] [-dir D] [-bank F] [-plan F]
                              draw by code every sheet of the plan not recorded yet, and save it
                              with the writer "synthetic"; with -png, its pictures too, in a
-                             directory of their own
+                             directory of their own; -shift, how far the answer's last digit
+                             of a near sheet leans toward its pair, 0.1 by default
+  tutor-eval gen sheets|near [-tasks N] [-seed N] [-prefix P] -bank F -plan F
+                             make a bank of tasks and a plan of their sheets, with their
+                             truth by construction: sheets of lines, six a task, or sheets of
+                             the near key, two a task; new files only
   tutor-eval sheets [-dir D] [-bank F] [-plan F]
                              the summary of the recorded sheets against the plan, without the
                              handwriting
@@ -132,6 +137,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return check(operands, stdout, stderr)
 	case "draw":
 		return runDraw(operands, stdout, stderr, time.Now)
+	case "gen":
+		return runGen(operands, stdout, stderr)
 	case "sheets":
 		return runSheets(operands, stdout, stderr)
 	case "split":

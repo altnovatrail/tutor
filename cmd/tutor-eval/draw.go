@@ -28,11 +28,16 @@ func runDraw(args []string, stdout, stderr io.Writer, now func() time.Time) int 
 	var f sheetFlags
 	f.add(flags)
 	seed := flags.Uint64("seed", 1, "the number the hands of the drawn sheets come from")
+	shift := flags.Float64("shift", synth.SimilarShift, "how far toward the digit of its pair the answer's last digit of a sheet of the scenario similar-digits is drawn, from 0, the font's digit, to 1, its pair's")
 	pngDir := flags.String("png", "", "also save the final picture of each sheet drawn and its frame before each erasure, as PNG, in this directory, out of git and not among the sheets")
 	if code, ok := parse(flags, args, stderr); !ok {
 		return code
 	}
 	if !f.usable("tutor-eval draw", stderr) {
+		return exitUsage
+	}
+	if *shift < 0 || *shift > 1 {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval draw: -shift is %g: give a share from 0 to 1\n", *shift)
 		return exitUsage
 	}
 	pictured := given(flags)["png"]
@@ -62,6 +67,16 @@ func runDraw(args []string, stdout, stderr io.Writer, now func() time.Time) int 
 		return exitFail
 	}
 
+	// A share of the shift is told by nothing in a sheet: a directory holds sheets drawn at one share,
+	// so a share given to a directory that holds sheets already is refused, not mixed with theirs.
+	if given(flags)["shift"] {
+		for _, sh := range r.Sheets {
+			if sh.File != "" {
+				_, _ = fmt.Fprintf(stderr, "tutor-eval draw: %s holds sheets already, drawn at a share of the shift no sheet tells: draw -shift into a directory of its own\n", f.dir)
+				return exitUsage
+			}
+		}
+	}
 	var drawn, kept []int
 	saved := 0 // the pictures saved
 	at := now().UTC().Truncate(time.Millisecond)
@@ -70,7 +85,7 @@ func runDraw(args []string, stdout, stderr io.Writer, now func() time.Time) int 
 			kept = append(kept, sh.Plan.Number)
 			continue
 		}
-		s := synth.Sheet(sh.Plan, *seed)
+		s := synth.SheetLeaning(sh.Plan, *seed, *shift)
 		if err := drawnRight(s, sh.Plan, bank); err != nil {
 			_, _ = fmt.Fprintf(stderr, "tutor-eval draw: sheet %d is drawn wrong, and nothing more is saved: %v\n", sh.Plan.Number, err)
 			return exitFail

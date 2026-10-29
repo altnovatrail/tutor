@@ -1,0 +1,1166 @@
+{
+  "format": "tutor-sheet-plan",
+  "version": 0,
+  "sheets": [
+    {
+      "number": 1,
+      "task": "lines-gen-3-001",
+      "scenario": "correct",
+      "lines": [
+        "11 × 2 = 22",
+        "47 + 35 = 82",
+        "82 − 22 = 60"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 2,
+      "task": "lines-gen-3-001",
+      "scenario": "error",
+      "lines": [
+        "47 + 35 = 82",
+        "82 − 11 = 71",
+        "71 × 2 = 142"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "order-of-operations"
+      },
+      "erasure": null
+    },
+    {
+      "number": 3,
+      "task": "lines-gen-3-001",
+      "scenario": "error",
+      "lines": [
+        "11 × 2 = 22",
+        "47 + 35 = 72",
+        "72 − 22 = 50"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "carry"
+      },
+      "erasure": null
+    },
+    {
+      "number": 4,
+      "task": "lines-gen-3-001",
+      "scenario": "erasure-fixed",
+      "lines": [
+        "11 × 2 = 22",
+        "47 + 35 = 82",
+        "82 − 22 = 60"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "mistake",
+        "text": "47 + 35 = 72",
+        "replacement": "47 + 35 = 82",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 5,
+      "task": "lines-gen-3-001",
+      "scenario": "erasure-broken",
+      "lines": [
+        "11 × 2 = 22",
+        "47 + 35 = 82",
+        "82 − 22 = 70"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 3,
+        "trap": "arithmetic"
+      },
+      "erasure": {
+        "line": 3,
+        "erased": "correct-step",
+        "text": "60",
+        "replacement": "70",
+        "part_of_line": true
+      }
+    },
+    {
+      "number": 6,
+      "task": "lines-gen-3-001",
+      "scenario": "correct",
+      "lines": [
+        "11 × 2 = 22",
+        "47 + 35 − 22 = 60"
+      ],
+      "answer": 2,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 7,
+      "task": "lines-gen-3-002",
+      "scenario": "correct",
+      "lines": [
+        "9x + 18 = 63",
+        "9x = 45",
+        "x = 5"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 8,
+      "task": "lines-gen-3-002",
+      "scenario": "error",
+      "lines": [
+        "9x + 18 = 63",
+        "9x = 81",
+        "x = 9"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "sign-on-transfer"
+      },
+      "erasure": null
+    },
+    {
+      "number": 9,
+      "task": "lines-gen-3-002",
+      "scenario": "error",
+      "lines": [
+        "9x + 18 = 63",
+        "9x = 45",
+        "x = 45"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 3,
+        "trap": "one-side-division"
+      },
+      "erasure": null
+    },
+    {
+      "number": 10,
+      "task": "lines-gen-3-002",
+      "scenario": "erasure-fixed",
+      "lines": [
+        "9x + 18 = 63",
+        "9x = 45",
+        "x = 5"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "mistake",
+        "text": "9x = 81",
+        "replacement": "9x = 45",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 11,
+      "task": "lines-gen-3-002",
+      "scenario": "erasure-broken",
+      "lines": [
+        "9x + 18 = 63",
+        "9x = 45",
+        "x = 45"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 3,
+        "trap": "one-side-division"
+      },
+      "erasure": {
+        "line": 3,
+        "erased": "correct-step",
+        "text": "5",
+        "replacement": "45",
+        "part_of_line": true
+      }
+    },
+    {
+      "number": 12,
+      "task": "lines-gen-3-002",
+      "scenario": "answer-not-last",
+      "lines": [
+        "9x + 18 = 63",
+        "9x = 45",
+        "x = 5",
+        "Проверка: 9 × 5 + 18 = 63"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 13,
+      "task": "lines-gen-3-003",
+      "scenario": "correct",
+      "lines": [
+        "6x − 7 = 3x + 11",
+        "6x − 3x = 11 + 7",
+        "3x = 18",
+        "x = 6"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 14,
+      "task": "lines-gen-3-003",
+      "scenario": "error",
+      "lines": [
+        "6x − 7 = 3x + 11",
+        "6x − 3x = 11 − 7",
+        "3x = 4",
+        "x = 4/3"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "sign-on-transfer"
+      },
+      "erasure": null
+    },
+    {
+      "number": 15,
+      "task": "lines-gen-3-003",
+      "scenario": "error",
+      "lines": [
+        "6x − 7 = 3x + 11",
+        "6x − 3x = 11 + 7",
+        "3x = 18",
+        "x = 18"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "error",
+        "first_error": 4,
+        "trap": "one-side-division"
+      },
+      "erasure": null
+    },
+    {
+      "number": 16,
+      "task": "lines-gen-3-003",
+      "scenario": "erasure-fixed",
+      "lines": [
+        "6x − 7 = 3x + 11",
+        "6x − 3x = 11 + 7",
+        "3x = 18",
+        "x = 6"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "mistake",
+        "text": "6x − 3x = 11 − 7",
+        "replacement": "6x − 3x = 11 + 7",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 17,
+      "task": "lines-gen-3-003",
+      "scenario": "erasure-broken",
+      "lines": [
+        "6x − 7 = 3x + 11",
+        "6x − 3x = 11 − 7",
+        "3x = 4",
+        "x = 4/3"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "sign-on-transfer"
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "correct-step",
+        "text": "6x − 3x = 11 + 7",
+        "replacement": "6x − 3x = 11 − 7",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 18,
+      "task": "lines-gen-3-003",
+      "scenario": "answer-not-last",
+      "lines": [
+        "6x − 7 = 3x + 11",
+        "6x − 3x = 11 + 7",
+        "3x = 18",
+        "x = 6",
+        "Проверка: 6 × 6 − 7 = 3 × 6 + 11"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 19,
+      "task": "lines-gen-3-004",
+      "scenario": "correct",
+      "lines": [
+        "16 × 4 = 64",
+        "66 + 19 = 85",
+        "85 − 64 = 21"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 20,
+      "task": "lines-gen-3-004",
+      "scenario": "error",
+      "lines": [
+        "66 + 19 = 85",
+        "85 − 16 = 69",
+        "69 × 4 = 276"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "order-of-operations"
+      },
+      "erasure": null
+    },
+    {
+      "number": 21,
+      "task": "lines-gen-3-004",
+      "scenario": "error",
+      "lines": [
+        "16 × 4 = 64",
+        "66 + 19 = 75",
+        "75 − 64 = 11"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "carry"
+      },
+      "erasure": null
+    },
+    {
+      "number": 22,
+      "task": "lines-gen-3-004",
+      "scenario": "erasure-fixed",
+      "lines": [
+        "16 × 4 = 64",
+        "66 + 19 = 85",
+        "85 − 64 = 21"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "mistake",
+        "text": "66 + 19 = 75",
+        "replacement": "66 + 19 = 85",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 23,
+      "task": "lines-gen-3-004",
+      "scenario": "erasure-broken",
+      "lines": [
+        "16 × 4 = 64",
+        "66 + 19 = 85",
+        "85 − 64 = 31"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 3,
+        "trap": "arithmetic"
+      },
+      "erasure": {
+        "line": 3,
+        "erased": "correct-step",
+        "text": "21",
+        "replacement": "31",
+        "part_of_line": true
+      }
+    },
+    {
+      "number": 24,
+      "task": "lines-gen-3-004",
+      "scenario": "correct",
+      "lines": [
+        "16 × 4 = 64",
+        "66 + 19 − 64 = 21"
+      ],
+      "answer": 2,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 25,
+      "task": "lines-gen-3-005",
+      "scenario": "correct",
+      "lines": [
+        "7x + 7 = 21",
+        "7x = 14",
+        "x = 2"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 26,
+      "task": "lines-gen-3-005",
+      "scenario": "error",
+      "lines": [
+        "7x + 7 = 21",
+        "7x = 28",
+        "x = 4"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "sign-on-transfer"
+      },
+      "erasure": null
+    },
+    {
+      "number": 27,
+      "task": "lines-gen-3-005",
+      "scenario": "error",
+      "lines": [
+        "7x + 7 = 21",
+        "7x = 14",
+        "x = 14"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 3,
+        "trap": "one-side-division"
+      },
+      "erasure": null
+    },
+    {
+      "number": 28,
+      "task": "lines-gen-3-005",
+      "scenario": "erasure-fixed",
+      "lines": [
+        "7x + 7 = 21",
+        "7x = 14",
+        "x = 2"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "mistake",
+        "text": "7x = 28",
+        "replacement": "7x = 14",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 29,
+      "task": "lines-gen-3-005",
+      "scenario": "erasure-broken",
+      "lines": [
+        "7x + 7 = 21",
+        "7x = 14",
+        "x = 14"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 3,
+        "trap": "one-side-division"
+      },
+      "erasure": {
+        "line": 3,
+        "erased": "correct-step",
+        "text": "2",
+        "replacement": "14",
+        "part_of_line": true
+      }
+    },
+    {
+      "number": 30,
+      "task": "lines-gen-3-005",
+      "scenario": "answer-not-last",
+      "lines": [
+        "7x + 7 = 21",
+        "7x = 14",
+        "x = 2",
+        "Проверка: 7 × 2 + 7 = 21"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 31,
+      "task": "lines-gen-3-006",
+      "scenario": "correct",
+      "lines": [
+        "9x − 5 = 5x + 19",
+        "9x − 5x = 19 + 5",
+        "4x = 24",
+        "x = 6"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 32,
+      "task": "lines-gen-3-006",
+      "scenario": "error",
+      "lines": [
+        "9x − 5 = 5x + 19",
+        "9x − 5x = 19 − 5",
+        "4x = 14",
+        "x = 7/2"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "sign-on-transfer"
+      },
+      "erasure": null
+    },
+    {
+      "number": 33,
+      "task": "lines-gen-3-006",
+      "scenario": "error",
+      "lines": [
+        "9x − 5 = 5x + 19",
+        "9x − 5x = 19 + 5",
+        "4x = 24",
+        "x = 24"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "error",
+        "first_error": 4,
+        "trap": "one-side-division"
+      },
+      "erasure": null
+    },
+    {
+      "number": 34,
+      "task": "lines-gen-3-006",
+      "scenario": "erasure-fixed",
+      "lines": [
+        "9x − 5 = 5x + 19",
+        "9x − 5x = 19 + 5",
+        "4x = 24",
+        "x = 6"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "mistake",
+        "text": "9x − 5x = 19 − 5",
+        "replacement": "9x − 5x = 19 + 5",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 35,
+      "task": "lines-gen-3-006",
+      "scenario": "erasure-broken",
+      "lines": [
+        "9x − 5 = 5x + 19",
+        "9x − 5x = 19 − 5",
+        "4x = 14",
+        "x = 7/2"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "sign-on-transfer"
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "correct-step",
+        "text": "9x − 5x = 19 + 5",
+        "replacement": "9x − 5x = 19 − 5",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 36,
+      "task": "lines-gen-3-006",
+      "scenario": "answer-not-last",
+      "lines": [
+        "9x − 5 = 5x + 19",
+        "9x − 5x = 19 + 5",
+        "4x = 24",
+        "x = 6",
+        "Проверка: 9 × 6 − 5 = 5 × 6 + 19"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 37,
+      "task": "lines-gen-3-007",
+      "scenario": "correct",
+      "lines": [
+        "16 × 2 = 32",
+        "66 + 19 = 85",
+        "85 − 32 = 53"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 38,
+      "task": "lines-gen-3-007",
+      "scenario": "error",
+      "lines": [
+        "66 + 19 = 85",
+        "85 − 16 = 69",
+        "69 × 2 = 138"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "order-of-operations"
+      },
+      "erasure": null
+    },
+    {
+      "number": 39,
+      "task": "lines-gen-3-007",
+      "scenario": "error",
+      "lines": [
+        "16 × 2 = 32",
+        "66 + 19 = 75",
+        "75 − 32 = 43"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "carry"
+      },
+      "erasure": null
+    },
+    {
+      "number": 40,
+      "task": "lines-gen-3-007",
+      "scenario": "erasure-fixed",
+      "lines": [
+        "16 × 2 = 32",
+        "66 + 19 = 85",
+        "85 − 32 = 53"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "mistake",
+        "text": "66 + 19 = 75",
+        "replacement": "66 + 19 = 85",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 41,
+      "task": "lines-gen-3-007",
+      "scenario": "erasure-broken",
+      "lines": [
+        "16 × 2 = 32",
+        "66 + 19 = 85",
+        "85 − 32 = 63"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 3,
+        "trap": "arithmetic"
+      },
+      "erasure": {
+        "line": 3,
+        "erased": "correct-step",
+        "text": "53",
+        "replacement": "63",
+        "part_of_line": true
+      }
+    },
+    {
+      "number": 42,
+      "task": "lines-gen-3-007",
+      "scenario": "correct",
+      "lines": [
+        "16 × 2 = 32",
+        "66 + 19 − 32 = 53"
+      ],
+      "answer": 2,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 43,
+      "task": "lines-gen-3-008",
+      "scenario": "correct",
+      "lines": [
+        "3x + 5 = 38",
+        "3x = 33",
+        "x = 11"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 44,
+      "task": "lines-gen-3-008",
+      "scenario": "error",
+      "lines": [
+        "3x + 5 = 38",
+        "3x = 43",
+        "x = 43/3"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "sign-on-transfer"
+      },
+      "erasure": null
+    },
+    {
+      "number": 45,
+      "task": "lines-gen-3-008",
+      "scenario": "error",
+      "lines": [
+        "3x + 5 = 38",
+        "3x = 33",
+        "x = 33"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 3,
+        "trap": "one-side-division"
+      },
+      "erasure": null
+    },
+    {
+      "number": 46,
+      "task": "lines-gen-3-008",
+      "scenario": "erasure-fixed",
+      "lines": [
+        "3x + 5 = 38",
+        "3x = 33",
+        "x = 11"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "mistake",
+        "text": "3x = 43",
+        "replacement": "3x = 33",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 47,
+      "task": "lines-gen-3-008",
+      "scenario": "erasure-broken",
+      "lines": [
+        "3x + 5 = 38",
+        "3x = 33",
+        "x = 33"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 3,
+        "trap": "one-side-division"
+      },
+      "erasure": {
+        "line": 3,
+        "erased": "correct-step",
+        "text": "11",
+        "replacement": "33",
+        "part_of_line": true
+      }
+    },
+    {
+      "number": 48,
+      "task": "lines-gen-3-008",
+      "scenario": "answer-not-last",
+      "lines": [
+        "3x + 5 = 38",
+        "3x = 33",
+        "x = 11",
+        "Проверка: 3 × 11 + 5 = 38"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 49,
+      "task": "lines-gen-3-009",
+      "scenario": "correct",
+      "lines": [
+        "8x − 4 = 3x + 41",
+        "8x − 3x = 41 + 4",
+        "5x = 45",
+        "x = 9"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 50,
+      "task": "lines-gen-3-009",
+      "scenario": "error",
+      "lines": [
+        "8x − 4 = 3x + 41",
+        "8x − 3x = 41 − 4",
+        "5x = 37",
+        "x = 37/5"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "sign-on-transfer"
+      },
+      "erasure": null
+    },
+    {
+      "number": 51,
+      "task": "lines-gen-3-009",
+      "scenario": "error",
+      "lines": [
+        "8x − 4 = 3x + 41",
+        "8x − 3x = 41 + 4",
+        "5x = 45",
+        "x = 45"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "error",
+        "first_error": 4,
+        "trap": "one-side-division"
+      },
+      "erasure": null
+    },
+    {
+      "number": 52,
+      "task": "lines-gen-3-009",
+      "scenario": "erasure-fixed",
+      "lines": [
+        "8x − 4 = 3x + 41",
+        "8x − 3x = 41 + 4",
+        "5x = 45",
+        "x = 9"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "mistake",
+        "text": "8x − 3x = 41 − 4",
+        "replacement": "8x − 3x = 41 + 4",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 53,
+      "task": "lines-gen-3-009",
+      "scenario": "erasure-broken",
+      "lines": [
+        "8x − 4 = 3x + 41",
+        "8x − 3x = 41 − 4",
+        "5x = 37",
+        "x = 37/5"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "sign-on-transfer"
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "correct-step",
+        "text": "8x − 3x = 41 + 4",
+        "replacement": "8x − 3x = 41 − 4",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 54,
+      "task": "lines-gen-3-009",
+      "scenario": "answer-not-last",
+      "lines": [
+        "8x − 4 = 3x + 41",
+        "8x − 3x = 41 + 4",
+        "5x = 45",
+        "x = 9",
+        "Проверка: 8 × 9 − 4 = 3 × 9 + 41"
+      ],
+      "answer": 4,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 55,
+      "task": "lines-gen-3-010",
+      "scenario": "correct",
+      "lines": [
+        "14 × 3 = 42",
+        "49 + 41 = 90",
+        "90 − 42 = 48"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 56,
+      "task": "lines-gen-3-010",
+      "scenario": "error",
+      "lines": [
+        "49 + 41 = 90",
+        "90 − 14 = 76",
+        "76 × 3 = 228"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "order-of-operations"
+      },
+      "erasure": null
+    },
+    {
+      "number": 57,
+      "task": "lines-gen-3-010",
+      "scenario": "error",
+      "lines": [
+        "14 × 3 = 42",
+        "49 + 41 = 80",
+        "80 − 42 = 38"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 2,
+        "trap": "carry"
+      },
+      "erasure": null
+    },
+    {
+      "number": 58,
+      "task": "lines-gen-3-010",
+      "scenario": "erasure-fixed",
+      "lines": [
+        "14 × 3 = 42",
+        "49 + 41 = 90",
+        "90 − 42 = 48"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": {
+        "line": 2,
+        "erased": "mistake",
+        "text": "49 + 41 = 80",
+        "replacement": "49 + 41 = 90",
+        "part_of_line": false
+      }
+    },
+    {
+      "number": 59,
+      "task": "lines-gen-3-010",
+      "scenario": "erasure-broken",
+      "lines": [
+        "14 × 3 = 42",
+        "49 + 41 = 90",
+        "90 − 42 = 58"
+      ],
+      "answer": 3,
+      "expected": {
+        "outcome": "error",
+        "first_error": 3,
+        "trap": "arithmetic"
+      },
+      "erasure": {
+        "line": 3,
+        "erased": "correct-step",
+        "text": "48",
+        "replacement": "58",
+        "part_of_line": true
+      }
+    },
+    {
+      "number": 60,
+      "task": "lines-gen-3-010",
+      "scenario": "correct",
+      "lines": [
+        "14 × 3 = 42",
+        "49 + 41 − 42 = 48"
+      ],
+      "answer": 2,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    }
+  ]
+}

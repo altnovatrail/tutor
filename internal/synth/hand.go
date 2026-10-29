@@ -80,12 +80,13 @@ type hand struct {
 // It panics on a plan sheet the plan's check refuses, such as one without lines, and on one code
 // cannot draw yet (Drawable).
 func Sheet(sh *sample.PlanSheet, seed uint64) *sample.Sample {
-	return sheetLeaning(sh, seed, SimilarShift)
+	return SheetLeaning(sh, seed, SimilarShift)
 }
 
-// sheetLeaning is Sheet with the digit of the answer of a sheet of the scenario "similar-digits"
-// leaning the share shift toward the digit of its pair.
-func sheetLeaning(sh *sample.PlanSheet, seed uint64, shift float64) *sample.Sample {
+// SheetLeaning is Sheet with the digit of the answer of a sheet of the scenario "similar-digits"
+// leaning the share shift toward the digit of its pair: draw takes it with -shift, to draw the near
+// sheets of the extended measurement at shares 0.1 to 0.4 (T93; R50).
+func SheetLeaning(sh *sample.PlanSheet, seed uint64, shift float64) *sample.Sample {
 	if len(sh.Parts) > 0 {
 		return sheetOfParts(sh, seed)
 	}
