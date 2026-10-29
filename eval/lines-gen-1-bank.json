@@ -1,0 +1,378 @@
+{
+  "format": "tutor-bank",
+  "version": 0,
+  "tasks": [
+    {
+      "id": "lines-gen-1-001",
+      "kind": "calculation",
+      "statement": "Вычисли 59 + 28 − 13 × 2.",
+      "key": "61",
+      "solution": [
+        "13 × 2 = 26",
+        "59 + 28 = 87",
+        "87 − 26 = 61"
+      ],
+      "traps": [
+        {
+          "id": "order-of-operations",
+          "description": "выполнил действия слева направо, не соблюдая порядка действий"
+        },
+        {
+          "id": "carry",
+          "description": "ошибся при сложении с переходом через десяток"
+        },
+        {
+          "id": "arithmetic",
+          "description": "ошибся в вычислении"
+        }
+      ],
+      "leaks": [
+        "13 × 2 = 26",
+        "87 − 26"
+      ],
+      "false_keys": [
+        {
+          "key": "51",
+          "solution": [
+            "13 × 2 = 26",
+            "59 + 28 = 77",
+            "77 − 26 = 51"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lines-gen-1-002",
+      "kind": "linear-equation",
+      "statement": "Реши уравнение 3x + 11 = 26.",
+      "key": "x = 5",
+      "solution": [
+        "3x + 11 = 26",
+        "3x = 15",
+        "x = 5"
+      ],
+      "traps": [
+        {
+          "id": "sign-on-transfer",
+          "description": "перенёс слагаемое в другую часть уравнения, не сменив знак"
+        },
+        {
+          "id": "one-side-division",
+          "description": "разделил на коэффициент только одну часть уравнения"
+        }
+      ],
+      "leaks": [
+        "3x = 15",
+        "15 : 3"
+      ],
+      "false_keys": [
+        {
+          "key": "x = 37/3",
+          "solution": [
+            "3x + 11 = 26",
+            "3x = 37",
+            "x = 37/3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lines-gen-1-003",
+      "kind": "linear-equation",
+      "statement": "Реши уравнение 9x − 8 = 4x + 12.",
+      "key": "x = 4",
+      "solution": [
+        "9x − 8 = 4x + 12",
+        "9x − 4x = 12 + 8",
+        "5x = 20",
+        "x = 4"
+      ],
+      "traps": [
+        {
+          "id": "sign-on-transfer",
+          "description": "перенёс слагаемое в другую часть уравнения, не сменив знак"
+        },
+        {
+          "id": "one-side-division",
+          "description": "разделил на коэффициент только одну часть уравнения"
+        }
+      ],
+      "leaks": [
+        "5x = 20",
+        "20 : 5"
+      ],
+      "false_keys": [
+        {
+          "key": "x = 4/5",
+          "solution": [
+            "9x − 8 = 4x + 12",
+            "9x − 4x = 12 − 8",
+            "5x = 4",
+            "x = 4/5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lines-gen-1-004",
+      "kind": "calculation",
+      "statement": "Вычисли 47 + 35 − 12 × 4.",
+      "key": "34",
+      "solution": [
+        "12 × 4 = 48",
+        "47 + 35 = 82",
+        "82 − 48 = 34"
+      ],
+      "traps": [
+        {
+          "id": "order-of-operations",
+          "description": "выполнил действия слева направо, не соблюдая порядка действий"
+        },
+        {
+          "id": "carry",
+          "description": "ошибся при сложении с переходом через десяток"
+        },
+        {
+          "id": "arithmetic",
+          "description": "ошибся в вычислении"
+        }
+      ],
+      "leaks": [
+        "12 × 4 = 48",
+        "82 − 48"
+      ],
+      "false_keys": [
+        {
+          "key": "24",
+          "solution": [
+            "12 × 4 = 48",
+            "47 + 35 = 72",
+            "72 − 48 = 24"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lines-gen-1-005",
+      "kind": "linear-equation",
+      "statement": "Реши уравнение 2x + 1 = 7.",
+      "key": "x = 3",
+      "solution": [
+        "2x + 1 = 7",
+        "2x = 6",
+        "x = 3"
+      ],
+      "traps": [
+        {
+          "id": "sign-on-transfer",
+          "description": "перенёс слагаемое в другую часть уравнения, не сменив знак"
+        },
+        {
+          "id": "one-side-division",
+          "description": "разделил на коэффициент только одну часть уравнения"
+        }
+      ],
+      "leaks": [
+        "2x = 6",
+        "6 : 2"
+      ],
+      "false_keys": [
+        {
+          "key": "x = 4",
+          "solution": [
+            "2x + 1 = 7",
+            "2x = 8",
+            "x = 4"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lines-gen-1-006",
+      "kind": "linear-equation",
+      "statement": "Реши уравнение 9x − 8 = 5x + 16.",
+      "key": "x = 6",
+      "solution": [
+        "9x − 8 = 5x + 16",
+        "9x − 5x = 16 + 8",
+        "4x = 24",
+        "x = 6"
+      ],
+      "traps": [
+        {
+          "id": "sign-on-transfer",
+          "description": "перенёс слагаемое в другую часть уравнения, не сменив знак"
+        },
+        {
+          "id": "one-side-division",
+          "description": "разделил на коэффициент только одну часть уравнения"
+        }
+      ],
+      "leaks": [
+        "4x = 24",
+        "24 : 4"
+      ],
+      "false_keys": [
+        {
+          "key": "x = 2",
+          "solution": [
+            "9x − 8 = 5x + 16",
+            "9x − 5x = 16 − 8",
+            "4x = 8",
+            "x = 2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lines-gen-1-007",
+      "kind": "calculation",
+      "statement": "Вычисли 49 + 14 − 17 × 2.",
+      "key": "29",
+      "solution": [
+        "17 × 2 = 34",
+        "49 + 14 = 63",
+        "63 − 34 = 29"
+      ],
+      "traps": [
+        {
+          "id": "order-of-operations",
+          "description": "выполнил действия слева направо, не соблюдая порядка действий"
+        },
+        {
+          "id": "carry",
+          "description": "ошибся при сложении с переходом через десяток"
+        },
+        {
+          "id": "arithmetic",
+          "description": "ошибся в вычислении"
+        }
+      ],
+      "leaks": [
+        "17 × 2 = 34",
+        "63 − 34"
+      ],
+      "false_keys": [
+        {
+          "key": "19",
+          "solution": [
+            "17 × 2 = 34",
+            "49 + 14 = 53",
+            "53 − 34 = 19"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lines-gen-1-008",
+      "kind": "linear-equation",
+      "statement": "Реши уравнение 3x + 1 = 34.",
+      "key": "x = 11",
+      "solution": [
+        "3x + 1 = 34",
+        "3x = 33",
+        "x = 11"
+      ],
+      "traps": [
+        {
+          "id": "sign-on-transfer",
+          "description": "перенёс слагаемое в другую часть уравнения, не сменив знак"
+        },
+        {
+          "id": "one-side-division",
+          "description": "разделил на коэффициент только одну часть уравнения"
+        }
+      ],
+      "leaks": [
+        "3x = 33",
+        "33 : 3"
+      ],
+      "false_keys": [
+        {
+          "key": "x = 35/3",
+          "solution": [
+            "3x + 1 = 34",
+            "3x = 35",
+            "x = 35/3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lines-gen-1-009",
+      "kind": "linear-equation",
+      "statement": "Реши уравнение 8x − 9 = 3x + 21.",
+      "key": "x = 6",
+      "solution": [
+        "8x − 9 = 3x + 21",
+        "8x − 3x = 21 + 9",
+        "5x = 30",
+        "x = 6"
+      ],
+      "traps": [
+        {
+          "id": "sign-on-transfer",
+          "description": "перенёс слагаемое в другую часть уравнения, не сменив знак"
+        },
+        {
+          "id": "one-side-division",
+          "description": "разделил на коэффициент только одну часть уравнения"
+        }
+      ],
+      "leaks": [
+        "5x = 30",
+        "30 : 5"
+      ],
+      "false_keys": [
+        {
+          "key": "x = 12/5",
+          "solution": [
+            "8x − 9 = 3x + 21",
+            "8x − 3x = 21 − 9",
+            "5x = 12",
+            "x = 12/5"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "lines-gen-1-010",
+      "kind": "calculation",
+      "statement": "Вычисли 14 + 37 − 12 × 3.",
+      "key": "15",
+      "solution": [
+        "12 × 3 = 36",
+        "14 + 37 = 51",
+        "51 − 36 = 15"
+      ],
+      "traps": [
+        {
+          "id": "order-of-operations",
+          "description": "выполнил действия слева направо, не соблюдая порядка действий"
+        },
+        {
+          "id": "carry",
+          "description": "ошибся при сложении с переходом через десяток"
+        },
+        {
+          "id": "arithmetic",
+          "description": "ошибся в вычислении"
+        }
+      ],
+      "leaks": [
+        "12 × 3 = 36",
+        "51 − 36"
+      ],
+      "false_keys": [
+        {
+          "key": "5",
+          "solution": [
+            "12 × 3 = 36",
+            "14 + 37 = 41",
+            "41 − 36 = 5"
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -132,7 +132,7 @@ func TestNearSheets(t *testing.T) {
 		// Leaning no way, the strokes before the digit that leans are drawn the same, and the first
 		// stroke drawn otherwise is of the answer line: the digit, and then, its points drawn anew,
 		// whatever follows it.
-		p := sheetLeaning(&sh, 1, 0)
+		p := SheetLeaning(&sh, 1, 0)
 		first := slices.IndexFunc(s.Strokes, func(st sample.Stroke) bool {
 			j := slices.IndexFunc(p.Strokes, func(q sample.Stroke) bool { return q.ID == st.ID })
 			return j < 0 || !slices.Equal(st.Points, p.Strokes[j].Points)
