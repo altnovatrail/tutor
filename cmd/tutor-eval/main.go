@@ -52,9 +52,11 @@ const usage = `usage:
                              directory of their own; -shift, how far the answer's last digit
                              of a near sheet leans toward its pair, 0.1 by default
   tutor-eval gen sheets|near [-tasks N] [-seed N] [-prefix P] -bank F -plan F
-                             make a bank of tasks and a plan of their sheets, with their
-                             truth by construction: sheets of lines, six a task, or sheets of
-                             the near key, two a task; new files only
+  tutor-eval gen workbook|essays [-n N] [-seed N] -file F
+                             make, with their truth by construction, a bank of tasks and a plan
+                             of their sheets — sheets of lines, six a task, or sheets of the
+                             near key, two a task — or pages of the workbook or essays; new
+                             files only
   tutor-eval sheets [-dir D] [-bank F] [-plan F]
                              the summary of the recorded sheets against the plan, without the
                              handwriting

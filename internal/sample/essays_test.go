@@ -182,6 +182,9 @@ func TestEssayCounts(t *testing.T) {
 	if got := sample.LinkingWords(text); !slices.Equal(got, []string{"then", "so", "because"}) {
 		t.Errorf("LinkingWords = %q", got)
 	}
+	if got := sample.JoiningWords("And if it rains or snows, and if not."); !slices.Equal(got, []string{"and", "if", "or"}) {
+		t.Errorf("JoiningWords = %q", got)
+	}
 	if got := sample.LowerStarts(text); !slices.Equal(got, []int{2, 5}) {
 		t.Errorf("LowerStarts = %v", got)
 	}
