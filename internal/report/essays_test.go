@@ -157,3 +157,54 @@ func TestKappa(t *testing.T) {
 		}
 	}
 }
+
+// In a run of two calls an assessment is the reading and the assessment of its text: the reading
+// tells how the model read, the assessment its judgements and feedback, and the cost and the time are
+// both together. A reading that failed leaves its assessment not asked and every criterion unchecked.
+func TestEssaysTwo(t *testing.T) {
+	met := func(v bool) *bool { return &v }
+	l := &essay.Log{
+		Run: essay.RunRecord{Kind: "run", CallKind: essay.CallKind, Part: "test", File: "f", Seed: 1, Repeats: 1, Prompt: "abcdef0123456789",
+			PromptVersion: essay.TwoVersion, Path: essay.PathTwo, MaxUSD: 7, Rubric: []sample.Criterion{{ID: "title"}, {ID: "spelling"}},
+			Readers: []essay.ReaderRecord{{Name: "sonnet-low", Model: "claude-sonnet-5-5", Effort: "low"}}},
+		Sheets: []essay.EssayRecord{{Kind: "essay", Essay: 1, Part: "test", Unmet: []string{}}, {Kind: "essay", Essay: 2, Part: "test", Unmet: []string{"title"}}},
+		Calls: []essay.CallRecord{
+			{Kind: "call", Call: essay.Call{Essay: 1, Reader: "sonnet-low", Repeat: 1, Step: essay.StepRead}, Answer: `{"text": "x"}`,
+				Reading: &essay.Reading{Words: 10}, Usage: runner.Usage{CostUSD: 0.01, LatencyMs: 1000}},
+			{Kind: "call", Call: essay.Call{Essay: 1, Reader: "sonnet-low", Repeat: 1, Step: essay.StepAssess}, Answer: `{"criteria": [], "feedback": "Good."}`,
+				Marks: []essay.Mark{{ID: "title", Met: met(true)}, {ID: "spelling", Met: met(false)}}, FeedbackWords: 5, Usage: runner.Usage{CostUSD: 0.02, LatencyMs: 2000}},
+			{Kind: "call", Call: essay.Call{Essay: 2, Reader: "sonnet-low", Repeat: 1, Step: essay.StepRead}, Error: "timeout", Usage: runner.Usage{CostUSD: 0.01, LatencyMs: 500}},
+			{Kind: "call", Call: essay.Call{Essay: 2, Reader: "sonnet-low", Repeat: 1, Step: essay.StepAssess}, NotAsked: true, Error: "no text",
+				Marks: []essay.Mark{{ID: "title", Reason: essay.ReasonFailed}, {ID: "spelling", Reason: essay.ReasonFailed}}},
+		},
+		End: &runner.End{Kind: "end"},
+	}
+	r, err := NewEssays(l)
+	if err != nil {
+		t.Fatal(err)
+	}
+	rd := r.Readers[0]
+	if rd.Calls != 2 || rd.Failed != 1 || rd.All.Judged != 2 || rd.All.Unchecked != 2 || rd.All.FalseAlarm.Events != 1 || rd.Feedbacks != 1 || rd.MeanWords != 5 ||
+		rd.Reading.Words != 10 || math.Abs(rd.MeanUSD-0.02) > 1e-9 || rd.TimeP50 != 500 || rd.TimeP95 != 3000 {
+		t.Errorf("the reader of two calls: %+v", rd)
+	}
+	var md bytes.Buffer
+	if err := r.Markdown(&md, "t.jsonl"); err != nil || !strings.Contains(md.String(), "The run assesses in two calls") || !strings.Contains(md.String(), "| 0.02000 | 500 / 3000 |") {
+		t.Errorf("the report of two calls (%v):\n%s", err, md.String())
+	}
+	// The feedback to read shows each assessment once, with its feedback; the CSV has every criterion of
+	// the pair whose reading failed, unchecked.
+	var fb, table bytes.Buffer
+	if err := r.Feedback(&fb, "t.jsonl"); err != nil || strings.Count(fb.String(), "## Essay 1") != 1 || !strings.Contains(fb.String(), "> Good.") {
+		t.Errorf("the feedback of two calls (%v):\n%s", err, fb.String())
+	}
+	if err := r.CSV(&table); err != nil || !strings.Contains(table.String(), "2,test,sonnet-low,1,title,unmet,unchecked,failed") || strings.Count(table.String(), "\n") != 5 {
+		t.Errorf("the CSV of two calls (%v):\n%s", err, table.String())
+	}
+	// The one-call report has no column of time.
+	one, _ := NewEssays(essaysLog())
+	var plain bytes.Buffer
+	if err := one.Markdown(&plain, "t.jsonl"); err != nil || strings.Contains(plain.String(), "Time p50") {
+		t.Errorf("the report of one call shows the time (%v)", err)
+	}
+}

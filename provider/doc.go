@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -39,6 +40,9 @@ type Request struct {
 	MaxOutputTokens int64
 	Effort          string
 	NoThinking      bool
+	// NoPicture marks a request of a text alone, such as the assessment of a text an earlier call
+	// read (T92): it has no picture, and its text is not blank. Any other request has a picture.
+	NoPicture bool
 }
 
 // Response is a model's answer: JSON that follows the request's schema, the model the provider
@@ -75,11 +79,18 @@ type Model interface {
 var ErrNoAnswer = errors.New("no answer")
 
 // CheckImages refuses the pictures of a request that an adapter sending at most pictures will not
-// send: none, more than most, one without its PNG, or, of two or more, one without its label. Of
-// several pictures each has a label, as Anthropic advises, so that the text can name them
-// (docs/architecture.md, section 4).
+// send: none, more than most, one without its PNG, or, of two or more, one without its label. A
+// request marked NoPicture is the one that has none, and it is refused with a picture or with a
+// blank text, which asks nothing (T92). Of several pictures each has a label, as Anthropic advises,
+// so that the text can name them (docs/architecture.md, section 4).
 func CheckImages(r Request, most int) error {
 	switch {
+	case r.NoPicture && len(r.Images) > 0:
+		return errors.New("a request of a text alone that has a picture")
+	case r.NoPicture && strings.TrimSpace(r.Text) == "":
+		return errors.New("a request of a text alone whose text is blank")
+	case r.NoPicture:
+		return nil
 	case len(r.Images) == 0:
 		return errors.New("a request without a picture")
 	case len(r.Images) > most:

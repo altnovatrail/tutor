@@ -431,4 +431,19 @@ func TestImagesRefused(t *testing.T) {
 	if _, err := c.Ask(context.Background(), request); err != nil {
 		t.Error(err)
 	}
+	// A text alone, as the assessment of a text an earlier call read, goes without a picture (T92).
+	textOnly := request
+	textOnly.Images, textOnly.NoPicture = nil, true
+	if _, err := c.Ask(context.Background(), textOnly); err != nil {
+		t.Error(err)
+	}
+	// Marked a text alone, it is refused with a picture or a blank text, and reaches no API.
+	for _, bad := range []provider.Request{{Text: "x", Images: request.Images, NoPicture: true}, {Text: " \n", NoPicture: true}} {
+		if _, err := c.Ask(context.Background(), bad); err == nil || !strings.Contains(err.Error(), "a request of a text alone") {
+			t.Errorf("%+v: %v", bad, err)
+		}
+	}
+	if bodies := f.requests(); len(bodies) != 2 || strings.Contains(bodies[1], `"image"`) || !strings.Contains(bodies[1], request.Text) {
+		t.Errorf("the request of a text alone is %v", bodies[len(bodies)-1:])
+	}
 }

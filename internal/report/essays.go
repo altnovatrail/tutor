@@ -2,6 +2,7 @@ package report
 
 import (
 	"encoding/csv"
+	"encoding/json"
 	"fmt"
 	"io"
 	"slices"
@@ -20,15 +21,21 @@ type Essays struct {
 	log    *essay.Log
 	essays map[int]*essay.EssayRecord
 	order  []int
+	// all are the calls of the log, but in a run of two calls each reading and the assessment of its
+	// text as one assessment (pairs), so that every measure reads them as calls of one step.
+	all []essay.CallRecord
 	// Readers are the readers' measures, in the order of the run.
 	Readers []EssaysReader
 }
 
-// EssaysReader is a reader's measures over every call of the run.
+// EssaysReader is a reader's measures over every assessment of the run: a call, or in a run of two
+// calls a reading and the assessment of its text (T92). Calls and Failed count the assessments, and
+// MeanUSD and the times are those of an assessment, both its calls together.
 type EssaysReader struct {
-	Name          string
-	Calls, Failed int
-	MeanUSD       float64
+	Name             string
+	Calls, Failed    int
+	MeanUSD          float64
+	TimeP50, TimeP95 int64
 	// All is every criterion together, and Criteria each criterion of the rubric, in its order.
 	All      EssaysCell
 	Criteria []EssaysCell
@@ -74,7 +81,10 @@ const AllCriteria = "all"
 
 // NewEssays builds the report of a log of the assessment by the rubric.
 func NewEssays(l *essay.Log) (*Essays, error) {
-	r := &Essays{log: l, essays: map[int]*essay.EssayRecord{}}
+	r := &Essays{log: l, essays: map[int]*essay.EssayRecord{}, all: l.Calls}
+	if l.Run.Path == essay.PathTwo {
+		r.all = pairs(l)
+	}
 	for i := range l.Sheets {
 		e := &l.Sheets[i]
 		r.essays[e.Essay] = e
@@ -89,8 +99,8 @@ func NewEssays(l *essay.Log) (*Essays, error) {
 // calls are a reader's calls, in the order of the run.
 func (r *Essays) calls(reader string) []*essay.CallRecord {
 	var out []*essay.CallRecord
-	for i := range r.log.Calls {
-		if c := &r.log.Calls[i]; c.Reader == reader {
+	for i := range r.all {
+		if c := &r.all[i]; c.Reader == reader {
 			out = append(out, c)
 		}
 	}
@@ -113,6 +123,7 @@ func (r *Essays) reader(name string) EssaysReader {
 	times := map[[2]int]int{}          // essay and criterion → how many times judged
 	ways := map[[2]int]map[bool]bool{} // essay and criterion → the judgements given
 	words, spent := 0, 0.0
+	var spans []int64
 	for _, c := range r.calls(name) {
 		e := r.essays[c.Essay]
 		if e == nil || c.NotAsked {
@@ -120,6 +131,7 @@ func (r *Essays) reader(name string) EssaysReader {
 		}
 		rd.Calls++
 		spent += c.CostUSD
+		spans = append(spans, c.LatencyMs)
 		if c.Error != "" {
 			rd.Failed++
 		}
@@ -165,6 +177,7 @@ func (r *Essays) reader(name string) EssaysReader {
 	if rd.Calls > 0 {
 		rd.MeanUSD = spent / float64(rd.Calls)
 	}
+	rd.TimeP50, rd.TimeP95 = percentile(spans, 0.50), percentile(spans, 0.95)
 	if rd.Feedbacks > 0 {
 		rd.MeanWords = float64(words) / float64(rd.Feedbacks)
 	}
@@ -267,6 +280,9 @@ func (r *Essays) Markdown(w io.Writer, logName string) error {
 	made, failed, spent := tally(l.Calls, func(c *essay.CallRecord) (bool, bool, float64) { return !c.NotAsked, c.Error != "", c.CostUSD })
 	fmt.Fprintf(&b, "The log %s, of the prompt %s, version %d. The essays of %s, drawn with the seed %d: %s. Readers: %s. Repeats: %d. Calls: %d made, %d of them failed; $%.2f spent of the $%.2f cap.\n",
 		logName, short(l.Run.Prompt), l.Run.PromptVersion, l.Run.File, l.Run.Seed, strings.Join(nums, ", "), strings.Join(readers, "; "), l.Run.Repeats, made, failed, spent, l.Run.MaxUSD)
+	if l.Run.Path == essay.PathTwo {
+		b.WriteString("The run assesses in two calls: a reading of the essay, then the assessment of the text it read (T92); an assessment below is both, and so are its cost and its time.\n")
+	}
 	b.WriteString(endNote(l.End))
 
 	b.WriteString("\n## The criteria\n\n| Reader | Criterion | Judged | False alarms | Missed \"unmet\" | Agree | κ | Unchecked |\n|---|---|---|---|---|---|---|---|\n")
@@ -277,12 +293,21 @@ func (r *Essays) Markdown(w io.Writer, logName string) error {
 	}
 	b.WriteString("\nA false alarm is a criterion judged unmet that the essay meets, counted among the judgements of criteria the essay meets: the main measure of О-22. A missed \"unmet\" is a criterion judged met that the essay does not meet, counted among the judgements of criteria it does not meet. The truth is the plan's. κ is Cohen's, over every judgement of the criterion, in every repeat. A criterion is unchecked when its call failed, or the answer judges it not once or more than once. A share's bound is the one-sided upper bound of 95 % over the essays, Clopper–Pearson on n / Deff.\n")
 
-	b.WriteString("\n## Repeats, reading and feedback\n\n| Reader | Calls | Failed | Criteria judged both ways | Word errors | Misspellings kept | Small starts kept | Unended kept | Feedbacks | Sentences | Words | Quote | Script | Broken by R70 spec | Words, mean | Words, most | Cost, $ |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|\n")
+	two := r.log.Run.Path == essay.PathTwo
+	head, rule := "| Reader | Calls | Failed | Criteria judged both ways | Word errors | Misspellings kept | Small starts kept | Unended kept | Feedbacks | Sentences | Words | Quote | Script | Broken by R70 spec | Words, mean | Words, most | Cost, $ |", strings.Repeat("|---", 17)+"|"
+	if two {
+		head, rule = head+" Time p50 / p95, ms |", rule+"---|"
+	}
+	b.WriteString("\n## Repeats, reading and feedback\n\n" + head + "\n" + rule + "\n")
 	for _, rd := range r.Readers {
-		fmt.Fprintf(&b, "| %s | %d | %d | %d of %d | %d of %d | %d of %d | %d of %d | %s | %d | %d | %d | %d | %d | %d | %.1f | %d | %.5f |\n",
+		fmt.Fprintf(&b, "| %s | %d | %d | %d of %d | %d of %d | %d of %d | %d of %d | %s | %d | %d | %d | %d | %d | %d | %.1f | %d | %.5f |",
 			rd.Name, rd.Calls, rd.Failed, rd.Unstable, rd.Paired, rd.Reading.WordErrors, rd.Reading.Words, rd.Reading.MisspelledKept, rd.Reading.Misspelled,
 			rd.Reading.LowerStartsKept, rd.Reading.LowerStarts, r.unended(rd.Name), rd.Feedbacks,
 			rd.Breaches[essay.BreachSentences], rd.Breaches[essay.BreachWords], rd.Breaches[essay.BreachQuote], rd.Breaches[essay.BreachScript], rd.PlatformBroken, rd.MeanWords, rd.MostWords, rd.MeanUSD)
+		if two {
+			fmt.Fprintf(&b, " %d / %d |", rd.TimeP50, rd.TimeP95)
+		}
+		b.WriteString("\n")
 	}
 	fmt.Fprintf(&b, "\nCriteria judged both ways: of the criteria of an essay judged in two repeats or more, those judged met in one and unmet in another. Word errors: the edit distance in words between the essay as written, its title and text, and the text the model read, in small letters and without the marks around the words, of the essay's words. Kept: what the learner wrote wrong that the model read as it is written — the words spelled wrong, the sentences that begin with a small letter and the last sentence without its mark. The feedback's rule (R05 spec): at most %d sentences and %d words, and a quoted span of %d words or more only as the essay writes it; the columns count the feedbacks that break each part, and a feedback in another script than Latin breaks the last. R70 spec sets the same rule with %d words, and «Broken by R70 spec» counts the feedbacks that break it.\n",
 		essay.MaxSentences, essay.MaxWords, essay.QuoteWords, essay.PlatformWords)
@@ -311,7 +336,7 @@ func (r *Essays) CSV(w io.Writer) error {
 	cw := csv.NewWriter(w)
 	rows := [][]string{{"essay", "part", "reader", "repeat", "criterion", "truth", "judged", "reason"}}
 	metText := map[bool]string{true: "met", false: "unmet"}
-	for _, c := range r.log.Calls {
+	for _, c := range r.all {
 		e := r.essays[c.Essay]
 		if e == nil || c.NotAsked {
 			continue
@@ -414,4 +439,55 @@ func feedbackOf(answer string) string {
 		return ""
 	}
 	return a.Feedback
+}
+
+// pairs are the calls of a run in two calls, each reading and the assessment of its text as one
+// assessment, as a call of one step tells it (T92): the reading's reading, the assessment's
+// judgements and feedback, an answer of the schema of one call with the text the reading wrote down,
+// and the cost and the time of both calls together. A reading that failed fails the assessment, and
+// so does an assessment the run never came to, its criteria unchecked.
+func pairs(l *essay.Log) []essay.CallRecord {
+	var out []essay.CallRecord
+	at := map[essay.Call]int{}
+	assessed := map[int]bool{}
+	for _, c := range l.Calls {
+		key := c.Call
+		key.Step = ""
+		i, ok := at[key]
+		if !ok {
+			marks, _ := essay.Marks(l.Run.Rubric, nil)
+			out = append(out, essay.CallRecord{Kind: "call", Call: key, Marks: marks})
+			i = len(out) - 1
+			at[key] = i
+		}
+		p := &out[i]
+		p.CostUSD += c.CostUSD
+		p.LatencyMs += c.LatencyMs
+		switch c.Step {
+		case essay.StepRead:
+			p.Reading = c.Reading
+			if c.Error != "" || c.NotAsked {
+				p.Error = "the reading: " + c.Error
+			}
+			p.Answer = c.Answer
+		case essay.StepAssess:
+			assessed[i] = true
+			p.Marks, p.Extra, p.Breaches, p.FeedbackWords = c.Marks, c.Extra, c.Breaches, c.FeedbackWords
+			if p.Error == "" && (c.Error != "" || c.NotAsked) {
+				p.Error = "the assessment of the text: " + c.Error
+			}
+			if text, err := essay.ReadReading(p.Answer); err == nil {
+				if a, err := essay.ReadText(c.Answer, text); err == nil {
+					data, _ := json.Marshal(a)
+					p.Answer = string(data)
+				}
+			}
+		}
+	}
+	for i := range out {
+		if !assessed[i] && out[i].Error == "" {
+			out[i].Error = "the run stopped before the assessment of the text"
+		}
+	}
+	return out
 }
