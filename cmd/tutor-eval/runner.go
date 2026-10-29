@@ -60,6 +60,7 @@ var plans = map[string]struct {
 // what a reading reads (T69), and for the workbook, the file of its pages, the seed they are drawn
 // from and what its reading reads (T79); for the essays, their file (T83).
 type options struct {
+	two           bool
 	readers       []string
 	repeats       int
 	reads         reading.Reads
@@ -105,6 +106,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	seed := flags.Uint64("seed", 1, "for -kind workbook and essay, the number the hands of the pages and the essays come from")
 	maxUSD := flags.Float64("max-usd", 0, "start no call that could take the run past this many US dollars; $3 for dev, $6 for test ($8 for the essays) and $2 for all by default")
 	logPath := flags.String("log", "", "the log of the run, a new file out of git: in samples or synthetic, and in samples alone for sheets there; by default in runs next to the directory of the sheets, and for the workbook and the essays in synthetic/runs")
+	two := flags.Bool("two", false, "for -kind essay, assess in two calls: read the essay, then assess the text read (T92)")
 	stub := flags.Bool("stub", false, "ask no model: a stub answers by the markup, and the run needs no key and no network")
 	readersList := flags.String("readers", strings.Join(runner.E4Configs, ","), "the configurations to ask, joined by commas: "+strings.Join(runner.ConfigNames(), ", ")+"; the three of E4 by default")
 	if code, ok := parse(flags, args, stderr); !ok {
@@ -120,7 +122,11 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	for _, name := range strings.Split(*readersList, ",") {
 		names = append(names, strings.TrimSpace(name))
 	}
-	o := options{readers: names, repeats: *repeats, workbook: *pagesFile, essays: *essaysPath, seed: *seed}
+	if *two && *kind != "essay" {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -two is for -kind essay, and the %s asks one call\n", *kind)
+		return exitUsage
+	}
+	o := options{two: *two, readers: names, repeats: *repeats, workbook: *pagesFile, essays: *essaysPath, seed: *seed}
 	if _, err := runner.Chosen(runner.Configs(), func(c runner.Config) runner.Config { return c }, o.readers); err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -readers is %q: %v\n", *readersList, err)
 		return exitUsage
@@ -520,7 +526,12 @@ func planEssays(_ []sheetFlags, part string, o options) (*runner.Run, string, er
 	if err != nil {
 		return nil, "", err
 	}
-	r, err := essay.New(part, o.essays, o.seed, es, essays, readers, o.repeats)
+	newRun, calls := essay.New, "a call an essay"
+	version := essay.Version
+	if o.two {
+		newRun, calls, version = essay.NewTwo, "two calls an essay, the reading and the assessment of the text it read", essay.TwoVersion
+	}
+	r, err := newRun(part, o.essays, o.seed, es, essays, readers, o.repeats)
 	if err != nil {
 		return nil, "", err
 	}
@@ -528,8 +539,12 @@ func planEssays(_ []sheetFlags, part string, o options) (*runner.Run, string, er
 	for i, rd := range readers {
 		names[i] = rd.Name
 	}
-	return r, fmt.Sprintf("%s: %s of %s, drawn with the seed %d, at %d px, by %s in %s, a call an essay, in version %d of the prompt of the assessment by the rubric.\n",
-		partName(part), count(len(essays), "essay"), o.essays, o.seed, render.Digit, strings.Join(names, " and "), count(o.repeats, "repeat"), essay.Version), nil
+	prompt := "the prompt of the assessment by the rubric"
+	if o.two {
+		prompt = "the prompts of the assessment in two calls"
+	}
+	return r, fmt.Sprintf("%s: %s of %s, drawn with the seed %d, at %d px, by %s in %s, %s, in version %d of %s.\n",
+		partName(part), count(len(essays), "essay"), o.essays, o.seed, render.Digit, strings.Join(names, " and "), count(o.repeats, "repeat"), calls, version, prompt), nil
 }
 
 // byReaders says who reads in a run: those that read once, and the others in their repeats; and

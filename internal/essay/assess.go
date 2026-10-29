@@ -142,7 +142,12 @@ type Judgement struct {
 // Read takes a model's answer apart as strictly as the schema: the text, the criteria and the
 // feedback and nothing else, every field of each criterion. Which criteria it judges, Marks weighs;
 // the answer as the model gave it is the run's to keep.
-func Read(answer string) (*Answer, error) {
+func Read(answer string) (*Answer, error) { return readAnswer(answer, true) }
+
+// readAnswer takes an answer apart as strictly as its schema: with the text or without it, as the
+// assessment of a text answers (ReadText), the criteria, every field of each, and the feedback, and
+// nothing else.
+func readAnswer(answer string, withText bool) (*Answer, error) {
 	var raw struct {
 		Text     *string `json:"text"`
 		Criteria *[]struct {
@@ -157,10 +162,13 @@ func Read(answer string) (*Answer, error) {
 	if err := dec.Decode(&raw); err != nil {
 		return nil, fmt.Errorf("essay: the answer is not the schema's: %w", err)
 	}
-	if raw.Text == nil || raw.Criteria == nil || raw.Feedback == nil {
-		return nil, errors.New("essay: the answer lacks the text, the criteria or the feedback")
+	if raw.Text == nil && withText || raw.Text != nil && !withText || raw.Criteria == nil || raw.Feedback == nil {
+		return nil, errors.New("essay: the answer lacks the text, the criteria or the feedback, or has a field its schema does not")
 	}
-	a := &Answer{Text: *raw.Text, Feedback: *raw.Feedback}
+	a := &Answer{Feedback: *raw.Feedback}
+	if raw.Text != nil {
+		a.Text = *raw.Text
+	}
 	for i, c := range *raw.Criteria {
 		if c.ID == nil || c.Met == nil || c.Evidence == nil {
 			return nil, fmt.Errorf("essay: criterion %d of the answer lacks a field", i+1)
