@@ -11,8 +11,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// The test vectors of the leak check are copies of format/vectors/leaks of spec at v0.3.2 (commit
-// 9d64b22), where they last changed in b217758, under Apache-2.0 as spec is. CI checks the
+// The test vectors of the leak check are copies of format/vectors/leaks of spec at v0.3.3 (commit
+// a58a323), where they last changed in b217758, under Apache-2.0 as spec is. CI checks the
 // repository out without the spec submodule, so the copies are what it tests; TestCopies holds them
 // to spec's wherever the submodule is there.
 const vectors = "testdata/leaks"
