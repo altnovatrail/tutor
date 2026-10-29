@@ -282,7 +282,7 @@ func TestRunWorkbookBare(t *testing.T) {
 func TestRunWorkbook(t *testing.T) {
 	log := filepath.Join(t.TempDir(), "workbook.jsonl")
 	code, out, errs := runMeasure("yes\n", "-kind", "workbook", "-workbook", theWorkbook, "-part", "dev", "-stub", "-repeats", "1", "-log", log)
-	if code != exitOK || !strings.HasPrefix(out, "The dev part: 5 pages of the workbook "+theWorkbook+", drawn with the seed 1, bare and with the lines of the items at 32 px, by opus-high once, haiku-low and haiku-low-no-thinking in 1 repeat, a call a page, in version 1 of the prompt of the workbook.\n30 calls, expected to cost $") {
+	if code != exitOK || !strings.HasPrefix(out, "The dev part: 5 pages of the workbook "+theWorkbook+", drawn with the seed 1, bare and with the lines of the items at 32 px, by opus-high once, haiku-low and haiku-low-no-thinking in 1 repeat, a call a page, in version 2 of the prompt of the workbook.\n30 calls, expected to cost $") {
 		t.Fatalf("the run ends %d:\n%s%s", code, out, errs)
 	}
 	data, err := os.ReadFile(log)

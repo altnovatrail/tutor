@@ -247,8 +247,7 @@ func New(part, file string, seed uint64, pages []*sample.WorkbookPage, readers [
 }
 
 // pageRecord is the record that tells a page of the run: its number and part, and each of its
-// boxes as code wrote it, with the verdict a right reading of it comes to and the size of its crop
-// at 32 px.
+// boxes as code wrote it, with the verdict of its value and the size of its crop at 32 px.
 func pageRecord(pg *sample.WorkbookPage, cells []Cell) PageRecord {
 	rec := PageRecord{Kind: "page", Page: pg.Number, Part: pg.Part}
 	crops := map[[2]int]Cell{}
@@ -305,9 +304,10 @@ type (
 		Boxes []BoxRecord `json:"boxes"`
 	}
 	// BoxRecord tells a box as code wrote it: its place, its check — kind, form and key — its
-	// scenario, what is written in it and crossed out, how a fraction is written, the verdict a
-	// right reading of it comes to, with its reason or trap, and the size of its crop at 32 px, none
-	// for a blank box. They are the texts of the file of the workbook, not the handwriting.
+	// scenario, what is written in it and crossed out, how a fraction is written, the verdict the
+	// box's check gives the value written, with its reason or trap, and the size of its crop at
+	// 32 px, none for a blank box. The verdict a right reading comes to by the prompt of the run is
+	// Want of it. They are the texts of the file of the workbook, not the handwriting.
 	BoxRecord struct {
 		Item     int                     `json:"item"`
 		Slot     int                     `json:"slot"`
