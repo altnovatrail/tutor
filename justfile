@@ -59,6 +59,13 @@ record *args:
 free-record *args:
     go run ./cmd/tutor-eval board -record -dir samples/free -bank eval/free-bank.json -plan eval/free-author.json {{ args }}
 
+# This recipe asks for no key either. The author's ten sheets of the extended measurement, solved in
+# free form and written messily on purpose, go to samples/free-messy, out of git. Its arguments go
+# to tutor-eval board.
+# Start the record mode on the ten messy sheets of the extended measurement (T97 in RUN.md).
+messy-record *args:
+    go run ./cmd/tutor-eval board -record -dir samples/free-messy -bank eval/free-bank.json -plan eval/free-messy.json {{ args }}
+
 # This recipe asks for the Anthropic key for eval if it is not set yet, without showing it, so that
 # no key lands in the shell's history; with -stub the run needs none, and Enter skips it. Its
 # arguments go to tutor-eval run: -part dev or -part test, and the rest.

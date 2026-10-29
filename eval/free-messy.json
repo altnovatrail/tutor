@@ -1,0 +1,256 @@
+{
+  "format": "tutor-sheet-plan",
+  "version": 1,
+  "sheets": [
+    {
+      "number": 1,
+      "task": "grasshopper",
+      "scenario": "correct",
+      "parts": [
+        {
+          "kind": "text",
+          "place": "wide",
+          "text": "свободное решение целиком",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        }
+      ],
+      "answer": 1,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 2,
+      "task": "backwards",
+      "scenario": "correct",
+      "parts": [
+        {
+          "kind": "text",
+          "place": "wide",
+          "text": "свободное решение целиком",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        }
+      ],
+      "answer": 1,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 3,
+      "task": "houses",
+      "scenario": "correct",
+      "parts": [
+        {
+          "kind": "text",
+          "place": "wide",
+          "text": "свободное решение целиком",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        }
+      ],
+      "answer": 1,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 4,
+      "task": "stamps",
+      "scenario": "correct",
+      "parts": [
+        {
+          "kind": "text",
+          "place": "wide",
+          "text": "свободное решение целиком",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        }
+      ],
+      "answer": 1,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 5,
+      "task": "pages",
+      "scenario": "correct",
+      "parts": [
+        {
+          "kind": "text",
+          "place": "wide",
+          "text": "свободное решение целиком",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        }
+      ],
+      "answer": 1,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 6,
+      "task": "album",
+      "scenario": "correct",
+      "parts": [
+        {
+          "kind": "text",
+          "place": "wide",
+          "text": "свободное решение целиком",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        }
+      ],
+      "answer": 1,
+      "expected": {
+        "outcome": "correct",
+        "first_error": null,
+        "trap": ""
+      },
+      "erasure": null
+    },
+    {
+      "number": 7,
+      "task": "houses",
+      "scenario": "error",
+      "parts": [
+        {
+          "kind": "text",
+          "place": "wide",
+          "text": "свободное решение целиком, с ошибкой: посчитал домик с флажком дважды — ответ 10",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        }
+      ],
+      "answer": 1,
+      "expected": {
+        "outcome": "error",
+        "first_error": 1,
+        "trap": "counted-twice"
+      },
+      "erasure": null
+    },
+    {
+      "number": 8,
+      "task": "stamps",
+      "scenario": "error",
+      "parts": [
+        {
+          "kind": "text",
+          "place": "wide",
+          "text": "свободное решение целиком, с ошибкой: разделил сумму пополам, не убрав разницу — ответ 10",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        }
+      ],
+      "answer": 1,
+      "expected": {
+        "outcome": "error",
+        "first_error": 1,
+        "trap": "halved-total"
+      },
+      "erasure": null
+    },
+    {
+      "number": 9,
+      "task": "backwards",
+      "scenario": "error",
+      "parts": [
+        {
+          "kind": "text",
+          "place": "wide",
+          "text": "свободное решение целиком, с ошибкой: решая с конца, не заменил действия обратными — ответ 10",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        }
+      ],
+      "answer": 1,
+      "expected": {
+        "outcome": "error",
+        "first_error": 1,
+        "trap": "not-inverted"
+      },
+      "erasure": null
+    },
+    {
+      "number": 10,
+      "task": "album",
+      "scenario": "error",
+      "parts": [
+        {
+          "kind": "text",
+          "place": "wide",
+          "text": "свободное решение целиком, с ошибкой: принял «в 3 раза дороже» за «на 3 рубля дороже» — ответ 104",
+          "figure": {
+            "number_line": null,
+            "row": null,
+            "scheme": null,
+            "column": null
+          }
+        }
+      ],
+      "answer": 1,
+      "expected": {
+        "outcome": "error",
+        "first_error": 1,
+        "trap": "times-as-more"
+      },
+      "erasure": null
+    }
+  ]
+}
