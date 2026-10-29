@@ -195,9 +195,6 @@ func trapsOf(ids ...string) []sample.Trap {
 	return out
 }
 
-// between is a number from lo to hi, both included.
-func between(r *rand.Rand, lo, hi int) int { return lo + r.IntN(hi-lo+1) }
-
 // n is a number as the lines write it.
 func n(v int) string { return strconv.Itoa(v) }
 
@@ -314,14 +311,4 @@ func fraction(p, q int) string {
 		return n(p / g)
 	}
 	return fmt.Sprintf("%d/%d", p/g, q/g)
-}
-
-func gcd(a, b int) int {
-	for b != 0 {
-		a, b = b, a%b
-	}
-	if a < 0 {
-		return -a
-	}
-	return a
 }

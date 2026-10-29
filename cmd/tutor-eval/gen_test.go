@@ -52,7 +52,7 @@ func TestGen(t *testing.T) {
 		args []string
 		says string
 	}{
-		{nil, "give sheets or near"},
+		{nil, "give sheets, near, workbook or essays"},
 		{[]string{"tasks"}, `"tasks" is nothing gen makes`},
 		{[]string{"near", "-bank", bank}, "give -bank and -plan"},
 		{[]string{"near", "-tasks", "0", "-bank", "a", "-plan", "b"}, "0 tasks"},
@@ -105,6 +105,40 @@ func TestDrawShift(t *testing.T) {
 		errs.Reset()
 		if code := runDraw([]string{"-dir", filepath.Join(dir, "x"), "-bank", bank, "-plan", plan, "-shift", shift}, &out, &errs, at); code != exitUsage || !strings.Contains(errs.String(), "give a share from 0 to 1") {
 			t.Errorf("draw -shift %s = %d, %q", shift, code, errs.String())
+		}
+	}
+}
+
+// gen writes pages of the workbook and essays as new files that check passes, and refuses a run of
+// none or without its file.
+func TestGenFiles(t *testing.T) {
+	dir := t.TempDir()
+	var out, errs bytes.Buffer
+	for _, c := range []struct{ kind, says string }{{"workbook", "2 pages of the seed 5"}, {"essays", "2 essays of the seed 5"}} {
+		path := filepath.Join(dir, c.kind+".json")
+		out.Reset()
+		if code := runGen([]string{c.kind, "-n", "2", "-seed", "5", "-file", path}, &out, &errs); code != exitOK || !strings.HasPrefix(out.String(), c.says) {
+			t.Fatalf("gen %s = %d: %s%s", c.kind, code, out.String(), errs.String())
+		}
+		out.Reset()
+		if code := check([]string{path}, &out, &errs); code != exitOK {
+			t.Errorf("check of the generated %s = %d: %s%s", c.kind, code, out.String(), errs.String())
+		}
+		errs.Reset()
+		if code := runGen([]string{c.kind, "-n", "2", "-file", path}, &out, &errs); code != exitFail || !strings.Contains(errs.String(), "file exists") {
+			t.Errorf("gen %s over a file = %d: %s", c.kind, code, errs.String())
+		}
+	}
+	for _, c := range []struct {
+		args []string
+		says string
+	}{
+		{[]string{"essays"}, "give -file"},
+		{[]string{"workbook", "-n", "0", "-file", "x"}, "make at least one page"},
+	} {
+		errs.Reset()
+		if code := runGen(c.args, &out, &errs); code != exitUsage || !strings.Contains(errs.String(), c.says) {
+			t.Errorf("gen %v = %d, %q; want %q", c.args, code, errs.String(), c.says)
 		}
 	}
 }

@@ -87,10 +87,10 @@ var (
 	joining = []string{"and", "or", "after", "before", "while", "until", "if", "although", "since"}
 )
 
-// distinctLower are the small letters whose capital a hand writes in another shape, not only
+// DistinctLower are the small letters whose capital a hand writes in another shape, not only
 // taller: a sentence that begins with a small letter, against the criterion of capitals and stops,
 // begins with one of them, so that a reader can tell it.
-const distinctLower = "abdefghimnqrty"
+const DistinctLower = "abdefghimnqrty"
 
 // The words of the essays: letters, with an apostrophe inside, as "don't", and a comma or an end
 // mark after a word of a text.
@@ -133,6 +133,10 @@ func Words(text string) []string {
 // LinkingWords are the distinct linking words of the criterion that a text holds, in small letters,
 // in the order they first come.
 func LinkingWords(text string) []string { return holds(text, linking) }
+
+// JoiningWords are the distinct words that join ideas but are no linking words of the criterion,
+// such as and or if, that a text holds, in small letters, in the order they first come.
+func JoiningWords(text string) []string { return holds(text, joining) }
 
 // holds are the distinct words of a list that a text holds, in small letters, in the order they
 // first come.
@@ -348,11 +352,11 @@ func checkClear(p *problems, path string, e *Essay) {
 	}
 	ss := Sentences(e.Text)
 	for _, i := range LowerStarts(e.Text) {
-		if r := []rune(ss[i-1])[0]; !strings.ContainsRune(distinctLower, r) {
-			p.add(path+".text", "sentence %d begins with %q, which a hand writes like its capital: a small letter that begins a sentence is one of %s", i, r, distinctLower)
+		if r := []rune(ss[i-1])[0]; !strings.ContainsRune(DistinctLower, r) {
+			p.add(path+".text", "sentence %d begins with %q, which a hand writes like its capital: a small letter that begins a sentence is one of %s", i, r, DistinctLower)
 		}
 	}
-	link, join := LinkingWords(e.Text), holds(e.Text, joining)
+	link, join := LinkingWords(e.Text), JoiningWords(e.Text)
 	if len(link) == 1 || len(link) == 0 && len(join) > 0 {
 		p.add(path+".text", "has the linking words %v and the joining words %v: an essay has two linking words at least, or none of either", link, join)
 	}
