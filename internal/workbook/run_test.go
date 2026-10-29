@@ -92,16 +92,13 @@ func TestRunOnTheStub(t *testing.T) {
 			t.Fatalf("page %d, %s, %s: %+v", c.Page, c.Condition, c.Reader, c)
 		}
 		for i, b := range c.Boxes {
-			want := truth[c.Page][i]
-			if want.Scenario == sample.BoxMirrored {
-				// A digit written mirrored the right reader marks, and the learner writes it again.
-				if b.Verdict != value.Unreadable || b.Reason != workbook.Mirrored || want.Verdict != value.Correct {
-					t.Errorf("page %d, box %d.%d, %s at %d px, mirrored: %s %s, of a value %s", c.Page, b.Item, b.Slot, c.Condition, c.Digit, b.Verdict, b.Reason, want.Verdict)
-				}
-				continue
-			}
-			if b.Verdict != want.Verdict || b.Trap != want.Trap || (b.Verdict == value.Unreadable) != (want.Scenario == "blank") {
-				t.Errorf("page %d, box %d.%d, %s at %d px: %s %s, want %s %s", c.Page, b.Item, b.Slot, c.Condition, c.Digit, b.Verdict, b.Trap, want.Verdict, want.Trap)
+			box := truth[c.Page][i]
+			// A digit written mirrored the right reader marks, and the learner writes it again; the
+			// page's record keeps the verdict of the value.
+			want := workbook.Want(box.Scenario, value.Slot{Verdict: box.Verdict, Reason: box.Reason, Trap: box.Trap}, l.Run.PromptVersion)
+			if b.Verdict != want.Verdict || string(b.Reason) != string(want.Reason) || b.Trap != want.Trap ||
+				(b.Verdict == value.Unreadable) != (box.Scenario == sample.BoxBlank || box.Scenario == sample.BoxMirrored) || (box.Scenario == sample.BoxMirrored && box.Verdict != value.Correct) {
+				t.Errorf("page %d, box %d.%d, %s at %d px: %s %s %s, want %+v of the box %+v", c.Page, b.Item, b.Slot, c.Condition, c.Digit, b.Verdict, b.Reason, b.Trap, want, box)
 			}
 		}
 	}

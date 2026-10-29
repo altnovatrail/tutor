@@ -276,6 +276,27 @@ func TestWorkbookMirrored(t *testing.T) {
 			t.Errorf("version %d: the summary is %q", version, r.Summary())
 		}
 	}
+	// The items and the errors of a page follow the boxes. With the mirrored box of page 2 marked too,
+	// a log of version 2 has one more item right and one of version 1 one fewer. At 16 px every
+	// mirrored box is read as the digit: right by version 1, and a request to write it again missed
+	// by version 2, an error of the page.
+	for version, want := range map[int]struct{ right, at16 int }{1: {8, 0}, workbook.MirroredVersion: {10, 3}} {
+		l := mirroredLog(version)
+		c := call(l, 2, workbook.Bare, 32)
+		c.Boxes[3], c.Items[3] = workbook.Box{Item: 4, Slot: 1, Text: str("5"), Verdict: value.Unreadable, Reason: workbook.Mirrored}, value.Unreadable
+		r, err := report.NewWorkbook(l)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, it := range r.Items {
+			if it.Condition == workbook.Bare && (it.Readings != 12 || it.Right != want.right || it.FalseAlarm.Events != 1) {
+				t.Errorf("version %d, bare items: %+v", version, it)
+			}
+		}
+		if len(r.Heights) != 1 || r.Heights[0].Errors != want.at16 {
+			t.Errorf("version %d, heights: %+v", version, r.Heights)
+		}
+	}
 	if r, err := report.NewWorkbook(workbookLog()); err != nil || len(r.Mirrored) != 0 || strings.Contains(r.Summary(), "mirrored") {
 		t.Errorf("a log with no mirrored digit tells them: %+v, %v", r, err)
 	}

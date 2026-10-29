@@ -193,9 +193,12 @@ func TestGolden(t *testing.T) {
 		}
 	}
 	for i, b := range workbook.Verdicts(pg, workbook.Right(cells)) {
-		verdict, reason, trap := workbook.Want(pg.Items[b.Item-1].Boxes[b.Slot-1])
-		if b.Verdict != verdict || b.Reason != reason || b.Trap != trap {
-			t.Errorf("box %d: the right reader comes to %+v, and the box to %s %s %s", i+1, b, verdict, reason, trap)
+		box := pg.Items[b.Item-1].Boxes[b.Slot-1]
+		if want := workbook.Want(box.Scenario, box.Verdict(), workbook.Version); b.Verdict != want.Verdict || string(b.Reason) != string(want.Reason) || b.Trap != want.Trap {
+			t.Errorf("box %d: the right reader comes to %+v, and the box to %+v", i+1, b, want)
+		}
+		if old := workbook.Want(box.Scenario, box.Verdict(), 1); old != box.Verdict() {
+			t.Errorf("box %d: by version 1 a right reading comes to %+v, not the value's %+v", i+1, old, box.Verdict())
 		}
 	}
 	if fp := workbook.Fingerprint(); len(fp) != 64 || fp == "" {

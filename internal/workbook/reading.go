@@ -283,13 +283,14 @@ func Right(cells []Cell) []Reading {
 	return out
 }
 
-// Want is the verdict a right reading of a box comes to by the prompt of this version: the verdict
-// of the value written (sample.WorkbookBox.Verdict), but for a box with a digit written mirrored,
-// unreadable, mirrored, so that the learner writes it again (R56 spec, amendment of 2026-10-29).
-func Want(b sample.WorkbookBox) (value.Verdict, Reason, string) {
-	if b.Scenario == sample.BoxMirrored {
-		return value.Unreadable, Mirrored, ""
+// Want is the verdict a right reading of a box of a scenario comes to by the prompt of a version,
+// from the verdict of the value written in it (sample.WorkbookBox.Verdict): that verdict, but from
+// MirroredVersion on, for a box with a digit written mirrored, unreadable, mirrored, so that the
+// learner writes it again (R56 spec, amendment of 2026-10-29). The run and its report both judge a
+// reading by it.
+func Want(scenario sample.BoxScenario, of value.Slot, version int) value.Slot {
+	if version >= MirroredVersion && scenario == sample.BoxMirrored {
+		return value.Slot{Verdict: value.Unreadable, Reason: value.Reason(Mirrored)}
 	}
-	v := b.Verdict()
-	return v.Verdict, Reason(v.Reason), v.Trap
+	return of
 }
