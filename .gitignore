@@ -7,3 +7,6 @@
 # stay out of git too, and agents work with them: CLAUDE.md and docs/architecture.md, section 3.4
 # (R28).
 /synthetic/
+
+# What release-files writes, for .github's shared release to sign and publish (R62).
+/dist/

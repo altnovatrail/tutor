@@ -1,0 +1,41 @@
+# NovaTrail's shared release (R18 .github), pinned to a release of .github by SHA with its version
+# beside it. RELEASE_LINE is the line the releases are numbered in; paths, what they are built from.
+# To the list for Go, paths adds the files the code embeds with //go:embed and leaves out code under
+# testdata/, as architecture 3.3 of .github asks (R62 in docs/decisions.md).
+name: Release
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  RELEASE_LINE: "0.1"
+
+jobs:
+  release:
+    name: Release
+    permissions:
+      contents: write
+      id-token: write
+      actions: read
+    uses: altnovatrail/.github/.github/workflows/release.yml@c1b848779d9f1d73817ca078a7cba3664632f03b # v0.1.11
+    with:
+      paths: |
+        *.go
+        :(exclude)*_test.go
+        :(exclude)*/testdata/*
+        go.mod
+        go.sum
+        justfile
+        LICENSE
+        internal/gen/topics.json
+        internal/board/page.html
+        internal/board/record.html
+        .devcontainer/Dockerfile
+        .github/workflows/release.yml

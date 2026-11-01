@@ -1,7 +1,9 @@
 # tutor
 
 [![CI](https://github.com/altnovatrail/tutor/actions/workflows/ci.yml/badge.svg)](https://github.com/altnovatrail/tutor/actions/workflows/ci.yml)
+[![Release](https://github.com/altnovatrail/tutor/actions/workflows/release.yml/badge.svg)](https://github.com/altnovatrail/tutor/actions/workflows/release.yml)
 [![CodeQL](https://github.com/altnovatrail/tutor/actions/workflows/codeql.yml/badge.svg)](https://github.com/altnovatrail/tutor/actions/workflows/codeql.yml)
+[![Latest release](https://img.shields.io/github/v/release/altnovatrail/tutor)](https://github.com/altnovatrail/tutor/releases/latest)
 [![Go version](https://img.shields.io/github/go-mod/go-version/altnovatrail/tutor)](go.mod)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/altnovatrail/tutor/badge)](https://scorecard.dev/viewer/?uri=github.com/altnovatrail/tutor)
 [![License](https://img.shields.io/github/license/altnovatrail/tutor)](LICENSE)
@@ -48,7 +50,11 @@ The measurement of free writing of epic E4 runs the same way on the 40 sheets co
 
 The workbook of epic E4 is 20 pages that code draws in memory from `eval/workbook.json`: ten items a page, each with its boxes, and in each box a value written by hand, plainly or with a digit leaning toward its pair, mirrored or crossed out and written again. Its pages are listed in [docs/workbook.md](docs/workbook.md), and `go run ./cmd/tutor-eval workbook -png synthetic/png/workbook` saves the crop of every filled box, what a reading sees. The essays of epic E4 are 20 short essays in English with one rubric of six criteria, and whether each essay meets each criterion as planned: `eval/essays.json`, listed in [docs/essays.md](docs/essays.md). Code draws them in memory too, and `go run ./cmd/tutor-eval essays -png synthetic/png/essays` saves the crop of every page.
 
-How it works is section 3.3 of [docs/architecture.md](docs/architecture.md), and the plan of epic E4's measurements is its section 3.4; what the library is to be, call by call, is sections 3.5 to 3.10. The plan is [RUN.md](RUN.md): epics E4 and E1, detailing, are done. The current epic is E3, deferred since 2026-10-25 and back on 2026-11-01: the first release of tutor comes first, and the eval protocol and the check of canvas's synthetic samples wait for spec and canvas. The library's code, epic E5, is proposed but not yet taken; it starts with the move to spec's 0.6 line.
+How it works is section 3.3 of [docs/architecture.md](docs/architecture.md), and the plan of epic E4's measurements is its section 3.4; what the library is to be, call by call, is sections 3.5 to 3.10. The plan is [RUN.md](RUN.md): epics E4 and E1, detailing, are done. The current epic is E3, deferred since 2026-10-25 and back on 2026-11-01: its first task gave tutor its releases, below, and the eval protocol and the check of canvas's synthetic samples wait for spec and canvas. The library's code, epic E5, is proposed but not yet taken; it starts with the move to spec's 0.6 line.
+
+## Releases
+
+A release comes out by itself after each merge into `main` that changes what the module is built from: its Go code, the files that code embeds, `go.mod`, `go.sum`, the `justfile`, the license, the Dockerfile or the release workflow (R62 in [docs/decisions.md](docs/decisions.md)). Its number is the next patch of line 0.1, from v0.1.0. A release is the tag of the Go module, which api builds from, `go get github.com/altnovatrail/tutor@v0.1.0`, and two files: the source of that commit, `tutor_<version>_source.tar.gz`, and `SHA256SUMS`. Each file comes with its Sigstore bundle, `<file>.sigstore.json`. The releases are immutable, and `gh release verify <tag> -R altnovatrail/tutor` and `gh release verify-asset <tag> <file> -R altnovatrail/tutor` check a release and a file you downloaded. The Go command checks the module itself against the Go checksum database.
 
 ## Documents
 
