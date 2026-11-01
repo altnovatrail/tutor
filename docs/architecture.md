@@ -794,13 +794,17 @@ ID — точные (R07 spec). У новых моделей своя `temperatu
   - `fmt` — форматирование на месте.
 - **Проверки CI** — рецепты `ci-lint`, `ci-test`, `ci-vuln` и `ci-licenses`, с именами из договора общего `go.yml` `.github` (R16 .github; R13). Их запускает job «Go» `.github/workflows/ci.yml`, через `go.yml`: на каждый рецепт — свой job и своя проверка, «Go / lint» и так далее. Идут они в ступени `toolchain` `.devcontainer/Dockerfile`, от пользователя раннера и с `HOME=/tmp`, из checkout без подмодуля `spec`. Поэтому код и тесты не должны читать `spec/`: файлы `spec` код берёт из его релизов (R21 spec), а тест, который откроет `spec/`, пройдёт в devcontainer и упадёт только в «Go / test».
   - `ci-lint` — это `lint`: CI и `just lint` проверяют одной командой;
-  - `ci-test` — тесты с детектором гонок и без кеша, `go test -race -count=1 ./...`;
+  - `ci-test` — тесты с детектором гонок и без кеша, `go test -race -count=1 ./...`, а перед ними — `release-files-test`, проверка рецепта релиза;
   - `ci-vuln` — govulncheck: известные уязвимости в коде, до которого доходит модуль;
   - `ci-licenses` — go-licenses: лицензия каждого пакета, из которого собирается модуль, — из списка `ALLOWED_LICENSES`, категории A ASF, который даёт `go.yml` (R12 spec). Без списка рецепт падает.
 
   Версии govulncheck и go-licenses — в самом `justfile`: `go run` берёт ровно названную версию, в образ они не ставятся, а Dependabot их не видит, и поднимают их руками (R13).
 - **CodeQL** читает Go: `.github/workflows/codeql.yml` передаёт общему `codeql.yml` `.github` вход `languages: go`, и анализ собирает код autobuild с Go из ступени `toolchain` (поправка к R09 .github; R13). Находки держат мерж правилом ruleset для CodeQL (R30 spec).
 - **Линтеры** — набор golangci-lint `standard` (errcheck, govet, ineffassign, staticcheck, unused) и ещё errorlint, misspell, nolintlint и unconvert. Форматтеры — gofmt и goimports (`.golangci.yml`).
+- **Релиз** (R62) выходит после каждого зелёного мержа в `main`, который меняет перечень `paths` в `.github/workflows/release.yml`: код Go без тестов, файлы `//go:embed`, `go.mod`, `go.sum`, `justfile`, `LICENSE`, Dockerfile и сам `release.yml`. Выпускает его общий `release.yml` `.github`, закреплённый на `v0.1.11`. Номер — следующий патч линии `0.1`, начиная с `v0.1.0`, а тег ставит сам релиз.
+  - **Тег модуля Go** — то, по чему `api` берёт `tutor`: `go get github.com/altnovatrail/tutor@vX.Y.Z`. Версию модуля sum.golang.org держит навсегда: убрать её нельзя, только отозвать директивой `retract` (R64 spec).
+  - **Файлы с подписью Sigstore** — `tutor_<версия>_source.tar.gz`, исходники коммита из дерева `git archive` без подмодуля `spec`, и `SHA256SUMS`. Их пишет рецепт `release-files`, и только в дереве, которое написал `git archive`: в папке с `.git` и в дереве с папкой, которую игнорирует git, он отказывает, чтобы в архив не попали `samples/` и всё, чего нет в git. `release-files-test` проверяет рецепт и сверяет, что каждый файл `//go:embed` стоит в `paths`, а его зовёт `ci-test`.
+  - **Бинарников `tutor-eval`** в релизе нет: они придут, когда eval-раннер возьмёт CI `modules`.
 
 ### 3.3. Доска проверки
 
