@@ -48,7 +48,7 @@ The measurement of free writing of epic E4 runs the same way on the 40 sheets co
 
 The workbook of epic E4 is 20 pages that code draws in memory from `eval/workbook.json`: ten items a page, each with its boxes, and in each box a value written by hand, plainly or with a digit leaning toward its pair, mirrored or crossed out and written again. Its pages are listed in [docs/workbook.md](docs/workbook.md), and `go run ./cmd/tutor-eval workbook -png synthetic/png/workbook` saves the crop of every filled box, what a reading sees. The essays of epic E4 are 20 short essays in English with one rubric of six criteria, and whether each essay meets each criterion as planned: `eval/essays.json`, listed in [docs/essays.md](docs/essays.md). Code draws them in memory too, and `go run ./cmd/tutor-eval essays -png synthetic/png/essays` saves the crop of every page.
 
-How it works is section 3.3 of [docs/architecture.md](docs/architecture.md), and the plan of epic E4's measurements is its section 3.4. The plan is [RUN.md](RUN.md): epic E4 is done, and detailing, the first epic, is current again, its tasks run one at a time.
+How it works is section 3.3 of [docs/architecture.md](docs/architecture.md), and the plan of epic E4's measurements is its section 3.4; what the library is to be, call by call, is sections 3.5 to 3.10. The plan is [RUN.md](RUN.md): epics E4 and E1, detailing, are done, and the next, the library's code, starts with the move to spec's 0.6 line.
 
 ## Documents
 
