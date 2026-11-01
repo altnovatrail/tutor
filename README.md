@@ -14,7 +14,7 @@
 
 The AI side of the NovaTrail tutor: it reads the learner's work, handwriting or text, into an observation, reviews the working for the first mistake, assesses an essay against the module author's rubric, and words the hint for the rung of the hint ladder that the platform's program chose. It holds the platform's prompts, one per AI capability and each with its own eval set, the adapters to AI providers, the exact models admitted for each capability, and the one function that admits an AI route for the learner's age category before every request; it reports each call's usage, by which api counts the platform AI quotas, and its eval runner is a CLI on the same code. It is a library inside api: it decides no verdict, picks no lesson or task and stores nothing, and its requests carry no identifier of the learner or the account: on the own-key route only the key itself goes along, to its own provider, which ties each call to the key owner's account.
 
-A component of [NovaTrail](https://github.com/altnovatrail/spec/tree/v0.3.3), a universal open platform for adaptive learning, interactive lessons and AI tutoring. It belongs to stage 2, First slice with learners, with canvas, api, app, skill-map and infra; together with canvas it brings the stage's first code, which for tutor is the check board below.
+A component of [NovaTrail](https://github.com/altnovatrail/spec/tree/v0.5.4), a universal open platform for adaptive learning, interactive lessons and AI tutoring. It belongs to stage 2, First slice with learners, with canvas, api, app, skill-map and infra; together with canvas it brings the stage's first code, which for tutor is the check board below.
 
 ## Status
 
@@ -48,7 +48,7 @@ The measurement of free writing of epic E4 runs the same way on the 40 sheets co
 
 The workbook of epic E4 is 20 pages that code draws in memory from `eval/workbook.json`: ten items a page, each with its boxes, and in each box a value written by hand, plainly or with a digit leaning toward its pair, mirrored or crossed out and written again. Its pages are listed in [docs/workbook.md](docs/workbook.md), and `go run ./cmd/tutor-eval workbook -png synthetic/png/workbook` saves the crop of every filled box, what a reading sees. The essays of epic E4 are 20 short essays in English with one rubric of six criteria, and whether each essay meets each criterion as planned: `eval/essays.json`, listed in [docs/essays.md](docs/essays.md). Code draws them in memory too, and `go run ./cmd/tutor-eval essays -png synthetic/png/essays` saves the crop of every page.
 
-How it works is section 3.3 of [docs/architecture.md](docs/architecture.md), and the plan of epic E4's measurements is its section 3.4. The plan is [RUN.md](RUN.md): epic E4 is done, and detailing, the first epic, is current again, its tasks run one at a time.
+How it works is section 3.3 of [docs/architecture.md](docs/architecture.md), and the plan of epic E4's measurements is its section 3.4; what the library is to be, call by call, is sections 3.5 to 3.10. The plan is [RUN.md](RUN.md): epics E4 and E1, detailing, are done. The next, the library's code, is proposed but not yet taken; it starts with the move to spec's 0.6 line.
 
 ## Documents
 
@@ -58,7 +58,7 @@ The documents are in Russian.
 - [docs/decisions.md](docs/decisions.md) — the decision log: what was decided, why, and what was rejected.
 - [RUN.md](RUN.md) — the work plan, in epics.
 
-The working rules, for people and coding agents alike, are in [CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md). The platform's shared vocabulary, formats, contracts and decisions are in [spec](https://github.com/altnovatrail/spec/tree/v0.3.3), checked out here as a git submodule at `v0.3.3`: clone this repository with `git clone --recurse-submodules`.
+The working rules, for people and coding agents alike, are in [CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md). The platform's shared vocabulary, formats, contracts and decisions are in [spec](https://github.com/altnovatrail/spec/tree/v0.5.4), checked out here as a git submodule at `v0.5.4`: clone this repository with `git clone --recurse-submodules`.
 
 ## License
 
