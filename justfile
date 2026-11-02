@@ -118,11 +118,27 @@ live *args:
     done
     exit "$status"
 
+# The file of the open views of the measurement's tasks, which tutor's release carries for canvas's
+# sample page: what the learner sees of each task of the banks, the workbook and the essays, and
+# none of its key, solution, traps or checks (T37; R64 in docs/decisions.md). A change to one of
+# those files fails the tests until this recipe writes the file anew. The new file takes the old
+# one's place only once it is written whole.
+# Write eval/open-tasks.json anew from the files of the measurement's tasks.
+open-tasks:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    new="$(mktemp -u eval/open-tasks.XXXXXX.json)"
+    trap 'rm -f "$new"' EXIT
+    go run ./cmd/tutor-eval open -file "$new" eval/bank.json eval/free-bank.json eval/workbook.json eval/essays.json
+    mv "$new" eval/open-tasks.json
+
 # What .github's shared release.yml runs to build a release, in the toolchain stage of the commit
 # it releases, from that commit's tree as git archive writes it, and then signs every file (R62 in
 # docs/decisions.md; R18 .github). The release is the Go module's tag, which api builds from, and
-# its files are the source of that commit, tutor_<version>_source.tar.gz, and SHA256SUMS over it.
-# dist/ is made afresh and holds plain files alone.
+# its files are the source of that commit, tutor_<version>_source.tar.gz; the open views of the
+# measurement's tasks, tutor_<version>_open-tasks.json, a copy of eval/open-tasks.json, which
+# canvas's CI puts into its sample page (R64); and SHA256SUMS over both. dist/ is made afresh and
+# holds plain files alone.
 # Build a release's files into dist/, for a version such as v0.1.0.
 release-files version:
     #!/usr/bin/env bash
@@ -148,6 +164,10 @@ release-files version:
             exit 1
         fi
     done < .gitignore
+    if [ ! -f eval/open-tasks.json ]; then
+        echo "release-files: eval/open-tasks.json, the open views a release carries, is not here" >&2
+        exit 1
+    fi
     rm -rf dist
     mkdir dist
     name="tutor_${version}"
@@ -157,13 +177,15 @@ release-files version:
     tar --create --format=gnu --sort=name --owner=0 --group=0 --numeric-owner --mode=go-w \
         --mtime="@$(stat -c %Y justfile)" --exclude=./dist --exclude=./spec \
         --transform="s,^\.,${name},S" --file=- . | gzip -n -9 > "dist/${name}_source.tar.gz"
-    (cd dist && sha256sum -- "${name}_source.tar.gz" > SHA256SUMS)
+    cp eval/open-tasks.json "dist/${name}_open-tasks.json"
+    (cd dist && sha256sum -- "${name}_open-tasks.json" "${name}_source.tar.gz" > SHA256SUMS)
 
-# Every file the code embeds with //go:embed is in the paths of release.yml, so that a change to it
-# gives a release. Then release-files on a small tree of its own: it refuses a version without v, a
-# folder with .git and a tree with a folder git ignores, writes two files with names .github's
-# release takes and sums that check, leaves dist/ and spec/ at the top out of the archive but not a
-# nested folder named spec, and gives the same bytes twice, a second apart.
+# Every file the code embeds with //go:embed is in the paths of release.yml, and so is the file of
+# open views, so that a change to it gives a release. Then release-files on a small tree of its
+# own: it refuses, each for its reason, a version without v, a folder with .git, a tree with a folder
+# git ignores and one without the file of open views, leaving dist/ as it was, writes three files with names .github's release takes and sums
+# that check, the file of open views as it is, leaves dist/ and spec/ at the top out of the archive
+# but not a nested folder named spec, and gives the same bytes twice, a second apart.
 # Check release.yml's paths against what the code embeds, and release-files in a temporary folder.
 release-files-test:
     #!/usr/bin/env bash
@@ -185,30 +207,41 @@ release-files-test:
             grep -qxF "        ${embedded}" .github/workflows/release.yml || fail "${embedded}, which ${file#./} embeds, is not in the paths of .github/workflows/release.yml"
         done
     done < <(grep -r --include='*.go' --exclude='*_test.go' --exclude-dir=spec --exclude-dir=testdata '^//go:embed ' . || true)
+    grep -qxF "        eval/open-tasks.json" .github/workflows/release.yml || fail "eval/open-tasks.json, which a release carries, is not in the paths of .github/workflows/release.yml"
     tree="$tmp/tree"
-    mkdir -p "$tree/dist" "$tree/spec" "$tree/internal/spec"
+    mkdir -p "$tree/dist" "$tree/spec" "$tree/internal/spec" "$tree/eval"
     cp justfile LICENSE .gitignore "$tree/"
+    cp eval/open-tasks.json "$tree/eval/"
     echo old > "$tree/dist/old"
     echo kept > "$tree/internal/spec/kept.txt"
     run() { (cd "$tree" && just release-files "$1") > "$tmp/out" 2>&1; }
-    ! run 0.1.0 || fail "it took a version without v"
+    # A refusal counts only for its own reason: the run fails, and says why.
+    refused() { ! run "$1" && grep -qF -- "$2" "$tmp/out"; }
+    refused 0.1.0 "the version is v<major>" || fail "it took a version without v"
     mkdir "$tree/.git"
-    ! run v0.0.0 || fail "it ran in a folder with .git"
+    refused v0.0.0 "this folder has .git" || fail "it ran in a folder with .git"
     rmdir "$tree/.git"
     for ignored in samples synthetic; do
         mkdir "$tree/$ignored"
-        ! run v0.0.0 || fail "it ran in a tree with ${ignored}/, which git ignores"
+        refused v0.0.0 "${ignored}/ is here, and git ignores it" || fail "it ran in a tree with ${ignored}/, which git ignores"
         rmdir "$tree/$ignored"
     done
+    mv "$tree/eval/open-tasks.json" "$tmp/open-tasks.json"
+    refused v0.0.0 "eval/open-tasks.json, the open views a release carries, is not here" || fail "it ran in a tree without eval/open-tasks.json"
+    [ -f "$tree/dist/old" ] || fail "it emptied dist/ before it refused"
+    mv "$tmp/open-tasks.json" "$tree/eval/"
     run v0.0.0 || fail "it failed on a tree that git archive could write"
     archive="$tree/dist/tutor_v0.0.0_source.tar.gz"
-    [ "$(ls "$tree/dist" | tr '\n' ' ')" = "SHA256SUMS tutor_v0.0.0_source.tar.gz " ] || fail "dist/ holds $(ls "$tree/dist" | tr '\n' ' ')"
+    [ "$(ls "$tree/dist" | tr '\n' ' ')" = "SHA256SUMS tutor_v0.0.0_open-tasks.json tutor_v0.0.0_source.tar.gz " ] || fail "dist/ holds $(ls "$tree/dist" | tr '\n' ' ')"
+    cmp -s "$tree/dist/tutor_v0.0.0_open-tasks.json" eval/open-tasks.json || fail "the file of open views in dist/ is not eval/open-tasks.json"
     for file in "$tree"/dist/*; do
         [[ "$(basename "$file")" =~ ^[A-Za-z0-9_+][A-Za-z0-9._+-]*$ ]] || fail "$(basename "$file") is not a name release.yml takes"
     done
     (cd "$tree/dist" && sha256sum --quiet --check SHA256SUMS) || fail "SHA256SUMS does not check"
+    [ "$(wc -l < "$tree/dist/SHA256SUMS")" -eq 2 ] || fail "SHA256SUMS does not sum both files"
     entries="$(tar --list --gzip --file="$archive")"
     grep -qx 'tutor_v0.0.0/LICENSE' <<< "$entries" || fail "LICENSE is not in the archive"
+    grep -qx 'tutor_v0.0.0/eval/open-tasks.json' <<< "$entries" || fail "eval/open-tasks.json is not in the archive"
     grep -qx 'tutor_v0.0.0/internal/spec/kept.txt' <<< "$entries" || fail "a nested folder named spec is not in the archive"
     ! grep -qv '^tutor_v0.0.0/' <<< "$entries" || fail "an entry is outside tutor_v0.0.0/"
     ! grep -qE '^tutor_v0.0.0/(dist|spec)(/|$)' <<< "$entries" || fail "dist/ or spec/ is in the archive"

@@ -5,6 +5,7 @@
 [![CodeQL](https://github.com/altnovatrail/tutor/actions/workflows/codeql.yml/badge.svg)](https://github.com/altnovatrail/tutor/actions/workflows/codeql.yml)
 [![Latest release](https://img.shields.io/github/v/release/altnovatrail/tutor)](https://github.com/altnovatrail/tutor/releases/latest)
 [![Go version](https://img.shields.io/github/go-mod/go-version/altnovatrail/tutor)](go.mod)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/16171/badge)](https://www.bestpractices.dev/projects/16171)
 [![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/altnovatrail/tutor/badge)](https://scorecard.dev/viewer/?uri=github.com/altnovatrail/tutor)
 [![License](https://img.shields.io/github/license/altnovatrail/tutor)](LICENSE)
 
@@ -16,7 +17,7 @@
 
 The AI side of the NovaTrail tutor: it reads the learner's work, handwriting or text, into an observation, reviews the working for the first mistake, assesses an essay against the module author's rubric, and words the hint for the rung of the hint ladder that the platform's program chose. It holds the platform's prompts, one per AI capability and each with its own eval set, the adapters to AI providers, the exact models admitted for each capability, and the one function that admits an AI route for the learner's age category before every request; it reports each call's usage, by which api counts the platform AI quotas, and its eval runner is a CLI on the same code. It is a library inside api: it decides no verdict, picks no lesson or task and stores nothing, and its requests carry no identifier of the learner or the account: on the own-key route only the key itself goes along, to its own provider, which ties each call to the key owner's account.
 
-A component of [NovaTrail](https://github.com/altnovatrail/spec/tree/v0.5.4), a universal open platform for adaptive learning, interactive lessons and AI tutoring. It belongs to stage 2, First slice with learners, with canvas, api, app, skill-map and infra; together with canvas it brings the stage's first code, which for tutor is the check board below.
+A component of [NovaTrail](https://github.com/altnovatrail/spec/tree/v0.6.2), a universal open platform for adaptive learning, interactive lessons and AI tutoring. It belongs to stage 2, First slice with learners, with canvas, api, app, skill-map and infra; together with canvas it brings the stage's first code, which for tutor is the check board below.
 
 ## Status
 
@@ -50,11 +51,11 @@ The measurement of free writing of epic E4 runs the same way on the 40 sheets co
 
 The workbook of epic E4 is 20 pages that code draws in memory from `eval/workbook.json`: ten items a page, each with its boxes, and in each box a value written by hand, plainly or with a digit leaning toward its pair, mirrored or crossed out and written again. Its pages are listed in [docs/workbook.md](docs/workbook.md), and `go run ./cmd/tutor-eval workbook -png synthetic/png/workbook` saves the crop of every filled box, what a reading sees. The essays of epic E4 are 20 short essays in English with one rubric of six criteria, and whether each essay meets each criterion as planned: `eval/essays.json`, listed in [docs/essays.md](docs/essays.md). Code draws them in memory too, and `go run ./cmd/tutor-eval essays -png synthetic/png/essays` saves the crop of every page.
 
-How it works is section 3.3 of [docs/architecture.md](docs/architecture.md), and the plan of epic E4's measurements is its section 3.4; what the library is to be, call by call, is sections 3.5 to 3.10. The plan is [RUN.md](RUN.md): epics E4 and E1, detailing, are done. The current epic is E3, deferred since 2026-10-25 and back on 2026-11-01: its first task gave tutor its releases, below, and the eval protocol and the check of canvas's synthetic samples wait for spec and canvas. The library's code, epic E5, is proposed but not yet taken; it starts with the move to spec's 0.6 line.
+How it works is section 3.3 of [docs/architecture.md](docs/architecture.md), and the plan of epic E4's measurements is its section 3.4; what the library is to be, call by call, is sections 3.5 to 3.10. The plan is [RUN.md](RUN.md): epics E4 and E1, detailing, are done. The current epic is E3, deferred since 2026-10-25 and back on 2026-11-01: its first tasks gave tutor its releases, moved it to spec's 0.6 line and put the open views of the measurement's tasks into the releases, below; the eval protocol and the check of canvas's synthetic samples wait for spec and canvas. The library's code, epic E5, is proposed but not yet taken.
 
 ## Releases
 
-A release comes out by itself after each merge into `main` that changes what the module is built from: its Go code, the files that code embeds, `go.mod`, `go.sum`, the `justfile`, the license, the Dockerfile or the release workflow (R62 in [docs/decisions.md](docs/decisions.md)). Its number is the next patch of line 0.1, from v0.1.0. A release is the tag of the Go module, which api builds from, `go get github.com/altnovatrail/tutor@v0.1.0`, and two files: the source of that commit, `tutor_<version>_source.tar.gz`, and `SHA256SUMS`. Each file comes with its Sigstore bundle, `<file>.sigstore.json`. The releases are immutable, and `gh release verify <tag> -R altnovatrail/tutor` and `gh release verify-asset <tag> <file> -R altnovatrail/tutor` check a release and a file you downloaded. The Go command checks the module itself against the Go checksum database.
+A release comes out by itself after each merge into `main` that changes what the module is built from: its Go code, the files that code embeds, `go.mod`, `go.sum`, the `justfile`, the license, the Dockerfile, the release workflow or the file of open views below (R62 in [docs/decisions.md](docs/decisions.md)). Its number is the next patch of line 0.1, from v0.1.0. A release is the tag of the Go module, which api builds from, `go get github.com/altnovatrail/tutor@v0.1.0`, and its files: the source of that commit, `tutor_<version>_source.tar.gz`; from the first release after 2026-11-02, the open views of the measurement's tasks, `tutor_<version>_open-tasks.json`; and `SHA256SUMS` over them. The open views are what a learner sees of each of the 56 tasks of the measurements — its statement, its canvas and its answer slots, in spec's module format 0.2 — and none of its key, solution, traps or checks: until the modules repository has content, canvas's CI puts them into the build of its sample page, by the release's tag and the file's sum (R64). The file is `eval/open-tasks.json`, and `just open-tasks` writes it anew from the banks. Each file comes with its Sigstore bundle, `<file>.sigstore.json`. The releases are immutable, and `gh release verify <tag> -R altnovatrail/tutor` and `gh release verify-asset <tag> <file> -R altnovatrail/tutor` check a release and a file you downloaded. The Go command checks the module itself against the Go checksum database.
 
 ## Documents
 
@@ -64,7 +65,7 @@ The documents are in Russian.
 - [docs/decisions.md](docs/decisions.md) — the decision log: what was decided, why, and what was rejected.
 - [RUN.md](RUN.md) — the work plan, in epics.
 
-The working rules, for people and coding agents alike, are in [CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md). The platform's shared vocabulary, formats, contracts and decisions are in [spec](https://github.com/altnovatrail/spec/tree/v0.5.4), checked out here as a git submodule at `v0.5.4`: clone this repository with `git clone --recurse-submodules`.
+The working rules, for people and coding agents alike, are in [CLAUDE.md](CLAUDE.md) and [AGENTS.md](AGENTS.md). The platform's shared vocabulary, formats, contracts and decisions are in [spec](https://github.com/altnovatrail/spec/tree/v0.6.2), checked out here as a git submodule at `v0.6.2`: clone this repository with `git clone --recurse-submodules`.
 
 ## License
 

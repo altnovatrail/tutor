@@ -1,7 +1,8 @@
 # NovaTrail's shared release (R18 .github), pinned to a release of .github by SHA with its version
 # beside it. RELEASE_LINE is the line the releases are numbered in; paths, what they are built from.
 # To the list for Go, paths adds the files the code embeds with //go:embed and leaves out code under
-# testdata/, as architecture 3.3 of .github asks (R62 in docs/decisions.md).
+# testdata/, as architecture 3.3 of .github asks (R62 in docs/decisions.md), and the file of the open
+# views of the measurement's tasks, which a release carries for canvas's sample page (R64).
 name: Release
 
 on:
@@ -37,5 +38,6 @@ jobs:
         internal/gen/topics.json
         internal/board/page.html
         internal/board/record.html
+        eval/open-tasks.json
         .devcontainer/Dockerfile
         .github/workflows/release.yml
