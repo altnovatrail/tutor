@@ -4,8 +4,9 @@
 // into an observation (T68), the hint (T74), which the run checks for leaks and its form (T75), the
 // reading of the boxes of a page of the workbook (T79), or the assessment of an essay by its rubric
 // (T83), and its report command reports on a run by the kind of its log; its other commands serve the
-// board, check the files of samples, banks, sheet plans, the workbook and the essays, and write
-// synthetic ones: run it without arguments for its commands.
+// board, check the files of samples, banks, sheet plans, the workbook and the essays, write
+// synthetic ones, and write the open views of the measurement's tasks for canvas's sample page (T37):
+// run it without arguments for its commands.
 package main
 
 import (
@@ -94,6 +95,10 @@ const usage = `usage:
                              check the essays, draw them in memory and sum up their words,
                              sentences, lines and unmet criteria, and the crops of their pages;
                              with -png, save each crop at 32 px, what a model sees, in synthetic
+  tutor-eval open -file F FILE...
+                             write the open views of the tasks of banks, the workbook and the
+                             essays, without their keys, solutions, traps or checks, into a new
+                             file for canvas's sample page; run it from the repository's root
   tutor-eval synth DIR       write the synthetic bank and one synthetic sample per scenario
   tutor-eval -version        print the version
 `
@@ -155,6 +160,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return runWorkbook(operands, stdout, stderr)
 	case "essays":
 		return runEssays(operands, stdout, stderr)
+	case "open":
+		return runOpen(operands, stdout, stderr)
 	case "synth":
 		if len(operands) != 1 {
 			_, _ = fmt.Fprintln(stderr, "tutor-eval synth: give one directory")

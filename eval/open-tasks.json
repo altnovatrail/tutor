@@ -1,0 +1,3395 @@
+{
+  "format": "tutor-open-tasks",
+  "version": 0,
+  "module_format_version": "0.2",
+  "banks": [
+    {
+      "bank": "eval/bank.json",
+      "digest": "sha256:c6f25b486faa79aa344eeb1dee6bd2aae8c069fd670a0d20c3fe929aeb9fdf13",
+      "language": "ru",
+      "tasks": [
+        {
+          "id": "equation-1",
+          "statement": [
+            {
+              "text": "Реши уравнение 3x + 1 = 7."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "anywhere"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "equation-2",
+          "statement": [
+            {
+              "text": "Реши уравнение 2(x − 3) = 10."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "anywhere"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "equation-3",
+          "statement": [
+            {
+              "text": "Реши уравнение 9 − (x − 2) = 4."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "anywhere"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "equation-4",
+          "statement": [
+            {
+              "text": "Реши уравнение 5x − 4 = 2x + 8."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "anywhere"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "chain-1",
+          "statement": [
+            {
+              "text": "Вычисли 17 + 49 − 14 × 2."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "anywhere"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "chain-2",
+          "statement": [
+            {
+              "text": "Вычисли (47 + 19) : 6."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "anywhere"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "chain-3",
+          "statement": [
+            {
+              "text": "Вычисли 120 − 4 × (18 + 7)."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "anywhere"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "posts",
+          "statement": [
+            {
+              "text": "Вдоль дорожки длиной 20 м через каждые 5 м стоят столбы, первый — в начале, последний — в конце. Сколько всего столбов?"
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "anywhere"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "rabbits",
+          "statement": [
+            {
+              "text": "Во дворе гуляют куры и кролики. У них вместе 5 голов и 14 ног. Сколько во дворе кроликов?"
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "anywhere"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "logs",
+          "statement": [
+            {
+              "text": "Бревно распилили на 6 частей. Каждый распил занимает 2 минуты. Сколько минут пилили бревно?"
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "anywhere"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bank": "eval/free-bank.json",
+      "digest": "sha256:32c6d2b8d3a1037b91c90b4c4250ffc04024b52d8c59c287d4b8dd76958c991d",
+      "language": "ru",
+      "tasks": [
+        {
+          "id": "grasshopper",
+          "statement": [
+            {
+              "text": "Кузнечик сидит на числовой прямой в точке 3. Он прыгнул три раза вправо, каждый раз на 4, а потом один раз влево на 5. В какой точке он оказался?"
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "anywhere"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "backwards",
+          "statement": [
+            {
+              "text": "Задумали число. К нему прибавили 7, потом вычли 12 и получили 15. Какое число задумали?"
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "anywhere"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "houses",
+          "statement": [
+            {
+              "text": "В ряд стоят домики. Домик с флажком — четвёртый слева и шестой справа. Сколько домиков в ряду?"
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "anywhere"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "stamps",
+          "statement": [
+            {
+              "text": "У двух братьев вместе 20 марок. У старшего на 6 марок больше, чем у младшего. Сколько марок у младшего?"
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "anywhere"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "pages",
+          "statement": [
+            {
+              "text": "Страницы книги пронумеровали подряд, с 1 по 75. Сколько всего цифр написали?"
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "anywhere"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "album",
+          "statement": [
+            {
+              "text": "Тетрадь стоит 14 рублей, а альбом — в 3 раза дороже. Сколько стоят вместе 2 альбома и 5 тетрадей?"
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "anywhere"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bank": "eval/workbook.json",
+      "digest": "sha256:fbc262aca2f1bd7e8e2293bca0a42bfee6b79f484a3b512c2131150e8730d26f",
+      "language": "ru",
+      "tasks": [
+        {
+          "id": "workbook-01",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "6 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 30"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "30 : 5 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 22 = 52"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "639 − 472 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "17 : 5 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "7/11 + 1/11 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "4/10 − 2/10 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "25 см — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "метра"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 8/14 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "3/10 + 3/10 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-02",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "7 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 56"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "18 : 6 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 29 = 61"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "527 − 232 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "29 : 4 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "4/8 + 1/8 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "6/7 − 3/7 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "200 г — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "кг"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 14/16 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "1/6 + 1/6 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-03",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "6 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 54"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "6 : 3 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 38 = 62"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "320 − 206 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "28 : 9 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "3/10 + 2/10 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "5/11 − 3/11 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "4 см — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "метра"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 4/16 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "1/6 + 3/6 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-04",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "3 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 12"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "14 : 7 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 25 = 53"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "377 − 186 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "54 : 8 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "7/9 + 1/9 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "4/5 − 2/5 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "12 минут — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "часа"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 6/12 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "1/4 + 1/4 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-05",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "4 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 36"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "28 : 4 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 30 = 71"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "707 − 192 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "52 : 6 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "2/8 + 5/8 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "3/5 − 1/5 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "30 минут — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "часа"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 6/10 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "3/12 + 7/12 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-06",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "3 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 15"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "24 : 4 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 22 = 55"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "306 − 193 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "88 : 9 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "4/8 + 2/8 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "8/10 − 7/10 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "50 см — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "метра"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 6/24 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "3/12 + 1/12 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-07",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "7 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 28"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "9 : 3 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 14 = 49"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "312 − 115 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "57 : 9 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "1/8 + 4/8 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "8/10 − 5/10 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "100 г — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "кг"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 4/18 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "4/10 + 4/10 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-08",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "4 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 20"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "12 : 4 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 20 = 57"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "642 − 515 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "36 : 8 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "5/12 + 1/12 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "5/9 − 3/9 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "36 минут — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "часа"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 5/10 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "3/10 + 1/10 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-09",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "5 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 30"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "36 : 6 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 24 = 38"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "381 − 253 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "48 : 5 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "5/11 + 4/11 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "7/8 − 6/8 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "20 см — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "метра"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 15/18 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "1/12 + 9/12 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-10",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "2 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 6"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "6 : 2 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 15 = 61"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "670 − 282 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "31 : 4 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "4/6 + 1/6 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "4/11 − 3/11 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "75 см — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "метра"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 3/12 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "9/12 + 1/12 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-11",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "4 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 16"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "24 : 6 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 25 = 52"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "735 − 494 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "80 : 9 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "5/7 + 1/7 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "9/11 − 1/11 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "15 минут — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "часа"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 21/27 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "3/6 + 1/6 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-12",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "9 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 45"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "12 : 2 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 43 = 69"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "624 − 378 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "34 : 7 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "1/11 + 2/11 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "4/8 − 2/8 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "10 минут — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "часа"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 25/30 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "7/10 + 1/10 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-13",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "9 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 81"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "63 : 9 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 24 = 52"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "330 − 116 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "38 : 7 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "1/5 + 2/5 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "8/11 − 1/11 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "250 г — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "кг"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 3/9 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "1/12 + 5/12 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-14",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "7 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 49"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "15 : 3 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 12 = 39"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "547 − 266 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "34 : 8 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "6/9 + 2/9 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "4/5 − 1/5 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "5 см — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "метра"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 5/20 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "1/6 + 2/6 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-15",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "5 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 40"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "48 : 6 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 35 = 72"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "604 − 280 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "35 : 4 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "4/10 + 3/10 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "4/9 − 3/9 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "6 минут — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "часа"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 3/6 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "1/8 + 5/8 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-16",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "7 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 42"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "12 : 3 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 32 = 62"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "945 − 384 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "19 : 4 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "5/8 + 2/8 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "3/8 − 2/8 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "45 минут — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "часа"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 6/30 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "4/12 + 4/12 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-17",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "9 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 27"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "35 : 7 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 41 = 55"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "551 − 228 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "44 : 7 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "3/6 + 2/6 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "3/6 − 2/6 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "24 минут — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "часа"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 4/8 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "4/9 + 2/9 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-18",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "6 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 24"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "18 : 3 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 37 = 80"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "617 − 253 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "22 : 6 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "1/7 + 3/7 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "7/11 − 2/11 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "48 минут — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "часа"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 15/25 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "2/6 + 2/6 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-19",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "9 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 72"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "40 : 5 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 36 = 81"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "504 − 391 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "27 : 6 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "2/9 + 4/9 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "3/11 − 2/11 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "500 г — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "кг"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 18/24 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "2/8 + 4/8 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "workbook-20",
+          "statement": [
+            {
+              "text": "Впиши ответы в окошки."
+            }
+          ],
+          "canvas": {
+            "kind": "workbook"
+          },
+          "items": [
+            {
+              "line": [
+                {
+                  "text": "2 ×"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "= 14"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "8 : 2 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "+ 17 = 39"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "575 − 209 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "17 : 4 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(ост."
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": ")"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "1/7 + 4/7 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "6/7 − 2/7 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "10 см — это"
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "метра"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "Сократи дробь: 12/18 ="
+                },
+                {
+                  "binding": "box"
+                }
+              ]
+            },
+            {
+              "line": [
+                {
+                  "text": "2/6 + 1/6 ="
+                },
+                {
+                  "binding": "box"
+                },
+                {
+                  "text": "(несократимой дробью)"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "bank": "eval/essays.json",
+      "digest": "sha256:17c6bb82a0bd743be36baf3fe1c1d168661e45076fbde3483887896de0ed320c",
+      "language": "en",
+      "tasks": [
+        {
+          "id": "essay-01",
+          "statement": [
+            {
+              "text": "Imagine a robot that bakes bread. Write a short essay about one day of its work."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-02",
+          "statement": [
+            {
+              "text": "Imagine a town under the sea. Write a short essay about what a visitor sees there."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-03",
+          "statement": [
+            {
+              "text": "Imagine an island that nobody has found yet. Write a short essay about your first morning there."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-04",
+          "statement": [
+            {
+              "text": "Imagine a tree that can talk. Write a short essay about what it tells you."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-05",
+          "statement": [
+            {
+              "text": "Imagine an umbrella that can fly. Write a short essay about where it goes."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-06",
+          "statement": [
+            {
+              "text": "Imagine a cat that lives in a lighthouse. Write a short essay about one night of its life."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-07",
+          "statement": [
+            {
+              "text": "Imagine a library where the books whisper at night. Write a short essay about what you hear there."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-08",
+          "statement": [
+            {
+              "text": "Imagine a dragon that is afraid of the dark. Write a short essay about how it finds its courage."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-09",
+          "statement": [
+            {
+              "text": "Imagine a snowman who wants to see the summer. Write a short essay about its wish."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-10",
+          "statement": [
+            {
+              "text": "Imagine a city in the clouds. Write a short essay about a day you spend there."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-11",
+          "statement": [
+            {
+              "text": "Imagine a shoe that can walk on its own. Write a short essay about where it goes."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-12",
+          "statement": [
+            {
+              "text": "Imagine a garden on the roof of a tall building. Write a short essay about what grows there."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-13",
+          "statement": [
+            {
+              "text": "Imagine a clock that runs backwards. Write a short essay about a day when it changes everything."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-14",
+          "statement": [
+            {
+              "text": "Imagine a whale that sings to ships. Write a short essay about its song."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-15",
+          "statement": [
+            {
+              "text": "Imagine a door in the side of a mountain. Write a short essay about what is behind it."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-16",
+          "statement": [
+            {
+              "text": "Imagine a bus that can fly over the city. Write a short essay about a trip on it."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-17",
+          "statement": [
+            {
+              "text": "Imagine a small star that falls into a field. Write a short essay about what happens next."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-18",
+          "statement": [
+            {
+              "text": "Imagine a bridge made of ice. Write a short essay about crossing it."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-19",
+          "statement": [
+            {
+              "text": "Imagine a painter who paints with the wind. Write a short essay about one of the pictures."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "essay-20",
+          "statement": [
+            {
+              "text": "Imagine a map that changes every night. Write a short essay about where it takes you."
+            }
+          ],
+          "canvas": {
+            "kind": "handwriting_sheet",
+            "grid": "lines"
+          },
+          "items": [
+            {
+              "answer_slots": [
+                {
+                  "binding": "sheet"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

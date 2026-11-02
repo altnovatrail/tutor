@@ -1,10 +1,11 @@
 module github.com/altnovatrail/tutor
 
-go 1.27
+go 1.27.0
 
 toolchain go1.27.3
 
 require (
+	github.com/altnovatrail/spec v0.6.2
 	github.com/anthropics/anthropic-sdk-go v1.84.0
 	github.com/openai/openai-go/v3 v3.85.0
 	golang.org/x/text v0.42.0
