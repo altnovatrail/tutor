@@ -456,7 +456,9 @@ func TestBuildRefuses(t *testing.T) {
 
 // The version of spec's Go module that the build takes is the tag of spec that CLAUDE.md names, and,
 // where the spec submodule is checked out, the submodule's tag: the module and the submodule move
-// together (Д46 in spec's RUN.md; R64 in docs/decisions.md). CI checks the repository out without
+// together (Д46 in spec's RUN.md; R64 in docs/decisions.md). From spec's line 0.7 its release tags
+// the same commit contracts/<tag> too, so the submodule's tag is the one that starts with v (the
+// 2026-11-02 amendment to R83 spec). CI checks the repository out without
 // the submodule, and there CLAUDE.md alone holds the module to the tag.
 func TestSpecVersion(t *testing.T) {
 	info, ok := debug.ReadBuildInfo()
@@ -483,9 +485,9 @@ func TestSpecVersion(t *testing.T) {
 	if _, err := os.Stat(filepath.Join(sub, ".git")); err != nil {
 		t.Skipf("no spec submodule: %v", err)
 	}
-	out, err := exec.Command(gitProgram(), "-C", sub, "describe", "--tags", "--exact-match").Output()
+	out, err := exec.Command(gitProgram(), "-C", sub, "describe", "--tags", "--exact-match", "--match", "v*").Output()
 	if err != nil {
-		t.Fatalf("the spec submodule is at no tag: %v", err)
+		t.Fatalf("the spec submodule is at no v* tag: %v", err)
 	}
 	if tag := strings.TrimSpace(string(out)); version != tag {
 		t.Errorf("the build takes spec's module %q, and the submodule is at %s: move them together", version, tag)
