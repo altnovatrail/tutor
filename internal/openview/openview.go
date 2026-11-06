@@ -1,7 +1,7 @@
 // Package openview builds the open views of the measurement's tasks: the file that tutor's release
 // carries for canvas's sample page, until modules has content (T37; R64 in docs/decisions.md; the
 // 2026-10-21 amendment to R25 spec). Each task in it is the open view of a task of the module format
-// 0.2, spec's open.Task: what the learner's app shows — the statement, the canvas and the items with
+// 0.3, spec's open.Task: what the learner's app shows — the statement, the canvas and the items with
 // their answer slots — and none of the key, the solution, the traps, the leak phrases or the checks,
 // which stay with tutor (R05 spec). tutor's banks are not modules: the views are built here, by the
 // kind of each file's tasks, and the file names each bank by its path in the repository and the
@@ -34,8 +34,10 @@ const (
 )
 
 // ModuleFormatVersion is the version of the module format whose open views of a task the file
-// holds, that of spec's v0.6.2 (R63).
-const ModuleFormatVersion formatv0.ModuleFormatVersion = "0.2"
+// holds, that of spec's v0.9.3 (R65). It is written here rather than read from spec.Format: the
+// committed file names it too, so a tag that changes the format changes the file's bytes, and
+// TestPatterns fails until the move writes the file anew and reviews it.
+const ModuleFormatVersion formatv0.ModuleFormatVersion = "0.3"
 
 // WorkbookStatement is the statement of each page of the workbook: its file gives the items of a
 // page, and no statement.

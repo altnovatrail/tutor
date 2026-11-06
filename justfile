@@ -255,9 +255,13 @@ release-files-test:
 ci-lint: lint
 
 # Run every test, with the race detector and without the test cache, and the check of the release
-# recipe, which is shell and not Go.
+# recipe, which is shell and not Go. The coverage of the tests goes to coverage/go.out, one Go
+# profile, which the coverage job of .github's shared go.yml sends to Codecov (R48 spec; R66). A
+# package's lines count by its own tests: -coverpkg=./... would make the profile 25 times larger
+# and the run twice as long for 1.4 points more (R66).
 ci-test: release-files-test
-    go test -race -count=1 ./...
+    mkdir -p coverage
+    go test -race -count=1 -covermode=atomic -coverprofile=coverage/go.out ./...
 
 # Fail on a known vulnerability in code this module reaches.
 ci-vuln:

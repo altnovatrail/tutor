@@ -30,7 +30,13 @@ jobs:
     name: Documents
     uses: altnovatrail/.github/.github/workflows/documents.yml@c772cc86973240e21cebb310fd0cda221a752ade # v0.1.5
 
-  # The repository's Go code, by its own ci- recipes in its toolchain stage (R16 .github).
+  # The repository's Go code, by its own ci- recipes in its toolchain stage, and the coverage of
+  # its tests, which the shared workflow sends to Codecov (R16 .github; R66). id-token: write is for
+  # its coverage job alone, which asks for an OIDC token: a called workflow can only lower what this
+  # job gives it.
   go:
     name: Go
-    uses: altnovatrail/.github/.github/workflows/go.yml@c772cc86973240e21cebb310fd0cda221a752ade # v0.1.5
+    permissions:
+      contents: read
+      id-token: write
+    uses: altnovatrail/.github/.github/workflows/go.yml@89d3ceee0b9977b3334488a4133d084d76474e0d # v0.1.15
