@@ -118,6 +118,7 @@
 | [x] | T30 | Переход на `spec` с протоколом eval v0 | я + Claude | да | протокол eval v0 — эпик E3 RUN.md `spec`, строка 1.6 COORDINATION.md `spec` |
 | [ ] | T31 | Раннер и страница записи — на протокол eval v0 | Claude | да | T30 |
 | [x] | T37 | Открытые виды задач замера в релизе `tutor` | Claude, проверяю я | да | T15, T35, T101 |
+| [x] | T102 | Покрытие в Codecov — Д4 | я + Claude | — | T30 |
 | [ ] | T32 | Совместимость с `canvas` | Claude | да | релиз `canvas` с синтетикой (R38 spec); T31 |
 
 **Почему такой порядок.**
@@ -163,11 +164,12 @@
 
 Д1 закрыт 2026-10-21 (T34, R13): тесты Go идут в CI — «Go / test» общего `go.yml` `.github`, рядом с «Go / lint», «Go / vuln» и «Go / licenses».
 
+Д4 закрыт 2026-11-06 (T102, R66): покрытие тестов уходит в Codecov, а общий `go.yml` `.github` — на v0.1.15.
+
 Номера не переиспользуются: следующий — Д5.
 
 | ID | Долг | Откуда | Чем грозит, пока не закрыт | Когда вернуться |
 |---|---|---|---|---|
-| Д4 | Покрытия в Codecov у `tutor` нет (R48 spec; Д29 RUN.md `spec`). Нужно: `ci-test` пишет профиль `go test -coverprofile` в `coverage/`, `codecov.yml`, значок покрытия, право `id-token: write` у job «Go» в `.github/workflows/ci.yml`, потом подъём ссылки на общий `go.yml` `.github` не ниже v0.1.12, а проверку `codecov/patch` в ruleset `main` ставлю я. Приложение Codecov должно видеть `tutor` | T30 | Ссылку на общие workflow не поднять: с v0.1.12 у `go.yml` job `coverage`, и без отчёта и права pull request красный. Правило RULES.md о 90 % изменённых строк к `tutor` не применяется | своей задачей, до мержа подъёма `go.yml`; задачу — при планировании следующего эпика или раньше, моим решением |
 
 ## Эпик E3. Протокол eval, релиз `tutor` и `canvas`
 
@@ -267,6 +269,30 @@
   - **копии векторов** `internal/lines/testdata/groups.json` и `internal/render/testdata/crops.json` заменяют векторы `contracts.Vectors`, `eval/v1/`, в форме протокола: история — `History`, итоги — `Group`, `CropSet` без PNG и `FilledBox`. Группы стёртого штриха для журнала действий — по § 12 текста контрактов (Д96 RUN.md `spec`);
   - **ещё не на теге:** причину `UNCHECKED_CAUSE_CHECK` — когда `unchecked` даёт условие на годном наблюдении — и векторы дайджеста открытого вида `spec` решил 2026-11-06 (R102 spec), но выпустит их эпик E7 RUN.md `spec`. `tutor` берёт их переходом на тег, где они выйдут (Д108 RUN.md `spec`);
   - **наборы возможностей** и их место `tutor` решает сам (R95 spec): образцы замера и ребёнка — вне git. Решить при планировании, какие из форматов `tutor` — листы строк, свободные листы, тетрадь и сочинения — становятся образцами протокола и как конвертер переносит образцы автора в `samples/`.
+
+#### T102. Покрытие в Codecov — Д4
+
+- **Цель:** покрытие тестов `tutor` уходит в Codecov, `codecov/patch` держит не меньше 90 % новых и изменённых строк, а ссылка на общий `go.yml` `.github` поднимается выше v0.1.11.
+- **Почему:** долг Д4, часть `tutor` в Д29 RUN.md `spec` (R48 spec). С v0.1.12 в `go.yml` job `coverage`, и без отчёта `ci-test` и права на токен его pull request красный.
+- **Решено автором (2026-11-06):** «делай Д4».
+- **Сделать:** `ci-test` пишет `coverage/go.out`; `.github/codecov.yml`; `id-token: write` у job «Go» и `go.yml` v0.1.15; значок покрытия; запись в журнале.
+- **Как проверить:** `just ci-test` пишет профиль; actionlint чистый; на pull request приходят «Go / coverage» и `codecov/patch`.
+- **Разделы:** R48 spec, R30 spec; repositories 2.3 spec; Д29 RUN.md `spec`; R13, R66; Д4.
+- **Сделано (2026-11-06):**
+  - **рецепт** `ci-test` — профиль `coverage/go.out`, `-covermode=atomic`, по пакетам; `/coverage/` — в `.gitignore`;
+  - **CI** — job «Go» в `.github/workflows/ci.yml` с `id-token: write` на `go.yml` v0.1.15, коммит 89d3cee; `.github/codecov.yml` — как у `module-kit`;
+  - **README** — значок покрытия после версии Go (repositories 2.3 spec); **`.bestpractices.json`** — ответ `test_most`, а автор сохранил его на сайте по ссылке с `overrides` 2026-11-06;
+  - **документы** — R66 в [docs/decisions.md](docs/decisions.md), architecture 3.2 — `ci-test`; Д4 закрыт;
+  - **проверено:**
+    - `just ci-test` зелёный и пишет профиль: 95,2 % операторов, 0,4 МБ. С `-coverpkg=./...` профиль был 10,7 МБ и тесты шли 2:48 вместо 1:15 — это отвергнуто в R66;
+    - actionlint 1.7.12, по сумме из `self-ci.yml` `.github`, — без замечаний на всех workflow;
+    - `go.yml` v0.1.15 против v0.1.5 — разница только в загрузке покрытия; Codecov знает `tutor` (API Codecov: `activated: false`, до первой загрузки);
+    - `docs-check-repo` зелёная;
+  - ревью не было: правка небольшая (правило 6).
+- **Открыто:**
+  - **мой шаг** — после первого pull request с «Go / coverage» и `codecov/patch` поставить `codecov/patch` обязательной проверкой ruleset `main`, как у `spec` (R30 spec);
+  - **pull request Dependabot #48** — подъём `go.yml` до v0.1.10 — после мержа устареет, и Dependabot его закроет. Остальные (#46, #47, #49, #51) поднимают другие общие workflow, и их ведёт Dependabot;
+  - **`justfile` в `paths` релиза** — мерж выпустит патч; вместе с T30 это один и тот же следующий релиз, если их смержить вместе.
 
 #### T32. Совместимость с `canvas`
 

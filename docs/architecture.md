@@ -806,7 +806,7 @@ ID — точные (R07 spec). У новых моделей своя `temperatu
   - `open-tasks` — файл открытых видов `eval/open-tasks.json` заново, когда поменялся банк, тетрадь или сочинения: до тех пор тест падает (T37).
 - **Проверки CI** — рецепты `ci-lint`, `ci-test`, `ci-vuln` и `ci-licenses`, с именами из договора общего `go.yml` `.github` (R16 .github; R13). Их запускает job «Go» `.github/workflows/ci.yml`, через `go.yml`: на каждый рецепт — свой job и своя проверка, «Go / lint» и так далее. Идут они в ступени `toolchain` `.devcontainer/Dockerfile`, от пользователя раннера и с `HOME=/tmp`, из checkout без подмодуля `spec`. Поэтому код и тесты не должны читать `spec/`: файлы `spec` код берёт из его релизов (R21 spec), а тест, который откроет `spec/`, пройдёт в devcontainer и упадёт только в «Go / test».
   - `ci-lint` — это `lint`: CI и `just lint` проверяют одной командой;
-  - `ci-test` — тесты с детектором гонок и без кеша, `go test -race -count=1 ./...`, а перед ними — `release-files-test`, проверка рецепта релиза;
+  - `ci-test` — тесты с детектором гонок и без кеша, а перед ними — `release-files-test`, проверка рецепта релиза. Покрытие тестов он пишет профилем `coverage/go.out`, по пакетам, а job «Go / coverage» `go.yml` шлёт его в Codecov по OIDC; проверка `codecov/patch` — не меньше 90 % новых и изменённых строк, `.github/codecov.yml` (R66);
   - `ci-vuln` — govulncheck: известные уязвимости в коде, до которого доходит модуль;
   - `ci-licenses` — go-licenses: лицензия каждого пакета, из которого собирается модуль, — из списка `ALLOWED_LICENSES`, категории A ASF, который даёт `go.yml` (R12 spec). Без списка рецепт падает.
 

@@ -10,3 +10,6 @@
 
 # What release-files writes, for .github's shared release to sign and publish (R62).
 /dist/
+
+# The coverage of the tests that ci-test writes, which CI sends to Codecov (R66).
+/coverage/

@@ -70,7 +70,7 @@
   "test_invocation_status": "Met",
   "test_invocation_justification": "`go test ./...`, the standard way for Go, runs every test. `just test` runs it, `just ci-test` runs it with the race detector, as CI does, and `just --list` names the recipes.",
   "test_most_status": "Met",
-  "test_most_justification": "On 2026-11-01 the tests covered 95.1% of the statements of the module, as `go test -coverprofile` measures them. Every package is at 86% or more except the provider port, provider, at 54%. `go test -cover ./...` prints the figure of each package.",
+  "test_most_justification": "On 2026-11-06 the tests covered 95.2% of the statements of the module, as `go test -coverprofile` measures them. Every package is at 86% or more except the provider port, provider, at 54%. CI sends the coverage of each pull request and each commit to main to Codecov, and its check codecov/patch asks for 90% of new and changed lines: https://codecov.io/gh/altnovatrail/tutor",
   "test_continuous_integration_status": "Met",
   "test_continuous_integration_justification": "GitHub Actions runs every check and every test on each pull request and on each commit to main. main takes a pull request only when they pass and its branch is up to date with main. https://github.com/altnovatrail/tutor/blob/main/.github/workflows/ci.yml",
   "test_policy_status": "Met",
