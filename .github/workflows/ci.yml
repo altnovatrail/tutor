@@ -18,7 +18,7 @@ concurrency:
 jobs:
   secrets:
     name: Secrets
-    uses: altnovatrail/.github/.github/workflows/secrets.yml@c772cc86973240e21cebb310fd0cda221a752ade # v0.1.5
+    uses: altnovatrail/.github/.github/workflows/secrets.yml@89d3ceee0b9977b3334488a4133d084d76474e0d # v0.1.15
 
   # A pull request's commits are what it checks; a push to main has been checked as one.
   dco:
