@@ -54,6 +54,11 @@ const usage = `usage:
                              just sample-check checks; with -png, its pictures too, in a
                              directory of their own; -shift, how far the answer's last digit
                              of a near sheet leans toward its pair, 0.1 by default
+  tutor-eval draw -workbook F|-essays F [-seed N] [-dir D] [-png D]
+                             draw by code every page of the workbook or essay of the file not
+                             drawn yet, as page-NN.json or essay-NN.json, a sample of the
+                             protocol, into -dir, synthetic/ and the file's name by default;
+                             with -png, the crops at 32 px, what a model sees, in synthetic
   tutor-eval gen sheets|near [-tasks N] [-seed N] [-prefix P] -bank F -plan F
   tutor-eval gen workbook|essays [-n N] [-seed N] -file F
                              make, with their truth by construction, a bank of tasks and a plan
@@ -67,7 +72,7 @@ const usage = `usage:
                              divide the recorded sheets into development and test, once
   tutor-eval run -part dev|test|all [-kind judge|reading|hint|workbook|essay] [-repeats N]
                  [-max-usd N] [-log F] [-stub] [-dir D] [-bank F] [-plan F] [-set D,B,P]...
-                 [-reads LIST] [-workbook F] [-essays F] [-seed N] [-readers LIST]
+                 [-reads LIST] [-workbook F] [-essays F] [-readers LIST]
                  [-two]
                              run the calls of a kind on a part of the split, or on all the
                              sheets, of one set or, for a reading or a hint, of each -set: the
@@ -76,11 +81,13 @@ const usage = `usage:
                              E4 by default; a reading reads what -reads names, keys by default,
                              and a hint is asked of the sheets with a mistake, at every rung in
                              Russian and English, and checked for leaks and its form; the
-                             workbook reads the pages of a part of -workbook, a call a page,
-                             captions by default or bare alone, and logs in synthetic/runs; the
-                             essay assesses the essays of a part of -essays by their rubric, a
-                             call an essay, or with -two the reading and the assessment of the
-                             text it read, and logs there too
+                             workbook reads the pages of a part of -workbook, as their samples
+                             in -dir hold them, a call a page, captions by default or bare
+                             alone, and logs in synthetic/runs; the essay assesses the essays of
+                             a part of -essays, their samples in -dir, by their rubric, a call an
+                             essay, or with -two the reading and the assessment of the text it
+                             read, and logs there too; -dir is synthetic/ and the file's name by
+                             default
   tutor-eval report LOG      the report of a run from its log, by its kind, asking no model:
                              of the judge, the criterion, and of the reading, the threshold of
                              R03, with the numbers in Markdown and CSV; of the hint, the leaks,
@@ -89,14 +96,14 @@ const usage = `usage:
                              items, the line of the item and the heights; of the essays, the
                              criteria, the reading and the feedback, and the feedback to read in
                              .feedback.md; beside the log
-  tutor-eval workbook [-file F] [-seed N] [-png D]
-                             check the pages of the workbook, draw them in memory and sum up
-                             their boxes and the crops of the filled ones at each height; with
-                             -png, save each crop at 32 px, what a reading sees, in synthetic
-  tutor-eval essays [-file F] [-seed N] [-png D]
-                             check the essays, draw them in memory and sum up their words,
-                             sentences, lines and unmet criteria, and the crops of their pages;
-                             with -png, save each crop at 32 px, what a model sees, in synthetic
+  tutor-eval workbook [-file F] [-dir D]
+                             check the pages of the workbook, read the samples of them that
+                             draw drew, and sum up their boxes, the samples read and refused,
+                             and the crops of the filled boxes at each height
+  tutor-eval essays [-file F] [-dir D]
+                             check the essays, read the samples of them that draw drew, and sum
+                             up their unmet criteria, the samples read and refused, their words,
+                             sentences and lines, and the crops of their pages
   tutor-eval open -file F FILE...
                              write the open views of the tasks of banks, the workbook and the
                              essays, without their keys, solutions, traps or checks, into a new

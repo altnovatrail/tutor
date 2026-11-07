@@ -49,12 +49,8 @@ func TestExamplesFollowTheRules(t *testing.T) {
 			final := s.GetGeometry().GetStrokes()
 			if h := s.GetHistory(); h != nil {
 				strokes, erasures, f := protocol.Ink(h)
-				for k, st := range strokes {
-					if _, ok := slices.BinarySearch(f.Visible, f.Written[k].GetId()); ok {
-						shown = append(shown, st)
-						final = append(final, &evalv1.FinalStroke{Id: f.Written[k].GetId(), Points: pointsOf(f.Written[k])})
-					}
-				}
+				shown = evalsample.Shown(strokes, f)
+				final = protocol.FinalOf(f)
 				if sh := s.GetSheet(); sh != nil {
 					got, err := evalsample.Groups(strokes, erasures)
 					if err != nil {
@@ -121,14 +117,6 @@ func cropsAre(t *testing.T, what string, strokes []sample.Stroke, groups []lines
 }
 
 // pointsOf are a written stroke's points as a final geometry holds them, without their times.
-func pointsOf(st *evalv1.Stroke) []*evalv1.FinalPoint {
-	out := make([]*evalv1.FinalPoint, len(st.GetPoints()))
-	for i, p := range st.GetPoints() {
-		out[i] = &evalv1.FinalPoint{X: p.GetX(), Y: p.GetY()}
-	}
-	return out
-}
-
 func id(t *testing.T, s string) int32 {
 	t.Helper()
 	n, err := protocol.StrokeNumber(s)

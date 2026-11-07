@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"image/png"
 	"os"
 	"path/filepath"
 	"strings"
@@ -18,17 +17,20 @@ const (
 	essaysDoc = "../../docs/essays.md"
 )
 
-// tutor-eval check takes the essays, and tutor-eval essays sums them up: the essays and their parts,
-// the criteria unmet in each part, their words, sentences and lines, and the crops of their pages
-// at 32 px, within the tokens Claude takes without scaling an image down.
+// tutor-eval check takes the essays, and tutor-eval essays sums them up with their samples: the
+// essays and their parts, the seed of the samples, the criteria unmet in each part, the samples read,
+// their words, sentences and lines, and the crops of their pages at 32 px, within the tokens Claude
+// takes without scaling an image down, the same as the essays drawn in memory.
 func TestEssaysCommand(t *testing.T) {
 	code, out, errs := runIt("check", theEssays)
 	if want := theEssays + ": ok, 20 essays, 5 of them dev and 15 test\n"; code != exitOK || out != want {
 		t.Errorf("check = %d %q %q, want %q", code, out, errs, want)
 	}
-	code, out, errs = runIt("essays", "-file", theEssays)
+	dir := drawnOf(t, theEssays)
+	code, out, errs = runIt("essays", "-file", theEssays, "-dir", dir)
 	for _, want := range []string{
 		theEssays + ": 20 essays, 5 of them dev and 15 test; seed 1.\n",
+		"Samples in " + dir + ": 20 of 20 read; not drawn: none; refused, and nothing of them goes to AI: none; off their file: none.\n",
 		"Unmet criteria, dev and test: title 1 and 4; sentences 1 and 4; capitals-and-stops 1 and 4; linking-words 1 and 4; on-topic 1 and 4; spelling 1 and 4; none 1 and 3.\n",
 		"Words 52 to 74, 64.0 on average; sentences 3 to 9, 5.8 on average; lines 9 to 14, 11.4 on average.\n",
 		"Crops at 32 px: digits drawn 23 to 32 px, 27.4 on average; width 864 to 1216 px, 1045.5 on average; height 671 to 1330 px, 1069.0 on average; tokens 936 to 1564, 1444.7 on average.\n",
@@ -37,7 +39,7 @@ func TestEssaysCommand(t *testing.T) {
 			t.Errorf("essays = %d %q %q, want %q in it", code, out, errs, want)
 		}
 	}
-	if code, _, errs := runIt("essays", "-file", theWorkbook); code != exitFail || !strings.Contains(errs, `unknown field "pages"`) {
+	if code, _, errs := runIt("essays", "-file", theWorkbook, "-dir", t.TempDir()); code != exitFail || !strings.Contains(errs, `unknown field "pages"`) {
 		t.Errorf("essays on the workbook = %d %q", code, errs)
 	}
 	// An essay that lists a criterion it meets fails the check, in both commands.
@@ -46,66 +48,9 @@ func TestEssaysCommand(t *testing.T) {
 	if err := os.WriteFile(wrong, []byte(text), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	for _, args := range [][]string{{"check", wrong}, {"essays", "-file", wrong}} {
+	for _, args := range [][]string{{"check", wrong}, {"essays", "-file", wrong, "-dir", t.TempDir()}} {
 		if code, _, errs := runIt(args...); code != exitFail || !strings.Contains(errs, "essays[0].unmet: lists the criterion title") {
 			t.Errorf("%s on an essay that lists a criterion it meets = %d %q", args[0], code, errs)
-		}
-	}
-}
-
-// With -png the command saves the crop of every page at 32 px, and saves them again over the crops of
-// a run before.
-func TestEssaysPictures(t *testing.T) {
-	dir := filepath.Join(t.TempDir(), "png")
-	code, out, errs := runIt("essays", "-file", theEssays, "-png", dir)
-	if code != exitOK || !strings.HasSuffix(out, "Crops of the pages at 32 px: 20 files, into "+dir+".\n") {
-		t.Fatalf("essays -png = %d %q %q", code, out, errs)
-	}
-	entries, err := os.ReadDir(dir)
-	if err != nil || len(entries) != 20 {
-		t.Fatalf("the crops are %d files, %v", len(entries), err)
-	}
-	f, err := os.Open(filepath.Join(dir, "essay-01.png"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = f.Close() }()
-	if cfg, err := png.DecodeConfig(f); err != nil || cfg.Width < 800 || cfg.Height < 600 {
-		t.Errorf("the crop of essay 1 is %+v, %v", cfg, err)
-	}
-	if code, _, errs := runIt("essays", "-file", theEssays, "-png", dir); code != exitOK {
-		t.Errorf("essays -png over the crops = %d %q", code, errs)
-	}
-	blocked := filepath.Join(t.TempDir(), "blocked")
-	if err := os.MkdirAll(filepath.Join(blocked, "essay-01.png"), 0o700); err != nil {
-		t.Fatal(err)
-	}
-	if code, _, errs := runIt("essays", "-file", theEssays, "-png", blocked); code != exitFail || !strings.Contains(errs, "essay 1") {
-		t.Errorf("essays -png where a crop cannot go = %d %q", code, errs)
-	}
-}
-
-func TestEssaysRefuses(t *testing.T) {
-	for _, c := range []struct {
-		name string
-		args []string
-		says string
-	}{
-		{"no directory for the crops", []string{"-png", ""}, "-png is empty"},
-		// The tests run in cmd/tutor-eval, where png is a folder git does not ignore.
-		{"the crops in the work tree", []string{"-png", "png"}, "cmd/tutor-eval/png is in the git work tree"},
-		{"the crops among the author's sheets", []string{"-png", "../../samples/essays-test"}, "outside its synthetic folder"},
-	} {
-		t.Run(c.name, func(t *testing.T) {
-			code, _, errs := runIt(append([]string{"essays", "-file", theEssays}, c.args...)...)
-			if code != exitUsage || !strings.Contains(errs, c.says) {
-				t.Errorf("essays = %d, %q; want %d and %q", code, errs, exitUsage, c.says)
-			}
-		})
-	}
-	for _, made := range []string{"png", "../../samples/essays-test"} {
-		if _, err := os.Stat(made); !os.IsNotExist(err) {
-			t.Errorf("a refused essays made %s: %v", made, err)
 		}
 	}
 }
@@ -237,12 +182,13 @@ func whyUnmet(e *sample.Essay, id string) string {
 func TestRunEssays(t *testing.T) {
 	dir := t.TempDir()
 	log := filepath.Join(dir, "essays.jsonl")
-	code, out, errs := runMeasure("yes\n", "-kind", "essay", "-essays", theEssays, "-part", "dev", "-stub", "-repeats", "2", "-log", log)
-	if code != exitOK || !strings.HasPrefix(out, "The dev part: 5 essays of "+theEssays+", drawn with the seed 1, at 32 px, by opus-high and haiku-low and haiku-low-no-thinking in 2 repeats, a call an essay, in version 1 of the prompt of the assessment by the rubric.\n30 calls, expected to cost $") {
+	drawn := drawnOf(t, theEssays)
+	code, out, errs := runMeasure("yes\n", "-kind", "essay", "-essays", theEssays, "-dir", drawn, "-part", "dev", "-stub", "-repeats", "2", "-log", log)
+	if code != exitOK || !strings.HasPrefix(out, "The dev part: 5 essays of "+theEssays+", drawn with the seed 1 into "+drawn+", at 32 px, by opus-high and haiku-low and haiku-low-no-thinking in 2 repeats, a call an essay, in version 1 of the prompt of the assessment by the rubric.\n30 calls, expected to cost $") {
 		t.Fatalf("the run ends %d:\n%s%s", code, out, errs)
 	}
 	// The test part of the essays is planned at $8, not the $6 of the sheets (R45).
-	if code, out, _ := runMeasure("no\n", "-kind", "essay", "-essays", theEssays, "-part", "test", "-stub", "-log", filepath.Join(dir, "test.jsonl")); code != exitOK || !strings.Contains(out, "The cap is $8.00.\n") || strings.Contains(out, "above the") {
+	if code, out, _ := runMeasure("no\n", "-kind", "essay", "-essays", theEssays, "-dir", drawn, "-part", "test", "-stub", "-log", filepath.Join(dir, "test.jsonl")); code != exitOK || !strings.Contains(out, "The cap is $8.00.\n") || strings.Contains(out, "above the") {
 		t.Errorf("the test part of the essays: %d\n%s", code, out)
 	}
 	data, err := os.ReadFile(log)
@@ -260,16 +206,16 @@ func TestRunEssays(t *testing.T) {
 		args []string
 		says string
 	}{
-		{[]string{"-dir", "x"}, "-dir names sheets, and the essay reads its own file"},
+		{[]string{"-plan", "x"}, "-plan names sheets, and the essay reads its own file"},
 		{[]string{"-workbook", theWorkbook}, "-workbook is not for -kind essay"},
 		{[]string{"-reads", "captions"}, "-reads is for -kind reading or workbook"},
 	} {
-		args := append([]string{"-kind", "essay", "-part", "dev", "-stub"}, c.args...)
+		args := append([]string{"-kind", "essay", "-dir", drawn, "-part", "dev", "-stub"}, c.args...)
 		if code, _, errs := runMeasure("yes\n", args...); code != exitUsage || !strings.Contains(errs, c.says) {
 			t.Errorf("%v: ends %d, %q; want %q", c.args, code, errs, c.says)
 		}
 	}
-	if code, _, errs := runMeasure("yes\n", "-kind", "essay", "-essays", theWorkbook, "-part", "dev", "-stub", "-log", filepath.Join(dir, "x.jsonl")); code != exitFail || !strings.Contains(errs, `unknown field "pages"`) {
+	if code, _, errs := runMeasure("yes\n", "-kind", "essay", "-essays", theWorkbook, "-dir", drawn, "-part", "dev", "-stub", "-log", filepath.Join(dir, "x.jsonl")); code != exitFail || !strings.Contains(errs, `unknown field "pages"`) {
 		t.Errorf("a run of the essays on the workbook ends %d, %q", code, errs)
 	}
 }
@@ -279,7 +225,7 @@ func TestRunEssays(t *testing.T) {
 func TestRunEssaysTwo(t *testing.T) {
 	dir := t.TempDir()
 	log := filepath.Join(dir, "two.jsonl")
-	code, out, errs := runMeasure("yes\n", "-kind", "essay", "-two", "-essays", theEssays, "-part", "dev", "-stub", "-repeats", "1", "-readers", "sonnet-low", "-log", log)
+	code, out, errs := runMeasure("yes\n", "-kind", "essay", "-two", "-essays", theEssays, "-dir", drawnOf(t, theEssays), "-part", "dev", "-stub", "-repeats", "1", "-readers", "sonnet-low", "-log", log)
 	if code != exitOK || !strings.Contains(out, "by sonnet-low in 1 repeat, two calls an essay, the reading and the assessment of the text it read, in version 1 of the prompts of the assessment in two calls.\n10 calls") {
 		t.Fatalf("the run in two calls ends %d:\n%s%s", code, out, errs)
 	}

@@ -6,7 +6,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/altnovatrail/tutor/internal/evalsample"
 	"github.com/altnovatrail/tutor/internal/runner"
+	"github.com/altnovatrail/tutor/internal/sample"
+	"github.com/altnovatrail/tutor/internal/synth"
 )
 
 // A run asks every reader of every essay of its part in every repeat, Opus too, and draws each essay
@@ -24,7 +27,7 @@ func TestNew(t *testing.T) {
 		{"all", 20, 20 * 3 * 2, 2},
 	} {
 		essays := Essays(es, c.part)
-		r, err := New(c.part, "eval/essays.json", 1, es, essays, readers, c.repeats)
+		r, err := New(c.part, "eval/essays.json", "", 1, es, drawnEssays(t, essays), readers, c.repeats)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -32,10 +35,10 @@ func TestNew(t *testing.T) {
 			t.Errorf("%s: %d essays, %d items and %d calls, want %d and %d", c.part, len(essays), len(r.Items), len(r.Steps), c.essays, c.calls)
 		}
 	}
-	if _, err := New("dev", "", 1, es, nil, readers, 1); err == nil {
+	if _, err := New("dev", "", "", 1, es, nil, readers, 1); err == nil {
 		t.Error("a run of no essay is planned")
 	}
-	if _, err := New("dev", "", 1, es, Essays(es, "dev"), readers, 0); err == nil {
+	if _, err := New("dev", "", "", 1, es, drawnEssays(t, Essays(es, "dev")), readers, 0); err == nil {
 		t.Error("a run of no repeat is planned")
 	}
 }
@@ -45,7 +48,7 @@ func TestNew(t *testing.T) {
 // keeps the rule of the feedback.
 func TestRunOnTheStub(t *testing.T) {
 	es := readEssays(t)
-	r, err := New("dev", "eval/essays.json", 1, es, Essays(es, "dev"), e4Readers(), 2)
+	r, err := New("dev", "eval/essays.json", "", 1, es, drawnEssays(t, Essays(es, "dev")), e4Readers(), 2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -95,7 +98,7 @@ func TestRunOnTheStub(t *testing.T) {
 // reading and no feedback; one not asked says so.
 func TestRecordOfFailures(t *testing.T) {
 	es := readEssays(t)
-	r, err := New("dev", "", 1, es, Essays(es, "dev")[:1], e4Readers()[:1], 1)
+	r, err := New("dev", "", "", 1, es, drawnEssays(t, Essays(es, "dev")[:1]), e4Readers()[:1], 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -111,4 +114,15 @@ func TestRecordOfFailures(t *testing.T) {
 // e4Readers are the readers of the three configurations of E4, which these tests were written for.
 func e4Readers() []Reader {
 	return runner.E4(Readers(), func(rd Reader) runner.Config { return rd.Config })
+}
+
+// drawnEssays are essays drawn from the seed 1 as their samples hold them, as the runner reads them.
+func drawnEssays(t *testing.T, essays []*sample.Essay) []*evalsample.Essay {
+	t.Helper()
+	var out []*evalsample.Essay
+	for _, e := range essays {
+		_, strokes := synth.Essay(e, 1)
+		out = append(out, &evalsample.Essay{Essay: e, Strokes: strokes, Seed: "1"})
+	}
+	return out
 }

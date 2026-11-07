@@ -58,6 +58,16 @@ type Essay struct {
 	Misspelled []Misspelling `json:"misspelled"`
 }
 
+// Written is the essay as it is written: its title, when it has one, on a line of its own, and its
+// text. It is the truth of an essay's sample of the eval protocol, and what a right reading writes
+// down.
+func (e *Essay) Written() string {
+	if e.Title == nil {
+		return e.Text
+	}
+	return *e.Title + "\n" + e.Text
+}
+
 // Misspelling is a common word spelled wrong: as it is written, and the word it is.
 type Misspelling struct {
 	Written string `json:"written"`

@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/altnovatrail/tutor/internal/evalsample"
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/runner"
 	"github.com/altnovatrail/tutor/internal/sample"
@@ -101,16 +102,18 @@ func Essays(es *sample.Essays, part string) []*sample.Essay {
 	return out
 }
 
-// New plans a run of the assessment over the essays of a part, drawn from the seed, by the readers,
-// repeated: it draws every essay once, cuts its crop at 32 px and puts the calls in order, repeat by
-// repeat, so that a run cut short has the same repeats of every essay.
-func New(part, file string, seed uint64, es *sample.Essays, essays []*sample.Essay, readers []Reader, repeats int) (*runner.Run, error) {
-	r, pics, err := prepare(part, file, seed, es, essays, readers, repeats, RunRecord{Prompt: Fingerprint(), PromptVersion: Version})
+// New plans a run of the assessment over the essays of a part, as their samples in the directory
+// dir hold them, drawn from the seed, by the readers, repeated: it cuts the crop of every essay at
+// 32 px once, from the strokes of its sample, and puts the calls in order, repeat by repeat, so that
+// a run cut short has the same repeats of every essay.
+func New(part, file, dir string, seed uint64, es *sample.Essays, essays []*evalsample.Essay, readers []Reader, repeats int) (*runner.Run, error) {
+	r, pics, err := prepare(part, file, dir, seed, es, essays, readers, repeats, RunRecord{Prompt: Fingerprint(), PromptVersion: Version})
 	if err != nil {
 		return nil, err
 	}
 	for rep := 1; rep <= repeats; rep++ {
-		for i, e := range essays {
+		for i, written := range essays {
+			e := written.Essay
 			for _, rd := range readers {
 				st := &step{Call: Call{Essay: e.Number, Reader: rd.Name, Repeat: rep}, essay: e, rubric: es.Rubric, pic: pics[i]}
 				in := int64(inputsOfText + render.Tokens(pics[i].Crop.Width, pics[i].Crop.Height))
@@ -134,8 +137,8 @@ func essayRecord(e *sample.Essay, pic *Picture) EssayRecord {
 // essay, each call, and the end, which is the runner's (runner.End). The run's record tells the kind
 // of call, essay, so that tutor-eval report tells its log from the others.
 type (
-	// RunRecord tells the run: its part, the file of the essays and the seed they are drawn from, the
-	// rubric, its readers and repeats, its cap and estimate, the fingerprint and the version of its
+	// RunRecord tells the run: its part, the file of the essays, the directory of their samples and
+	// the seed they were drawn from, the rubric, its readers and repeats, its cap and estimate, the fingerprint and the version of its
 	// prompt, and its path, one call or two.
 	RunRecord struct {
 		Kind          string             `json:"kind"`
@@ -143,6 +146,7 @@ type (
 		Time          time.Time          `json:"time"`
 		Part          string             `json:"part"`
 		File          string             `json:"file"`
+		Dir           string             `json:"dir,omitempty"`
 		Seed          uint64             `json:"seed"`
 		Rubric        []sample.Criterion `json:"rubric"`
 		Readers       []ReaderRecord     `json:"readers"`
@@ -303,11 +307,11 @@ func (s *assessStep) Record(o runner.Outcome) any {
 	return rec
 }
 
-// NewTwo plans a run of the assessment in two calls over the essays of a part, drawn from the seed,
-// by the readers, repeated: for each essay, reader and repeat, the reading of its crop at 32 px and
+// NewTwo plans a run of the assessment in two calls over the essays of a part, as their samples in
+// the directory dir hold them, by the readers, repeated: for each essay, reader and repeat, the reading of its crop at 32 px and
 // right after it the assessment of the text the reading wrote down (T92). The calls go repeat by
 // repeat, as New puts them.
-func NewTwo(part, file string, seed uint64, es *sample.Essays, essays []*sample.Essay, readers []Reader, repeats int) (*runner.Run, error) {
+func NewTwo(part, file, dir string, seed uint64, es *sample.Essays, essays []*evalsample.Essay, readers []Reader, repeats int) (*runner.Run, error) {
 	for _, rd := range readers {
 		if _, ok := readOutputs[rd.Name]; !ok {
 			panic("essay: no output of a reading for the configuration " + rd.Name)
@@ -316,12 +320,13 @@ func NewTwo(part, file string, seed uint64, es *sample.Essays, essays []*sample.
 			panic("essay: no output of an assessment of the text for the configuration " + rd.Name)
 		}
 	}
-	r, pics, err := prepare(part, file, seed, es, essays, readers, repeats, RunRecord{Prompt: TwoFingerprint(), PromptVersion: TwoVersion, Path: PathTwo})
+	r, pics, err := prepare(part, file, dir, seed, es, essays, readers, repeats, RunRecord{Prompt: TwoFingerprint(), PromptVersion: TwoVersion, Path: PathTwo})
 	if err != nil {
 		return nil, err
 	}
 	for rep := 1; rep <= repeats; rep++ {
-		for i, e := range essays {
+		for i, written := range essays {
+			e := written.Essay
 			for _, rd := range readers {
 				read := &pairText{}
 				call := Call{Essay: e.Number, Reader: rd.Name, Repeat: rep}
@@ -337,10 +342,11 @@ func NewTwo(part, file string, seed uint64, es *sample.Essays, essays []*sample.
 	return r, nil
 }
 
-// prepare is what a run of the assessment draws before its calls, in one call or two: it refuses a
-// run of no repeat or no essay, draws every essay once and cuts its crop at 32 px, records each essay,
-// and records the run with its readers and the prompt, version and path given (prompt).
-func prepare(part, file string, seed uint64, es *sample.Essays, essays []*sample.Essay, readers []Reader, repeats int, prompt RunRecord) (*runner.Run, []*Picture, error) {
+// prepare is what a run of the assessment cuts before its calls, in one call or two: it refuses a
+// run of no repeat or no essay, cuts the crop of every essay at 32 px once, from its sample's strokes,
+// records each essay, and records the run with its readers and the prompt, version and path given
+// (prompt).
+func prepare(part, file, dir string, seed uint64, es *sample.Essays, essays []*evalsample.Essay, readers []Reader, repeats int, prompt RunRecord) (*runner.Run, []*Picture, error) {
 	if repeats < 1 {
 		return nil, nil, fmt.Errorf("essay: %d repeats", repeats)
 	}
@@ -349,8 +355,9 @@ func prepare(part, file string, seed uint64, es *sample.Essays, essays []*sample
 	}
 	r := &runner.Run{}
 	pics := make([]*Picture, len(essays))
-	for i, e := range essays {
-		pic, err := PictureOf(e, seed, render.Digit)
+	for i, written := range essays {
+		e := written.Essay
+		pic, err := PictureFrom(nil, written.Strokes, render.Digit)
 		if err != nil {
 			return nil, nil, fmt.Errorf("essay: essay %d: %w", e.Number, err)
 		}
@@ -362,7 +369,7 @@ func prepare(part, file string, seed uint64, es *sample.Essays, essays []*sample
 		records[i] = rd.Record()
 	}
 	r.Record = func(h runner.Head) any {
-		return RunRecord{Kind: "run", CallKind: CallKind, Time: h.Time, Part: part, File: file, Seed: seed, Rubric: es.Rubric, Readers: records, Repeats: repeats,
+		return RunRecord{Kind: "run", CallKind: CallKind, Time: h.Time, Part: part, File: file, Dir: dir, Seed: seed, Rubric: es.Rubric, Readers: records, Repeats: repeats,
 			MaxUSD: h.MaxUSD, Estimate: h.Estimate, Prompt: prompt.Prompt, PromptVersion: prompt.PromptVersion, Path: prompt.Path}
 	}
 	return r, pics, nil

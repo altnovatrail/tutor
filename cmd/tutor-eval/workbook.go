@@ -6,64 +6,51 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/sample"
-	"github.com/altnovatrail/tutor/internal/synth"
 	"github.com/altnovatrail/tutor/internal/workbook"
 )
 
 // workbookFile is the file of the pages of the workbook (T78).
 const workbookFile = "eval/workbook.json"
 
-// runWorkbook checks the pages of the workbook, draws them in memory and prints their summary: the
-// pages, the items and the boxes by scenario, kind and writing of a fraction, and the crops of the
-// filled boxes at each height of eval. With -png it saves the crop of every filled box at 32 px,
-// what a reading sees, in a directory of synthetic or out of the work tree.
+// runWorkbook checks the pages of the workbook, reads the samples of its pages that tutor-eval draw
+// drew, held to the rules of sections 11 and 12 and refused as the runner refuses them (R71), and
+// prints their summary: the pages, the items and the boxes by scenario, kind and writing of a
+// fraction, the samples read, refused and off their file, and the crops of the filled boxes of the
+// pages read at each height of eval, cut from their samples' strokes.
 func runWorkbook(args []string, stdout, stderr io.Writer) int {
 	flags := flag.NewFlagSet("tutor-eval workbook", flag.ContinueOnError)
 	file := flags.String("file", workbookFile, "the pages of the workbook")
-	seed := flags.Uint64("seed", 1, "the number the hands of the pages come from")
-	pngDir := flags.String("png", "", "also save the crop of every filled box at 32 px, as PNG, in this directory: in synthetic, or out of the work tree")
+	dirFlag := flags.String("dir", "", "the directory of the samples of the pages, which tutor-eval draw -workbook draws: in synthetic, since sample-check reads the repository's paths alone; by default synthetic/ and the file's name")
 	if code, ok := parse(flags, args, stderr); !ok {
 		return code
 	}
-	pictured := given(flags)["png"]
-	if pictured {
-		if err := cropsDir(*pngDir); err != nil {
-			_, _ = fmt.Fprintf(stderr, "tutor-eval workbook: %v\n", err)
-			return exitUsage
-		}
+	dir, err := drawnDirOf(*dirFlag, *file, given(flags)["dir"])
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval workbook: %v\n", err)
+		return exitUsage
 	}
-	wb, err := readWorkbook(*file)
+	w, d, seed, err := readPages(*file, dir, checkSamples)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval workbook: %v\n", err)
 		return exitFail
 	}
 	var out bytes.Buffer
-	fmt.Fprintf(&out, "%s: %s; seed %d.\n", *file, workbookSize(wb), *seed)
-	fmt.Fprintf(&out, "Boxes by scenario: %s.\n", workbookTally(wb))
-	saved := 0
+	fmt.Fprintf(&out, "%s: %s; %s.\n", *file, workbookSize(w.Workbook), seedWords(seed, d.Seeds()))
+	fmt.Fprintf(&out, "Boxes by scenario: %s.\n", workbookTally(w.Workbook))
+	out.WriteString(drawnLine(d, "page", dir))
 	tallies := make(map[int]*cropTally)
-	for i := range wb.Pages {
-		pg := &wb.Pages[i]
-		drawn, err := synth.PageOf(pg, *seed)
-		if err != nil {
-			_, _ = fmt.Fprintf(stderr, "tutor-eval workbook: %v\n", err)
-			return exitFail
+	for _, x := range d.Drawn {
+		if x.Read == nil {
+			continue
 		}
 		for _, digit := range render.Heights() {
-			cells, err := workbook.CellsOf(drawn, pg, digit)
-			if err == nil && pictured && digit == render.Digit {
-				var n int
-				n, err = saveCells(*pngDir, pg.Number, cells)
-				saved += n
-			}
+			cells, err := workbook.CellsOf(x.Read.Ink, x.Read.Page, digit)
 			if err != nil {
-				_, _ = fmt.Fprintf(stderr, "tutor-eval workbook: page %d: %v\n", pg.Number, err)
+				_, _ = fmt.Fprintf(stderr, "tutor-eval workbook: page %d: %v\n", x.Number, err)
 				return exitFail
 			}
 			if tallies[digit] == nil {
@@ -73,10 +60,9 @@ func runWorkbook(args []string, stdout, stderr io.Writer) int {
 		}
 	}
 	for _, digit := range render.Heights() {
-		fmt.Fprintf(&out, "Crops at %d px: %s.\n", digit, tallies[digit])
-	}
-	if pictured {
-		fmt.Fprintf(&out, "Crops of the filled boxes at %d px: %s, into %s.\n", render.Digit, count(saved, "file"), *pngDir)
+		if tallies[digit] != nil {
+			fmt.Fprintf(&out, "Crops at %d px: %s.\n", digit, tallies[digit])
+		}
 	}
 	if _, err := stdout.Write(out.Bytes()); err != nil {
 		return exitFail
@@ -84,40 +70,22 @@ func runWorkbook(args []string, stdout, stderr io.Writer) int {
 	return exitOK
 }
 
-// readWorkbook reads the pages of the workbook and checks them, the format and the layout of every
-// page, as every command of the workbook takes them.
-func readWorkbook(path string) (*sample.Workbook, error) {
-	wb, err := readFile(path, sample.ReadWorkbook)
-	if err == nil {
-		err = synth.CheckLayout(wb)
+// seedWords says which seed the samples of a directory were drawn with, or that none is drawn.
+func seedWords(seed uint64, seeds []string) string {
+	if len(seeds) == 0 {
+		return "no sample drawn"
 	}
-	return wb, err
+	return fmt.Sprintf("seed %d", seed)
 }
 
-// cropsDir refuses a directory for the crops of the workbook or of the essays that is not named,
-// or that lies in the work tree outside synthetic: the crops are of code's writing, and the samples
-// folder is for the author's.
+// cropsDir refuses a directory for the crops of the pages or of the essays that draw draws, that is
+// not named, or that lies in the work tree outside synthetic: the crops are of code's writing, and
+// the samples folder is for the author's.
 func cropsDir(dir string) error {
 	if dir == "" {
 		return errors.New("-png is empty: name the directory of the crops")
 	}
 	return checkIgnored(dir, syntheticFolder)
-}
-
-// saveCells saves the crop of each filled box of a page as page-NN-item-NN-box-N.png, over a crop
-// saved before, and returns how many it saved: the crops are drawn by code, the same from the same
-// seed, so a second run saves them again.
-func saveCells(dir string, page int, cells []workbook.Cell) (int, error) {
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return 0, err
-	}
-	for i, c := range cells {
-		name := fmt.Sprintf("page-%02d-item-%02d-box-%d.png", page, c.Item, c.Slot)
-		if err := os.WriteFile(filepath.Join(dir, name), c.PNG, 0o600); err != nil {
-			return i, err
-		}
-	}
-	return len(cells), nil
 }
 
 // workbookSize says how large the workbook is: its pages, by part, its items and its boxes.

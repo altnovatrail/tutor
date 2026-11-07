@@ -196,3 +196,14 @@ func TestEssayCounts(t *testing.T) {
 		t.Errorf("Met = %v", met)
 	}
 }
+
+// An essay as it is written: its title on a line of its own, when it has one, and its text.
+func TestEssayWritten(t *testing.T) {
+	title := "The Robot"
+	if got := (&sample.Essay{Title: &title, Text: "It bakes."}).Written(); got != "The Robot\nIt bakes." {
+		t.Errorf("%q", got)
+	}
+	if got := (&sample.Essay{Text: "It bakes."}).Written(); got != "It bakes." {
+		t.Errorf("%q", got)
+	}
+}

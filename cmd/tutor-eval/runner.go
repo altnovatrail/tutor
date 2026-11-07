@@ -17,7 +17,6 @@ import (
 	"time"
 
 	"github.com/altnovatrail/tutor/internal/essay"
-	"github.com/altnovatrail/tutor/internal/evalsample"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/judge"
 	"github.com/altnovatrail/tutor/internal/measure"
@@ -43,8 +42,9 @@ var plans = map[string]struct {
 	// several is whether the kind runs over several sets: the judge runs on one, since its
 	// criterion counts the test part of one set (R28).
 	several bool
-	// file names the flag of the file a kind reads in place of sets of sheets, drawing it with -seed:
-	// workbook, the pages of the workbook (T79), or essays (T83). Its run logs in synthetic.
+	// file names the flag of the file a kind reads in place of sets of sheets, with the samples of its
+	// pages or essays in -dir: workbook, the pages of the workbook (T79), or essays (T83; R71). Its
+	// run logs in synthetic.
 	file string
 	// caps are the kind's own caps of the parts, where it plans other than partCaps: the essays,
 	// $8 for the test (R45).
@@ -58,8 +58,9 @@ var plans = map[string]struct {
 }
 
 // options are what a run is asked besides its sets and part: how many times each call is repeated,
-// what a reading reads (T69), and for the workbook, the file of its pages, the seed they are drawn
-// from and what its reading reads (T79); for the essays, their file (T83).
+// what a reading reads (T69), and for the workbook, the file of its pages, the directory of their
+// samples and what its reading reads (T79; R71); for the essays, their file and the directory of
+// their samples (T83).
 type options struct {
 	two           bool
 	readers       []string
@@ -67,7 +68,7 @@ type options struct {
 	reads         reading.Reads
 	workbook      string
 	essays        string
-	seed          uint64
+	dir           string
 	workbookReads workbook.Reads
 }
 
@@ -104,7 +105,6 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	readsList := flags.String("reads", "keys", "what a reading reads, joined by commas: keys, the finished sheet without a key, with the right key and with the false keys; heights, at 16, 24 and 48 px; states, the sheet as it was while it was written. For the workbook, bare, its pages at 32 px without the lines of the items; captions, with them and without, by default; and heights, at 16, 24 and 48 px")
 	pagesFile := flags.String("workbook", workbookFile, "for -kind workbook, the file of the pages of the workbook")
 	essaysPath := flags.String("essays", essaysFile, "for -kind essay, the file of the essays")
-	seed := flags.Uint64("seed", 1, "for -kind workbook and essay, the number the hands of the pages and the essays come from")
 	maxUSD := flags.Float64("max-usd", 0, "start no call that could take the run past this many US dollars; $3 for dev, $6 for test ($8 for the essays) and $2 for all by default")
 	logPath := flags.String("log", "", "the log of the run, a new file out of git: in samples or synthetic, and in samples alone for sheets there; by default in runs next to the directory of the sheets, and for the workbook and the essays in synthetic/runs")
 	two := flags.Bool("two", false, "for -kind essay, assess in two calls: read the essay, then assess the text read (T92)")
@@ -127,14 +127,21 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -two is for -kind essay, and the %s asks one call\n", *kind)
 		return exitUsage
 	}
-	o := options{two: *two, readers: names, repeats: *repeats, workbook: *pagesFile, essays: *essaysPath, seed: *seed}
+	o := options{two: *two, readers: names, repeats: *repeats, workbook: *pagesFile, essays: *essaysPath}
 	if _, err := runner.Chosen(runner.Configs(), func(c runner.Config) runner.Config { return c }, o.readers); err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -readers is %q: %v\n", *readersList, err)
 		return exitUsage
 	}
 	var sets []sheetFlags
+	// own is the file a kind of the workbook or the essays reads, in place of sets of sheets.
+	own := map[string]string{"workbook": *pagesFile, "essays": *essaysPath}[k.file]
 	if k.file != "" {
 		if !fileFlags(*kind, k.file, set, stderr) {
+			return exitUsage
+		}
+		var err error
+		if o.dir, err = drawnDirOf(f.dir, own, set["dir"]); err != nil {
+			_, _ = fmt.Fprintf(stderr, "tutor-eval run: %v\n", err)
 			return exitUsage
 		}
 		if k.file == "workbook" {
@@ -144,8 +151,8 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 			}
 		}
 	} else {
-		if set["workbook"] || set["essays"] || set["seed"] {
-			_, _ = fmt.Fprintf(stderr, "tutor-eval run: -workbook, -essays and -seed are for -kind workbook and essay, and the %s reads sheets\n", *kind)
+		if set["workbook"] || set["essays"] {
+			_, _ = fmt.Fprintf(stderr, "tutor-eval run: -workbook and -essays are for -kind workbook and essay, and the %s reads sheets\n", *kind)
 			return exitUsage
 		}
 		if sets, ok = setsOf(f, setValues, set, stderr); !ok {
@@ -207,7 +214,6 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	path := *logPath
 	if path == "" {
 		at := now().UTC()
-		own := map[string]string{"workbook": *pagesFile, "essays": *essaysPath}[k.file]
 		dir, names := filepath.Join(syntheticFolder, "runs"), []string{strings.TrimSuffix(filepath.Base(own), filepath.Ext(own))}
 		if k.file == "" {
 			dir, names = filepath.Join(filepath.Dir(filepath.Clean(sets[0].dir)), "runs"), nil
@@ -283,18 +289,18 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 }
 
 // fileFlags checks the flags of a run of a kind that reads a file of its own and no sets of sheets,
-// the workbook or the essays, and says why it refuses: no flag of the sheets, no file of the other
-// kind, and -reads only for the workbook.
+// the workbook or the essays, with the directory of their samples, and says why it refuses: no flag
+// of the sheets, no file of the other kind, and -reads only for the workbook.
 func fileFlags(kind, file string, set map[string]bool, stderr io.Writer) bool {
-	for _, name := range []string{"set", "dir", "bank", "plan"} {
+	for _, name := range []string{"set", "bank", "plan"} {
 		if set[name] {
-			_, _ = fmt.Fprintf(stderr, "tutor-eval run: -%s names sheets, and the %s reads its own file: give -%s and -seed\n", name, kind, file)
+			_, _ = fmt.Fprintf(stderr, "tutor-eval run: -%s names sheets, and the %s reads its own file: give -%s and -dir\n", name, kind, file)
 			return false
 		}
 	}
 	for _, other := range []string{"workbook", "essays"} {
 		if other != file && set[other] {
-			_, _ = fmt.Fprintf(stderr, "tutor-eval run: -%s is not for -kind %s: give -%s and -seed\n", other, kind, file)
+			_, _ = fmt.Fprintf(stderr, "tutor-eval run: -%s is not for -kind %s: give -%s and -dir\n", other, kind, file)
 			return false
 		}
 	}
@@ -484,20 +490,31 @@ func planHint(sets []sheetFlags, part string, o options) (*runner.Run, string, e
 		strings.Join(by, ", "), count(o.repeats, "repeat"), hint.Version), nil
 }
 
-// planWorkbook plans a run of the reading of the workbook over the pages of a part, drawn from the
-// seed, and says what it asks: the pages, the readers and repeats, what is read, and the version of
-// the prompt (T79). It reads no sheets.
+// planWorkbook plans a run of the reading of the workbook over the pages of a part, as the samples
+// of the directory hold them, held to the rules of sections 11 and 12 by spec's check, and says what
+// it asks: the pages, the readers and repeats, what is read, and the version of the prompt (T79;
+// R71). A page whose sample the runner refuses is named and not asked of. It reads no sheets.
 func planWorkbook(_ []sheetFlags, part string, o options) (*runner.Run, string, error) {
-	wb, err := readWorkbook(o.workbook)
+	w, d, seed, err := readPages(o.workbook, o.dir, checkSamples)
 	if err != nil {
 		return nil, "", err
 	}
-	pages := workbook.Pages(wb, part)
+	var numbers []int
+	for _, pg := range workbook.Pages(w.Workbook, part) {
+		numbers = append(numbers, pg.Number)
+	}
+	if len(numbers) == 0 {
+		return nil, "", fmt.Errorf("workbook: no page of the part %s", part)
+	}
+	pages, refused, err := partDrawn(d, "page", numbers)
+	if err != nil {
+		return nil, "", err
+	}
 	readers, err := runner.Chosen(workbook.Readers(), readerConfig, o.readers)
 	if err != nil {
 		return nil, "", err
 	}
-	r, err := workbook.New(part, o.workbook, o.seed, pages, readers, o.repeats, o.workbookReads)
+	r, err := workbook.New(part, o.workbook, o.dir, seed, pages, readers, o.repeats, o.workbookReads)
 	if err != nil {
 		return nil, "", err
 	}
@@ -512,18 +529,30 @@ func planWorkbook(_ []sheetFlags, part string, o options) (*runner.Run, string, 
 	if o.workbookReads.Heights && repeated != "" {
 		what = append(what, fmt.Sprintf("bare at 16, 24 and 48 px, once by %s", repeated))
 	}
-	return r, fmt.Sprintf("%s: %s of the workbook %s, drawn with the seed %d, %s, a call a page, in version %d of the prompt of the workbook.\n",
-		partName(part), count(len(pages), "page"), o.workbook, o.seed, strings.Join(what, "; and "), workbook.Version), nil
+	return r, refusedLine(refused) + fmt.Sprintf("%s: %s of the workbook %s, drawn with the seed %d into %s, %s, a call a page, in version %d of the prompt of the workbook.\n",
+		partName(part), count(len(pages), "page"), o.workbook, seed, o.dir, strings.Join(what, "; and "), workbook.Version), nil
 }
 
-// planEssays plans a run of the assessment by the rubric over the essays of a part, drawn with the
-// seed, by every reader in every repeat (T83).
+// planEssays plans a run of the assessment by the rubric over the essays of a part, as the samples
+// of the directory hold them, by every reader in every repeat (T83; R71). An essay whose sample the
+// runner refuses is named and not asked of.
 func planEssays(_ []sheetFlags, part string, o options) (*runner.Run, string, error) {
-	es, err := readFile(o.essays, sample.ReadEssays)
+	f, d, seed, err := readEssays(o.essays, o.dir, checkSamples)
 	if err != nil {
 		return nil, "", err
 	}
-	essays := essay.Essays(es, part)
+	es := f.Essays
+	var numbers []int
+	for _, e := range essay.Essays(es, part) {
+		numbers = append(numbers, e.Number)
+	}
+	if len(numbers) == 0 {
+		return nil, "", fmt.Errorf("essay: no essay of the part %s", part)
+	}
+	essays, refused, err := partDrawn(d, "essay", numbers)
+	if err != nil {
+		return nil, "", err
+	}
 	readers, err := runner.Chosen(essay.Readers(), readerConfig, o.readers)
 	if err != nil {
 		return nil, "", err
@@ -533,7 +562,7 @@ func planEssays(_ []sheetFlags, part string, o options) (*runner.Run, string, er
 	if o.two {
 		newRun, calls, version = essay.NewTwo, "two calls an essay, the reading and the assessment of the text it read", essay.TwoVersion
 	}
-	r, err := newRun(part, o.essays, o.seed, es, essays, readers, o.repeats)
+	r, err := newRun(part, o.essays, o.dir, seed, es, essays, readers, o.repeats)
 	if err != nil {
 		return nil, "", err
 	}
@@ -545,8 +574,8 @@ func planEssays(_ []sheetFlags, part string, o options) (*runner.Run, string, er
 	if o.two {
 		prompt = "the prompts of the assessment in two calls"
 	}
-	return r, fmt.Sprintf("%s: %s of %s, drawn with the seed %d, at %d px, by %s in %s, %s, in version %d of %s.\n",
-		partName(part), count(len(essays), "essay"), o.essays, o.seed, render.Digit, strings.Join(names, " and "), count(o.repeats, "repeat"), calls, version, prompt), nil
+	return r, refusedLine(refused) + fmt.Sprintf("%s: %s of %s, drawn with the seed %d into %s, at %d px, by %s in %s, %s, in version %d of %s.\n",
+		partName(part), count(len(essays), "essay"), o.essays, seed, o.dir, render.Digit, strings.Join(names, " and "), count(o.repeats, "repeat"), calls, version, prompt), nil
 }
 
 // byReaders says who reads in a run: those that read once, and the others in their repeats; and
@@ -626,7 +655,7 @@ func partSheets(f sheetFlags, set, part string) (plan *sample.Plan, chosen []she
 		case sh.File == "":
 			return nil, nil, nil, fmt.Errorf("sheet %d is not recorded: -part all runs every sheet of the plan", n)
 		case sh.Refused != nil:
-			refused = append(refused, fmt.Sprintf("%s sheet %d (%s: %s)", set, n, evalsample.Reason(sh.Refused.Reason), sh.Refused.Detail))
+			refused = append(refused, refusedOf(set+" sheet", n, sh.Refused))
 			continue
 		case sh.Sample == nil:
 			return nil, nil, nil, fmt.Errorf("sheet %d does not pass its check: tutor-eval sheets says where", n)

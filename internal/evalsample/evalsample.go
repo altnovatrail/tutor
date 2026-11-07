@@ -19,8 +19,6 @@ import (
 	"errors"
 	"fmt"
 	"math"
-	"os"
-	"path"
 	"path/filepath"
 	"regexp"
 	"slices"
@@ -51,37 +49,19 @@ const (
 // Pointer is the pointer a drawn stroke names: the synthetic hand writes as a pen does.
 const Pointer = "pen"
 
-// Bank is a bank of tasks as a sample names it, as the source file of its task reference (R69): its
-// path in the repository, from the root, with slashes; the digest of the file, "sha256:" and 64
-// lowercase hexadecimal digits; and the bank it holds.
+// Bank is a bank of tasks as a sample names it, as the source file of its task reference (R69), and
+// the bank it holds.
 type Bank struct {
-	Path   string
-	Digest string
-	Bank   *sample.Bank
+	Source
+	Bank *sample.Bank
 }
 
 // ReadBank reads the bank at a path, which a sample names from the root of the repository that
-// holds it: the nearest folder above it with a go.mod, tutor's root. A bank outside any is named by
-// its file's name alone, wherever it is read from, and nothing of the folders above it goes into a
-// sample; its digest tells two banks of one name apart.
+// holds it (ReadSource).
 func ReadBank(file string) (*Bank, error) {
-	data, err := os.ReadFile(file)
+	at, data, err := ReadSource(file)
 	if err != nil {
 		return nil, err
-	}
-	at := filepath.Base(file)
-	if abs, err := filepath.Abs(file); err == nil {
-		for dir := filepath.Dir(abs); ; dir = filepath.Dir(dir) {
-			if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
-				if rel, err := filepath.Rel(dir, abs); err == nil {
-					at = filepath.ToSlash(rel)
-				}
-				break
-			}
-			if filepath.Dir(dir) == dir {
-				break
-			}
-		}
 	}
 	return BankOf(at, data)
 }
@@ -92,7 +72,7 @@ func BankOf(at string, data []byte) (*Bank, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Bank{Path: path.Clean(at), Digest: Digest(data), Bank: b}, nil
+	return &Bank{Source: SourceOf(at, data), Bank: b}, nil
 }
 
 // Digest is the digest of a file as the protocol names one: "sha256:" and the SHA-256 of its bytes.
@@ -189,6 +169,15 @@ func Of(s *sample.Sample, sh *sample.PlanSheet, b *Bank, seed uint64, id string)
 	if err != nil {
 		return nil, err
 	}
+	es := drawnSample(seed, id, b.reference(t.ID, digest), h, markup)
+	es.Surface = &evalv1.Sample_Sheet{Sheet: sheet}
+	return es, nil
+}
+
+// drawnSample is a sample of measurement that code drew from the seed, by an adult, with its history
+// of writing, its task and its markup, and no surface yet: what every drawn sample holds alike
+// (section 11).
+func drawnSample(seed uint64, id string, task *evalv1.TaskReference, h *evalv1.History, markup *evalv1.Markup) *evalv1.Sample {
 	return &evalv1.Sample{
 		Protocol:       protocol.Protocol,
 		Id:             id,
@@ -198,15 +187,10 @@ func Of(s *sample.Sample, sh *sample.PlanSheet, b *Bank, seed uint64, id string)
 		WriterCode:     new(WriterCode(seed)),
 		TextSetVersion: TextSetVersion,
 		CanvasVersion:  CanvasVersion,
-		Task: &evalv1.TaskReference{
-			Source:         &evalv1.TaskReference_File{File: &evalv1.TaskFileSource{FileDigest: b.Digest, Bank: b.Path, BankDigest: b.Digest}},
-			Task:           t.ID,
-			OpenViewDigest: digest,
-		},
-		Ink:     &evalv1.Sample_History{History: h},
-		Surface: &evalv1.Sample_Sheet{Sheet: sheet},
-		Markup:  markup,
-	}, nil
+		Task:           task,
+		Ink:            &evalv1.Sample_History{History: h},
+		Markup:         markup,
+	}
 }
 
 // event is an event of the history before it is written: its time, and the stroke written or the

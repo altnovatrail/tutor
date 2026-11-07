@@ -293,14 +293,8 @@ func quoted(text string) []string {
 	return out
 }
 
-// essayText is the essay as it is written: its title, when it has one, on a line of its own, and
-// its text.
-func essayText(e *sample.Essay) string {
-	if e.Title == nil {
-		return e.Text
-	}
-	return *e.Title + "\n" + e.Text
-}
+// essayText is the essay as it is written (sample.Essay.Written).
+func essayText(e *sample.Essay) string { return e.Written() }
 
 // plainWords are the words of a text in small letters, without the marks around them: what the
 // reading and the quotes are compared by. A typographic apostrophe is the straight one.
