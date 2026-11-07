@@ -24,7 +24,7 @@ jobs:
   dco:
     name: DCO
     if: github.event_name == 'pull_request'
-    uses: altnovatrail/.github/.github/workflows/dco.yml@c772cc86973240e21cebb310fd0cda221a752ade # v0.1.5
+    uses: altnovatrail/.github/.github/workflows/dco.yml@89d3ceee0b9977b3334488a4133d084d76474e0d # v0.1.15
 
   documents:
     name: Documents
