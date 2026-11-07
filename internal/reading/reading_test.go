@@ -12,11 +12,17 @@ import (
 	"strings"
 	"testing"
 
+	mkobservation "github.com/altnovatrail/module-kit/observation"
+	"github.com/altnovatrail/module-kit/verdict"
+	observationv1 "github.com/altnovatrail/spec/contracts/novatrail/observation/v1"
+	"github.com/altnovatrail/spec/types/formatv0"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/synth"
-	"github.com/altnovatrail/tutor/internal/value"
+	"github.com/altnovatrail/tutor/internal/task"
 	"github.com/altnovatrail/tutor/provider"
 )
 
@@ -76,11 +82,11 @@ func every(t *testing.T) []planned {
 }
 
 // truth is the verdict a reading should come to on a sheet of an outcome.
-var truth = map[sample.Outcome]value.Verdict{
-	sample.OutcomeCorrect:    value.Correct,
-	sample.OutcomeError:      value.NotYet,
-	sample.OutcomeUnreadable: value.Unreadable,
-	sample.OutcomeNoAnswer:   value.Unreadable,
+var truth = map[sample.Outcome]verdict.Verdict{
+	sample.OutcomeCorrect:    verdict.Correct,
+	sample.OutcomeError:      verdict.NotYet,
+	sample.OutcomeUnreadable: verdict.Unreadable,
+	sample.OutcomeNoAnswer:   verdict.Unreadable,
 }
 
 // The reader who is always right comes, on every sheet of the measurement, to the verdict of its
@@ -136,8 +142,8 @@ func TestKeys(t *testing.T) {
 			}
 			for _, k := range keys {
 				key := reading.KeyOf(k)
-				if got := (value.Number{Key: key}).Check(&key); got.Verdict != value.Correct {
-					t.Errorf("task %s: the key %q is %q to the check, which gives %+v", task.ID, k, key, got)
+				if got, reason := reading.Verdict(observation([]reading.Part{text(key, true)}, reading.Result{Part: 1, Value: key}), key); got != verdict.Correct {
+					t.Errorf("task %s: the key %q is %q to the check, which gives %s %s", task.ID, k, key, got, reason)
 				}
 			}
 		}
@@ -172,30 +178,66 @@ func TestVerdict(t *testing.T) {
 	for _, c := range []struct {
 		name   string
 		o      *reading.Observation
-		want   value.Verdict
+		want   verdict.Verdict
 		reason reading.Reason
 	}{
-		{"a failed call", nil, value.Unchecked, ""},
-		{"no answer", observation(two), value.Unreadable, reading.NoResult},
-		{"two answers", observation(two, reading.Result{Part: 1, Value: "66"}, reading.Result{Part: 2, Value: "11"}), value.Unreadable, reading.Results},
-		{"illegible", observation([]reading.Part{text("66 : 6 = 11", false)}, reading.Result{Part: 1, Value: "11"}), value.Unreadable, reading.Illegible},
-		{"another value", observation(two, reading.Result{Part: 2, Value: "11", OtherValues: []string{"17"}}), value.Unreadable, reading.Ambiguous},
-		{"blank", observation(two, reading.Result{Part: 2, Value: " = "}), value.Unreadable, reading.Reason(value.Blank)},
-		{"not written", observation(two, reading.Result{Part: 2, Value: "12"}), value.Unreadable, reading.NotWritten},
-		{"inside a number", observation([]reading.Part{text("x = 13/2", true)}, reading.Result{Part: 1, Value: "2"}), value.Unreadable, reading.NotWritten},
-		{"not in notation", observation([]reading.Part{text("Ответ: 1,5", true)}, reading.Result{Part: 1, Value: "1,5"}), value.Unreadable, reading.Reason(value.Notation)},
-		{"right", observation(two, reading.Result{Part: 2, Value: "11"}), value.Correct, ""},
-		{"right, with the =", observation(two, reading.Result{Part: 2, Value: "= 11."}), value.Correct, ""},
-		{"a full stop after", observation([]reading.Part{text("Ответ: 11.", true)}, reading.Result{Part: 1, Value: "11"}), value.Correct, ""},
-		{"a comma after", observation([]reading.Part{text("x = 11, y = 3", true)}, reading.Result{Part: 1, Value: "11"}), value.Correct, ""},
-		{"after a subtraction", observation([]reading.Part{text("22 − 11", true)}, reading.Result{Part: 1, Value: "11"}), value.Correct, ""},
-		{"without its minus", observation([]reading.Part{text("x = −11", true)}, reading.Result{Part: 1, Value: "11"}), value.Unreadable, reading.NotWritten},
-		{"the whole of a decimal", observation([]reading.Part{text("x = 11.5", true)}, reading.Result{Part: 1, Value: "11"}), value.Unreadable, reading.NotWritten},
-		{"wrong", observation([]reading.Part{text("66 : 6 = 12", true)}, reading.Result{Part: 1, Value: "12"}), value.NotYet, ""},
+		{"a failed call", nil, verdict.Unchecked, ""},
+		{"no answer", observation(two), verdict.Unreadable, reading.NoResult},
+		{"two answers", observation(two, reading.Result{Part: 1, Value: "66"}, reading.Result{Part: 2, Value: "11"}), verdict.Unreadable, reading.Results},
+		{"illegible", observation([]reading.Part{text("66 : 6 = 11", false)}, reading.Result{Part: 1, Value: "11"}), verdict.Unreadable, reading.Illegible},
+		{"another value", observation(two, reading.Result{Part: 2, Value: "11", OtherValues: []string{"17"}}), verdict.Unreadable, reading.Ambiguous},
+		{"blank", observation(two, reading.Result{Part: 2, Value: " = "}), verdict.Unreadable, reading.Reason(verdict.Blank)},
+		{"not written", observation(two, reading.Result{Part: 2, Value: "12"}), verdict.Unreadable, reading.NotWritten},
+		{"inside a number", observation([]reading.Part{text("x = 13/2", true)}, reading.Result{Part: 1, Value: "2"}), verdict.Unreadable, reading.NotWritten},
+		{"not in notation", observation([]reading.Part{text("Ответ: 1,5", true)}, reading.Result{Part: 1, Value: "1,5"}), verdict.Unreadable, reading.Reason(verdict.Notation)},
+		{"right", observation(two, reading.Result{Part: 2, Value: "11"}), verdict.Correct, ""},
+		{"right, with the =", observation(two, reading.Result{Part: 2, Value: "= 11."}), verdict.Correct, ""},
+		{"a full stop after", observation([]reading.Part{text("Ответ: 11.", true)}, reading.Result{Part: 1, Value: "11"}), verdict.Correct, ""},
+		{"a comma after", observation([]reading.Part{text("x = 11, y = 3", true)}, reading.Result{Part: 1, Value: "11"}), verdict.Correct, ""},
+		{"after a subtraction", observation([]reading.Part{text("22 − 11", true)}, reading.Result{Part: 1, Value: "11"}), verdict.Correct, ""},
+		{"without its minus", observation([]reading.Part{text("x = −11", true)}, reading.Result{Part: 1, Value: "11"}), verdict.Unreadable, reading.NotWritten},
+		{"the whole of a decimal", observation([]reading.Part{text("x = 11.5", true)}, reading.Result{Part: 1, Value: "11"}), verdict.Unreadable, reading.NotWritten},
+		{"wrong", observation([]reading.Part{text("66 : 6 = 12", true)}, reading.Result{Part: 1, Value: "12"}), verdict.NotYet, ""},
 	} {
 		if got, reason := reading.Verdict(c.o, "11"); got != c.want || reason != c.reason {
 			t.Errorf("%s: %s (%s), want %s (%s)", c.name, got, reason, c.want, c.reason)
 		}
+		obs, _ := reading.ObservationOf(c.o)
+		// The record of the call tells the same observation, by its verdict, reason and value.
+		got, reason := reading.Verdict(c.o, "11")
+		rec := &reading.CallRecord{Verdict: string(got), Reason: reason}
+		if c.o != nil && len(c.o.Results) == 1 {
+			rec.Value = c.o.Results[0].Value
+		}
+		if told := reading.RecordObservation(rec); !proto.Equal(told, obs) {
+			t.Errorf("%s: the record tells %v, and the answer %v", c.name, told, obs)
+		}
+		if c.o == nil {
+			if obs != nil {
+				t.Errorf("%s: an observation of none", c.name)
+			}
+			continue
+		}
+		if err := mkobservation.Validate([]formatv0.Item{task.SheetItem("11")}, obs); err != nil {
+			t.Errorf("%s: %v", c.name, err)
+		}
+	}
+	// The protocol names each reason of the reading by the table of section 10: a value not seen in
+	// its part is ambiguous, as one the reader cannot point to in the writing.
+	for o, want := range map[*reading.Observation]observationv1.Unreadable{
+		observation(two): observationv1.Unreadable_UNREADABLE_NO_FINAL_ANSWER,
+		observation(two, reading.Result{Part: 1, Value: "66"}, reading.Result{Part: 2, Value: "11"}):  observationv1.Unreadable_UNREADABLE_SEVERAL_FINAL_ANSWERS,
+		observation([]reading.Part{text("66 : 6 = 11", false)}, reading.Result{Part: 1, Value: "11"}): observationv1.Unreadable_UNREADABLE_ILLEGIBLE,
+		observation(two, reading.Result{Part: 2, Value: "12"}):                                        observationv1.Unreadable_UNREADABLE_AMBIGUOUS,
+		observation(two, reading.Result{Part: 2, Value: " = "}):                                       observationv1.Unreadable_UNREADABLE_BLANK,
+	} {
+		if obs, _ := reading.ObservationOf(o); obs.GetAnswerSlots()[0].GetUnreadable() != want {
+			t.Errorf("%+v: %v, want %v", o, obs, want)
+		}
+	}
+	// A key that is no number checks nothing: the sheet is unchecked.
+	if got, reason := reading.Verdict(observation(two, reading.Result{Part: 2, Value: "11"}), "x = 11"); got != verdict.Unchecked || reason != "" {
+		t.Errorf("a key out of the notation gives %s %s", got, reason)
 	}
 }
 

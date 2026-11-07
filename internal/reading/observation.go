@@ -2,6 +2,7 @@ package reading
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -10,7 +11,13 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/altnovatrail/module-kit/observation"
+	"github.com/altnovatrail/module-kit/verdict"
+	observationv1 "github.com/altnovatrail/spec/contracts/novatrail/observation/v1"
+	"github.com/altnovatrail/spec/types/formatv0"
+
 	"github.com/altnovatrail/tutor/internal/sample"
+	"github.com/altnovatrail/tutor/internal/task"
 	"github.com/altnovatrail/tutor/internal/value"
 )
 
@@ -100,7 +107,7 @@ func Read(answer string) (*Observation, error) {
 // Reason is why a sheet is unreadable: of the observation, or of the value as the check reads it.
 type Reason string
 
-// The reasons of the observation; the value's are value.Blank and value.Notation.
+// The reasons of the observation; the value's are module-kit's, verdict.Blank and verdict.Notation.
 const (
 	NoResult   Reason = "no_result"
 	Results    Reason = "results"
@@ -109,41 +116,116 @@ const (
 	NotWritten Reason = "not_written"
 )
 
+// ObservationOf is an observation as the eval protocol writes it (contracts/README.md of spec,
+// section 10): the one answer slot of a sheet, bound anywhere, with the value of the final answer,
+// or the reason the reading gives none, and that reason in tutor's own words, which the log keeps
+// (R73). A nil observation, a failed call, is none: nil, with no reason.
+//   - no final answer is UNREADABLE_NO_FINAL_ANSWER, no_result, and more than one
+//     UNREADABLE_SEVERAL_FINAL_ANSWERS, results;
+//   - the answer's part illegible is UNREADABLE_ILLEGIBLE, illegible;
+//   - an answer that could be read as another value is UNREADABLE_AMBIGUOUS, ambiguous, and so is a
+//     value not seen in the writing of its part, not_written: section 10 names a value that the
+//     reader cannot point to in the writing ambiguous;
+//   - a value that nothing is left of once it is read, and an empty one, is UNREADABLE_BLANK, with
+//     no word of the reading's: module-kit's verdict names it blank;
+//   - otherwise the value, as it is written.
+func ObservationOf(o *Observation) (*observationv1.Observation, Reason) {
+	if o == nil {
+		return nil, ""
+	}
+	reason := Reason("")
+	switch {
+	case len(o.Results) == 0:
+		reason = NoResult
+	case len(o.Results) > 1:
+		reason = Results
+	default:
+		r := o.Results[0]
+		part := o.Parts[r.Part-1]
+		read, ok := value.Read(r.Value)
+		switch {
+		case !part.Legible:
+			reason = Illegible
+		case len(r.OtherValues) > 0:
+			reason = Ambiguous
+		case !ok:
+			return observationOf(Reason(verdict.Blank), ""), ""
+		case !seen(read, part.Text):
+			reason = NotWritten
+		default:
+			return observationOf("", r.Value), ""
+		}
+	}
+	return observationOf(reason, ""), reason
+}
+
+// unreadable is the reason of the protocol that each reason of the reading, and blank, is (section
+// 10 of spec's contracts text).
+var unreadable = map[Reason]observationv1.Unreadable{
+	NoResult:              observationv1.Unreadable_UNREADABLE_NO_FINAL_ANSWER,
+	Results:               observationv1.Unreadable_UNREADABLE_SEVERAL_FINAL_ANSWERS,
+	Illegible:             observationv1.Unreadable_UNREADABLE_ILLEGIBLE,
+	Ambiguous:             observationv1.Unreadable_UNREADABLE_AMBIGUOUS,
+	NotWritten:            observationv1.Unreadable_UNREADABLE_AMBIGUOUS,
+	Reason(verdict.Blank): observationv1.Unreadable_UNREADABLE_BLANK,
+}
+
+// observationOf is the observation of the one answer slot of a sheet: the reason of the protocol
+// that a reason of the reading is, or, with none of them, the value.
+func observationOf(reason Reason, v string) *observationv1.Observation {
+	slot := &observationv1.AnswerSlotObservation{AnswerSlot: &observationv1.AnswerSlotPlace{Item: 1, Slot: 1}}
+	if u, ok := unreadable[reason]; ok {
+		slot.Read = &observationv1.AnswerSlotObservation_Unreadable{Unreadable: u}
+	} else {
+		slot.Read = &observationv1.AnswerSlotObservation_Value{Value: v}
+	}
+	return &observationv1.Observation{AnswerSlots: []*observationv1.AnswerSlotObservation{slot}}
+}
+
+// RecordObservation is the observation that the record of a call tells, by the verdict, the reason
+// and the value the run wrote for it, so that what is made of it keeps the rules of the run that
+// judged it: nil for a call that failed or that gave no verdict, the protocol's reason for a
+// reason of the reading or blank, and otherwise the value read.
+func RecordObservation(c *CallRecord) *observationv1.Observation {
+	if c.NotAsked || c.Error != "" || verdict.Verdict(c.Verdict) == verdict.Unchecked {
+		return nil
+	}
+	return observationOf(c.Reason, c.Value)
+}
+
 // Verdict is the program's verdict on an observation, against the key of the task's check, the
 // value of the bank's key (KeyOf), whatever key the reading was given (docs/architecture.md, 3.4):
-//   - no observation, a failed call, is unchecked;
-//   - the observation is unreadable when it has no final answer or more than one, when the answer's
-//     part is illegible, when the answer could be read as another value, when its value is blank,
-//     and when the value is not seen in the writing of its part (concepts 9.1 spec);
-//   - otherwise the check of the kind number judges the value: correct, not yet right, or
-//     unreadable when the value is in none of its notations (R56 spec).
-func Verdict(o *Observation, key string) (value.Verdict, Reason) {
-	switch {
-	case o == nil:
-		return value.Unchecked, ""
-	case len(o.Results) == 0:
-		return value.Unreadable, NoResult
-	case len(o.Results) > 1:
-		return value.Unreadable, Results
+// module-kit's, on the observation as the protocol writes it (ObservationOf; R73). No observation,
+// a failed call, is unchecked; a reason of the reading makes it unreadable, with the reading's own
+// word for it; and otherwise the check of the kind number judges the value: correct, not yet
+// right, or unreadable, blank or in none of its notations (R56 spec). A key that is no number is
+// no check module-kit takes, and it gives no verdict, whatever was read: the sheet is unchecked,
+// with no reason. The banks' keys are all numbers, and a test holds them so.
+func Verdict(o *Observation, key string) (verdict.Verdict, Reason) {
+	obs, reason := ObservationOf(o)
+	slot, err := SlotVerdict(key, obs)
+	if err != nil {
+		return verdict.Unchecked, ""
 	}
-	r := o.Results[0]
-	part := o.Parts[r.Part-1]
-	switch {
-	case !part.Legible:
-		return value.Unreadable, Illegible
-	case len(r.OtherValues) > 0:
-		return value.Unreadable, Ambiguous
+	if reason == "" {
+		reason = Reason(slot.Reason)
 	}
-	read, ok := value.Read(r.Value, nil)
-	if !ok {
-		return value.Unreadable, Reason(value.Blank)
-	}
-	if !seen(read, part.Text) {
-		return value.Unreadable, NotWritten
-	}
-	slot := value.Number{Key: key}.Check(&r.Value)
-	return slot.Verdict, Reason(slot.Reason)
+	return slot.Verdict, reason
 }
+
+// SlotVerdict is module-kit's verdict on the one answer slot of a sheet whose check is number with
+// the key (task.SheetItem), on an observation as the protocol writes it, nil for none: then the
+// slot is unchecked. An error is an observation that is not valid, or a key that is no number.
+func SlotVerdict(key string, o *observationv1.Observation) (verdict.SlotVerdict, error) {
+	items, err := observation.Verdicts(ctx, []formatv0.Item{task.SheetItem(key)}, o, nil)
+	if err != nil {
+		return verdict.SlotVerdict{}, err
+	}
+	return items[0].Slots[0], nil
+}
+
+// ctx is the context of a verdict: a check of number runs no predicate that it could stop.
+var ctx = context.Background()
 
 // seen reports whether a value, read as the check reads it, stands in the writing of its part:
 // both normalized and without spaces, and the value the whole of a number there (R62 canvas-api).
@@ -304,10 +386,13 @@ func UnderKey(o *Observation, m Marked, g Given) Under {
 			u.Parts = append(u.Parts, i+1)
 		}
 	}
-	key := value.Number{Key: KeyOf(g.Key)}
-	marked := m.Value
+	key := task.SheetItem(KeyOf(g.Key))
+	isKey := func(v string) bool {
+		got, err := verdict.OfSlot(ctx, verdict.AnswerSlots(key)[0], &v)
+		return err == nil && got.Verdict == verdict.Correct
+	}
 	for _, r := range o.Results {
-		if key.Check(&r.Value).Verdict == value.Correct && key.Check(&marked).Verdict != value.Correct {
+		if isKey(r.Value) && !isKey(m.Value) {
 			u.Result = true
 		}
 	}

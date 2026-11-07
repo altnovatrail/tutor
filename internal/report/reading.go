@@ -8,10 +8,15 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/altnovatrail/module-kit/observation"
+	"github.com/altnovatrail/module-kit/verdict"
+	observationv1 "github.com/altnovatrail/spec/contracts/novatrail/observation/v1"
+	"github.com/altnovatrail/spec/types/formatv0"
+
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/sample"
-	"github.com/altnovatrail/tutor/internal/value"
+	"github.com/altnovatrail/tutor/internal/task"
 )
 
 // Reading is what a run of the reading comes to (T71, T72; docs/architecture.md, 3.4, «Чтение в
@@ -150,9 +155,10 @@ type Share struct {
 func (s Share) String() string { return fmt.Sprintf("%d of %d, ≤ %.3f", s.Events, s.Of, s.Upper) }
 
 // Pair is the rule of two readers (R08; Т-33) on the readings without a key of the finished sheets
-// at 32 px, of the first repeat: a sheet is released when both readers give one result and its
-// values, normalized as the check of the kind number reads them, are one, and its verdict is
-// theirs; otherwise it is "unreadable". Coverage is the share released, and the errors among the
+// at 32 px, of the first repeat, as api will run it: module-kit joins the two observations,
+// observation.Join, and gives the verdict on the joined one (contracts/README.md of spec, section
+// 10; R73). A sheet is released when the two read one value — the check compares them equal and
+// gives them one verdict —, and its verdict is the joined one; otherwise it is "unreadable". Coverage is the share released, and the errors among the
 // released are counted against those of each reader alone. The fast reader's "correct" and the
 // strong one's with it give p of the hybrid: the share the fast reader sends on (architecture 2.6).
 type Pair struct {
@@ -168,15 +174,16 @@ type Errors struct {
 	FalseCorrect, FalseAlarm, Extra int
 }
 
-// expected is the verdict the outcome of a sheet asks of a reading.
-func expected(o sample.Outcome) value.Verdict {
+// expected is the verdict the outcome of a sheet asks of a reading. A sample of the eval protocol
+// has the outcome that module-kit's verdict on its truth gives (evalsample.Read).
+func expected(o sample.Outcome) verdict.Verdict {
 	switch o {
 	case sample.OutcomeCorrect:
-		return value.Correct
+		return verdict.Correct
 	case sample.OutcomeError:
-		return value.NotYet
+		return verdict.NotYet
 	}
-	return value.Unreadable
+	return verdict.Unreadable
 }
 
 // legible is whether a sheet's outcome asks for a verdict: correct or an error.
@@ -184,14 +191,18 @@ func legible(o sample.Outcome) bool { return o == sample.OutcomeCorrect || o == 
 
 // errorsOf are a call's errors against its sheet's outcome.
 func errorsOf(o sample.Outcome, c *reading.CallRecord) Errors {
-	v := value.Verdict(c.Verdict)
+	return errorsOfVerdict(o, verdict.Verdict(c.Verdict))
+}
+
+// errorsOfVerdict are the errors of a verdict against a sheet's outcome.
+func errorsOfVerdict(o sample.Outcome, v verdict.Verdict) Errors {
 	var e Errors
 	switch {
-	case v == value.Correct && o != sample.OutcomeCorrect:
+	case v == verdict.Correct && o != sample.OutcomeCorrect:
 		e.FalseCorrect = 1
-	case v == value.NotYet && o == sample.OutcomeCorrect:
+	case v == verdict.NotYet && o == sample.OutcomeCorrect:
 		e.FalseAlarm = 1
-	case v == value.Unreadable && legible(o):
+	case v == verdict.Unreadable && legible(o):
 		e.Extra = 1
 	}
 	return e
@@ -368,7 +379,7 @@ func (r *Reading) cell(reader string, cond reading.Condition) ReadingCell {
 			c.Calls++
 			times = append(times, call.LatencyMs)
 			spent += call.CostUSD
-			if value.Verdict(call.Verdict) == expected(o) {
+			if verdict.Verdict(call.Verdict) == expected(o) {
 				c.Right++
 			}
 			if under(call) {
@@ -425,37 +436,51 @@ func (r *Reading) pair(strong, fast string) Pair {
 		if a == nil || b == nil {
 			continue
 		}
-		o := r.sheets[id].Outcome
+		sh := r.sheets[id]
+		o := sh.Outcome
 		p.Sheets++
 		add(&p.StrongAlone, errorsOf(o, a))
 		add(&p.FastAlone, errorsOf(o, b))
-		if value.Verdict(b.Verdict) == value.Correct {
+		if verdict.Verdict(b.Verdict) == verdict.Correct {
 			p.FastCorrect++
-			if value.Verdict(a.Verdict) == value.Correct {
+			if verdict.Verdict(a.Verdict) == verdict.Correct {
 				p.BothCorrect++
 			}
 		} else {
 			p.FastSendsOn++
 		}
-		if !released(a, b) {
+		v, released := joined(sh.Key, a, b)
+		if !released {
 			continue
 		}
 		p.Released++
-		e := errorsOf(o, a)
+		e := errorsOfVerdict(o, v)
 		p.FalseCorrect, p.FalseAlarm, p.Extra = p.FalseCorrect+e.FalseCorrect, p.FalseAlarm+e.FalseAlarm, p.Extra+e.Extra
 	}
 	return p
 }
 
-// released is whether two readings of a sheet agree: neither failed, each gave one result, and
-// their values, read as the check of the kind number reads them, and their verdicts are one.
-func released(a, b *reading.CallRecord) bool {
-	if a.Error != "" || b.Error != "" || a.Value == "" || b.Value == "" || a.Verdict != b.Verdict {
-		return false
+// joined is the pair's reading of a sheet whose key is key: module-kit's verdict on the
+// observations of the two readers joined (observation.Join), and whether the sheet is released, the
+// two having read one value. Each observation is the one its record tells
+// (reading.RecordObservation), so that the pair is made of the verdicts the run wrote, as the
+// errors of each reader beside it are. A call that failed, or gave no verdict, joins nothing, and
+// the sheet is not released.
+func joined(key string, a, b *reading.CallRecord) (verdict.Verdict, bool) {
+	oa, ob := reading.RecordObservation(a), reading.RecordObservation(b)
+	if oa == nil || ob == nil {
+		return verdict.Unchecked, false
 	}
-	va, okA := value.Read(a.Value, nil)
-	vb, okB := value.Read(b.Value, nil)
-	return okA && okB && va == vb
+	j, err := observation.Join([]formatv0.Item{task.SheetItem(key)}, oa, ob)
+	if err != nil {
+		return verdict.Unchecked, false
+	}
+	v, err := reading.SlotVerdict(key, j)
+	if err != nil {
+		return verdict.Unchecked, false
+	}
+	_, value := j.GetAnswerSlots()[0].GetRead().(*observationv1.AnswerSlotObservation_Value)
+	return v.Verdict, value
 }
 
 // P is p of the hybrid: the share of sheets the fast reader does not confirm "correct" on, which

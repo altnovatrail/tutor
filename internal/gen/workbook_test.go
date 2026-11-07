@@ -12,10 +12,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/altnovatrail/spec/types/formatv0"
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/synth"
-	"github.com/altnovatrail/tutor/internal/value"
 	"github.com/altnovatrail/tutor/internal/workbook"
 )
 
@@ -289,7 +289,7 @@ func TestItems(t *testing.T) {
 				ok = is(key, n[0]+n[2], n[1]) && trap == frac(n[0]+n[2], n[1]) && is(b.TrapValues[1].Value, n[0]+n[2], 2*n[1]) && gcd(n[0]+n[2], n[1]) > 1
 			}
 			if form := b.Form; ok && k >= 8 {
-				ok = form != nil && *form == value.Reduced
+				ok = form != nil && *form == formatv0.CheckFormReduced
 			}
 			if !ok {
 				t.Fatalf("item %d, %q, has the check %+v", k+1, it.Text, b)

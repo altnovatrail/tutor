@@ -1,12 +1,14 @@
 package sample
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"regexp"
 	"strings"
 
-	"github.com/altnovatrail/tutor/internal/value"
+	"github.com/altnovatrail/module-kit/verdict"
+	"github.com/altnovatrail/spec/types/formatv0"
 )
 
 // WorkbookFormat is the name a file of the workbook's pages declares in its "format" field.
@@ -72,10 +74,10 @@ type WorkbookBox struct {
 // BoxCheck is the check of a box, as the module format gives it (spec's format, section 15): the
 // kind, number or fraction; the key; the form of a fraction, nil for a number; and the trap values.
 type BoxCheck struct {
-	Kind       CheckKind   `json:"kind"`
-	Key        string      `json:"key"`
-	Form       *value.Form `json:"form"`
-	TrapValues []TrapValue `json:"trap_values"`
+	Kind       CheckKind           `json:"kind"`
+	Key        string              `json:"key"`
+	Form       *formatv0.CheckForm `json:"form"`
+	TrapValues []TrapValue         `json:"trap_values"`
 }
 
 // CheckKind is the kind of a box's check.
@@ -145,25 +147,43 @@ const Mirrorable = "2579"
 // writtenValue is how a value is written in a box: digits, or a simple fraction of them.
 var writtenValue = regexp.MustCompile(`^(0|[1-9][0-9]*)(/[1-9][0-9]*)?$`)
 
-// Checker is the check of a box as code of its kind: value.Number or value.Fraction.
-func (c BoxCheck) Checker() interface{ Check(*string) value.Slot } {
-	traps := make([]value.Trap, len(c.TrapValues))
-	for i, t := range c.TrapValues {
-		traps[i] = value.Trap{Value: t.Value, Trap: t.Trap}
+// Format is the check of a box as the module format writes it: the workbook's check is the
+// format's already, and a number has no form.
+func (c BoxCheck) Format() formatv0.Check {
+	key := c.Key
+	out := formatv0.Check{Kind: formatv0.CheckKind(c.Kind), Key: &key}
+	if c.Form != nil {
+		form := *c.Form
+		out.Form = &form
 	}
-	if c.Kind == KindFraction {
-		f := value.Fraction{Key: c.Key, Form: value.AnyForm, Traps: traps}
-		if c.Form != nil {
-			f.Form = *c.Form
-		}
-		return f
+	for _, tv := range c.TrapValues {
+		out.TrapValues = append(out.TrapValues, formatv0.TrapValue{Value: tv.Value, Trap: formatv0.TrapID(tv.Trap)})
 	}
-	return value.Number{Key: c.Key, Traps: traps}
+	return out
+}
+
+// Slot is a box with its check as module-kit judges it: an answer slot bound box.
+func (c BoxCheck) Slot() verdict.AnswerSlot {
+	return verdict.AnswerSlot{Binding: string(formatv0.LinePartBindingBox), Check: c.Format()}
+}
+
+// Verdict is module-kit's verdict on a value read in a box of this check, nil when nothing was read
+// (verdict.OfSlot): correct, not yet right with its trap, or unreadable, blank or out of the
+// notation. An error is a check that the format does not take, such as a key out of the notation.
+func (c BoxCheck) Verdict(value *string) (verdict.SlotVerdict, error) {
+	return verdict.OfSlot(context.Background(), c.Slot(), value)
 }
 
 // Verdict is the verdict of a box read as it is written: unreadable for a blank box, and otherwise
-// what its check gives the value written. It is what a right reading of the box comes to.
-func (b WorkbookBox) Verdict() value.Slot { return b.Check.Checker().Check(b.Written) }
+// what its check gives the value written. It is what a right reading of the box comes to. A check
+// that the format does not take gives unchecked, and the check of the file names it.
+func (b WorkbookBox) Verdict() verdict.SlotVerdict {
+	v, err := b.Check.Verdict(b.Written)
+	if err != nil {
+		return verdict.SlotVerdict{Verdict: verdict.Unchecked}
+	}
+	return v
+}
 
 // Mirrored is the place, among the characters of the value written, of the digit a box of the
 // scenario BoxMirrored draws mirrored: the first of 2, 5, 7 and 9; false when there is none.
@@ -282,14 +302,18 @@ func checkCheck(p *problems, path string, c BoxCheck) bool {
 	switch {
 	case c.Kind == KindNumber && c.Form != nil:
 		p.add(path+".form", "is %q, but a number has no form", *c.Form)
-	case c.Kind == KindFraction && (c.Form == nil || *c.Form != value.AnyForm && *c.Form != value.Reduced):
-		p.add(path+".form", "is not %q or %q", value.AnyForm, value.Reduced)
+	case c.Kind == KindFraction && (c.Form == nil || *c.Form != formatv0.CheckFormAny && *c.Form != formatv0.CheckFormReduced):
+		p.add(path+".form", "is not %q or %q", formatv0.CheckFormAny, formatv0.CheckFormReduced)
 	case c.Kind != KindNumber && c.Kind != KindFraction:
 		p.add(path+".kind", "is %q, not %q or %q", c.Kind, KindNumber, KindFraction)
 		return false
 	}
-	check := c.Checker()
-	if v := check.Check(&c.Key); v.Verdict != value.Correct || !writtenValue.MatchString(c.Key) {
+	v, err := c.Verdict(&c.Key)
+	if err != nil && writtenValue.MatchString(c.Key) {
+		p.add(path, "is no check the format takes: %v", err)
+		return false
+	}
+	if err != nil || v.Verdict != verdict.Correct || !writtenValue.MatchString(c.Key) {
 		p.add(path+".key", "%q is no key of a %s, as the format and the pages write it", c.Key, c.Kind)
 		return false
 	}
@@ -303,17 +327,25 @@ func checkCheck(p *problems, path string, c BoxCheck) bool {
 			p.add(tp+".trap", "%q names a trap another trap value names", t.Trap)
 		}
 		seen[t.Trap] = true
-		v := check.Check(&t.Value)
+		v, _ := c.Verdict(&t.Value) // the key is one: the check is taken
 		switch {
 		case !writtenValue.MatchString(t.Value):
 			p.add(tp+".value", "%q is not written as the pages write values", t.Value)
-		case v.Verdict != value.NotYet:
+		case v.Verdict != verdict.NotYet:
 			p.add(tp+".value", "%q is %s, and a trap value is not yet right", t.Value, v.Verdict)
-		case v.Trap != t.Trap:
-			p.add(tp+".value", "%q is equal to the trap value of %q as the check compares them", t.Value, v.Trap)
+		case v.Trap == nil || string(v.Trap.Trap) != t.Trap:
+			p.add(tp+".value", "%q is equal to the trap value of %q as the check compares them", t.Value, trapOf(v))
 		}
 	}
 	return true
+}
+
+// trapOf is the trap a verdict names, or none.
+func trapOf(v verdict.SlotVerdict) string {
+	if v.Trap == nil {
+		return ""
+	}
+	return string(v.Trap.Trap)
 }
 
 // trapName is how a trap is named: lowercase words joined by hyphens.
@@ -350,15 +382,15 @@ func checkBox(p *problems, path string, b WorkbookBox) {
 	v := b.Verdict()
 	switch b.Scenario {
 	case BoxCorrect, BoxSimilarDigits, BoxMirrored, BoxRewritten:
-		if v.Verdict != value.Correct {
+		if v.Verdict != verdict.Correct {
 			p.add(path+".written", "%q is %s, but a box of the scenario %s holds the key's value", *b.Written, v.Verdict, b.Scenario)
 		}
 	case BoxError:
-		if v.Verdict != value.NotYet || v.Trap == "" {
+		if v.Verdict != verdict.NotYet || v.Trap == nil {
 			p.add(path+".written", "%q is no trap value, but a box of the scenario %s holds one", *b.Written, b.Scenario)
 		}
 	case BoxNearKey:
-		if v.Verdict != value.NotYet {
+		if v.Verdict != verdict.NotYet {
 			p.add(path+".written", "%q is %s, but a box of the scenario %s is not yet right", *b.Written, v.Verdict, b.Scenario)
 		}
 	default:
@@ -374,7 +406,7 @@ func checkBox(p *problems, path string, b WorkbookBox) {
 	if b.Crossed != nil {
 		if !writtenValue.MatchString(*b.Crossed) {
 			p.add(path+".crossed", "%q is not written as the pages write values", *b.Crossed)
-		} else if c := b.Check.Checker().Check(b.Crossed); c.Verdict != value.NotYet {
+		} else if c, _ := b.Check.Verdict(b.Crossed); c.Verdict != verdict.NotYet {
 			p.add(path+".crossed", "%q is %s, but what is crossed out is a wrong value", *b.Crossed, c.Verdict)
 		}
 	}

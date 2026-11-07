@@ -8,9 +8,10 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/altnovatrail/module-kit/verdict"
+	"github.com/altnovatrail/spec/types/formatv0"
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/sample"
-	"github.com/altnovatrail/tutor/internal/value"
 	"github.com/altnovatrail/tutor/internal/workbook"
 	"github.com/altnovatrail/tutor/provider"
 )
@@ -27,7 +28,7 @@ func testPage() *sample.WorkbookPage {
 			Check: sample.BoxCheck{Kind: sample.KindNumber, Key: "8", TrapValues: []sample.TrapValue{{Value: "49", Trap: "wrong-operation"}}}, Scenario: sample.BoxCorrect, Written: ptr("8"),
 		}}},
 		{Text: "Сократи дробь: 6/8 = [ ]", Boxes: []sample.WorkbookBox{{
-			Check:    sample.BoxCheck{Kind: sample.KindFraction, Key: "3/4", Form: ptr(value.Reduced), TrapValues: []sample.TrapValue{{Value: "6/8", Trap: "not-in-lowest-terms"}}},
+			Check:    sample.BoxCheck{Kind: sample.KindFraction, Key: "3/4", Form: ptr(formatv0.CheckFormReduced), TrapValues: []sample.TrapValue{{Value: "6/8", Trap: "not-in-lowest-terms"}}},
 			Scenario: sample.BoxCorrect, Written: ptr("3/4"), Fraction: ptr(sample.Stacked),
 		}}},
 		{Text: "17 : 5 = [ ] (ост. [ ])", Boxes: []sample.WorkbookBox{
@@ -45,25 +46,26 @@ func reading(item, slot int, text string) workbook.Reading {
 // is unreadable without a call, and the reading's doubts and failures each give their own verdict.
 func TestVerdicts(t *testing.T) {
 	pg := testPage()
-	blank := workbook.Box{Item: 3, Slot: 2, Verdict: value.Unreadable, Reason: workbook.Reason(value.Blank)}
+	blank := workbook.Box{Item: 3, Slot: 2, Verdict: verdict.Unreadable, Reason: workbook.Reason(verdict.Blank)}
+	unchecked := workbook.Box{Item: 3, Slot: 2, Verdict: verdict.Unchecked}
 	for _, c := range []struct {
 		name string
 		read []workbook.Reading
 		want []workbook.Box
 	}{
 		{"read right", []workbook.Reading{reading(1, 1, "8"), reading(2, 1, "3/4"), reading(3, 1, "3")}, []workbook.Box{
-			{Item: 1, Slot: 1, Text: ptr("8"), Verdict: value.Correct}, {Item: 2, Slot: 1, Text: ptr("3/4"), Verdict: value.Correct},
-			{Item: 3, Slot: 1, Text: ptr("3"), Verdict: value.Correct}, blank,
+			{Item: 1, Slot: 1, Text: ptr("8"), Verdict: verdict.Correct}, {Item: 2, Slot: 1, Text: ptr("3/4"), Verdict: verdict.Correct},
+			{Item: 3, Slot: 1, Text: ptr("3"), Verdict: verdict.Correct}, blank,
 		}},
 		{"a trap, a fraction to reduce and a decimal", []workbook.Reading{reading(1, 1, "49"), reading(2, 1, "9/12"), reading(3, 1, "3.0")}, []workbook.Box{
-			{Item: 1, Slot: 1, Text: ptr("49"), Verdict: value.NotYet, Trap: "wrong-operation"},
-			{Item: 2, Slot: 1, Text: ptr("9/12"), Verdict: value.NotYet, Trap: "not-in-lowest-terms"},
-			{Item: 3, Slot: 1, Text: ptr("3.0"), Verdict: value.Correct}, blank,
+			{Item: 1, Slot: 1, Text: ptr("49"), Verdict: verdict.NotYet, Trap: "wrong-operation"},
+			{Item: 2, Slot: 1, Text: ptr("9/12"), Verdict: verdict.NotYet, Trap: "not-in-lowest-terms"},
+			{Item: 3, Slot: 1, Text: ptr("3.0"), Verdict: verdict.Correct}, blank,
 		}},
 		{"a decimal in a box of a fraction", []workbook.Reading{reading(1, 1, "8"), reading(2, 1, "0.75"), reading(3, 1, "3")}, []workbook.Box{
-			{Item: 1, Slot: 1, Text: ptr("8"), Verdict: value.Correct},
-			{Item: 2, Slot: 1, Text: ptr("0.75"), Verdict: value.Unreadable, Reason: workbook.Reason(value.Notation)},
-			{Item: 3, Slot: 1, Text: ptr("3"), Verdict: value.Correct}, blank,
+			{Item: 1, Slot: 1, Text: ptr("8"), Verdict: verdict.Correct},
+			{Item: 2, Slot: 1, Text: ptr("0.75"), Verdict: verdict.Unreadable, Reason: workbook.Reason(verdict.Notation)},
+			{Item: 3, Slot: 1, Text: ptr("3"), Verdict: verdict.Correct}, blank,
 		}},
 		{"doubts", []workbook.Reading{
 			{Item: 1, Slot: 1, Text: "8", Legible: false, OtherReadings: []string{}},
@@ -71,26 +73,33 @@ func TestVerdicts(t *testing.T) {
 			{Item: 3, Slot: 1, Text: "", Legible: true, OtherReadings: []string{}, Blank: true},
 			reading(3, 2, "2"), // a cell for a blank box judges nothing
 		}, []workbook.Box{
-			{Item: 1, Slot: 1, Text: ptr("8"), Verdict: value.Unreadable, Reason: workbook.Illegible},
-			{Item: 2, Slot: 1, Text: ptr("3/4"), Verdict: value.Unreadable, Reason: workbook.Ambiguous},
-			{Item: 3, Slot: 1, Text: ptr(""), Verdict: value.Unreadable, Reason: workbook.Reason(value.Blank)}, blank,
+			{Item: 1, Slot: 1, Text: ptr("8"), Verdict: verdict.Unreadable, Reason: workbook.Illegible},
+			{Item: 2, Slot: 1, Text: ptr("3/4"), Verdict: verdict.Unreadable, Reason: workbook.Ambiguous},
+			{Item: 3, Slot: 1, Text: ptr(""), Verdict: verdict.Unreadable, Reason: workbook.Reason(verdict.Blank)}, blank,
 		}},
 		{"a digit read mirrored, legible or not, and with other readings", []workbook.Reading{
 			{Item: 1, Slot: 1, Text: "8", Legible: true, OtherReadings: []string{}, Mirrored: true},
 			{Item: 2, Slot: 1, Text: "3/4", Legible: false, OtherReadings: []string{"3/9"}, Mirrored: true},
 			reading(3, 1, "3"),
 		}, []workbook.Box{
-			{Item: 1, Slot: 1, Text: ptr("8"), Verdict: value.Unreadable, Reason: workbook.Mirrored},
-			{Item: 2, Slot: 1, Text: ptr("3/4"), Verdict: value.Unreadable, Reason: workbook.Mirrored},
-			{Item: 3, Slot: 1, Text: ptr("3"), Verdict: value.Correct}, blank,
+			{Item: 1, Slot: 1, Text: ptr("8"), Verdict: verdict.Unreadable, Reason: workbook.Mirrored},
+			{Item: 2, Slot: 1, Text: ptr("3/4"), Verdict: verdict.Unreadable, Reason: workbook.Mirrored},
+			{Item: 3, Slot: 1, Text: ptr("3"), Verdict: verdict.Correct}, blank,
 		}},
+		// An answer with no cell for a box, or two, is no valid observation (R73): every box of the
+		// page is unchecked, the blank one too, as after a failed call.
 		{"a cell missing and a cell twice", []workbook.Reading{reading(1, 1, "8"), reading(1, 1, "8"), reading(3, 1, "3"), reading(9, 1, "1")}, []workbook.Box{
-			{Item: 1, Slot: 1, Verdict: value.Unchecked, Reason: workbook.Twice},
-			{Item: 2, Slot: 1, Verdict: value.Unchecked, Reason: workbook.Missing},
-			{Item: 3, Slot: 1, Text: ptr("3"), Verdict: value.Correct}, blank,
+			{Item: 1, Slot: 1, Verdict: verdict.Unchecked, Reason: workbook.Twice},
+			{Item: 2, Slot: 1, Verdict: verdict.Unchecked, Reason: workbook.Missing},
+			{Item: 3, Slot: 1, Text: ptr("3"), Verdict: verdict.Unchecked}, unchecked,
 		}},
 		{"a failed call", nil, []workbook.Box{
-			{Item: 1, Slot: 1, Verdict: value.Unchecked}, {Item: 2, Slot: 1, Verdict: value.Unchecked}, {Item: 3, Slot: 1, Verdict: value.Unchecked}, blank,
+			{Item: 1, Slot: 1, Verdict: verdict.Unchecked}, {Item: 2, Slot: 1, Verdict: verdict.Unchecked}, {Item: 3, Slot: 1, Verdict: verdict.Unchecked}, unchecked,
+		}},
+		{"a text of white space", []workbook.Reading{reading(1, 1, "8"), reading(2, 1, "  "), reading(3, 1, "3")}, []workbook.Box{
+			{Item: 1, Slot: 1, Text: ptr("8"), Verdict: verdict.Correct},
+			{Item: 2, Slot: 1, Text: ptr("  "), Verdict: verdict.Unreadable, Reason: workbook.Reason(verdict.Blank)},
+			{Item: 3, Slot: 1, Text: ptr("3"), Verdict: verdict.Correct}, blank,
 		}},
 	} {
 		t.Run(c.name, func(t *testing.T) {
@@ -100,14 +109,23 @@ func TestVerdicts(t *testing.T) {
 			}
 		})
 	}
+	// A check that module-kit refuses gives no verdict, whatever was read: every box is unchecked,
+	// and none keeps a reason of the reading.
+	refused := testPage()
+	refused.Items[0].Boxes[0].Check.TrapValues = []sample.TrapValue{{Value: "{n}", Trap: "placeholder"}}
+	for _, b := range workbook.Verdicts(refused, []workbook.Reading{{Item: 1, Slot: 1, Text: "8", Legible: false, OtherReadings: []string{}}, reading(2, 1, "3/4"), reading(3, 1, "3")}) {
+		if b.Verdict != verdict.Unchecked || b.Reason != "" {
+			t.Errorf("a refused check: box %d.%d is %s %s", b.Item, b.Slot, b.Verdict, b.Reason)
+		}
+	}
 	// An item is right only when every box of it is: the division with its remainder blank is
 	// unreadable, and not yet right when a box of it is.
 	got := workbook.Items(pg, workbook.Verdicts(pg, []workbook.Reading{reading(1, 1, "8"), reading(2, 1, "6/8"), reading(3, 1, "3")}))
-	if want := []value.Verdict{value.Correct, value.NotYet, value.Unreadable}; fmt.Sprint(got) != fmt.Sprint(want) {
+	if want := []verdict.Verdict{verdict.Correct, verdict.NotYet, verdict.Unreadable}; fmt.Sprint(got) != fmt.Sprint(want) {
 		t.Errorf("Items = %v, want %v", got, want)
 	}
 	got = workbook.Items(pg, workbook.Verdicts(pg, []workbook.Reading{reading(1, 1, "8"), reading(2, 1, "3/4"), reading(3, 1, "4")}))
-	if want := []value.Verdict{value.Correct, value.Correct, value.NotYet}; fmt.Sprint(got) != fmt.Sprint(want) {
+	if want := []verdict.Verdict{verdict.Correct, verdict.Correct, verdict.NotYet}; fmt.Sprint(got) != fmt.Sprint(want) {
 		t.Errorf("Items = %v, want %v", got, want)
 	}
 }
@@ -194,10 +212,10 @@ func TestGolden(t *testing.T) {
 	}
 	for i, b := range workbook.Verdicts(pg, workbook.Right(cells)) {
 		box := pg.Items[b.Item-1].Boxes[b.Slot-1]
-		if want := workbook.Want(box.Scenario, box.Verdict(), workbook.Version); b.Verdict != want.Verdict || string(b.Reason) != string(want.Reason) || b.Trap != want.Trap {
+		if want := workbook.Want(box.Scenario, workbook.SlotOf(box.Verdict()), workbook.Version); b.Verdict != want.Verdict || string(b.Reason) != string(want.Reason) || b.Trap != want.Trap {
 			t.Errorf("box %d: the right reader comes to %+v, and the box to %+v", i+1, b, want)
 		}
-		if old := workbook.Want(box.Scenario, box.Verdict(), 1); old != box.Verdict() {
+		if old := workbook.Want(box.Scenario, workbook.SlotOf(box.Verdict()), 1); old != workbook.SlotOf(box.Verdict()) {
 			t.Errorf("box %d: by version 1 a right reading comes to %+v, not the value's %+v", i+1, old, box.Verdict())
 		}
 	}
