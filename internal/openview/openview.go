@@ -3,9 +3,10 @@
 // 2026-10-21 amendment to R25 spec). Each task in it is the open view of a task of the module format
 // 0.3, spec's open.Task: what the learner's app shows — the statement, the canvas and the items with
 // their answer slots — and none of the key, the solution, the traps, the leak phrases or the checks,
-// which stay with tutor (R05 spec). tutor's banks are not modules: the views are built here, by the
-// kind of each file's tasks, and the file names each bank by its path in the repository and the
-// digest of its bytes, by which the runner at the same tag finds a task's key.
+// which stay with tutor (R05 spec). tutor's banks are not modules: their tasks of the format are built
+// by package task, by the kind of each file's tasks, and their open views are module-kit's (R68).
+// The file names each bank by its path in the repository and the digest of its bytes, by which the
+// runner at the same tag finds a task's key.
 package openview
 
 import (
@@ -21,10 +22,12 @@ import (
 	"regexp"
 	"strings"
 
+	mkview "github.com/altnovatrail/module-kit/openview"
 	"github.com/altnovatrail/spec/types/formatv0"
 	"github.com/altnovatrail/spec/types/formatv0/open"
 
 	"github.com/altnovatrail/tutor/internal/sample"
+	"github.com/altnovatrail/tutor/internal/task"
 )
 
 // Format is the name the file declares in its "format" field, and Version its version.
@@ -38,10 +41,6 @@ const (
 // committed file names it too, so a tag that changes the format changes the file's bytes, and
 // TestPatterns fails until the move writes the file anew and reviews it.
 const ModuleFormatVersion formatv0.ModuleFormatVersion = "0.3"
-
-// WorkbookStatement is the statement of each page of the workbook: its file gives the items of a
-// page, and no statement.
-const WorkbookStatement = "Впиши ответы в окошки."
 
 // File is the file of open views: the banks of the measurement, each with its tasks.
 type File struct {
@@ -85,116 +84,28 @@ func Build(inputs []Input) (*File, error) {
 	return f, nil
 }
 
-// bankOf reads a file of tasks by the format it declares, and builds the open views of its tasks.
+// bankOf reads a file of tasks by the format it declares, builds its tasks of the format
+// (task.Read), and takes the open view of each from module-kit, the view whose digest a sample of
+// the eval protocol names (R68).
 func bankOf(in Input) (*Bank, error) {
-	var head struct {
-		Format string `json:"format"`
-	}
-	if err := json.Unmarshal(in.Data, &head); err != nil {
-		return nil, fmt.Errorf("not a JSON object: %w", err)
+	f, err := task.Read(in.Data)
+	if err != nil {
+		return nil, err
 	}
 	sum := sha256.Sum256(in.Data)
 	b := &Bank{
-		Bank:   path.Clean(filepath.ToSlash(in.Path)),
-		Digest: formatv0.Digest("sha256:" + hex.EncodeToString(sum[:])),
+		Bank:     path.Clean(filepath.ToSlash(in.Path)),
+		Digest:   formatv0.Digest("sha256:" + hex.EncodeToString(sum[:])),
+		Language: f.Language,
 	}
-	r := bytes.NewReader(in.Data)
-	switch head.Format {
-	case sample.BankFormat:
-		bank, err := sample.ReadBank(r)
+	for _, t := range f.Tasks {
+		v, err := mkview.Task(t)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("task %s: %w", t.ID, err)
 		}
-		b.Language = formatv0.LanguageTag(sample.LangRussian)
-		for i := range bank.Tasks {
-			b.Tasks = append(b.Tasks, Sheet(&bank.Tasks[i]))
-		}
-	case sample.WorkbookFormat:
-		wb, err := sample.ReadWorkbook(r)
-		if err != nil {
-			return nil, err
-		}
-		b.Language = formatv0.LanguageTag(sample.LangRussian)
-		for i := range wb.Pages {
-			b.Tasks = append(b.Tasks, Page(&wb.Pages[i]))
-		}
-	case sample.EssaysFormat:
-		es, err := sample.ReadEssays(r)
-		if err != nil {
-			return nil, err
-		}
-		b.Language = formatv0.LanguageTag(sample.LangEnglish)
-		for i := range es.Essays {
-			b.Tasks = append(b.Tasks, Essay(&es.Essays[i]))
-		}
-	default:
-		return nil, fmt.Errorf("format %q is not %q, %q or %q", head.Format, sample.BankFormat, sample.WorkbookFormat, sample.EssaysFormat)
+		b.Tasks = append(b.Tasks, v)
 	}
 	return b, nil
-}
-
-// Sheet is the open view of a task of a bank, solved on a sheet: its statement; a handwriting sheet,
-// of the format's default grid, as the format has no sheet without one; and one item whose one answer
-// slot is anywhere on the sheet, where AI finds the final answer, as the measurement's judge and
-// reading find it.
-func Sheet(t *sample.Task) open.Task {
-	return open.Task{
-		ID:        formatv0.TaskID(t.ID),
-		Statement: paragraph(t.Statement),
-		Canvas:    open.Canvas{Kind: formatv0.CanvasKindHandwritingSheet},
-		Items:     []open.Item{{AnswerSlots: []open.AnswerSlot{{Binding: formatv0.AnswerSlotBindingAnywhere}}}},
-	}
-}
-
-// Page is the open view of a page of the workbook, workbook-01 for the first: WorkbookStatement, a
-// workbook, and an item to each of the page's, a line of its text with a box for each "[ ]", its
-// pieces of text trimmed, as the format's vectors write a line.
-func Page(p *sample.WorkbookPage) open.Task {
-	items := make([]open.Item, len(p.Items))
-	for i, it := range p.Items {
-		items[i] = open.Item{Line: line(it.Text)}
-	}
-	return open.Task{
-		ID:        formatv0.TaskID(fmt.Sprintf("workbook-%02d", p.Number)),
-		Statement: paragraph(WorkbookStatement),
-		Canvas:    open.Canvas{Kind: formatv0.CanvasKindWorkbook},
-		Items:     items,
-	}
-}
-
-// line is the line of an item of the workbook: pieces of its text and a box for each sample.BoxMark.
-func line(text string) []open.LinePart {
-	var parts []open.LinePart
-	for i, piece := range strings.Split(text, sample.BoxMark) {
-		if i > 0 {
-			box := formatv0.LinePartBindingBox
-			parts = append(parts, open.LinePart{Binding: &box})
-		}
-		if piece = strings.TrimSpace(piece); piece != "" {
-			t := formatv0.Text(piece)
-			parts = append(parts, open.LinePart{Text: &t})
-		}
-	}
-	return parts
-}
-
-// Essay is the open view of an essay's task, essay-01 for the first: its topic, a handwriting sheet
-// with lines, and one answer slot, the whole sheet, a work as a whole. What code wrote for the essay,
-// its title and text, is no part of the task, and the rubric is the check, which is closed.
-func Essay(e *sample.Essay) open.Task {
-	lines := formatv0.CanvasGridLines
-	return open.Task{
-		ID:        formatv0.TaskID(fmt.Sprintf("essay-%02d", e.Number)),
-		Statement: paragraph(e.Topic),
-		Canvas:    open.Canvas{Kind: formatv0.CanvasKindHandwritingSheet, Grid: &lines},
-		Items:     []open.Item{{AnswerSlots: []open.AnswerSlot{{Binding: formatv0.AnswerSlotBindingSheet}}}},
-	}
-}
-
-// paragraph is a statement of one paragraph.
-func paragraph(text string) []open.StatementPart {
-	t := formatv0.Text(text)
-	return []open.StatementPart{{Text: &t}}
 }
 
 // Marshal writes the file as indented JSON, ending with a newline, as tutor's other files are.

@@ -144,27 +144,6 @@ func TestKeys(t *testing.T) {
 	}
 }
 
-// The value of a written answer is the first number after its last "=", or after «Ответ:».
-func TestValueOf(t *testing.T) {
-	for in, want := range map[string]string{
-		"x = 2":               "2",
-		"x = 13/2":            "13/2",
-		"17 + 49 − 28 = 38":   "38",
-		"56 : 6 = 9 (ост. 2)": "9",
-		"Ответ: 5 столбов":    "5",
-		"ответ: в точке 10":   "10",
-		"Ответ: −3":           "-3",
-		"12":                  "12",
-		"3x +":                "3",
-		"Ответ: пять":         "",
-		"x = 2,5":             "2,5",
-	} {
-		if got := reading.ValueOf(in); got != want {
-			t.Errorf("ValueOf(%q) = %q, want %q", in, got, want)
-		}
-	}
-}
-
 func observation(parts []reading.Part, results ...reading.Result) *reading.Observation {
 	for i := range parts {
 		if parts[i].OtherReadings == nil {

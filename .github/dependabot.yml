@@ -29,7 +29,10 @@ updates:
     # spec's Go module moves together with the spec submodule, to its tag, in a task of its own (Д46
     # in spec's RUN.md; R64 in docs/decisions.md), so Dependabot does not raise it. Nor the module of
     # spec's contracts, which its release tags contracts/<tag> on the same commit (Д92 in spec's
-    # RUN.md; R67 in docs/decisions.md).
+    # RUN.md; R67 in docs/decisions.md). Nor module-kit, whose release requires spec at its tag: a
+    # newer one may require a newer spec, so it moves by hand with the move to that tag (R68 in
+    # docs/decisions.md).
     ignore:
       - dependency-name: github.com/altnovatrail/spec
       - dependency-name: github.com/altnovatrail/spec/contracts
+      - dependency-name: github.com/altnovatrail/module-kit

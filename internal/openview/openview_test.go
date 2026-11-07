@@ -2,7 +2,6 @@ package openview_test
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"os"
 	"os/exec"
@@ -22,6 +21,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/openview"
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/sample"
+	"github.com/altnovatrail/tutor/internal/task"
 )
 
 // The root of the repository, the files the open views are built from, as just open-tasks builds
@@ -268,7 +268,7 @@ func sources(t *testing.T) map[formatv0.TaskID]source {
 		t.Fatal(err)
 	}
 	for _, page := range wb.Pages {
-		s := source{shown: []string{openview.WorkbookStatement}}
+		s := source{shown: []string{task.WorkbookStatement}}
 		for _, it := range page.Items {
 			s.shown = append(s.shown, it.Text)
 			for _, box := range it.Boxes {
@@ -284,7 +284,7 @@ func sources(t *testing.T) map[formatv0.TaskID]source {
 				}
 			}
 		}
-		out[openview.Page(&page).ID] = s
+		out[task.Page(&page).ID] = s
 	}
 	es, err := sample.ReadEssays(bytes.NewReader(readRoot(t, inputs[3])))
 	if err != nil {
@@ -303,7 +303,7 @@ func sources(t *testing.T) map[formatv0.TaskID]source {
 		for _, m := range e.Misspelled {
 			s.phrases = append(s.phrases, m.Written)
 		}
-		out[openview.Essay(&e).ID] = s
+		out[task.Essay(es.Rubric, &e).ID] = s
 	}
 	return out
 }
@@ -423,24 +423,6 @@ func mustEssays(t *testing.T) *sample.Essays {
 func squeeze(texts []string) string {
 	all := strings.ReplaceAll(strings.Join(texts, ""), sample.BoxMark, "")
 	return strings.Join(strings.Fields(all), "")
-}
-
-// A line of the workbook keeps the order of its text and boxes.
-func TestLine(t *testing.T) {
-	page := sample.WorkbookPage{Number: 7, Items: []sample.WorkbookItem{{Text: "88 : 9 = [ ] (ост. [ ])"}, {Text: "[ ] + 22 = 55"}}}
-	v := openview.Page(&page)
-	if v.ID != "workbook-07" {
-		t.Errorf("ID %s", v.ID)
-	}
-	got, err := json.Marshal(v.Items)
-	if err != nil {
-		t.Fatal(err)
-	}
-	want := `[{"line":[{"text":"88 : 9 ="},{"binding":"box"},{"text":"(ост."},{"binding":"box"},{"text":")"}]},` +
-		`{"line":[{"binding":"box"},{"text":"+ 22 = 55"}]}]`
-	if string(got) != want {
-		t.Errorf("items %s\nwant  %s", got, want)
-	}
 }
 
 // Build refuses a file that is no file of tasks, and names it.
