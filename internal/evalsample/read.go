@@ -75,14 +75,8 @@ func Read(es *evalv1.Sample, sh *sample.PlanSheet, b *Bank) (*Sheet, *Refusal, e
 		return nil, refuse(evalv1.Refusal_REFUSAL_NO_MARKUP, "the sample has no markup, and the runner measures nothing on it"), nil
 	}
 	ref := es.GetTask()
-	src := ref.GetFile()
-	switch {
-	case src == nil:
-		return nil, refuse(evalv1.Refusal_REFUSAL_OTHER_TASK, "its task is not of a file of tasks, and its set's is the bank %s", b.Path), nil
-	case src.GetBank() != b.Path:
-		return nil, refuse(evalv1.Refusal_REFUSAL_OTHER_TASK, "its task is of the bank %s, and its set's is %s", src.GetBank(), b.Path), nil
-	case src.GetBankDigest() != b.Digest || src.GetFileDigest() != b.Digest:
-		return nil, refuse(evalv1.Refusal_REFUSAL_OTHER_TASK, "its bank is of another digest than %s's", b.Path), nil
+	if r := b.refuse(ref); r != nil {
+		return nil, r, nil
 	}
 	t := b.task(ref.GetTask())
 	if t == nil {

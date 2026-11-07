@@ -26,16 +26,23 @@ import (
 // stay as they are, and so does every file already there. The same seed draws the same sheets, to
 // the byte. With -png it also saves the pictures of each sheet it draws, in a directory of their
 // own, so that the author and the executor can look at them. It draws the sheets of a plan of parts
-// too: text, columns and drawings (T59, T60).
+// too: text, columns and drawings (T59, T60). With -workbook or -essays it draws the pages of the
+// workbook or the essays instead, as samples of the protocol too, into a directory of their own
+// (drawPages, drawEssays; R71).
 func runDraw(args []string, stdout, stderr io.Writer, now func() time.Time) int {
 	flags := flag.NewFlagSet("tutor-eval draw", flag.ContinueOnError)
 	var f sheetFlags
 	f.add(flags)
 	seed := flags.Uint64("seed", 1, "the number the hands of the drawn sheets come from")
 	shift := flags.Float64("shift", synth.SimilarShift, "how far toward the digit of its pair the answer's last digit of a sheet of the scenario similar-digits is drawn, from 0, the font's digit, to 1, its pair's")
-	pngDir := flags.String("png", "", "also save the final picture of each sheet drawn and its frame before each erasure, as PNG, in this directory, out of git and not among the sheets")
+	pngDir := flags.String("png", "", "also save the final picture of each sheet drawn and its frame before each erasure, as PNG, in this directory, out of git and not among the sheets; of the pages and the essays, the crops at 32 px, in synthetic or out of the work tree")
+	pagesFile := flags.String("workbook", "", "draw the pages of this file of the workbook, in place of sheets, into -dir, by default synthetic/ and the file's name")
+	essaysPath := flags.String("essays", "", "draw the essays of this file, in place of sheets, into -dir, by default synthetic/ and the file's name")
 	if code, ok := parse(flags, args, stderr); !ok {
 		return code
+	}
+	if set := given(flags); set["workbook"] || set["essays"] {
+		return drawOwn(set, f.dir, *pagesFile, *essaysPath, *seed, *pngDir, stdout, stderr)
 	}
 	if !f.usable("tutor-eval draw", stderr) {
 		return exitUsage
@@ -135,6 +142,49 @@ func runDraw(args []string, stdout, stderr io.Writer, now func() time.Time) int 
 		return exitFail
 	}
 	return exitOK
+}
+
+// drawOwn draws the pages of the workbook or the essays of a file, with the seed, into the directory
+// given or their file's (drawnDir), and the crops into pngDir when -png is given. It refuses the
+// flags of the sheets, and both files at once.
+func drawOwn(set map[string]bool, dir, pagesFile, essaysPath string, seed uint64, pngDir string, stdout, stderr io.Writer) int {
+	for _, name := range []string{"bank", "plan", "shift"} {
+		if set[name] {
+			_, _ = fmt.Fprintf(stderr, "tutor-eval draw: -%s is for the sheets, and -workbook and -essays draw their own file\n", name)
+			return exitUsage
+		}
+	}
+	file := pagesFile
+	if set["essays"] {
+		file = essaysPath
+	}
+	switch {
+	case set["workbook"] && set["essays"]:
+		_, _ = fmt.Fprintln(stderr, "tutor-eval draw: give -workbook or -essays, one file to a directory")
+		return exitUsage
+	case file == "":
+		_, _ = fmt.Fprintln(stderr, "tutor-eval draw: name the file to draw")
+		return exitUsage
+	}
+	dir, err := drawnDirOf(dir, file, set["dir"])
+	if err == nil && set["png"] {
+		err = cropsDir(pngDir)
+		if err == nil && within(absolute(dir), absolute(pngDir)) {
+			err = fmt.Errorf("-png %s is among the samples of %s: give the crops a directory of their own", pngDir, dir)
+		}
+	}
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval draw: %v\n", err)
+		return exitUsage
+	}
+	if !set["png"] {
+		pngDir = ""
+	}
+	f := drawFlags{file: file, dir: dir, seed: seed, pngDir: pngDir}
+	if set["essays"] {
+		return drawEssays(f, stdout, stderr)
+	}
+	return drawPages(f, stdout, stderr)
 }
 
 // picturesDir refuses a directory for the pictures that is not named, that is the directory of the
@@ -253,9 +303,12 @@ func drawnRight(s *sample.Sample, sh *sample.PlanSheet, bank *sample.Bank) error
 }
 
 // sheetList names sheets by number, or says there are none.
-func sheetList(numbers []int) string {
+func sheetList(numbers []int) string { return listOf("sheet", numbers) }
+
+// listOf names sheets, pages or essays by number, the noun given, or says there are none.
+func listOf(noun string, numbers []int) string {
 	if len(numbers) == 0 {
 		return "none"
 	}
-	return fmt.Sprintf("%s, sheets %s", count(len(numbers), "sheet"), sheets.Numbers(numbers))
+	return fmt.Sprintf("%s, %ss %s", count(len(numbers), noun), noun, sheets.Numbers(numbers))
 }

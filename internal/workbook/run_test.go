@@ -7,8 +7,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/altnovatrail/tutor/internal/evalsample"
 	"github.com/altnovatrail/tutor/internal/runner"
 	"github.com/altnovatrail/tutor/internal/sample"
+	"github.com/altnovatrail/tutor/internal/synth"
 	"github.com/altnovatrail/tutor/internal/value"
 	"github.com/altnovatrail/tutor/internal/workbook"
 )
@@ -30,7 +32,7 @@ func TestNew(t *testing.T) {
 		{"all", workbook.Reads{Heights: true}, 20, 20 * 2 * 3},
 	} {
 		pages := workbook.Pages(wb, c.part)
-		r, err := workbook.New(c.part, "eval/workbook.json", 1, pages, readers, 3, c.reads)
+		r, err := workbook.New(c.part, "eval/workbook.json", "", 1, drawnPages(t, pages), readers, 3, c.reads)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -38,13 +40,13 @@ func TestNew(t *testing.T) {
 			t.Errorf("%s, %v: %d pages, %d items and %d calls, want %d and %d", c.part, c.reads.Names(), len(pages), len(r.Items), len(r.Steps), c.pages, c.calls)
 		}
 	}
-	if _, err := workbook.New("dev", "", 1, workbook.Pages(wb, "dev"), readers, 3, workbook.Reads{}); err == nil {
+	if _, err := workbook.New("dev", "", "", 1, drawnPages(t, workbook.Pages(wb, "dev")), readers, 3, workbook.Reads{}); err == nil {
 		t.Error("a run that reads nothing is planned")
 	}
-	if _, err := workbook.New("dev", "", 1, nil, readers, 3, workbook.Reads{Captions: true}); err == nil {
+	if _, err := workbook.New("dev", "", "", 1, nil, readers, 3, workbook.Reads{Captions: true}); err == nil {
 		t.Error("a run of no page is planned")
 	}
-	if _, err := workbook.New("dev", "", 1, workbook.Pages(wb, "dev"), readers, 0, workbook.Reads{Captions: true}); err == nil {
+	if _, err := workbook.New("dev", "", "", 1, drawnPages(t, workbook.Pages(wb, "dev")), readers, 0, workbook.Reads{Captions: true}); err == nil {
 		t.Error("a run of no repeat is planned")
 	}
 	if _, err := workbook.ParseReads("captions,states"); err == nil {
@@ -60,7 +62,7 @@ func TestNew(t *testing.T) {
 // to.
 func TestRunOnTheStub(t *testing.T) {
 	wb := theWorkbook(t)
-	r, err := workbook.New("dev", "eval/workbook.json", 1, workbook.Pages(wb, "dev"), e4Readers(), 1, workbook.Reads{Captions: true, Heights: true})
+	r, err := workbook.New("dev", "eval/workbook.json", "", 1, drawnPages(t, workbook.Pages(wb, "dev")), e4Readers(), 1, workbook.Reads{Captions: true, Heights: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -122,11 +124,11 @@ func TestNewAsksNothingIdle(t *testing.T) {
 		empty.Items[i].Boxes = boxes
 	}
 	readers := e4Readers()
-	if _, err := workbook.New("dev", "", 1, []*sample.WorkbookPage{&empty}, readers, 3, workbook.Reads{Captions: true}); err == nil || !strings.Contains(err.Error(), "asks nothing") {
+	if _, err := workbook.New("dev", "", "", 1, drawnPages(t, []*sample.WorkbookPage{&empty}), readers, 3, workbook.Reads{Captions: true}); err == nil || !strings.Contains(err.Error(), "asks nothing") {
 		t.Errorf("a run of a page with no filled box: %v", err)
 	}
 	pages := append([]*sample.WorkbookPage{&empty}, workbook.Pages(wb, "dev")[1:]...)
-	r, err := workbook.New("dev", "", 1, pages, readers, 1, workbook.Reads{Heights: true})
+	r, err := workbook.New("dev", "", "", 1, drawnPages(t, pages), readers, 1, workbook.Reads{Heights: true})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -149,7 +151,7 @@ func TestNewAsksNothingIdle(t *testing.T) {
 	if _, err := workbook.ReadLog(strings.NewReader(strings.Replace(log.String(), `"kind":"page"`, `"kind":"sheet"`, 1))); err == nil {
 		t.Error("a record of a sheet reads in a log of the workbook")
 	}
-	if _, err := workbook.New("dev", "", 1, workbook.Pages(wb, "dev"), readers[:1], 1, workbook.Reads{Heights: true}); err == nil {
+	if _, err := workbook.New("dev", "", "", 1, drawnPages(t, workbook.Pages(wb, "dev")), readers[:1], 1, workbook.Reads{Heights: true}); err == nil {
 		t.Error("heights by Opus alone, who reads none of them, are planned")
 	}
 }
@@ -157,4 +159,18 @@ func TestNewAsksNothingIdle(t *testing.T) {
 // e4Readers are the readers of the three configurations of E4, which these tests were written for.
 func e4Readers() []workbook.Reader {
 	return runner.E4(workbook.Readers(), func(rd workbook.Reader) runner.Config { return rd.Config })
+}
+
+// drawnPages are pages drawn from the seed 1 as their samples hold them, as the runner reads them.
+func drawnPages(t *testing.T, pages []*sample.WorkbookPage) []*evalsample.Page {
+	t.Helper()
+	var out []*evalsample.Page
+	for _, pg := range pages {
+		ink, err := synth.PageOf(pg, 1)
+		if err != nil {
+			t.Fatal(err)
+		}
+		out = append(out, &evalsample.Page{Page: pg, Ink: ink})
+	}
+	return out
 }

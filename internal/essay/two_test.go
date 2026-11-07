@@ -96,7 +96,7 @@ func TestReadTwo(t *testing.T) {
 func TestNewTwo(t *testing.T) {
 	es := readEssays(t)
 	essays := Essays(es, "dev")
-	r, err := NewTwo("dev", "eval/essays.json", 1, es, essays, e4Readers(), 2)
+	r, err := NewTwo("dev", "eval/essays.json", "", 1, es, drawnEssays(t, essays), e4Readers(), 2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -136,10 +136,10 @@ func TestNewTwo(t *testing.T) {
 			t.Errorf("the assessment %d: %+v", i, c)
 		}
 	}
-	if _, err := NewTwo("dev", "", 1, es, nil, e4Readers(), 1); err == nil {
+	if _, err := NewTwo("dev", "", "", 1, es, nil, e4Readers(), 1); err == nil {
 		t.Error("a run of no essay is planned")
 	}
-	if _, err := NewTwo("dev", "", 1, es, essays, e4Readers(), 0); err == nil {
+	if _, err := NewTwo("dev", "", "", 1, es, drawnEssays(t, essays), e4Readers(), 0); err == nil {
 		t.Error("a run of no repeat is planned")
 	}
 }
@@ -148,7 +148,7 @@ func TestNewTwo(t *testing.T) {
 // and every criterion of it is unchecked.
 func TestTwoAfterAFailedReading(t *testing.T) {
 	es := readEssays(t)
-	r, err := NewTwo("dev", "", 1, es, Essays(es, "dev")[:1], e4Readers()[:1], 1)
+	r, err := NewTwo("dev", "", "", 1, es, drawnEssays(t, Essays(es, "dev")[:1]), e4Readers()[:1], 1)
 	if err != nil {
 		t.Fatal(err)
 	}

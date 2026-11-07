@@ -86,3 +86,25 @@ func TestEssays(t *testing.T) {
 		t.Errorf("the strokes of the essays hash to %s, want %s", got, want)
 	}
 }
+
+// The lines an essay is written in from a seed are those Essay draws it in, without drawing it.
+func TestEssayLinesOf(t *testing.T) {
+	f, err := os.Open("../../eval/essays.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = f.Close() }()
+	es, err := sample.ReadEssays(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := range es.Essays[:3] {
+		e := &es.Essays[i]
+		for _, seed := range []uint64{1, 7} {
+			lines, _ := Essay(e, seed)
+			if got := EssayLinesOf(e, seed); !slices.Equal(got, lines) {
+				t.Errorf("essay %d, seed %d: %v, and Essay draws %v", e.Number, seed, got, lines)
+			}
+		}
+	}
+}

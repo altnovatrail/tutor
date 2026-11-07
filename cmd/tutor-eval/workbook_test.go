@@ -2,7 +2,6 @@ package main
 
 import (
 	"fmt"
-	"image/png"
 	"os"
 	"path/filepath"
 	"strings"
@@ -19,17 +18,20 @@ const (
 	workbookDoc = "../../docs/workbook.md"
 )
 
-// tutor-eval check takes the pages of the workbook, and tutor-eval workbook sums them up: the
-// pages and their parts, the boxes by scenario, and the crops of the filled boxes at each height,
-// 640 tokens a page of ten crops of 200 × 200.
+// tutor-eval check takes the pages of the workbook, and tutor-eval workbook sums them up with the
+// samples of its pages: the pages and their parts, the seed of the samples, the boxes by scenario,
+// the samples read, and the crops of the filled boxes at each height, 640 tokens a page of ten crops
+// of 200 × 200, the same as the pages drawn in memory.
 func TestWorkbookCommand(t *testing.T) {
 	code, out, errs := runIt("check", theWorkbook)
 	if want := theWorkbook + ": ok, workbook of 20 pages, 5 of them dev and 15 test; 200 items, 220 boxes\n"; code != exitOK || out != want {
 		t.Errorf("check = %d %q %q, want %q", code, out, errs, want)
 	}
-	code, out, errs = runIt("workbook", "-file", theWorkbook)
+	dir := drawnOf(t, theWorkbook)
+	code, out, errs = runIt("workbook", "-file", theWorkbook, "-dir", dir)
 	for _, want := range []string{
 		theWorkbook + ": 20 pages, 5 of them dev and 15 test; 200 items, 220 boxes; seed 1.\n",
+		"Samples in " + dir + ": 20 of 20 read; not drawn: none; refused, and nothing of them goes to AI: none; off their file: none.\n",
 		"Boxes by scenario: correct 100 (",
 		"; blank 20 (number 11, fraction 9: stacked 0, inline 0).\n",
 		"Crops at 32 px: 200 crops, 0 of them larger than 200 × 200, at most 200 px wide and 200 px high; 640 tokens of crops a page, at most 640.\n",
@@ -38,7 +40,7 @@ func TestWorkbookCommand(t *testing.T) {
 			t.Errorf("workbook = %d %q %q, want %q in it", code, out, errs, want)
 		}
 	}
-	if code, _, errs := runIt("workbook", "-file", measurementPlan); code != exitFail || !strings.Contains(errs, `unknown field "sheets"`) {
+	if code, _, errs := runIt("workbook", "-file", measurementPlan, "-dir", t.TempDir()); code != exitFail || !strings.Contains(errs, `unknown field "sheets"`) {
 		t.Errorf("workbook on a sheet plan = %d %q", code, errs)
 	}
 	// A line wider than the page passes the check of the format, and both commands refuse it.
@@ -47,67 +49,14 @@ func TestWorkbookCommand(t *testing.T) {
 	if err := os.WriteFile(wide, []byte(text), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	for _, args := range [][]string{{"check", wide}, {"workbook", "-file", wide}} {
+	for _, args := range [][]string{{"check", wide}, {"workbook", "-file", wide, "-dir", t.TempDir()}} {
 		if code, _, errs := runIt(args...); code != exitFail || !strings.Contains(errs, "pages[0].items[0].text: the line") {
 			t.Errorf("%s on a line wider than the page = %d %q", args[0], code, errs)
 		}
 	}
-}
-
-// With -png the command saves the crop of every filled box at 32 px, 200 × 200, and saves them again
-// over the crops of a run before.
-func TestWorkbookPictures(t *testing.T) {
-	dir := filepath.Join(t.TempDir(), "png")
-	code, out, errs := runIt("workbook", "-file", theWorkbook, "-png", dir)
-	if code != exitOK || !strings.HasSuffix(out, "Crops of the filled boxes at 32 px: 200 files, into "+dir+".\n") {
-		t.Fatalf("workbook -png = %d %q %q", code, out, errs)
-	}
-	entries, err := os.ReadDir(dir)
-	if err != nil || len(entries) != 200 {
-		t.Fatalf("the crops are %d files, %v", len(entries), err)
-	}
-	f, err := os.Open(filepath.Join(dir, "page-01-item-05-box-2.png"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer func() { _ = f.Close() }()
-	if cfg, err := png.DecodeConfig(f); err != nil || cfg.Width != 200 || cfg.Height != 200 {
-		t.Errorf("the crop of page 1, item 5, box 2 is %+v, %v", cfg, err)
-	}
-	if code, _, errs := runIt("workbook", "-file", theWorkbook, "-png", dir); code != exitOK {
-		t.Errorf("workbook -png over the crops = %d %q", code, errs)
-	}
-	blocked := filepath.Join(t.TempDir(), "blocked")
-	if err := os.MkdirAll(filepath.Join(blocked, "page-01-item-01-box-1.png"), 0o700); err != nil {
-		t.Fatal(err)
-	}
-	if code, _, errs := runIt("workbook", "-file", theWorkbook, "-png", blocked); code != exitFail || !strings.Contains(errs, "page 1") {
-		t.Errorf("workbook -png where a crop cannot go = %d %q", code, errs)
-	}
-}
-
-func TestWorkbookRefuses(t *testing.T) {
-	for _, c := range []struct {
-		name string
-		args []string
-		says string
-	}{
-		{"no directory for the crops", []string{"-png", ""}, "-png is empty"},
-		// The tests run in cmd/tutor-eval, where png is a folder git does not ignore.
-		{"the crops in the work tree", []string{"-png", "png"}, "cmd/tutor-eval/png is in the git work tree"},
-		{"the crops among the author's sheets", []string{"-png", "../../samples/workbook-test"}, "outside its synthetic folder"},
-	} {
-		t.Run(c.name, func(t *testing.T) {
-			code, _, errs := runIt(append([]string{"workbook", "-file", theWorkbook}, c.args...)...)
-			if code != exitUsage || !strings.Contains(errs, c.says) {
-				t.Errorf("workbook = %d, %q; want %d and %q", code, errs, exitUsage, c.says)
-			}
-		})
-	}
-	for _, made := range []string{"png", "../../samples/workbook-test"} {
-		if _, err := os.Stat(made); !os.IsNotExist(err) {
-			t.Errorf("a refused workbook made %s: %v", made, err)
-		}
+	// The tests run in cmd/tutor-eval, where synthetic is a folder git does not ignore.
+	if code, _, errs := runIt("workbook"); code != exitUsage || !strings.Contains(errs, "cmd/tutor-eval/synthetic/workbook is in the git work tree") {
+		t.Errorf("workbook in its default directory here = %d %q", code, errs)
 	}
 }
 
@@ -267,7 +216,7 @@ func verdictCell(v value.Slot) string {
 // name — asks each once a page and repeat, as the platform reads them, with no line of the item (R50).
 func TestRunWorkbookBare(t *testing.T) {
 	log := filepath.Join(t.TempDir(), "workbook.jsonl")
-	code, out, errs := runMeasure("yes\n", "-kind", "workbook", "-workbook", theWorkbook, "-part", "dev", "-stub", "-repeats", "1", "-reads", "bare", "-readers", "sonnet-low, opus-medium", "-log", log)
+	code, out, errs := runMeasure("yes\n", "-kind", "workbook", "-workbook", theWorkbook, "-dir", drawnOf(t, theWorkbook), "-part", "dev", "-stub", "-repeats", "1", "-reads", "bare", "-readers", "sonnet-low, opus-medium", "-log", log)
 	if code != exitOK || !strings.Contains(out, "bare at 32 px, by opus-medium once, sonnet-low in 1 repeat, a call a page,") || !strings.Contains(out, "10 calls") {
 		t.Fatalf("the run ends %d:\n%s%s", code, out, errs)
 	}
@@ -277,12 +226,13 @@ func TestRunWorkbookBare(t *testing.T) {
 }
 
 // A run of the reading of the workbook on the stub goes the whole way, a call a page, and logs the
-// pages and the calls; it takes no sheets, logs in synthetic by default, and reads captions and
-// heights alone.
+// pages and the calls; it takes the samples of the pages and no sheets, logs in synthetic by
+// default, and reads captions and heights alone.
 func TestRunWorkbook(t *testing.T) {
 	log := filepath.Join(t.TempDir(), "workbook.jsonl")
-	code, out, errs := runMeasure("yes\n", "-kind", "workbook", "-workbook", theWorkbook, "-part", "dev", "-stub", "-repeats", "1", "-log", log)
-	if code != exitOK || !strings.HasPrefix(out, "The dev part: 5 pages of the workbook "+theWorkbook+", drawn with the seed 1, bare and with the lines of the items at 32 px, by opus-high once, haiku-low and haiku-low-no-thinking in 1 repeat, a call a page, in version 2 of the prompt of the workbook.\n30 calls, expected to cost $") {
+	dir := drawnOf(t, theWorkbook)
+	code, out, errs := runMeasure("yes\n", "-kind", "workbook", "-workbook", theWorkbook, "-dir", dir, "-part", "dev", "-stub", "-repeats", "1", "-log", log)
+	if code != exitOK || !strings.HasPrefix(out, "The dev part: 5 pages of the workbook "+theWorkbook+", drawn with the seed 1 into "+dir+", bare and with the lines of the items at 32 px, by opus-high once, haiku-low and haiku-low-no-thinking in 1 repeat, a call a page, in version 2 of the prompt of the workbook.\n30 calls, expected to cost $") {
 		t.Fatalf("the run ends %d:\n%s%s", code, out, errs)
 	}
 	data, err := os.ReadFile(log)
@@ -299,20 +249,24 @@ func TestRunWorkbook(t *testing.T) {
 		args []string
 		says string
 	}{
-		{[]string{"-dir", "x"}, "-dir names sheets, and the workbook reads its own file"},
+		{[]string{"-bank", "x"}, "-bank names sheets, and the workbook reads its own file"},
+		{[]string{"-seed", "2"}, "flag provided but not defined: -seed"},
 		{[]string{"-essays", theEssays}, "-essays is not for -kind workbook"},
 		{[]string{"-set", "a,b,c"}, "-set names sheets"},
 		{[]string{"-reads", "keys"}, `-reads is "keys": for the workbook, give bare, captions or heights`},
 		// The tests run in cmd/tutor-eval, where synthetic is a folder git does not ignore.
 		{nil, "cmd/tutor-eval/synthetic/runs is in the git work tree"},
 	} {
-		args := append([]string{"-kind", "workbook", "-workbook", theWorkbook, "-part", "dev", "-stub"}, c.args...)
+		args := append([]string{"-kind", "workbook", "-workbook", theWorkbook, "-dir", dir, "-part", "dev", "-stub"}, c.args...)
 		if code, _, errs := runMeasure("yes\n", args...); code == exitOK || !strings.Contains(errs, c.says) {
 			t.Errorf("%v: ends %d, %q; want %q", c.args, code, errs, c.says)
 		}
 	}
-	if code, _, errs := runMeasure("yes\n", "-part", "dev", "-stub", "-seed", "2"); code != exitUsage || !strings.Contains(errs, "-workbook, -essays and -seed are for -kind workbook and essay") {
-		t.Errorf("the judge with -seed ends %d, %q", code, errs)
+	if code, _, errs := runMeasure("yes\n", "-part", "dev", "-stub", "-workbook", theWorkbook); code != exitUsage || !strings.Contains(errs, "-workbook and -essays are for -kind workbook and essay") {
+		t.Errorf("the judge with -workbook ends %d, %q", code, errs)
+	}
+	if code, _, errs := runMeasure("yes\n", "-kind", "workbook", "-part", "dev", "-stub"); code != exitUsage || !strings.Contains(errs, "cmd/tutor-eval/synthetic/workbook is in the git work tree") {
+		t.Errorf("a run in the default directory here ends %d, %q", code, errs)
 	}
 	if _, err := os.Stat("synthetic"); !os.IsNotExist(err) {
 		t.Errorf("a refused run made synthetic in cmd/tutor-eval: %v", err)

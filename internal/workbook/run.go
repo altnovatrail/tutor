@@ -8,10 +8,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/altnovatrail/tutor/internal/evalsample"
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/runner"
 	"github.com/altnovatrail/tutor/internal/sample"
-	"github.com/altnovatrail/tutor/internal/synth"
 	"github.com/altnovatrail/tutor/internal/value"
 	"github.com/altnovatrail/tutor/provider"
 )
@@ -146,8 +146,9 @@ func Pages(wb *sample.Workbook, part string) []*sample.WorkbookPage {
 	return out
 }
 
-// New plans a run of the reading over the pages of a part of the workbook, drawn from the seed, by
-// the readers, repeated: it draws every page once, cuts its crops and puts the calls in order,
+// New plans a run of the reading over the pages of a part of the workbook, as their samples in the
+// directory dir hold them, drawn from the seed, by the readers, repeated: it cuts the crops of every
+// page once, from the strokes of its sample's boxes, and puts the calls in order,
 // repeat by repeat, so that a run cut short has the same repeats of every page. A page with no
 // filled box goes to no model: its boxes are blank, and their verdicts need no call. Of each page,
 // by each reader, as reads says:
@@ -155,7 +156,7 @@ func Pages(wb *sample.Workbook, part string) []*sample.WorkbookPage {
 //   - captions: the crops at 32 px, bare and captioned, so too;
 //   - heights: the bare crops at 16, 24 and 48 px, in the first repeat, by the readers that do not
 //     read once.
-func New(part, file string, seed uint64, pages []*sample.WorkbookPage, readers []Reader, repeats int, reads Reads) (*runner.Run, error) {
+func New(part, file, dir string, seed uint64, pages []*evalsample.Page, readers []Reader, repeats int, reads Reads) (*runner.Run, error) {
 	if repeats < 1 {
 		return nil, fmt.Errorf("workbook: %d repeats", repeats)
 	}
@@ -175,16 +176,14 @@ func New(part, file string, seed uint64, pages []*sample.WorkbookPage, readers [
 		cells map[int][]Cell
 	}
 	var all []planned
-	for _, pg := range pages {
-		drawn, err := synth.PageOf(pg, seed)
-		if err != nil {
-			return nil, err
-		}
+	for _, written := range pages {
+		pg, drawn := written.Page, written.Ink
 		p := planned{page: pg, cells: map[int][]Cell{}}
 		for _, digit := range render.Heights() {
 			if digit != render.Digit && !heights {
 				continue
 			}
+			var err error
 			if p.cells[digit], err = CellsOf(drawn, pg, digit); err != nil {
 				return nil, fmt.Errorf("workbook: page %d: %w", pg.Number, err)
 			}
@@ -201,7 +200,7 @@ func New(part, file string, seed uint64, pages []*sample.WorkbookPage, readers [
 		}
 	}
 	r.Record = func(h runner.Head) any {
-		return RunRecord{Kind: "run", CallKind: CallKind, Time: h.Time, Part: part, File: file, Seed: seed, Readers: records, Repeats: repeats, Reads: read.Names(),
+		return RunRecord{Kind: "run", CallKind: CallKind, Time: h.Time, Part: part, File: file, Dir: dir, Seed: seed, Readers: records, Repeats: repeats, Reads: read.Names(),
 			MaxUSD: h.MaxUSD, Estimate: h.Estimate, Prompt: Fingerprint(), PromptVersion: Version}
 	}
 	add := func(rd Reader, rep int, p planned, c Condition, digit int) {
@@ -275,8 +274,8 @@ func pageRecord(pg *sample.WorkbookPage, cells []Cell) PageRecord {
 // page, each call, and the end, which is the runner's (runner.End). The run's record tells the kind
 // of call, workbook, so that tutor-eval report tells its log from the others.
 type (
-	// RunRecord tells the run: its part, the file of the workbook and the seed its pages are drawn
-	// from, its readers and repeats, what it reads, its cap and estimate, and the fingerprint and
+	// RunRecord tells the run: its part, the file of the workbook, the directory of its pages'
+	// samples and the seed they were drawn from, its readers and repeats, what it reads, its cap and estimate, and the fingerprint and
 	// the version of its prompt.
 	RunRecord struct {
 		Kind          string          `json:"kind"`
@@ -284,6 +283,7 @@ type (
 		Time          time.Time       `json:"time"`
 		Part          string          `json:"part"`
 		File          string          `json:"file"`
+		Dir           string          `json:"dir,omitempty"`
 		Seed          uint64          `json:"seed"`
 		Readers       []ReaderRecord  `json:"readers"`
 		Repeats       int             `json:"repeats"`

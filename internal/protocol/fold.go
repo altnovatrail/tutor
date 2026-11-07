@@ -142,3 +142,21 @@ func Final(strokes []*evalv1.FinalStroke) []sample.Stroke {
 	}
 	return out
 }
+
+// FinalOf are the strokes a folded history shows at the end as strokes of a final geometry, in the
+// order they were written: each with its ID and its points, with no time. The table of boxes of a
+// workbook takes them (Table), since the rule of boxes takes a stroke's points alone.
+func FinalOf(f Folded) []*evalv1.FinalStroke {
+	var out []*evalv1.FinalStroke
+	for _, w := range f.Written {
+		if _, ok := slices.BinarySearch(f.Visible, w.GetId()); !ok {
+			continue
+		}
+		st := &evalv1.FinalStroke{Id: w.GetId(), Points: make([]*evalv1.FinalPoint, len(w.GetPoints()))}
+		for k, p := range w.GetPoints() {
+			st.Points[k] = &evalv1.FinalPoint{X: p.GetX(), Y: p.GetY()}
+		}
+		out = append(out, st)
+	}
+	return out
+}

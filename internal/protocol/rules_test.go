@@ -237,3 +237,27 @@ func TestInk(t *testing.T) {
 		t.Errorf("%d of the cases %v are in the vectors", seen, want)
 	}
 }
+
+// FinalOf gives the strokes a history shows at the end, in the order they were written, with their
+// points and no time: those of the vectors' visible strokes.
+func TestFinalOf(t *testing.T) {
+	v := readVectors(t, "groups.json")
+	for _, c := range v.Cases {
+		h := message(t, c["history"], &evalv1.History{})
+		f := protocol.Fold(h)
+		final := protocol.FinalOf(f)
+		var ids []int32
+		for _, st := range final {
+			ids = append(ids, st.GetId())
+			w := f.Written[slices.IndexFunc(f.Written, func(s *evalv1.Stroke) bool { return s.GetId() == st.GetId() })]
+			if len(st.GetPoints()) != len(w.GetPoints()) || st.GetPoints()[0].GetX() != w.GetPoints()[0].GetX() || st.GetPoints()[0].GetY() != w.GetPoints()[0].GetY() {
+				t.Errorf("%s: stroke %d is not as written", name(t, c), st.GetId())
+			}
+		}
+		sorted := slices.Clone(ids)
+		slices.Sort(sorted)
+		if !slices.Equal(sorted, f.Visible) {
+			t.Errorf("%s: final strokes %v, and the visible %v", name(t, c), ids, f.Visible)
+		}
+	}
+}

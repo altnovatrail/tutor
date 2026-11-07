@@ -5,82 +5,76 @@ import (
 	"flag"
 	"fmt"
 	"io"
-	"os"
-	"path/filepath"
+	"strconv"
 	"strings"
 
 	"github.com/altnovatrail/tutor/internal/essay"
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/sample"
+	"github.com/altnovatrail/tutor/internal/synth"
 )
 
 // essaysFile is the file of the essays (T82).
 const essaysFile = "eval/essays.json"
 
-// runEssays checks the essays, draws them in memory and prints their summary: the essays and their
-// parts, their words, sentences and lines, the criteria each part leaves unmet, and the crops of the
-// pages at 32 px. With -png it saves the crop of every page at 32 px, what a model sees, in a
-// directory of synthetic or out of the work tree.
+// runEssays checks the essays, reads the samples of them that tutor-eval draw drew, held to the rules
+// of sections 11 and 12 and refused as the runner refuses them (R71), and prints their summary: the
+// essays and their parts, the criteria each part leaves unmet, the samples read, refused and off
+// their file, and of the essays read their words, sentences and lines and the crops of their pages
+// at 32 px, cut from their samples' strokes.
 func runEssays(args []string, stdout, stderr io.Writer) int {
 	flags := flag.NewFlagSet("tutor-eval essays", flag.ContinueOnError)
 	file := flags.String("file", essaysFile, "the essays")
-	seed := flags.Uint64("seed", 1, "the number the hands of the essays come from")
-	pngDir := flags.String("png", "", "also save the crop of every page at 32 px, as PNG, in this directory: in synthetic, or out of the work tree")
+	dirFlag := flags.String("dir", "", "the directory of the samples of the essays, which tutor-eval draw -essays draws: in synthetic, since sample-check reads the repository's paths alone; by default synthetic/ and the file's name")
 	if code, ok := parse(flags, args, stderr); !ok {
 		return code
 	}
-	pictured := given(flags)["png"]
-	if pictured {
-		if err := cropsDir(*pngDir); err != nil {
-			_, _ = fmt.Fprintf(stderr, "tutor-eval essays: %v\n", err)
-			return exitUsage
-		}
+	dir, err := drawnDirOf(*dirFlag, *file, given(flags)["dir"])
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval essays: %v\n", err)
+		return exitUsage
 	}
-	es, err := readFile(*file, sample.ReadEssays)
+	f, d, seed, err := readEssays(*file, dir, checkSamples)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval essays: %v\n", err)
 		return exitFail
 	}
+	es := f.Essays
 	var out bytes.Buffer
-	fmt.Fprintf(&out, "%s: %s; seed %d.\n", *file, essaysSize(es), *seed)
+	fmt.Fprintf(&out, "%s: %s; %s.\n", *file, essaysSize(es), seedWords(seed, d.Seeds()))
 	fmt.Fprintf(&out, "Unmet criteria, dev and test: %s.\n", essaysTally(es))
+	out.WriteString(drawnLine(d, "essay", dir))
 	var words, sentences, lines, drawn, widths, heights, tokens span
-	for i := range es.Essays {
-		e := &es.Essays[i]
-		pic, err := essay.PictureOf(e, *seed, render.Digit)
-		if err == nil && pictured {
-			err = saveEssay(*pngDir, e.Number, pic.PNG)
+	for _, x := range d.Drawn {
+		if x.Read == nil {
+			continue
 		}
+		e := x.Read.Essay
+		pic, err := essay.PictureFrom(nil, x.Read.Strokes, render.Digit)
 		if err != nil {
 			_, _ = fmt.Fprintf(stderr, "tutor-eval essays: essay %d: %v\n", e.Number, err)
 			return exitFail
 		}
 		words.add(len(sample.Words(e.Text)))
 		sentences.add(len(sample.Sentences(e.Text)))
-		lines.add(len(pic.Lines))
+		// The lines an essay is written in are code's, from the seed of its sample; a person's essay
+		// tells none.
+		if own, err := strconv.ParseUint(x.Read.Seed, 10, 64); err == nil {
+			lines.add(len(synth.EssayLinesOf(e, own)))
+		}
 		drawn.add(pic.Crop.Drawn)
 		widths.add(pic.Crop.Width)
 		heights.add(pic.Crop.Height)
 		tokens.add(render.Tokens(pic.Crop.Width, pic.Crop.Height))
 	}
-	fmt.Fprintf(&out, "Words %s; sentences %s; lines %s.\n", words.in(""), sentences.in(""), lines.in(""))
-	fmt.Fprintf(&out, "Crops at %d px: digits drawn %s; width %s; height %s; tokens %s.\n", render.Digit, drawn.in(" px"), widths.in(" px"), heights.in(" px"), tokens.in(""))
-	if pictured {
-		fmt.Fprintf(&out, "Crops of the pages at %d px: %s, into %s.\n", render.Digit, count(len(es.Essays), "file"), *pngDir)
+	if words.n > 0 {
+		fmt.Fprintf(&out, "Words %s; sentences %s; lines %s.\n", words.in(""), sentences.in(""), lines.in(""))
+		fmt.Fprintf(&out, "Crops at %d px: digits drawn %s; width %s; height %s; tokens %s.\n", render.Digit, drawn.in(" px"), widths.in(" px"), heights.in(" px"), tokens.in(""))
 	}
 	if _, err := stdout.Write(out.Bytes()); err != nil {
 		return exitFail
 	}
 	return exitOK
-}
-
-// saveEssay saves the crop of an essay's page as essay-NN.png, over a crop saved before: the crops
-// are drawn by code, the same from the same seed.
-func saveEssay(dir string, number int, png []byte) error {
-	if err := os.MkdirAll(dir, 0o700); err != nil {
-		return err
-	}
-	return os.WriteFile(filepath.Join(dir, fmt.Sprintf("essay-%02d.png", number)), png, 0o600)
 }
 
 // essaysSize says how many essays there are, by part.

@@ -50,14 +50,20 @@ func EssayLines(e *sample.Essay, width int) []string {
 	return lines
 }
 
+// EssayLinesOf are the lines Essay writes an essay in from the seed, without drawing it: the width
+// of its lines is the first thing the seed and the essay's number draw.
+func EssayLinesOf(e *sample.Essay, seed uint64) []string {
+	rng := rand.New(rand.NewPCG(seed, essayStream+uint64(e.Number)))
+	return EssayLines(e, essayMinLine+rng.IntN(essayMaxLine-essayMinLine+1))
+}
+
 // Essay draws an essay as a learner writes it, from the seed, on a page of EssayWidth × EssayHeight:
 // the lines it is written in, and its strokes in the order they were written. Each essay draws the
 // width of its lines and its hand from the seed and its number. Between two words the hand leaves a
 // gap of two spaces, a whole advance: the half advance of a space in a line of sums would run the
 // words of a text together. It panics on an essay with no words.
 func Essay(e *sample.Essay, seed uint64) (lines []string, strokes []sample.Stroke) {
-	rng := rand.New(rand.NewPCG(seed, essayStream+uint64(e.Number)))
-	lines = EssayLines(e, essayMinLine+rng.IntN(essayMaxLine-essayMinLine+1))
+	lines = EssayLinesOf(e, seed)
 	gapped := make([]string, len(lines))
 	for i, l := range lines {
 		gapped[i] = strings.ReplaceAll(l, " ", "  ")

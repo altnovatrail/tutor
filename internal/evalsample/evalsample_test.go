@@ -122,7 +122,8 @@ func TestReadBank(t *testing.T) {
 }
 
 // What a drawn sample names of itself: an ID and a writer's code from its seed, in the forms of
-// section 11, and the values of В68's option 1 where only canvas's samples page has one.
+// section 11, and canvas 0.0.0 and the set of texts "none" where only canvas's samples page has one
+// (the 2026-11-07 amendment to R93 spec).
 func TestHeader(t *testing.T) {
 	for _, c := range []struct {
 		plan  string
@@ -478,8 +479,9 @@ func drawn(t *testing.T) []struct {
 	return out
 }
 
-// testdata holds a drawn sample of each kind that tutor-eval draw draws, with the seed 1, and they
-// are what draw writes, to the byte: CI holds them to the rules of sections 11 and 12 with spec's
+// testdata holds a drawn sample of each kind that tutor-eval draw draws, with the seed 1 — of the
+// sheets, a page of the workbook with every scenario of a box and both writings of a fraction, and an
+// essay (R71) —, and they are what draw writes, to the byte: CI holds them to the rules of sections 11 and 12 with spec's
 // sample-check (just ci-sample-check), so that a drawn file that breaks a rule fails a pull request.
 // go test -update writes them anew.
 func TestDrawn(t *testing.T) {
@@ -501,8 +503,25 @@ func TestDrawn(t *testing.T) {
 		}
 		readBack(t, got, b, d.sh)
 	}
-	if len(want) != 7 {
-		t.Errorf("%d drawn samples, want 7: %v", len(want), want)
+	w, f := readWorkbook(t), readEssays(t)
+	for name, data := range map[string][]byte{
+		"workbook-05.json": pageFile(t, w, &w.Workbook.Pages[4], 1),
+		"essays-16.json":   essayFile(t, f, &f.Essays.Essays[15], 1),
+	} {
+		want[name] = true
+		path := filepath.Join("testdata", name)
+		if *update {
+			if err := os.WriteFile(path, data, 0o600); err != nil {
+				t.Fatal(err)
+			}
+			continue
+		}
+		if got, err := os.ReadFile(path); err != nil || !bytes.Equal(got, data) {
+			t.Errorf("%s is not what draw writes, %v: run go test ./internal/evalsample -update to write it anew", path, err)
+		}
+	}
+	if len(want) != 9 {
+		t.Errorf("%d drawn samples, want 9: %v", len(want), want)
 	}
 	files, _ := filepath.Glob(filepath.Join("testdata", "*.json"))
 	for _, f := range files {

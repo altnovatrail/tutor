@@ -21,6 +21,14 @@ type Picture struct {
 // (render.CropOf).
 func PictureOf(e *sample.Essay, seed uint64, digit int) (*Picture, error) {
 	lines, strokes := synth.Essay(e, seed)
+	return PictureFrom(lines, strokes, digit)
+}
+
+// PictureFrom is an essay written in the lines given, or nil where only its crop counts, as a model
+// sees it: the crop of its strokes by the rule of the eval protocol, with its digits digit px high, or less when the crop would be too
+// large (render.CropOf). The runner takes the strokes from the essay's sample, which the sheet shows
+// at the end.
+func PictureFrom(lines []string, strokes []sample.Stroke, digit int) (*Picture, error) {
 	c, err := render.CropOf(strokes, nil, digit)
 	if err != nil {
 		return nil, err
