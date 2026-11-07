@@ -1,7 +1,8 @@
 // Package sheets reads the directory where the record mode of the board saves the measurement's
 // sheets (R25), and tutor-eval draw the sheets it draws (R26), against the sheet plan: for each plan
-// sheet its last file, read and checked as a sample. A file is a sample of spec's eval protocol or of
-// tutor-sample v0, which the record mode writes until T105, and its first key tells which (R69). From
+// sheet its last file, read and checked as a sample. A file is a sample of spec's eval protocol, which
+// its first key tells (R69); one of tutor-sample v0, which the record mode wrote until T105, is a
+// problem of its sheet, and tutor-eval convert writes it as a sample of the protocol (R75). From
 // it come the summary of what is recorded, without the handwriting, and the split of the sheets into
 // a development and a test part (R24).
 package sheets
@@ -46,7 +47,7 @@ type Sheet struct {
 	// Mouse is set when a mouse wrote a stroke of the sample of the protocol, as its pointer says.
 	Mouse bool
 	// ID is the ID of the sample of the protocol, and Truth the truth of its answer slot: what the
-	// runner's report takes of it (R74). A sheet of tutor-sample v0 has neither.
+	// runner's report takes of it (R74).
 	ID    string
 	Truth []evalsample.Truth
 }
@@ -61,8 +62,7 @@ type Chosen struct {
 	Sample *sample.Sample
 	Task   *sample.Task
 	Plan   *sample.PlanSheet
-	// ID and Truth are the sample's of the protocol, for the runner's report, and none of a sheet of
-	// tutor-sample v0 (R74).
+	// ID and Truth are the sample's of the protocol, for the runner's report (R74).
 	ID    string
 	Truth []evalsample.Truth
 }
@@ -134,7 +134,7 @@ func Read(dir string, plan *sample.Plan, bank *evalsample.Bank, check samplechec
 	for i, data := range files {
 		sh := &r.Sheets[i]
 		if !ofOurs[i] {
-			sh.Sample, sh.Problems = readSheet(data, sh.Plan, bank.Bank)
+			sh.Problems = []string{V0Problem}
 			continue
 		}
 		if at := broken[filepath.Join(dir, sh.File)]; len(at) > 0 {
@@ -210,28 +210,9 @@ func lineList(at []int) string {
 	return "lines " + strings.Join(parts, ", ")
 }
 
-// readSheet reads a sheet's file as a sample of tutor-sample v0 and checks it with the bank and
-// against its plan sheet's task and scenario.
-func readSheet(data []byte, sh *sample.PlanSheet, bank *sample.Bank) (*sample.Sample, []string) {
-	s, err := sample.ReadSample(bytes.NewReader(data))
-	if err == nil {
-		err = s.CheckWithBank(bank)
-	}
-	if err != nil {
-		return nil, problemPaths(err)
-	}
-	var off []string
-	if s.Task != sh.Task {
-		off = append(off, "task")
-	}
-	if s.Scenario != sh.Scenario {
-		off = append(off, "scenario")
-	}
-	if len(off) > 0 {
-		return nil, off
-	}
-	return s, nil
-}
+// V0Problem is the problem of a sheet whose file is of tutor-sample v0, which no reader but
+// tutor-eval convert takes since T105 (R75).
+const V0Problem = "(a file of tutor-sample v0: tutor-eval convert writes it as a sample of the protocol)"
 
 // problemPaths are the paths of the problems of a check, nothing of the handwriting.
 func problemPaths(err error) []string {
@@ -358,7 +339,7 @@ func Summary(r *Recorded) string {
 		if s.Writer == sample.WriterSynthetic {
 			drawn = append(drawn, sh.Plan.Number)
 		}
-		if sh.Mouse || byMouse(s) {
+		if sh.Mouse {
 			mouse = append(mouse, sh.Plan.Number)
 		}
 		if where := offPaths(Differences(sh.Plan, s)); len(where) > 0 {
@@ -368,7 +349,7 @@ func Summary(r *Recorded) string {
 	line("Planned erasures: %d. Slips: %s on %s.", planned, count(slips, "erasure"), count(slipped, "sheet"))
 	line("With frames, that is with an erasure: %s.", count(framed, "sheet"))
 	line("Drawn by code, the writer synthetic: %s.", Numbers(drawn))
-	line("Written with a mouse, by the pointer or pressure 0.5 at every point: %s.", Numbers(mouse))
+	line("Written with a mouse, by the pointer of a stroke: %s.", Numbers(mouse))
 	if len(off) == 0 {
 		line("Marked off the plan: none.")
 	} else {
@@ -438,21 +419,6 @@ func byOutcome(r *Recorded, passing []*Sheet) []tally {
 		}
 	}
 	return out
-}
-
-// byMouse reports whether every point of a sheet has the pressure 0.5, which a device without
-// pressure, a mouse, reports while its button is down (architecture 4).
-func byMouse(s *sample.Sample) bool {
-	points := 0
-	for _, st := range s.Strokes {
-		for _, p := range st.Points {
-			if p.Pressure != 0.5 {
-				return false
-			}
-			points++
-		}
-	}
-	return points > 0
 }
 
 // offPaths are the paths of a sheet's differences from its plan sheet, each once, in their order.

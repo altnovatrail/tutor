@@ -47,24 +47,24 @@ board *args:
     export TUTOR_ANTHROPIC_API_KEY TUTOR_OPENAI_API_KEY
     exec go run ./cmd/tutor-eval board {{ args }}
 
-# This recipe asks for no key: the record mode asks no model. The sheets go to samples/sheets,
+# This recipe asks for no key: the record mode asks no model. The sheets go to samples/sheets-v1,
 # out of git. Its arguments go to tutor-eval board.
 # Start the record mode of the board on http://127.0.0.1:8080 (R25 in docs/decisions.md).
 record *args:
     go run ./cmd/tutor-eval board -record {{ args }}
 
 # This recipe asks for no key either. The sheets of the author's free-form plan, three sheets of
-# parts, go to samples/free, out of git. Its arguments go to tutor-eval board.
+# parts, go to samples/free-v1, out of git. Its arguments go to tutor-eval board.
 # Start the record mode on the free-form sheets of epic E4 (T61 in RUN.md).
 free-record *args:
-    go run ./cmd/tutor-eval board -record -dir samples/free -bank eval/free-bank.json -plan eval/free-author.json {{ args }}
+    go run ./cmd/tutor-eval board -record -dir samples/free-v1 -bank eval/free-bank.json -plan eval/free-author.json {{ args }}
 
 # This recipe asks for no key either. The author's ten sheets of the extended measurement, solved in
-# free form and written messily on purpose, go to samples/free-messy, out of git. Its arguments go
+# free form and written messily on purpose, go to samples/free-messy-v1, out of git. Its arguments go
 # to tutor-eval board.
 # Start the record mode on the ten messy sheets of the extended measurement (T97 in RUN.md).
 messy-record *args:
-    go run ./cmd/tutor-eval board -record -dir samples/free-messy -bank eval/free-bank.json -plan eval/free-messy.json {{ args }}
+    go run ./cmd/tutor-eval board -record -dir samples/free-messy-v1 -bank eval/free-bank.json -plan eval/free-messy.json {{ args }}
 
 # This recipe asks for the Anthropic key for eval if it is not set yet, without showing it, so that
 # no key lands in the shell's history; with -stub the run needs none, and Enter skips it. Its
@@ -80,17 +80,17 @@ measure *args:
     export TUTOR_ANTHROPIC_API_KEY
     exec go run ./cmd/tutor-eval run {{ args }}
 
-# This recipe is measure on the 40 sheets that code draws for free writing, in synthetic/free, out
+# This recipe is measure on the 40 sheets that code draws for free writing, in synthetic/free-v1, out
 # of git, and it asks for the key as measure does; the run logs in synthetic/runs. Its arguments go
 # to tutor-eval run: -part dev, -part test or -part all, and the rest.
 # Run the measurement of free writing on the sheets of code, after its estimate and your yes (T65 in RUN.md).
 free *args:
-    just measure -dir synthetic/free -bank eval/free-bank.json -plan eval/free-sheets.json {{ args }}
+    just measure -dir synthetic/free-v1 -bank eval/free-bank.json -plan eval/free-sheets.json {{ args }}
 
 # This recipe asks for the Anthropic key for eval if it is not set yet, as measure does; with -stub
 # the runs need none. It runs the judge, version 2, and the reading — without a key, with the
 # right and the false keys, at the other heights of digits and on the states — over all the
-# author's three sheets of free writing in samples/free, each after its estimate and your yes, and
+# author's three sheets of free writing in samples/free-v1, each after its estimate and your yes, and
 # prints each report on the terminal. The logs and the reports go to samples/runs, out of git, and
 # the reports hold no handwriting. Each run is capped at $1, so that both stay within the $2 of
 # T77. Its arguments go to both runs, such as -stub or another -max-usd. A run you say no to, or one
@@ -108,8 +108,8 @@ live *args:
     judge="samples/runs/${stamp}-live-judge.jsonl"
     reading="samples/runs/${stamp}-live-reading.jsonl"
     status=0
-    go run ./cmd/tutor-eval run -part all -max-usd 1 -dir samples/free -bank eval/free-bank.json -plan eval/free-author.json -log "$judge" {{ args }} || status=1
-    go run ./cmd/tutor-eval run -kind reading -part all -max-usd 1 -reads keys,heights,states -set samples/free,eval/free-bank.json,eval/free-author.json -log "$reading" {{ args }} || status=1
+    go run ./cmd/tutor-eval run -part all -max-usd 1 -dir samples/free-v1 -bank eval/free-bank.json -plan eval/free-author.json -log "$judge" {{ args }} || status=1
+    go run ./cmd/tutor-eval run -kind reading -part all -max-usd 1 -reads keys,heights,states -set samples/free-v1,eval/free-bank.json,eval/free-author.json -log "$reading" {{ args }} || status=1
     for log in "$judge" "$reading"; do
         if [ -f "$log" ]; then
             go run ./cmd/tutor-eval report "$log" || status=1

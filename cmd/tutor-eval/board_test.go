@@ -129,8 +129,10 @@ func TestBoardRecordCommand(t *testing.T) {
 	}{
 		{"the record mode", append([]string{"-record", "-dir", t.TempDir()}, files...), nil, exitOK, true, "The record mode of the board is at http://127.0.0.1:8080"},
 		{"a spending cap", append([]string{"-record", "-dir", t.TempDir(), "-max-usd", "3"}, files...), nil, exitUsage, false, "-max-usd is for the check board"},
-		{"a bank on the check board", []string{"-dir", t.TempDir(), "-bank", measurementBank}, keys, exitUsage, false, "-bank and -plan are for the record mode"},
-		{"a plan on the check board", []string{"-dir", t.TempDir(), "-plan", measurementPlan}, keys, exitUsage, false, "-bank and -plan are for the record mode"},
+		{"a bank on the check board", []string{"-dir", t.TempDir(), "-bank", measurementBank}, keys, exitUsage, false, "-bank, -plan and -writer-code are for the record mode"},
+		{"a plan on the check board", []string{"-dir", t.TempDir(), "-plan", measurementPlan}, keys, exitUsage, false, "-bank, -plan and -writer-code are for the record mode"},
+		{"a writer's code on the check board", []string{"-dir", t.TempDir(), "-writer-code", filepath.Join(t.TempDir(), "code")}, keys, exitUsage, false, "-bank, -plan and -writer-code are for the record mode"},
+		{"a writer's code in the work tree outside samples", append([]string{"-record", "-dir", t.TempDir(), "-writer-code", "../../synthetic/writer-code"}, files...), nil, exitUsage, false, "outside its samples folder"},
 		{"a broken plan", []string{"-record", "-dir", t.TempDir(), "-bank", measurementBank, "-plan", brokenPlan}, nil, exitFail, false, "invalid plan: sheets: are missing"},
 		{"no bank", []string{"-record", "-dir", t.TempDir(), "-bank", filepath.Join(dir, "nowhere.json"), "-plan", measurementPlan}, nil, exitFail, false, "nowhere.json: open"},
 		{"a plan of tasks not in the bank", []string{"-record", "-dir", t.TempDir(), "-bank", otherBank, "-plan", measurementPlan}, nil, exitFail, false, `sheets[0].task: "posts" is not in the bank`},
@@ -138,7 +140,7 @@ func TestBoardRecordCommand(t *testing.T) {
 		{"an empty directory", append([]string{"-record", "-dir", ""}, files...), nil, exitUsage, false, "-dir is empty"},
 		{"a directory that cannot be made", append([]string{"-record", "-dir", filepath.Join(blocker, "sheets")}, files...), nil, exitFail, false, "tutor-eval board: mkdir "},
 		// The tests run in cmd/tutor-eval, where samples/sheets is not the samples folder at the root.
-		{"the default directory", append([]string{"-record"}, files...), nil, exitUsage, false, "cmd/tutor-eval/samples/sheets is in the git work tree"},
+		{"the default directory", append([]string{"-record"}, files...), nil, exitUsage, false, "cmd/tutor-eval/samples/sheets-v1 is in the git work tree"},
 		{"the synthetic folder", append([]string{"-record", "-dir", "../../synthetic/sheets"}, files...), nil, exitUsage, false, "outside its samples folder"},
 	}
 	for _, tt := range tests {
@@ -146,7 +148,13 @@ func TestBoardRecordCommand(t *testing.T) {
 			var stdout, stderr bytes.Buffer
 			var handler http.Handler
 			serve := func(s *http.Server) error { handler = s.Handler; return nil }
-			got := runBoard(tt.args, &stdout, &stderr, func(k string) string { return tt.env[k] }, serve)
+			// The tests run in cmd/tutor-eval, where samples/writer-code is not in the samples folder at
+			// the root: the record mode gets a file of the code out of the work tree.
+			args := tt.args
+			if slices.Contains(args, "-record") && !slices.Contains(args, "-writer-code") {
+				args = append(slices.Clone(args), "-writer-code", filepath.Join(t.TempDir(), "writer-code"))
+			}
+			got := runBoard(args, &stdout, &stderr, func(k string) string { return tt.env[k] }, serve)
 			if got != tt.wantCode || (handler != nil) != tt.wantServed {
 				t.Errorf("code %d, served %v; want %d, %v (stderr %q)", got, handler != nil, tt.wantCode, tt.wantServed, stderr.String())
 			}

@@ -76,6 +76,7 @@
     <button id="eraser" type="button" aria-pressed="false">Eraser</button>
     <button id="undo" type="button">Undo</button>
     <button id="clear" type="button">Clear</button>
+    <button id="over" type="button">Start over</button>
     <button id="done" type="button" class="go">Done</button>
     <span id="status" role="status"></span>
   </div>
@@ -136,10 +137,12 @@
 <script>
 "use strict";
 // The record page: the author writes a sheet of the sheet plan, the board finds its lines, and the
-// author checks the markup the plan fills in and saves the sheet as a sample of the format
-// tutor-sample v0 (R25). Every point keeps its time and its pressure. The eraser and Undo take
-// whole strokes away, and each time they do is an erasure with its time. On a sheet of a plan of
-// parts the board finds its parts instead, by the groups of strokes of the eval protocol, and the
+// author checks the markup the plan fills in and saves the sheet as a sample of spec's eval protocol,
+// with its history of writing (R25; R75). Every point keeps its time, and every stroke the type of
+// the pointer that wrote it; no pressure is kept, as the protocol holds none. The eraser, Undo and
+// Clear take whole strokes away, and each time they do is an event of the history with its time:
+// erase, undo or clear. Start over drops the history and writes the sheet anew. On a sheet of a plan
+// of parts the board finds its parts instead, by the groups of strokes of the eval protocol, and the
 // page frames them and keeps them in the order of first writing (T61).
 const WIDTH = 1000;
 const HEIGHT = 600;
@@ -194,11 +197,14 @@ function ofParts() { return (current().parts ?? []).length > 0; }
 function unit() { return ofParts() ? "part" : "line"; }
 function Unit() { return ofParts() ? "Part" : "Line"; }
 function mendHint() {
-  return ` Pick strokes on the sheet, with a click or a rectangle, and move them, or join ${unit()}s, until they are the plan’s; or press Back to take a stray stroke away or write what is missing, or Clear to write the sheet again.`;
+  return ` Pick strokes on the sheet, with a click or a rectangle, and move them, or join ${unit()}s, until they are the plan’s; or press Back to take a stray stroke away or write what is missing, or Start over to write the sheet again.`;
 }
 function within(value, low, high) { return Math.min(Math.max(value, low), high); }
 function rounded(value, scale) { return Math.round(value * scale) / scale; }
 function unsaved() { return sheet.strokes.length > 0 && !view.saved; }
+// slip says whether Undo or Clear made an erasure, rather than a move of the eraser: what they take
+// away is never the planned erasure (R25).
+function slip(e) { return e.kind !== "erase"; }
 function erasedIds() { return new Set(sheet.erasures.flatMap((e) => e.strokes)); }
 function visible() {
   const gone = erasedIds();
@@ -221,11 +227,9 @@ function spot(e, box) {
   };
 }
 
-// point is a sample of the pen: its place, its time on the sheet and its pressure. A device without
-// pressure, a mouse, reports 0.5 while its button is down (Pointer Events).
+// point is a sample of the pen: its place and its time on the sheet.
 function point(e, box) {
-  const pressure = Number.isFinite(e.pressure) ? within(e.pressure, 0, 1) : 0.5;
-  return { ...spot(e, box), t_ms: clock(e.timeStamp), pressure: rounded(pressure, 1000) };
+  return { ...spot(e, box), t_ms: clock(e.timeStamp) };
 }
 
 // samples are the pen's moves an event stands for: the events the browser coalesced into it, or the
@@ -424,7 +428,8 @@ function setControls() {
   byId("eraser").disabled = !writing;
   byId("undo").disabled = !writing || visible().length === 0;
   byId("done").disabled = !writing || visible().length === 0;
-  for (const id of ["clear", "sheet-prev", "sheet-next"]) byId(id).disabled = view.busy || !sh;
+  byId("clear").disabled = !writing || visible().length === 0;
+  for (const id of ["over", "sheet-prev", "sheet-next"]) byId(id).disabled = view.busy || !sh;
   byId("fields").disabled = view.mode !== "markup" || view.busy;
   byId("back").disabled = view.mode !== "markup" || view.busy;
   byId("save").disabled = view.mode !== "markup" || view.busy || !ready();
@@ -496,7 +501,9 @@ sheetCanvas.addEventListener("pointerdown", (e) => {
     sweep(view.hold, at, at);
   } else {
     sheet.made += 1;
-    const stroke = { id: "s-" + String(sheet.made).padStart(4, "0"), points: [point(e, box)] };
+    // A stroke's ID is its number from 1 in the order of writing, as the protocol numbers them, and
+    // its pointer the browser's name of it.
+    const stroke = { id: String(sheet.made), pointer: e.pointerType || "mouse", points: [point(e, box)] };
     sheet.strokes.push(stroke);
     view.hold = { pointer: e.pointerId, rubbing: false, stroke };
   }
@@ -523,7 +530,7 @@ sheetCanvas.addEventListener("pointermove", (e) => {
   if (hold.rubbing && hold.touched.size !== touched) draw();
 });
 
-// end lets the pointer go. The pen's stroke ends without a point: a pointerup has no pressure. A
+// end lets the pointer go. The pen's stroke ends without a point: a pointerup adds none. A
 // lifted eraser takes what it touched in that one move away, as one erasure at that moment; an
 // eraser the browser cancelled, or whose capture it lost, takes nothing away.
 function end(e, lifted) {
@@ -534,7 +541,7 @@ function end(e, lifted) {
   if (hold.rubbing && hold.touched.size > 0) {
     if (lifted) {
       const taken = sheet.strokes.filter((s) => hold.touched.has(s.id)).map((s) => s.id);
-      sheet.erasures.push({ t_ms: clock(e.timeStamp), strokes: taken });
+      sheet.erasures.push({ t_ms: clock(e.timeStamp), strokes: taken, kind: "erase" });
     } else {
       say("The eraser was interrupted, and it took nothing away.");
     }
@@ -552,21 +559,34 @@ byId("eraser").addEventListener("click", () => {
   setControls();
 });
 
-// Undo takes the last stroke still on the sheet away, and the record keeps that as an erasure: a
-// slip of the pen.
+// Undo takes the last stroke still on the sheet away, and the history keeps that as an undo: a slip
+// of the pen.
 byId("undo").addEventListener("click", (e) => {
   if (view.mode !== "write" || view.hold) return;
   const last = visible().at(-1);
   if (!last) return;
   view.pending = null;
-  sheet.erasures.push({ t_ms: clock(e.timeStamp), strokes: [last.id], undo: true });
+  sheet.erasures.push({ t_ms: clock(e.timeStamp), strokes: [last.id], kind: "undo" });
   draw();
   setControls();
 });
 
+// Clear takes every stroke still on the sheet away, and the history keeps that as a clear: the sheet
+// goes on, its clock running, as the element of canvas has it.
 byId("clear").addEventListener("click", (e) => {
+  if (view.mode !== "write" || view.hold || view.busy) return;
+  const shown = visible().map((s) => s.id);
+  if (shown.length === 0) return;
+  if (!again("clear", e, "Press Clear again to take every stroke away.")) return;
+  sheet.erasures.push({ t_ms: clock(e.timeStamp), strokes: shown, kind: "clear" });
+  draw();
+  setControls();
+});
+
+// Start over drops what is written, its history too, and opens the sheet anew.
+byId("over").addEventListener("click", (e) => {
   if (!view.plan || view.hold || view.busy) return;
-  if (unsaved() && !again("clear", e, "Press Clear again to start the sheet over.")) return;
+  if (unsaved() && !again("over", e, "Press Start over again to write the sheet anew.")) return;
   open(e.timeStamp);
 });
 
@@ -586,7 +606,23 @@ async function post(url, body) {
   return { ok: res.ok, status: res.status, data };
 }
 
-const asErasure = (e) => ({ t_ms: e.t_ms, strokes: e.strokes, planned: null });
+// history is the sheet's history of writing as the protocol writes it, the message History in its
+// JSON: each stroke written at its last point, each erasure at its time, as an erase, an undo or a
+// clear; at one millisecond the strokes come before the erasures, so that an erasure takes off a
+// stroke that ended as it touched.
+function history() {
+  const events = [
+    ...sheet.strokes.map((s, i) => ({ t: s.points.at(-1).t_ms, order: 0, at: i, event: {
+      t_ms: s.points.at(-1).t_ms, write: { id: Number(s.id), pointer: s.pointer, points: s.points } } })),
+    ...sheet.erasures.map((x, i) => {
+      const ids = x.strokes.map(Number);
+      const what = x.kind === "undo" ? { undo: { removed: ids, restored: [] } } : { [x.kind]: { ids } };
+      return { t: x.t_ms, order: 1, at: i, event: { t_ms: x.t_ms, ...what } };
+    }),
+  ];
+  events.sort((a, b) => a.t - b.t || a.order - b.order || a.at - b.at);
+  return { events: events.map((x) => x.event) };
+}
 
 // Done locks the sheet and asks the board for its lines; the time until Back is cut out of the
 // record, so the markup leaves no pause in it.
@@ -600,8 +636,7 @@ byId("done").addEventListener("click", async (e) => {
   say(`Finding the ${unit()}s…`);
   let answer;
   try {
-    answer = await post("/api/record/propose", { number: sh.number, strokes: sheet.strokes, erasures: sheet.erasures.map(asErasure),
-      undone: sheet.erasures.map((x) => Boolean(x.undo)) });
+    answer = await post("/api/record/propose", { number: sh.number, history: history() });
   } catch (err) {
     answer = { ok: false, data: { error: err.message } };
   }
@@ -719,8 +754,8 @@ function onLine(n) {
 function erasureRow(e, i, on) {
   const row = make("li");
   const taken = `Erasure ${i + 1}: ${e.strokes.length === 1 ? "1 stroke" : e.strokes.length + " strokes"}, ${onLine(on[i])}`;
-  if (e.undo) {
-    row.textContent = `${taken}, by Undo: a slip.`;
+  if (slip(e)) {
+    row.textContent = `${taken}, by ${e.kind === "undo" ? "Undo" : "Clear"}: a slip.`;
     return row;
   }
   if (!current().erasure) {
@@ -926,8 +961,8 @@ function sameCount() { return view.lines.length === current().lines.length; }
 function erasureProblem() {
   const sh = current();
   if (!sh.erasure) return "";
-  if (!sheet.erasures.some((e) => !e.undo)) {
-    return `The sheet has no move of the eraser, and the scenario ${sh.scenario} plans an erasure: Undo makes slips only, so write the sheet again, erasing in one move of the eraser.`;
+  if (!sheet.erasures.some((e) => !slip(e))) {
+    return `The sheet has no move of the eraser, and the scenario ${sh.scenario} plans an erasure: Undo and Clear make slips only, so write the sheet again, erasing in one move of the eraser.`;
   }
   if (view.planned < 0) return `Pick the planned erasure: the scenario ${sh.scenario} has one, and the rest are slips.`;
   if (byId("planned-text").value.trim() === "") return "Say what the erased strokes said.";
@@ -1002,7 +1037,7 @@ async function checkNow() {
   const sh = current();
   let answer;
   try {
-    answer = await post("/api/record/check", { number: sh.number, sample: sample() });
+    answer = await post("/api/record/check", { number: sh.number, history: history(), markup: markup() });
   } catch (err) {
     answer = { ok: false, data: { error: err.message } };
   }
@@ -1019,20 +1054,16 @@ function plannedMarkup() {
   return { line: Number(byId("planned-line").value), erased: current().erasure.erased, text: byId("planned-text").value.trim() };
 }
 
-// sample is the sheet as a document of the format tutor-sample v0: every field present, the
-// erasures slips without markup but for the planned one, and the lines as the form has them.
-function sample() {
+// markup is the sheet's markup as the form has it: its lines, the erasure taken for the planned one,
+// by its place among the erasures, with what it took, and the outcome it is meant to have.
+function markup() {
   const sh = current();
   const outcome = byId("outcome").value;
   return {
-    format: "tutor-sample", version: 0, sheet: { width: WIDTH, height: HEIGHT },
-    task: sh.task, writer: "author", scenario: sh.scenario,
-    strokes: sheet.strokes.map((s) => ({ id: s.id, points: s.points })),
-    erasures: sheet.erasures.map((e, i) => ({ ...asErasure(e), planned: i === view.planned && sh.erasure ? plannedMarkup() : null })),
     lines: view.lines.map((l) => ({
       text: l.text.trim(), strokes: l.strokes, illegible: l.illegible, crossed_out: l.crossed_out, answer: l.answer,
     })),
-    injection: null,
+    planned: view.planned >= 0 && sh.erasure ? { erasure: view.planned, ...plannedMarkup() } : null,
     expected: {
       outcome,
       first_error: outcome === "error" ? Number(byId("first-error").value) : null,
@@ -1079,7 +1110,7 @@ byId("save").addEventListener("click", async () => {
   say("Saving…");
   let answer;
   try {
-    answer = await post("/api/record/save", { number: sh.number, sample: sample() });
+    answer = await post("/api/record/save", { number: sh.number, history: history(), markup: markup() });
   } catch (err) {
     answer = { ok: false, data: { error: err.message } };
   }
@@ -1091,7 +1122,7 @@ byId("save").addEventListener("click", async () => {
     byId("saves").textContent = savesText(sh.saved);
     const notes = described(answer.data.differences);
     listInto("differences", notes.length ? ["Saved with these differences from the plan:", ...notes] : []);
-    say(`Saved as ${answer.data.file}. Go on with →, or Clear to write this sheet again.`);
+    say(`Saved as ${answer.data.file}. Go on with →, or Start over to write this sheet again.`);
     overlay();
     setControls();
     return;

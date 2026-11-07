@@ -104,6 +104,20 @@ func Ink(h *evalv1.History) ([]sample.Stroke, []sample.Erasure, Folded) {
 		strokes[i] = st
 	}
 
+	erasures, _ := erasuresOf(h, f)
+	return strokes, erasures, f
+}
+
+// ErasureEvents are the events of a history that Ink's erasures come from, one to each in its
+// order: an erase, a clear or an undo. The record mode tells by them a move of the eraser from a
+// slip, which Undo and Clear make (R25).
+func ErasureEvents(h *evalv1.History) []*evalv1.HistoryEvent {
+	_, events := erasuresOf(h, Fold(h))
+	return events
+}
+
+// erasuresOf are Ink's erasures of a history and its fold, with the event of each.
+func erasuresOf(h *evalv1.History, f Folded) ([]sample.Erasure, []*evalv1.HistoryEvent) {
 	// The last event that took each hidden stroke off.
 	events := h.GetEvents()
 	last := map[int32]int{}
@@ -115,6 +129,7 @@ func Ink(h *evalv1.History) ([]sample.Stroke, []sample.Erasure, Folded) {
 		}
 	}
 	var erasures []sample.Erasure
+	var of []*evalv1.HistoryEvent
 	for n, e := range events {
 		var ids []string
 		for _, id := range takenOff(e) {
@@ -124,9 +139,10 @@ func Ink(h *evalv1.History) ([]sample.Stroke, []sample.Erasure, Folded) {
 		}
 		if len(ids) > 0 {
 			erasures = append(erasures, sample.Erasure{TMs: int64(e.GetTMs()), Strokes: ids})
+			of = append(of, e)
 		}
 	}
-	return strokes, erasures, f
+	return erasures, of
 }
 
 // Final are the strokes of a final geometry as tutor's code takes the strokes of a sheet: their

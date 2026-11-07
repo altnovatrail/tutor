@@ -2,16 +2,50 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
 	"time"
 
+	evalv1 "github.com/altnovatrail/spec/contracts/novatrail/eval/v1"
+
+	"github.com/altnovatrail/tutor/internal/evalsample"
+	"github.com/altnovatrail/tutor/internal/protocol"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/sheets"
 	"github.com/altnovatrail/tutor/internal/synth"
 )
+
+// sheetFile is a sheet as the record mode or draw saves it, a sample of the protocol of the bank at
+// a path: one code drew as draw writes it from the seed 1, and any other as the record mode does, by
+// a pen, the ID of its plan sheet's number.
+func sheetFile(t *testing.T, s *sample.Sample, sh *sample.PlanSheet, bankPath string) []byte {
+	t.Helper()
+	bank, err := evalsample.ReadBank(bankPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var es *evalv1.Sample
+	if s.Writer == sample.WriterSynthetic {
+		es, err = evalsample.Of(s, sh, bank, 1, fmt.Sprintf("synthetic-1-test-%02d", sh.Number))
+	} else {
+		h, ids, herr := evalsample.HistoryOf(s, "pen")
+		if herr != nil {
+			t.Fatal(herr)
+		}
+		es, err = evalsample.PersonOf(s, sh, bank, h, ids, fmt.Sprintf("test-%02d", sh.Number), "TESTCODE01")
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := protocol.MarshalSample(es)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
+}
 
 // recordedSheets writes the synthetic bank and the plan of the synthetic sheets, and saves every
 // sheet in a directory as the record mode saves it. It returns the flags that name the three.
@@ -23,16 +57,6 @@ func recordedSheets(t *testing.T) []string {
 	if err := os.Mkdir(dir, 0o700); err != nil {
 		t.Fatal(err)
 	}
-	at := time.Date(2026, 10, 26, 10, 0, 0, 0, time.UTC)
-	for i, s := range samples {
-		data, err := sample.Marshal(s)
-		if err != nil {
-			t.Fatal(err)
-		}
-		if err := os.WriteFile(filepath.Join(dir, sample.SheetFile(&plan.Sheets[i], at)), data, 0o600); err != nil {
-			t.Fatal(err)
-		}
-	}
 	files := map[string]any{"bank.json": synth.Bank(), "plan.json": plan}
 	for name, v := range files {
 		data, err := sample.Marshal(v)
@@ -40,6 +64,13 @@ func recordedSheets(t *testing.T) []string {
 			t.Fatal(err)
 		}
 		if err := os.WriteFile(filepath.Join(root, name), data, 0o600); err != nil {
+			t.Fatal(err)
+		}
+	}
+	at := time.Date(2026, 10, 26, 10, 0, 0, 0, time.UTC)
+	for i, s := range samples {
+		data := sheetFile(t, s, &plan.Sheets[i], filepath.Join(root, "bank.json"))
+		if err := os.WriteFile(filepath.Join(dir, sample.SheetFile(&plan.Sheets[i], at)), data, 0o600); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -94,10 +125,7 @@ func TestSheetsAndSplit(t *testing.T) {
 
 	// A sheet of the split saved again: its file no longer counts, and the summary says so.
 	plan, samples := synth.Plan()
-	data, err := sample.Marshal(samples[0])
-	if err != nil {
-		t.Fatal(err)
-	}
+	data := sheetFile(t, samples[0], &plan.Sheets[0], where[3])
 	if err := os.WriteFile(filepath.Join(dir, sample.SheetFile(&plan.Sheets[0], time.Date(2026, 10, 27, 0, 0, 0, 0, time.UTC))), data, 0o600); err != nil {
 		t.Fatal(err)
 	}
@@ -142,8 +170,8 @@ func TestSplitRefuses(t *testing.T) {
 		{"a stray argument", append([]string{"split", "-seed", "1", "extra"}, where...), exitUsage, "unexpected arguments"},
 		{"a broken plan", []string{"split", "-seed", "1", "-dir", where[1], "-bank", where[3], "-plan", where[3]}, exitFail, where[3] + ": "},
 		// The tests run in cmd/tutor-eval, where samples/sheets is not the samples folder at the root.
-		{"the default directory", []string{"split", "-seed", "1", "-bank", where[3], "-plan", where[5]}, exitUsage, "cmd/tutor-eval/samples/sheets is in the git work tree"},
-		{"the summary of the default directory", []string{"sheets", "-bank", where[3], "-plan", where[5]}, exitUsage, "cmd/tutor-eval/samples/sheets is in the git work tree"},
+		{"the default directory", []string{"split", "-seed", "1", "-bank", where[3], "-plan", where[5]}, exitUsage, "cmd/tutor-eval/samples/sheets-v1 is in the git work tree"},
+		{"the summary of the default directory", []string{"sheets", "-bank", where[3], "-plan", where[5]}, exitUsage, "cmd/tutor-eval/samples/sheets-v1 is in the git work tree"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

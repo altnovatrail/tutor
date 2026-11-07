@@ -137,7 +137,14 @@ func Read(es *evalv1.Sample, sh *sample.PlanSheet, b *Bank) (*Sheet, *Refusal, e
 	if outcome == sample.OutcomeError {
 		s.Expected.Trap = sh.Expected.Trap
 	}
-	planErasure(s, sh)
+	var slips []bool
+	for _, e := range protocol.ErasureEvents(h) {
+		slips = append(slips, e.GetErase() == nil)
+	}
+	if i := PlannedErasure(s, sh, slips); i >= 0 {
+		pe := sh.Erasure
+		s.Erasures[i].Planned = &sample.PlannedErasure{Line: pe.Line, Erased: pe.Erased, Text: pe.Text}
+	}
 
 	mouse := false
 	for _, e := range h.GetEvents() {
@@ -189,22 +196,28 @@ func writerOf(es *evalv1.Sample) sample.Writer {
 	return sample.WriterAuthor
 }
 
-// planErasure marks the planned erasure of a sheet whose plan sheet plans one: the last erasure whose
-// strokes stood where the plan's erasure took them from, the line or the part it names, as
-// sheets.ErasurePlace finds it. The other erasures are slips of the pen.
-func planErasure(s *sample.Sample, sh *sample.PlanSheet) {
+// PlannedErasure is the erasure of a sheet the runner takes for the one its plan sheet plans, by its
+// place among the erasures, or -1: the last move of the eraser whose strokes stood where the plan's
+// erasure took them from, the line or the part it names, as sheets.ErasurePlace finds it. What Undo
+// and Clear took away, slips says for each erasure, is never the planned one (R25); the other
+// erasures are slips of the pen. A sample of the protocol keeps no pick of the planned erasure, so
+// the record mode holds the author's pick to this one (R75).
+func PlannedErasure(s *sample.Sample, sh *sample.PlanSheet, slips []bool) int {
 	pe := sh.Erasure
 	if pe == nil {
-		return
+		return -1
 	}
 	for i := len(s.Erasures) - 1; i >= 0; i-- {
+		if i < len(slips) && slips[i] {
+			continue
+		}
 		place := lines.ErasureLine(s, s.Erasures[i])
 		if len(sh.Parts) > 0 {
 			place = lines.ErasurePart(s, s.Erasures[i])
 		}
 		if place == pe.Line {
-			s.Erasures[i].Planned = &sample.PlannedErasure{Line: pe.Line, Erased: pe.Erased, Text: pe.Text}
-			return
+			return i
 		}
 	}
+	return -1
 }

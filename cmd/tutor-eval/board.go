@@ -114,15 +114,17 @@ func within(base, path string) bool {
 }
 
 // The directories each mode of the board writes to by default, in the samples folder at the root
-// of tutor, which git ignores (R05).
+// of tutor, which git ignores (R05). The sheets are samples of the protocol since T105, beside the
+// files of tutor-sample v0 that the record mode saved before, in samples/sheets (R75).
 const (
 	boardDir  = samplesFolder + "/board"
-	sheetsDir = samplesFolder + "/sheets"
+	sheetsDir = samplesFolder + "/sheets-v1"
 )
 
 // boardFlags are the flags of tutor-eval board, and which of them the command line set.
 type boardFlags struct {
 	addr, dir, bank, plan string
+	code                  string
 	maxUSD                float64
 	record                bool
 	set                   map[string]bool
@@ -140,6 +142,7 @@ func runBoard(args []string, stdout, stderr io.Writer, getenv func(string) strin
 	flags.BoolVar(&f.record, "record", false, "the record mode: write the sheets of the plan and save each as a sample, asking no model")
 	flags.StringVar(&f.bank, "bank", "eval/bank.json", "with -record: the bank of tasks")
 	flags.StringVar(&f.plan, "plan", "eval/sheets.json", "with -record: the sheet plan")
+	flags.StringVar(&f.code, "writer-code", writerCodeFile, "with -record: the file of the author's writer's code, made at random at the first save when it is not there; by default "+writerCodeFile+" for a directory in samples, and beside -dir otherwise")
 	if code, ok := parse(flags, args, stderr); !ok {
 		return code
 	}
@@ -180,8 +183,8 @@ func runBoard(args []string, stdout, stderr io.Writer, getenv func(string) strin
 // directory for the pictures and the log. It returns the handler, the line that says the board is
 // ready, and the exit code when it cannot start.
 func checkBoard(f boardFlags, getenv func(string) string, stderr io.Writer) (http.Handler, string, int) {
-	if f.set["bank"] || f.set["plan"] {
-		_, _ = fmt.Fprintln(stderr, "tutor-eval board: -bank and -plan are for the record mode, -record")
+	if f.set["bank"] || f.set["plan"] || f.set["writer-code"] {
+		_, _ = fmt.Fprintln(stderr, "tutor-eval board: -bank, -plan and -writer-code are for the record mode, -record")
 		return nil, "", exitUsage
 	}
 	if f.maxUSD <= 0 {
@@ -215,21 +218,30 @@ func recordMode(f boardFlags, stderr io.Writer) (http.Handler, string, int) {
 		return nil, "", exitUsage
 	}
 	dir := cmp.Or(f.dir, sheetsDir)
-	if err := checkIgnored(dir, samplesFolder); err != nil {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %v\n", err)
-		return nil, "", exitUsage
+	f.code = writerCodeOf(dir, f.code, f.set["writer-code"])
+	for _, d := range []string{dir, filepath.Dir(f.code)} {
+		if err := checkIgnored(d, samplesFolder); err != nil {
+			_, _ = fmt.Fprintf(stderr, "tutor-eval board: %v\n", err)
+			return nil, "", exitUsage
+		}
 	}
 	bank, plan, err := readPlan(f.bank, f.plan)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %v\n", err)
 		return nil, "", exitFail
 	}
-	rc, err := board.NewRecorder(bank.Bank, plan, dir)
+	// sample-check takes the repository's paths: a directory out of the work tree, a board's test, is
+	// not held to the rules, and the board says so.
+	check, unchecked := checkSamples, ""
+	if !checkable(dir) {
+		check, unchecked = nil, " They are out of the work tree, and sample-check, which takes the repository's paths, does not hold them to the rules."
+	}
+	rc, err := board.NewRecorder(bank, plan, dir, f.code, check)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %v\n", err)
 		return nil, "", exitFail
 	}
-	return rc.Handler(f.addr), fmt.Sprintf("The record mode of the board is at http://%s — open it in a browser. Sheets go to %s.", f.addr, dir), exitOK
+	return rc.Handler(f.addr), fmt.Sprintf("The record mode of the board is at http://%s — open it in a browser. Sheets go to %s, as samples of the protocol.%s", f.addr, dir, unchecked), exitOK
 }
 
 // readFile reads a file of the format with its reader.

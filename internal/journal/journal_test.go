@@ -99,7 +99,7 @@ type sheet struct {
 // stroke adds a short level stroke at height y, from the moment start to the moment end.
 func (s *sheet) stroke(id string, y float64, start, end int64) {
 	s.strokes = append(s.strokes, sample.Stroke{ID: id, Points: []sample.Point{
-		{X: 100, Y: y, TMs: start, Pressure: 0.5}, {X: 140, Y: y + 4, TMs: end, Pressure: 0.5},
+		{X: 100, Y: y, TMs: start}, {X: 140, Y: y + 4, TMs: end},
 	}})
 }
 
@@ -263,7 +263,7 @@ func TestAgreement(t *testing.T) {
 	var aside sheet
 	aside.stroke("a", 100, 0, 10)
 	aside.strokes = append(aside.strokes, sample.Stroke{ID: "note", Points: []sample.Point{
-		{X: 800, Y: 98, TMs: 20, Pressure: 0.5}, {X: 900, Y: 108, TMs: 30, Pressure: 0.5},
+		{X: 800, Y: 98, TMs: 20}, {X: 900, Y: 108, TMs: 30},
 	}})
 	smp = aside.sample([]string{"a"})
 	j = journal.Of(smp)

@@ -138,40 +138,83 @@ func WriterCode(seed uint64) string {
 // A sheet with an inscription to steer the model, which the markup has no part for, is no sheet of a
 // plan of the measurement, and Of refuses it.
 func Of(s *sample.Sample, sh *sample.PlanSheet, b *Bank, seed uint64, id string) (*evalv1.Sample, error) {
-	switch {
-	case s.Writer != sample.WriterSynthetic:
+	if s.Writer != sample.WriterSynthetic {
 		return nil, fmt.Errorf("evalsample: the sheet is the %s's, and Of writes the sheets code drew", s.Writer)
-	case s.Injection != nil:
-		return nil, errors.New("evalsample: a sheet with an inscription to steer the model is no sheet of a plan of the measurement")
+	}
+	h, ids, err := HistoryOf(s, Pointer)
+	if err != nil {
+		return nil, err
+	}
+	ref, sheet, markup, err := sheetParts(s, sh, b, h, ids)
+	if err != nil {
+		return nil, err
+	}
+	es := drawnSample(seed, id, ref, h, markup)
+	es.Surface = &evalv1.Sample_Sheet{Sheet: sheet}
+	return es, nil
+}
+
+// PersonOf is a sheet that a person wrote for its plan sheet, as a sample of measurement of the
+// protocol, from an adult in their own hand or imitating a child's, with the history of writing h,
+// whose strokes ids numbers (section 11): a person's origin, the sample's ID id, which they give at
+// random (NewID), and their writer's code, code; and the sheet's groups and crops, its task and its
+// markup as Of has them. A sheet the record mode of the board wrote, or one converted from a file of
+// tutor-sample v0, names canvas 0.0.0 and the set of texts "none", as the samples page of canvas
+// wrote neither (R75).
+func PersonOf(s *sample.Sample, sh *sample.PlanSheet, b *Bank, h *evalv1.History, ids map[string]int32, id, code string) (*evalv1.Sample, error) {
+	writer := evalv1.Writer_WRITER_ADULT
+	switch s.Writer {
+	case sample.WriterAuthor:
+	case sample.WriterAuthorAsChild:
+		writer = evalv1.Writer_WRITER_ADULT_AS_CHILD
+	default:
+		return nil, fmt.Errorf("evalsample: the sheet is the %s's, and PersonOf writes the sheets a person wrote", s.Writer)
+	}
+	ref, sheet, markup, err := sheetParts(s, sh, b, h, ids)
+	if err != nil {
+		return nil, err
+	}
+	return &evalv1.Sample{
+		Protocol:       protocol.Protocol,
+		Id:             id,
+		Purpose:        evalv1.Purpose_PURPOSE_MEASUREMENT,
+		Writer:         writer,
+		Origin:         &evalv1.Sample_Person{Person: &evalv1.Person{}},
+		WriterCode:     new(code),
+		TextSetVersion: TextSetVersion,
+		CanvasVersion:  CanvasVersion,
+		Task:           ref,
+		Ink:            &evalv1.Sample_History{History: h},
+		Surface:        &evalv1.Sample_Sheet{Sheet: sheet},
+		Markup:         markup,
+	}, nil
+}
+
+// sheetParts are what a sample of a sheet holds whoever wrote it: the reference of its task, by the
+// digest of its open view; its surface, which the rules of section 12 give the strokes of its
+// history h; and its markup, whose strokes ids numbers. A sheet with an inscription to steer the
+// model, which the markup has no part for, is no sheet of a plan of the measurement.
+func sheetParts(s *sample.Sample, sh *sample.PlanSheet, b *Bank, h *evalv1.History, ids map[string]int32) (*evalv1.TaskReference, *evalv1.Sheet, *evalv1.Markup, error) {
+	if s.Injection != nil {
+		return nil, nil, nil, errors.New("evalsample: a sheet with an inscription to steer the model is no sheet of a plan of the measurement")
 	}
 	t := b.task(sh.Task)
 	if t == nil || s.Task != sh.Task {
-		return nil, fmt.Errorf("evalsample: the sheet's task %s is not the plan sheet's %s of %s", s.Task, sh.Task, b.Path)
+		return nil, nil, nil, fmt.Errorf("evalsample: the sheet's task %s is not the plan sheet's %s of %s", s.Task, sh.Task, b.Path)
 	}
 	_, digest, err := sheetTask(t)
 	if err != nil {
-		return nil, fmt.Errorf("evalsample: the open view of %s: %w", t.ID, err)
-	}
-
-	ids := map[string]int32{}
-	for i, st := range s.Strokes {
-		ids[st.ID] = int32(i + 1)
-	}
-	h, err := historyOf(s, ids)
-	if err != nil {
-		return nil, err
+		return nil, nil, nil, fmt.Errorf("evalsample: the open view of %s: %w", t.ID, err)
 	}
 	sheet, err := sheetOf(h, s.Sheet)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
-	markup, err := markupOf(s, sh, ids)
+	markup, err := markupOf(s, sh, t, ids)
 	if err != nil {
-		return nil, err
+		return nil, nil, nil, err
 	}
-	es := drawnSample(seed, id, b.reference(t.ID, digest), h, markup)
-	es.Surface = &evalv1.Sample_Sheet{Sheet: sheet}
-	return es, nil
+	return b.reference(t.ID, digest), sheet, markup, nil
 }
 
 // drawnSample is a sample of measurement that code drew from the seed, by an adult, with its history
@@ -201,10 +244,22 @@ type event struct {
 	at      int
 }
 
-// historyOf is the sheet's strokes and erasures as a history of writing: a stroke is written at its
-// last point, and an erasure at its time; at one millisecond the strokes come before the erasures,
-// so that an erasure takes off a stroke that ended as it touched.
-func historyOf(s *sample.Sample, ids map[string]int32) (*evalv1.History, error) {
+// HistoryOf is the sheet's strokes and erasures as a history of writing, each stroke written by the
+// pointer given: the strokes numbered from 1 in the order they were written, which ids gives by
+// their IDs in the sheet; a stroke written at its last point, and an erasure at its time; at one
+// millisecond the strokes come before the erasures, so that an erasure takes off a stroke that ended
+// as it touched.
+func HistoryOf(s *sample.Sample, pointer string) (*evalv1.History, map[string]int32, error) {
+	ids := map[string]int32{}
+	for i, st := range s.Strokes {
+		ids[st.ID] = int32(i + 1)
+	}
+	h, err := historyOf(s, ids, pointer)
+	return h, ids, err
+}
+
+// historyOf is HistoryOf with the strokes numbered by ids.
+func historyOf(s *sample.Sample, ids map[string]int32, pointer string) (*evalv1.History, error) {
 	var events []event
 	for i, st := range s.Strokes {
 		if len(st.Points) == 0 {
@@ -236,7 +291,7 @@ func historyOf(s *sample.Sample, ids map[string]int32) (*evalv1.History, error) 
 			he.Event = &evalv1.HistoryEvent_Erase{Erase: &evalv1.StrokeIds{Ids: gone}}
 		} else {
 			st := s.Strokes[e.at]
-			w := &evalv1.Stroke{Id: ids[st.ID], Pointer: Pointer}
+			w := &evalv1.Stroke{Id: ids[st.ID], Pointer: pointer}
 			for _, p := range st.Points {
 				w.Points = append(w.Points, &evalv1.InkPoint{X: tenth(p.X), Y: tenth(p.Y), TMs: int32(p.TMs)})
 			}
@@ -402,9 +457,18 @@ func slot() *observationv1.AnswerSlotPlace { return &observationv1.AnswerSlotPla
 //     measurement draws;
 //   - else the value of the answer, as the reading reads one (sample.ValueOf).
 //
+// The answer of a plan sheet of one part, a whole solution a person writes freely, is that part: on
+// a sheet a person wrote, its value is the key's on a sheet they mark correct, and on one they mark
+// wrong the number after the last word «ответ» of its text, as their markup names it (wholeValue).
+// Code draws no such sheet: its truth is for the author's hand to write.
+//
 // A sheet with a part crossed out has the note crossed_out on its slot: something there is crossed
-// out and written again.
-func markupOf(s *sample.Sample, sh *sample.PlanSheet, ids map[string]int32) (*evalv1.Markup, error) {
+// out and written again. Every stroke a sheet shows is in a part (section 11), and a sheet with one
+// in none has no markup the protocol takes.
+func markupOf(s *sample.Sample, sh *sample.PlanSheet, t *sample.Task, ids map[string]int32) (*evalv1.Markup, error) {
+	if id := Loose(s); id != "" {
+		return nil, fmt.Errorf("evalsample: the stroke %q, which the sheet shows, is in no part, and every stroke a sheet shows is in one", id)
+	}
 	parts := &evalv1.WritingParts{}
 	if len(sh.Parts) > 0 && len(sh.Parts) != len(s.Lines) {
 		return nil, fmt.Errorf("evalsample: the sheet has %d lines, and its plan sheet %d parts: the kind of each part is its plan's", len(s.Lines), len(sh.Parts))
@@ -445,6 +509,12 @@ func markupOf(s *sample.Sample, sh *sample.PlanSheet, ids map[string]int32) (*ev
 		read.Read = unreadable(observationv1.Unreadable_UNREADABLE_SEVERAL_FINAL_ANSWERS)
 	case answers[0].Illegible:
 		read.Read = unreadable(observationv1.Unreadable_UNREADABLE_ILLEGIBLE)
+	case len(sh.Parts) == 1 && s.Writer != sample.WriterSynthetic:
+		v, err := wholeValue(s, t, answers[0].Text)
+		if err != nil {
+			return nil, err
+		}
+		read.Read = &observationv1.AnswerSlotObservation_Value{Value: v}
 	default:
 		v := sample.ValueOf(answers[0].Text)
 		if v == "" {
@@ -461,6 +531,59 @@ func markupOf(s *sample.Sample, sh *sample.PlanSheet, ids map[string]int32) (*ev
 		m.Notes = append(m.Notes, &evalv1.AnswerSlotNote{AnswerSlot: slot(), CrossedOut: true})
 	}
 	return m, nil
+}
+
+// Loose is the first stroke a sheet shows, in the order they were written, that is in no line and no
+// inscription, or "" when there is none.
+func Loose(s *sample.Sample) string {
+	in := map[string]bool{}
+	for _, l := range s.Lines {
+		for _, id := range l.Strokes {
+			in[id] = true
+		}
+	}
+	if s.Injection != nil {
+		for _, id := range s.Injection.Strokes {
+			in[id] = true
+		}
+	}
+	for _, st := range render.Shown(s, math.MaxInt64) {
+		if !in[st.ID] {
+			return st.ID
+		}
+	}
+	return ""
+}
+
+// answerWord is the word after which the author's markup of a whole solution names its answer: «ответ»
+// as a word of its own, in any case, and not inside «ответа» or «ответы».
+var answerWord = regexp.MustCompile(`(?i)(?:^|[^\p{L}])(ответ)(?:[^\p{L}]|$)`)
+
+// wholeValue is the value of the answer of a whole solution the author wrote, its markup's text: the
+// key's on a sheet marked correct, and on one marked wrong the first number after the last word
+// «ответ» of the text. A sheet marked correct whose text names another number there, and one marked
+// wrong whose text names none or the key's, has no truth the author's markup gives (R75).
+func wholeValue(s *sample.Sample, t *sample.Task, text string) (string, error) {
+	key := sample.KeyOf(t.Key)
+	named := ""
+	if at := answerWord.FindAllStringSubmatchIndex(text, -1); len(at) > 0 {
+		if nums := sample.Numbers(text[at[len(at)-1][3]:]); len(nums) > 0 {
+			named = nums[0]
+		}
+	}
+	switch {
+	case s.Expected.Outcome != sample.OutcomeCorrect && s.Expected.Outcome != sample.OutcomeError:
+		return "", fmt.Errorf("evalsample: the sheet is marked %s, and the truth of a whole solution is the key's or the answer its markup names, on a sheet marked correct or wrong: mark its part illegible, or the sheet correct or wrong", s.Expected.Outcome)
+	case s.Expected.Outcome == sample.OutcomeCorrect && named != "" && named != key:
+		return "", fmt.Errorf("evalsample: the sheet is marked correct, and its markup names the answer %s, not the key's %s", named, key)
+	case s.Expected.Outcome == sample.OutcomeCorrect:
+		return key, nil
+	case named == "":
+		return "", errors.New("evalsample: the sheet is marked wrong, and its markup names no number after the word «ответ»: say there what the answer written is")
+	case named == key:
+		return "", fmt.Errorf("evalsample: the sheet is marked wrong, and the answer its markup names is the key's, %s", key)
+	}
+	return named, nil
 }
 
 func unreadable(r observationv1.Unreadable) *observationv1.AnswerSlotObservation_Unreadable {

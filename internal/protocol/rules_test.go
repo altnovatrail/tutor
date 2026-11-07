@@ -232,6 +232,16 @@ func TestInk(t *testing.T) {
 		}) {
 			t.Errorf("%s: erasures %+v, want %+v", n, erasures, w)
 		}
+		// Each erasure comes with its event: the undo that took a stroke just written, the clear.
+		events := protocol.ErasureEvents(h)
+		if len(events) != len(erasures) {
+			t.Fatalf("%s: %d events, and %d erasures", n, len(events), len(erasures))
+		}
+		for i, e := range events {
+			if e.GetTMs() != int32(erasures[i].TMs) || (n == "undone-write") != (e.GetUndo() != nil) || (n == "cleared") != (e.GetClear() != nil) {
+				t.Errorf("%s: erasure %d comes of the event %v", n, i, e)
+			}
+		}
 	}
 	if seen != len(want) {
 		t.Errorf("%d of the cases %v are in the vectors", seen, want)

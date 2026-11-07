@@ -137,9 +137,6 @@ func checkPoint(p *problems, path string, pt Point, sheet Sheet) {
 	if pt.TMs < 0 {
 		p.add(path+".t_ms", "%d is below 0", pt.TMs)
 	}
-	if math.IsNaN(pt.Pressure) || pt.Pressure < 0 || pt.Pressure > 1 {
-		p.add(path+".pressure", "%v is not from 0 to 1", pt.Pressure)
-	}
 }
 
 // checkErasures checks the erasures and returns the set of erased strokes.

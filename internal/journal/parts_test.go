@@ -22,7 +22,7 @@ const partsHeader = "How the sheet was written, step by step. A part is a group 
 // moment end.
 func (s *sheet) at(id string, x, y float64, start, end int64) {
 	s.strokes = append(s.strokes, sample.Stroke{ID: id, Points: []sample.Point{
-		{X: x, Y: y, TMs: start, Pressure: 0.5}, {X: x + 40, Y: y + 4, TMs: end, Pressure: 0.5},
+		{X: x, Y: y, TMs: start}, {X: x + 40, Y: y + 4, TMs: end},
 	}})
 }
 
@@ -129,7 +129,7 @@ func TestPartsErasedWriting(t *testing.T) {
 func TestPartsTwoGroups(t *testing.T) {
 	bridge := func(s *sheet, at int64) {
 		s.strokes = append(s.strokes, sample.Stroke{ID: "m", Points: []sample.Point{
-			{X: 150, Y: 100, TMs: at, Pressure: 0.5}, {X: 290, Y: 104, TMs: at + 100, Pressure: 0.5},
+			{X: 150, Y: 100, TMs: at}, {X: 290, Y: 104, TMs: at + 100},
 		}})
 	}
 	for _, c := range []struct {
@@ -181,7 +181,7 @@ func TestPartsTwoGroups(t *testing.T) {
 func TestPartsPlaces(t *testing.T) {
 	dot := func(x, y float64) string {
 		s := &sample.Sample{Sheet: sample.Sheet{Width: 1000, Height: 600}, Strokes: []sample.Stroke{
-			{ID: "d", Points: []sample.Point{{X: x, Y: y, TMs: 0, Pressure: 0.5}}},
+			{ID: "d", Points: []sample.Point{{X: x, Y: y, TMs: 0}}},
 		}}
 		return journal.OfParts(s).Parts[0].Place
 	}
@@ -202,7 +202,7 @@ func TestPartsPlaces(t *testing.T) {
 	// top of the sheet is in the middle of its width.
 	var s sheet
 	s.strokes = append(s.strokes, sample.Stroke{ID: "axis", Points: []sample.Point{
-		{X: 60, Y: 120, TMs: 0, Pressure: 0.5}, {X: 950, Y: 120, TMs: 400, Pressure: 0.5},
+		{X: 60, Y: 120, TMs: 0}, {X: 950, Y: 120, TMs: 400},
 	}})
 	if got := journal.OfParts(s.sample()).Parts[0].Place; got != "top centre" {
 		t.Errorf("the axis stands at %q, want top centre", got)

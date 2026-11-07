@@ -83,7 +83,7 @@ func line(strokes []sample.Stroke, erasures ...sample.Erasure) *sample.Sample {
 func at(t int64, xy ...float64) sample.Stroke {
 	st := sample.Stroke{ID: fmt.Sprintf("s-%d", t)}
 	for i := 0; i < len(xy); i += 2 {
-		st.Points = append(st.Points, sample.Point{X: xy[i], Y: xy[i+1], TMs: t + int64(i), Pressure: 0.5})
+		st.Points = append(st.Points, sample.Point{X: xy[i], Y: xy[i+1], TMs: t + int64(i)})
 	}
 	return st
 }

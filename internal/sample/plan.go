@@ -200,7 +200,7 @@ func (sh *PlanSheet) standIn() *Sample {
 	var clock int64
 	stroke := func() string {
 		id := fmt.Sprintf("s-%d", len(s.Strokes)+1)
-		s.Strokes = append(s.Strokes, Stroke{ID: id, Points: []Point{{TMs: clock, Pressure: 0.5}}})
+		s.Strokes = append(s.Strokes, Stroke{ID: id, Points: []Point{{TMs: clock}}})
 		clock++
 		return id
 	}

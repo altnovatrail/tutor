@@ -1,16 +1,18 @@
 // Package sample is the format of the reading measurement's samples, of its bank of tasks, of its
 // sheet plan and of the split of its sheets: their types, how they are read from JSON and how they
-// are checked. A sample is one sheet of handwriting: every stroke with the time and pressure of its
-// points, in the order it was written, every erasure, and the markup made while writing. The bank
+// are checked. A sample is one sheet of handwriting: every stroke with the time of its points, in
+// the order it was written, every erasure, and the markup made while writing. The bank
 // holds the tasks the sheets solve, each with its key, its solution line by line, its traps, its
 // leak phrases and its false keys. The plan says what the writer writes on each sheet, and with it
 // the markup. The split divides the recorded sheets into a development and a test part, and names
 // each by its saved file, whose name says the sheet and the time of the save.
 //
-// The format is tutor's own until spec's eval protocol replaces it (В7 in RUN.md); its fields
-// are explained in docs/architecture.md, section 3.1. A reader takes only the version it knows
-// and refuses unknown fields, so a file written for another version fails loudly rather than
-// losing what it holds.
+// A sample is the sheet as tutor's code takes it in memory: its files are samples of spec's eval
+// protocol, which internal/evalsample reads into one (R69), and the files of tutor-sample v0, which
+// the record mode wrote until T105, only internal/convert still reads (R75). The bank, the plan and
+// the split are files of their own, explained in docs/architecture.md, section 3.1. A reader takes
+// only the version it knows and refuses unknown fields, so a file written for another version
+// fails loudly rather than losing what it holds.
 package sample
 
 import (
@@ -80,8 +82,6 @@ type Point struct {
 	Y float64 `json:"y"`
 	// TMs is the time in milliseconds since the sheet was opened.
 	TMs int64 `json:"t_ms"`
-	// Pressure is from 0 to 1; a device that has none, a mouse, gives 0.5.
-	Pressure float64 `json:"pressure"`
 }
 
 // Erasure is one touch of the eraser. The eraser removes whole strokes, never a part of one.
@@ -205,17 +205,15 @@ const (
 	LangEnglish Lang = "en"
 )
 
-// ReadSample reads a sample from JSON and checks it on its own; CheckWithBank checks it against
-// its task. An error from a sample that fails the check is a *FormatError.
-func ReadSample(r io.Reader) (*Sample, error) {
-	var s Sample
-	if err := readStrict(r, "sample", &s); err != nil {
-		return nil, readError("sample", err)
+// ReadStrict reads exactly one JSON value into v as strictly as every file of the format is read:
+// every field present and spelt as its JSON name, once, and no other. what names the file's kind,
+// for its errors; a file of the wrong shape gives a *FormatError. The reader of tutor-sample v0,
+// internal/convert, reads with it what it alone still reads (T105).
+func ReadStrict(r io.Reader, what string, v any) error {
+	if err := readStrict(r, what, v); err != nil {
+		return readError(what, err)
 	}
-	if err := s.Check(); err != nil {
-		return nil, err
-	}
-	return &s, nil
+	return nil
 }
 
 // ReadBank reads a bank of tasks from JSON and checks it. An error from a bank that fails the

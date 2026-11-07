@@ -89,10 +89,9 @@ func TestHintWithoutMistakes(t *testing.T) {
 	}
 	at := time.Date(2026, 11, 7, 9, 0, 0, 0, time.UTC)
 	for i := range plan.Sheets {
-		data, err := sample.Marshal(synth.Sheet(&plan.Sheets[i], 1))
-		if err != nil {
-			t.Fatal(err)
-		}
+		s := synth.Sheet(&plan.Sheets[i], 1)
+		s.Writer = sample.WriterAuthor // the author's free solutions, which code does not draw
+		data := sheetFile(t, s, &plan.Sheets[i], freeBank)
 		if err := os.WriteFile(filepath.Join(dir, sample.SheetFile(&plan.Sheets[i], at)), data, 0o600); err != nil {
 			t.Fatal(err)
 		}

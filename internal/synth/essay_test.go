@@ -82,7 +82,7 @@ func TestEssays(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got, want := fmt.Sprintf("%x", sha256.Sum256(data)), "a396239b81ffa9369696bef72564f7a5cedd98d2140087d0db9cce9dc121e0c5"; got != want {
+	if got, want := fmt.Sprintf("%x", sha256.Sum256(data)), "5ce41d4120095721baef9366d1c657a95da16dabf396a05c755c83b1b2328c28"; got != want {
 		t.Errorf("the strokes of the essays hash to %s, want %s", got, want)
 	}
 }

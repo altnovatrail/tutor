@@ -64,7 +64,7 @@ func TestDraw(t *testing.T) {
 	for _, want := range []string{
 		"Sheets: 40 of the plan's 40 recorded, 40 of them passing the check.",
 		"Planned erasures: 14. Slips: 0 erasures on 0 sheets.",
-		"Written with a mouse, by the pointer or pressure 0.5 at every point: none.",
+		"Written with a mouse, by the pointer of a stroke: none.",
 		"Marked off the plan: none.",
 	} {
 		if !strings.Contains(summary.String(), want) {
@@ -209,7 +209,7 @@ func TestDrawRefuses(t *testing.T) {
 		{"the pictures in a folder of the sheets", []string{"-dir", dir, "-png", filepath.Join(dir, "png")}, "is among the sheets of"},
 		// The tests run in cmd/tutor-eval, where png and samples/sheets are folders git does not ignore.
 		{"the pictures in the work tree", []string{"-dir", dir, "-png", "png"}, "cmd/tutor-eval/png is in the git work tree"},
-		{"the default directory", nil, "cmd/tutor-eval/samples/sheets is in the git work tree"},
+		{"the default directory", nil, "cmd/tutor-eval/samples/sheets-v1 is in the git work tree"},
 	} {
 		t.Run(c.name, func(t *testing.T) {
 			var out, errs bytes.Buffer

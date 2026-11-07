@@ -47,7 +47,7 @@ func TestPlanOfParts(t *testing.T) {
 	served := false
 	serve := func(*http.Server) error { served = true; return nil }
 	recorded := filepath.Join(t.TempDir(), "recorded")
-	if code := runBoard([]string{"-record", "-dir", recorded, "-bank", freeBank, "-plan", partsPlan}, &stdout, &stderr, func(string) string { return "" }, serve); code != exitOK || !served || !strings.Contains(stdout.String(), "Sheets go to "+recorded) {
+	if code := runBoard([]string{"-record", "-dir", recorded, "-bank", freeBank, "-plan", partsPlan, "-writer-code", filepath.Join(t.TempDir(), "writer-code")}, &stdout, &stderr, func(string) string { return "" }, serve); code != exitOK || !served || !strings.Contains(stdout.String(), "Sheets go to "+recorded) {
 		t.Errorf("board -record = %d, served %v, %q %q", code, served, stdout.String(), stderr.String())
 	}
 	if _, err := os.Stat(recorded); err != nil {

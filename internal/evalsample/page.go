@@ -98,7 +98,7 @@ func OfPage(drawn *synth.Page, pg *sample.WorkbookPage, w *Workbook, seed uint64
 			s.Strokes = append(s.Strokes, st)
 		}
 	}
-	h, err := historyOf(s, ids)
+	h, err := historyOf(s, ids, Pointer)
 	if err != nil {
 		return nil, err
 	}

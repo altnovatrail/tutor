@@ -17,7 +17,7 @@ import (
 
 // stroke is an upright stroke 30 units high at (x, y), written from t0 to t1 ms.
 func stroke(id string, x, y float64, t0, t1 int64) sample.Stroke {
-	return sample.Stroke{ID: id, Points: []sample.Point{{X: x, Y: y, TMs: t0, Pressure: 0.5}, {X: x, Y: y + 30, TMs: t1, Pressure: 0.5}}}
+	return sample.Stroke{ID: id, Points: []sample.Point{{X: x, Y: y, TMs: t0}, {X: x, Y: y + 30, TMs: t1}}}
 }
 
 // sheet is a sample of the strokes, the erasures and the lines, each line its text and strokes.
