@@ -10,7 +10,7 @@ import (
 
 // box is a stroke of two points across the box from (x0, y0) to (x1, y1), drawn from t0 on.
 func box(id string, x0, y0, x1, y1 float64, t0 int64) sample.Stroke {
-	return sample.Stroke{ID: id, Points: []sample.Point{{X: x0, Y: y0, TMs: t0, Pressure: 0.5}, {X: x1, Y: y1, TMs: t0 + 100, Pressure: 0.5}}}
+	return sample.Stroke{ID: id, Points: []sample.Point{{X: x0, Y: y0, TMs: t0}, {X: x1, Y: y1, TMs: t0 + 100}}}
 }
 
 // On a sheet of a plan of parts, the planned erasure took its strokes from where they stood on the

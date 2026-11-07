@@ -11,10 +11,17 @@ import (
 	"reflect"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
 
+	"google.golang.org/protobuf/encoding/protojson"
+
+	evalv1 "github.com/altnovatrail/spec/contracts/novatrail/eval/v1"
+
+	"github.com/altnovatrail/tutor/internal/evalsample"
+	"github.com/altnovatrail/tutor/internal/protocol"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/synth"
 )
@@ -45,15 +52,44 @@ func recordPlan() *sample.Plan {
 	}}
 }
 
+// bankOf is a bank as a sample of the protocol names it: by a path in the repository and the digest
+// of its file.
+func bankOf(t *testing.T, path string, b *sample.Bank) *evalsample.Bank {
+	t.Helper()
+	data, err := sample.Marshal(b)
+	if err != nil {
+		t.Fatal(err)
+	}
+	eb, err := evalsample.BankOf(path, data)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return eb
+}
+
+// newRecorder starts the record mode of a plan in a new directory, with no check of the rules, its
+// writer's code in a file of a directory of its own and the IDs of its samples numbered, and its
+// clock standing at the moment given.
+func newRecorder(t *testing.T, bank *evalsample.Bank, plan *sample.Plan, dir string, at time.Time) *Recorder {
+	t.Helper()
+	rc, err := NewRecorder(bank, plan, dir, filepath.Join(t.TempDir(), "writer-code"), nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	n := 0
+	rc.newID = func() (string, error) {
+		n++
+		return fmt.Sprintf("test-sample-%d", n), nil
+	}
+	rc.now = func() time.Time { return at }
+	return rc
+}
+
 // recorder starts the record mode of recordPlan in a new directory, its clock standing at one
 // moment, and returns it with its handler.
 func recorder(t *testing.T) (*Recorder, http.Handler) {
 	t.Helper()
-	rc, err := NewRecorder(synth.Bank(), recordPlan(), t.TempDir())
-	if err != nil {
-		t.Fatal(err)
-	}
-	rc.now = func() time.Time { return time.Date(2026, 10, 26, 10, 15, 30, 123_456_789, time.UTC) }
+	rc := newRecorder(t, bankOf(t, "eval/synthetic-bank.json", synth.Bank()), recordPlan(), t.TempDir(), time.Date(2026, 10, 26, 10, 15, 30, 123_456_789, time.UTC))
 	return rc, rc.Handler(boardAddr)
 }
 
@@ -72,9 +108,9 @@ func written(sh sample.PlanSheet) *sample.Sample {
 			id := fmt.Sprintf("s-%d", len(s.Strokes)+1)
 			x := 40 + 30*float64(j)
 			s.Strokes = append(s.Strokes, sample.Stroke{ID: id, Points: []sample.Point{
-				{X: x, Y: y, TMs: clock, Pressure: 0.4},
-				{X: x + 8, Y: y + 15, TMs: clock + 8, Pressure: 0.6},
-				{X: x + 12, Y: y + 30, TMs: clock + 16, Pressure: 0.5},
+				{X: x, Y: y, TMs: clock},
+				{X: x + 8, Y: y + 15, TMs: clock + 8},
+				{X: x + 12, Y: y + 30, TMs: clock + 16},
 			}})
 			ids = append(ids, id)
 			clock += 300
@@ -91,7 +127,7 @@ func erasing(s *sample.Sample, sh sample.PlanSheet) *sample.Sample {
 	at := last[len(last)-1].TMs + 300
 	y := 40 + 90*float64(sh.Erasure.Line-1) + 10
 	s.Strokes = append(s.Strokes, sample.Stroke{ID: "s-erased", Points: []sample.Point{
-		{X: 300, Y: y, TMs: at, Pressure: 0.5}, {X: 330, Y: y + 5, TMs: at + 20, Pressure: 0.5}}})
+		{X: 300, Y: y, TMs: at}, {X: 330, Y: y + 5, TMs: at + 20}}})
 	s.Erasures = append(s.Erasures, sample.Erasure{TMs: at + 500, Strokes: []string{"s-erased"},
 		Planned: &sample.PlannedErasure{Line: sh.Erasure.Line, Erased: sh.Erasure.Erased, Text: sh.Erasure.Text}})
 	return s
@@ -105,24 +141,101 @@ func slip(s *sample.Sample, id string, y float64) *sample.Sample {
 		at = max(at, e.TMs)
 	}
 	at += 300
-	s.Strokes = append(s.Strokes, sample.Stroke{ID: id, Points: []sample.Point{{X: 600, Y: y, TMs: at, Pressure: 0.5}}})
+	s.Strokes = append(s.Strokes, sample.Stroke{ID: id, Points: []sample.Point{{X: 600, Y: y, TMs: at}}})
 	s.Erasures = append(s.Erasures, sample.Erasure{TMs: at + 100, Strokes: []string{id}})
 	return s
 }
 
-// raw is a sample as JSON, without spaces.
-func raw(t *testing.T, s *sample.Sample) string {
+// numbered is a sheet with its strokes numbered from 1 in the order they stand, as the page numbers
+// them and the protocol does, and its erasures and lines naming them so.
+func numbered(s *sample.Sample) *sample.Sample {
+	n := *s
+	ids := map[string]string{}
+	n.Strokes = make([]sample.Stroke, len(s.Strokes))
+	for i, st := range s.Strokes {
+		ids[st.ID] = strconv.Itoa(i + 1)
+		n.Strokes[i] = sample.Stroke{ID: ids[st.ID], Points: slices.Clone(st.Points)}
+	}
+	rename := func(list []string) []string {
+		out := make([]string, len(list))
+		for i, id := range list {
+			out[i] = ids[id]
+		}
+		return out
+	}
+	n.Erasures = nil // as the protocol's history folds a sheet without one (protocol.Ink)
+	for _, e := range s.Erasures {
+		n.Erasures = append(n.Erasures, sample.Erasure{TMs: e.TMs, Strokes: rename(e.Strokes), Planned: e.Planned})
+	}
+	n.Lines = make([]sample.Line, len(s.Lines))
+	for i, l := range s.Lines {
+		l.Strokes = rename(l.Strokes)
+		n.Lines[i] = l
+	}
+	return &n
+}
+
+// historyJSON is a sheet's history of writing as the page sends it, its strokes numbered: each
+// erasure an erase, or an undo where undone says so.
+func historyJSON(t *testing.T, s *sample.Sample, undone ...bool) json.RawMessage {
 	t.Helper()
-	data, err := json.Marshal(s)
+	h, _, err := evalsample.HistoryOf(numbered(s), "mouse")
 	if err != nil {
 		t.Fatal(err)
 	}
-	return string(data)
+	k := 0
+	for _, e := range h.GetEvents() {
+		if er := e.GetErase(); er != nil {
+			if k < len(undone) && undone[k] {
+				e.Event = &evalv1.HistoryEvent_Undo{Undo: &evalv1.Undo{Removed: er.GetIds()}}
+			}
+			k++
+		}
+	}
+	data, err := protojson.Marshal(h)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return data
 }
 
-// saveBody is the body of a save of a sample's JSON for a plan sheet.
-func saveBody(number int, sampleJSON string) SaveRequest {
-	return SaveRequest{Number: number, Sample: json.RawMessage(sampleJSON)}
+// proposal is the body of a proposal for a sheet, its erasures by Undo where undone says so.
+func proposal(t *testing.T, number int, s *sample.Sample, undone ...bool) ProposeRequest {
+	t.Helper()
+	return ProposeRequest{Number: number, History: historyJSON(t, s, undone...)}
+}
+
+// saving is the body of a check or a save of a sheet as the page sends it: its history, and its
+// markup, the erasure planned by its place.
+func saving(t *testing.T, number int, s *sample.Sample, undone ...bool) SaveRequest {
+	t.Helper()
+	n := numbered(s)
+	m := Markup{Lines: n.Lines, Expected: n.Expected}
+	for i, e := range n.Erasures {
+		if e.Planned != nil {
+			m.Planned = &Planned{Erasure: i, PlannedErasure: *e.Planned}
+		}
+	}
+	return SaveRequest{Number: number, History: historyJSON(t, s, undone...), Markup: m}
+}
+
+// readSaved reads a saved file as the runner will, against its plan sheet, and gives the sample of
+// the protocol and the sheet it is read as.
+func readSaved(t *testing.T, rc *Recorder, name string, sh *sample.PlanSheet) (*evalv1.Sample, *sample.Sample) {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join(rc.dir, name))
+	if err != nil {
+		t.Fatal(err)
+	}
+	es, err := protocol.ReadSample(bytes.NewReader(data))
+	if err != nil {
+		t.Fatalf("the saved file does not read back: %v", err)
+	}
+	read, refused, err := evalsample.Read(es, sh, rc.bank)
+	if err != nil || refused != nil {
+		t.Fatalf("the runner reads the saved file: %v, %v", err, refused)
+	}
+	return es, read.Sample
 }
 
 // files lists the names in a directory.
@@ -196,7 +309,7 @@ func TestRecordPlanView(t *testing.T) {
 		}
 	}
 	for range 2 {
-		if rec, _ := call(t, h, "POST", "/api/record/save", saveBody(1, raw(t, written(rc.plan.Sheets[0])))); rec.Code != http.StatusOK {
+		if rec, _ := call(t, h, "POST", "/api/record/save", saving(t, 1, written(rc.plan.Sheets[0]))); rec.Code != http.StatusOK {
 			t.Fatalf("save = %d %s", rec.Code, rec.Body)
 		}
 	}
@@ -239,7 +352,7 @@ func TestRecordPlanView(t *testing.T) {
 func TestRecordPropose(t *testing.T) {
 	rc, h := recorder(t)
 	s := written(rc.plan.Sheets[1])
-	rec, _ := call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: 2, Strokes: s.Strokes, Erasures: s.Erasures})
+	rec, _ := call(t, h, "POST", "/api/record/propose", proposal(t, 2, s))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("propose = %d %s", rec.Code, rec.Body)
 	}
@@ -247,33 +360,41 @@ func TestRecordPropose(t *testing.T) {
 	if err := json.Unmarshal(rec.Body.Bytes(), &p); err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(p.Lines, s.Lines) || !reflect.DeepEqual(p.Expected, s.Expected) || len(p.Differences) != 0 {
+	if !reflect.DeepEqual(p.Lines, numbered(s).Lines) || !reflect.DeepEqual(p.Expected, s.Expected) || len(p.Differences) != 0 {
 		t.Errorf("the proposal = %+v, want the plan's markup on the strokes of each line", p)
 	}
 
-	stray := sample.Stroke{ID: "s-stray", Points: []sample.Point{{X: 500, Y: 560, TMs: 9000, Pressure: 0.5}}}
-	_, out := call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: 2, Strokes: append(slices.Clone(s.Strokes), stray)})
+	stray := sample.Stroke{ID: "s-stray", Points: []sample.Point{{X: 500, Y: 560, TMs: 9000}}}
+	withStray := &sample.Sample{Strokes: append(slices.Clone(s.Strokes), stray)}
+	_, out := call(t, h, "POST", "/api/record/propose", proposal(t, 2, withStray))
 	if lines := out["lines"].([]any); len(lines) != 5 || lines[4].(map[string]any)["text"] != "" {
 		t.Errorf("lines with a stray stroke = %v, want a fifth line without a text", lines)
 	}
 	noted(t, out["differences"], "sample.lines", "the sheet has 5 lines, and its plan sheet 4: a stray stroke")
 
-	erased := []sample.Erasure{{TMs: 9100, Strokes: []string{"s-stray"}}}
-	_, out = call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: 2, Strokes: append(slices.Clone(s.Strokes), stray), Erasures: erased})
+	withStray.Erasures = []sample.Erasure{{TMs: 9100, Strokes: []string{"s-stray"}}}
+	_, out = call(t, h, "POST", "/api/record/propose", proposal(t, 2, withStray))
 	if lines := out["lines"].([]any); len(lines) != 4 || len(out["differences"].([]any)) != 0 {
 		t.Errorf("the proposal with the stray stroke erased = %v, want the plan's four lines", out)
 	}
 
-	_, out = call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: 2, Strokes: s.Strokes[:9]})
+	_, out = call(t, h, "POST", "/api/record/propose", proposal(t, 2, &sample.Sample{Strokes: s.Strokes[:9]}))
 	noted(t, out["differences"], "sample.lines", "the sheet has 3 lines, and its plan sheet 4: a long stroke may join two lines")
-	_, out = call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: 2})
+	_, out = call(t, h, "POST", "/api/record/propose", proposal(t, 2, &sample.Sample{}))
 	noted(t, out["differences"], "sample.lines", "the sheet has no lines yet")
 
-	rec, out = call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: 4})
+	rec, out = call(t, h, "POST", "/api/record/propose", proposal(t, 4, s))
 	if rec.Code != http.StatusUnprocessableEntity {
 		t.Errorf("a proposal for no sheet = %d, want 422", rec.Code)
 	}
 	noted(t, out["problems"], "number", "4 is not a sheet of the plan, 1…3")
+	for _, body := range []any{map[string]any{"number": 2}, map[string]any{"number": 2, "history": map[string]any{"events": []any{map[string]any{"t_ms": 1, "colour": "red"}}}}} {
+		rec, out = call(t, h, "POST", "/api/record/propose", body)
+		if rec.Code != http.StatusUnprocessableEntity {
+			t.Errorf("a proposal of %v = %d, want 422", body, rec.Code)
+		}
+		noted(t, out["problems"], "history", "")
+	}
 }
 
 // For each erasure the board names the line most of its strokes stood on. On a sheet with a planned
@@ -285,7 +406,7 @@ func TestRecordProposeErasures(t *testing.T) {
 	sh := rc.plan.Sheets[2]
 	propose := func(s *sample.Sample, undone ...bool) (Proposal, map[string]any) {
 		t.Helper()
-		rec, out := call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: sh.Number, Strokes: s.Strokes, Erasures: s.Erasures, Undone: undone})
+		rec, out := call(t, h, "POST", "/api/record/propose", proposal(t, sh.Number, s, undone...))
 		var p Proposal
 		if err := json.Unmarshal(rec.Body.Bytes(), &p); err != nil || rec.Code != http.StatusOK {
 			t.Fatalf("propose = %d %s", rec.Code, rec.Body)
@@ -296,7 +417,7 @@ func TestRecordProposeErasures(t *testing.T) {
 	// the answer to a check.
 	erasureLines := func(s *sample.Sample) []int {
 		t.Helper()
-		_, out := call(t, h, "POST", "/api/record/check", saveBody(sh.Number, raw(t, s)))
+		_, out := call(t, h, "POST", "/api/record/check", saving(t, sh.Number, s))
 		var got []int
 		for _, n := range out["erasure_lines"].([]any) {
 			got = append(got, int(n.(float64)))
@@ -335,7 +456,7 @@ func TestRecordProposeErasures(t *testing.T) {
 			id string
 			y  float64
 		}{{"x1", 50}, {"x2", 52}, {"y1", 140}, {"y2", 142}, {"z1", 54}, {"z2", 56}, {"z3", 58}} {
-			s.Strokes = append(s.Strokes, sample.Stroke{ID: st.id, Points: []sample.Point{{X: 700, Y: st.y, TMs: at, Pressure: 0.5}}})
+			s.Strokes = append(s.Strokes, sample.Stroke{ID: st.id, Points: []sample.Point{{X: 700, Y: st.y, TMs: at}}})
 			at += 100
 		}
 		for _, m := range moves {
@@ -374,7 +495,7 @@ func TestRecordProposeErasures(t *testing.T) {
 	// A sheet without a planned erasure: its slips have lines, and nothing is planned.
 	plain := slip(erasing(written(rc.plan.Sheets[1]), sh), "s-low", 560)
 	plain.Erasures[0].Planned = nil
-	_, out = call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: 2, Strokes: plain.Strokes, Erasures: plain.Erasures})
+	_, out = call(t, h, "POST", "/api/record/propose", proposal(t, 2, plain))
 	if out["planned"] != nil || len(out["differences"].([]any)) != 0 {
 		t.Errorf("the proposal for sheet 2 = %v, want nothing planned and nothing named", out)
 	}
@@ -385,24 +506,16 @@ func TestRecordSaveErasure(t *testing.T) {
 	rc, h := recorder(t)
 	sh := rc.plan.Sheets[2]
 	s := slip(erasing(written(sh), sh), "s-low", 560)
-	rec, out := call(t, h, "POST", "/api/record/save", saveBody(3, raw(t, s)))
+	rec, out := call(t, h, "POST", "/api/record/save", saving(t, 3, s))
 	if rec.Code != http.StatusOK || out["file"] != "03-20261026-101530-123-synthetic-calculation-01-erasure-fixed.json" || len(out["differences"].([]any)) != 0 {
 		t.Fatalf("save = %d %v, want the file of sheet 3 without differences", rec.Code, out)
 	}
-	data, err := os.ReadFile(filepath.Join(rc.dir, out["file"].(string)))
-	if err != nil {
-		t.Fatal(err)
-	}
-	back, err := sample.ReadSample(bytes.NewReader(data))
-	if err == nil {
-		err = back.CheckWithBank(rc.bank)
-	}
-	if err != nil || !reflect.DeepEqual(back, s) {
-		t.Errorf("the saved file = %v; want the sample sent, passing the check with the bank", err)
+	if _, back := readSaved(t, rc, out["file"].(string), &sh); !reflect.DeepEqual(back, numbered(s)) {
+		t.Errorf("the saved file reads as %+v; want the sheet sent, its planned erasure the plan's", back)
 	}
 
 	s.Erasures[0].Planned = &sample.PlannedErasure{Line: 2, Erased: sample.ErasedMistake, Text: "57"}
-	rec, out = call(t, h, "POST", "/api/record/save", saveBody(3, raw(t, s)))
+	rec, out = call(t, h, "POST", "/api/record/save", saving(t, 3, s))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("save = %d %s", rec.Code, rec.Body)
 	}
@@ -420,7 +533,7 @@ func TestRecordSaveErasure(t *testing.T) {
 func TestRecordSave(t *testing.T) {
 	rc, h := recorder(t)
 	s := written(rc.plan.Sheets[1])
-	rec, out := call(t, h, "POST", "/api/record/save", saveBody(2, raw(t, s)))
+	rec, out := call(t, h, "POST", "/api/record/save", saving(t, 2, s))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("save = %d %s", rec.Code, rec.Body)
 	}
@@ -433,24 +546,33 @@ func TestRecordSave(t *testing.T) {
 	if err != nil || info.Mode().Perm() != 0o600 {
 		t.Fatalf("the saved file: %v, %v; want it readable by its owner alone", info, err)
 	}
-	data, err := os.ReadFile(path)
+	// A person's sample of measurement, the author's, by a new ID and the author's writer's code,
+	// whose strokes are those sent, by the pointer that wrote them, and whose markup is the sheet's.
+	es, back := readSaved(t, rc, first, &rc.plan.Sheets[1])
+	code, err := os.ReadFile(rc.code)
 	if err != nil {
 		t.Fatal(err)
 	}
-	back, err := sample.ReadSample(bytes.NewReader(data))
-	if err != nil {
-		t.Fatalf("the saved file does not read back: %v", err)
+	if es.GetPerson() == nil || es.GetWriter() != evalv1.Writer_WRITER_ADULT || es.GetPurpose() != evalv1.Purpose_PURPOSE_MEASUREMENT || es.GetId() != "test-sample-1" ||
+		es.GetWriterCode()+"\n" != string(code) || es.GetCanvasVersion() != evalsample.CanvasVersion || es.GetTextSetVersion() != evalsample.TextSetVersion {
+		t.Errorf("the saved sample is %v by %v, ID %q, code %q (the file's %q), canvas %q, texts %q; want the author's sample of measurement", es.GetOrigin(), es.GetWriter(), es.GetId(), es.GetWriterCode(), code, es.GetCanvasVersion(), es.GetTextSetVersion())
 	}
-	if err := back.CheckWithBank(rc.bank); err != nil || !reflect.DeepEqual(back, s) {
-		t.Errorf("the saved file = %v, %+v; want the sample sent, passing the check with the bank", err, back)
+	if p := es.GetHistory().GetEvents()[0].GetWrite().GetPointer(); p != "mouse" {
+		t.Errorf("the first stroke's pointer = %q, want the one sent", p)
+	}
+	if !reflect.DeepEqual(back, numbered(s)) {
+		t.Errorf("the saved file reads as %+v; want the sheet sent", back)
 	}
 
-	rec, out = call(t, h, "POST", "/api/record/save", saveBody(2, raw(t, s)))
+	rec, out = call(t, h, "POST", "/api/record/save", saving(t, 2, s))
 	if rec.Code != http.StatusOK || out["file"] != "02-20261026-101530-124-synthetic-linear-01-error.json" || out["saved"].(float64) != 2 {
 		t.Errorf("the second save = %d %v, want a second file a millisecond later", rec.Code, out)
 	}
 	if names := files(t, rc.dir); len(names) != 2 || !slices.IsSorted(names) || names[1] != out["file"] {
 		t.Errorf("the directory holds %q, want the second save last by name", names)
+	}
+	if es, _ := readSaved(t, rc, out["file"].(string), &rc.plan.Sheets[1]); es.GetId() != "test-sample-2" || es.GetWriterCode()+"\n" != string(code) {
+		t.Errorf("the second sample: ID %q, code %q; want a new ID and the same code", es.GetId(), es.GetWriterCode())
 	}
 }
 
@@ -458,31 +580,31 @@ func TestRecordSave(t *testing.T) {
 // sheet, and it writes nothing.
 func TestRecordCheck(t *testing.T) {
 	rc, h := recorder(t)
-	check := func(number int, s string) (int, map[string]any) {
+	check := func(number int, s *sample.Sample) (int, map[string]any) {
 		t.Helper()
-		rec, out := call(t, h, "POST", "/api/record/check", saveBody(number, s))
+		rec, out := call(t, h, "POST", "/api/record/check", saving(t, number, s))
 		return rec.Code, out
 	}
 	good := written(rc.plan.Sheets[1])
-	if code, out := check(2, raw(t, good)); code != http.StatusOK || len(out["problems"].([]any)) != 0 || len(out["differences"].([]any)) != 0 {
+	if code, out := check(2, good); code != http.StatusOK || len(out["problems"].([]any)) != 0 || len(out["differences"].([]any)) != 0 {
 		t.Errorf("a check of a good sheet = %d %v, want neither problems nor differences", code, out)
 	}
 	good.Lines[1].Text = "3x = 7 - 1"
-	code, out := check(2, raw(t, good))
+	code, out := check(2, good)
 	noted(t, out["differences"], "sample.lines[1].text", `is "3x = 7 - 1", and the plan sheet's line 2 is "3x = 7 + 1"`)
 	if code != http.StatusOK || len(out["problems"].([]any)) != 0 {
 		t.Errorf("a check of a sheet off its plan = %d %v, want its differences only", code, out)
 	}
 	broken := written(rc.plan.Sheets[1])
 	broken.Lines[3].Answer = false
-	code, out = check(2, raw(t, broken))
+	code, out = check(2, broken)
 	noted(t, out["problems"], "sample.lines", "one line is the answer, not 0")
 	if code != http.StatusOK || len(out["differences"].([]any)) != 0 {
 		t.Errorf("a check of a broken sheet = %d %v, want its problems only", code, out)
 	}
 	_, out = call(t, h, "POST", "/api/record/check", map[string]any{"number": 2})
-	noted(t, out["problems"], "sample", "is missing")
-	if rec, out := call(t, h, "POST", "/api/record/check", saveBody(7, raw(t, good))); rec.Code != http.StatusUnprocessableEntity {
+	noted(t, out["problems"], "history", "is missing")
+	if rec, out := call(t, h, "POST", "/api/record/check", saving(t, 7, good)); rec.Code != http.StatusUnprocessableEntity {
 		t.Errorf("a check of no sheet = %d %v, want 422", rec.Code, out)
 	}
 	if names := files(t, rc.dir); len(names) != 0 {
@@ -498,7 +620,7 @@ func TestRecordCheckErasureLines(t *testing.T) {
 	sh := rc.plan.Sheets[2]
 	lineOf := func(s *sample.Sample) string {
 		t.Helper()
-		_, out := call(t, h, "POST", "/api/record/check", saveBody(sh.Number, raw(t, s)))
+		_, out := call(t, h, "POST", "/api/record/check", saving(t, sh.Number, s))
 		return fmt.Sprint(out["erasure_lines"])
 	}
 	s := slip(erasing(written(sh), sh), "s-low", 560)
@@ -510,12 +632,12 @@ func TestRecordCheckErasureLines(t *testing.T) {
 	between := written(sh)
 	between.Lines[0], between.Lines[1] = between.Lines[1], between.Lines[0]
 	between.Strokes = append(between.Strokes, sample.Stroke{ID: "s-between", Points: []sample.Point{
-		{X: 500, Y: 70, TMs: 90_000, Pressure: 0.5}, {X: 500, Y: 130, TMs: 90_010, Pressure: 0.5}}})
+		{X: 500, Y: 70, TMs: 90_000}, {X: 500, Y: 130, TMs: 90_010}}})
 	between.Erasures = []sample.Erasure{{TMs: 90_100, Strokes: []string{"s-between"}}}
 	if got := lineOf(between); got != "[2]" {
 		t.Errorf("erasure lines = %s, want [2]: the line higher on the sheet", got)
 	}
-	_, out := call(t, h, "POST", "/api/record/check", saveBody(sh.Number, raw(t, between)))
+	_, out := call(t, h, "POST", "/api/record/check", saving(t, sh.Number, between))
 	if len(out["problems"].([]any)) == 0 {
 		t.Errorf("the check of markup with the lines swapped = %v, want its problems too", out)
 	}
@@ -530,52 +652,47 @@ func TestRecordSaveNamesGoOn(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, later), []byte("{}"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	rc, err := NewRecorder(synth.Bank(), recordPlan(), dir)
-	if err != nil {
-		t.Fatal(err)
-	}
-	rc.now = func() time.Time { return time.Date(2026, 10, 26, 10, 15, 30, 0, time.UTC) }
+	rc := newRecorder(t, bankOf(t, "eval/synthetic-bank.json", synth.Bank()), recordPlan(), dir, time.Date(2026, 10, 26, 10, 15, 30, 0, time.UTC))
 	h := rc.Handler(boardAddr)
 	taken := "02-20261026-101531-001-synthetic-linear-01-error.json"
 	if err := os.WriteFile(filepath.Join(dir, taken), []byte("{}"), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	rec, out := call(t, h, "POST", "/api/record/save", saveBody(2, raw(t, written(rc.plan.Sheets[1]))))
+	rec, out := call(t, h, "POST", "/api/record/save", saving(t, 2, written(rc.plan.Sheets[1])))
 	if rec.Code != http.StatusOK || out["file"] != "02-20261026-101531-002-synthetic-linear-01-error.json" {
 		t.Errorf("save = %d %v, want a name after the latest file and past the taken one", rec.Code, out)
 	}
 }
 
-// Every sheet that does not pass the format's strict reader, its plan sheet or the bank is
-// refused with every problem at its path in the request, and nothing is written.
+// Every sheet whose history cannot be read, that does not pass its own check, its plan sheet or the
+// bank, or that shows a stroke in no line, is refused with every problem at its path in the request,
+// and nothing is written.
 func TestRecordSaveRefuses(t *testing.T) {
 	rc, h := recorder(t)
-	correct := raw(t, written(rc.plan.Sheets[0]))
-	withError := raw(t, written(rc.plan.Sheets[1]))
-	edit := func(s *sample.Sample, change func(s *sample.Sample)) string {
+	edit := func(number int, change func(s *sample.Sample)) SaveRequest {
+		s := written(rc.plan.Sheets[number-1])
 		change(s)
-		return raw(t, s)
+		return saving(t, number, s)
 	}
+	stray := edit(1, func(s *sample.Sample) {
+		s.Strokes = append(s.Strokes, sample.Stroke{ID: "s-stray", Points: []sample.Point{{X: 500, Y: 560, TMs: 90_000}}})
+	})
+	planned := saving(t, 3, slip(written(rc.plan.Sheets[2]), "s-slip", 560))
+	planned.Markup.Planned = &Planned{Erasure: 1, PlannedErasure: sample.PlannedErasure{Line: 1, Erased: sample.ErasedMistake, Text: "56"}}
 	tests := []struct {
 		name string
 		body any
 		path string
 		want string
 	}{
-		{"a missing pressure", saveBody(1, strings.Replace(correct, `,"pressure":0.4`, "", 1)), "sample.strokes[0].points[0].pressure", "is missing"},
-		{"a field in another case", saveBody(1, strings.Replace(correct, `"pressure":`, `"Pressure":`, 1)), "sample.strokes[0].points[0]", `unknown field "Pressure"`},
-		{"a null", saveBody(1, strings.Replace(correct, `"task":"synthetic-linear-01"`, `"task":null`, 1)), "sample.task", "is null"},
-		{"a field the format does not have", saveBody(1, strings.Replace(correct, `{"format":`, `{"colour":"red","format":`, 1)), "sample", `unknown field "colour"`},
-		{"a sample that is not an object", saveBody(1, `"a sheet"`), "sample", "is not an object"},
-		{"no sample", map[string]any{"number": 1}, "sample", "is missing"},
-		{"a sample its own check refuses", saveBody(1, edit(written(rc.plan.Sheets[0]), func(s *sample.Sample) { s.Lines[0].Answer = true })), "sample.lines", "one line is the answer, not 2"},
-		{"another task", saveBody(1, edit(written(rc.plan.Sheets[0]), func(s *sample.Sample) { s.Task = synth.TaskCalculation })), "sample.task", `but sheet 1 of the plan solves "synthetic-linear-01"`},
-		{"another scenario", saveBody(1, edit(written(rc.plan.Sheets[0]), func(s *sample.Sample) { s.Scenario = sample.ScenarioSimilarDigits })), "sample.scenario", `of the scenario "correct"`},
-		{"another writer", saveBody(1, edit(written(rc.plan.Sheets[0]), func(s *sample.Sample) { s.Writer = sample.WriterAuthorAsChild })), "sample.writer", "in their own hand"},
-		{"another sheet", saveBody(1, edit(written(rc.plan.Sheets[0]), func(s *sample.Sample) { s.Sheet.Height = 1400 })), "sample.sheet", "not the board's 1000 × 600"},
-		{"a trap of another task", saveBody(2, strings.Replace(withError, `"trap":"sign-on-transfer"`, `"trap":"arithmetic"`, 1)), "sample.expected.trap", "not a trap of the task"},
-		{"no such sheet", saveBody(9, correct), "number", "9 is not a sheet of the plan"},
-		{"an erasure scenario without its planned erasure", saveBody(3, raw(t, written(rc.plan.Sheets[2]))), "sample.erasures", "one planned erasure, not 0"},
+		{"no history", map[string]any{"number": 1}, "history", "is missing"},
+		{"a history the protocol does not read", map[string]any{"number": 1, "history": map[string]any{"events": []any{map[string]any{"t_ms": 1, "colour": "red"}}}}, "history", "cannot be read"},
+		{"a sheet its own check refuses", edit(1, func(s *sample.Sample) { s.Lines[0].Answer = true }), "sample.lines", "one line is the answer, not 2"},
+		{"a trap of another task", edit(2, func(s *sample.Sample) { s.Expected.Trap = "arithmetic" }), "sample.expected.trap", "not a trap of the task"},
+		{"a stroke in no line", stray, "sample.lines", "the stroke 10, which the sheet shows, is in no line"},
+		{"no such sheet", saving(t, 9, written(rc.plan.Sheets[0])), "number", "9 is not a sheet of the plan"},
+		{"an erasure scenario without its planned erasure", saving(t, 3, written(rc.plan.Sheets[2])), "sample.erasures", "one planned erasure, not 0"},
+		{"a planned erasure the history has not", planned, "markup.planned.erasure", "1 is no erasure of the history, 0…0"},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -591,13 +708,107 @@ func TestRecordSaveRefuses(t *testing.T) {
 	}
 }
 
+// A sheet that spec's sample-check finds breaking a rule is not saved, and the lines it names are;
+// nothing is left in the directory. A check that cannot run, and a file of the writer's code that
+// holds no code, are server errors.
+func TestRecordSaveHeldToTheRules(t *testing.T) {
+	rc, h := recorder(t)
+	var asked []string
+	rc.rules = func(files []string) (map[string][]int, error) {
+		asked = append(asked, files...)
+		return map[string][]int{files[0]: {3, 7}}, nil
+	}
+	rec, out := call(t, h, "POST", "/api/record/save", saving(t, 1, written(rc.plan.Sheets[0])))
+	if rec.Code != http.StatusUnprocessableEntity || len(asked) != 1 || !strings.HasPrefix(filepath.Base(asked[0]), pending) {
+		t.Errorf("save = %d %s, asked %q; want 422 and the check of a file pending", rec.Code, rec.Body, asked)
+	}
+	noted(t, out["problems"], "sample", "sample-check finds the sample breaks a rule of sections 11 and 12 of spec's text of the contracts, at lines [3 7]")
+	if names := files(t, rc.dir); len(names) != 0 {
+		t.Errorf("a sheet that breaks a rule left %q in the directory", names)
+	}
+	rc.rules = func([]string) (map[string][]int, error) { return map[string][]int{}, nil }
+	if rec, _ := call(t, h, "POST", "/api/record/save", saving(t, 1, written(rc.plan.Sheets[0]))); rec.Code != http.StatusOK {
+		t.Errorf("save of a sheet that keeps the rules = %d %s", rec.Code, rec.Body)
+	}
+	rc.rules = func([]string) (map[string][]int, error) { return nil, os.ErrPermission }
+	if rec, _ := call(t, h, "POST", "/api/record/save", saving(t, 1, written(rc.plan.Sheets[0]))); rec.Code != http.StatusInternalServerError {
+		t.Errorf("save with a check that cannot run = %d %s, want 500", rec.Code, rec.Body)
+	}
+	rc.rules = nil
+	if err := os.WriteFile(rc.code, []byte("not a code\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if rec, out := call(t, h, "POST", "/api/record/save", saving(t, 1, written(rc.plan.Sheets[0]))); rec.Code != http.StatusInternalServerError || !strings.Contains(fmt.Sprint(out["error"]), "holds no writer's code") {
+		t.Errorf("save with a broken file of the code = %d %s, want 500", rec.Code, rec.Body)
+	}
+	if names := files(t, rc.dir); len(names) != 1 {
+		t.Errorf("the directory holds %q, want the one sheet saved", names)
+	}
+}
+
+// The page's history holds what Undo and Clear did as undo and clear, and the board takes neither
+// for a move of the eraser: a sheet whose planned erasure was made by Clear is named, and its saved
+// sample keeps the events as they were sent.
+func TestRecordUndoAndClear(t *testing.T) {
+	rc, h := recorder(t)
+	sh := rc.plan.Sheets[2]
+	s := numbered(slip(erasing(written(sh), sh), "s-slip", 560))
+	raw := historyJSON(t, s, false, true)
+	// The sheet cleared and written again, with no move of the eraser: the clear is no move, and the
+	// sheet is named as one without.
+	again := written(sh)
+	hc, _, err := evalsample.HistoryOf(numbered(again), "pen")
+	if err != nil {
+		t.Fatal(err)
+	}
+	all := []int32{}
+	for i := range again.Strokes {
+		all = append(all, int32(i+1))
+	}
+	events := append([]*evalv1.HistoryEvent{}, hc.GetEvents()...)
+	events = append(events, &evalv1.HistoryEvent{TMs: 50_000, Event: &evalv1.HistoryEvent_Clear{Clear: &evalv1.StrokeIds{Ids: all}}})
+	for _, e := range hc.GetEvents() {
+		w := e.GetWrite()
+		re := &evalv1.Stroke{Id: w.GetId() + int32(len(all)), Pointer: "pen"}
+		for _, p := range w.GetPoints() {
+			re.Points = append(re.Points, &evalv1.InkPoint{X: p.GetX(), Y: p.GetY(), TMs: p.GetTMs() + 60_000})
+		}
+		events = append(events, &evalv1.HistoryEvent{TMs: e.GetTMs() + 60_000, Event: &evalv1.HistoryEvent_Write{Write: re}})
+	}
+	cleared, err := protojson.Marshal(&evalv1.History{Events: events})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, out := call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: sh.Number, History: cleared})
+	noted(t, out["differences"], "sample.erasures", "the sheet has no move of the eraser")
+	if lines := out["lines"].([]any); len(lines) != len(sh.Lines) {
+		t.Errorf("the lines of the sheet written again = %v, want the plan's %d", lines, len(sh.Lines))
+	}
+
+	// Without the clear, the sheet saves, and its sample holds the undo as it was sent.
+	rec, out := call(t, h, "POST", "/api/record/save", SaveRequest{Number: sh.Number, History: raw, Markup: saving(t, sh.Number, s).Markup})
+	if rec.Code != http.StatusOK {
+		t.Fatalf("save = %d %s", rec.Code, rec.Body)
+	}
+	es, _ := readSaved(t, rc, out["file"].(string), &sh)
+	undos := 0
+	for _, e := range es.GetHistory().GetEvents() {
+		if e.GetUndo() != nil {
+			undos++
+		}
+	}
+	if undos != 1 {
+		t.Errorf("the saved history holds %d undos, want the one sent", undos)
+	}
+}
+
 // A sheet whose markup differs from its plan sheet is saved, and the board names the differences.
 func TestRecordSaveNamesDifferences(t *testing.T) {
 	rc, h := recorder(t)
 	s := written(rc.plan.Sheets[1])
 	s.Expected.FirstError = intp(3)
 	s.Lines[2].Text = "3x = 9"
-	rec, out := call(t, h, "POST", "/api/record/save", saveBody(2, raw(t, s)))
+	rec, out := call(t, h, "POST", "/api/record/save", saving(t, 2, s))
 	if rec.Code != http.StatusOK {
 		t.Fatalf("save = %d %s", rec.Code, rec.Body)
 	}
@@ -634,18 +845,17 @@ func TestDifferences(t *testing.T) {
 }
 
 // What a pen can give is saved: points at one millisecond, a stroke that starts as the last one
-// ends, a stroke of one point, points on the edge of the sheet, and the pressures 0 and 1.
+// ends, a stroke of one point, and points on the edge of the sheet.
 func TestRecordSaveEdgeCases(t *testing.T) {
 	rc, h := recorder(t)
 	s := written(rc.plan.Sheets[0])
 	first := &s.Strokes[0]
 	first.Points[1].TMs = first.Points[0].TMs
-	first.Points[0].Pressure, first.Points[1].Pressure = 0, 1
 	s.Strokes[1].Points[0].TMs = first.Points[2].TMs
 	s.Strokes[2].Points = s.Strokes[2].Points[:1]
 	last := s.Strokes[len(s.Strokes)-1].Points
 	last[0].X, last[0].Y, last[len(last)-1].X, last[len(last)-1].Y = 0, 0, sheetWidth, sheetHeight
-	rec, _ := call(t, h, "POST", "/api/record/save", saveBody(1, raw(t, s)))
+	rec, _ := call(t, h, "POST", "/api/record/save", saving(t, 1, s))
 	if rec.Code != http.StatusOK {
 		t.Errorf("save = %d %s, want the sheet saved", rec.Code, rec.Body)
 	}
@@ -661,7 +871,7 @@ func TestRecordSaveCannotWrite(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = os.Chmod(rc.dir, 0o700) })
-	rec, out := call(t, h, "POST", "/api/record/save", saveBody(1, raw(t, written(rc.plan.Sheets[0]))))
+	rec, out := call(t, h, "POST", "/api/record/save", saving(t, 1, written(rc.plan.Sheets[0])))
 	if rec.Code != http.StatusInternalServerError || !strings.Contains(fmt.Sprint(out["error"]), "the sheet is not saved") {
 		t.Errorf("save = %d %s, want 500", rec.Code, rec.Body)
 	}
@@ -675,7 +885,7 @@ func TestRecordSaveCannotWrite(t *testing.T) {
 func TestRecordGuards(t *testing.T) {
 	rc, h := recorder(t)
 	body := func() *bytes.Reader {
-		data, _ := json.Marshal(saveBody(1, raw(t, written(rc.plan.Sheets[0]))))
+		data, _ := json.Marshal(saving(t, 1, written(rc.plan.Sheets[0])))
 		return bytes.NewReader(data)
 	}
 	send := func(host, origin, contentType string, r *bytes.Reader) *httptest.ResponseRecorder {
@@ -698,7 +908,7 @@ func TestRecordGuards(t *testing.T) {
 		{"another site's page", boardAddr, "https://evil.example", "application/json", body(), http.StatusForbidden},
 		{"a rebound domain", "evil.example:8080", "", "application/json", body(), http.StatusForbidden},
 		{"a form without a preflight", boardAddr, "", "text/plain", body(), http.StatusUnsupportedMediaType},
-		{"a request too large", boardAddr, "", "application/json", bytes.NewReader(append([]byte(`{"number":1,"sample":"`), bytes.Repeat([]byte("A"), maxBody)...)), http.StatusRequestEntityTooLarge},
+		{"a request too large", boardAddr, "", "application/json", bytes.NewReader(append([]byte(`{"number":1,"history":"`), bytes.Repeat([]byte("A"), maxBody)...)), http.StatusRequestEntityTooLarge},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -735,7 +945,7 @@ func TestNewRecorderRefuses(t *testing.T) {
 			tt.change(plan)
 			bank := synth.Bank()
 			bank.Tasks = append(bank.Tasks, sample.Task{ID: "../x"})
-			if _, err := NewRecorder(bank, plan, t.TempDir()); err == nil || !strings.Contains(err.Error(), tt.want) {
+			if _, err := NewRecorder(&evalsample.Bank{Bank: bank}, plan, t.TempDir(), filepath.Join(t.TempDir(), "writer-code"), nil); err == nil || !strings.Contains(err.Error(), tt.want) {
 				t.Errorf("NewRecorder = %v, want an error holding %q", err, tt.want)
 			}
 		})
@@ -779,11 +989,7 @@ func partsRecorder(t *testing.T, planPath string) (*Recorder, http.Handler) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	rc, err := NewRecorder(bank, plan, t.TempDir())
-	if err != nil {
-		t.Fatal(err)
-	}
-	rc.now = func() time.Time { return time.Date(2026, 10, 27, 18, 0, 0, 0, time.UTC) }
+	rc := newRecorder(t, bankOf(t, "eval/free-bank.json", bank), plan, t.TempDir(), time.Date(2026, 10, 27, 18, 0, 0, 0, time.UTC))
 	return rc, rc.Handler(boardAddr)
 }
 
@@ -829,7 +1035,7 @@ func TestRecordProposeParts(t *testing.T) {
 		for _, seed := range []uint64{1, 2, 77} {
 			t.Run(fmt.Sprintf("sheet %d seed %d", sh.Number, seed), func(t *testing.T) {
 				ran++
-				s := synth.Sheet(&sh, seed)
+				s := numbered(synth.Sheet(&sh, seed))
 				undone := make([]bool, len(s.Erasures))
 				planned := -1
 				for i, e := range s.Erasures {
@@ -838,7 +1044,7 @@ func TestRecordProposeParts(t *testing.T) {
 						planned = i
 					}
 				}
-				rec, proposed := call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: sh.Number, Strokes: s.Strokes, Erasures: s.Erasures, Undone: undone})
+				rec, proposed := call(t, h, "POST", "/api/record/propose", proposal(t, sh.Number, s, undone...))
 				var p Proposal
 				if err := json.Unmarshal(rec.Body.Bytes(), &p); err != nil || rec.Code != http.StatusOK {
 					t.Fatalf("propose = %d %s", rec.Code, rec.Body)
@@ -894,13 +1100,13 @@ func TestRecordProposeParts(t *testing.T) {
 				}
 
 				s.Writer = sample.WriterAuthor
-				_, out := call(t, h, "POST", "/api/record/check", saveBody(sh.Number, raw(t, s)))
+				_, out := call(t, h, "POST", "/api/record/check", saving(t, sh.Number, s, undone...))
 				if sh.Erasure != nil {
 					if got := out["erasure_lines"].([]any); int(got[planned].(float64)) != sh.Erasure.Line {
 						t.Errorf("erasure lines = %v, want the planned one on part %d", got, sh.Erasure.Line)
 					}
 				}
-				rec, out = call(t, h, "POST", "/api/record/save", saveBody(sh.Number, raw(t, s)))
+				rec, out = call(t, h, "POST", "/api/record/save", saving(t, sh.Number, s, undone...))
 				if rec.Code != http.StatusOK || len(out["differences"].([]any)) != 0 {
 					t.Errorf("save = %d %v, want the sheet saved without differences", rec.Code, out)
 				}
@@ -927,28 +1133,28 @@ func TestRecordProposePartsNames(t *testing.T) {
 			kept = append(kept, st)
 		}
 	}
-	_, out := call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: sh.Number, Strokes: kept, Erasures: s.Erasures})
+	_, out := call(t, h, "POST", "/api/record/propose", proposal(t, sh.Number, &sample.Sample{Strokes: kept, Erasures: s.Erasures}))
 	noted(t, out["differences"], "sample.lines", fmt.Sprintf("the sheet has %d parts, and its plan sheet %d: two parts written close together without a pause come as one group", len(sh.Lines)-1, len(sh.Lines)))
-	_, out = call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: sh.Number})
+	_, out = call(t, h, "POST", "/api/record/propose", proposal(t, sh.Number, &sample.Sample{}))
 	noted(t, out["differences"], "sample.lines", "the sheet has no parts yet")
 
 	// A planned erasure on a sheet without a move of the eraser is named on its part.
 	first := rc.plan.Sheets[6] // sheet 7, the number line with an arc erased
 	drawn := synth.Sheet(&first, 1)
-	_, out = call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: first.Number, Strokes: drawn.Strokes})
+	_, out = call(t, h, "POST", "/api/record/propose", proposal(t, first.Number, &sample.Sample{Strokes: drawn.Strokes}))
 	noted(t, out["differences"], "sample.erasures", fmt.Sprintf("its plan sheet plans an erasure on part %d", first.Erasure.Line))
 
 	// Two moves of the eraser on its parts: the one that took more strokes is taken, whatever group
 	// they stood on, and the sheet is named, as the planned erasure is one move.
 	slipID := drawn.Lines[len(drawn.Lines)-1].Strokes[0]
-	moves := append(slices.Clone(drawn.Erasures), sample.Erasure{TMs: 1 << 40, Strokes: []string{slipID}})
-	rec, out := call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: first.Number, Strokes: drawn.Strokes, Erasures: moves})
+	moves := append(slices.Clone(drawn.Erasures), sample.Erasure{TMs: 1 << 30, Strokes: []string{slipID}})
+	rec, out := call(t, h, "POST", "/api/record/propose", proposal(t, first.Number, &sample.Sample{Strokes: drawn.Strokes, Erasures: moves}))
 	var p Proposal
 	if err := json.Unmarshal(rec.Body.Bytes(), &p); err != nil || p.Planned == nil || *p.Planned != 0 {
 		t.Errorf("planned = %v (%v), want the first move, which took more strokes", p.Planned, err)
 	}
 	noted(t, out["differences"], "sample.erasures", "2 moves of the eraser took strokes from the parts of the sheet, and the planned erasure is one move")
-	if p, _ := call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: first.Number, Strokes: drawn.Strokes, Erasures: moves, Undone: []bool{false, true}}); p.Code != http.StatusOK || strings.Contains(p.Body.String(), "moves of the eraser") {
+	if p, _ := call(t, h, "POST", "/api/record/propose", proposal(t, first.Number, &sample.Sample{Strokes: drawn.Strokes, Erasures: moves}, false, true)); p.Code != http.StatusOK || strings.Contains(p.Body.String(), "moves of the eraser") {
 		t.Errorf("with the second by Undo = %d %s, want nothing named", p.Code, p.Body)
 	}
 }
@@ -964,7 +1170,7 @@ func TestRecordAuthorFree(t *testing.T) {
 		if code.Task != sh.Task {
 			t.Fatalf("sheet %d of code solves %q, and the author's sheet %d %q", code.Number, code.Task, sh.Number, sh.Task)
 		}
-		s := synth.Sheet(&code, 1)
+		s := numbered(synth.Sheet(&code, 1))
 		visible := map[string]bool{}
 		for _, l := range s.Lines {
 			for _, id := range l.Strokes {
@@ -984,7 +1190,7 @@ func TestRecordAuthorFree(t *testing.T) {
 		if len(undone) > 0 {
 			undone[0] = true
 		}
-		rec, out := call(t, h, "POST", "/api/record/propose", ProposeRequest{Number: sh.Number, Strokes: s.Strokes, Erasures: s.Erasures, Undone: undone})
+		rec, out := call(t, h, "POST", "/api/record/propose", proposal(t, sh.Number, s, undone...))
 		var p Proposal
 		if err := json.Unmarshal(rec.Body.Bytes(), &p); err != nil || rec.Code != http.StatusOK {
 			t.Fatalf("propose = %d %s", rec.Code, rec.Body)
@@ -996,9 +1202,87 @@ func TestRecordAuthorFree(t *testing.T) {
 
 		s.Task, s.Scenario, s.Writer, s.Expected = sh.Task, sh.Scenario, sample.WriterAuthor, sh.Expected
 		s.Lines = p.Lines
-		rec, out = call(t, h, "POST", "/api/record/save", saveBody(sh.Number, raw(t, s)))
+		rec, out = call(t, h, "POST", "/api/record/save", saving(t, sh.Number, s, undone...))
 		if rec.Code != http.StatusOK || len(out["differences"].([]any)) != 0 {
 			t.Errorf("sheet %d: save = %d %v, want it saved without differences", sh.Number, rec.Code, out)
 		}
 	}
+}
+
+// A history that writes nothing, and markup without lines, are what the sheet's own check names.
+func TestRecordSaveNothing(t *testing.T) {
+	rc, h := recorder(t)
+	rec, out := call(t, h, "POST", "/api/record/save", map[string]any{"number": 1, "history": map[string]any{}, "markup": map[string]any{"lines": nil, "expected": map[string]any{"outcome": "correct", "first_error": nil, "trap": ""}, "planned": nil}})
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Errorf("save of nothing = %d %s", rec.Code, rec.Body)
+	}
+	noted(t, out["problems"], "sample.strokes", "are missing")
+	body := saving(t, 1, written(rc.plan.Sheets[0]))
+	body.Markup.Lines[0].Strokes = nil
+	if _, out := call(t, h, "POST", "/api/record/check", body); len(out["problems"].([]any)) == 0 {
+		t.Errorf("a line without strokes = %v, want its problems", out)
+	}
+}
+
+// On the author's free solution, one part, a stroke in no part is named as of a part, and markup
+// whose truth the protocol cannot take — a sheet marked correct whose text names another answer
+// than the key's — is refused, and nothing is saved.
+func TestRecordSaveFreeSolution(t *testing.T) {
+	codeRec, _ := partsRecorder(t, freePlan)
+	rc, h := partsRecorder(t, authorPlan)
+	sh := rc.plan.Sheets[0]
+	code := codeRec.plan.Sheets[6] // a sheet of code of the same task, grasshopper
+	s := synth.Sheet(&code, 1)
+	var ids []string
+	for _, l := range s.Lines {
+		ids = append(ids, l.Strokes...)
+	}
+	order := map[string]int{}
+	for i, st := range s.Strokes {
+		order[st.ID] = i
+	}
+	slices.SortFunc(ids, func(a, b string) int { return order[a] - order[b] })
+	for i := range s.Erasures {
+		s.Erasures[i].Planned = nil
+	}
+	s.Task, s.Scenario, s.Writer, s.Expected = sh.Task, sh.Scenario, sample.WriterAuthor, sh.Expected
+	s.Lines = []sample.Line{{Text: "свободное решение — ответ 12", Strokes: ids, Answer: true}}
+	rec, out := call(t, h, "POST", "/api/record/save", saving(t, sh.Number, s))
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Errorf("save = %d %s, want 422", rec.Code, rec.Body)
+	}
+	noted(t, out["problems"], "sample", "marked correct, and its markup names the answer 12, not the key's 10")
+
+	stray := *s
+	stray.Strokes = append(slices.Clone(s.Strokes), sample.Stroke{ID: "s-stray", Points: []sample.Point{{X: 990, Y: 590, TMs: 1 << 30}}})
+	_, out = call(t, h, "POST", "/api/record/check", saving(t, sh.Number, &stray))
+	noted(t, out["problems"], "sample.lines", "is in no part")
+	if names := files(t, rc.dir); len(names) != 0 {
+		t.Errorf("refused sheets left %q", names)
+	}
+}
+
+// The sample keeps no pick of the planned erasure, so the board holds the author's pick to the one
+// the runner takes, the last move of the eraser on the plan's line: a pick of an earlier move there is
+// refused, and an Undo there after it is a slip, which the runner passes by too.
+func TestRecordSavePlannedAsTheRunner(t *testing.T) {
+	rc, h := recorder(t)
+	sh := rc.plan.Sheets[2]
+	two := slip(erasing(written(sh), sh), "s-again", 50)
+	rec, out := call(t, h, "POST", "/api/record/save", saving(t, 3, two))
+	if rec.Code != http.StatusUnprocessableEntity {
+		t.Errorf("save with an earlier move picked = %d %s, want 422", rec.Code, rec.Body)
+	}
+	noted(t, out["problems"], "markup.planned.erasure", "is erasure 1, and the runner takes for the planned erasure the last move of the eraser on line 1 of the plan, erasure 2")
+	rec, out = call(t, h, "POST", "/api/record/save", saving(t, 3, two, false, true))
+	if rec.Code != http.StatusOK {
+		t.Fatalf("save with the later one by Undo = %d %s", rec.Code, rec.Body)
+	}
+	if _, back := readSaved(t, rc, out["file"].(string), &sh); back.Erasures[0].Planned == nil || back.Erasures[1].Planned != nil {
+		t.Errorf("the runner takes %+v for the planned erasure, want the move of the eraser, not the Undo", back.Erasures)
+	}
+	elsewhere := slip(written(sh), "s-low", 560)
+	elsewhere.Erasures[0].Planned = &sample.PlannedErasure{Line: 1, Erased: sample.ErasedMistake, Text: "56"}
+	_, out = call(t, h, "POST", "/api/record/check", saving(t, 3, elsewhere))
+	noted(t, out["problems"], "markup.planned.erasure", "no move took strokes from there")
 }

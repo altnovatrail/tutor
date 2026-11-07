@@ -193,7 +193,7 @@ func TestText(t *testing.T) {
 		}
 	}
 	for _, c := range []struct{ what, got, want string }{
-		{"strokes", fmt.Sprintf("%x", sha256.Sum256(data)), "d918953ef2ae6ac6f27436bd7be4054cdc2b21688ef8847939af9b7353de5015"},
+		{"strokes", fmt.Sprintf("%x", sha256.Sum256(data)), "45a84b9020ebd1bfae44f74f604c58e392781e8f36ec342f420c5787a9eb5f81"},
 		{"picture", fmt.Sprintf("%x", sha256.Sum256(img.Pix)), "9da2a0651616effadada1fa60d3ba4b1536d58eea0907372070b02663804e803"},
 	} {
 		if c.got != c.want {

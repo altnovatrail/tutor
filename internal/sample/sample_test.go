@@ -5,27 +5,12 @@ import (
 	"encoding/json"
 	"errors"
 	"reflect"
-	"regexp"
 	"strings"
 	"testing"
 
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/synth"
 )
-
-// roundTripSample writes a sample as JSON and reads it back with the package's reader.
-func roundTripSample(t *testing.T, s *sample.Sample) *sample.Sample {
-	t.Helper()
-	data, err := sample.Marshal(s)
-	if err != nil {
-		t.Fatalf("Marshal: %v", err)
-	}
-	got, err := sample.ReadSample(bytes.NewReader(data))
-	if err != nil {
-		t.Fatalf("ReadSample: %v", err)
-	}
-	return got
-}
 
 func TestSyntheticSamplesOfEveryScenario(t *testing.T) {
 	bank := synth.Bank()
@@ -38,11 +23,10 @@ func TestSyntheticSamplesOfEveryScenario(t *testing.T) {
 			if s.Scenario != sample.Scenarios[i] {
 				t.Fatalf("sample %d is of the scenario %q, want %q", i, s.Scenario, sample.Scenarios[i])
 			}
-			got := roundTripSample(t, s)
-			if !reflect.DeepEqual(got, s) {
-				t.Errorf("the sample read back differs from the one written")
+			if err := s.Check(); err != nil {
+				t.Errorf("Check: %v", err)
 			}
-			if err := got.CheckWithBank(bank); err != nil {
+			if err := s.CheckWithBank(bank); err != nil {
 				t.Errorf("CheckWithBank: %v", err)
 			}
 		})
@@ -129,7 +113,6 @@ func TestCheckRefusesBrokenSamples(t *testing.T) {
 		{"a stroke without points", sample.ScenarioCorrect, func(s *sample.Sample) { s.Strokes[2].Points = nil }, "strokes[2].points", "are missing"},
 		{"a point off the sheet", sample.ScenarioCorrect, func(s *sample.Sample) { s.Strokes[0].Points[0].X = 5000 }, "strokes[0].points[0]", "off the sheet"},
 		{"a negative time", sample.ScenarioCorrect, func(s *sample.Sample) { s.Strokes[0].Points[0].TMs = -1 }, "strokes[0].points[0].t_ms", "below 0"},
-		{"pressure above 1", sample.ScenarioCorrect, func(s *sample.Sample) { s.Strokes[0].Points[1].Pressure = 1.5 }, "strokes[0].points[1].pressure", "from 0 to 1"},
 		{"time going back in a stroke", sample.ScenarioCorrect, func(s *sample.Sample) { s.Strokes[0].Points[2].TMs = 0 }, "strokes[0].points[2].t_ms", "goes back"},
 		{"strokes out of order", sample.ScenarioCorrect, func(s *sample.Sample) { s.Strokes[0], s.Strokes[1] = s.Strokes[1], s.Strokes[0] }, "strokes[1]", "order they were written"},
 		{"erasing an unknown stroke", sample.ScenarioErasureFixed, func(s *sample.Sample) { s.Erasures[0].Strokes[0] = "s-9999" }, "erasures[0].strokes[0]", "not a stroke"},
@@ -189,40 +172,6 @@ func TestCheckRefusesBrokenSamples(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			s := edit(t, tt.scenario, tt.change)
 			wantProblem(t, s.Check(), tt.path, tt.want)
-			// The reader refuses the file the same way.
-			data, err := sample.Marshal(s)
-			if err != nil {
-				t.Fatal(err)
-			}
-			if _, err := sample.ReadSample(bytes.NewReader(data)); err == nil {
-				t.Error("ReadSample took the broken sample")
-			}
-		})
-	}
-}
-
-func TestReadSampleRefusesWhatJSONCannotHold(t *testing.T) {
-	good, err := sample.Marshal(synth.Sample(sample.ScenarioCorrect))
-	if err != nil {
-		t.Fatal(err)
-	}
-	tests := []struct {
-		name string
-		data string
-		want string
-	}{
-		{"an unknown field", strings.Replace(string(good), `"task":`, `"colour": "red", "task":`, 1), `unknown field "colour"`},
-		{"data after the object", string(good) + "{}", "unexpected data"},
-		{"not JSON", "<sample/>", "invalid character"},
-		{"a string for a number", strings.Replace(string(good), `"width": 1000`, `"width": "1000"`, 1), "sheet.width: is not a number"},
-		{"a text cut short", string(good[:len(good)/2]), "the JSON text ends too early"},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, err := sample.ReadSample(strings.NewReader(tt.data))
-			if err == nil || !strings.Contains(err.Error(), tt.want) {
-				t.Errorf("ReadSample error = %v, want one holding %q", err, tt.want)
-			}
 		})
 	}
 }
@@ -231,7 +180,7 @@ func TestCheckListsEveryProblem(t *testing.T) {
 	s := edit(t, sample.ScenarioCorrect, func(s *sample.Sample) {
 		s.Task = ""
 		s.Writer = "child"
-		s.Strokes[0].Points[0].Pressure = 2
+		s.Strokes[0].Points[0].X = 5000
 	})
 	err := s.Check()
 	var fe *sample.FormatError
@@ -302,37 +251,17 @@ func TestCheckRefusesBrokenBanks(t *testing.T) {
 	}
 }
 
-func TestReadSampleIsStrict(t *testing.T) {
-	good, err := sample.Marshal(synth.Sample(sample.ScenarioCorrect))
-	if err != nil {
-		t.Fatal(err)
+// ReadStrict reads any value as strictly as the format's files: a value of the wrong shape is a
+// *FormatError at its path, and broken JSON a plain error.
+func TestReadStrict(t *testing.T) {
+	var v struct {
+		Name string `json:"name"`
 	}
-	text := string(good)
-	firstPressure := strings.Index(text, `"pressure": `)
-	tests := []struct {
-		name string
-		data string
-		path string
-		want string
-	}{
-		{"a missing field", regexp.MustCompile(`,\s+"pressure": [0-9.]+`).ReplaceAllLiteralString(text[:firstPressure+40], "") + text[firstPressure+40:], "strokes[0].points[0].pressure", "is missing"},
-		{"a field spelt in another case", strings.Replace(text, `"pressure": `, `"Pressure": `, 1), "strokes[0].points[0]", `unknown field "Pressure"`},
-		{"a field given twice", strings.Replace(text, `"task": `, `"writer": "author", "task": `, 1), "writer", "appears twice"},
-		{"a null where a value is required", strings.Replace(text, `"task": "synthetic-linear-01"`, `"task": null`, 1), "task", "is null"},
-		{"a fraction where a whole number is required", regexp.MustCompile(`("t_ms": [0-9]+)`).ReplaceAllString(text[:firstPressure], "${1}.5") + text[firstPressure:], "strokes[0].points[0].t_ms", "not a whole number"},
-		{"an object where an array is required", strings.Replace(text, `"erasures": []`, `"erasures": {}`, 1), "erasures", "is not an array"},
+	if err := sample.ReadStrict(strings.NewReader(`{"name": "x"}`), "thing", &v); err != nil || v.Name != "x" {
+		t.Errorf("ReadStrict = %v, %+v", err, v)
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			_, err := sample.ReadSample(strings.NewReader(tt.data))
-			wantProblem(t, err, tt.path, tt.want)
-		})
-	}
-}
-
-func TestReadSampleNamesEveryMissingField(t *testing.T) {
-	_, err := sample.ReadSample(strings.NewReader(`{"format": "tutor-sample", "version": 0, "strokes": [{"id": "s-1", "points": [{"x": 1, "y": 2}]}]}`))
-	for _, path := range []string{"strokes[0].points[0].t_ms", "strokes[0].points[0].pressure", "sheet", "expected"} {
-		wantProblem(t, err, path, "is missing")
+	wantProblem(t, sample.ReadStrict(strings.NewReader(`{"name": "x", "colour": 1}`), "thing", &v), sample.Root, `unknown field "colour"`)
+	if err := sample.ReadStrict(strings.NewReader(`{"name": `), "thing", &v); err == nil || !strings.Contains(err.Error(), "read thing") {
+		t.Errorf("broken JSON: %v", err)
 	}
 }

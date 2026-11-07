@@ -80,7 +80,7 @@ func OfEssay(e *sample.Essay, f *Essays, seed uint64, id string) (*evalv1.Sample
 	for i, st := range strokes {
 		ids[st.ID] = int32(i + 1)
 	}
-	h, err := historyOf(s, ids)
+	h, err := historyOf(s, ids, Pointer)
 	if err != nil {
 		return nil, err
 	}

@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/altnovatrail/tutor/internal/sample"
+	"github.com/altnovatrail/tutor/internal/synth"
 )
 
 // failingWriter refuses every write, as a closed pipe would.
@@ -38,7 +39,8 @@ func TestRun(t *testing.T) {
 		{name: "stray argument", args: []string{"-version", "extra"}, wantCode: exitUsage, wantStderr: "unexpected arguments"},
 		{name: "unknown command", args: []string{"grade"}, wantCode: exitUsage, wantStderr: `unknown command "grade"`},
 		{name: "check without files", args: []string{"check"}, wantCode: exitUsage, wantStderr: "no files given"},
-		{name: "synth without a directory", args: []string{"synth"}, wantCode: exitUsage, wantStderr: "give one directory"},
+		{name: "convert without a directory", args: []string{"convert"}, wantCode: exitUsage, wantStderr: "-from is empty"},
+		{name: "synth, which went with T105", args: []string{"synth", "dir"}, wantCode: exitUsage, wantStderr: `unknown command "synth"`},
 		{name: "check a missing file", args: []string{"check", "no-such-file.json"}, wantCode: exitFail, wantStderr: "no-such-file.json"},
 	}
 	for _, tt := range tests {
@@ -57,64 +59,22 @@ func TestRun(t *testing.T) {
 	}
 }
 
-// synthDir writes the synthetic files into a fresh directory and returns it.
+// synthDir writes the synthetic bank and a synthetic sample of tutor-sample v0 into a fresh directory
+// and returns it.
 func synthDir(t *testing.T) string {
 	t.Helper()
-	dir := filepath.Join(t.TempDir(), "synth")
-	var stdout, stderr bytes.Buffer
-	if got := run([]string{"synth", dir}, &stdout, &stderr); got != exitOK {
-		t.Fatalf("synth = %d, stderr %q", got, stderr.String())
+	dir := t.TempDir()
+	data, err := sample.Marshal(synth.Bank())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "bank.json"), data, 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(dir, "sample-correct.json"), []byte(`{"format": "tutor-sample", "version": 0}`), 0o644); err != nil {
+		t.Fatal(err)
 	}
 	return dir
-}
-
-func TestSynthThenCheck(t *testing.T) {
-	dir := synthDir(t)
-	files, err := filepath.Glob(filepath.Join(dir, "*.json"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if want := 1 + len(sample.Scenarios); len(files) != want {
-		t.Fatalf("synth wrote %d files, want %d", len(files), want)
-	}
-	var stdout, stderr bytes.Buffer
-	if got := run(append([]string{"check"}, files...), &stdout, &stderr); got != exitOK {
-		t.Fatalf("check = %d, stderr %q", got, stderr.String())
-	}
-	out := stdout.String()
-	if !strings.Contains(out, "bank.json: ok, bank of 3 tasks") {
-		t.Errorf("stdout = %q, want the bank checked", out)
-	}
-	for _, sc := range sample.Scenarios {
-		if !strings.Contains(out, "ok, sample of the scenario "+string(sc)+", task ") {
-			t.Errorf("stdout = %q, want the sample of %q checked against the bank", out, sc)
-		}
-	}
-}
-
-func TestSynthNeverOverwritesAndCleansUp(t *testing.T) {
-	dir := t.TempDir()
-	mine := filepath.Join(dir, "sample-error.json")
-	if err := os.WriteFile(mine, []byte("mine"), 0o644); err != nil {
-		t.Fatal(err)
-	}
-	var stdout, stderr bytes.Buffer
-	if got := run([]string{"synth", dir}, &stdout, &stderr); got != exitFail {
-		t.Errorf("synth into a directory holding one of its files = %d, want %d", got, exitFail)
-	}
-	if !strings.Contains(stderr.String(), "exists") {
-		t.Errorf("stderr = %q, want it to say the file exists", stderr.String())
-	}
-	entries, err := os.ReadDir(dir)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(entries) != 1 {
-		t.Errorf("the directory holds %d files after the failed run, want only the one that was there", len(entries))
-	}
-	if data, err := os.ReadFile(mine); err != nil || string(data) != "mine" {
-		t.Errorf("the file that was there = %q, %v; want it untouched", data, err)
-	}
 }
 
 func TestCheckFailures(t *testing.T) {
@@ -128,12 +88,6 @@ func TestCheckFailures(t *testing.T) {
 		}
 		return path
 	}
-	data, err := os.ReadFile(correct)
-	if err != nil {
-		t.Fatal(err)
-	}
-	broken := write("broken.json", strings.Replace(string(data), `"writer": "author"`, `"writer": "child"`, 1))
-	otherTask := write("other-task.json", strings.Replace(string(data), `"task": "synthetic-linear-01"`, `"task": "nowhere"`, 1))
 	planText := `{"format": "tutor-sheet-plan", "version": 0, "sheets": [{"number": 1, "task": "synthetic-linear-01",
 		"scenario": "correct", "lines": ["3x + 1 = 7", "3x = 6", "x = 2"], "answer": 3,
 		"expected": {"outcome": "correct", "first_error": null, "trap": ""}, "erasure": null}]}`
@@ -148,18 +102,16 @@ func TestCheckFailures(t *testing.T) {
 		wantStdout string
 		wantStderr string
 	}{
-		{"a sample alone", []string{correct}, exitOK, "its task is not checked: no bank was given", ""},
-		{"a broken sample", []string{broken}, exitFail, "", `broken.json: invalid sample: writer: "child"`},
-		{"a sample of no task in the bank", []string{bank, otherTask}, exitFail, "", `other-task.json: invalid sample: task: "nowhere" is not in the bank`},
+		{"a sample of tutor-sample v0", []string{bank, correct}, exitFail, "bank.json: ok, bank of 3 tasks", "sample-correct.json: a sample of tutor-sample v0, which no reader but tutor-eval convert takes since T105"},
 		{"two banks", []string{bank, bank}, exitFail, "", "a second bank"},
-		{"a sample with a broken bank", []string{write("broken-bank.json", `{"format": "tutor-bank", "version": 0, "tasks": []}`), correct}, exitFail, "its task is not checked: the bank is invalid", "broken-bank.json: invalid bank"},
+		{"a plan with a broken bank", []string{write("broken-bank.json", `{"format": "tutor-bank", "version": 0, "tasks": []}`), plan}, exitFail, "its tasks are not checked: the bank is invalid", "broken-bank.json: invalid bank"},
 		{"a plan before its bank", []string{plan, bank}, exitOK, "plan.json: ok, plan of 1 sheet, its tasks and traps are in the bank", ""},
 		{"a plan alone", []string{plan}, exitOK, "plan.json: ok, plan of 1 sheet, its tasks are not checked: no bank was given", ""},
 		{"a broken plan", []string{brokenPlan}, exitFail, "", "broken-plan.json: invalid plan: sheets[0].answer: 4 is not a line of the sheet, 1…3"},
 		{"a plan of no task in the bank", []string{bank, planOfOtherTask}, exitFail, "", `plan-of-other-task.json: invalid plan: sheets[0].task: "nowhere" is not in the bank`},
 		{"not JSON", []string{write("notes.json", "notes")}, exitFail, "", "not a JSON object"},
 		{"a sample of the protocol", []string{write("protocol.json", `{"protocol": "novatrail.eval.v1"}`)}, exitFail, "", "protocol.json: a file of spec's eval protocol: just -f spec/justfile sample-check"},
-		{"another format", []string{write("other.json", `{"format": "csv"}`)}, exitFail, "", `format "csv" is not "tutor-sample", "tutor-bank", "tutor-sheet-plan", "tutor-workbook" or "tutor-essays"`},
+		{"another format", []string{write("other.json", `{"format": "csv"}`)}, exitFail, "", `format "csv" is not "tutor-bank", "tutor-sheet-plan", "tutor-workbook" or "tutor-essays"`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

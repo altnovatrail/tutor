@@ -102,8 +102,8 @@ func TestPageAgain(t *testing.T) {
 	}
 }
 
-// The pages of the workbook with seed 1 are what the measurement reads (T80): their hash holds
-// them, on every machine (see the package's comment).
+// The pages of the workbook with seed 1 are what the measurement reads (T80): their hash holds them,
+// on every machine (see the package's comment), their points without pressure since T105 (R75).
 func TestPagesAsBefore(t *testing.T) {
 	wb := theWorkbook(t)
 	h := sha256.New()
@@ -114,7 +114,7 @@ func TestPagesAsBefore(t *testing.T) {
 		}
 		h.Write(data)
 	}
-	if got, want := fmt.Sprintf("%x", h.Sum(nil)), "b5f1c90a6685c5811db46c4613ba5f84fe18cd96c6591870d5e78f2cd811efa8"; got != want {
+	if got, want := fmt.Sprintf("%x", h.Sum(nil)), "e98f70db9d4b059ed9eabc8e45a825bbccf48e1c744dbbb496f9617a9120ba0b"; got != want {
 		t.Errorf("the 20 pages of the workbook with seed 1 hash to %s, want %s", got, want)
 	}
 }

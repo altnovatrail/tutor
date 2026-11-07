@@ -140,7 +140,9 @@ func TestSheetIsTheSameEachTime(t *testing.T) {
 // The sheets of E2's plan come out byte for byte as they did before the sheets of parts came: the
 // set synthetic/lines is drawn from them with seed 1, and the groups of TestSheetDrawsThePlan hold
 // on their seeds, not by construction (R30 in docs/decisions.md). A product is rounded on its own,
-// float64(…), so that the hash holds on every machine (see the package's comment).
+// float64(…), so that the hash holds on every machine (see the package's comment). Since T105 a
+// point holds no pressure, and the hash is of the same points and times as the files of
+// synthetic/lines drawn before, their pressure left out (R75).
 func TestSheetsOfLinesAsBefore(t *testing.T) {
 	_, plan := measurement(t)
 	h := sha256.New()
@@ -151,7 +153,7 @@ func TestSheetsOfLinesAsBefore(t *testing.T) {
 		}
 		h.Write(data)
 	}
-	if got, want := fmt.Sprintf("%x", h.Sum(nil)), "ecb2a5fb86587d9de7fb8a5f537257204a0e5849bf31c8b907a20db5e395d0c4"; got != want {
+	if got, want := fmt.Sprintf("%x", h.Sum(nil)), "7d6482a0751235e007fb2d0b6faee9f2f28fda08ba0a6b1dc1bf323fc72491de"; got != want {
 		t.Errorf("the 40 sheets of E2's plan with seed 1 hash to %s, want %s", got, want)
 	}
 }

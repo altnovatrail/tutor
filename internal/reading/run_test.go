@@ -153,8 +153,8 @@ func TestHeightDrawnAlike(t *testing.T) {
 	sh := chosen(t, "free", "../../eval/free-sheets.json", "../../eval/free-bank.json", 1)[0]
 	s := *sh.Sample
 	s.Strokes = []sample.Stroke{
-		{ID: "a", Points: []sample.Point{{X: 10, Y: 100, TMs: 1000, Pressure: 0.5}}},
-		{ID: "b", Points: []sample.Point{{X: 990, Y: 100, TMs: 2000, Pressure: 0.5}}},
+		{ID: "a", Points: []sample.Point{{X: 10, Y: 100, TMs: 1000}}},
+		{ID: "b", Points: []sample.Point{{X: 990, Y: 100, TMs: 2000}}},
 	}
 	s.Erasures = nil
 	s.Lines = []sample.Line{{Text: "Ответ: в точке 10", Strokes: []string{"a", "b"}, Answer: true}}

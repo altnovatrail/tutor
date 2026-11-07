@@ -356,19 +356,19 @@ func (w *writer) scribble(s string, x, y float64) []string {
 	return []string{w.stroke(points)}
 }
 
-// stroke draws a polyline as the pen would: points every few units, the clock running and the
-// pressure wandering. It returns the stroke's ID.
+// stroke draws a polyline as the pen would: points every few units and the clock running. It
+// returns the stroke's ID. The pen's pressure is drawn and not kept: no sample holds it since T105,
+// and the draws stay so that a seed draws the same sheets as before, to the byte (R75).
 func (w *writer) stroke(poly []pt) string {
 	id := fmt.Sprintf("s-%04d", len(w.s.Strokes)+1)
-	pressure := 0.45 + float64(0.2*w.rng.Float64())
+	_ = w.rng.Float64() // the pressure the stroke starts at
 	var points []sample.Point
 	add := func(p pt) {
-		pressure = math.Min(0.95, math.Max(0.05, pressure+w.jitter(0.03)))
+		_ = w.jitter(0.03) // how the pressure wanders
 		points = append(points, sample.Point{
-			X:        clamp(p.x+w.jitter(0.6), 0, w.s.Sheet.Width),
-			Y:        clamp(p.y+w.jitter(0.6), 0, w.s.Sheet.Height),
-			TMs:      w.t,
-			Pressure: math.Round(pressure*1000) / 1000,
+			X:   clamp(p.x+w.jitter(0.6), 0, w.s.Sheet.Width),
+			Y:   clamp(p.y+w.jitter(0.6), 0, w.s.Sheet.Height),
+			TMs: w.t,
 		})
 		w.t += w.pointMs
 	}

@@ -45,10 +45,31 @@ func planned(t *testing.T) (*sample.Plan, []*sample.Sample) {
 	return plan, samples
 }
 
-// save writes a sample as the board saves it, under its plan sheet's name at a moment.
+// save writes a sheet as the board saves it, a sample of the protocol, under its plan sheet's name at
+// a moment: a sheet code drew as draw writes it, and any other as the record mode does, by a pen.
 func save(t *testing.T, dir string, sh *sample.PlanSheet, s *sample.Sample, at time.Time) string {
 	t.Helper()
-	data, err := sample.Marshal(s)
+	return saveBy(t, dir, sh, s, at, "pen")
+}
+
+// saveBy is save, the strokes of a person's sheet by the pointer given.
+func saveBy(t *testing.T, dir string, sh *sample.PlanSheet, s *sample.Sample, at time.Time, pointer string) string {
+	t.Helper()
+	var es *evalv1.Sample
+	var err error
+	if s.Writer == sample.WriterSynthetic {
+		es, err = evalsample.Of(s, sh, bank(), 1, fmt.Sprintf("synthetic-1-plan-%02d", sh.Number))
+	} else {
+		h, ids, herr := evalsample.HistoryOf(s, pointer)
+		if herr != nil {
+			t.Fatal(herr)
+		}
+		es, err = evalsample.PersonOf(s, sh, bank(), h, ids, fmt.Sprintf("test-%02d-%d", sh.Number, at.UnixMilli()), "TESTCODE01")
+	}
+	if err != nil {
+		t.Fatal(err)
+	}
+	data, err := protocol.MarshalSample(es)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,10 +99,7 @@ func TestRead(t *testing.T) {
 	// Sheet 1 twice: the later file counts. Sheet 2 once, broken; sheet 3 not at all; the rest once.
 	save(t, dir, &plan.Sheets[0], samples[0], at)
 	last := save(t, dir, &plan.Sheets[0], samples[0], at.Add(time.Second))
-	broken := *samples[1]
-	broken.Lines = slices.Clone(broken.Lines)
-	broken.Lines[0].Text = ""
-	save(t, dir, &plan.Sheets[1], &broken, at)
+	saveProtocol(t, dir, &plan.Sheets[1], at, func(es *evalv1.Sample) { es.Ink = &evalv1.Sample_Geometry{Geometry: &evalv1.Geometry{}} })
 	for i := 3; i < len(plan.Sheets); i++ {
 		save(t, dir, &plan.Sheets[i], samples[i], at)
 	}
@@ -100,8 +118,8 @@ func TestRead(t *testing.T) {
 	if sh := r.Sheets[0]; sh.File != last || sh.Files != 2 || sh.Sample == nil {
 		t.Errorf("sheet 1 = %s, %d files, sample %v; want the later of two files", sh.File, sh.Files, sh.Sample != nil)
 	}
-	if sh := r.Sheets[1]; sh.Sample != nil || !slices.Equal(sh.Problems, []string{"lines[0].text"}) {
-		t.Errorf("sheet 2: problems %q, want the path of the missing text alone", sh.Problems)
+	if sh := r.Sheets[1]; sh.Sample != nil || !slices.Equal(sh.Problems, []string{"(the sample is no sheet of measurement with its history)"}) {
+		t.Errorf("sheet 2: problems %q, want it no sheet of measurement", sh.Problems)
 	}
 	if sh := r.Sheets[2]; sh.File != "" || sh.Files != 0 {
 		t.Errorf("sheet 3 = %+v, want no file", sh)
@@ -111,13 +129,13 @@ func TestRead(t *testing.T) {
 		t.Errorf("other files = %q, want %q", r.Other, other)
 	}
 
-	// A sample of another scenario under the plan sheet's name does not pass.
-	wrong := *samples[3]
-	wrong.Scenario = sample.ScenarioSimilarDigits
-	save(t, dir, &plan.Sheets[3], &wrong, at.Add(time.Hour))
+	// A file of tutor-sample v0 under the plan sheet's name does not pass: convert writes it anew.
+	if err := os.WriteFile(filepath.Join(dir, sample.SheetFile(&plan.Sheets[3], at.Add(time.Hour))), []byte(`{"format": "tutor-sample", "version": 0}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	r, _ = sheets.Read(dir, plan, bank(), nil)
-	if sh := r.Sheets[3]; sh.Sample != nil || !slices.Contains(sh.Problems, "scenario") {
-		t.Errorf("sheet 4 with another scenario: problems %q, want the scenario", sh.Problems)
+	if sh := r.Sheets[3]; sh.Sample != nil || !slices.Equal(sh.Problems, []string{sheets.V0Problem}) {
+		t.Errorf("sheet 4 of tutor-sample v0: problems %q, want it named", sh.Problems)
 	}
 	if _, err := sheets.Read(filepath.Join(dir, "nowhere"), plan, bank(), nil); err == nil {
 		t.Error("a directory that is not there reads")
@@ -127,18 +145,9 @@ func TestRead(t *testing.T) {
 // The summary of the synthetic sheets, all recorded, one twice with a mouse, one off its plan.
 func TestSummary(t *testing.T) {
 	dir, plan, samples := recorded(t)
-	mouse := *samples[0]
-	mouse.Strokes = slices.Clone(mouse.Strokes)
-	for i, st := range mouse.Strokes {
-		points := slices.Clone(st.Points)
-		for j := range points {
-			points[j].Pressure = 0.5
-		}
-		mouse.Strokes[i].Points = points
-	}
-	save(t, dir, &plan.Sheets[0], &mouse, at.Add(time.Hour))
+	saveBy(t, dir, &plan.Sheets[0], samples[0], at.Add(time.Hour), "mouse")
 	off := *samples[1]
-	off.Expected.Trap = ""
+	off.Expected.FirstError = new(1)
 	save(t, dir, &plan.Sheets[1], &off, at.Add(time.Hour))
 	drawn := *samples[2]
 	drawn.Writer = sample.WriterSynthetic
@@ -161,8 +170,8 @@ func TestSummary(t *testing.T) {
 		"Planned erasures: 2. Slips: 1 erasure on 1 sheet.",
 		"With frames, that is with an erasure: 2 sheets.",
 		"Drawn by code, the writer synthetic: 3.",
-		"Written with a mouse, by the pointer or pressure 0.5 at every point: 1.",
-		"Marked off the plan: 2 (expected.trap).",
+		"Written with a mouse, by the pointer of a stroke: 1.",
+		"Marked off the plan: 2 (expected.first_error).",
 	}, "\n") + "\n"
 	if got := sheets.Summary(r); got != want {
 		t.Errorf("summary:\n%s\nwant:\n%s", got, want)
@@ -184,15 +193,12 @@ func TestSummary(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	broken := *samples[4]
-	broken.Lines = slices.Clone(broken.Lines)
-	broken.Lines[0].Strokes = []string{}
-	name := save(t, dir, &plan.Sheets[4], &broken, at.Add(time.Hour))
+	name := saveProtocol(t, dir, &plan.Sheets[4], at.Add(time.Hour), func(es *evalv1.Sample) { es.Ink = &evalv1.Sample_Geometry{Geometry: &evalv1.Geometry{}} })
 	r, _ = sheets.Read(dir, plan, bank(), nil)
 	got = sheets.Summary(r)
 	for _, want := range []string{
 		"Sheets: 6 of the plan's 7 recorded, 5 of them passing the check.\nNot recorded yet: 1.\n",
-		"Sheet 5 does not pass the check, " + name + ", at lines[0].strokes.\n",
+		"Sheet 5 does not pass the check, " + name + ", at (the sample is no sheet of measurement with its history).\n",
 	} {
 		if !strings.Contains(got, want) {
 			t.Errorf("summary:\n%s\nwant it to hold %q", got, want)
@@ -373,13 +379,13 @@ func saveProtocol(t *testing.T, dir string, sh *sample.PlanSheet, at time.Time, 
 	return name
 }
 
-// A directory holds samples of the protocol beside those of tutor-sample v0, and the first key of a
-// file tells which. A sample of the protocol that the check finds breaking a rule, or that cannot be
+// A directory holds samples of the protocol, which the first key of a file tells, and a file of
+// tutor-sample v0 there is a problem of its sheet, which convert mends. A sample of the protocol that the check finds breaking a rule, or that cannot be
 // read strictly, is refused as invalid, and so is one the runner refuses for its markup; one that is
 // no sheet of measurement is a problem of its sheet. The summary names the refused with their
 // reasons, and the mouse by the pointer.
 func TestReadProtocol(t *testing.T) {
-	plan, samples := planned(t)
+	plan, _ := planned(t)
 	dir := t.TempDir()
 	at := time.Date(2026, 11, 7, 9, 0, 0, 0, time.UTC)
 	keep := func(*evalv1.Sample) {}
@@ -397,7 +403,10 @@ func TestReadProtocol(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, names[6]), []byte(`{"protocol": "novatrail.eval.v1", "no_such_field": 1}`), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	save(t, dir, &plan.Sheets[6], samples[6], at)
+	names[7] = sample.SheetFile(&plan.Sheets[6], at)
+	if err := os.WriteFile(filepath.Join(dir, names[7]), []byte(`{"format": "tutor-sample", "version": 0}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
 
 	var asked []string
 	check := func(files []string) (map[string][]int, error) {
@@ -416,7 +425,7 @@ func TestReadProtocol(t *testing.T) {
 		passes  bool
 		refused evalv1.Refusal
 		problem bool
-	}{{1, true, 0, false}, {2, false, evalv1.Refusal_REFUSAL_INVALID, false}, {3, false, evalv1.Refusal_REFUSAL_NO_MARKUP, false}, {4, false, 0, true}, {5, true, 0, false}, {6, false, evalv1.Refusal_REFUSAL_INVALID, false}, {7, true, 0, false}} {
+	}{{1, true, 0, false}, {2, false, evalv1.Refusal_REFUSAL_INVALID, false}, {3, false, evalv1.Refusal_REFUSAL_NO_MARKUP, false}, {4, false, 0, true}, {5, true, 0, false}, {6, false, evalv1.Refusal_REFUSAL_INVALID, false}, {7, false, 0, true}} {
 		sh := r.Sheets[c.n-1]
 		var reason evalv1.Refusal
 		if sh.Refused != nil {
@@ -435,7 +444,8 @@ func TestReadProtocol(t *testing.T) {
 		"Sheet 3 is refused, " + names[3] + ", as no markup:",
 		"Sheet 6 is refused, " + names[6] + ", as invalid: it cannot be read strictly as a sample of the protocol.",
 		"Sheet 4 does not pass the check",
-		"Written with a mouse, by the pointer or pressure 0.5 at every point: 5.",
+		"Written with a mouse, by the pointer of a stroke: 5.",
+		"Sheet 7 does not pass the check, " + names[7] + ", at " + sheets.V0Problem + ".",
 	} {
 		if !strings.Contains(summary, want) {
 			t.Errorf("the summary\n%s\nwant it to hold %q", summary, want)

@@ -4,9 +4,9 @@
 // into an observation (T68), the hint (T74), which the run checks for leaks and its form (T75), the
 // reading of the boxes of a page of the workbook (T79), or the assessment of an essay by its rubric
 // (T83), and its report command reports on a run by the kind of its log; its other commands serve the
-// board, check the files of samples, banks, sheet plans, the workbook and the essays, write
-// synthetic ones, and write the open views of the measurement's tasks for canvas's sample page (T37):
-// run it without arguments for its commands.
+// board, check the files of banks, sheet plans, the workbook and the essays, convert the sheets of
+// tutor-sample v0 to samples of spec's eval protocol (T105), and write the open views of the
+// measurement's tasks for canvas's sample page (T37): run it without arguments for its commands.
 package main
 
 import (
@@ -18,11 +18,9 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"path/filepath"
 	"runtime/debug"
 	"time"
 
-	"github.com/altnovatrail/tutor/internal/newfile"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/sheets"
 	"github.com/altnovatrail/tutor/internal/synth"
@@ -44,10 +42,14 @@ const usage = `usage:
                                                       judge, you mark whether they were right
   tutor-eval board -record [-addr A] [-dir D] [-bank F] [-plan F]
                                                       the record mode: write the sheets of the plan,
-                                                      and each is saved as a sample
-  tutor-eval check FILE...   check samples, banks, sheet plans, the pages of the workbook and the
-                             essays;
-                             samples and plans against a bank given with them
+                                                      and each is saved as a sample of the protocol
+  tutor-eval check FILE...   check banks, sheet plans, the pages of the workbook and the essays;
+                             plans against a bank given with them
+  tutor-eval convert -from D [-to D] [-bank F] [-plan F] [-seed N] [-shift S] [-writer-code F]
+                             write the sheets of tutor-sample v0 in -from as samples of the
+                             protocol, under the same names, into -to, -from and -v1 by default:
+                             the author's with their writer's code, the sheets of code as draw
+                             draws them from the seed; the split is copied, the old files stay
   tutor-eval draw [-seed N] [-shift S] [-png D] [-dir D] [-bank F] [-plan F]
                              draw by code every sheet of the plan not recorded yet, and save it
                              as a sample of spec's eval protocol drawn from the seed, which
@@ -111,7 +113,6 @@ const usage = `usage:
                              write the open views of the tasks of banks, the workbook and the
                              essays, without their keys, solutions, traps or checks, into a new
                              file for canvas's sample page; run it from the repository's root
-  tutor-eval synth DIR       write the synthetic bank and one synthetic sample per scenario
   tutor-eval -version        print the version
 `
 
@@ -150,6 +151,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 	switch cmd, operands := rest[0], rest[1:]; cmd {
 	case "board":
 		return runBoard(operands, stdout, stderr, os.Getenv, serveHTTP)
+	case "convert":
+		return runConvert(operands, stdout, stderr)
 	case "check":
 		if len(operands) == 0 {
 			_, _ = fmt.Fprintln(stderr, "tutor-eval check: no files given")
@@ -174,12 +177,6 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return runEssays(operands, stdout, stderr)
 	case "open":
 		return runOpen(operands, stdout, stderr)
-	case "synth":
-		if len(operands) != 1 {
-			_, _ = fmt.Fprintln(stderr, "tutor-eval synth: give one directory")
-			return exitUsage
-		}
-		return writeSynth(operands[0], stdout, stderr)
 	default:
 		_, _ = fmt.Fprintf(stderr, "tutor-eval: unknown command %q\n%s", cmd, usage)
 		return exitUsage
@@ -228,18 +225,8 @@ func check(paths []string, stdout, stderr io.Writer) int {
 		}
 		switch head.Format {
 		case sample.SampleFormat:
-			s, err := sample.ReadSample(bytes.NewReader(data))
-			if err != nil {
-				fail(path, err)
-				continue
-			}
-			reads = append(reads, read{
-				path:      path,
-				what:      "sample of the scenario " + string(s.Scenario),
-				withBank:  s.CheckWithBank,
-				inBank:    "task " + s.Task,
-				unchecked: "its task is not checked",
-			})
+			fail(path, errors.New("a sample of tutor-sample v0, which no reader but tutor-eval convert takes since T105: convert writes it as a sample of the protocol"))
+			continue
 		case sample.PlanFormat:
 			pl, err := sample.ReadPlan(bytes.NewReader(data))
 			if err != nil {
@@ -289,7 +276,7 @@ func check(paths []string, stdout, stderr io.Writer) int {
 				return exitFail
 			}
 		default:
-			fail(path, fmt.Errorf("format %q is not %q, %q, %q, %q or %q", head.Format, sample.SampleFormat, sample.BankFormat, sample.PlanFormat, sample.WorkbookFormat, sample.EssaysFormat))
+			fail(path, fmt.Errorf("format %q is not %q, %q, %q or %q", head.Format, sample.BankFormat, sample.PlanFormat, sample.WorkbookFormat, sample.EssaysFormat))
 		}
 	}
 	for _, r := range reads {
@@ -320,45 +307,6 @@ func count(n int, noun string) string {
 		return "1 " + noun
 	}
 	return fmt.Sprintf("%d %ss", n, noun)
-}
-
-// writeSynth writes the synthetic bank and samples into dir, creating it if need be. It never
-// overwrites a file, and when it fails it removes the files it has written, so that the next run
-// starts clean.
-func writeSynth(dir string, stdout, stderr io.Writer) int {
-	type file struct {
-		name    string
-		content any
-	}
-	files := []file{{"bank.json", synth.Bank()}}
-	for _, s := range synth.Samples() {
-		files = append(files, file{"sample-" + string(s.Scenario) + ".json", s})
-	}
-	var written []string
-	err := os.MkdirAll(dir, 0o755)
-	for _, f := range files {
-		if err != nil {
-			break
-		}
-		var data []byte
-		if data, err = sample.Marshal(f.content); err == nil {
-			path := filepath.Join(dir, f.name)
-			if err = newfile.Write(path, data, 0o644); err == nil {
-				written = append(written, path)
-			}
-		}
-	}
-	if err != nil {
-		for _, path := range written {
-			_ = os.Remove(path)
-		}
-		_, _ = fmt.Fprintf(stderr, "tutor-eval synth: %v\n", err)
-		return exitFail
-	}
-	if _, err := fmt.Fprintf(stdout, "wrote %d files to %s\n", len(files), dir); err != nil {
-		return exitFail
-	}
-	return exitOK
 }
 
 // version is the version the go command stamped into the binary: the tag of a release it was

@@ -12,7 +12,7 @@ import (
 // stroke is a stroke of two points, a straight line from (x0, y0) to (x1, y1), drawn from t0 to t1
 // milliseconds.
 func stroke(id string, x0, y0, x1, y1 float64, t0, t1 int64) sample.Stroke {
-	return sample.Stroke{ID: id, Points: []sample.Point{{X: x0, Y: y0, TMs: t0, Pressure: 0.5}, {X: x1, Y: y1, TMs: t1, Pressure: 0.5}}}
+	return sample.Stroke{ID: id, Points: []sample.Point{{X: x0, Y: y0, TMs: t0}, {X: x1, Y: y1, TMs: t1}}}
 }
 
 // row writes n strokes in a row from x across, each w wide and 30 high at the top y, gap apart,
