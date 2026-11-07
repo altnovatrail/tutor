@@ -14,6 +14,7 @@ import (
 	"github.com/altnovatrail/module-kit/observation"
 	"github.com/altnovatrail/module-kit/verdict"
 	observationv1 "github.com/altnovatrail/spec/contracts/novatrail/observation/v1"
+	"github.com/altnovatrail/spec/types/formatv0"
 
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/task"
@@ -373,4 +374,63 @@ func Want(scenario sample.BoxScenario, of Slot, version int) Slot {
 		return Slot{Verdict: verdict.Unreadable, Reason: Mirrored}
 	}
 	return of
+}
+
+// unreadableOf is the reason of the protocol that each reason of the reading of a box is (section
+// 10 of spec's contracts text): a digit read mirrored is ambiguous.
+var unreadableOf = map[Reason]observationv1.Unreadable{
+	Reason(verdict.Blank): observationv1.Unreadable_UNREADABLE_BLANK,
+	Mirrored:              observationv1.Unreadable_UNREADABLE_AMBIGUOUS,
+	Illegible:             observationv1.Unreadable_UNREADABLE_ILLEGIBLE,
+	Ambiguous:             observationv1.Unreadable_UNREADABLE_AMBIGUOUS,
+}
+
+// ItemsOf are the items of a page's task as its record tells them: each item's boxes, with their
+// checks, as the line of a workbook holds them, without the text of the line, which no verdict reads.
+// The report joins two readings of the page by them, with no file of the workbook (R74).
+func ItemsOf(pr *PageRecord) []formatv0.Item {
+	var items []formatv0.Item
+	for _, b := range pr.Boxes {
+		for len(items) < b.Item {
+			items = append(items, formatv0.Item{})
+		}
+		c := sample.BoxCheck{Kind: b.Kind, Key: b.Key, TrapValues: b.TrapValues}
+		if b.Form != "" {
+			form := b.Form
+			c.Form = &form
+		}
+		check := c.Format()
+		box := formatv0.LinePartBindingBox
+		items[b.Item-1].Line = append(items[b.Item-1].Line, formatv0.LinePart{Binding: &box, Check: &check})
+	}
+	return items
+}
+
+// RecordObservation is the observation of a page that the record of a call tells, by the verdict,
+// the reason and the text of each box the run wrote, so that what is made of it keeps the rules of
+// the run that judged it: nil for a call that failed, or whose boxes are unchecked; each blank box
+// UNREADABLE_BLANK, a reason of the reading the protocol's, and otherwise the text read.
+func RecordObservation(pr *PageRecord, c *CallRecord) *observationv1.Observation {
+	if c.NotAsked || c.Error != "" || len(c.Boxes) != len(pr.Boxes) {
+		return nil
+	}
+	obs := &observationv1.Observation{}
+	for i, b := range c.Boxes {
+		slot := &observationv1.AnswerSlotObservation{AnswerSlot: &observationv1.AnswerSlotPlace{Item: int32(b.Item), Slot: int32(b.Slot)}}
+		u, ok := unreadableOf[b.Reason]
+		switch {
+		case b.Verdict == verdict.Unchecked:
+			return nil
+		case pr.Boxes[i].Written == nil:
+			slot.Read = unreadable(observationv1.Unreadable_UNREADABLE_BLANK)
+		case ok:
+			slot.Read = unreadable(u)
+		case b.Text == nil:
+			return nil // a box judged with no text read is none that the run wrote
+		default:
+			slot.Read = &observationv1.AnswerSlotObservation_Value{Value: *b.Text}
+		}
+		obs.AnswerSlots = append(obs.AnswerSlots, slot)
+	}
+	return obs
 }

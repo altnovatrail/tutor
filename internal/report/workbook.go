@@ -22,9 +22,11 @@ import (
 // captioned, by scenario, by kind of check and by how a fraction is written; the items; whether the
 // line of an item helps or harms the reading; and the other heights of digits against 32 px.
 type Workbook struct {
-	log     *workbook.Log
-	readers []runner.ReaderRecord
-	pages   []*workbook.PageRecord
+	// protocol are the runner's reports of the protocol that the log tells (R74).
+	protocol []Named
+	log      *workbook.Log
+	readers  []runner.ReaderRecord
+	pages    []*workbook.PageRecord
 	// byPage are the pages by their number, each with its place among them.
 	byPage map[int]pageAt
 	// Cells are the readings of the boxes at 32 px by reader, condition and group.
@@ -288,8 +290,16 @@ func NewWorkbook(l *workbook.Log) (*Workbook, error) {
 			}
 		}
 	}
+	r.protocol = WorkbookReports(l)
 	return r, nil
 }
+
+// Reports are the runner's reports of the protocol that the log tells (R74), none for a log whose
+// samples are not of the protocol.
+func (r *Workbook) Reports() []Named { return r.protocol }
+
+// ProtocolCSV writes the measures of section 14 of the runner's reports as CSV.
+func (r *Workbook) ProtocolCSV(w io.Writer) error { return protocolCSV(w, r.protocol) }
 
 // calls are a reader's calls in a condition at a height, in the order they were made.
 func (r *Workbook) calls(reader string, cond workbook.Condition, digit int) []*workbook.CallRecord {
@@ -661,6 +671,7 @@ func (r *Workbook) Markdown(w io.Writer, logName string) error {
 			}
 		}
 	}
+	markdownProtocol(&b, logName, r.protocol, l.Run.Refused)
 	_, err := io.WriteString(w, b.String())
 	return err
 }

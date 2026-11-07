@@ -407,7 +407,8 @@ func planJudge(sets []sheetFlags, part string, o options) (*runner.Run, string, 
 // not read once (T69).
 func planReading(sets []sheetFlags, part string, o options) (*runner.Run, string, error) {
 	repeats := o.repeats
-	var names, counts, refused []string
+	var names, counts []string
+	var refused []refusal
 	var all []sheets.Chosen
 	for _, s := range sets {
 		name := setName(s)
@@ -432,6 +433,7 @@ func planReading(sets []sheetFlags, part string, o options) (*runner.Run, string
 	if err != nil {
 		return nil, "", err
 	}
+	r.Refused = recordsOf(refused)
 	planned := reading.PlannedOf(r)
 	by, repeated := byReaders(readers, repeats)
 	var what []string
@@ -450,7 +452,8 @@ func planReading(sets []sheetFlags, part string, o options) (*runner.Run, string
 // ladder in both languages, by the three tutors in their repeats (T74). A part with no sheet with a
 // mistake has no hint to ask, and the run is refused before the question.
 func planHint(sets []sheetFlags, part string, o options) (*runner.Run, string, error) {
-	var names, counts, refused []string
+	var names, counts []string
+	var refused []refusal
 	var wrong []sheets.Chosen
 	taken := 0
 	for _, s := range sets {
@@ -518,6 +521,7 @@ func planWorkbook(_ []sheetFlags, part string, o options) (*runner.Run, string, 
 	if err != nil {
 		return nil, "", err
 	}
+	r.Refused = recordsOf(refused)
 	by, repeated := byReaders(readers, o.repeats)
 	var what []string
 	switch {
@@ -566,6 +570,7 @@ func planEssays(_ []sheetFlags, part string, o options) (*runner.Run, string, er
 	if err != nil {
 		return nil, "", err
 	}
+	r.Refused = recordsOf(refused)
 	names := make([]string, len(readers))
 	for i, rd := range readers {
 		names[i] = rd.Name
@@ -616,7 +621,7 @@ func partName(part string) string {
 // recorded and passing, with no split. Each sheet is of the set by its name. A sheet whose sample of
 // the protocol the runner refuses (section 13 of spec's text of the contracts) is not asked of, and
 // nothing of it goes to AI: refused names each, with its reason.
-func partSheets(f sheetFlags, set, part string) (plan *sample.Plan, chosen []sheets.Chosen, refused []string, err error) {
+func partSheets(f sheetFlags, set, part string) (plan *sample.Plan, chosen []sheets.Chosen, refused []refusal, err error) {
 	bank, plan, err := readPlan(f.bank, f.plan)
 	if err != nil {
 		return nil, nil, nil, err
@@ -655,21 +660,25 @@ func partSheets(f sheetFlags, set, part string) (plan *sample.Plan, chosen []she
 		case sh.File == "":
 			return nil, nil, nil, fmt.Errorf("sheet %d is not recorded: -part all runs every sheet of the plan", n)
 		case sh.Refused != nil:
-			refused = append(refused, refusedOf(set+" sheet", n, sh.Refused))
+			refused = append(refused, refusalOf(set+" sheet", n, set, sh.File, sh.Refused))
 			continue
 		case sh.Sample == nil:
 			return nil, nil, nil, fmt.Errorf("sheet %d does not pass its check: tutor-eval sheets says where", n)
 		}
 		i := slices.IndexFunc(bank.Bank.Tasks, func(t sample.Task) bool { return t.ID == sh.Sample.Task })
-		chosen = append(chosen, sheets.Chosen{Set: set, Number: n, File: sh.File, Sample: sh.Sample, Task: &bank.Bank.Tasks[i], Plan: sh.Plan})
+		chosen = append(chosen, sheets.Chosen{Set: set, Number: n, File: sh.File, Sample: sh.Sample, Task: &bank.Bank.Tasks[i], Plan: sh.Plan, ID: sh.ID, Truth: sh.Truth})
 	}
 	return plan, chosen, refused, nil
 }
 
 // refusedLine names the sheets a run refuses, before what it asks: nothing of them goes to AI.
-func refusedLine(refused []string) string {
+func refusedLine(refused []refusal) string {
 	if len(refused) == 0 {
 		return ""
 	}
-	return fmt.Sprintf("Refused, and nothing of them goes to AI: %s.\n", strings.Join(refused, "; "))
+	lines := make([]string, len(refused))
+	for i, r := range refused {
+		lines[i] = r.line
+	}
+	return fmt.Sprintf("Refused, and nothing of them goes to AI: %s.\n", strings.Join(lines, "; "))
 }

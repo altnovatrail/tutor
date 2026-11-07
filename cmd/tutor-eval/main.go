@@ -95,7 +95,10 @@ const usage = `usage:
                              about 30 hints to read in .hints.md; of the workbook, the boxes, the
                              items, the line of the item and the heights; of the essays, the
                              criteria, the reading and the feedback, and the feedback to read in
-                             .feedback.md; beside the log
+                             .feedback.md; beside the log. A run of the reading, the workbook or
+                             the essays on samples of the protocol gets the runner's reports
+                             too, .<reader>.report.json for each reader and pair, and their
+                             measures in .protocol.csv
   tutor-eval workbook [-file F] [-dir D]
                              check the pages of the workbook, read the samples of them that
                              draw drew, and sum up their boxes, the samples read and refused,

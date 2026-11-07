@@ -20,6 +20,9 @@ import (
 type Refusal struct {
 	Reason evalv1.Refusal
 	Detail string
+	// Sample is the ID the sample's file names, or "" when it names none that can be read: the
+	// runner's report names a refused sample by it (R74).
+	Sample string
 }
 
 func (r *Refusal) Error() string { return fmt.Sprintf("%s: %s", Reason(r.Reason), r.Detail) }
@@ -49,10 +52,13 @@ func refuse(r evalv1.Refusal, format string, args ...any) *Refusal {
 var ErrNotSheet = errors.New("evalsample: the sample is no sheet of measurement with its history, and the runner of sheets reads only those")
 
 // Sheet is a sample of the protocol read as a sheet of its plan: the sample tutor's runner takes,
-// and whether a mouse wrote any of its strokes.
+// whether a mouse wrote any of its strokes, and what the runner's report takes of it, its ID and
+// the truth of its answer slot (R74).
 type Sheet struct {
 	Sample *sample.Sample
 	Mouse  bool
+	ID     string
+	Truth  []Truth
 }
 
 // Read reads a sample of the protocol, which sample-check has found valid, as the plan sheet its
@@ -92,10 +98,11 @@ func Read(es *evalv1.Sample, sh *sample.PlanSheet, b *Bank) (*Sheet, *Refusal, e
 	if ref.GetOpenViewDigest() != digest {
 		return nil, refuse(evalv1.Refusal_REFUSAL_OTHER_TASK, "the open view of its task %s is of another digest than the bank's", t.ID), nil
 	}
-	outcome, r := outcomeOf(ft, m)
+	outcome, items, r := outcomeOf(ft, m)
 	if r != nil {
 		return nil, r, nil
 	}
+	truth := truthsOf(items, m, nil)
 	if es.GetWriter() == evalv1.Writer_WRITER_CHILD {
 		return nil, refuse(evalv1.Refusal_REFUSAL_CHILD, "a child wrote it, and nothing of a child's sample goes to AI until a contract with the provider admits children (П-3)"), nil
 	}
@@ -136,38 +143,38 @@ func Read(es *evalv1.Sample, sh *sample.PlanSheet, b *Bank) (*Sheet, *Refusal, e
 	for _, e := range h.GetEvents() {
 		mouse = mouse || e.GetWrite().GetPointer() == "mouse"
 	}
-	return &Sheet{Sample: s, Mouse: mouse}, nil, nil
+	return &Sheet{Sample: s, Mouse: mouse, ID: es.GetId(), Truth: truth}, nil, nil
 }
 
 // outcomeOf is the outcome of a sheet as the verdict of module-kit on its truth gives it, by the
-// task's key: correct is correct, not yet right is an error, an answer illegible or ambiguous is
+// task's key, with the verdicts it gave: correct is correct, not yet right is an error, an answer illegible or ambiguous is
 // unreadable, and no answer, several, or a blank sheet is no answer. A truth that is no valid
 // observation of the task, or gets no verdict, is a markup that does not fit its task, and so is a
 // mark of criteria on a sheet whose task has no rubric (section 13).
-func outcomeOf(ft formatv0.Task, m *evalv1.Markup) (sample.Outcome, *Refusal) {
+func outcomeOf(ft formatv0.Task, m *evalv1.Markup) (sample.Outcome, []verdict.ItemVerdict, *Refusal) {
 	if m.GetMarks() != nil {
-		return "", refuse(evalv1.Refusal_REFUSAL_INVALID, "its markup marks criteria, and its task %s has no rubric", ft.ID)
+		return "", nil, refuse(evalv1.Refusal_REFUSAL_INVALID, "its markup marks criteria, and its task %s has no rubric", ft.ID)
 	}
 	if err := observation.Validate(ft.Items, m.GetTruth()); err != nil {
-		return "", refuse(evalv1.Refusal_REFUSAL_INVALID, "its truth is no valid observation of its task %s", ft.ID)
+		return "", nil, refuse(evalv1.Refusal_REFUSAL_INVALID, "its truth is no valid observation of its task %s", ft.ID)
 	}
 	items, err := observation.Verdicts(ctx, ft.Items, m.GetTruth(), nil)
 	if err != nil || len(items) != 1 || len(items[0].Slots) != 1 {
-		return "", refuse(evalv1.Refusal_REFUSAL_INVALID, "its truth gets no verdict of its task %s", ft.ID)
+		return "", nil, refuse(evalv1.Refusal_REFUSAL_INVALID, "its truth gets no verdict of its task %s", ft.ID)
 	}
 	v := items[0].Slots[0]
 	switch v.Verdict {
 	case verdict.Correct:
-		return sample.OutcomeCorrect, nil
+		return sample.OutcomeCorrect, items, nil
 	case verdict.NotYet:
-		return sample.OutcomeError, nil
+		return sample.OutcomeError, items, nil
 	case verdict.Unreadable:
 		if v.Reason == verdict.Illegible || v.Reason == verdict.Ambiguous || v.Reason == verdict.Notation {
-			return sample.OutcomeUnreadable, nil
+			return sample.OutcomeUnreadable, items, nil
 		}
-		return sample.OutcomeNoAnswer, nil
+		return sample.OutcomeNoAnswer, items, nil
 	}
-	return "", refuse(evalv1.Refusal_REFUSAL_INVALID, "its truth gets the verdict %s of its task %s", v.Verdict, ft.ID)
+	return "", nil, refuse(evalv1.Refusal_REFUSAL_INVALID, "its truth gets the verdict %s of its task %s", v.Verdict, ft.ID)
 }
 
 // writerOf is who wrote a sample, as tutor's code names a writer: the code that drew it, or the

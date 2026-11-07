@@ -182,6 +182,10 @@ func pageMarkup(pg *sample.WorkbookPage) *evalv1.Markup {
 type Page struct {
 	Page *sample.WorkbookPage
 	Ink  *synth.Page
+	// ID is the sample's, and Truth the truth of each filled box, which a model reads, in the
+	// task's order: what the runner's report takes of the page (R74).
+	ID    string
+	Truth []Truth
 }
 
 // ReadPage reads a sample of the protocol, which sample-check has found valid, as the page of the
@@ -221,9 +225,15 @@ func ReadPage(es *evalv1.Sample, w *Workbook) (*Page, *Refusal, error) {
 	case observation.Validate(ft.Items, m.GetTruth()) != nil:
 		return nil, refuse(evalv1.Refusal_REFUSAL_INVALID, "its truth is no valid observation of its task %s", ft.ID), nil
 	}
-	if _, err := observation.Verdicts(ctx, ft.Items, m.GetTruth(), nil); err != nil {
+	filled := map[[2]int]bool{}
+	for _, fb := range es.GetWorkbook().GetFilledBoxes() {
+		filled[[2]int{int(fb.GetAnswerSlot().GetItem()), int(fb.GetAnswerSlot().GetSlot())}] = true
+	}
+	items, err := observation.Verdicts(ctx, ft.Items, m.GetTruth(), nil)
+	if err != nil {
 		return nil, refuse(evalv1.Refusal_REFUSAL_INVALID, "its truth gets no verdict of its task %s", ft.ID), nil
 	}
+	truth := truthsOf(items, m, func(item, slot int) bool { return filled[[2]int{item, slot}] })
 	for _, n := range m.GetNotes() {
 		if !slotOf(pg, n.GetAnswerSlot()) {
 			return nil, refuse(evalv1.Refusal_REFUSAL_INVALID, "a note names the box %d.%d, which its task %s has not", n.GetAnswerSlot().GetItem(), n.GetAnswerSlot().GetSlot(), ft.ID), nil
@@ -254,7 +264,7 @@ func ReadPage(es *evalv1.Sample, w *Workbook) (*Page, *Refusal, error) {
 		}
 		ink.Boxes = append(ink.Boxes, box)
 	}
-	return &Page{Page: pg, Ink: ink}, nil, nil
+	return &Page{Page: pg, Ink: ink, ID: es.GetId(), Truth: truth}, nil, nil
 }
 
 // slotOf reports whether a place is a box of the page.

@@ -119,6 +119,11 @@ type Essay struct {
 	Essay   *sample.Essay
 	Strokes []sample.Stroke
 	Seed    string
+	// ID is the sample's, People the marks of its markup, and Unreadable the reason its truth gives
+	// no text, or "": what the runner's report takes of the essay (R74).
+	ID         string
+	People     []Mark
+	Unreadable string
 }
 
 // ReadEssay reads a sample of the protocol, which sample-check has found valid, as the essay of the
@@ -176,7 +181,8 @@ func ReadEssay(es *evalv1.Sample, f *Essays) (*Essay, *Refusal, error) {
 		return nil, nil, ErrNotEssay
 	}
 	strokes, _, fold := protocol.Ink(h)
-	return &Essay{Essay: e, Strokes: Shown(strokes, fold), Seed: es.GetSynthetic().GetSeed()}, nil, nil
+	people, unreadable := peopleOf(m)
+	return &Essay{Essay: e, Strokes: Shown(strokes, fold), Seed: es.GetSynthetic().GetSeed(), ID: es.GetId(), People: people, Unreadable: unreadable}, nil, nil
 }
 
 // EssayDifferences are where an essay's sample is off what its file says of the essay, by paths

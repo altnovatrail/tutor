@@ -12,6 +12,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/measure"
 	"github.com/altnovatrail/tutor/internal/newfile"
+	"github.com/altnovatrail/tutor/internal/protocol"
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/report"
 	"github.com/altnovatrail/tutor/internal/runner"
@@ -81,6 +82,31 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 			data []byte
 		}{toRead, text.Bytes()})
 	}
+	var reports []string
+	if x, ok := r.(withProtocol); ok && len(x.Reports()) > 0 {
+		var table bytes.Buffer
+		if err := x.ProtocolCSV(&table); err != nil {
+			_, _ = fmt.Fprintf(stderr, "tutor-eval report: %v\n", err)
+			return exitFail
+		}
+		outputs = append(outputs, struct {
+			path string
+			data []byte
+		}{base + ".protocol.csv", table.Bytes()})
+		for _, n := range x.Reports() {
+			data, err := protocol.MarshalReport(n.Report)
+			if err != nil {
+				_, _ = fmt.Fprintf(stderr, "tutor-eval report: %s: %v\n", n.Name, err)
+				return exitFail
+			}
+			p := report.ReportFile(base, n.Name)
+			reports = append(reports, p)
+			outputs = append(outputs, struct {
+				path string
+				data []byte
+			}{p, data})
+		}
+	}
 	for _, o := range outputs {
 		if _, err := os.Lstat(o.path); err == nil {
 			_, _ = fmt.Fprintf(stderr, "tutor-eval report: %s exists: a report is written once, beside its log\n", o.path)
@@ -103,6 +129,9 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 	if toRead != "" {
 		fmt.Fprintf(&b, "%s: %s\n", what, toRead)
 	}
+	if len(reports) > 0 {
+		fmt.Fprintf(&b, "The runner's reports of the protocol (§ 14), and their measures in %s.protocol.csv: %s\n", base, strings.Join(reports, ", "))
+	}
 	if _, err := io.WriteString(stdout, b.String()); err != nil {
 		return exitFail
 	}
@@ -122,6 +151,13 @@ type written interface {
 // .feedback.md (T83).
 type withReading interface {
 	Readable() (suffix, label string, write func(w io.Writer, logName string) error)
+}
+
+// withProtocol is a report whose log tells the runner's reports of the protocol, which the command
+// writes beside the log, each a file, with the CSV of their measures (R74).
+type withProtocol interface {
+	Reports() []report.Named
+	ProtocolCSV(w io.Writer) error
 }
 
 // reportOf builds the report of a log by the kind of call it is of: the judge's, whose log tells no

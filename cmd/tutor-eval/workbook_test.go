@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/altnovatrail/module-kit/verdict"
+	evalv1 "github.com/altnovatrail/spec/contracts/novatrail/eval/v1"
 	"github.com/altnovatrail/spec/types/formatv0"
 
 	"github.com/altnovatrail/tutor/internal/sample"
@@ -245,9 +246,10 @@ func TestRunWorkbook(t *testing.T) {
 	if n := strings.Count(string(data), `"kind":"page"`); n != 5 || strings.Count(string(data), `"kind":"call"`) != 30 {
 		t.Errorf("the log holds %d pages:\n%.300s", n, data)
 	}
-	if code, out, errs := runIt("report", log); code != exitOK || !strings.Contains(out, "haiku-low, bare: 55 of 55 readings right") {
+	if code, out, errs := runIt("report", log); code != exitOK || !strings.Contains(out, "haiku-low, bare: 55 of 55 readings right") || !strings.Contains(out, "The runner's reports of the protocol") {
 		t.Errorf("the report of the workbook ends %d: %s%s", code, out, errs)
 	}
+	reportsBeside(t, log, evalv1.Capability_CAPABILITY_HANDWRITING_READING, "opus-high", "haiku-low", "opus-high+haiku-low-no-thinking")
 	for _, c := range []struct {
 		args []string
 		says string

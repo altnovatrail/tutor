@@ -9,6 +9,8 @@ import (
 	"testing"
 	"time"
 
+	evalv1 "github.com/altnovatrail/spec/contracts/novatrail/eval/v1"
+
 	"github.com/altnovatrail/tutor/internal/reading"
 )
 
@@ -85,6 +87,7 @@ func TestReadingOverSets(t *testing.T) {
 			t.Errorf("the report of a reading: %v", err)
 		}
 	}
+	reportsBeside(t, log, evalv1.Capability_CAPABILITY_HANDWRITING_READING, "opus-high", "haiku-low", "haiku-low-no-thinking", "opus-high+haiku-low", "opus-high+haiku-low-no-thinking")
 }
 
 // A reading of the other heights and of the states alone, on the stub: Haiku reads them once and

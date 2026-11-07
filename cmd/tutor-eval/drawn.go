@@ -17,6 +17,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/newfile"
 	"github.com/altnovatrail/tutor/internal/protocol"
 	"github.com/altnovatrail/tutor/internal/render"
+	"github.com/altnovatrail/tutor/internal/runner"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/samplecheck"
 	"github.com/altnovatrail/tutor/internal/sheets"
@@ -389,11 +390,33 @@ func refusedOf(what string, n int, r *evalsample.Refusal) string {
 	return fmt.Sprintf("%s %d (%s: %s)", what, n, evalsample.Reason(r.Reason), r.Detail)
 }
 
+// refusal is a sample a run refuses: how the run names it before it asks, and how the record of
+// the run names it, for the runner's report (R74).
+type refusal struct {
+	line   string
+	record runner.Refused
+}
+
+// refusalOf is a sample the run refuses, by what it is and its number, its set when the run reads
+// several, and its file.
+func refusalOf(what string, n int, set, file string, r *evalsample.Refusal) refusal {
+	return refusal{line: refusedOf(what, n, r), record: runner.Refused{Set: set, Sample: r.Sample, File: file, Reason: r.Reason.String(), Detail: r.Detail}}
+}
+
+// recordsOf are the refused samples as the record of the run names them.
+func recordsOf(refused []refusal) []runner.Refused {
+	var out []runner.Refused
+	for _, r := range refused {
+		out = append(out, r.record)
+	}
+	return out
+}
+
 // partDrawn are the samples read of the pages or essays of a part, by their numbers: a run asks of
 // each that is drawn and fits its file. One refused is named in refused, with its reason, and not
 // asked of, and nothing of it goes to AI; one not drawn, or off its file, stops the run before it
 // asks, as a sheet not recorded or failing its check does.
-func partDrawn[T any](d *evalsample.Dir[T], noun string, numbers []int) (chosen []*T, refused []string, err error) {
+func partDrawn[T any](d *evalsample.Dir[T], noun string, numbers []int) (chosen []*T, refused []refusal, err error) {
 	at := map[int]int{}
 	for i, x := range d.Drawn {
 		at[x.Number] = i
@@ -404,7 +427,7 @@ func partDrawn[T any](d *evalsample.Dir[T], noun string, numbers []int) (chosen 
 		case x.File == "":
 			return nil, nil, fmt.Errorf("%s %d is not drawn: tutor-eval draw draws it", noun, n)
 		case x.Refused != nil:
-			refused = append(refused, refusedOf(noun, n, x.Refused))
+			refused = append(refused, refusalOf(noun, n, "", x.File, x.Refused))
 		case x.Read == nil:
 			return nil, nil, fmt.Errorf("the sample of %s %d is off its file at %s", noun, n, strings.Join(x.Problems, ", "))
 		default:

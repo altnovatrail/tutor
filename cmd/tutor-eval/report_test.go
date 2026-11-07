@@ -1,10 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+
+	evalv1 "github.com/altnovatrail/spec/contracts/novatrail/eval/v1"
+
+	"github.com/altnovatrail/tutor/internal/protocol"
+	"github.com/altnovatrail/tutor/internal/report"
 )
 
 // The report of a run on the stub: the stub is always right, so no form differs from another, and
@@ -41,6 +47,28 @@ func TestReport(t *testing.T) {
 	}
 	if code, _, errs := runIt("report", log); code != exitFail || !strings.Contains(errs, "exists") {
 		t.Errorf("a second report ends %d: %s", code, errs)
+	}
+}
+
+// reportsBeside holds the runner's reports of the protocol that the report of a log writes beside
+// it, by their names, and the CSV of their measures: each reads back strictly, of its capability,
+// with module-kit's verdicts and samples measured (R74).
+func reportsBeside(t *testing.T, log string, capability evalv1.Capability, names ...string) {
+	t.Helper()
+	base := strings.TrimSuffix(log, ".jsonl")
+	if _, err := os.Stat(base + ".protocol.csv"); err != nil {
+		t.Errorf("the CSV of the reports: %v", err)
+	}
+	for _, name := range names {
+		data, err := os.ReadFile(report.ReportFile(base, name))
+		if err != nil {
+			t.Errorf("the report of %s: %v", name, err)
+			continue
+		}
+		r, err := protocol.ReadReport(bytes.NewReader(data))
+		if err != nil || r.GetCapability() != capability || r.GetVerdicts().GetCode() != evalv1.VerdictCode_VERDICT_CODE_MODULE_KIT || len(r.GetSamples()) == 0 || r.GetSamples()[0].GetMeasured() == nil {
+			t.Errorf("the report of %s, %v: %.300s", name, err, data)
+		}
 	}
 }
 

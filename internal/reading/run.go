@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/altnovatrail/tutor/internal/evalsample"
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/runner"
 	"github.com/altnovatrail/tutor/internal/sample"
@@ -153,7 +154,7 @@ func (s *step) Record(o runner.Outcome) any {
 	if !o.NotAsked && o.Error == "" {
 		var err error
 		if obs, err = Read(o.Answer); err != nil {
-			rec.Error = err.Error()
+			rec.Error, rec.Invalid = err.Error(), true
 		}
 	}
 	verdict, reason := Verdict(obs, KeyOf(s.sheet.Task.Key))
@@ -212,7 +213,7 @@ func New(part string, sets []string, chosen []sheets.Chosen, readers []Reader, r
 	}
 	r.Record = func(h runner.Head) any {
 		return RunRecord{Kind: "run", CallKind: CallKind, Time: h.Time, Part: part, Sets: sets, Readers: records, Repeats: repeats, Reads: cut.Names(), MaxUSD: h.MaxUSD, Estimate: h.Estimate,
-			Prompt: Fingerprint(), PromptVersion: Version}
+			Prompt: Fingerprint(), PromptVersion: Version, Runner: h.Runner, ModuleKit: h.ModuleKit, Refused: h.Refused}
 	}
 	add := func(rd Reader, rep int, proto *step) {
 		st := *proto
@@ -372,7 +373,7 @@ func conditions(sh *prepared) []condition {
 func sheetRecord(sh *prepared) SheetRecord {
 	rec := SheetRecord{Kind: "sheet", Set: sh.Set, Sheet: sh.Number, File: sh.File, Writer: sh.Sample.Writer, Task: sh.Sample.Task, Scenario: sh.Sample.Scenario,
 		Outcome: sh.Sample.Expected.Outcome, Key: KeyOf(sh.Task.Key), FalseKeys: []string{}, Markup: sh.marked,
-		Median: sh.median, States: sh.states, Policies: sh.policies}
+		Median: sh.median, States: sh.states, Policies: sh.policies, Sample: sh.ID, Truth: sh.Truth}
 	if rec.States == nil {
 		rec.States = []states.State{}
 	}
@@ -404,6 +405,11 @@ type (
 		Estimate      runner.Estimate `json:"estimate"`
 		Prompt        string          `json:"prompt"`
 		PromptVersion int             `json:"prompt_version"`
+		// Runner and ModuleKit are the versions of the build that ran, and Refused the samples it
+		// refused: what the runner's report takes of the run (R74).
+		Runner    string           `json:"runner,omitempty"`
+		ModuleKit string           `json:"module_kit,omitempty"`
+		Refused   []runner.Refused `json:"refused,omitempty"`
 	}
 	// ReaderRecord is a reader as the run's record tells it: its model and prices, and whether it
 	// reads once.
@@ -431,6 +437,10 @@ type (
 		Median    float64         `json:"median"`
 		States    []states.State  `json:"states"`
 		Policies  states.Policies `json:"policies"`
+		// Sample is the ID of the sheet's sample of the protocol, and Truth the truth of its answer
+		// slot, for the runner's report; a sheet of tutor-sample v0 has neither (R74).
+		Sample string             `json:"sample,omitempty"`
+		Truth  []evalsample.Truth `json:"truth,omitempty"`
 	}
 	// CallRecord tells a call: the answer as the model gave it, the verdict on it and its reason,
 	// the value of its answer, what was read under the key, the failure if it failed, and what it
@@ -445,6 +455,9 @@ type (
 		Value    string `json:"value,omitempty"`
 		UnderKey Under  `json:"under_key"`
 		Error    string `json:"error,omitempty"`
+		// Invalid is set when the answer is off the schema: no observation, and the report of the
+		// protocol names the call unchecked, UNCHECKED_CAUSE_INVALID (R74).
+		Invalid bool `json:"invalid,omitempty"`
 		runner.Usage
 	}
 )

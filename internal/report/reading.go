@@ -25,10 +25,12 @@ import (
 // policy of reading on its own (О-8, О-21). It holds no handwriting: numbers, the sets and numbers of sheets,
 // and the names of readers and conditions.
 type Reading struct {
-	log     *reading.Log
-	sheets  map[sheetID]*reading.SheetRecord
-	order   []sheetID
-	readers []reading.ReaderRecord
+	// protocol are the runner's reports of the protocol that the log tells (R74).
+	protocol []Named
+	log      *reading.Log
+	sheets   map[sheetID]*reading.SheetRecord
+	order    []sheetID
+	readers  []reading.ReaderRecord
 	// byCall are the calls of the finished sheets at 32 px that were asked, by reader and condition,
 	// and by sheet.
 	byCall map[readerCondition]map[sheetID][]*reading.CallRecord
@@ -286,18 +288,19 @@ func NewReading(l *reading.Log) (*Reading, error) {
 		}
 	}
 	r.Heights, r.States, r.Policies, r.Costs = r.heights(), r.stateCells(), r.policies(), r.costs()
-	for _, strong := range r.readers {
-		if !strong.Once {
-			continue
-		}
-		for _, fast := range r.readers {
-			if !fast.Once {
-				r.Pairs = append(r.Pairs, r.pair(strong.Name, fast.Name))
-			}
-		}
+	for _, p := range pairsOf(r.readers) {
+		r.Pairs = append(r.Pairs, r.pair(p[0].Name, p[1].Name))
 	}
+	r.protocol = ReadingReports(l)
 	return r, nil
 }
+
+// Reports are the runner's reports of the protocol that the log tells (R74), none for a log whose
+// samples are not of the protocol.
+func (r *Reading) Reports() []Named { return r.protocol }
+
+// ProtocolCSV writes the measures of section 14 of the runner's reports as CSV.
+func (r *Reading) ProtocolCSV(w io.Writer) error { return protocolCSV(w, r.protocol) }
 
 // calls are the calls a reader made of the finished sheets at 32 px in a condition, by sheet.
 func (r *Reading) calls(reader string, cond reading.Condition) map[sheetID][]*reading.CallRecord {
@@ -467,20 +470,29 @@ func (r *Reading) pair(strong, fast string) Pair {
 // errors of each reader beside it are. A call that failed, or gave no verdict, joins nothing, and
 // the sheet is not released.
 func joined(key string, a, b *reading.CallRecord) (verdict.Verdict, bool) {
+	v, value := joinedSlot(key, a, b)
+	return v.Verdict, value
+}
+
+// joinedSlot is module-kit's verdict on the observations of two readers of a sheet joined, as
+// their records tell them, and whether the two read one value; unchecked, with none, when either
+// gives no observation.
+func joinedSlot(key string, a, b *reading.CallRecord) (verdict.SlotVerdict, bool) {
+	none := verdict.SlotVerdict{Verdict: verdict.Unchecked}
 	oa, ob := reading.RecordObservation(a), reading.RecordObservation(b)
 	if oa == nil || ob == nil {
-		return verdict.Unchecked, false
+		return none, false
 	}
 	j, err := observation.Join([]formatv0.Item{task.SheetItem(key)}, oa, ob)
 	if err != nil {
-		return verdict.Unchecked, false
+		return none, false
 	}
 	v, err := reading.SlotVerdict(key, j)
 	if err != nil {
-		return verdict.Unchecked, false
+		return none, false
 	}
 	_, value := j.GetAnswerSlots()[0].GetRead().(*observationv1.AnswerSlotObservation_Value)
-	return v.Verdict, value
+	return v, value
 }
 
 // P is p of the hybrid: the share of sheets the fast reader does not confirm "correct" on, which
@@ -546,6 +558,7 @@ func (r *Reading) Markdown(w io.Writer, logName string) error {
 	for _, c := range r.Cells {
 		fmt.Fprintf(&b, "| %s | %s | %d | %d | %.5f |\n", c.Reader, c.Condition, c.TimeP50, c.TimeP95, c.MeanUSD)
 	}
+	markdownProtocol(&b, logName, r.protocol, l.Run.Refused)
 	_, err := io.WriteString(w, b.String())
 	return err
 }
