@@ -6,11 +6,12 @@ import (
 	"strings"
 	"unicode"
 
+	"github.com/altnovatrail/module-kit/verdict"
+
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/states"
-	"github.com/altnovatrail/tutor/internal/value"
 )
 
 // The heights of digits, the states and the readings of a sheet by each policy of reading on its
@@ -244,7 +245,7 @@ func (r *Reading) stateCell(reader, kind string, calls []*reading.CallRecord) St
 		answer := slices.IndexFunc(sh.Markup.Parts, func(p reading.MarkedPart) bool { return p.Answer && !p.CrossedOut })
 		done := answer >= 0 && st.Parts[answer] == states.Done
 		obs, _ := reading.Read(call.Answer)
-		v := value.Verdict(call.Verdict)
+		v := verdict.Verdict(call.Verdict)
 		switch {
 		case done && st.Erased > 0:
 			c.Erasing++
@@ -255,7 +256,7 @@ func (r *Reading) stateCell(reader, kind string, calls []*reading.CallRecord) St
 			}
 		default:
 			earlyOf[id]++
-			if v == value.Correct || v == value.NotYet {
+			if v == verdict.Correct || v == verdict.NotYet {
 				early[id]++
 			}
 			c.NotDone++
@@ -332,8 +333,11 @@ func (r *Reading) costs() []Cost {
 		calls := r.ofStates[rd.Name]
 		if len(calls) == 0 {
 			c.From = "its readings without a key"
-			for _, cs := range r.calls(rd.Name, reading.NoKey) {
-				calls = append(calls, cs...)
+			// In the order of the sheets: a sum in the order of a map is another in its last bits, and
+			// a price at the edge of its rounding was printed one way or the other.
+			by := r.calls(rd.Name, reading.NoKey)
+			for _, id := range r.order {
+				calls = append(calls, by[id]...)
 			}
 		}
 		if len(calls) == 0 {

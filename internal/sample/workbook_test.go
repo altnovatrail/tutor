@@ -5,8 +5,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/altnovatrail/module-kit/verdict"
+	"github.com/altnovatrail/spec/types/formatv0"
 	"github.com/altnovatrail/tutor/internal/sample"
-	"github.com/altnovatrail/tutor/internal/value"
 )
 
 func ptr[T any](v T) *T { return &v }
@@ -22,7 +23,7 @@ func testWorkbook() *sample.Workbook {
 				Scenario: sample.BoxError, Written: ptr("49"),
 			}}},
 			{Text: "Сократи дробь: 6/8 = [ ]", Boxes: []sample.WorkbookBox{{
-				Check: sample.BoxCheck{Kind: sample.KindFraction, Key: "3/4", Form: ptr(value.Reduced),
+				Check: sample.BoxCheck{Kind: sample.KindFraction, Key: "3/4", Form: ptr(formatv0.CheckFormReduced),
 					TrapValues: []sample.TrapValue{{Value: "6/8", Trap: "not-in-lowest-terms"}}},
 				Scenario: sample.BoxRewritten, Written: ptr("3/4"), Crossed: ptr("6/8"), Fraction: ptr(sample.Stacked),
 			}}},
@@ -89,10 +90,11 @@ func TestWorkbookCheck(t *testing.T) {
 		}, "pages[0].items", "1 to 10 items"},
 		{"boxes not in the text", func(wb *sample.Workbook) { wb.Pages[0].Items[0].Text = "7 × 8 = 56" }, "pages[0].items[0]", "its text shows 0"},
 		{"another kind", func(wb *sample.Workbook) { box(wb, 0).Check.Kind = "choice" }, "pages[0].items[0].boxes[0].check.kind", `"choice"`},
-		{"a number with a form", func(wb *sample.Workbook) { box(wb, 0).Check.Form = ptr(value.AnyForm) }, "pages[0].items[0].boxes[0].check.form", "a number has no form"},
+		{"a number with a form", func(wb *sample.Workbook) { box(wb, 0).Check.Form = ptr(formatv0.CheckFormAny) }, "pages[0].items[0].boxes[0].check.form", "a number has no form"},
 		{"a fraction without a form", func(wb *sample.Workbook) { box(wb, 1).Check.Form = nil }, "pages[0].items[1].boxes[0].check.form", `not "any" or "reduced"`},
 		{"a key not in lowest terms", func(wb *sample.Workbook) { box(wb, 1).Check.Key = "6/8" }, "pages[0].items[1].boxes[0].check.key", "no key of a fraction"},
 		{"a key out of notation", func(wb *sample.Workbook) { box(wb, 0).Check.Key = "x = 8" }, "pages[0].items[0].boxes[0].check.key", "no key"},
+		{"a placeholder in a trap value", func(wb *sample.Workbook) { box(wb, 0).Check.TrapValues[0].Value = "{n}" }, "pages[0].items[0].boxes[0].check", "no check the format takes"},
 		{"a right trap value", func(wb *sample.Workbook) { box(wb, 0).Check.TrapValues[0].Value = "8" }, "pages[0].items[0].boxes[0].check.trap_values[0].value", "is correct"},
 		{"two equal trap values", func(wb *sample.Workbook) {
 			box(wb, 1).Check.TrapValues = append(box(wb, 1).Check.TrapValues, sample.TrapValue{Value: "9/12", Trap: "other"})
@@ -163,7 +165,7 @@ func TestLeaningAndMirrored(t *testing.T) {
 	if r, ok := sample.PairOf('8'); !ok || r != '3' {
 		t.Errorf("the pair of 8 is %c %v", r, ok)
 	}
-	if v := (sample.WorkbookBox{Check: sample.BoxCheck{Kind: sample.KindNumber, Key: "8"}}).Verdict(); v.Verdict != value.Unreadable || v.Reason != value.Blank {
+	if v := (sample.WorkbookBox{Check: sample.BoxCheck{Kind: sample.KindNumber, Key: "8"}}).Verdict(); v.Verdict != verdict.Unreadable || v.Reason != verdict.Blank {
 		t.Errorf("a blank box is %+v", v)
 	}
 }

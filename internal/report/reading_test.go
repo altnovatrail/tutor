@@ -10,6 +10,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/altnovatrail/module-kit/verdict"
+
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/report"
 	"github.com/altnovatrail/tutor/internal/runner"
@@ -17,7 +19,6 @@ import (
 	"github.com/altnovatrail/tutor/internal/sheets"
 	"github.com/altnovatrail/tutor/internal/states"
 	"github.com/altnovatrail/tutor/internal/synth"
-	"github.com/altnovatrail/tutor/internal/value"
 )
 
 var update = flag.Bool("update", false, "write the golden logs and reports of the reading and the hint anew")
@@ -40,9 +41,9 @@ func newReadingLog(outcomes ...sample.Outcome) *readingLog {
 }
 
 // call adds a call of a sheet at 32 px with its verdict and value, read under the key or not.
-func (b *readingLog) call(sheet int, reader string, cond reading.Condition, repeat int, verdict value.Verdict, val string, under bool) *reading.CallRecord {
+func (b *readingLog) call(sheet int, reader string, cond reading.Condition, repeat int, v verdict.Verdict, val string, under bool) *reading.CallRecord {
 	c := reading.CallRecord{Kind: "call", Call: reading.Call{Set: "s", Sheet: sheet, Condition: cond, Reader: reader, Repeat: repeat, Digit: 32, Drawn: 32},
-		Verdict: string(verdict), Value: val, UnderKey: reading.Under{Result: under}}
+		Verdict: string(v), Value: val, UnderKey: reading.Under{Result: under}}
 	c.LatencyMs, c.CostUSD = int64(1000*sheet), 0.01
 	b.l.Calls = append(b.l.Calls, c)
 	return &b.l.Calls[len(b.l.Calls)-1]
@@ -81,15 +82,15 @@ func TestReadingThreshold(t *testing.T) {
 	b := newReadingLog(sample.OutcomeCorrect, sample.OutcomeCorrect, sample.OutcomeCorrect, sample.OutcomeCorrect, sample.OutcomeCorrect, sample.OutcomeError)
 	for sheet := 1; sheet <= 5; sheet++ {
 		for rep := 1; rep <= 3; rep++ {
-			b.call(sheet, "haiku-low", reading.NoKey, rep, value.Correct, "5", false)
-			b.call(sheet, "haiku-low", reading.RightKey, rep, value.NotYet, "6", false)
+			b.call(sheet, "haiku-low", reading.NoKey, rep, verdict.Correct, "5", false)
+			b.call(sheet, "haiku-low", reading.RightKey, rep, verdict.NotYet, "6", false)
 		}
-		b.call(sheet, "opus-high", reading.NoKey, 1, value.Correct, "5", sheet == 1)
-		b.call(sheet, "opus-high", reading.RightKey, 1, value.Correct, "5", false)
-		b.call(sheet, "opus-high", reading.FalseKey, 1, value.Correct, "5", sheet == 2)
+		b.call(sheet, "opus-high", reading.NoKey, 1, verdict.Correct, "5", sheet == 1)
+		b.call(sheet, "opus-high", reading.RightKey, 1, verdict.Correct, "5", false)
+		b.call(sheet, "opus-high", reading.FalseKey, 1, verdict.Correct, "5", sheet == 2)
 	}
-	b.call(6, "haiku-low-no-thinking", reading.NoKey, 1, value.NotYet, "6", false)
-	b.call(6, "haiku-low-no-thinking", reading.RightKey, 1, value.Correct, "5", true)
+	b.call(6, "haiku-low-no-thinking", reading.NoKey, 1, verdict.NotYet, "6", false)
+	b.call(6, "haiku-low-no-thinking", reading.RightKey, 1, verdict.Correct, "5", true)
 	r := b.report(t)
 
 	haiku := thresholdOf(t, r, "haiku-low")
@@ -106,10 +107,10 @@ func TestReadingThreshold(t *testing.T) {
 	}
 	// Without the false key and the readings under keys, Opus passes.
 	b = newReadingLog(sample.OutcomeCorrect, sample.OutcomeError)
-	b.call(1, "opus-high", reading.NoKey, 1, value.Correct, "5", false)
-	b.call(1, "opus-high", reading.RightKey, 1, value.Correct, "5", false)
-	b.call(2, "opus-high", reading.NoKey, 1, value.NotYet, "6", false)
-	b.call(2, "opus-high", reading.RightKey, 1, value.NotYet, "6", false)
+	b.call(1, "opus-high", reading.NoKey, 1, verdict.Correct, "5", false)
+	b.call(1, "opus-high", reading.RightKey, 1, verdict.Correct, "5", false)
+	b.call(2, "opus-high", reading.NoKey, 1, verdict.NotYet, "6", false)
+	b.call(2, "opus-high", reading.RightKey, 1, verdict.NotYet, "6", false)
 	if th := thresholdOf(t, b.report(t), "opus-high"); !th.Passes() || th.Nonzero != 0 {
 		t.Errorf("a reader the key changes nothing for: %+v", th)
 	}
@@ -117,24 +118,24 @@ func TestReadingThreshold(t *testing.T) {
 	// the conditions do not move it. Two readings without a key, one of them a false alarm, against
 	// one with the right key, a false alarm, and one failed: d is 1 − 1/2.
 	b = newReadingLog(sample.OutcomeCorrect)
-	b.call(1, "haiku-low", reading.NoKey, 1, value.NotYet, "6", false)
-	b.call(1, "haiku-low", reading.NoKey, 2, value.Correct, "5", false)
-	b.call(1, "haiku-low", reading.RightKey, 1, value.NotYet, "6", false)
-	b.call(1, "haiku-low", reading.RightKey, 2, value.Unchecked, "", false).Error = "cut off"
+	b.call(1, "haiku-low", reading.NoKey, 1, verdict.NotYet, "6", false)
+	b.call(1, "haiku-low", reading.NoKey, 2, verdict.Correct, "5", false)
+	b.call(1, "haiku-low", reading.RightKey, 1, verdict.NotYet, "6", false)
+	b.call(1, "haiku-low", reading.RightKey, 2, verdict.Unchecked, "", false).Error = "cut off"
 	if th := thresholdOf(t, b.report(t), "haiku-low"); th.Sum != 0.5 || th.Nonzero != 1 {
 		t.Errorf("d over the calls that gave a verdict: %+v", th)
 	}
 	// A log without the conditions of the key does not measure the threshold, and a part other than
 	// the test does not decide it.
 	b = newReadingLog(sample.OutcomeCorrect)
-	b.call(1, "haiku-low", reading.NoKey, 1, value.Correct, "5", false)
+	b.call(1, "haiku-low", reading.NoKey, 1, verdict.Correct, "5", false)
 	if th := thresholdOf(t, b.report(t), "haiku-low"); th.Measured() || th.Holds() || th.Passes() {
 		t.Errorf("a threshold without the right key: %+v", th)
 	}
 	b = newReadingLog(sample.OutcomeCorrect)
 	b.l.Run.Part = "dev"
-	b.call(1, "opus-high", reading.NoKey, 1, value.Correct, "5", false)
-	b.call(1, "opus-high", reading.RightKey, 1, value.Correct, "5", false)
+	b.call(1, "opus-high", reading.NoKey, 1, verdict.Correct, "5", false)
+	b.call(1, "opus-high", reading.RightKey, 1, verdict.Correct, "5", false)
 	if th := thresholdOf(t, b.report(t), "opus-high"); !th.Holds() || th.Passes() {
 		t.Errorf("a threshold of the dev part: %+v", th)
 	}
@@ -146,12 +147,12 @@ func TestReadingThreshold(t *testing.T) {
 // time.
 func TestReadingCells(t *testing.T) {
 	b := newReadingLog(sample.OutcomeCorrect, sample.OutcomeCorrect, sample.OutcomeError, sample.OutcomeUnreadable)
-	b.call(1, "haiku-low", reading.NoKey, 1, value.Correct, "5", false).Answer = `{"parts": [{"kind": "text", "text": "2+3=5", "legible": true, "other_readings": []}], "results": [{"part": 1, "value": "5", "other_values": []}]}`
-	b.call(2, "haiku-low", reading.NoKey, 1, value.NotYet, "6", false)
-	b.call(3, "haiku-low", reading.NoKey, 1, value.Correct, "5", false)
-	b.call(4, "haiku-low", reading.NoKey, 1, value.Unreadable, "", false)
-	b.call(1, "haiku-low", reading.NoKey, 2, value.Unreadable, "", false)
-	c := b.call(2, "haiku-low", reading.NoKey, 2, value.Unchecked, "", false)
+	b.call(1, "haiku-low", reading.NoKey, 1, verdict.Correct, "5", false).Answer = `{"parts": [{"kind": "text", "text": "2+3=5", "legible": true, "other_readings": []}], "results": [{"part": 1, "value": "5", "other_values": []}]}`
+	b.call(2, "haiku-low", reading.NoKey, 1, verdict.NotYet, "6", false)
+	b.call(3, "haiku-low", reading.NoKey, 1, verdict.Correct, "5", false)
+	b.call(4, "haiku-low", reading.NoKey, 1, verdict.Unreadable, "", false)
+	b.call(1, "haiku-low", reading.NoKey, 2, verdict.Unreadable, "", false)
+	c := b.call(2, "haiku-low", reading.NoKey, 2, verdict.Unchecked, "", false)
 	c.Error = "timeout"
 	r := b.report(t)
 	var cell report.ReadingCell
@@ -180,15 +181,15 @@ func TestReadingCells(t *testing.T) {
 // "correct" on.
 func TestReadingPairs(t *testing.T) {
 	b := newReadingLog(sample.OutcomeCorrect, sample.OutcomeCorrect, sample.OutcomeError, sample.OutcomeError)
-	b.call(1, "opus-high", reading.NoKey, 1, value.Correct, "5", false)
-	b.call(1, "haiku-low", reading.NoKey, 1, value.Correct, "5.", false)
-	b.call(2, "opus-high", reading.NoKey, 1, value.Correct, "5", false)
-	b.call(2, "haiku-low", reading.NoKey, 1, value.NotYet, "6", false)
-	b.call(3, "opus-high", reading.NoKey, 1, value.NotYet, "6", false)
-	b.call(3, "haiku-low", reading.NoKey, 1, value.Correct, "5", false)
-	b.call(4, "opus-high", reading.NoKey, 1, value.NotYet, "6", false)
-	b.call(4, "haiku-low", reading.NoKey, 1, value.NotYet, "6", false).Error = "cut off"
-	b.call(4, "haiku-low", reading.NoKey, 2, value.NotYet, "6", false)
+	b.call(1, "opus-high", reading.NoKey, 1, verdict.Correct, "5", false)
+	b.call(1, "haiku-low", reading.NoKey, 1, verdict.Correct, "5.", false)
+	b.call(2, "opus-high", reading.NoKey, 1, verdict.Correct, "5", false)
+	b.call(2, "haiku-low", reading.NoKey, 1, verdict.NotYet, "6", false)
+	b.call(3, "opus-high", reading.NoKey, 1, verdict.NotYet, "6", false)
+	b.call(3, "haiku-low", reading.NoKey, 1, verdict.Correct, "5", false)
+	b.call(4, "opus-high", reading.NoKey, 1, verdict.NotYet, "6", false)
+	b.call(4, "haiku-low", reading.NoKey, 1, verdict.NotYet, "6", false).Error = "cut off"
+	b.call(4, "haiku-low", reading.NoKey, 2, verdict.NotYet, "6", false)
 	r := b.report(t)
 	var p report.Pair
 	for _, x := range r.Pairs {
@@ -205,6 +206,23 @@ func TestReadingPairs(t *testing.T) {
 	if len(r.Pairs) != 2 {
 		t.Errorf("%d pairs, want Opus with each Haiku", len(r.Pairs))
 	}
+
+	// module-kit joins the two readings that the records tell (observation.Join; R73): 0.5 and 1/2
+	// are one value of number, and released; two readings illegible give no value, and nothing is
+	// released; a call that gave no verdict joins nothing.
+	b = newReadingLog(sample.OutcomeCorrect, sample.OutcomeUnreadable, sample.OutcomeCorrect)
+	b.l.Sheets[0].Key = "1/2"
+	b.call(1, "opus-high", reading.NoKey, 1, verdict.Correct, "0.5", false)
+	b.call(1, "haiku-low", reading.NoKey, 1, verdict.Correct, "1/2", false)
+	b.call(2, "opus-high", reading.NoKey, 1, verdict.Unreadable, "5", false).Reason = reading.Illegible
+	b.call(2, "haiku-low", reading.NoKey, 1, verdict.Unreadable, "5", false).Reason = reading.Illegible
+	b.call(3, "opus-high", reading.NoKey, 1, verdict.Correct, "5", false)
+	b.call(3, "haiku-low", reading.NoKey, 1, verdict.Unchecked, "5", false)
+	for _, p := range b.report(t).Pairs {
+		if p.Fast == "haiku-low" && (p.Sheets != 3 || p.Released != 1 || p.FalseCorrect+p.FalseAlarm+p.Extra != 0) {
+			t.Errorf("the pair joined by module-kit %+v", p)
+		}
+	}
 }
 
 // A log without readers or sheets, a sheet twice and a call of a sheet, a reader or a condition the
@@ -214,10 +232,10 @@ func TestReadingRefuses(t *testing.T) {
 		"no sheets":      func(b *readingLog) { b.l.Sheets = nil },
 		"no readers":     func(b *readingLog) { b.l.Run.Readers = nil },
 		"a sheet twice":  func(b *readingLog) { b.l.Sheets = append(b.l.Sheets, b.l.Sheets[0]) },
-		"another sheet":  func(b *readingLog) { b.call(9, "opus-high", reading.NoKey, 1, value.Correct, "5", false) },
-		"another reader": func(b *readingLog) { b.call(1, "sonnet", reading.NoKey, 1, value.Correct, "5", false) },
+		"another sheet":  func(b *readingLog) { b.call(9, "opus-high", reading.NoKey, 1, verdict.Correct, "5", false) },
+		"another reader": func(b *readingLog) { b.call(1, "sonnet", reading.NoKey, 1, verdict.Correct, "5", false) },
 		"another condition": func(b *readingLog) {
-			b.call(1, "opus-high", reading.Condition("half"), 1, value.Correct, "5", false)
+			b.call(1, "opus-high", reading.Condition("half"), 1, verdict.Correct, "5", false)
 		},
 	} {
 		b := newReadingLog(sample.OutcomeCorrect)
@@ -327,7 +345,7 @@ func chosenOf(t *testing.T, set, planPath, bankPath string, numbers ...int) []sh
 }
 
 // heightCall adds a reading without a key of a finished sheet at a height, the first repeat.
-func (b *readingLog) heightCall(sheet, digit, drawn int, verdict value.Verdict) *reading.CallRecord {
+func (b *readingLog) heightCall(sheet, digit, drawn int, verdict verdict.Verdict) *reading.CallRecord {
 	c := b.call(sheet, "haiku-low", reading.NoKey, 1, verdict, "", false)
 	c.Digit, c.Drawn = digit, drawn
 	return c
@@ -342,13 +360,13 @@ func TestReadingHeights(t *testing.T) {
 	b := newReadingLog(sample.OutcomeCorrect, sample.OutcomeCorrect, sample.OutcomeCorrect, sample.OutcomeCorrect, sample.OutcomeCorrect, sample.OutcomeError)
 	b.l.Sheets[0].Markup.Parts[0].Text = "Ответ: 5 столбов"
 	for sheet := 1; sheet <= 5; sheet++ {
-		b.call(sheet, "haiku-low", reading.NoKey, 1, value.Correct, "5", false)
-		b.heightCall(sheet, 16, 16, value.NotYet)
-		b.heightCall(sheet, 24, 24, value.Correct)
+		b.call(sheet, "haiku-low", reading.NoKey, 1, verdict.Correct, "5", false)
+		b.heightCall(sheet, 16, 16, verdict.NotYet)
+		b.heightCall(sheet, 24, 24, verdict.Correct)
 	}
-	b.call(6, "haiku-low", reading.NoKey, 1, value.NotYet, "6", false)
-	b.heightCall(6, 16, 16, value.NotYet)
-	b.heightCall(6, 24, 22, value.Correct)
+	b.call(6, "haiku-low", reading.NoKey, 1, verdict.NotYet, "6", false)
+	b.heightCall(6, 16, 16, verdict.NotYet)
+	b.heightCall(6, 24, 22, verdict.Correct)
 	r := b.report(t)
 	find := func(digit int, group string) report.Height {
 		for _, h := range r.Heights {
@@ -373,7 +391,7 @@ func TestReadingHeights(t *testing.T) {
 	}
 	// At 24 px without the new false "correct", 24 px is advised; on the dev part it is not decided;
 	// without heights there is no advice to give.
-	b.l.Calls[len(b.l.Calls)-1].Verdict = string(value.NotYet)
+	b.l.Calls[len(b.l.Calls)-1].Verdict = string(verdict.NotYet)
 	if digit, _, _ := b.report(t).Advice(); digit != 24 {
 		t.Errorf("the advice %d, want 24", digit)
 	}
@@ -382,7 +400,7 @@ func TestReadingHeights(t *testing.T) {
 		t.Error("the dev part decides the advice")
 	}
 	// A reader that read some height but not 24 px leaves 24 px unadvised.
-	other := b.call(1, "haiku-low-no-thinking", reading.NoKey, 1, value.Correct, "", false)
+	other := b.call(1, "haiku-low-no-thinking", reading.NoKey, 1, verdict.Correct, "", false)
 	other.Digit, other.Drawn = 48, 48
 	if digit, _, _ := b.report(t).Advice(); digit != 32 {
 		t.Errorf("the advice %d with a reader that did not read 24 px, want 32", digit)
@@ -405,16 +423,16 @@ func TestReadingStates(t *testing.T) {
 			{Event: 5, Erasure: 1, Parts: []states.Progress{states.Done, states.Done}},
 		}
 	}
-	state := func(sheet, n int, verdict value.Verdict, answer string) {
+	state := func(sheet, n int, verdict verdict.Verdict, answer string) {
 		c := b.call(sheet, "haiku-low", reading.NoKey, 1, verdict, "", false)
 		c.State, c.Answer = n, answer
 	}
 	both := `{"parts": [{"kind": "text", "text": "2+3=5", "legible": true, "other_readings": []}, {"kind": "text", "text": "Ответ: 5", "legible": true, "other_readings": []}], "results": [{"part": 2, "value": "5", "other_values": []}]}`
 	none := `{"parts": [{"kind": "text", "text": "2 + 3 = 6", "legible": true, "other_readings": []}], "results": []}`
-	state(1, 1, value.Correct, both)    // early, invented, the begun answer read as written whole
-	state(2, 1, value.Unreadable, none) // in place; the written part misread
-	state(1, 2, value.Correct, both)    // the answer written, right
-	state(2, 2, value.Correct, both)    // the answer written, a false "correct"
+	state(1, 1, verdict.Correct, both)    // early, invented, the begun answer read as written whole
+	state(2, 1, verdict.Unreadable, none) // in place; the written part misread
+	state(1, 2, verdict.Correct, both)    // the answer written, right
+	state(2, 2, verdict.Correct, both)    // the answer written, a false "correct"
 	r := b.report(t)
 	cells := map[string]report.StateCell{}
 	for _, c := range r.States {
@@ -456,7 +474,7 @@ func TestReadingRefusesStates(t *testing.T) {
 		t.Error("a state of two parts on a markup of one: a report")
 	}
 	b = newReadingLog(sample.OutcomeCorrect)
-	b.call(1, "haiku-low", reading.NoKey, 1, value.Correct, "5", false).State = 1
+	b.call(1, "haiku-low", reading.NoKey, 1, verdict.Correct, "5", false).State = 1
 	if _, err := report.NewReading(&b.l); err == nil {
 		t.Error("a call of a state the sheet does not tell: a report")
 	}
@@ -470,8 +488,8 @@ func TestReadingPolicies(t *testing.T) {
 	for i, p := range []states.Policies{{AfterLine: 2, Pause400: 9}, {AfterLine: 4, Pause400: 3, Pause6000: 1}, {AfterLine: 3, Pause2000: 2}} {
 		b.l.Sheets[i].Policies = p
 	}
-	b.call(1, "opus-high", reading.NoKey, 1, value.Correct, "5", false).CostUSD = 0.02
-	c := b.call(1, "haiku-low", reading.NoKey, 1, value.Correct, "5", false)
+	b.call(1, "opus-high", reading.NoKey, 1, verdict.Correct, "5", false).CostUSD = 0.02
+	c := b.call(1, "haiku-low", reading.NoKey, 1, verdict.Correct, "5", false)
 	c.State, c.CostUSD = 1, 0.001
 	b.l.Sheets[0].States = []states.State{{Event: 1, Line: 1, Parts: []states.Progress{states.Done}}}
 	r := b.report(t)

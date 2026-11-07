@@ -8,11 +8,13 @@ import (
 	"strings"
 	"time"
 
+	"github.com/altnovatrail/module-kit/verdict"
+	"github.com/altnovatrail/spec/types/formatv0"
+
 	"github.com/altnovatrail/tutor/internal/evalsample"
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/runner"
 	"github.com/altnovatrail/tutor/internal/sample"
-	"github.com/altnovatrail/tutor/internal/value"
 	"github.com/altnovatrail/tutor/provider"
 )
 
@@ -119,8 +121,8 @@ func (s *step) Right() (string, error) {
 }
 
 // Record is the call's record: the answer as the model gave it, the verdict of every box of the
-// page and of every item. An answer off the schema is a failure of the reading, and every filled box
-// is then unchecked.
+// page and of every item. An answer off the schema is a failure of the reading, and every box of
+// the page, the blank ones too, is then unchecked (R73).
 func (s *step) Record(o runner.Outcome) any {
 	rec := CallRecord{Kind: "call", Call: s.Call, NotAsked: o.NotAsked, Answer: o.Answer, Error: o.Error, Usage: o.Usage}
 	var read []Reading
@@ -255,7 +257,7 @@ func pageRecord(pg *sample.WorkbookPage, cells []Cell) PageRecord {
 	}
 	for i, it := range pg.Items {
 		for k, b := range it.Boxes {
-			v := b.Verdict()
+			v := SlotOf(b.Verdict())
 			br := BoxRecord{Item: i + 1, Slot: k + 1, Kind: b.Check.Kind, Key: b.Check.Key, Scenario: b.Scenario, Written: b.Written, Crossed: b.Crossed, Fraction: b.Fraction,
 				Verdict: v.Verdict, Reason: v.Reason, Trap: v.Trap}
 			if b.Check.Form != nil {
@@ -312,14 +314,14 @@ type (
 		Item     int                     `json:"item"`
 		Slot     int                     `json:"slot"`
 		Kind     sample.CheckKind        `json:"check"`
-		Form     value.Form              `json:"form,omitempty"`
+		Form     formatv0.CheckForm      `json:"form,omitempty"`
 		Key      string                  `json:"key"`
 		Scenario sample.BoxScenario      `json:"scenario"`
 		Written  *string                 `json:"written"`
 		Crossed  *string                 `json:"crossed,omitempty"`
 		Fraction *sample.FractionWriting `json:"fraction,omitempty"`
-		Verdict  value.Verdict           `json:"verdict"`
-		Reason   value.Reason            `json:"reason,omitempty"`
+		Verdict  verdict.Verdict         `json:"verdict"`
+		Reason   Reason                  `json:"reason,omitempty"`
 		Trap     string                  `json:"trap,omitempty"`
 		Width    int                     `json:"width,omitempty"`
 		Height   int                     `json:"height,omitempty"`
@@ -330,11 +332,11 @@ type (
 	CallRecord struct {
 		Kind string `json:"kind"`
 		Call
-		NotAsked bool            `json:"not_asked,omitempty"`
-		Answer   string          `json:"answer,omitempty"`
-		Boxes    []Box           `json:"boxes"`
-		Items    []value.Verdict `json:"items"`
-		Error    string          `json:"error,omitempty"`
+		NotAsked bool              `json:"not_asked,omitempty"`
+		Answer   string            `json:"answer,omitempty"`
+		Boxes    []Box             `json:"boxes"`
+		Items    []verdict.Verdict `json:"items"`
+		Error    string            `json:"error,omitempty"`
 		runner.Usage
 	}
 )

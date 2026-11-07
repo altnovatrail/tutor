@@ -2,23 +2,29 @@ package workbook
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
 	"strings"
+	"unicode"
+
+	"github.com/altnovatrail/module-kit/observation"
+	"github.com/altnovatrail/module-kit/verdict"
+	observationv1 "github.com/altnovatrail/spec/contracts/novatrail/observation/v1"
 
 	"github.com/altnovatrail/tutor/internal/sample"
-	"github.com/altnovatrail/tutor/internal/value"
+	"github.com/altnovatrail/tutor/internal/task"
 	"github.com/altnovatrail/tutor/provider"
 )
 
 // The reading of a page of the workbook (T79; docs/architecture.md, 3.4, «Рабочая тетрадь»): one
 // call a page, which shows the model the crop of every filled box, each labelled with its place,
 // item and slot, and asks what each box holds, as it is written. The program gives each box its
-// verdict by the box's check, and each item by its boxes (R56 spec); a blank box goes to no model,
-// and its verdict is unreadable, blank (R53 spec, amendment of 2026-10-27).
+// verdict by the box's check, and each item by its boxes, module-kit's (R56 spec; R73); a blank box
+// goes to no model, and its verdict is unreadable, blank (R53 spec, amendment of 2026-10-27).
 
 // Version is the version of the prompt of the reading of the workbook, frozen before the test of the
 // run that measures it, as the reading's was (T73). Version 1, frozen in T80, read a digit written
@@ -172,15 +178,16 @@ func Read(answer string) ([]Reading, error) {
 // it.
 type Reason string
 
-// The reasons of the reading; the value's are value.Blank and value.Notation.
+// The reasons of the reading; the value's are module-kit's, verdict.Blank and verdict.Notation.
 const (
 	Illegible Reason = "illegible"
 	Ambiguous Reason = "ambiguous"
 	// Mirrored is a box with a digit the reader says is written mirrored: ambiguous by the rule of a
 	// digit written mirrored, and the learner writes it again (R56 spec, amendment of 2026-10-29).
 	Mirrored Reason = "mirrored"
-	// Missing is a filled box the answer has no cell for, and Twice one it has two cells for: both
-	// make the box unchecked, a failure of the reading.
+	// Missing is a filled box the answer has no cell for, and Twice one it has two cells for: either
+	// makes the answer no valid observation, and every box of the page unchecked, a failure of the
+	// reading (R73).
 	Missing Reason = "missing"
 	Twice   Reason = "twice"
 )
@@ -188,86 +195,142 @@ const (
 // Box is the verdict of a box of a page: its place, the answer read in it, and its verdict with
 // the reason or the trap.
 type Box struct {
-	Item    int           `json:"item"`
-	Slot    int           `json:"slot"`
-	Text    *string       `json:"text,omitempty"`
-	Verdict value.Verdict `json:"verdict"`
-	Reason  Reason        `json:"reason,omitempty"`
-	Trap    string        `json:"trap,omitempty"`
+	Item    int             `json:"item"`
+	Slot    int             `json:"slot"`
+	Text    *string         `json:"text,omitempty"`
+	Verdict verdict.Verdict `json:"verdict"`
+	Reason  Reason          `json:"reason,omitempty"`
+	Trap    string          `json:"trap,omitempty"`
 }
 
 // Verdicts are the program's verdicts on the boxes of a page, in its order, from what a model read
-// in them, nil for a failed call:
+// in them, nil for a failed call: module-kit's, on the observation of the page as the eval protocol
+// writes it (contracts/README.md of spec, section 10; R73), each with the reason in the reading's
+// own words, which the log keeps:
 //   - a blank box, which no model is shown, is unreadable, blank;
-//   - a failed call leaves every other box unchecked, and so does a box the answer has no cell for,
-//     or two;
-//   - a box read blank is unreadable, blank; one with a digit read mirrored, unreadable, mirrored;
-//     one read illegible or with other readings, unreadable;
+//   - a box read blank is unreadable, blank; one with a digit read mirrored, unreadable, mirrored,
+//     ambiguous to the protocol; one read illegible or with other readings, unreadable;
 //   - otherwise the box's check judges the answer: correct, not yet right with its trap, or
-//     unreadable when the answer is not in the notation of its kind (R56 spec).
+//     unreadable when the answer is not in the notation of its kind (R56 spec);
+//   - a failed call is no observation, and neither is an answer with no cell for a filled box, or
+//     two: every box of the page is then unchecked, the blank ones too, and a box without its cell,
+//     or with two, is missing, or twice.
 //
 // A cell of a place the page has no filled box for is passed over: it judges nothing.
 func Verdicts(pg *sample.WorkbookPage, read []Reading) []Box {
+	obs, boxes := observationOf(pg, read)
+	items, err := observation.Verdicts(ctx, task.Page(pg).Items, obs, nil)
+	k := 0
+	for i, it := range pg.Items {
+		for s := range it.Boxes {
+			box := &boxes[k]
+			k++
+			v := verdict.SlotVerdict{Verdict: verdict.Unchecked} // a check that module-kit refuses gives none
+			if err == nil {
+				v = items[i].Slots[s]
+			}
+			got := SlotOf(v)
+			box.Verdict, box.Trap = got.Verdict, got.Trap
+			switch {
+			case got.Verdict == verdict.Unchecked && box.Reason != Missing && box.Reason != Twice:
+				box.Reason = ""
+			case got.Verdict == verdict.Unreadable && box.Reason == "":
+				box.Reason = got.Reason
+			}
+		}
+	}
+	return boxes
+}
+
+// observationOf is the observation of a page as the protocol writes it, from what a model read in
+// its boxes, every box in the task's order, and the boxes with their places, the text read in each
+// that one cell was read for, and the reason in the reading's words. It is nil for a failed call,
+// and for an answer with no cell for a filled box, or two, which is not valid.
+func observationOf(pg *sample.WorkbookPage, read []Reading) (*observationv1.Observation, []Box) {
 	type place struct{ item, slot int }
 	cells := map[place][]Reading{}
 	for _, r := range read {
 		cells[place{r.Item, r.Slot}] = append(cells[place{r.Item, r.Slot}], r)
 	}
-	var out []Box
+	obs := &observationv1.Observation{}
+	valid := read != nil
+	var boxes []Box
 	for i, it := range pg.Items {
 		for k, b := range it.Boxes {
 			box := Box{Item: i + 1, Slot: k + 1}
 			got := cells[place{i + 1, k + 1}]
+			slot := &observationv1.AnswerSlotObservation{AnswerSlot: &observationv1.AnswerSlotPlace{Item: int32(i + 1), Slot: int32(k + 1)}}
 			switch {
 			case b.Written == nil:
-				box.Verdict, box.Reason = value.Unreadable, Reason(value.Blank)
+				slot.Read, box.Reason = unreadable(observationv1.Unreadable_UNREADABLE_BLANK), Reason(verdict.Blank)
 			case read == nil:
-				box.Verdict = value.Unchecked
 			case len(got) == 0:
-				box.Verdict, box.Reason = value.Unchecked, Missing
+				box.Reason, valid = Missing, false
 			case len(got) > 1:
-				box.Verdict, box.Reason = value.Unchecked, Twice
+				box.Reason, valid = Twice, false
 			default:
-				box = judged(box, b, got[0])
+				r := got[0]
+				box.Text = &r.Text
+				box.Reason = readOf(slot, r)
 			}
-			out = append(out, box)
+			obs.AnswerSlots = append(obs.AnswerSlots, slot)
+			boxes = append(boxes, box)
 		}
 	}
-	return out
+	if !valid {
+		return nil, boxes
+	}
+	return obs, boxes
 }
 
-// judged is the verdict on a filled box from the one cell read in it.
-func judged(box Box, b sample.WorkbookBox, r Reading) Box {
-	text := r.Text
-	box.Text = &text
+// readOf gives the answer slot of a filled box what the one cell read in it gives, and returns the
+// reason in the reading's words: blank; mirrored, ambiguous by the rule of a digit written
+// mirrored; illegible; ambiguous; and a text that is empty or only white space is blank, as the
+// check would read it, with module-kit's word. Otherwise the slot gives the text as it is written,
+// and there is no reason.
+func readOf(slot *observationv1.AnswerSlotObservation, r Reading) Reason {
+	var reason observationv1.Unreadable
+	var why Reason
 	switch {
 	case r.Blank:
-		box.Verdict, box.Reason = value.Unreadable, Reason(value.Blank)
+		reason, why = observationv1.Unreadable_UNREADABLE_BLANK, Reason(verdict.Blank)
 	case r.Mirrored:
-		box.Verdict, box.Reason = value.Unreadable, Mirrored
+		reason, why = observationv1.Unreadable_UNREADABLE_AMBIGUOUS, Mirrored
 	case !r.Legible:
-		box.Verdict, box.Reason = value.Unreadable, Illegible
+		reason, why = observationv1.Unreadable_UNREADABLE_ILLEGIBLE, Illegible
 	case len(r.OtherReadings) > 0:
-		box.Verdict, box.Reason = value.Unreadable, Ambiguous
+		reason, why = observationv1.Unreadable_UNREADABLE_AMBIGUOUS, Ambiguous
+	case strings.TrimFunc(r.Text, func(c rune) bool { return unicode.Is(unicode.White_Space, c) }) == "":
+		reason = observationv1.Unreadable_UNREADABLE_BLANK
 	default:
-		v := b.Check.Checker().Check(&text)
-		box.Verdict, box.Reason, box.Trap = v.Verdict, Reason(v.Reason), v.Trap
+		slot.Read = &observationv1.AnswerSlotObservation_Value{Value: r.Text}
+		return ""
 	}
-	return box
+	slot.Read = unreadable(reason)
+	return why
 }
 
+// unreadable is the reason an answer slot gives no value.
+func unreadable(u observationv1.Unreadable) *observationv1.AnswerSlotObservation_Unreadable {
+	return &observationv1.AnswerSlotObservation_Unreadable{Unreadable: u}
+}
+
+// ctx is the context of a verdict: a check of number or fraction runs no predicate that it could
+// stop.
+var ctx = context.Background()
+
 // Items are the verdicts of the items of a page, each made of the verdicts of its boxes
-// (value.Item), in the order of the page.
-func Items(pg *sample.WorkbookPage, boxes []Box) []value.Verdict {
-	out := make([]value.Verdict, len(pg.Items))
+// (verdict.ItemOf), in the order of the page.
+func Items(pg *sample.WorkbookPage, boxes []Box) []verdict.Verdict {
+	out := make([]verdict.Verdict, len(pg.Items))
 	for i := range pg.Items {
-		var of []value.Verdict
+		var of []verdict.SlotVerdict
 		for _, b := range boxes {
 			if b.Item == i+1 {
-				of = append(of, b.Verdict)
+				of = append(of, verdict.SlotVerdict{Verdict: b.Verdict})
 			}
 		}
-		out[i] = value.Item(of)
+		out[i] = verdict.ItemOf(of)
 	}
 	return out
 }
@@ -283,14 +346,31 @@ func Right(cells []Cell) []Reading {
 	return out
 }
 
+// Slot is the verdict of a box as the log writes it: module-kit's verdict, why it is unreadable or
+// unchecked, in the reading's words or module-kit's, and the trap of the value by its ID.
+type Slot struct {
+	Verdict verdict.Verdict
+	Reason  Reason
+	Trap    string
+}
+
+// SlotOf is module-kit's verdict of a box as the log writes it.
+func SlotOf(v verdict.SlotVerdict) Slot {
+	s := Slot{Verdict: v.Verdict, Reason: Reason(v.Reason)}
+	if v.Trap != nil {
+		s.Trap = string(v.Trap.Trap)
+	}
+	return s
+}
+
 // Want is the verdict a right reading of a box of a scenario comes to by the prompt of a version,
 // from the verdict of the value written in it (sample.WorkbookBox.Verdict): that verdict, but from
 // MirroredVersion on, for a box with a digit written mirrored, unreadable, mirrored, so that the
 // learner writes it again (R56 spec, amendment of 2026-10-29). The run and its report both judge a
 // reading by it.
-func Want(scenario sample.BoxScenario, of value.Slot, version int) value.Slot {
+func Want(scenario sample.BoxScenario, of Slot, version int) Slot {
 	if version >= MirroredVersion && scenario == sample.BoxMirrored {
-		return value.Slot{Verdict: value.Unreadable, Reason: value.Reason(Mirrored)}
+		return Slot{Verdict: verdict.Unreadable, Reason: Mirrored}
 	}
 	return of
 }

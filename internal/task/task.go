@@ -99,16 +99,12 @@ func Read(data []byte) (*File, error) {
 // a wrong value is not_yet with no trap. The solution is a paragraph to a line, and the leaks are the
 // leak phrases.
 func Sheet(t *sample.Task) formatv0.Task {
-	key := sample.KeyOf(t.Key)
 	task := formatv0.Task{
 		ID:        formatv0.TaskID(t.ID),
 		Statement: paragraphs(t.Statement),
 		Canvas:    formatv0.Canvas{Kind: formatv0.CanvasKindHandwritingSheet},
-		Items: []formatv0.Item{{AnswerSlots: []formatv0.AnswerSlot{{
-			Binding: formatv0.AnswerSlotBindingAnywhere,
-			Check:   formatv0.Check{Kind: formatv0.CheckKindNumber, Key: &key},
-		}}}},
-		Solution: paragraphs(t.Solution...),
+		Items:     []formatv0.Item{SheetItem(sample.KeyOf(t.Key))},
+		Solution:  paragraphs(t.Solution...),
 	}
 	for _, trap := range t.Traps {
 		task.Traps = append(task.Traps, formatv0.TrapID(trap.ID))
@@ -117,6 +113,16 @@ func Sheet(t *sample.Task) formatv0.Task {
 		task.LeakPhrases = append(task.LeakPhrases, formatv0.Text(leak))
 	}
 	return closed(task, formatv0.SkillID(t.Kind))
+}
+
+// SheetItem is the one item of a sheet's task: an answer slot bound anywhere, whose check is
+// number with the key's value. The reading judges an observation by it, and the report of the
+// reading joins the observations of a pair by it, with the key that the log tells (R73).
+func SheetItem(key string) formatv0.Item {
+	return formatv0.Item{AnswerSlots: []formatv0.AnswerSlot{{
+		Binding: formatv0.AnswerSlotBindingAnywhere,
+		Check:   formatv0.Check{Kind: formatv0.CheckKindNumber, Key: &key},
+	}}}
 }
 
 // Page is a page of the workbook, workbook-01 for the first: WorkbookStatement, a workbook, and an
@@ -155,7 +161,7 @@ func lineOf(it sample.WorkbookItem) ([]formatv0.LinePart, string) {
 	for i, piece := range strings.Split(it.Text, sample.BoxMark) {
 		if i > 0 {
 			box := formatv0.LinePartBindingBox
-			c := boxCheck(it.Boxes[i-1].Check)
+			c := it.Boxes[i-1].Check.Format()
 			parts = append(parts, formatv0.LinePart{Binding: &box, Check: &c})
 			solved.WriteString(it.Boxes[i-1].Check.Key)
 		}
@@ -166,21 +172,6 @@ func lineOf(it sample.WorkbookItem) ([]formatv0.LinePart, string) {
 		}
 	}
 	return parts, solved.String()
-}
-
-// boxCheck is the check of a box, as the format writes it: the workbook's check is the format's
-// already (sample.BoxCheck), and a number has no form.
-func boxCheck(c sample.BoxCheck) formatv0.Check {
-	key := c.Key
-	out := formatv0.Check{Kind: formatv0.CheckKind(c.Kind), Key: &key}
-	if c.Form != nil {
-		form := formatv0.CheckForm(*c.Form)
-		out.Form = &form
-	}
-	for _, tv := range c.TrapValues {
-		out.TrapValues = append(out.TrapValues, formatv0.TrapValue{Value: tv.Value, Trap: formatv0.TrapID(tv.Trap)})
-	}
-	return out
 }
 
 // Essay is an essay's task, essay-01 for the first: its topic, a handwriting sheet with lines, and

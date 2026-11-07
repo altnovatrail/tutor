@@ -6,10 +6,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/altnovatrail/module-kit/verdict"
+	"github.com/altnovatrail/spec/types/formatv0"
+
 	"github.com/altnovatrail/tutor/internal/report"
 	"github.com/altnovatrail/tutor/internal/runner"
 	"github.com/altnovatrail/tutor/internal/sample"
-	"github.com/altnovatrail/tutor/internal/value"
 	"github.com/altnovatrail/tutor/internal/workbook"
 )
 
@@ -24,9 +26,9 @@ func workbookLog() *workbook.Log {
 		End: &runner.End{Kind: "end"}}
 	for n := 1; n <= 3; n++ {
 		l.Sheets = append(l.Sheets, workbook.PageRecord{Kind: "page", Page: n, Part: "test", Boxes: []workbook.BoxRecord{
-			{Item: 1, Slot: 1, Kind: sample.KindNumber, Key: "8", Scenario: sample.BoxCorrect, Written: str("8"), Verdict: value.Correct},
-			{Item: 2, Slot: 1, Kind: sample.KindNumber, Key: "8", Scenario: sample.BoxNearKey, Written: str("3"), Verdict: value.NotYet},
-			{Item: 3, Slot: 1, Kind: sample.KindFraction, Form: value.Reduced, Key: "1/2", Scenario: sample.BoxBlank, Verdict: value.Unreadable, Reason: value.Blank},
+			{Item: 1, Slot: 1, Kind: sample.KindNumber, Key: "8", Scenario: sample.BoxCorrect, Written: str("8"), Verdict: verdict.Correct},
+			{Item: 2, Slot: 1, Kind: sample.KindNumber, Key: "8", Scenario: sample.BoxNearKey, Written: str("3"), Verdict: verdict.NotYet},
+			{Item: 3, Slot: 1, Kind: sample.KindFraction, Form: formatv0.CheckFormReduced, Key: "1/2", Scenario: sample.BoxBlank, Verdict: verdict.Unreadable, Reason: workbook.Reason(verdict.Blank)},
 		}})
 		for _, c := range []struct {
 			cond  workbook.Condition
@@ -34,10 +36,10 @@ func workbookLog() *workbook.Log {
 		}{{workbook.Bare, 32}, {workbook.Captioned, 32}, {workbook.Bare, 16}} {
 			l.Calls = append(l.Calls, workbook.CallRecord{Kind: "call", Call: workbook.Call{Page: n, Condition: c.cond, Reader: "haiku-low", Repeat: 1, Digit: c.digit},
 				Boxes: []workbook.Box{
-					{Item: 1, Slot: 1, Text: str("8"), Verdict: value.Correct},
-					{Item: 2, Slot: 1, Text: str("3"), Verdict: value.NotYet},
-					{Item: 3, Slot: 1, Verdict: value.Unreadable, Reason: workbook.Reason(value.Blank)},
-				}, Items: []value.Verdict{value.Correct, value.NotYet, value.Unreadable}})
+					{Item: 1, Slot: 1, Text: str("8"), Verdict: verdict.Correct},
+					{Item: 2, Slot: 1, Text: str("3"), Verdict: verdict.NotYet},
+					{Item: 3, Slot: 1, Verdict: verdict.Unreadable, Reason: workbook.Reason(verdict.Blank)},
+				}, Items: []verdict.Verdict{verdict.Correct, verdict.NotYet, verdict.Unreadable}})
 		}
 	}
 	return l
@@ -60,12 +62,12 @@ func call(l *workbook.Log, page int, cond workbook.Condition, digit int) *workbo
 func TestWorkbookCells(t *testing.T) {
 	l := workbookLog()
 	c := call(l, 1, workbook.Bare, 32)
-	c.Boxes[1] = workbook.Box{Item: 2, Slot: 1, Text: str("8"), Verdict: value.Correct} // near key read as the key
-	c.Items[1] = value.Correct
-	call(l, 2, workbook.Bare, 32).Boxes[0] = workbook.Box{Item: 1, Slot: 1, Text: str("3"), Verdict: value.NotYet}
-	call(l, 2, workbook.Bare, 32).Items[0] = value.NotYet
-	call(l, 3, workbook.Bare, 32).Boxes[0] = workbook.Box{Item: 1, Slot: 1, Verdict: value.Unchecked, Reason: workbook.Missing}
-	call(l, 3, workbook.Bare, 32).Items[0] = value.Unchecked
+	c.Boxes[1] = workbook.Box{Item: 2, Slot: 1, Text: str("8"), Verdict: verdict.Correct} // near key read as the key
+	c.Items[1] = verdict.Correct
+	call(l, 2, workbook.Bare, 32).Boxes[0] = workbook.Box{Item: 1, Slot: 1, Text: str("3"), Verdict: verdict.NotYet}
+	call(l, 2, workbook.Bare, 32).Items[0] = verdict.NotYet
+	call(l, 3, workbook.Bare, 32).Boxes[0] = workbook.Box{Item: 1, Slot: 1, Verdict: verdict.Unchecked, Reason: workbook.Missing}
+	call(l, 3, workbook.Bare, 32).Items[0] = verdict.Unchecked
 	r, err := report.NewWorkbook(l)
 	if err != nil {
 		t.Fatal(err)
@@ -122,7 +124,7 @@ func TestWorkbookCells(t *testing.T) {
 // with no new false "correct".
 func TestWorkbookCaptions(t *testing.T) {
 	l := workbookLog()
-	call(l, 2, workbook.Captioned, 32).Boxes[1] = workbook.Box{Item: 2, Slot: 1, Text: str("8"), Verdict: value.Correct}
+	call(l, 2, workbook.Captioned, 32).Boxes[1] = workbook.Box{Item: 2, Slot: 1, Text: str("8"), Verdict: verdict.Correct}
 	r, err := report.NewWorkbook(l)
 	if err != nil {
 		t.Fatal(err)
@@ -135,7 +137,7 @@ func TestWorkbookCaptions(t *testing.T) {
 	}
 	l = workbookLog()
 	for n := 1; n <= 3; n++ {
-		call(l, n, workbook.Bare, 32).Boxes[0] = workbook.Box{Item: 1, Slot: 1, Verdict: value.Unreadable, Reason: workbook.Illegible}
+		call(l, n, workbook.Bare, 32).Boxes[0] = workbook.Box{Item: 1, Slot: 1, Verdict: verdict.Unreadable, Reason: workbook.Illegible}
 	}
 	if r, err = report.NewWorkbook(l); err != nil {
 		t.Fatal(err)
@@ -147,7 +149,7 @@ func TestWorkbookCaptions(t *testing.T) {
 	// are of as many calls.
 	extra := *call(l, 1, workbook.Bare, 32)
 	extra.Repeat, extra.Boxes = 2, append([]workbook.Box(nil), extra.Boxes...)
-	extra.Boxes[1] = workbook.Box{Item: 2, Slot: 1, Verdict: value.Unreadable, Reason: workbook.Illegible}
+	extra.Boxes[1] = workbook.Box{Item: 2, Slot: 1, Verdict: verdict.Unreadable, Reason: workbook.Illegible}
 	l.Calls = append(l.Calls, extra)
 	if r, err = report.NewWorkbook(l); err != nil {
 		t.Fatal(err)
@@ -168,7 +170,7 @@ func TestWorkbookHeights(t *testing.T) {
 	if len(r.Heights) != 1 || r.Heights[0].Digit != 16 || !r.Heights[0].NotWorse() || r.Heights[0].Sheets != 3 {
 		t.Fatalf("heights: %+v", r.Heights)
 	}
-	call(l, 3, workbook.Bare, 16).Boxes[1] = workbook.Box{Item: 2, Slot: 1, Text: str("8"), Verdict: value.Correct}
+	call(l, 3, workbook.Bare, 16).Boxes[1] = workbook.Box{Item: 2, Slot: 1, Text: str("8"), Verdict: verdict.Correct}
 	if r, err = report.NewWorkbook(l); err != nil {
 		t.Fatal(err)
 	}
@@ -194,7 +196,7 @@ func TestWorkbookRefused(t *testing.T) {
 		"a page twice":   func(l *workbook.Log) { l.Sheets = append(l.Sheets, l.Sheets[0]) },
 		"a call of none": func(l *workbook.Log) { l.Calls[0].Page = 9 },
 		"a box short":    func(l *workbook.Log) { l.Calls[0].Boxes = l.Calls[0].Boxes[:2] },
-		"an item more":   func(l *workbook.Log) { l.Calls[0].Items = append(l.Calls[0].Items, value.Correct) },
+		"an item more":   func(l *workbook.Log) { l.Calls[0].Items = append(l.Calls[0].Items, verdict.Correct) },
 		"boxes swapped": func(l *workbook.Log) {
 			l.Calls[0].Boxes[0], l.Calls[0].Boxes[1] = l.Calls[0].Boxes[1], l.Calls[0].Boxes[0]
 		},
@@ -215,22 +217,22 @@ func mirroredLog(version int) *workbook.Log {
 	l := workbookLog()
 	l.Run.PromptVersion = version
 	for i := range l.Sheets {
-		l.Sheets[i].Boxes = append(l.Sheets[i].Boxes, workbook.BoxRecord{Item: 4, Slot: 1, Kind: sample.KindNumber, Key: "5", Scenario: sample.BoxMirrored, Written: str("5"), Verdict: value.Correct})
+		l.Sheets[i].Boxes = append(l.Sheets[i].Boxes, workbook.BoxRecord{Item: 4, Slot: 1, Kind: sample.KindNumber, Key: "5", Scenario: sample.BoxMirrored, Written: str("5"), Verdict: verdict.Correct})
 	}
 	for i := range l.Calls {
 		c := &l.Calls[i]
-		c.Boxes = append(c.Boxes, workbook.Box{Item: 4, Slot: 1, Text: str("5"), Verdict: value.Correct})
-		c.Items = append(c.Items, value.Correct)
+		c.Boxes = append(c.Boxes, workbook.Box{Item: 4, Slot: 1, Text: str("5"), Verdict: verdict.Correct})
+		c.Items = append(c.Items, verdict.Correct)
 	}
 	for page, b := range map[int]workbook.Box{
-		1: {Item: 4, Slot: 1, Text: str("5"), Verdict: value.Unreadable, Reason: workbook.Mirrored},
-		3: {Item: 4, Slot: 1, Text: str("2"), Verdict: value.NotYet},
+		1: {Item: 4, Slot: 1, Text: str("5"), Verdict: verdict.Unreadable, Reason: workbook.Mirrored},
+		3: {Item: 4, Slot: 1, Text: str("2"), Verdict: verdict.NotYet},
 	} {
 		c := call(l, page, workbook.Bare, 32)
 		c.Boxes[3], c.Items[3] = b, b.Verdict
 	}
 	c := call(l, 1, workbook.Bare, 32)
-	c.Boxes[0], c.Items[0] = workbook.Box{Item: 1, Slot: 1, Text: str("8"), Verdict: value.Unreadable, Reason: workbook.Mirrored}, value.Unreadable
+	c.Boxes[0], c.Items[0] = workbook.Box{Item: 1, Slot: 1, Text: str("8"), Verdict: verdict.Unreadable, Reason: workbook.Mirrored}, verdict.Unreadable
 	return l
 }
 
@@ -283,7 +285,7 @@ func TestWorkbookMirrored(t *testing.T) {
 	for version, want := range map[int]struct{ right, at16 int }{1: {8, 0}, workbook.MirroredVersion: {10, 3}} {
 		l := mirroredLog(version)
 		c := call(l, 2, workbook.Bare, 32)
-		c.Boxes[3], c.Items[3] = workbook.Box{Item: 4, Slot: 1, Text: str("5"), Verdict: value.Unreadable, Reason: workbook.Mirrored}, value.Unreadable
+		c.Boxes[3], c.Items[3] = workbook.Box{Item: 4, Slot: 1, Text: str("5"), Verdict: verdict.Unreadable, Reason: workbook.Mirrored}, verdict.Unreadable
 		r, err := report.NewWorkbook(l)
 		if err != nil {
 			t.Fatal(err)

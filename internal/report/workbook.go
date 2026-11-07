@@ -7,6 +7,9 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/altnovatrail/module-kit/verdict"
+	"github.com/altnovatrail/spec/types/formatv0"
+
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/runner"
 	"github.com/altnovatrail/tutor/internal/sample"
@@ -40,8 +43,8 @@ type Workbook struct {
 }
 
 // want is the verdict a right reading of a box comes to by the log's prompt (workbook.Want).
-func (r *Workbook) want(b *workbook.BoxRecord) value.Slot {
-	return workbook.Want(b.Scenario, value.Slot{Verdict: b.Verdict, Reason: b.Reason, Trap: b.Trap}, r.version)
+func (r *Workbook) want(b *workbook.BoxRecord) workbook.Slot {
+	return workbook.Want(b.Scenario, workbook.Slot{Verdict: b.Verdict, Reason: b.Reason, Trap: b.Trap}, r.version)
 }
 
 // The groups of the boxes a cell of the report counts: all of them, each scenario, each kind of
@@ -62,7 +65,7 @@ func workbookGroups(b *workbook.BoxRecord) []string {
 	switch {
 	case b.Kind == sample.KindNumber:
 		groups = append(groups, Number)
-	case b.Form == value.Reduced:
+	case b.Form == formatv0.CheckFormReduced:
 		groups = append(groups, Reduced)
 	default:
 		groups = append(groups, Fraction)
@@ -199,19 +202,19 @@ func (e boxErrors) count() int {
 // unreadable on a filled box — a digit written mirrored, from prompt version 2 — "unreadable" on it
 // is right and no extra one, "correct" misses asking the learner to write it again, and "not yet"
 // is a false alarm still.
-func boxErrorsOf(truth *workbook.BoxRecord, want value.Slot, got workbook.Box) boxErrors {
+func boxErrorsOf(truth *workbook.BoxRecord, want workbook.Slot, got workbook.Box) boxErrors {
 	var e boxErrors
 	switch {
 	case truth.Written == nil:
-	case got.Verdict == value.Unchecked:
+	case got.Verdict == verdict.Unchecked:
 		e.unchecked = true
-	case got.Verdict == value.Unreadable:
-		e.extra = want.Verdict != value.Unreadable
-	case truth.Verdict == value.NotYet && got.Verdict == value.Correct:
+	case got.Verdict == verdict.Unreadable:
+		e.extra = want.Verdict != verdict.Unreadable
+	case truth.Verdict == verdict.NotYet && got.Verdict == verdict.Correct:
 		e.falseCorrect = true
-	case truth.Verdict == value.Correct && got.Verdict == value.NotYet:
+	case truth.Verdict == verdict.Correct && got.Verdict == verdict.NotYet:
 		e.falseAlarm = true
-	case want.Verdict == value.Unreadable && got.Verdict == value.Correct:
+	case want.Verdict == verdict.Unreadable && got.Verdict == verdict.Correct:
 		e.missed = true
 	}
 	e.right = got.Verdict == want.Verdict && got.Trap == want.Trap
@@ -347,7 +350,7 @@ func (r *Workbook) cells(reader string, cond workbook.Condition, calls []*workbo
 }
 
 // add counts a reading of a box of the page at its place.
-func (c *counts) add(truth *workbook.BoxRecord, want value.Slot, got workbook.Box, at int) {
+func (c *counts) add(truth *workbook.BoxRecord, want workbook.Slot, got workbook.Box, at int) {
 	c.Readings++
 	e := boxErrorsOf(truth, want, got)
 	if readAsWritten(truth, got) {
@@ -367,12 +370,12 @@ func (c *counts) add(truth *workbook.BoxRecord, want value.Slot, got workbook.Bo
 		c.ex[at]++
 	}
 	switch truth.Verdict {
-	case value.NotYet:
+	case verdict.NotYet:
 		c.fcOf[at]++
 		if e.falseCorrect {
 			c.fc[at]++
 		}
-	case value.Correct:
+	case verdict.Correct:
 		c.faOf[at]++
 		if e.falseAlarm {
 			c.fa[at]++
@@ -401,16 +404,16 @@ func (m *mirroredCounts) add(truth *workbook.BoxRecord, got workbook.Box, at int
 		m.Readings++
 		m.of[at]++
 		switch got.Verdict {
-		case value.Unreadable:
+		case verdict.Unreadable:
 			m.rw[at]++
 			if got.Reason == workbook.Mirrored {
 				m.Marked++
 			}
-		case value.Correct:
+		case verdict.Correct:
 			m.AsDigit++
-		case value.NotYet:
+		case verdict.NotYet:
 			m.fa[at]++
-		case value.Unchecked:
+		case verdict.Unchecked:
 			m.Unchecked++
 		}
 	}
@@ -432,14 +435,14 @@ func (r *Workbook) items(reader string, cond workbook.Condition, calls []*workbo
 				it.Right++
 			}
 			switch truth[i] {
-			case value.NotYet:
+			case verdict.NotYet:
 				fcOf[at]++
-				if got == value.Correct {
+				if got == verdict.Correct {
 					fc[at]++
 				}
-			case value.Correct:
+			case verdict.Correct:
 				faOf[at]++
-				if got == value.NotYet {
+				if got == verdict.NotYet {
 					fa[at]++
 				}
 			}
@@ -451,19 +454,19 @@ func (r *Workbook) items(reader string, cond workbook.Condition, calls []*workbo
 
 // itemTruth is the verdict of each item of a page made of its boxes': of the values written in them,
 // or, with want, of what a right reading of each comes to.
-func itemTruth(pg *workbook.PageRecord, want func(*workbook.BoxRecord) value.Slot) []value.Verdict {
-	var out []value.Verdict
+func itemTruth(pg *workbook.PageRecord, want func(*workbook.BoxRecord) workbook.Slot) []verdict.Verdict {
+	var out []verdict.Verdict
 	for k := 0; k < len(pg.Boxes); {
 		item := pg.Boxes[k].Item
-		var of []value.Verdict
+		var of []verdict.SlotVerdict
 		for ; k < len(pg.Boxes) && pg.Boxes[k].Item == item; k++ {
 			v := pg.Boxes[k].Verdict
 			if want != nil {
 				v = want(&pg.Boxes[k]).Verdict
 			}
-			of = append(of, v)
+			of = append(of, verdict.SlotVerdict{Verdict: v})
 		}
-		out = append(out, value.Item(of))
+		out = append(out, verdict.ItemOf(of))
 	}
 	return out
 }

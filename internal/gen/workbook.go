@@ -7,9 +7,9 @@ import (
 	"slices"
 	"strconv"
 
+	"github.com/altnovatrail/spec/types/formatv0"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/synth"
-	"github.com/altnovatrail/tutor/internal/value"
 )
 
 // pageScenarios are the scenarios of the eleven boxes of a page, the most constrained first, as
@@ -209,7 +209,7 @@ func numberBox(key, trap int, name string) sample.WorkbookBox {
 }
 
 // fractionBox is a box of the kind fraction, in a form, with its key and trap values.
-func fractionBox(key string, form value.Form, traps ...sample.TrapValue) sample.WorkbookBox {
+func fractionBox(key string, form formatv0.CheckForm, traps ...sample.TrapValue) sample.WorkbookBox {
 	return sample.WorkbookBox{Check: sample.BoxCheck{Kind: sample.KindFraction, Key: key, Form: &form, TrapValues: traps}}
 }
 
@@ -294,7 +294,7 @@ func fractionSum(rng *rand.Rand) sample.WorkbookItem {
 	a := between(rng, 1, d-2)
 	b := between(rng, 1, d-1-a)
 	return item(fmt.Sprintf("%s + %s = [ ]", frac(a, d), frac(b, d)),
-		fractionBox(frac(a+b, d), value.AnyForm, sample.TrapValue{Value: frac(a+b, 2*d), Trap: "adds-denominators"}))
+		fractionBox(frac(a+b, d), formatv0.CheckFormAny, sample.TrapValue{Value: frac(a+b, 2*d), Trap: "adds-denominators"}))
 }
 
 // fractionDifference: fractions of one denominator subtracted, any form, "4/10 − 2/10 = [ ]"; the
@@ -304,7 +304,7 @@ func fractionDifference(rng *rand.Rand) sample.WorkbookItem {
 	a := between(rng, 2, d-1)
 	b := between(rng, 1, a-1)
 	return item(fmt.Sprintf("%s − %s = [ ]", frac(a, d), frac(b, d)),
-		fractionBox(frac(a-b, d), value.AnyForm, sample.TrapValue{Value: frac(a+b, d), Trap: "adds-instead"}))
+		fractionBox(frac(a-b, d), formatv0.CheckFormAny, sample.TrapValue{Value: frac(a+b, d), Trap: "adds-instead"}))
 }
 
 // A share of a whole: centimetres of a metre, grams of a kilogram or minutes of an hour, the line's
@@ -328,7 +328,7 @@ func share(rng *rand.Rand) sample.WorkbookItem {
 	s := shares[rng.IntN(len(shares))]
 	x := s.amount[rng.IntN(len(s.amount))]
 	return item(fmt.Sprintf(s.line, x),
-		fractionBox(lowest(x, s.whole), value.AnyForm, sample.TrapValue{Value: frac(x, s.wrong), Trap: s.trap}))
+		fractionBox(lowest(x, s.whole), formatv0.CheckFormAny, sample.TrapValue{Value: frac(x, s.wrong), Trap: s.trap}))
 }
 
 // reduce: a fraction to reduce, in lowest terms, "Сократи дробь: 8/14 = [ ]"; the traps are the
@@ -343,7 +343,7 @@ func reduce(rng *rand.Rand) sample.WorkbookItem {
 		g := between(rng, 2, 4)
 		n, m := p*g, q*g
 		return item(fmt.Sprintf("Сократи дробь: %s = [ ]", frac(n, m)),
-			fractionBox(frac(p, q), value.Reduced,
+			fractionBox(frac(p, q), formatv0.CheckFormReduced,
 				sample.TrapValue{Value: frac(n, m), Trap: "not-in-lowest-terms"},
 				sample.TrapValue{Value: frac(p, m), Trap: "reduces-numerator-only"}))
 	}
@@ -361,7 +361,7 @@ func reducedSum(rng *rand.Rand) sample.WorkbookItem {
 			continue
 		}
 		return item(fmt.Sprintf("%s + %s = [ ] (несократимой дробью)", frac(a, d), frac(b, d)),
-			fractionBox(lowest(a+b, d), value.Reduced,
+			fractionBox(lowest(a+b, d), formatv0.CheckFormReduced,
 				sample.TrapValue{Value: frac(a+b, d), Trap: "not-in-lowest-terms"},
 				sample.TrapValue{Value: frac(a+b, 2*d), Trap: "adds-denominators"}))
 	}

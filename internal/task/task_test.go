@@ -23,7 +23,6 @@ import (
 	"github.com/altnovatrail/tutor/internal/protocol/protocoltest"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/task"
-	"github.com/altnovatrail/tutor/internal/value"
 )
 
 // root is the repository's root, from this package.
@@ -193,7 +192,7 @@ func TestSheet(t *testing.T) {
 // A line of the workbook keeps the order of its text and boxes in its open view, and each box has
 // the check of its box in the task; the solution is the line with the keys in its boxes.
 func TestPage(t *testing.T) {
-	form := value.Reduced
+	form := formatv0.CheckFormReduced
 	page := sample.WorkbookPage{Number: 7, Items: []sample.WorkbookItem{
 		{Text: "88 : 9 = [ ] (ост. [ ])", Boxes: []sample.WorkbookBox{
 			{Check: sample.BoxCheck{Kind: sample.KindNumber, Key: "9", TrapValues: []sample.TrapValue{{Value: "8", Trap: "off-by-one"}}}},
@@ -303,74 +302,12 @@ func TestKeysAndTraps(t *testing.T) {
 	}
 }
 
-// same reports whether module-kit's verdict on a value is tutor's own, internal/value's: the
-// verdict, the reason and the trap. It returns module-kit's verdict.
-func same(t *testing.T, where string, slot verdict.AnswerSlot, v *string, own value.Slot) verdict.SlotVerdict {
-	t.Helper()
-	got, err := verdict.OfSlot(context.Background(), slot, v)
-	if err != nil {
-		t.Errorf("%s: %v", where, err)
-		return got
-	}
-	trap := ""
-	if got.Trap != nil {
-		trap = string(got.Trap.Trap)
-	}
-	if string(got.Verdict) != string(own.Verdict) || string(got.Reason) != string(own.Reason) || trap != own.Trap {
-		t.Errorf("%s: module-kit %s %s %q, internal/value %s %s %q", where, got.Verdict, got.Reason, trap, own.Verdict, own.Reason, own.Trap)
-	}
-	return got
-}
-
-// On every box of the workbooks, module-kit gives the value written, the value crossed out, the
-// key and each trap value the verdict, reason and trap that internal/value gives them: the
-// measurements so far and the runner on module-kit judge a box alike (R68).
-func TestWorkbookAsValue(t *testing.T) {
+// On the final answer of every sheet of every plan, module-kit gives the verdict its plan asks: a
+// sheet planned correct is correct, and one planned with an error not_yet with no trap, where the
+// plan gives the answer's value.
+func TestSheetsAsPlanned(t *testing.T) {
+	ctx := context.Background()
 	n := 0
-	for _, name := range []string{"eval/workbook.json", "eval/workbook-gen.json"} {
-		wb, err := sample.ReadWorkbook(bytes.NewReader(readRoot(t, name)))
-		if err != nil {
-			t.Fatal(err)
-		}
-		for _, page := range wb.Pages {
-			tk := task.Page(&page)
-			slots := slotsOf(tk)
-			at := 0
-			for _, it := range page.Items {
-				for _, box := range it.Boxes {
-					if at == len(slots) {
-						t.Fatalf("%s: %s has more boxes than its %d slots", name, tk.ID, len(slots))
-					}
-					slot := slots[at]
-					at++
-					where := fmt.Sprintf("%s: %s, box %d", name, tk.ID, at)
-					values := []*string{box.Written, box.Crossed, &box.Check.Key}
-					for _, tv := range box.Check.TrapValues {
-						values = append(values, &tv.Value)
-					}
-					for _, v := range values {
-						if v == nil && box.Written != nil {
-							continue
-						}
-						same(t, where, slot, v, box.Check.Checker().Check(v))
-						n++
-					}
-				}
-			}
-			if at != len(slots) {
-				t.Errorf("%s: %s has %d boxes and %d slots", name, tk.ID, at, len(slots))
-			}
-		}
-	}
-	if n == 0 {
-		t.Error("no box compared")
-	}
-}
-
-// On the final answer of every sheet of every plan, module-kit gives the verdict that the reading's
-// check gives it, value.Number with the value of the bank's key; and a sheet planned correct is
-// correct, one planned with an error not_yet with no trap, where the plan gives the answer's value.
-func TestSheetsAsValue(t *testing.T) {
 	for planName, bankName := range plans {
 		pl, err := sample.ReadPlan(bytes.NewReader(readRoot(t, planName)))
 		if err != nil {
@@ -385,15 +322,18 @@ func TestSheetsAsValue(t *testing.T) {
 			if src == nil {
 				t.Fatalf("%s: sheet %d: no task %s in %s", planName, sh.Number, sh.Task, bankName)
 			}
-			slot := slotsOf(task.Sheet(src))[0]
 			answer := sample.ValueOf(sh.Lines[sh.Answer-1])
-			where := fmt.Sprintf("%s: sheet %d, %q", planName, sh.Number, answer)
-			got := same(t, where, slot, &answer, value.Number{Key: sample.KeyOf(src.Key)}.Check(&answer))
 			if answer == "" {
 				// The plans of the author's own sheets describe their parts in words: the value is
 				// in the author's handwriting alone.
 				continue
 			}
+			where := fmt.Sprintf("%s: sheet %d, %q", planName, sh.Number, answer)
+			got, err := verdict.OfSlot(ctx, slotsOf(task.Sheet(src))[0], &answer)
+			if err != nil {
+				t.Fatalf("%s: %v", where, err)
+			}
+			n++
 			switch sh.Expected.Outcome {
 			case sample.OutcomeCorrect:
 				if got.Verdict != verdict.Correct {
@@ -405,6 +345,9 @@ func TestSheetsAsValue(t *testing.T) {
 				}
 			}
 		}
+	}
+	if n == 0 {
+		t.Error("no sheet judged")
 	}
 }
 

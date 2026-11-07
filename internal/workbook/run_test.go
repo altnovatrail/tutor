@@ -7,11 +7,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/altnovatrail/module-kit/verdict"
 	"github.com/altnovatrail/tutor/internal/evalsample"
 	"github.com/altnovatrail/tutor/internal/runner"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/synth"
-	"github.com/altnovatrail/tutor/internal/value"
 	"github.com/altnovatrail/tutor/internal/workbook"
 )
 
@@ -97,9 +97,9 @@ func TestRunOnTheStub(t *testing.T) {
 			box := truth[c.Page][i]
 			// A digit written mirrored the right reader marks, and the learner writes it again; the
 			// page's record keeps the verdict of the value.
-			want := workbook.Want(box.Scenario, value.Slot{Verdict: box.Verdict, Reason: box.Reason, Trap: box.Trap}, l.Run.PromptVersion)
+			want := workbook.Want(box.Scenario, workbook.Slot{Verdict: box.Verdict, Reason: box.Reason, Trap: box.Trap}, l.Run.PromptVersion)
 			if b.Verdict != want.Verdict || string(b.Reason) != string(want.Reason) || b.Trap != want.Trap ||
-				(b.Verdict == value.Unreadable) != (box.Scenario == sample.BoxBlank || box.Scenario == sample.BoxMirrored) || (box.Scenario == sample.BoxMirrored && box.Verdict != value.Correct) {
+				(b.Verdict == verdict.Unreadable) != (box.Scenario == sample.BoxBlank || box.Scenario == sample.BoxMirrored) || (box.Scenario == sample.BoxMirrored && box.Verdict != verdict.Correct) {
 				t.Errorf("page %d, box %d.%d, %s at %d px: %s %s %s, want %+v of the box %+v", c.Page, b.Item, b.Slot, c.Condition, c.Digit, b.Verdict, b.Reason, b.Trap, want, box)
 			}
 		}

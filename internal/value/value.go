@@ -1,10 +1,10 @@
-// Package value is the checks of the kinds number and fraction of the module format (R56 spec; the
-// format text of spec, section 15, «Checks»): it reads a value as it is written in the steps the
-// format gives, takes it only in a notation of the kind, and compares it with the key as a rational
-// number, exactly; a fraction asked in lowest terms is right only in them. A value equal to a trap
-// value names the trap. The reading's verdict of a sheet comes to the check of number once the
-// observation has a final answer to judge (T68; docs/architecture.md, 3.4), and a box of a page of
-// the workbook to the check of its kind (T78).
+// Package value is how tutor reads a value as the module format's checks read it (R56 spec; the
+// format text of spec, section 15, «Checks»): the normalization of steps 1 to 4, a number's value
+// read in steps 1 to 5 and 7, and a text in a notation of number as a rational number, exactly. The
+// reading compares the texts of parts by it and finds a value in its part's writing, the leak check
+// finds the key's number, and the reports compare what was read with what was written. The verdict
+// is module-kit's: the checks of number and fraction went to it, with the copy of the vectors of
+// verdicts (T108; R73).
 //
 // The normalization follows Unicode 17.0.0, the version of the tables of Go 1.27 and of
 // golang.org/x/text v0.42.0 (norm.Version); the format's test vectors use only characters that
@@ -22,180 +22,14 @@ import (
 	"golang.org/x/text/unicode/norm"
 )
 
-// Verdict is the verdict of an answer slot or of an item.
-type Verdict string
-
-// The verdicts of the format.
-const (
-	Correct    Verdict = "correct"
-	NotYet     Verdict = "not_yet"
-	Unreadable Verdict = "unreadable"
-	Unchecked  Verdict = "unchecked"
-)
-
-// Reason is why a value is unreadable: nothing was read, or it is not in the kind's notation.
-type Reason string
-
-// The reasons of an unreadable value.
-const (
-	Blank    Reason = "blank"
-	Notation Reason = "notation"
-)
-
-// Trap is a wrong value that the author knows, and the trap it shows.
-type Trap struct {
-	Value string
-	Trap  string
-}
-
-// Number is a check of the kind number: the key, written in the notation, the units that may
-// follow the number, and the trap values.
-type Number struct {
-	Key   string
-	Units []string
-	Traps []Trap
-}
-
-// Slot is the verdict of an answer slot: the verdict, why it is unreadable when it is, and the
-// trap the value matches when it is not yet right and matches one.
-type Slot struct {
-	Verdict Verdict
-	Reason  Reason
-	Trap    string
-}
-
-// Check judges the value read in an answer slot, nil when nothing was read. A key that is not in
-// the notation is no key the check can compare with, and the slot is unchecked: the format would
-// not take such a check, and a bank of the measurement gives none.
-func (n Number) Check(value *string) Slot {
-	if value == nil {
-		return Slot{Verdict: Unreadable, Reason: Blank}
-	}
-	v, reason := n.read(*value)
-	if reason != "" {
-		return Slot{Verdict: Unreadable, Reason: reason}
-	}
-	key, reason := n.read(n.Key)
-	if reason != "" {
-		return Slot{Verdict: Unchecked}
-	}
-	if v.Cmp(key) == 0 {
-		return Slot{Verdict: Correct}
-	}
-	slot := Slot{Verdict: NotYet}
-	for _, t := range n.Traps {
-		if tv, reason := n.read(t.Value); reason == "" && tv.Cmp(v) == 0 {
-			slot.Trap = t.Trap
-			break
-		}
-	}
-	return slot
-}
-
-// read reads a value as the check reads it, in steps 1 to 7 and the notation: the number, or why
-// it is unreadable.
-func (n Number) read(value string) (*big.Rat, Reason) {
-	text, ok := Read(value, n.Units)
-	if !ok {
-		return nil, Blank
-	}
-	r, ok := Rational(text)
-	if !ok {
-		return nil, Notation
-	}
-	return r, ""
-}
-
-// Form is the form a check of the kind fraction asks the fraction in.
-type Form string
-
-// The forms of a fraction: any fraction of the key's value, or only the one in lowest terms.
-const (
-	AnyForm Form = "any"
-	Reduced Form = "reduced"
-)
-
-// Fraction is a check of the kind fraction: the key, a simple fraction, the form asked, and the
-// trap values. A form not given is AnyForm.
-type Fraction struct {
-	Key   string
-	Form  Form
-	Traps []Trap
-}
-
-// Check judges the value read in an answer slot, nil when nothing was read. A key that is not a
-// simple fraction, or one asked in lowest terms that is not in them, is no key the check can
-// compare with, and neither is a form other than AnyForm and Reduced: the slot is unchecked, as the
-// format would not take such a check (task.fraction-key).
-func (f Fraction) Check(value *string) Slot {
-	if value == nil {
-		return Slot{Verdict: Unreadable, Reason: Blank}
-	}
-	if f.Form != "" && f.Form != AnyForm && f.Form != Reduced {
-		return Slot{Verdict: Unchecked}
-	}
-	v, lowest, reason := readFraction(*value)
-	if reason != "" {
-		return Slot{Verdict: Unreadable, Reason: reason}
-	}
-	key, keyLowest, reason := readFraction(f.Key)
-	if reason != "" || f.Form == Reduced && !keyLowest {
-		return Slot{Verdict: Unchecked}
-	}
-	if v.Cmp(key) == 0 && (f.Form != Reduced || lowest) {
-		return Slot{Verdict: Correct}
-	}
-	slot := Slot{Verdict: NotYet}
-	for _, t := range f.Traps {
-		if tv, _, reason := readFraction(t.Value); reason == "" && tv.Cmp(v) == 0 {
-			slot.Trap = t.Trap
-			break
-		}
-	}
-	return slot
-}
-
-// readFraction reads a value as the kind fraction reads it, in steps 1 to 5 and 7 and the notation
-// of a simple fraction: the number, whether the fraction is in lowest terms, or why it is
-// unreadable.
-func readFraction(value string) (*big.Rat, bool, Reason) {
-	text, ok := Read(value, nil)
-	if !ok {
-		return nil, false, Blank
-	}
-	if utf8.RuneCountInString(text) > maxLength || !fraction.MatchString(text) {
-		return nil, false, Notation
-	}
-	top, bottom, _ := strings.Cut(strings.ReplaceAll(text, " ", ""), "/")
-	n, _ := new(big.Int).SetString(top, 10)
-	d, _ := new(big.Int).SetString(bottom, 10)
-	lowest := new(big.Int).GCD(nil, nil, new(big.Int).Abs(n), d).Cmp(big.NewInt(1)) == 0
-	return new(big.Rat).SetFrac(n, d), lowest, ""
-}
-
-// Item is the verdict of an item, made of the verdicts of its answer slots: correct when every one
-// is; otherwise not yet right when one is, since a value read clearly and wrong is no doubt;
-// otherwise unreadable when one is; otherwise unchecked.
-func Item(slots []Verdict) Verdict {
-	switch {
-	case len(slots) > 0 && !slices.ContainsFunc(slots, func(v Verdict) bool { return v != Correct }):
-		return Correct
-	case slices.Contains(slots, NotYet):
-		return NotYet
-	case slices.Contains(slots, Unreadable):
-		return Unreadable
-	}
-	return Unchecked
-}
-
-// Read reads a value as the kind number reads it, in steps 1 to 7 of section 15: the text that is
-// left, and false when it is blank.
-func Read(value string, units []string) (string, bool) {
-	text := strings.Trim(withoutUnit(steps1To5(value), units), " ")
+// Read reads a value as the kind number reads it with no units, in steps 1 to 5 and 7 of section
+// 15: the text that is left, and false when it is blank.
+func Read(value string) (string, bool) {
+	text := strings.Trim(steps1To5(value), " ")
 	return text, text != ""
 }
 
-// Normalize is steps 1 to 4 of section 15, which a value and its units go through: the
+// Normalize is steps 1 to 4 of section 15, which a value goes through: the
 // superscript and subscript digits, and the vulgar fractions a number touches, become U+FFFD;
 // NFKC; the dashes and the minus become "-" and the fraction and division slashes "/"; every run
 // of white space becomes one space, and white space at either end is dropped.
@@ -240,33 +74,10 @@ func scriptsReplaced(text string) string {
 	return string(out)
 }
 
-// steps1To5 is steps 1 to 5, which a number's value and its units both go through: Normalize, then
+// steps1To5 is steps 1 to 5, which a number's value goes through: Normalize, then
 // a "=" at the start and every ".", "!" and "?" at the end dropped.
 func steps1To5(text string) string {
 	return strings.TrimRight(strings.TrimPrefix(Normalize(text), "="), ".!?")
-}
-
-// withoutUnit is step 6: of the units that end the text, with a space before it or none, the
-// longest, dropped when something stands before it, and otherwise nothing is. Both sides compare
-// by the simple lowercase mapping of each character.
-func withoutUnit(text string, units []string) string {
-	runes := []rune(text)
-	lowered := Lowercase(runes)
-	var fit []rune
-	for _, u := range units {
-		unit := Lowercase([]rune(strings.Trim(steps1To5(u), " ")))
-		if len(unit) > len(fit) && len(unit) <= len(lowered) && slices.Equal(lowered[len(lowered)-len(unit):], unit) {
-			fit = unit
-		}
-	}
-	if len(fit) == 0 {
-		return text
-	}
-	before := string(runes[:len(runes)-len(fit)])
-	if strings.Trim(before, " ") == "" {
-		return text
-	}
-	return strings.TrimSuffix(before, " ")
 }
 
 // Lowercase maps each character to its simple lowercase mapping, as unicode.ToLower does: a

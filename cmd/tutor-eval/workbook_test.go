@@ -7,8 +7,11 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/altnovatrail/module-kit/verdict"
+	"github.com/altnovatrail/spec/types/formatv0"
+
 	"github.com/altnovatrail/tutor/internal/sample"
-	"github.com/altnovatrail/tutor/internal/value"
+	"github.com/altnovatrail/tutor/internal/workbook"
 )
 
 // The pages of the workbook (T78; docs/architecture.md, 3.4) and the document that shows them as
@@ -100,7 +103,7 @@ func workbookCountTable(wb *sample.Workbook) string {
 					} else {
 						t.fraction++
 					}
-					if b.Check.Form != nil && *b.Check.Form == value.Reduced {
+					if b.Check.Form != nil && *b.Check.Form == formatv0.CheckFormReduced {
 						t.reduced++
 					}
 					if b.Fraction != nil && *b.Fraction == sample.Stacked {
@@ -144,7 +147,7 @@ func workbookBoxTable(t *testing.T, wb *sample.Workbook) string {
 				check := "число"
 				if b.Check.Kind == sample.KindFraction {
 					check = "дробь"
-					if *b.Check.Form == value.Reduced {
+					if *b.Check.Form == formatv0.CheckFormReduced {
 						check = "несократимая дробь"
 					}
 				}
@@ -153,7 +156,7 @@ func workbookBoxTable(t *testing.T, wb *sample.Workbook) string {
 					traps[n] = cell(t, tv.Value) + " " + tv.Trap
 				}
 				fmt.Fprintf(&s, "| %d | %d | %s | %d | %s | %s | %s | %s | %s | %s |\n", pg.Number, i+1, cell(t, it.Text), k+1, check,
-					cell(t, b.Check.Key), strings.Join(traps, ", "), writtenCell(t, b), scenarioCell(b), verdictCell(b.Verdict()))
+					cell(t, b.Check.Key), strings.Join(traps, ", "), writtenCell(t, b), scenarioCell(b), verdictCell(workbook.SlotOf(b.Verdict())))
 			}
 		}
 	}
@@ -201,8 +204,8 @@ func nonNil(s *string) *string {
 }
 
 // verdictCell is a verdict as the document names it, with its reason or its trap.
-func verdictCell(v value.Slot) string {
-	name := map[value.Verdict]string{value.Correct: "верно", value.NotYet: "пока нет", value.Unreadable: "не прочитать", value.Unchecked: "без проверки"}[v.Verdict]
+func verdictCell(v workbook.Slot) string {
+	name := map[verdict.Verdict]string{verdict.Correct: "верно", verdict.NotYet: "пока нет", verdict.Unreadable: "не прочитать", verdict.Unchecked: "без проверки"}[v.Verdict]
 	switch {
 	case v.Trap != "":
 		return name + ", " + v.Trap
