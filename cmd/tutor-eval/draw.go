@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"errors"
 	"flag"
 	"fmt"
@@ -10,7 +11,9 @@ import (
 	"strings"
 	"time"
 
+	"github.com/altnovatrail/tutor/internal/evalsample"
 	"github.com/altnovatrail/tutor/internal/newfile"
+	"github.com/altnovatrail/tutor/internal/protocol"
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/sheets"
@@ -18,11 +21,12 @@ import (
 )
 
 // runDraw draws, with internal/synth, every sheet of the plan that the directory of sheets does
-// not hold yet, and saves each as the record mode would, with the writer "synthetic" (R26). The
-// sheets the author wrote stay as they are, and so does every file already there. The same seed
-// draws the same sheets. With -png it also saves the pictures of each sheet it draws, in a
-// directory of their own, so that the author and the executor can look at them. It draws the
-// sheets of a plan of parts too: text, columns and drawings (T59, T60).
+// not hold yet, and saves each under the name the record mode would give it, as a sample of spec's
+// eval protocol drawn by code from the seed (R26; R69): evalsample.Of. The sheets the author wrote
+// stay as they are, and so does every file already there. The same seed draws the same sheets, to
+// the byte. With -png it also saves the pictures of each sheet it draws, in a directory of their
+// own, so that the author and the executor can look at them. It draws the sheets of a plan of parts
+// too: text, columns and drawings (T59, T60).
 func runDraw(args []string, stdout, stderr io.Writer, now func() time.Time) int {
 	flags := flag.NewFlagSet("tutor-eval draw", flag.ContinueOnError)
 	var f sheetFlags
@@ -61,7 +65,7 @@ func runDraw(args []string, stdout, stderr io.Writer, now func() time.Time) int 
 			return exitFail
 		}
 	}
-	r, err := sheets.Read(f.dir, plan, bank)
+	r, err := sheets.Read(f.dir, plan, bank, nil)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval draw: %v\n", err)
 		return exitFail
@@ -85,14 +89,13 @@ func runDraw(args []string, stdout, stderr io.Writer, now func() time.Time) int 
 			kept = append(kept, sh.Plan.Number)
 			continue
 		}
-		s := synth.SheetLeaning(sh.Plan, *seed, *shift)
-		if err := drawnRight(s, sh.Plan, bank); err != nil {
+		data, s, err := drawSheet(sh.Plan, f.plan, bank, *seed, *shift)
+		if err != nil {
 			_, _ = fmt.Fprintf(stderr, "tutor-eval draw: sheet %d is drawn wrong, and nothing more is saved: %v\n", sh.Plan.Number, err)
 			return exitFail
 		}
 		at = at.Add(time.Millisecond)
 		name := sample.SheetFile(sh.Plan, at)
-		data, err := sample.Marshal(s)
 		var pics []picture
 		if err == nil && pictured {
 			pics, err = pictures(s, name)
@@ -184,6 +187,54 @@ func pictures(s *sample.Sample, file string) ([]picture, error) {
 		pics = append(pics, picture{fmt.Sprintf("%s-frame-%d.png", base, i+1), data})
 	}
 	return pics, nil
+}
+
+// drawSheet draws a plan sheet from the seed and writes it as a sample of the protocol, its ID of the
+// plan's file and the shift: the file's bytes, and the sheet as the runner reads it back from them,
+// which the pictures are drawn of.
+func drawSheet(sh *sample.PlanSheet, plan string, bank *evalsample.Bank, seed uint64, shift float64) ([]byte, *sample.Sample, error) {
+	drawn := synth.SheetLeaning(sh, seed, shift)
+	if err := drawnRight(drawn, sh, bank.Bank); err != nil {
+		return nil, nil, err
+	}
+	id, err := evalsample.ID(plan, seed, shift, sh.Number)
+	if err != nil {
+		return nil, nil, err
+	}
+	es, err := evalsample.Of(drawn, sh, bank, seed, id)
+	if err != nil {
+		return nil, nil, err
+	}
+	data, err := protocol.MarshalSample(es)
+	if err != nil {
+		return nil, nil, err
+	}
+	s, err := readBack(data, sh, bank)
+	if err != nil {
+		return nil, nil, err
+	}
+	return data, s, nil
+}
+
+// readBack reads a drawn file as the runner will, refusals and all (evalsample.Read), and checks the
+// sheet it gives as drawnRight does: what the protocol holds to a tenth of a unit is the same sheet.
+// The rules of sections 11 and 12 are sample-check's, which the tests and CI run on drawn files.
+func readBack(data []byte, sh *sample.PlanSheet, bank *evalsample.Bank) (*sample.Sample, error) {
+	es, err := protocol.ReadSample(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	read, refused, err := evalsample.Read(es, sh, bank)
+	switch {
+	case err != nil:
+		return nil, err
+	case refused != nil:
+		return nil, fmt.Errorf("the runner would refuse it: %w", refused)
+	}
+	if err := drawnRight(read.Sample, sh, bank.Bank); err != nil {
+		return nil, fmt.Errorf("read back: %w", err)
+	}
+	return read.Sample, nil
 }
 
 // drawnRight checks a drawn sheet as the summary will: the format, the bank and the plan sheet's

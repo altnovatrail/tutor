@@ -25,11 +25,16 @@ ARG JUST_VERSION=1.58.0
 # that brings it in: here, R12 of docs/decisions.md.
 ARG GO_VERSION=1.27.3
 ARG GOLANGCI_LINT_VERSION=2.15.0
+# buf builds the image of the contracts of the spec submodule, which spec's recipe sample-check
+# holds the samples of the eval protocol to, here and in CI (R69 of docs/decisions.md). It is the
+# version spec's devcontainer pins at the tag of the submodule: the check runs spec's code with the
+# buf spec runs it with. Apache-2.0.
+ARG BUF_VERSION=1.75.0
 # The sha256 of every archive, per architecture, as its publisher lists it: SHASUMS256.txt of
 # the Node release, SHA256SUMS of the just release, the list at go.dev/dl for Go,
-# golangci-lint-<version>-checksums.txt of the golangci-lint release. A sum written here keeps an
-# archive from being swapped once it has been read (R34 spec), and is raised together with its
-# version.
+# golangci-lint-<version>-checksums.txt of the golangci-lint release, sha256.txt of the buf
+# release. A sum written here keeps an archive from being swapped once it has been read (R34
+# spec), and is raised together with its version.
 ARG NODE_SHA256_AMD64=6e1db87ef58b8819e5d5402eff1536491b18edd8eb7bee5ef7897876e88dc5ff
 ARG NODE_SHA256_ARM64=724282c3b43aec998aa9527380465b45d229e021b58035f5f4f63095eabfe5d5
 ARG JUST_SHA256_AMD64=4a5cc2f53e6f0f8c59092a6cc38291eb729d46a7dd95d3ae582008881b84931d
@@ -38,6 +43,8 @@ ARG GO_SHA256_AMD64=65efbc80fdc1fa2cd2631cad5b481777a68e8725f34e89f50fc6ac714e37
 ARG GO_SHA256_ARM64=a06e99309dbcbdca1a8ccd2282c3ee146e55930886e26b4f1193269587165f49
 ARG GOLANGCI_LINT_SHA256_AMD64=9b7fe6a6bf6334b98decf8d86b11415ea7889afdabdd1959fdce23af2a9ebcea
 ARG GOLANGCI_LINT_SHA256_ARM64=b4d8f17068b35ee6060cc2f69a16fb48740d706fbba81661c318649c114a6998
+ARG BUF_SHA256_AMD64=fad1e38d6909bbb583a4da81d8c02a01046e2cd663bde7e337dd24277393764b
+ARG BUF_SHA256_ARM64=00eb190aa82df17f393e05b04889cc60a0b13b3259d336e21a87d5f23ab4fd26
 
 # Every archive comes through one helper, so that every download is retried the same way and
 # checked against its sum before anything unpacks it. --retry-all-errors is the point of it: a
@@ -47,10 +54,12 @@ RUN arch="$(dpkg --print-architecture)"; \
     case "$arch" in \
         amd64) node_arch=x64; gnu_arch=x86_64; \
             node_sha256="$NODE_SHA256_AMD64"; just_sha256="$JUST_SHA256_AMD64"; \
-            go_sha256="$GO_SHA256_AMD64"; golangci_lint_sha256="$GOLANGCI_LINT_SHA256_AMD64" ;; \
+            go_sha256="$GO_SHA256_AMD64"; golangci_lint_sha256="$GOLANGCI_LINT_SHA256_AMD64"; \
+            buf_sha256="$BUF_SHA256_AMD64" ;; \
         arm64) node_arch=arm64; gnu_arch=aarch64; \
             node_sha256="$NODE_SHA256_ARM64"; just_sha256="$JUST_SHA256_ARM64"; \
-            go_sha256="$GO_SHA256_ARM64"; golangci_lint_sha256="$GOLANGCI_LINT_SHA256_ARM64" ;; \
+            go_sha256="$GO_SHA256_ARM64"; golangci_lint_sha256="$GOLANGCI_LINT_SHA256_ARM64"; \
+            buf_sha256="$BUF_SHA256_ARM64" ;; \
         *) echo "unsupported architecture: $arch" >&2; exit 1 ;; \
     esac; \
     workdir="$(mktemp -d)"; \
@@ -85,6 +94,12 @@ RUN arch="$(dpkg --print-architecture)"; \
         -xzf "$workdir/golangci-lint-${GOLANGCI_LINT_VERSION}-${arch}.tar.gz" \
         "golangci-lint-${GOLANGCI_LINT_VERSION}-linux-${arch}/golangci-lint"; \
     install -m 0755 "$workdir/golangci-lint" /usr/local/bin/golangci-lint; \
+    \
+    echo "buf ${BUF_VERSION}"; \
+    fetch "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-Linux-${gnu_arch}" \
+        "$workdir/buf-${BUF_VERSION}-${gnu_arch}" "$buf_sha256"; \
+    install -m 0755 "$workdir/buf-${BUF_VERSION}-${gnu_arch}" /usr/local/bin/buf; \
+    buf --version; \
     \
     rm -rf "$workdir"
 

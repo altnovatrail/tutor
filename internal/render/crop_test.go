@@ -167,8 +167,11 @@ func TestCropVectors(t *testing.T) {
 			}
 			name := fmt.Sprintf("%s at %d px", c.Name, want.GetDigitHeight())
 			b := vc.crops.GetInkBox()
-			if box := [4]int64{got.box.minY, got.box.minX, got.box.maxY, got.box.maxX}; box != [4]int64{int64(b.GetYmin()), int64(b.GetXmin()), int64(b.GetYmax()), int64(b.GetXmax())} {
+			if box := got.InkBox(); box != [4]int64{int64(b.GetYmin()), int64(b.GetXmin()), int64(b.GetYmax()), int64(b.GetXmax())} {
 				t.Errorf("%s: box %v in tenths, want %v", name, box, b)
+			}
+			if m := got.MedianTenths(); m != int64(vc.crops.GetBundleMedian()) {
+				t.Errorf("%s: h_med %d in tenths, want %d", name, m, vc.crops.GetBundleMedian())
 			}
 			if got.unit != min(int64(vc.crops.GetBundleMedian()), 10*cropCeiling) {
 				t.Errorf("%s: the scale takes %d tenths, and h_med is %d", name, got.unit, vc.crops.GetBundleMedian())

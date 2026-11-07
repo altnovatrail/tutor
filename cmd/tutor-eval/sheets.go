@@ -10,8 +10,10 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/altnovatrail/tutor/internal/evalsample"
 	"github.com/altnovatrail/tutor/internal/newfile"
 	"github.com/altnovatrail/tutor/internal/sample"
+	"github.com/altnovatrail/tutor/internal/samplecheck"
 	"github.com/altnovatrail/tutor/internal/sheets"
 )
 
@@ -76,16 +78,21 @@ func parse(flags *flag.FlagSet, args []string, stderr io.Writer) (int, bool) {
 	return exitOK, true
 }
 
+// checkSamples holds the samples of the protocol among the sheets to the rules of sections 11 and
+// 12 of spec's text of the contracts, by spec's recipe sample-check (R69); a test replaces it.
+var checkSamples samplecheck.Check = samplecheck.Run
+
 // readPlan reads the bank and the sheet plan and checks the plan against the bank. Its error says
-// which file fails.
-func readPlan(bankPath, planPath string) (*sample.Bank, *sample.Plan, error) {
-	bank, err := readFile(bankPath, sample.ReadBank)
+// which file fails. The bank comes with its path in the repository and its digest, by which a
+// sample of the protocol names its task (R69).
+func readPlan(bankPath, planPath string) (*evalsample.Bank, *sample.Plan, error) {
+	bank, err := evalsample.ReadBank(bankPath)
 	if err != nil {
 		return nil, nil, fmt.Errorf("%s: %w", bankPath, err)
 	}
 	plan, err := readFile(planPath, sample.ReadPlan)
 	if err == nil {
-		err = plan.CheckWithBank(bank)
+		err = plan.CheckWithBank(bank.Bank)
 	}
 	if err != nil {
 		return nil, nil, fmt.Errorf("%s: %w", planPath, err)
@@ -111,7 +118,7 @@ func runSheets(args []string, stdout, stderr io.Writer) int {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval sheets: %v\n", err)
 		return exitFail
 	}
-	r, err := sheets.Read(f.dir, plan, bank)
+	r, err := sheets.Read(f.dir, plan, bank, checkSamples)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval sheets: %v\n", err)
 		return exitFail
@@ -180,7 +187,7 @@ func runSplit(args []string, stdout, stderr io.Writer) int {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval split: %v\n", err)
 		return exitFail
 	}
-	r, err := sheets.Read(f.dir, plan, bank)
+	r, err := sheets.Read(f.dir, plan, bank, checkSamples)
 	if err == nil {
 		var sp *sample.Split
 		if sp, err = sheets.Split(r, *seed, *dev); err == nil {

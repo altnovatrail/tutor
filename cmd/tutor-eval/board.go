@@ -224,7 +224,7 @@ func recordMode(f boardFlags, stderr io.Writer) (http.Handler, string, int) {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %v\n", err)
 		return nil, "", exitFail
 	}
-	rc, err := board.NewRecorder(bank, plan, dir)
+	rc, err := board.NewRecorder(bank.Bank, plan, dir)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval board: %v\n", err)
 		return nil, "", exitFail

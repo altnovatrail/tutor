@@ -10,6 +10,8 @@ import (
 	"time"
 
 	"github.com/altnovatrail/tutor/internal/hint"
+	"github.com/altnovatrail/tutor/internal/sample"
+	"github.com/altnovatrail/tutor/internal/synth"
 )
 
 // A hint goes over three sets in one run, on the stub, and asks only the sheets with a mistake: the
@@ -72,13 +74,28 @@ func TestHintOverSets(t *testing.T) {
 }
 
 // The author's three sheets are all correct, so a hint has nothing to ask of them: the run is
-// refused before the question.
+// refused before the question. They stand in as the board saves the author's, in tutor-sample v0
+// until T105: their plan marks each whole solution as the answer, which the author's hand writes and
+// no code draws.
 func TestHintWithoutMistakes(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "free")
 	args := []string{"-dir", dir, "-bank", freeBank, "-plan", authorPlan}
-	var out, errs bytes.Buffer
-	if code := runDraw(append([]string{"-seed", "1"}, args...), &out, &errs, time.Now); code != exitOK {
-		t.Fatalf("draw = %d %s", code, errs.String())
+	_, plan, err := readPlan(freeBank, authorPlan)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	at := time.Date(2026, 11, 7, 9, 0, 0, 0, time.UTC)
+	for i := range plan.Sheets {
+		data, err := sample.Marshal(synth.Sheet(&plan.Sheets[i], 1))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, sample.SheetFile(&plan.Sheets[i], at)), data, 0o600); err != nil {
+			t.Fatal(err)
+		}
 	}
 	code, stdout, stderr := runMeasure("yes\n", append([]string{"-kind", "hint", "-part", "all", "-stub"}, args...)...)
 	if code != exitFail || stdout != "" || !strings.Contains(stderr, "All the sheets: no sheet with a mistake (free 0 of 3)") {

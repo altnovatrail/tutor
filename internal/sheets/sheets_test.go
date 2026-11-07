@@ -1,6 +1,7 @@
 package sheets_test
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"slices"
@@ -8,10 +9,28 @@ import (
 	"testing"
 	"time"
 
+	evalv1 "github.com/altnovatrail/spec/contracts/novatrail/eval/v1"
+
+	"github.com/altnovatrail/tutor/internal/evalsample"
+	"github.com/altnovatrail/tutor/internal/protocol"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/sheets"
 	"github.com/altnovatrail/tutor/internal/synth"
 )
+
+// bank is the synthetic bank as a sample of the protocol names it: by a path and the digest of its
+// file.
+func bank() *evalsample.Bank {
+	b, err := sample.Marshal(synth.Bank())
+	if err != nil {
+		panic(err)
+	}
+	eb, err := evalsample.BankOf("eval/synthetic-bank.json", b)
+	if err != nil {
+		panic(err)
+	}
+	return eb
+}
 
 // planned is the plan of the synthetic samples, checked, and its samples.
 func planned(t *testing.T) (*sample.Plan, []*sample.Sample) {
@@ -74,7 +93,7 @@ func TestRead(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	r, err := sheets.Read(dir, plan, synth.Bank())
+	r, err := sheets.Read(dir, plan, bank(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,11 +115,11 @@ func TestRead(t *testing.T) {
 	wrong := *samples[3]
 	wrong.Scenario = sample.ScenarioSimilarDigits
 	save(t, dir, &plan.Sheets[3], &wrong, at.Add(time.Hour))
-	r, _ = sheets.Read(dir, plan, synth.Bank())
+	r, _ = sheets.Read(dir, plan, bank(), nil)
 	if sh := r.Sheets[3]; sh.Sample != nil || !slices.Contains(sh.Problems, "scenario") {
 		t.Errorf("sheet 4 with another scenario: problems %q, want the scenario", sh.Problems)
 	}
-	if _, err := sheets.Read(filepath.Join(dir, "nowhere"), plan, synth.Bank()); err == nil {
+	if _, err := sheets.Read(filepath.Join(dir, "nowhere"), plan, bank(), nil); err == nil {
 		t.Error("a directory that is not there reads")
 	}
 }
@@ -127,7 +146,7 @@ func TestSummary(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "notes.txt"), nil, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	r, err := sheets.Read(dir, plan, synth.Bank())
+	r, err := sheets.Read(dir, plan, bank(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -142,7 +161,7 @@ func TestSummary(t *testing.T) {
 		"Planned erasures: 2. Slips: 1 erasure on 1 sheet.",
 		"With frames, that is with an erasure: 2 sheets.",
 		"Drawn by code, the writer synthetic: 3.",
-		"Written with a mouse, pressure 0.5 at every point: 1.",
+		"Written with a mouse, by the pointer or pressure 0.5 at every point: 1.",
 		"Marked off the plan: 2 (expected.trap).",
 	}, "\n") + "\n"
 	if got := sheets.Summary(r); got != want {
@@ -169,7 +188,7 @@ func TestSummary(t *testing.T) {
 	broken.Lines = slices.Clone(broken.Lines)
 	broken.Lines[0].Strokes = []string{}
 	name := save(t, dir, &plan.Sheets[4], &broken, at.Add(time.Hour))
-	r, _ = sheets.Read(dir, plan, synth.Bank())
+	r, _ = sheets.Read(dir, plan, bank(), nil)
 	got = sheets.Summary(r)
 	for _, want := range []string{
 		"Sheets: 6 of the plan's 7 recorded, 5 of them passing the check.\nNot recorded yet: 1.\n",
@@ -183,7 +202,7 @@ func TestSummary(t *testing.T) {
 
 func TestSplit(t *testing.T) {
 	dir, plan, _ := recorded(t)
-	r, err := sheets.Read(dir, plan, synth.Bank())
+	r, err := sheets.Read(dir, plan, bank(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -300,7 +319,7 @@ func sheetsOf(part []sample.SplitSheet) string {
 // A split names the scenarios it leaves out of a part, and the sheets whose file no longer counts.
 func TestLopsidedAndStale(t *testing.T) {
 	dir, plan, samples := recorded(t)
-	r, err := sheets.Read(dir, plan, synth.Bank())
+	r, err := sheets.Read(dir, plan, bank(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -321,7 +340,7 @@ func TestLopsidedAndStale(t *testing.T) {
 	if err := os.Remove(filepath.Join(dir, r.Sheets[4].File)); err != nil {
 		t.Fatal(err)
 	}
-	r, _ = sheets.Read(dir, plan, synth.Bank())
+	r, _ = sheets.Read(dir, plan, bank(), nil)
 	if got := sheets.Stale(r, sp); !slices.Equal(got, []int{2, 5}) {
 		t.Errorf("stale = %v, want sheets 2 and 5", got)
 	}
@@ -329,7 +348,129 @@ func TestLopsidedAndStale(t *testing.T) {
 
 func TestReadRefusesTooLargeAPlan(t *testing.T) {
 	plan := &sample.Plan{Sheets: make([]sample.PlanSheet, sample.MaxSheets+1)}
-	if _, err := sheets.Read(t.TempDir(), plan, synth.Bank()); err == nil || !strings.Contains(err.Error(), "two digits") {
+	if _, err := sheets.Read(t.TempDir(), plan, bank(), nil); err == nil || !strings.Contains(err.Error(), "two digits") {
 		t.Errorf("a plan of %d sheets: %v", sample.MaxSheets+1, err)
+	}
+}
+
+// saveProtocol writes a plan sheet drawn from the seed 1 as a sample of the protocol, changed as
+// given, under its plan sheet's name.
+func saveProtocol(t *testing.T, dir string, sh *sample.PlanSheet, at time.Time, change func(es *evalv1.Sample)) string {
+	t.Helper()
+	es, err := evalsample.Of(synth.Sheet(sh, 1), sh, bank(), 1, fmt.Sprintf("synthetic-1-plan-%02d", sh.Number))
+	if err != nil {
+		t.Fatal(err)
+	}
+	change(es)
+	data, err := protocol.MarshalSample(es)
+	if err != nil {
+		t.Fatal(err)
+	}
+	name := sample.SheetFile(sh, at)
+	if err := os.WriteFile(filepath.Join(dir, name), data, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	return name
+}
+
+// A directory holds samples of the protocol beside those of tutor-sample v0, and the first key of a
+// file tells which. A sample of the protocol that the check finds breaking a rule, or that cannot be
+// read strictly, is refused as invalid, and so is one the runner refuses for its markup; one that is
+// no sheet of measurement is a problem of its sheet. The summary names the refused with their
+// reasons, and the mouse by the pointer.
+func TestReadProtocol(t *testing.T) {
+	plan, samples := planned(t)
+	dir := t.TempDir()
+	at := time.Date(2026, 11, 7, 9, 0, 0, 0, time.UTC)
+	keep := func(*evalv1.Sample) {}
+	names := map[int]string{}
+	names[1] = saveProtocol(t, dir, &plan.Sheets[0], at, keep)
+	names[2] = saveProtocol(t, dir, &plan.Sheets[1], at, keep)
+	names[3] = saveProtocol(t, dir, &plan.Sheets[2], at, func(es *evalv1.Sample) { es.Markup = nil })
+	names[4] = saveProtocol(t, dir, &plan.Sheets[3], at, func(es *evalv1.Sample) {
+		es.Ink = &evalv1.Sample_Geometry{Geometry: &evalv1.Geometry{}}
+	})
+	names[5] = saveProtocol(t, dir, &plan.Sheets[4], at, func(es *evalv1.Sample) {
+		es.GetHistory().GetEvents()[0].GetWrite().Pointer = "mouse"
+	})
+	names[6] = sample.SheetFile(&plan.Sheets[5], at)
+	if err := os.WriteFile(filepath.Join(dir, names[6]), []byte(`{"protocol": "novatrail.eval.v1", "no_such_field": 1}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	save(t, dir, &plan.Sheets[6], samples[6], at)
+
+	var asked []string
+	check := func(files []string) (map[string][]int, error) {
+		asked = files
+		return map[string][]int{filepath.Join(dir, names[2]): {4, 9}}, nil
+	}
+	r, err := sheets.Read(dir, plan, bank(), check)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(asked) != 6 {
+		t.Errorf("the check is asked of %v, the six samples of the protocol", asked)
+	}
+	for _, c := range []struct {
+		n       int
+		passes  bool
+		refused evalv1.Refusal
+		problem bool
+	}{{1, true, 0, false}, {2, false, evalv1.Refusal_REFUSAL_INVALID, false}, {3, false, evalv1.Refusal_REFUSAL_NO_MARKUP, false}, {4, false, 0, true}, {5, true, 0, false}, {6, false, evalv1.Refusal_REFUSAL_INVALID, false}, {7, true, 0, false}} {
+		sh := r.Sheets[c.n-1]
+		var reason evalv1.Refusal
+		if sh.Refused != nil {
+			reason = sh.Refused.Reason
+		}
+		if (sh.Sample != nil) != c.passes || reason != c.refused || (len(sh.Problems) > 0) != c.problem {
+			t.Errorf("sheet %d: %v, refused %v, problems %v", c.n, sh.Sample != nil, sh.Refused, sh.Problems)
+		}
+	}
+	if !r.Sheets[4].Mouse || r.Sheets[0].Mouse {
+		t.Error("the mouse is not told by the pointer")
+	}
+	summary := sheets.Summary(r)
+	for _, want := range []string{
+		"Sheet 2 is refused, " + names[2] + ", as invalid: sample-check finds it breaks a rule of sections 11 and 12, at lines 4, 9.",
+		"Sheet 3 is refused, " + names[3] + ", as no markup:",
+		"Sheet 6 is refused, " + names[6] + ", as invalid: it cannot be read strictly as a sample of the protocol.",
+		"Sheet 4 does not pass the check",
+		"Written with a mouse, by the pointer or pressure 0.5 at every point: 5.",
+	} {
+		if !strings.Contains(summary, want) {
+			t.Errorf("the summary\n%s\nwant it to hold %q", summary, want)
+		}
+	}
+	if !strings.Contains(summary, "Sheet 2 is refused") || strings.Contains(summary, "the stroke") {
+		t.Errorf("the summary quotes the check: %s", summary)
+	}
+
+	if _, err := sheets.Read(dir, plan, bank(), func([]string) (map[string][]int, error) { return nil, os.ErrPermission }); err == nil {
+		t.Error("a check that cannot run reads the directory")
+	}
+	if r, err := sheets.Read(dir, plan, bank(), nil); err != nil || r.Sheets[1].Sample == nil {
+		t.Errorf("with no check, the sample sample-check fails is read: %v", err)
+	}
+}
+
+// A file is of the protocol when its top level names one, whatever it names; a sample of
+// tutor-sample v0, a file that is no JSON object and one cut short are not.
+func TestOfProtocol(t *testing.T) {
+	for _, c := range []struct {
+		data string
+		want bool
+	}{
+		{`{"protocol": "novatrail.eval.v1", "id": "x"}`, true},
+		{`{"id": {"protocol": 1}, "protocol": null}`, true},
+		{`{"protocol": 1}`, true},
+		{`{"format": "tutor-sample", "version": 0, "lines": [{"protocol": "x"}]}`, false},
+		{`["protocol"]`, false},
+		{`{"format": "tutor-sample", "lines": [`, false},
+		{`{"format"`, false},
+		{``, false},
+	} {
+		if got := sheets.OfProtocol([]byte(c.data)); got != c.want {
+			t.Errorf("%s: %v, want %v", c.data, got, c.want)
+		}
 	}
 }
