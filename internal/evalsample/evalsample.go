@@ -6,9 +6,9 @@
 // runner refuse one: one that spec's check sample-check finds invalid, one without its markup, one of
 // another task, one whose markup does not fit its task, and a child's (R69).
 //
-// What the protocol does not name for a sample that the samples page of canvas did not write, a
-// drawn one, is В68 of RUN.md: until spec answers, such a sample names canvas 0.0.0 and the set of
-// texts "none", the values of no release.
+// A sample that the samples page of canvas did not write, a drawn one, names canvas 0.0.0 and the
+// set of texts "none", the values of no release, which sample-check asks of a synthetic sample
+// (section 11; the 2026-11-07 amendment to R93 spec, spec's answer to В68 of RUN.md).
 package evalsample
 
 import (
@@ -38,9 +38,9 @@ import (
 	"github.com/altnovatrail/tutor/internal/task"
 )
 
-// What a drawn sample names that only the samples page of canvas has (В68 in RUN.md, option 1): no
-// version of canvas and no set of texts, since neither wrote or showed anything. Both keep the
-// form section 11 asks of them.
+// What a drawn sample names that only the samples page of canvas has (section 11; the 2026-11-07
+// amendment to R93 spec): no version of canvas and no set of texts, since neither wrote or showed
+// anything.
 const (
 	CanvasVersion  = "0.0.0"
 	TextSetVersion = "none"

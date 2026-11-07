@@ -122,7 +122,8 @@ func TestReadBank(t *testing.T) {
 }
 
 // What a drawn sample names of itself: an ID and a writer's code from its seed, in the forms of
-// section 11, and the values of В68's option 1 where only canvas's samples page has one.
+// section 11, and canvas 0.0.0 and the set of texts "none" where only canvas's samples page has one
+// (the 2026-11-07 amendment to R93 spec).
 func TestHeader(t *testing.T) {
 	for _, c := range []struct {
 		plan  string
