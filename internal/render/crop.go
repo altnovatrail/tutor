@@ -381,6 +381,15 @@ func (c *Crop) PNG(strokes []sample.Stroke) ([]byte, error) {
 	return PNG(img)
 }
 
+// InkBox is the box of the points the crop was cut around, in whole tenths of a unit, [ymin, xmin,
+// ymax, xmax]: the ink_box of the eval protocol's set of crops (contracts/README.md of spec, section
+// 11).
+func (c *Crop) InkBox() [4]int64 { return [4]int64{c.box.minY, c.box.minX, c.box.maxY, c.box.maxX} }
+
+// MedianTenths is h_med in whole tenths of a unit, as it is: the bundle_median of the protocol's set
+// of crops, which the scale takes no higher than cropCeiling.
+func (c *Crop) MedianTenths() int64 { return int64(math.Round(c.Median * 10)) }
+
 // nearest is the whole number nearest a / b, b > 0, a half up, below zero too.
 func nearest(a, b int64) int64 {
 	n := 2*a + b

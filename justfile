@@ -263,6 +263,18 @@ ci-test: release-files-test
     mkdir -p coverage
     go test -race -count=1 -covermode=atomic -coverprofile=coverage/go.out ./...
 
+# The drawn samples of spec's eval protocol that the tests hold to what tutor-eval draw writes,
+# one of each kind it draws (internal/evalsample's testdata), checked against the rules of sections
+# 11 and 12 of spec's text of the contracts by spec's own recipe, with the buf of the toolchain stage
+# (R69). go test -update in internal/evalsample writes them anew.
+# Check the drawn samples of testdata with spec's sample-check.
+sample-check:
+    just -f spec/justfile sample-check internal/evalsample/testdata/*.json
+
+# Run sample-check under the name the repository's own job Samples in ci.yml runs; it needs the
+# spec submodule, which go.yml does not check out.
+ci-sample-check: sample-check
+
 # Fail on a known vulnerability in code this module reaches.
 ci-vuln:
     go run {{ GOVULNCHECK }} ./...

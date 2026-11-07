@@ -24,6 +24,7 @@ import (
 
 	"github.com/altnovatrail/tutor/internal/newfile"
 	"github.com/altnovatrail/tutor/internal/sample"
+	"github.com/altnovatrail/tutor/internal/sheets"
 	"github.com/altnovatrail/tutor/internal/synth"
 )
 
@@ -49,7 +50,8 @@ const usage = `usage:
                              samples and plans against a bank given with them
   tutor-eval draw [-seed N] [-shift S] [-png D] [-dir D] [-bank F] [-plan F]
                              draw by code every sheet of the plan not recorded yet, and save it
-                             with the writer "synthetic"; with -png, its pictures too, in a
+                             as a sample of spec's eval protocol drawn from the seed, which
+                             just sample-check checks; with -png, its pictures too, in a
                              directory of their own; -shift, how far the answer's last digit
                              of a near sheet leans toward its pair, 0.1 by default
   tutor-eval gen sheets|near [-tasks N] [-seed N] [-prefix P] -bank F -plan F
@@ -199,6 +201,12 @@ func check(paths []string, stdout, stderr io.Writer) int {
 		data, err := os.ReadFile(path)
 		if err != nil {
 			fail(path, err)
+			continue
+		}
+		// A sample of spec's eval protocol keeps the rules of its text by spec's check alone, and tutor
+		// writes none of its own (R93 spec; R69). The directory of sheets tells one so too.
+		if sheets.OfProtocol(data) {
+			fail(path, errors.New("a file of spec's eval protocol: just -f spec/justfile sample-check holds a sample to its rules, and tutor-eval sheets reads it against its plan"))
 			continue
 		}
 		var head struct {

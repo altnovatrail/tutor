@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/altnovatrail/tutor/internal/sample"
+	"github.com/altnovatrail/tutor/internal/protocol"
 )
 
 // gen writes a bank and a plan of generated sheets as new files, which check passes and draw draws;
@@ -93,7 +93,7 @@ func TestDrawShift(t *testing.T) {
 	if bytes.Equal(drawn("0.1"), drawn("0.4")) {
 		t.Error("the shares 0.1 and 0.4 draw the same sheet")
 	}
-	if s, err := sample.ReadSample(bytes.NewReader(drawn("0.3"))); err != nil || s.Scenario != sample.ScenarioSimilarDigits {
+	if s, err := protocol.ReadSample(bytes.NewReader(drawn("0.3"))); err != nil || s.GetSynthetic().GetSeed() != "1" || s.GetMarkup() == nil {
 		t.Errorf("the sheet drawn at 0.3: %v", err)
 	}
 	// A share given to a directory that holds sheets already is refused.

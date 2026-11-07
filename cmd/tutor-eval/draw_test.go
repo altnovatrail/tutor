@@ -64,7 +64,7 @@ func TestDraw(t *testing.T) {
 	for _, want := range []string{
 		"Sheets: 40 of the plan's 40 recorded, 40 of them passing the check.",
 		"Planned erasures: 14. Slips: 0 erasures on 0 sheets.",
-		"Written with a mouse, pressure 0.5 at every point: none.",
+		"Written with a mouse, by the pointer or pressure 0.5 at every point: none.",
 		"Marked off the plan: none.",
 	} {
 		if !strings.Contains(summary.String(), want) {
@@ -228,15 +228,21 @@ func TestDrawRefuses(t *testing.T) {
 	}
 }
 
-// The command draws the free-form plan, 40 sheets of parts, and the author's three, each one part:
-// they pass the summary with the plan's markup, and each has its picture, and a frame before its
-// planned erasure.
+// The command draws the free-form plan, 40 sheets of parts: they pass the summary with the plan's
+// markup, and each has its picture, and a frame before its planned erasure. The author's three,
+// each one part that holds the whole solution as its answer, it does not draw: a sample's truth is
+// the value of its answer, and theirs is for the author's hand to write (R69).
 func TestDrawSheetsOfParts(t *testing.T) {
 	root := t.TempDir()
+	var out, errs bytes.Buffer
+	if code := runDraw([]string{"-dir", filepath.Join(root, "author"), "-bank", freeBank, "-plan", authorPlan}, &out, &errs, time.Now); code != exitFail ||
+		!strings.Contains(errs.String(), "sheet 1 is drawn wrong") || !strings.Contains(errs.String(), "for the author's hand to write") {
+		t.Errorf("draw the author's plan = %d, %s", code, errs.String())
+	}
 	for _, c := range []struct {
 		plan                   string
 		sheets, erasures, pics int
-	}{{"../../eval/free-sheets.json", 40, 16, 56}, {"../../eval/free-author.json", 3, 0, 3}} {
+	}{{"../../eval/free-sheets.json", 40, 16, 56}} {
 		name := strings.TrimSuffix(filepath.Base(c.plan), ".json")
 		dir, pics := filepath.Join(root, name), filepath.Join(root, name+"-png")
 		files := []string{"-dir", dir, "-bank", freeBank, "-plan", c.plan}

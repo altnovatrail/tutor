@@ -40,3 +40,28 @@ jobs:
       contents: read
       id-token: write
     uses: altnovatrail/.github/.github/workflows/go.yml@89d3ceee0b9977b3334488a4133d084d76474e0d # v0.1.15
+
+  # The samples of spec's eval protocol that tutor-eval draw writes, one of each kind it draws, as
+  # internal/evalsample's testdata holds them, checked by spec's recipe sample-check against the
+  # contracts of the spec submodule (R69; section 11 of spec's text of the contracts). go.yml checks
+  # out no submodule, so this job is the repository's own, as the shared documents.yml runs its
+  # check: in the toolchain stage of .devcontainer/Dockerfile, with its buf, Node and just.
+  samples:
+    name: Samples
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          submodules: true
+          persist-credentials: false
+
+      # The Dockerfile copies nothing from the repository, so it is built without a context.
+      - name: Toolchain image
+        run: docker build --target toolchain --tag toolchain - < .devcontainer/Dockerfile
+
+      - name: sample-check
+        run: |
+          docker run --rm --user "$(id -u):$(id -g)" --env HOME=/tmp \
+              --volume "$PWD:/work" --workdir /work \
+              toolchain just ci-sample-check

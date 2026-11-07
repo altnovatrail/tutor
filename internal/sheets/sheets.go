@@ -1,12 +1,15 @@
 // Package sheets reads the directory where the record mode of the board saves the measurement's
-// sheets (R25), against the sheet plan: for each plan sheet its last file, read and checked as a
-// sample. From it come the summary of what is recorded, without the handwriting, and the split of
-// the sheets into a development and a test part (R24).
+// sheets (R25), and tutor-eval draw the sheets it draws (R26), against the sheet plan: for each plan
+// sheet its last file, read and checked as a sample. A file is a sample of spec's eval protocol or of
+// tutor-sample v0, which the record mode writes until T105, and its first key tells which (R69). From
+// it come the summary of what is recorded, without the handwriting, and the split of the sheets into
+// a development and a test part (R24).
 package sheets
 
 import (
 	"bytes"
 	"crypto/sha256"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -14,7 +17,12 @@ import (
 	"slices"
 	"strings"
 
+	evalv1 "github.com/altnovatrail/spec/contracts/novatrail/eval/v1"
+
+	"github.com/altnovatrail/tutor/internal/evalsample"
+	"github.com/altnovatrail/tutor/internal/protocol"
 	"github.com/altnovatrail/tutor/internal/sample"
+	"github.com/altnovatrail/tutor/internal/samplecheck"
 )
 
 // SplitFile is the name of the split's file in the directory of sheets.
@@ -32,6 +40,11 @@ type Sheet struct {
 	// the handwriting.
 	Sample   *sample.Sample
 	Problems []string
+	// Refused is why the runner refuses the sample of the protocol in File, as section 13 has it, or
+	// nil: a refused sample has no Sample and no Problems, and nothing of it goes to AI.
+	Refused *evalsample.Refusal
+	// Mouse is set when a mouse wrote a stroke of the sample of the protocol, as its pointer says.
+	Mouse bool
 }
 
 // Chosen is a sheet that a run asks of (T67, T68): its set, the name of its directory of sheets,
@@ -55,8 +68,11 @@ type Recorded struct {
 }
 
 // Read reads the directory against the plan and the bank. A file that does not pass is a problem
-// of its sheet, not an error; the error is a directory that cannot be read.
-func Read(dir string, plan *sample.Plan, bank *sample.Bank) (*Recorded, error) {
+// of its sheet, not an error; the error is a directory that cannot be read, or a check that cannot
+// run. A sample of the protocol is held to the rules of sections 11 and 12 by check, spec's code
+// (samplecheck.Run), and refused when it breaks one; with no check, as tutor-eval draw reads the
+// directory only to see which sheets it holds, it is not.
+func Read(dir string, plan *sample.Plan, bank *evalsample.Bank, check samplecheck.Check) (*Recorded, error) {
 	if len(plan.Sheets) > sample.MaxSheets {
 		return nil, fmt.Errorf("the plan has %d sheets, and a file's name holds a sheet's number in two digits", len(plan.Sheets))
 	}
@@ -82,35 +98,118 @@ func Read(dir string, plan *sample.Plan, bank *sample.Bank) (*Recorded, error) {
 		sh.File = e.Name()
 		sh.Files++
 	}
+	files := map[int][]byte{}
+	ofOurs := map[int]bool{}
+	var ours []string
 	for i := range r.Sheets {
-		if sh := &r.Sheets[i]; sh.File != "" {
-			sh.Sample, sh.Problems = readSheet(filepath.Join(dir, sh.File), sh.Plan, bank)
+		sh := &r.Sheets[i]
+		if sh.File == "" {
+			continue
 		}
+		data, err := os.ReadFile(filepath.Join(dir, sh.File))
+		if err != nil {
+			sh.Problems = []string{"(the file cannot be read)"}
+			continue
+		}
+		files[i] = data
+		if ofOurs[i] = OfProtocol(data); ofOurs[i] {
+			ours = append(ours, filepath.Join(dir, sh.File))
+		}
+	}
+	broken := map[string][]int{}
+	if check != nil && len(ours) > 0 {
+		var err error
+		if broken, err = check(ours); err != nil {
+			return nil, err
+		}
+	}
+	for i, data := range files {
+		sh := &r.Sheets[i]
+		if !ofOurs[i] {
+			sh.Sample, sh.Problems = readSheet(data, sh.Plan, bank.Bank)
+			continue
+		}
+		if at := broken[filepath.Join(dir, sh.File)]; len(at) > 0 {
+			sh.Refused = &evalsample.Refusal{Reason: evalv1.Refusal_REFUSAL_INVALID, Detail: fmt.Sprintf("sample-check finds it breaks a rule of sections 11 and 12, at %s", lineList(at))}
+			continue
+		}
+		readProtocol(sh, data, bank)
 	}
 	return r, nil
 }
 
-// readSheet reads a sheet's file as a sample and checks it with the bank and against its plan
-// sheet's task and scenario.
-func readSheet(path string, sh *sample.PlanSheet, bank *sample.Bank) (*sample.Sample, []string) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, []string{"(the file cannot be read)"}
+// OfProtocol reports whether a file is a JSON object that names a protocol at its top level, whatever
+// it names, as a sample of spec's eval protocol does and one of tutor-sample v0 does not. It reads
+// the keys and skips their values, the crops' PNG among them, without decoding them.
+func OfProtocol(data []byte) bool {
+	d := json.NewDecoder(bytes.NewReader(data))
+	if t, err := d.Token(); err != nil || t != json.Delim('{') {
+		return false
 	}
+	for d.More() {
+		key, err := d.Token()
+		if err != nil {
+			return false
+		}
+		if key == "protocol" {
+			return true
+		}
+		var skip json.RawMessage
+		if d.Decode(&skip) != nil {
+			return false
+		}
+	}
+	return false
+}
+
+// readProtocol reads a sheet's sample of the protocol as its plan sheet, and refuses it as section
+// 13 has it (evalsample.Read). A file that cannot be read strictly as a sample is invalid too.
+func readProtocol(sh *Sheet, data []byte, bank *evalsample.Bank) {
+	es, err := protocol.ReadSample(bytes.NewReader(data))
+	if err != nil {
+		sh.Refused = &evalsample.Refusal{Reason: evalv1.Refusal_REFUSAL_INVALID, Detail: "it cannot be read strictly as a sample of the protocol"}
+		return
+	}
+	read, refused, err := evalsample.Read(es, sh.Plan, bank)
+	switch {
+	case errors.Is(err, evalsample.ErrNotSheet):
+		sh.Problems = []string{"(the sample is no sheet of measurement with its history)"}
+		return
+	case err != nil:
+		sh.Problems = []string{"(the open view of its task cannot be digested)"}
+		return
+	case refused != nil:
+		sh.Refused = refused
+		return
+	}
+	if err := read.Sample.CheckWithBank(bank.Bank); err != nil {
+		sh.Problems = problemPaths(err)
+		return
+	}
+	sh.Sample, sh.Mouse = read.Sample, read.Mouse
+}
+
+// lineList names lines of a file.
+func lineList(at []int) string {
+	parts := make([]string, len(at))
+	for i, n := range at {
+		parts[i] = fmt.Sprint(n)
+	}
+	if len(at) == 1 {
+		return "line " + parts[0]
+	}
+	return "lines " + strings.Join(parts, ", ")
+}
+
+// readSheet reads a sheet's file as a sample of tutor-sample v0 and checks it with the bank and
+// against its plan sheet's task and scenario.
+func readSheet(data []byte, sh *sample.PlanSheet, bank *sample.Bank) (*sample.Sample, []string) {
 	s, err := sample.ReadSample(bytes.NewReader(data))
 	if err == nil {
 		err = s.CheckWithBank(bank)
 	}
 	if err != nil {
-		var fe *sample.FormatError
-		if !errors.As(err, &fe) {
-			return nil, []string{"(the file is not the JSON of a sample)"}
-		}
-		paths := make([]string, len(fe.Problems))
-		for i, p := range fe.Problems {
-			paths[i] = p.Path
-		}
-		return nil, paths
+		return nil, problemPaths(err)
 	}
 	var off []string
 	if s.Task != sh.Task {
@@ -123,6 +222,19 @@ func readSheet(path string, sh *sample.PlanSheet, bank *sample.Bank) (*sample.Sa
 		return nil, off
 	}
 	return s, nil
+}
+
+// problemPaths are the paths of the problems of a check, nothing of the handwriting.
+func problemPaths(err error) []string {
+	var fe *sample.FormatError
+	if !errors.As(err, &fe) {
+		return []string{"(the file is not the JSON of a sample)"}
+	}
+	paths := make([]string, len(fe.Problems))
+	for i, p := range fe.Problems {
+		paths[i] = p.Path
+	}
+	return paths
 }
 
 // count writes a number with a noun, in the singular for one: "1 sheet", "40 sheets".
@@ -167,7 +279,7 @@ func Summary(r *Recorded) string {
 	var b strings.Builder
 	line := func(format string, args ...any) { _, _ = fmt.Fprintf(&b, format+"\n", args...) }
 
-	var missing, failing []int
+	var missing, failing, refused []int
 	var more []string
 	recorded, files := 0, 0
 	var passing []*Sheet
@@ -177,6 +289,8 @@ func Summary(r *Recorded) string {
 		case sh.File == "":
 			missing = append(missing, sh.Plan.Number)
 			continue
+		case sh.Refused != nil:
+			refused = append(refused, sh.Plan.Number)
 		case sh.Sample == nil:
 			failing = append(failing, sh.Plan.Number)
 		default:
@@ -202,6 +316,10 @@ func Summary(r *Recorded) string {
 	for _, n := range failing {
 		sh := r.Sheets[n-1]
 		line("Sheet %d does not pass the check, %s, at %s.", n, sh.File, strings.Join(sh.Problems, ", "))
+	}
+	for _, n := range refused {
+		sh := r.Sheets[n-1]
+		line("Sheet %d is refused, %s, as %s: %s.", n, sh.File, evalsample.Reason(sh.Refused.Reason), sh.Refused.Detail)
 	}
 
 	line("By task: %s.", tallies(byTask(r, passing)))
@@ -231,7 +349,7 @@ func Summary(r *Recorded) string {
 		if s.Writer == sample.WriterSynthetic {
 			drawn = append(drawn, sh.Plan.Number)
 		}
-		if byMouse(s) {
+		if sh.Mouse || byMouse(s) {
 			mouse = append(mouse, sh.Plan.Number)
 		}
 		if where := offPaths(Differences(sh.Plan, s)); len(where) > 0 {
@@ -241,7 +359,7 @@ func Summary(r *Recorded) string {
 	line("Planned erasures: %d. Slips: %s on %s.", planned, count(slips, "erasure"), count(slipped, "sheet"))
 	line("With frames, that is with an erasure: %s.", count(framed, "sheet"))
 	line("Drawn by code, the writer synthetic: %s.", Numbers(drawn))
-	line("Written with a mouse, pressure 0.5 at every point: %s.", Numbers(mouse))
+	line("Written with a mouse, by the pointer or pressure 0.5 at every point: %s.", Numbers(mouse))
 	if len(off) == 0 {
 		line("Marked off the plan: none.")
 	} else {
