@@ -7,6 +7,8 @@ import (
 	"strings"
 	"testing"
 
+	evalv1 "github.com/altnovatrail/spec/contracts/novatrail/eval/v1"
+
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
@@ -199,9 +201,10 @@ func TestRunEssays(t *testing.T) {
 		t.Errorf("the log holds %d essays:\n%.300s", n, data)
 	}
 	code, out, errs = runIt("report", log)
-	if code != exitOK || !strings.Contains(out, "haiku-low: false alarms 0 of 48") || !strings.HasSuffix(out, "The feedback to read: "+filepath.Join(dir, "essays.feedback.md")+"\n") {
+	if code != exitOK || !strings.Contains(out, "haiku-low: false alarms 0 of 48") || !strings.Contains(out, "The feedback to read: "+filepath.Join(dir, "essays.feedback.md")+"\n") {
 		t.Errorf("the report of the essays ends %d: %s%s", code, out, errs)
 	}
+	reportsBeside(t, log, evalv1.Capability_CAPABILITY_RUBRIC_ASSESSMENT, "opus-high", "haiku-low", "haiku-low-no-thinking")
 	for _, c := range []struct {
 		args []string
 		says string

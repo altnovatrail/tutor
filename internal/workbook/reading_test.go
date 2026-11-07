@@ -1,17 +1,22 @@
 package workbook_test
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
+	"github.com/altnovatrail/module-kit/observation"
 	"github.com/altnovatrail/module-kit/verdict"
 	"github.com/altnovatrail/spec/types/formatv0"
+
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/sample"
+	"github.com/altnovatrail/tutor/internal/task"
 	"github.com/altnovatrail/tutor/internal/workbook"
 	"github.com/altnovatrail/tutor/provider"
 )
@@ -232,5 +237,67 @@ func TestFrozenV2(t *testing.T) {
 	const frozen = "885515cb2ad2a4aa3e49c1322e0d108099d66b93746309b5654cf7bacca6cf4b"
 	if got := workbook.Fingerprint(); got != frozen || workbook.Version != 2 {
 		t.Errorf("the fingerprint of version %d is %s, not the one frozen after the dev round of T99, %s", workbook.Version, got, frozen)
+	}
+}
+
+// The record of a page tells the items of its task, each box with its check, and the record of a
+// call the observation that module-kit judges as the call did: the same verdicts, box by box. A
+// failed call, an answer with a cell missing and a box judged with no text tell none (R74).
+func TestRecordObservation(t *testing.T) {
+	pg := testPage()
+	pr := &workbook.PageRecord{Kind: "page", Page: pg.Number}
+	for i, it := range pg.Items {
+		for k, b := range it.Boxes {
+			br := workbook.BoxRecord{Item: i + 1, Slot: k + 1, Kind: b.Check.Kind, Key: b.Check.Key, Written: b.Written, TrapValues: b.Check.TrapValues}
+			if b.Check.Form != nil {
+				br.Form = *b.Check.Form
+			}
+			pr.Boxes = append(pr.Boxes, br)
+		}
+	}
+	items := workbook.ItemsOf(pr)
+	want := task.Page(pg).Items
+	if len(items) != len(want) {
+		t.Fatalf("%d items, want %d", len(items), len(want))
+	}
+	for i := range items {
+		got, of := verdict.AnswerSlots(items[i]), verdict.AnswerSlots(want[i])
+		if len(got) != len(of) {
+			t.Fatalf("item %d: %d boxes, want %d", i+1, len(got), len(of))
+		}
+		for k := range got {
+			if !reflect.DeepEqual(got[k], of[k]) {
+				t.Errorf("item %d, box %d: %+v, want %+v", i+1, k+1, got[k], of[k])
+			}
+		}
+	}
+	for _, read := range [][]workbook.Reading{
+		{reading(1, 1, "49"), reading(2, 1, "6/8"), reading(3, 1, "3")},
+		{{Item: 1, Slot: 1, Text: "8", Legible: true, OtherReadings: []string{}, Mirrored: true}, {Item: 2, Slot: 1, Text: "3/4", Legible: false, OtherReadings: []string{}}, reading(3, 1, "3,0")},
+	} {
+		boxes := workbook.Verdicts(pg, read)
+		c := &workbook.CallRecord{Kind: "call", Boxes: boxes}
+		obs := workbook.RecordObservation(pr, c)
+		got, err := observation.Verdicts(context.Background(), items, obs, nil)
+		if err != nil {
+			t.Fatal(err)
+		}
+		at := 0
+		for _, it := range got {
+			for _, v := range it.Slots {
+				if b := boxes[at]; v.Verdict != b.Verdict || workbook.SlotOf(v).Trap != b.Trap {
+					t.Errorf("box %d.%d: module-kit gives %+v on the record, and the run %+v", b.Item, b.Slot, v, b)
+				}
+				at++
+			}
+		}
+	}
+	missing := &workbook.CallRecord{Boxes: workbook.Verdicts(pg, []workbook.Reading{reading(1, 1, "8")})}
+	noText := &workbook.CallRecord{Boxes: workbook.Verdicts(pg, []workbook.Reading{reading(1, 1, "8"), reading(2, 1, "3/4"), reading(3, 1, "3")})}
+	noText.Boxes[0].Text = nil
+	for name, c := range map[string]*workbook.CallRecord{"failed": {Error: "x", Boxes: missing.Boxes}, "a cell missing": missing, "no text": noText, "too few boxes": {}} {
+		if obs := workbook.RecordObservation(pr, c); obs != nil {
+			t.Errorf("%s: %v", name, obs)
+		}
 	}
 }

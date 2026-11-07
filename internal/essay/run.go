@@ -79,7 +79,7 @@ func (s *step) Record(o runner.Outcome) any {
 	if !o.NotAsked && o.Error == "" {
 		var err error
 		if a, err = Read(o.Answer); err != nil {
-			rec.Error = err.Error()
+			rec.Error, rec.Invalid = err.Error(), true
 		}
 	}
 	rec.Marks, rec.Extra = Marks(s.rubric, a)
@@ -128,9 +128,11 @@ func New(part, file, dir string, seed uint64, es *sample.Essays, essays []*evals
 // does not meet, its words, what it spells wrong, how many of its sentences begin with a small
 // letter and whether the last ends without its mark, and the size of its crop at 32 px. They are the
 // texts of the file of the essays, not the handwriting.
-func essayRecord(e *sample.Essay, pic *Picture) EssayRecord {
+func essayRecord(written *evalsample.Essay, pic *Picture) EssayRecord {
+	e := written.Essay
 	return EssayRecord{Kind: "essay", Essay: e.Number, Part: e.Part, Unmet: e.Unmet, Words: len(plainWords(essayText(e))), Misspelled: e.Misspelled,
-		LowerStarts: len(sample.LowerStarts(e.Text)), Unended: sample.Unended(e.Text), Width: pic.Crop.Width, Height: pic.Crop.Height}
+		LowerStarts: len(sample.LowerStarts(e.Text)), Unended: sample.Unended(e.Text), Width: pic.Crop.Width, Height: pic.Crop.Height,
+		Sample: written.ID, People: written.People, Unreadable: written.Unreadable}
 }
 
 // The records of a run's log, a JSON object a line, each with its kind: the run first, then each
@@ -158,6 +160,11 @@ type (
 		// Path is "two" for a run in two calls, the reading and the assessment of the text (T92), and
 		// empty for one call; the prompt and its version are then those of the two calls.
 		Path string `json:"path,omitempty"`
+		// Runner and ModuleKit are the versions of the build that ran, and Refused the samples it
+		// refused: what the runner's report takes of the run (R74).
+		Runner    string           `json:"runner,omitempty"`
+		ModuleKit string           `json:"module_kit,omitempty"`
+		Refused   []runner.Refused `json:"refused,omitempty"`
 	}
 	// ReaderRecord is a reader as the run's record tells it: its model and prices.
 	ReaderRecord = runner.ReaderRecord
@@ -173,6 +180,11 @@ type (
 		Unended     bool                 `json:"unended"`
 		Width       int                  `json:"width"`
 		Height      int                  `json:"height"`
+		// Sample is the ID of the essay's sample, People the marks of its markup, and Unreadable the
+		// reason its truth gives no text, as the protocol names it: for the runner's report (R74).
+		Sample     string            `json:"sample,omitempty"`
+		People     []evalsample.Mark `json:"people,omitempty"`
+		Unreadable string            `json:"unreadable,omitempty"`
 	}
 	// CallRecord tells a call: the answer as the model gave it, what it comes to on each criterion
 	// and how many of its judgements name no criterion, how it read the essay, what its feedback
@@ -189,6 +201,9 @@ type (
 		Breaches      []string `json:"breaches,omitempty"`
 		FeedbackWords int      `json:"feedback_words,omitempty"`
 		Error         string   `json:"error,omitempty"`
+		// Invalid is set when the answer is off the schema, which the report of the protocol names
+		// unchecked, UNCHECKED_CAUSE_INVALID (R74).
+		Invalid bool `json:"invalid,omitempty"`
 		runner.Usage
 	}
 )
@@ -259,7 +274,7 @@ func (s *readStep) Record(o runner.Outcome) any {
 			err = fmt.Errorf("essay: the reading wrote no text")
 		}
 		if err != nil {
-			rec.Error = err.Error()
+			rec.Error, rec.Invalid = err.Error(), true
 			return rec
 		}
 		s.read.text, s.read.ok = text, true
@@ -297,7 +312,7 @@ func (s *assessStep) Record(o runner.Outcome) any {
 	if !o.NotAsked && o.Error == "" {
 		var err error
 		if a, err = ReadText(o.Answer, s.read.text); err != nil {
-			rec.Error = err.Error()
+			rec.Error, rec.Invalid = err.Error(), true
 		}
 	}
 	rec.Marks, rec.Extra = Marks(s.rubric, a)
@@ -362,7 +377,7 @@ func prepare(part, file, dir string, seed uint64, es *sample.Essays, essays []*e
 			return nil, nil, fmt.Errorf("essay: essay %d: %w", e.Number, err)
 		}
 		pics[i] = pic
-		r.Items = append(r.Items, essayRecord(e, pic))
+		r.Items = append(r.Items, essayRecord(written, pic))
 	}
 	records := make([]ReaderRecord, len(readers))
 	for i, rd := range readers {
@@ -370,7 +385,8 @@ func prepare(part, file, dir string, seed uint64, es *sample.Essays, essays []*e
 	}
 	r.Record = func(h runner.Head) any {
 		return RunRecord{Kind: "run", CallKind: CallKind, Time: h.Time, Part: part, File: file, Dir: dir, Seed: seed, Rubric: es.Rubric, Readers: records, Repeats: repeats,
-			MaxUSD: h.MaxUSD, Estimate: h.Estimate, Prompt: prompt.Prompt, PromptVersion: prompt.PromptVersion, Path: prompt.Path}
+			MaxUSD: h.MaxUSD, Estimate: h.Estimate, Prompt: prompt.Prompt, PromptVersion: prompt.PromptVersion, Path: prompt.Path,
+			Runner: h.Runner, ModuleKit: h.ModuleKit, Refused: h.Refused}
 	}
 	return r, pics, nil
 }

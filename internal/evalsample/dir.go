@@ -163,23 +163,26 @@ func readDir[T any](dir, kind string, numbers []int, check samplecheck.Check, re
 			continue
 		}
 		path := filepath.Join(dir, x.File)
-		if lines := broken[path]; len(lines) > 0 {
-			x.Refused = &Refusal{Reason: evalv1.Refusal_REFUSAL_INVALID, Detail: fmt.Sprintf("sample-check finds it breaks a rule of sections 11 and 12, at %s", lineList(lines))}
-			continue
-		}
 		data, err := os.ReadFile(path)
 		if err != nil {
 			x.Problems = []string{"(the file cannot be read)"}
 			continue
 		}
+		if lines := broken[path]; len(lines) > 0 {
+			x.Refused = &Refusal{Reason: evalv1.Refusal_REFUSAL_INVALID, Detail: fmt.Sprintf("sample-check finds it breaks a rule of sections 11 and 12, at %s", lineList(lines)), Sample: SampleID(data)}
+			continue
+		}
 		es, err := protocol.ReadSample(bytes.NewReader(data))
 		if err != nil {
-			x.Refused = &Refusal{Reason: evalv1.Refusal_REFUSAL_INVALID, Detail: "it cannot be read strictly as a sample of the protocol"}
+			x.Refused = &Refusal{Reason: evalv1.Refusal_REFUSAL_INVALID, Detail: "it cannot be read strictly as a sample of the protocol", Sample: SampleID(data)}
 			continue
 		}
 		x.Seed = es.GetSynthetic().GetSeed()
 		if x.Read, x.Refused, x.Problems, err = read(i, es); err != nil {
 			return nil, err
+		}
+		if x.Refused != nil {
+			x.Refused.Sample = es.GetId()
 		}
 	}
 	return d, nil

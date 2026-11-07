@@ -177,6 +177,11 @@ type Head struct {
 	Time     time.Time
 	MaxUSD   float64
 	Estimate Estimate
+	// Runner and ModuleKit are the versions of the build that runs (Versions), and Refused the
+	// samples the run refuses, as Run names them: the record of the run keeps them for the
+	// runner's report (R74).
+	Runner, ModuleKit string
+	Refused           []Refused
 }
 
 // Run is a run as its kind planned it: the record that tells the run, the first line of its log,
@@ -189,6 +194,9 @@ type Run struct {
 	Record func(h Head) any
 	Items  []any
 	Steps  []Step
+	// Refused are the samples the run refuses, which its record names; the command that plans the
+	// run sets them.
+	Refused []Refused
 }
 
 // Estimate is what the run is expected to take.
@@ -230,7 +238,8 @@ type End struct {
 // a run, whose monotonic reading times the calls, and a fixed clock in a test.
 func (r *Run) Do(ctx context.Context, ask Asker, maxUSD float64, log io.Writer, now func() time.Time) (Result, error) {
 	w := &writer{log: log}
-	w.put(r.Record(Head{Time: now().UTC(), MaxUSD: maxUSD, Estimate: r.Estimate()}))
+	tutor, moduleKit := Versions()
+	w.put(r.Record(Head{Time: now().UTC(), MaxUSD: maxUSD, Estimate: r.Estimate(), Runner: tutor, ModuleKit: moduleKit, Refused: r.Refused}))
 	for _, it := range r.Items {
 		w.put(it)
 	}
@@ -248,7 +257,7 @@ func (r *Run) Do(ctx context.Context, ask Asker, maxUSD float64, log io.Writer, 
 			break
 		}
 		if worst := st.Worst(); res.SpentUSD+worst > maxUSD {
-			res.Stopped = fmt.Sprintf("the cap: $%.4f spent of $%.2f, and the next call can cost up to $%.4f", res.SpentUSD, maxUSD, worst)
+			res.Stopped = fmt.Sprintf("%s: $%.4f spent of $%.2f, and the next call can cost up to $%.4f", StoppedByCap, res.SpentUSD, maxUSD, worst)
 			break
 		}
 		o := call(ctx, ask, st, now)

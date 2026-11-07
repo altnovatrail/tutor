@@ -45,6 +45,10 @@ type Sheet struct {
 	Refused *evalsample.Refusal
 	// Mouse is set when a mouse wrote a stroke of the sample of the protocol, as its pointer says.
 	Mouse bool
+	// ID is the ID of the sample of the protocol, and Truth the truth of its answer slot: what the
+	// runner's report takes of it (R74). A sheet of tutor-sample v0 has neither.
+	ID    string
+	Truth []evalsample.Truth
 }
 
 // Chosen is a sheet that a run asks of (T67, T68): its set, the name of its directory of sheets,
@@ -57,6 +61,10 @@ type Chosen struct {
 	Sample *sample.Sample
 	Task   *sample.Task
 	Plan   *sample.PlanSheet
+	// ID and Truth are the sample's of the protocol, for the runner's report, and none of a sheet of
+	// tutor-sample v0 (R74).
+	ID    string
+	Truth []evalsample.Truth
 }
 
 // Recorded is the directory of sheets read against the plan.
@@ -130,7 +138,7 @@ func Read(dir string, plan *sample.Plan, bank *evalsample.Bank, check samplechec
 			continue
 		}
 		if at := broken[filepath.Join(dir, sh.File)]; len(at) > 0 {
-			sh.Refused = &evalsample.Refusal{Reason: evalv1.Refusal_REFUSAL_INVALID, Detail: fmt.Sprintf("sample-check finds it breaks a rule of sections 11 and 12, at %s", lineList(at))}
+			sh.Refused = &evalsample.Refusal{Reason: evalv1.Refusal_REFUSAL_INVALID, Detail: fmt.Sprintf("sample-check finds it breaks a rule of sections 11 and 12, at %s", lineList(at)), Sample: evalsample.SampleID(data)}
 			continue
 		}
 		readProtocol(sh, data, bank)
@@ -167,7 +175,7 @@ func OfProtocol(data []byte) bool {
 func readProtocol(sh *Sheet, data []byte, bank *evalsample.Bank) {
 	es, err := protocol.ReadSample(bytes.NewReader(data))
 	if err != nil {
-		sh.Refused = &evalsample.Refusal{Reason: evalv1.Refusal_REFUSAL_INVALID, Detail: "it cannot be read strictly as a sample of the protocol"}
+		sh.Refused = &evalsample.Refusal{Reason: evalv1.Refusal_REFUSAL_INVALID, Detail: "it cannot be read strictly as a sample of the protocol", Sample: evalsample.SampleID(data)}
 		return
 	}
 	read, refused, err := evalsample.Read(es, sh.Plan, bank)
@@ -179,6 +187,7 @@ func readProtocol(sh *Sheet, data []byte, bank *evalsample.Bank) {
 		sh.Problems = []string{"(the open view of its task cannot be digested)"}
 		return
 	case refused != nil:
+		refused.Sample = es.GetId()
 		sh.Refused = refused
 		return
 	}
@@ -186,7 +195,7 @@ func readProtocol(sh *Sheet, data []byte, bank *evalsample.Bank) {
 		sh.Problems = problemPaths(err)
 		return
 	}
-	sh.Sample, sh.Mouse = read.Sample, read.Mouse
+	sh.Sample, sh.Mouse, sh.ID, sh.Truth = read.Sample, read.Mouse, read.ID, read.Truth
 }
 
 // lineList names lines of a file.

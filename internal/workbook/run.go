@@ -129,7 +129,7 @@ func (s *step) Record(o runner.Outcome) any {
 	if !o.NotAsked && o.Error == "" {
 		var err error
 		if read, err = Read(o.Answer); err != nil {
-			rec.Error = err.Error()
+			rec.Error, rec.Invalid = err.Error(), true
 		}
 	}
 	rec.Boxes = Verdicts(s.page, read)
@@ -191,7 +191,9 @@ func New(part, file, dir string, seed uint64, pages []*evalsample.Page, readers 
 			}
 		}
 		all = append(all, p)
-		r.Items = append(r.Items, pageRecord(pg, p.cells[render.Digit]))
+		rec := pageRecord(pg, p.cells[render.Digit])
+		rec.Sample, rec.Truth = written.ID, written.Truth
+		r.Items = append(r.Items, rec)
 	}
 	// The run's record names the readers it asks: reading only the other heights, not the readers
 	// that read once.
@@ -203,7 +205,7 @@ func New(part, file, dir string, seed uint64, pages []*evalsample.Page, readers 
 	}
 	r.Record = func(h runner.Head) any {
 		return RunRecord{Kind: "run", CallKind: CallKind, Time: h.Time, Part: part, File: file, Dir: dir, Seed: seed, Readers: records, Repeats: repeats, Reads: read.Names(),
-			MaxUSD: h.MaxUSD, Estimate: h.Estimate, Prompt: Fingerprint(), PromptVersion: Version}
+			MaxUSD: h.MaxUSD, Estimate: h.Estimate, Prompt: Fingerprint(), PromptVersion: Version, Runner: h.Runner, ModuleKit: h.ModuleKit, Refused: h.Refused}
 	}
 	add := func(rd Reader, rep int, p planned, c Condition, digit int) {
 		st := &step{Call: Call{Page: p.page.Number, Condition: c, Reader: rd.Name, Repeat: rep, Digit: digit}, page: p.page, cells: p.cells[digit]}
@@ -259,7 +261,7 @@ func pageRecord(pg *sample.WorkbookPage, cells []Cell) PageRecord {
 		for k, b := range it.Boxes {
 			v := SlotOf(b.Verdict())
 			br := BoxRecord{Item: i + 1, Slot: k + 1, Kind: b.Check.Kind, Key: b.Check.Key, Scenario: b.Scenario, Written: b.Written, Crossed: b.Crossed, Fraction: b.Fraction,
-				Verdict: v.Verdict, Reason: v.Reason, Trap: v.Trap}
+				Verdict: v.Verdict, Reason: v.Reason, Trap: v.Trap, TrapValues: b.Check.TrapValues}
 			if b.Check.Form != nil {
 				br.Form = *b.Check.Form
 			}
@@ -294,6 +296,11 @@ type (
 		Estimate      runner.Estimate `json:"estimate"`
 		Prompt        string          `json:"prompt"`
 		PromptVersion int             `json:"prompt_version"`
+		// Runner and ModuleKit are the versions of the build that ran, and Refused the samples it
+		// refused: what the runner's report takes of the run (R74).
+		Runner    string           `json:"runner,omitempty"`
+		ModuleKit string           `json:"module_kit,omitempty"`
+		Refused   []runner.Refused `json:"refused,omitempty"`
 	}
 	// ReaderRecord is a reader as the run's record tells it: its model and prices, and whether it
 	// reads once.
@@ -304,6 +311,10 @@ type (
 		Page  int         `json:"page"`
 		Part  string      `json:"part"`
 		Boxes []BoxRecord `json:"boxes"`
+		// Sample is the ID of the page's sample, and Truth the truth of each filled box, in the
+		// task's order: for the runner's report (R74).
+		Sample string             `json:"sample,omitempty"`
+		Truth  []evalsample.Truth `json:"truth,omitempty"`
 	}
 	// BoxRecord tells a box as code wrote it: its place, its check — kind, form and key — its
 	// scenario, what is written in it and crossed out, how a fraction is written, the verdict the
@@ -323,8 +334,11 @@ type (
 		Verdict  verdict.Verdict         `json:"verdict"`
 		Reason   Reason                  `json:"reason,omitempty"`
 		Trap     string                  `json:"trap,omitempty"`
-		Width    int                     `json:"width,omitempty"`
-		Height   int                     `json:"height,omitempty"`
+		// TrapValues are the trap values of its check, by which the report joins two readings of
+		// the page as module-kit would, with no file of the workbook (R74).
+		TrapValues []sample.TrapValue `json:"trap_values,omitempty"`
+		Width      int                `json:"width,omitempty"`
+		Height     int                `json:"height,omitempty"`
 	}
 	// CallRecord tells a call: the answer as the model gave it, the verdict of each box of the page
 	// and of each item, the failure if it failed, and what it took. A call whose request could not
@@ -337,6 +351,9 @@ type (
 		Boxes    []Box             `json:"boxes"`
 		Items    []verdict.Verdict `json:"items"`
 		Error    string            `json:"error,omitempty"`
+		// Invalid is set when the answer is off the schema, which the report of the protocol names
+		// unchecked, UNCHECKED_CAUSE_INVALID (R74).
+		Invalid bool `json:"invalid,omitempty"`
 		runner.Usage
 	}
 )

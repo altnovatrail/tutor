@@ -18,9 +18,11 @@ import (
 // Cohen's κ — and how the reader read the essays and kept the rule of the feedback. It has no
 // threshold: the measure has no target yet (О-22).
 type Essays struct {
-	log    *essay.Log
-	essays map[int]*essay.EssayRecord
-	order  []int
+	// protocol are the runner's reports of the protocol that the log tells (R74).
+	protocol []Named
+	log      *essay.Log
+	essays   map[int]*essay.EssayRecord
+	order    []int
 	// all are the calls of the log, but in a run of two calls each reading and the assessment of its
 	// text as one assessment (pairs), so that every measure reads them as calls of one step.
 	all []essay.CallRecord
@@ -93,8 +95,16 @@ func NewEssays(l *essay.Log) (*Essays, error) {
 	for _, rd := range l.Run.Readers {
 		r.Readers = append(r.Readers, r.reader(rd.Name))
 	}
+	r.protocol = EssayReports(l)
 	return r, nil
 }
+
+// Reports are the runner's reports of the protocol that the log tells (R74), none for a log whose
+// samples are not of the protocol.
+func (r *Essays) Reports() []Named { return r.protocol }
+
+// ProtocolCSV writes the measures of section 14 of the runner's reports as CSV.
+func (r *Essays) ProtocolCSV(w io.Writer) error { return protocolCSV(w, r.protocol) }
 
 // calls are a reader's calls, in the order of the run.
 func (r *Essays) calls(reader string) []*essay.CallRecord {
@@ -259,9 +269,9 @@ func addReading(to *essay.Reading, r essay.Reading) {
 // kappaText writes κ, or "—" where it is not defined.
 func (c EssaysCell) kappaText() string {
 	if !c.KappaDef {
-		return "—"
+		return kappaText(nil)
 	}
-	return strconv.FormatFloat(c.Kappa, 'f', 2, 64)
+	return kappaText(&c.Kappa)
 }
 
 // Markdown writes the report.
@@ -311,6 +321,7 @@ func (r *Essays) Markdown(w io.Writer, logName string) error {
 	}
 	fmt.Fprintf(&b, "\nCriteria judged both ways: of the criteria of an essay judged in two repeats or more, those judged met in one and unmet in another. Word errors: the edit distance in words between the essay as written, its title and text, and the text the model read, in small letters and without the marks around the words, of the essay's words. Kept: what the learner wrote wrong that the model read as it is written — the words spelled wrong, the sentences that begin with a small letter and the last sentence without its mark. The feedback's rule (R05 spec): at most %d sentences and %d words, and a quoted span of %d words or more only as the essay writes it; the columns count the feedbacks that break each part, and a feedback in another script than Latin breaks the last. R70 spec sets the same rule with %d words, and «Broken by R70 spec» counts the feedbacks that break it.\n",
 		essay.MaxSentences, essay.MaxWords, essay.QuoteWords, essay.PlatformWords)
+	markdownProtocol(&b, logName, r.protocol, l.Run.Refused)
 	_, err := io.WriteString(w, b.String())
 	return err
 }
