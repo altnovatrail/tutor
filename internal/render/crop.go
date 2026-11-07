@@ -368,6 +368,19 @@ func (c *Crop) Draw(strokes []sample.Stroke) (*image.Gray, error) {
 	return img, nil
 }
 
+// PNG draws strokes on the crop, as Draw does, and encodes the picture as the eval protocol writes
+// a crop's PNG (contracts/README.md of spec, section 11): grey of 8 bits, colour type 0, not
+// interlaced, and the chunks IHDR, IDAT and IEND alone — no ancillary chunk, which could hold a
+// text, metadata or a time. Go's encoder writes a grey picture so, its IDAT in pieces of one zlib
+// stream.
+func (c *Crop) PNG(strokes []sample.Stroke) ([]byte, error) {
+	img, err := c.Draw(strokes)
+	if err != nil {
+		return nil, err
+	}
+	return PNG(img)
+}
+
 // nearest is the whole number nearest a / b, b > 0, a half up, below zero too.
 func nearest(a, b int64) int64 {
 	n := 2*a + b
