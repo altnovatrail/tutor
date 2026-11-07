@@ -6,9 +6,11 @@ toolchain go1.27.3
 
 require (
 	github.com/altnovatrail/spec v0.9.3
+	github.com/altnovatrail/spec/contracts v0.9.3
 	github.com/anthropics/anthropic-sdk-go v1.84.0
 	github.com/openai/openai-go/v3 v3.85.0
 	golang.org/x/text v0.42.0
+	google.golang.org/protobuf v1.36.12
 	gopkg.in/yaml.v3 v3.0.1
 )
 

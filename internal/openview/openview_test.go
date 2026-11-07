@@ -13,6 +13,8 @@ import (
 	"strings"
 	"testing"
 
+	// The module of spec's contracts goes into the build information only when the test links it.
+	_ "github.com/altnovatrail/spec/contracts"
 	"github.com/altnovatrail/spec/types/formatv0"
 	"github.com/altnovatrail/spec/types/formatv0/open"
 
@@ -458,21 +460,27 @@ func TestBuildRefuses(t *testing.T) {
 // where the spec submodule is checked out, the submodule's tag: the module and the submodule move
 // together (Д46 in spec's RUN.md; R64 in docs/decisions.md). From spec's line 0.7 its release tags
 // the same commit contracts/<tag> too, so the submodule's tag is the one that starts with v (the
-// 2026-11-02 amendment to R83 spec). CI checks the repository out without
-// the submodule, and there CLAUDE.md alone holds the module to the tag.
+// 2026-11-02 amendment to R83 spec). That release tags the module of spec's contracts with the same
+// number, and the build takes it at the same version as spec's module (Д92 in spec's RUN.md; R67 in
+// docs/decisions.md). CI checks the repository out without the submodule, and there CLAUDE.md alone
+// holds the modules to the tag.
 func TestSpecVersion(t *testing.T) {
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
 		t.Fatal("no build information")
 	}
-	version := ""
+	versions := map[string]string{}
 	for _, dep := range info.Deps {
-		if dep.Path == "github.com/altnovatrail/spec" {
+		if dep.Path == "github.com/altnovatrail/spec" || dep.Path == "github.com/altnovatrail/spec/contracts" {
 			if dep.Replace != nil {
-				t.Fatalf("spec's module is replaced by %s %s", dep.Replace.Path, dep.Replace.Version)
+				t.Fatalf("%s is replaced by %s %s", dep.Path, dep.Replace.Path, dep.Replace.Version)
 			}
-			version = dep.Version
+			versions[dep.Path] = dep.Version
 		}
+	}
+	version := versions["github.com/altnovatrail/spec"]
+	if contracts := versions["github.com/altnovatrail/spec/contracts"]; contracts != version {
+		t.Errorf("the build takes spec's module %q and the module of its contracts %q: move them together", version, contracts)
 	}
 	named := regexp.MustCompile("spec at `(v[0-9]+\\.[0-9]+\\.[0-9]+)`").FindSubmatch(readRoot(t, "CLAUDE.md"))
 	if named == nil {

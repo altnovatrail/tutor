@@ -1,28 +1,39 @@
 package render
 
 import (
+	"bytes"
+	"compress/zlib"
 	"crypto/sha256"
+	"encoding/binary"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash/crc32"
+	"io"
+	"io/fs"
 	"math"
-	"os"
 	"reflect"
+	"regexp"
 	"slices"
 	"strconv"
+	"strings"
 	"testing"
 
+	"github.com/altnovatrail/spec/contracts"
+	evalv1 "github.com/altnovatrail/spec/contracts/novatrail/eval/v1"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
+
 	"github.com/altnovatrail/tutor/internal/lines"
+	"github.com/altnovatrail/tutor/internal/protocol"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/synth"
 )
 
-// cropVectors is testdata/crops.json: canvas's test vectors of its crop for checking (R25 canvas),
-// which the eval protocol takes as they are (Д36 in spec's RUN.md). The file is a copy of
-// vectors/crops.json of altnovatrail/canvas at commit ff05c7e, unchanged since 5ec752d, under
-// Apache-2.0 as canvas is. They hold the crop's numbers, not its pixels. The protocol's own vectors
-// come in spec's releases (T35 in spec's RUN.md), and the test moves to them then (R35 in
-// docs/decisions.md).
+// cropVectors is spec's test vectors of the crop, contracts.Vectors eval/v1/crops.json
+// (contracts/README.md of spec, section 12; Д96 in spec's RUN.md): canvas's cases (R25 canvas) in
+// the form of the protocol, their strokes a final geometry and their crops a CropSet without PNG.
+// They hold the crop's numbers, not its pixels. Their messages are read by protojson.
 type cropVectors struct {
 	Rule struct {
 		Margin  int   `json:"margin"`
@@ -34,57 +45,30 @@ type cropVectors struct {
 		Patch   int   `json:"patch"`
 		Heights []int `json:"heights"`
 	} `json:"rule"`
-	Cases []struct {
-		Name    string `json:"name"`
-		Strokes []struct {
-			ID     int          `json:"id"`
-			Points [][2]float64 `json:"points"`
-		} `json:"strokes"`
-		Groups []struct {
-			Label string `json:"label"`
-			IDs   []int  `json:"ids"`
-		} `json:"groups"`
-		Bundles [][]int `json:"bundles"`
-		Median  float64 `json:"median"`
-		Exact   struct {
-			Box    [4]int64 `json:"box"` // [ymin, xmin, ymax, xmax] in tenths
-			Median int64    `json:"median"`
-		} `json:"exact"`
-		Crops []struct {
-			Digit    int        `json:"digit"`
-			Drawn    int        `json:"drawn"`
-			Scale    float64    `json:"scale"`
-			Line     float64    `json:"line"`
-			Width    int        `json:"width"`
-			Height   int        `json:"height"`
-			Margins  [2]int     `json:"margins"`
-			SheetBox [4]float64 `json:"sheetBox"`
-			Frames   []Frame    `json:"frames"`
-		} `json:"crops"`
-	} `json:"cases"`
+	Cases []cropCase `json:"cases"`
 }
 
-// UnmarshalJSON reads a frame of the vectors, {label, box}.
-func (f *Frame) UnmarshalJSON(data []byte) error {
-	var v struct {
-		Label string   `json:"label"`
-		Box   [4]int64 `json:"box"`
-	}
-	err := json.Unmarshal(data, &v)
-	f.Label, f.Box = v.Label, v.Box
-	return err
+// cropCase is a case of the vectors as the file writes it.
+type cropCase struct {
+	Name        string            `json:"name"`
+	DigitHeight int               `json:"digit_height"`
+	Strokes     []json.RawMessage `json:"strokes"`
+	Groups      []json.RawMessage `json:"groups"`
+	Bundles     [][]int           `json:"bundles"`
+	Crops       json.RawMessage   `json:"crops"`
 }
 
-// vectorCase is a case of the vectors as the renderer takes it: its strokes, their IDs as text, and
-// its groups.
+// vectorCase is a case of the vectors as the renderer takes it: its strokes, their IDs as text, its
+// groups and its crops.
 type vectorCase struct {
 	strokes []sample.Stroke
 	groups  []lines.StrokeGroup
+	crops   *evalv1.CropSet
 }
 
 func readCropVectors(t *testing.T) (cropVectors, []vectorCase) {
 	t.Helper()
-	data, err := os.ReadFile("testdata/crops.json")
+	data, err := fs.ReadFile(contracts.Vectors, "eval/v1/crops.json")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -92,32 +76,41 @@ func readCropVectors(t *testing.T) (cropVectors, []vectorCase) {
 	if err := json.Unmarshal(data, &v); err != nil {
 		t.Fatal(err)
 	}
+	read := func(raw json.RawMessage, m proto.Message) {
+		if err := protojson.Unmarshal(raw, m); err != nil {
+			t.Fatal(err)
+		}
+	}
 	var cases []vectorCase
 	for _, c := range v.Cases {
-		var vc vectorCase
-		for _, st := range c.Strokes {
-			s := sample.Stroke{ID: strconv.Itoa(st.ID)}
-			for _, p := range st.Points {
-				s.Points = append(s.Points, sample.Point{X: p[0], Y: p[1]})
-			}
-			vc.strokes = append(vc.strokes, s)
+		vc := vectorCase{crops: &evalv1.CropSet{}}
+		var final []*evalv1.FinalStroke
+		for _, raw := range c.Strokes {
+			st := &evalv1.FinalStroke{}
+			read(raw, st)
+			final = append(final, st)
 		}
-		for _, g := range c.Groups {
-			sg := lines.StrokeGroup{Label: g.Label}
-			for _, id := range g.IDs {
-				sg.Strokes = append(sg.Strokes, strconv.Itoa(id))
+		vc.strokes = protocol.Final(final)
+		for _, raw := range c.Groups {
+			var g evalv1.Group
+			read(raw, &g)
+			sg := lines.StrokeGroup{Label: g.GetLabel()}
+			for _, id := range g.GetStrokeIds() {
+				sg.Strokes = append(sg.Strokes, protocol.StrokeID(id))
 			}
 			vc.groups = append(vc.groups, sg)
 		}
+		read(c.Crops, vc.crops)
 		cases = append(cases, vc)
 	}
 	return v, cases
 }
 
-// The crop's rule is canvas's: its numbers, and every number of every case of canvas's vectors at
-// each height of digits, to the bit — the bundles, the median, the box and the median the scale
-// takes, the height drawn, the scale, the line, the size, the margins, where the crop lies on the
-// sheet and the frames of the groups.
+// The crop's rule is spec's: its numbers, and every number of every case of spec's vectors at each
+// height of digits, to the bit — the bundles, the box of the ink and h_med in tenths, the heights
+// of the set, the height drawn, the scale, the line, the size, the margins, where the crop lies on
+// the sheet and the frames of the groups. h_med is the set's bundle_median as it is, while the
+// scale takes it no higher than the ceiling.
 func TestCropVectors(t *testing.T) {
 	v, cases := readCropVectors(t)
 	r := v.Rule
@@ -128,7 +121,7 @@ func TestCropVectors(t *testing.T) {
 		t.Errorf("the vectors' heights are %v, and the measurement's %v", r.Heights, Heights())
 	}
 	if len(v.Cases) != 34 {
-		t.Errorf("%d cases, want canvas's 34", len(v.Cases))
+		t.Errorf("%d cases, want spec's 34", len(v.Cases))
 	}
 	for n, c := range v.Cases {
 		vc := cases[n]
@@ -150,27 +143,57 @@ func TestCropVectors(t *testing.T) {
 		if !reflect.DeepEqual(ids, c.Bundles) && (len(ids) > 0 || len(c.Bundles) > 0) {
 			t.Errorf("%s: bundles %v, want %v", c.Name, ids, c.Bundles)
 		}
-		if m, err := MedianOf(vc.strokes); err != nil || m != c.Median {
-			t.Errorf("%s: median %v, %v; want %v", c.Name, m, err, c.Median)
+		es, err := extentsOf(vc.strokes)
+		if err != nil {
+			t.Fatalf("%s: %v", c.Name, err)
 		}
-		for _, want := range c.Crops {
-			got, err := CropOf(vc.strokes, vc.groups, want.Digit)
+		if m := medianTenths(es); m != int64(vc.crops.GetBundleMedian()) {
+			t.Errorf("%s: h_med %d in tenths, want %d", c.Name, m, vc.crops.GetBundleMedian())
+		}
+		heights := append(Heights(), c.DigitHeight)
+		slices.Sort(heights)
+		heights = slices.Compact(heights)
+		var given []int
+		for _, want := range vc.crops.GetCrops() {
+			given = append(given, int(want.GetDigitHeight()))
+		}
+		if !slices.Equal(given, heights) {
+			t.Errorf("%s: crops at %v px, want the heights of eval and the module's, %v", c.Name, given, heights)
+		}
+		for _, want := range vc.crops.GetCrops() {
+			got, err := CropOf(vc.strokes, vc.groups, int(want.GetDigitHeight()))
 			if err != nil {
-				t.Fatalf("%s at %d px: %v", c.Name, want.Digit, err)
+				t.Fatalf("%s at %d px: %v", c.Name, want.GetDigitHeight(), err)
 			}
-			name := fmt.Sprintf("%s at %d px", c.Name, want.Digit)
-			if box := [4]int64{got.box.minY, got.box.minX, got.box.maxY, got.box.maxX}; box != c.Exact.Box || got.unit != c.Exact.Median {
-				t.Errorf("%s: box %v and median %d in tenths, want %v and %d", name, box, got.unit, c.Exact.Box, c.Exact.Median)
+			name := fmt.Sprintf("%s at %d px", c.Name, want.GetDigitHeight())
+			b := vc.crops.GetInkBox()
+			if box := [4]int64{got.box.minY, got.box.minX, got.box.maxY, got.box.maxX}; box != [4]int64{int64(b.GetYmin()), int64(b.GetXmin()), int64(b.GetYmax()), int64(b.GetXmax())} {
+				t.Errorf("%s: box %v in tenths, want %v", name, box, b)
 			}
-			if got.Drawn != want.Drawn || got.Scale != want.Scale || got.Line != want.Line || got.Width != want.Width || got.Height != want.Height || got.Margins != want.Margins {
+			if got.unit != min(int64(vc.crops.GetBundleMedian()), 10*cropCeiling) {
+				t.Errorf("%s: the scale takes %d tenths, and h_med is %d", name, got.unit, vc.crops.GetBundleMedian())
+			}
+			margins := [2]int{int(want.GetMarginTop()), int(want.GetMarginLeft())}
+			if got.Drawn != int(want.GetDrawnHeight()) || got.Scale != want.GetScale() || got.Line != want.GetLineWidth() ||
+				got.Width != int(want.GetWidth()) || got.Height != int(want.GetHeight()) || got.Margins != margins {
 				t.Errorf("%s: drawn %d, scale %v, line %v, %d × %d, margins %v; want %d, %v, %v, %d × %d, %v", name,
-					got.Drawn, got.Scale, got.Line, got.Width, got.Height, got.Margins, want.Drawn, want.Scale, want.Line, want.Width, want.Height, want.Margins)
+					got.Drawn, got.Scale, got.Line, got.Width, got.Height, got.Margins,
+					want.GetDrawnHeight(), want.GetScale(), want.GetLineWidth(), want.GetWidth(), want.GetHeight(), margins)
 			}
-			if got.SheetBox != want.SheetBox {
-				t.Errorf("%s: on the sheet %v, want %v", name, got.SheetBox, want.SheetBox)
+			sb := want.GetSheetBox()
+			if got.SheetBox != [4]float64{sb.GetYmin(), sb.GetXmin(), sb.GetYmax(), sb.GetXmax()} {
+				t.Errorf("%s: on the sheet %v, want %v", name, got.SheetBox, sb)
 			}
-			if !reflect.DeepEqual(got.Frames, want.Frames) {
-				t.Errorf("%s: frames %v, want %v", name, got.Frames, want.Frames)
+			var frames []Frame
+			for _, f := range want.GetFrames() {
+				fb := f.GetBox()
+				frames = append(frames, Frame{Label: f.GetLabel(), Box: [4]int64{int64(fb.GetYmin()), int64(fb.GetXmin()), int64(fb.GetYmax()), int64(fb.GetXmax())}})
+			}
+			if !reflect.DeepEqual(got.Frames, frames) {
+				t.Errorf("%s: frames %v, want %v", name, got.Frames, frames)
+			}
+			if len(want.GetPng()) != 0 {
+				t.Errorf("%s: the vectors hold pixels", name)
 			}
 		}
 	}
@@ -362,6 +385,81 @@ func TestCropDrawsOtherStrokes(t *testing.T) {
 	for _, v := range img.Pix {
 		if v != 0xff {
 			t.Fatal("a stroke off the crop left ink on it")
+		}
+	}
+}
+
+// A crop's PNG is as the eval protocol writes one (contracts/README.md of spec, section 11): grey
+// of 8 bits, colour type 0, not interlaced, of the crop's size, the chunks IHDR, IDAT and IEND
+// alone, its IDAT one zlib stream with nothing after it, each row with a filter from 0 to 4. The
+// case is the largest crop of the vectors.
+func TestCropPNGChunks(t *testing.T) {
+	v, cases := readCropVectors(t)
+	n := slices.IndexFunc(v.Cases, func(c cropCase) bool { return c.Name == "limit" })
+	if n < 0 {
+		t.Fatal("no case limit")
+	}
+	for _, digit := range Heights() {
+		c, err := CropOf(cases[n].strokes, cases[n].groups, digit)
+		if err != nil {
+			t.Fatal(err)
+		}
+		data, err := c.PNG(cases[n].strokes)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !bytes.HasPrefix(data, []byte("\x89PNG\r\n\x1a\n")) {
+			t.Fatalf("at %d px: no PNG signature", digit)
+		}
+		var kinds []string
+		var ihdr, idat []byte
+		for rest := data[8:]; len(rest) > 0; {
+			size := 0
+			if len(rest) >= 12 {
+				size = int(binary.BigEndian.Uint32(rest))
+			}
+			if len(rest) < 12 || size > len(rest)-12 {
+				t.Fatalf("at %d px: a chunk cut short", digit)
+			}
+			kind, body := string(rest[4:8]), rest[8:8+size]
+			if crc32.ChecksumIEEE(rest[4:8+size]) != binary.BigEndian.Uint32(rest[8+size:]) {
+				t.Errorf("at %d px: the CRC of %s is wrong", digit, kind)
+			}
+			kinds = append(kinds, kind)
+			switch kind {
+			case "IHDR":
+				ihdr = body
+			case "IDAT":
+				idat = append(idat, body...)
+			}
+			rest = rest[12+size:]
+		}
+		if seq := strings.Join(kinds, " "); !regexp.MustCompile(`^IHDR( IDAT)+ IEND$`).MatchString(seq) {
+			t.Errorf("at %d px: chunks %s", digit, seq)
+		}
+		if len(ihdr) != 13 || int(binary.BigEndian.Uint32(ihdr)) != c.Width || int(binary.BigEndian.Uint32(ihdr[4:])) != c.Height ||
+			ihdr[8] != 8 || ihdr[9] != 0 || ihdr[10] != 0 || ihdr[11] != 0 || ihdr[12] != 0 {
+			t.Errorf("at %d px: IHDR %v for %d × %d", digit, ihdr, c.Width, c.Height)
+		}
+		r := bytes.NewReader(idat)
+		z, err := zlib.NewReader(r)
+		if err != nil {
+			t.Fatal(err)
+		}
+		raw, err := io.ReadAll(z)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if r.Len() != 0 {
+			t.Errorf("at %d px: %d bytes after the zlib stream", digit, r.Len())
+		}
+		if len(raw) != c.Height*(1+c.Width) {
+			t.Fatalf("at %d px: %d bytes of rows, want %d", digit, len(raw), c.Height*(1+c.Width))
+		}
+		for y := range c.Height {
+			if f := raw[y*(1+c.Width)]; f > 4 {
+				t.Errorf("at %d px: row %d has the filter %d", digit, y, f)
+			}
 		}
 	}
 }
