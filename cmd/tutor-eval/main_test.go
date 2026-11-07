@@ -158,6 +158,7 @@ func TestCheckFailures(t *testing.T) {
 		{"a broken plan", []string{brokenPlan}, exitFail, "", "broken-plan.json: invalid plan: sheets[0].answer: 4 is not a line of the sheet, 1…3"},
 		{"a plan of no task in the bank", []string{bank, planOfOtherTask}, exitFail, "", `plan-of-other-task.json: invalid plan: sheets[0].task: "nowhere" is not in the bank`},
 		{"not JSON", []string{write("notes.json", "notes")}, exitFail, "", "not a JSON object"},
+		{"a sample of the protocol", []string{write("protocol.json", `{"protocol": "novatrail.eval.v1"}`)}, exitFail, "", "protocol.json: a file of spec's eval protocol: just -f spec/justfile sample-check"},
 		{"another format", []string{write("other.json", `{"format": "csv"}`)}, exitFail, "", `format "csv" is not "tutor-sample", "tutor-bank", "tutor-sheet-plan", "tutor-workbook" or "tutor-essays"`},
 	}
 	for _, tt := range tests {

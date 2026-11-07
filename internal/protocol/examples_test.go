@@ -2,7 +2,6 @@ package protocol_test
 
 import (
 	"bytes"
-	"cmp"
 	"fmt"
 	"io/fs"
 	"slices"
@@ -12,17 +11,18 @@ import (
 	evalv1 "github.com/altnovatrail/spec/contracts/novatrail/eval/v1"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/altnovatrail/tutor/internal/evalsample"
 	"github.com/altnovatrail/tutor/internal/lines"
 	"github.com/altnovatrail/tutor/internal/protocol"
 	"github.com/altnovatrail/tutor/internal/protocol/protocoltest"
-	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// spec's examples keep the rules of section 12 by the code of tutor too: the groups of a sheet
-// with a history are those lines.Groups finds among the strokes it shows, the table of a workbook's
-// boxes is Table's, and every crop's numbers are render.CropOf's — the height drawn, the size, the
-// margins, the scale, the line, where it lies on the sheet and the frames. The pixels are not
+// spec's examples keep the rules of section 12 by the code of tutor too, the code that writes the
+// samples tutor-eval draw draws (internal/evalsample): the groups of a sheet with a history are those
+// lines.Groups finds among the strokes it shows, the table of a workbook's boxes is Table's, and
+// every set of crops is what evalsample.CropSet gives — the box of the points, h_med, and each crop's
+// height drawn, size, margins, scale, line, place on the sheet and frames. The pixels are not
 // compared: two implementations may draw a crop a level of grey apart.
 func TestExamplesFollowTheRules(t *testing.T) {
 	examples := protocoltest.Examples(t)
@@ -56,11 +56,11 @@ func TestExamplesFollowTheRules(t *testing.T) {
 					}
 				}
 				if sh := s.GetSheet(); sh != nil {
-					groups := lines.Groups(strokes, erasures)
-					slices.SortFunc(groups, func(a, b lines.StrokeGroup) int {
-						return cmp.Or(cmp.Compare(len(a.Label), len(b.Label)), cmp.Compare(a.Label, b.Label))
-					})
-					if got := groupsOf(t, groups); !slices.EqualFunc(got, sh.GetGroups(), func(a, b *evalv1.Group) bool { return proto.Equal(a, b) }) {
+					got, err := evalsample.Groups(strokes, erasures)
+					if err != nil {
+						t.Fatal(err)
+					}
+					if !slices.EqualFunc(got, sh.GetGroups(), func(a, b *evalv1.Group) bool { return proto.Equal(a, b) }) {
 						t.Errorf("groups %v, and the example's %v", got, sh.GetGroups())
 					}
 				}
@@ -69,7 +69,7 @@ func TestExamplesFollowTheRules(t *testing.T) {
 			}
 
 			if sh := s.GetSheet(); sh != nil {
-				cropsAre(t, "the sheet", shown, groupsFrom(sh.GetGroups()), sh.GetCrops())
+				cropsAre(t, "the sheet", shown, evalsample.GroupsOf(sh.GetGroups()), sh.GetCrops())
 				return
 			}
 			wb := s.GetWorkbook()
@@ -96,61 +96,28 @@ func TestExamplesFollowTheRules(t *testing.T) {
 	}
 }
 
-// cropsAre checks that every crop of a set has the numbers render.CropOf gives the strokes.
+// cropsAre checks that a set of crops is what evalsample.CropSet gives the strokes at its heights,
+// but for the pixels of each PNG.
 func cropsAre(t *testing.T, what string, strokes []sample.Stroke, groups []lines.StrokeGroup, set *evalv1.CropSet) {
 	t.Helper()
 	if len(set.GetCrops()) == 0 {
 		t.Errorf("%s has no crops", what)
 	}
-	for _, want := range set.GetCrops() {
-		got, err := render.CropOf(strokes, groups, int(want.GetDigitHeight()))
-		if err != nil {
-			t.Fatal(err)
-		}
-		sb := want.GetSheetBox()
-		if got.Drawn != int(want.GetDrawnHeight()) || got.Width != int(want.GetWidth()) || got.Height != int(want.GetHeight()) ||
-			got.Margins != [2]int{int(want.GetMarginTop()), int(want.GetMarginLeft())} ||
-			got.Scale != want.GetScale() || got.Line != want.GetLineWidth() ||
-			got.SheetBox != [4]float64{sb.GetYmin(), sb.GetXmin(), sb.GetYmax(), sb.GetXmax()} {
-			t.Errorf("%s at %d px: %+v, and the example's %v", what, want.GetDigitHeight(), got, want)
-		}
-		var frames []render.Frame
-		for _, f := range want.GetFrames() {
-			b := f.GetBox()
-			frames = append(frames, render.Frame{Label: f.GetLabel(), Box: [4]int64{int64(b.GetYmin()), int64(b.GetXmin()), int64(b.GetYmax()), int64(b.GetXmax())}})
-		}
-		if !slices.EqualFunc(got.Frames, frames, func(a, b render.Frame) bool { return a == b }) {
-			t.Errorf("%s at %d px: frames %v, and the example's %v", what, want.GetDigitHeight(), got.Frames, frames)
-		}
+	var heights []int
+	for _, c := range set.GetCrops() {
+		heights = append(heights, int(c.GetDigitHeight()))
 	}
-}
-
-// groupsOf are groups as the protocol writes them: their strokes' IDs ascending.
-func groupsOf(t *testing.T, groups []lines.StrokeGroup) []*evalv1.Group {
-	t.Helper()
-	var out []*evalv1.Group
-	for _, g := range groups {
-		m := &evalv1.Group{Label: g.Label}
-		for _, s := range g.Strokes {
-			m.StrokeIds = append(m.StrokeIds, id(t, s))
-		}
-		slices.Sort(m.StrokeIds)
-		out = append(out, m)
+	got, err := evalsample.CropSet(strokes, groups, heights)
+	if err != nil {
+		t.Fatal(err)
 	}
-	return out
-}
-
-// groupsFrom are a sample's groups as the renderer takes them.
-func groupsFrom(groups []*evalv1.Group) []lines.StrokeGroup {
-	var out []lines.StrokeGroup
-	for _, g := range groups {
-		sg := lines.StrokeGroup{Label: g.GetLabel()}
-		for _, id := range g.GetStrokeIds() {
-			sg.Strokes = append(sg.Strokes, protocol.StrokeID(id))
-		}
-		out = append(out, sg)
+	want := proto.CloneOf(set)
+	for _, c := range append(got.GetCrops(), want.GetCrops()...) {
+		c.Png = nil
 	}
-	return out
+	if !proto.Equal(got, want) {
+		t.Errorf("%s: the crops %v, and the example's %v", what, got, want)
+	}
 }
 
 // pointsOf are a written stroke's points as a final geometry holds them, without their times.
