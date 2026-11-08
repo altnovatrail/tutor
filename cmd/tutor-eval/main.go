@@ -77,6 +77,9 @@ const usage = `usage:
                              make the set of the tutor's words of a plan of lines: a plan of
                              parts of its sheets with a mistake, ten again with a note at the
                              side, and the cases of the words on it; new files only
+  tutor-eval gen words-cases [-seed N] -bank F -plan F -cases F
+                             make the cases of the words on the sheets with a mistake of a plan
+                             whose sheets are written already, such as yours; a new file only
   tutor-eval sheets [-dir D] [-bank F] [-plan F]
                              the summary of the recorded sheets against the plan, without the
                              handwriting
@@ -85,7 +88,7 @@ const usage = `usage:
   tutor-eval run -part dev|test|all|recorded [-kind judge|reading|hint|workbook|essay] [-repeats N]
                  [-max-usd N] [-log F] [-stub] [-dir D] [-bank F] [-plan F] [-set D,B,P]...
                  [-reads LIST] [-workbook F] [-essays F] [-readers LIST]
-                 [-two] [-cases F]
+                 [-two] [-cases F] [-case-kinds LIST]
                              run the calls of a kind on a part of the split, or on all the
                              sheets, of one set or, for a reading or a hint, of each -set: the
                              estimate first, then calls to Claude once you type yes, and a log of
@@ -100,13 +103,19 @@ const usage = `usage:
                              essay, or with -two the reading and the assessment of the text it
                              read, and logs there too; -dir is synthetic/ and the file's name by
                              default; a hint with -cases asks the cases of the set of the words
-                             on the one set of their plan
+                             on the one set of their plan, those of the kinds -case-kinds names,
+                             and with -part recorded those of the sheets recorded so far
   tutor-eval judge-words -log F|-controls F [-judge C] [-max-usd N] [-out F] [-stub]
                              judge the hints of a log of the set of the words, or the judge's
                              control phrases: whether each tells the learner's sex, keeps to
                              the task, suits a child and takes up the note at the side; the
                              estimate first, then calls once you type yes, and a log beside
                              the hints' log, .judge.jsonl, or in synthetic/runs
+  tutor-eval admit-words -controls LOG HINT-LOG...
+                             the rule of admission of the words (R86) on the judge's control
+                             phrases and logs of the hint with their judges' logs: the stage
+                             author, or every reason why not, with the counts and every file's
+                             SHA-256; no hint is printed
   tutor-eval report LOG      the report of a run from its log, by its kind, asking no model:
                              of the judge, the criterion, and of the reading, the threshold of
                              R03, with the numbers in Markdown and CSV; of the hint, the leaks,
@@ -196,6 +205,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return runReport(operands, stdout, stderr)
 	case "admit":
 		return runAdmit(operands, stdout, stderr)
+	case "admit-words":
+		return runAdmitWords(operands, stdout, stderr)
 	case "judge-words":
 		return runJudgeWords(context.Background(), operands, os.Stdin, stdout, stderr, os.Getenv, time.Now)
 	case "workbook":

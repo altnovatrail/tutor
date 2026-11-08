@@ -75,8 +75,10 @@ type options struct {
 	essays        string
 	dir           string
 	workbookReads workbook.Reads
-	// cases is the file of the cases of the set of the words, for a hint (T118), or "".
+	// cases is the file of the cases of the set of the words, for a hint (T118), or "", and kinds
+	// the kinds of case it asks, all of them when none is named (T119).
 	cases string
+	kinds []hint.CaseKind
 }
 
 // setsFlag is the flag -set, given once for each set of sheets: its directory, bank and plan.
@@ -116,6 +118,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	logPath := flags.String("log", "", "the log of the run, a new file out of git: in samples or synthetic, and in samples alone for sheets there; by default in runs next to the directory of the sheets, and for the workbook and the essays in synthetic/runs")
 	two := flags.Bool("two", false, "for -kind essay, assess in two calls: read the essay, then assess the text read (T92)")
 	casesPath := flags.String("cases", "", "for -kind hint, the file of the cases of the set of the words, such as eval/words-cases.json, on the one set of its plan, asked case by case (T118)")
+	kindsList := flags.String("case-kinds", "", "with -cases, the kinds of case to ask, joined by commas: rung, otherwise, note; all of them by default")
 	stub := flags.Bool("stub", false, "ask no model: a stub answers by the markup, and the run needs no key and no network")
 	readersList := flags.String("readers", strings.Join(runner.E4Configs, ","), "the configurations to ask, joined by commas: "+strings.Join(runner.ConfigNames(), ", ")+"; the three of E4 by default")
 	if code, ok := parse(flags, args, stderr); !ok {
@@ -140,6 +143,20 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		return exitUsage
 	}
 	o := options{two: *two, readers: names, repeats: *repeats, workbook: *pagesFile, essays: *essaysPath, cases: *casesPath}
+	if *kindsList != "" {
+		if *casesPath == "" {
+			_, _ = fmt.Fprintln(stderr, "tutor-eval run: -case-kinds is for -cases, the cases of the set of the words")
+			return exitUsage
+		}
+		for _, k := range strings.Split(*kindsList, ",") {
+			kind := hint.CaseKind(strings.TrimSpace(k))
+			if !slices.Contains(hint.CaseKinds(), kind) {
+				_, _ = fmt.Fprintf(stderr, "tutor-eval run: -case-kinds is %q: give rung, otherwise or note, joined by commas\n", *kindsList)
+				return exitUsage
+			}
+			o.kinds = append(o.kinds, kind)
+		}
+	}
 	if _, err := runner.Chosen(runner.Configs(), func(c runner.Config) runner.Config { return c }, o.readers); err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -readers is %q: %v\n", *readersList, err)
 		return exitUsage
@@ -191,12 +208,12 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		caps = k.caps
 	}
 	planned, ok := caps[*part]
-	if *part == "recorded" && *kind != "reading" {
+	if *part == "recorded" && *kind != "reading" && (*kind != "hint" || *casesPath == "") {
 		// The sheets recorded so far are the run of admission's, of the reading alone (T126).
 		ok = false
 	}
 	if !ok {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -part is %q: give dev, test or all, or recorded for the reading of the sheets recorded so far\n", *part)
+		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -part is %q: give dev, test or all, or recorded for the reading, or the cases of a hint, of the sheets recorded so far\n", *part)
 		return exitUsage
 	}
 	if !set["max-usd"] {
@@ -533,17 +550,63 @@ func planHint(sets []sheetFlags, part string, o options) (*runner.Run, string, e
 	for _, tu := range tutors {
 		by = append(by, tu.Name)
 	}
+	left := ""
+	if set != nil {
+		var err error
+		if left, err = keepCases(set, wrong, o.kinds); err != nil {
+			return nil, "", err
+		}
+	}
 	r, err := hint.New(part, names, wrong, tutors, o.repeats, set)
 	if err != nil {
 		return nil, "", err
 	}
 	if set != nil {
-		return r, refusedLine(refused) + fmt.Sprintf("%s: %s of the set of the words in %s, on %s with a mistake of %d in %s, by %s in %s, in version %d of the hint's prompt.\n",
-			partName(part), count(len(set.Cases.Cases), "case"), set.File, count(len(r.Items), "sheet"), taken, names[0], strings.Join(by, ", "), count(o.repeats, "repeat"), hint.Version), nil
+		return r, refusedLine(refused) + fmt.Sprintf("%s: %s of the set of the words in %s%s, on %s with a mistake of %d in %s, by %s in %s, in version %d of the hint's prompt.\n",
+			partName(part), count(len(set.Cases.Cases), "case"), set.File, left, count(len(r.Items), "sheet"), taken, names[0], strings.Join(by, ", "), count(o.repeats, "repeat"), hint.Version), nil
 	}
 	return r, refusedLine(refused) + fmt.Sprintf("%s: %s with a mistake of %d in %s (%s), each at %d rungs in %d languages, by %s in %s, in version %d of the hint's prompt.\n",
 		partName(part), count(len(wrong), "sheet"), taken, count(len(sets), "set"), strings.Join(counts, ", "), len(hint.Rungs()), len(hint.Langs()),
 		strings.Join(by, ", "), count(o.repeats, "repeat"), hint.Version), nil
+}
+
+// keepCases keeps of the cases of a set those a run asks: of the kinds named, all when none is, and
+// of the sheets with a mistake the part holds — not those left out of the split, refused by their
+// check or, of the sheets recorded so far, not recorded yet (T119); and says what it left out, which
+// the run's record counts. A run with no case left is refused.
+func keepCases(set *hint.Set, wrong []sheets.Chosen, kinds []hint.CaseKind) (string, error) {
+	held := map[int]bool{}
+	for _, sh := range wrong {
+		held[sh.Number] = true
+	}
+	all := *set.Cases
+	all.Cases = nil
+	unheld, other := 0, 0
+	for _, k := range set.Cases.Cases {
+		switch {
+		case len(kinds) > 0 && !slices.Contains(kinds, k.Kind):
+			other++
+		case !held[k.Sheet]:
+			unheld++
+		default:
+			all.Cases = append(all.Cases, k)
+		}
+	}
+	if len(all.Cases) == 0 {
+		return "", fmt.Errorf("%s: no case is left to ask", set.File)
+	}
+	set.Cases, set.LeftOut = &all, other+unheld
+	var left []string
+	if other > 0 {
+		left = append(left, count(other, "case")+" of other kinds")
+	}
+	if unheld > 0 {
+		left = append(left, count(unheld, "case")+" of sheets the run does not hold")
+	}
+	if len(left) == 0 {
+		return "", nil
+	}
+	return " (" + strings.Join(left, " and ") + " left out)", nil
 }
 
 // casesOf reads the file of the cases of the set of the words and checks them against the one set of

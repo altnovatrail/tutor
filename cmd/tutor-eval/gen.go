@@ -9,6 +9,7 @@ import (
 	"path/filepath"
 
 	"github.com/altnovatrail/tutor/internal/gen"
+	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/newfile"
 	"github.com/altnovatrail/tutor/internal/sample"
 )
@@ -31,18 +32,21 @@ var generators = map[string]struct {
 // own seed and prefix. Of a bank and a plan it writes both files or neither.
 func runGen(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		_, _ = fmt.Fprintln(stderr, "tutor-eval gen: give sheets, near, workbook, essays or words")
+		_, _ = fmt.Fprintln(stderr, "tutor-eval gen: give sheets, near, workbook, essays, words or words-cases")
 		return exitUsage
 	}
-	if args[0] == "words" {
+	switch args[0] {
+	case "words":
 		return runGenWords(args[1:], stdout, stderr)
+	case "words-cases":
+		return runGenWordsCases(args[1:], stdout, stderr)
 	}
 	if f, ok := fileGenerators[args[0]]; ok {
 		return runGenFile(args[0], f, args[1:], stdout, stderr)
 	}
 	g, ok := generators[args[0]]
 	if !ok {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval gen: %q is nothing gen makes: give sheets, near, workbook, essays or words\n", args[0])
+		_, _ = fmt.Fprintf(stderr, "tutor-eval gen: %q is nothing gen makes: give sheets, near, workbook, essays, words or words-cases\n", args[0])
 		return exitUsage
 	}
 	flags := flag.NewFlagSet("tutor-eval gen "+args[0], flag.ContinueOnError)
@@ -202,4 +206,44 @@ func writeBoth(firstPath string, first any, secondPath string, second any) error
 		_ = os.Remove(firstPath)
 	}
 	return err
+}
+
+// runGenWordsCases makes the cases of the words on the sheets with a mistake of a plan whose sheets
+// are written already, such as the author's (T119; gen.WordsCases), as a new file: run -kind hint
+// -cases asks them on the set of that plan.
+func runGenWordsCases(args []string, stdout, stderr io.Writer) int {
+	flags := flag.NewFlagSet("tutor-eval gen words-cases", flag.ContinueOnError)
+	seed := flags.Uint64("seed", 1, "the number the questions asked come from")
+	bankPath := flags.String("bank", "", "the bank of the plan")
+	planPath := flags.String("plan", "", "the plan whose sheets with a mistake the cases are of")
+	casesPath := flags.String("cases", "", "the new file of the cases")
+	if code, ok := parse(flags, args, stderr); !ok {
+		return code
+	}
+	if *bankPath == "" || *planPath == "" || *casesPath == "" {
+		_, _ = fmt.Fprintln(stderr, "tutor-eval gen words-cases: give -bank and -plan, the bank and the plan, and -cases, the new file to write")
+		return exitUsage
+	}
+	if _, err := os.Lstat(*casesPath); err == nil {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval gen words-cases: %s: file exists, and gen writes only new files\n", *casesPath)
+		return exitFail
+	}
+	bank, plan, err := readPlan(*bankPath, *planPath)
+	var cases *hint.Cases
+	if err == nil {
+		cases, err = gen.WordsCases(plan, bank.Bank, filepath.Base(*planPath), *seed)
+	}
+	var data []byte
+	if err == nil {
+		data, err = sample.Marshal(cases)
+	}
+	if err == nil {
+		err = newfile.Write(*casesPath, data, 0o644)
+	}
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval gen words-cases: %v\n", err)
+		return exitFail
+	}
+	_, _ = fmt.Fprintf(stdout, "%s of the seed %d on the plan %s: %s.\n", count(len(cases.Cases), "case"), *seed, *planPath, *casesPath)
+	return exitOK
 }

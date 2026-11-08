@@ -1,6 +1,6 @@
 # The judge of the words: the hints of a log
 
-The log words-stub.judge.jsonl, of the prompt 8e4663bc66b2, version 1, judging words-stub.jsonl, sha256 abc. Judge: opus-high (claude-opus-5-5, high). Calls: 30 made, 0 of them without a verdict; $0.36 spent of the $10.00 cap.
+The log words-stub.judge.jsonl, of the prompt 2d705550adf9, version 2, judging words-stub.jsonl, sha256 abc. Judge: opus-high (claude-opus-5-5, high). Calls: 30 made, 0 of them without a verdict; $0.36 spent of the $10.00 cap.
 
 ## The verdicts
 
