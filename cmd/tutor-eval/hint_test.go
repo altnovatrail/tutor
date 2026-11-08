@@ -25,7 +25,7 @@ func TestHintOverSets(t *testing.T) {
 	if code != exitOK {
 		t.Fatalf("the run ends %d: %s%s", code, out, errs)
 	}
-	want := "The dev part: %d sheets with a mistake of 30 in 3 sets (lines %d of 10, free %d of 10, near %d of 10), each at 3 rungs in 2 languages, by opus-high, haiku-low, haiku-low-no-thinking in 1 repeat, in version 1 of the hint's prompt.\n"
+	want := "The dev part: %d sheets with a mistake of 30 in 3 sets (lines %d of 10, free %d of 10, near %d of 10), each at 3 rungs in 2 languages, by opus-high, haiku-low, haiku-low-no-thinking in 1 repeat, in version 2 of the hint's prompt.\n"
 	log := filepath.Join(parent, "runs", "20261026-123000-000-hint-lines+free+near-dev.jsonl")
 	data, err := os.ReadFile(log)
 	if err != nil {

@@ -148,7 +148,11 @@ func base(language string) string {
 	return strings.ToLower(b)
 }
 
-// readable is whether a language tag has a first subtag a check can read: two or three letters.
+// Readable is whether a language tag has a first subtag a check can read: two or three letters.
+// A check of a tag that is not fails closed, with the breach Language.
+func Readable(language string) bool { return readable(language) }
+
+// readable is Readable.
 func readable(language string) bool {
 	b := base(language)
 	if len(b) < 2 || len(b) > 3 {

@@ -16,6 +16,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/sheets"
 	"github.com/altnovatrail/tutor/provider"
+	"github.com/altnovatrail/tutor/words"
 )
 
 // CallKind is the kind of call of the hint, as its log tells it (runner.CallKind).
@@ -176,7 +177,10 @@ func (s *step) Record(o runner.Outcome) any {
 		}
 	}
 	rec.LeakedKeys, rec.LeakedPhrases = s.sheet.check.Split(a.Hint)
-	rec.Form = Form(a.Hint, s.Lang, s.sheet.Task.Statement)
+	// Version 2 is held to the form api holds hints to, the limits of R70 spec (words.Hint).
+	for _, b := range words.Hint(a.Hint, string(s.Lang), s.sheet.Task.Statement) {
+		rec.Form = append(rec.Form, string(b))
+	}
 	switch {
 	case rec.Leaked():
 		return s.shown(rec, FallbackLeak)

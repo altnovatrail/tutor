@@ -21,9 +21,10 @@ const (
 	BreachScript = string(words.Script)
 )
 
-// Form is what a hint breaks of its form, in the order of the constants above; nil when it keeps
-// it: the form of the measurement (words.HintForm, with MaxWords), the one the prompt of version 1
-// names, so that the logs of epic E4 read as they were judged. Its sentences, questions and words
+// Form is what a hint breaks of the form of the measurement of epic E4, in the order of the
+// constants above; nil when it keeps it (words.HintForm, with MaxWords), the one the prompt of
+// version 1 named. No run calls it any more: the logs of version 1 keep what it found, and a run of
+// version 2 holds hints to words.Hint, as api does. The tests of that form keep it. Its sentences, questions and words
 // are counted as words.Count counts them.
 func Form(text string, lang sample.Lang, statement string) []string {
 	var out []string

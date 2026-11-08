@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"image"
 	"image/png"
 	"strings"
 
@@ -52,16 +53,9 @@ func (t *Tutor) ReadSheet(ctx context.Context, r SheetReading) SheetRead {
 	if err != nil {
 		return SheetRead{Outcome: Outcome{Kind: Failed, Err: err}}
 	}
-	cfg, err := png.DecodeConfig(bytes.NewReader(r.Crop))
-	if err == nil && (cfg.Width > maxCropSide || cfg.Height > maxCropSide) {
-		err = fmt.Errorf("%d × %d pixels, more than %d on a side", cfg.Width, cfg.Height, maxCropSide)
-	}
-	if err == nil {
-		// The whole picture decodes, not its header alone, so that a broken crop goes to no model.
-		_, err = png.Decode(bytes.NewReader(r.Crop))
-	}
+	cfg, err := cropSize(r.Crop)
 	if err != nil {
-		return SheetRead{Outcome: Outcome{Kind: Failed, Err: fmt.Errorf("tutor: the crop is no PNG of a sheet: %w", err)}}
+		return SheetRead{Outcome: Outcome{Kind: Failed, Err: err}}
 	}
 	calls, a, refused := t.prepare(admissionv0.CapabilityHandwritingReading, r.Route)
 	if refused != nil {
@@ -124,6 +118,18 @@ func sheetTask(t *open.Task) (*observationv1.AnswerSlotPlace, string, error) {
 	if place == nil {
 		return nil, "", fmt.Errorf("tutor: the task %s has no answer slot bound anywhere: AI reads nothing of it", t.ID)
 	}
+	statement, err := taskText(t, asks)
+	if err != nil {
+		return nil, "", err
+	}
+	return place, statement, nil
+}
+
+// taskText is a task as the learner reads it, each piece on its line, in the task's own words and
+// none of tutor's: the paragraphs of the statement, the alt of each of its pictures, since a model
+// sees no picture of the statement, and the text of an item, what it asks, when there is one. A task
+// with no words is refused.
+func taskText(t *open.Task, asks *formatv0.Text) (string, error) {
 	var lines []string
 	add := func(s string) {
 		if s = strings.TrimSpace(s); s != "" {
@@ -142,7 +148,23 @@ func sheetTask(t *open.Task) (*observationv1.AnswerSlotPlace, string, error) {
 		add(string(*asks))
 	}
 	if len(lines) == 0 {
-		return nil, "", fmt.Errorf("tutor: the task %s has no words to read: no statement, alt or question", t.ID)
+		return "", fmt.Errorf("tutor: the task %s has no words to read: no statement, alt or question", t.ID)
 	}
-	return place, strings.Join(lines, "\n"), nil
+	return strings.Join(lines, "\n"), nil
+}
+
+// cropSize is the size of a crop, which must be a whole PNG of no more than maxCropSide on a side:
+// the whole picture decodes, not its header alone, so that a broken crop goes to no model.
+func cropSize(crop []byte) (image.Config, error) {
+	cfg, err := png.DecodeConfig(bytes.NewReader(crop))
+	if err == nil && (cfg.Width > maxCropSide || cfg.Height > maxCropSide) {
+		err = fmt.Errorf("%d × %d pixels, more than %d on a side", cfg.Width, cfg.Height, maxCropSide)
+	}
+	if err == nil {
+		_, err = png.Decode(bytes.NewReader(crop))
+	}
+	if err != nil {
+		return cfg, fmt.Errorf("tutor: the crop is no PNG of a sheet: %w", err)
+	}
+	return cfg, nil
 }
