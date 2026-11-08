@@ -293,3 +293,42 @@ func TestOffTheSchema(t *testing.T) {
 func e4Readers() []reading.Reader {
 	return runner.E4(reading.Readers(), func(rd reading.Reader) runner.Config { return rd.Config })
 }
+
+// A run of admission reads the finished sheet without a key at 32 px alone, by every reader in every
+// repeat, Opus too, which stays marked the strong reader of the pair; plain goes with nothing else.
+func TestNewPlain(t *testing.T) {
+	free := chosen(t, "free", "../../eval/free-sheets.json", "../../eval/free-bank.json", 1, 2)
+	plain, err := reading.ParseReads("plain")
+	if err != nil || plain != (reading.Reads{Plain: true}) || strings.Join(plain.Names(), ",") != reading.Plain {
+		t.Fatalf("plain reads %+v, %v", plain, err)
+	}
+	if _, err := reading.ParseReads("plain,keys"); err == nil {
+		t.Error("plain is read with keys")
+	}
+	readers := e4Readers()[:2]
+	if !readers[0].Once {
+		t.Fatalf("%s reads more than once anyway", readers[0].Name)
+	}
+	r, err := reading.New("all", []string{"free"}, free, readers, 3, plain)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := 2 * 2 * 3; len(r.Steps) != want {
+		t.Errorf("%d steps, want %d", len(r.Steps), want)
+	}
+	asked := map[string]int{}
+	for _, st := range r.Steps {
+		c := st.Call.Record(runner.Outcome{NotAsked: true}).(reading.CallRecord)
+		asked[c.Reader]++
+		if c.Condition != reading.NoKey || c.Digit != 32 || c.State != 0 || c.Key != "" {
+			t.Errorf("a call of admission asks %+v", c.Call)
+		}
+	}
+	if asked[readers[0].Name] != 6 || asked[readers[1].Name] != 6 {
+		t.Errorf("the readers ask %v", asked)
+	}
+	rec := r.Record(runner.Head{}).(reading.RunRecord)
+	if strings.Join(rec.Reads, ",") != reading.Plain || !rec.Readers[0].Once || rec.Readers[1].Once || rec.Repeats != 3 {
+		t.Errorf("the run is logged %+v", rec)
+	}
+}

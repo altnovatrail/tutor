@@ -56,10 +56,16 @@ const (
 // Reads are what a run reads of its sheets: the conditions of the key on the finished sheet with its
 // digits 32 px high, keys; the finished sheet without a key at the other heights of digits, heights;
 // and its states without a key, states (T69). The heights and the states are read once, by the
-// readers that do not read once (R08; R28).
+// readers that do not read once (R08; R28). Plain is the run of admission (T113): the finished sheet
+// without a key at 32 px alone, by every reader in every repeat, Opus too, as the platform reads it;
+// it goes with nothing else. A reader that reads once in a measurement keeps the mark in its record:
+// it is the strong reader of the pair, which the report pairs with each other.
 type Reads struct {
-	Keys, Heights, States bool
+	Keys, Heights, States, Plain bool
 }
+
+// Plain is the name of the reads of a run of admission, as Names and the log write it.
+const Plain = "plain"
 
 // ParseReads reads what a run reads from a list of keys, heights and states, joined by commas.
 func ParseReads(list string) (Reads, error) {
@@ -72,9 +78,14 @@ func ParseReads(list string) (Reads, error) {
 			r.Heights = true
 		case "states":
 			r.States = true
+		case Plain:
+			r.Plain = true
 		default:
-			return r, fmt.Errorf("reading: %q is nothing a run reads: give keys, heights or states, joined by commas", name)
+			return r, fmt.Errorf("reading: %q is nothing a run reads: give keys, heights, states or plain, joined by commas", name)
 		}
+	}
+	if r.Plain && (r.Keys || r.Heights || r.States) {
+		return r, fmt.Errorf("reading: plain is read alone, without keys, heights or states")
 	}
 	return r, nil
 }
@@ -85,7 +96,7 @@ func (r Reads) Names() []string {
 	for _, n := range []struct {
 		on   bool
 		name string
-	}{{r.Keys, "keys"}, {r.Heights, "heights"}, {r.States, "states"}} {
+	}{{r.Keys, "keys"}, {r.Heights, "heights"}, {r.States, "states"}, {r.Plain, Plain}} {
 		if n.on {
 			out = append(out, n.name)
 		}
@@ -178,7 +189,9 @@ func (s *step) Record(o runner.Outcome) any {
 //     repeat;
 //   - heights: the finished sheet without a key at 16, 24 and 48 px, a height whose crop is drawn at
 //     the height of one before it, 32 px first, left out;
-//   - states: each state of the sheet, without a key, at 32 px.
+//   - states: each state of the sheet, without a key, at 32 px;
+//   - plain: the finished sheet without a key at 32 px alone, by every reader in every repeat: the
+//     run of admission (T113).
 //
 // The heights and the states are asked in the first repeat, by the readers that do not read once.
 func New(part string, sets []string, chosen []sheets.Chosen, readers []Reader, repeats int, reads Reads) (*runner.Run, error) {
@@ -227,7 +240,8 @@ func New(part string, sets []string, chosen []sheets.Chosen, readers []Reader, r
 	for rep := 1; rep <= repeats; rep++ {
 		for _, sh := range all {
 			for _, rd := range readers {
-				if rd.Once && rep > 1 {
+				// In a run of admission every reader reads in every repeat, the strong one too.
+				if rd.Once && rep > 1 && !reads.Plain {
 					continue
 				}
 				for _, st := range sh.keyed {
@@ -299,6 +313,9 @@ func plan(sh sheets.Chosen, reads Reads) (sheetPlan, error) {
 	p.median = main.Crop.Median
 	call := func(shown *Sheet, state int) Call {
 		return Call{Set: sh.Set, Sheet: sh.Number, Condition: NoKey, Digit: shown.Crop.Digit, Drawn: shown.Crop.Drawn, State: state}
+	}
+	if reads.Plain {
+		out.keyed = append(out.keyed, &step{Call: call(main, 0), sheet: p, shown: main, right: p.marked})
 	}
 	if reads.Keys {
 		for _, g := range conditions(p) {

@@ -44,22 +44,24 @@ var files = map[string]int{
 	"eval/workbook-gen.json":     300,
 	"eval/essays.json":           20,
 	"eval/essays-gen.json":       300,
+	"eval/author-bank.json":      9,
 }
 
 // plans are the plans of sheets, each with the bank whose tasks its sheets solve, as the recipes
 // and the commands pair them.
 var plans = map[string]string{
-	"eval/sheets.json":      "eval/bank.json",
-	"eval/free-sheets.json": "eval/free-bank.json",
-	"eval/free-author.json": "eval/free-bank.json",
-	"eval/free-messy.json":  "eval/free-bank.json",
-	"eval/near-sheets.json": "eval/near-bank.json",
-	"eval/near-gen.json":    "eval/near-gen-bank.json",
-	"eval/lines-gen-1.json": "eval/lines-gen-1-bank.json",
-	"eval/lines-gen-2.json": "eval/lines-gen-2-bank.json",
-	"eval/lines-gen-3.json": "eval/lines-gen-3-bank.json",
-	"eval/lines-gen-4.json": "eval/lines-gen-4-bank.json",
-	"eval/lines-gen-5.json": "eval/lines-gen-5-bank.json",
+	"eval/sheets.json":        "eval/bank.json",
+	"eval/free-sheets.json":   "eval/free-bank.json",
+	"eval/free-author.json":   "eval/free-bank.json",
+	"eval/free-messy.json":    "eval/free-bank.json",
+	"eval/near-sheets.json":   "eval/near-bank.json",
+	"eval/near-gen.json":      "eval/near-gen-bank.json",
+	"eval/lines-gen-1.json":   "eval/lines-gen-1-bank.json",
+	"eval/lines-gen-2.json":   "eval/lines-gen-2-bank.json",
+	"eval/lines-gen-3.json":   "eval/lines-gen-3-bank.json",
+	"eval/lines-gen-4.json":   "eval/lines-gen-4-bank.json",
+	"eval/lines-gen-5.json":   "eval/lines-gen-5-bank.json",
+	"eval/author-sheets.json": "eval/author-bank.json",
 }
 
 func readRoot(t *testing.T, name string) []byte {

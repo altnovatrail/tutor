@@ -233,9 +233,10 @@ func inkOf(raw json.RawMessage) (*ink, []Note) {
 // solution, takes the whole sheet.
 //
 // On a sheet whose plan sheet plans an erasure, Planned is the index of the erasure the board
-// takes for it: of the moves of the eraser, the one that took the most strokes from the plan's
-// line, the earlier of two that took as many. A stroke stood on the line its band stands on
-// (lines.On). On a sheet of parts it is the move that took the most strokes from any of its parts,
+// takes for it. On a sheet of lines it is the one the runner takes and the save holds the pick to
+// (R75; the 2026-11-08 amendment): the last move of the eraser that stood on the plan's line
+// (evalsample.PlannedErasure), a move standing on the line most of its strokes stood on. On a sheet
+// of parts it is the move that took the most strokes from any of its parts,
 // by their place on the plane (lines.PartsTaken): until the author joins the groups of a part, the
 // number of a group is not yet the number of the plan's part, and slips on such a sheet are Undo's
 // alone. Planned is null when none took any.
@@ -303,7 +304,14 @@ func (rc *Recorder) propose(w http.ResponseWriter, r *http.Request) {
 			took[i] = t.From[pe.Line]
 		}
 		at := fmt.Sprintf("line %d", pe.Line)
-		p.Planned, p.Differences = plannedOf(took, in.undone, at, at, p.Differences)
+		var picked *int
+		picked, p.Differences = plannedOf(took, in.undone, at, at, p.Differences)
+		p.Planned = nil
+		if want := evalsample.PlannedErasure(&sample.Sample{Strokes: in.strokes, Lines: p.Lines, Erasures: in.erasures}, sh, in.undone); want >= 0 {
+			p.Planned = &want
+		} else if picked != nil {
+			p.Differences = append(p.Differences, Note{"sample.erasures", fmt.Sprintf("a move of the eraser took strokes from %s, but most of its strokes stood on another line, and the runner takes for the planned erasure only a move that stood on %s: write the sheet again, erasing on that line alone", at, at)})
+		}
 	}
 	writeJSON(w, http.StatusOK, p)
 }
@@ -363,7 +371,8 @@ func whole(groups []lines.StrokeGroup, strokes []sample.Stroke) lines.StrokeGrou
 // the eraser — Undo makes slips — the one that took the most strokes from where it counts, took
 // holding how many each erasure took from there, the earlier of two that took as many. It names a
 // sheet with no move of the eraser and one where more than one took strokes from there, as the
-// planned erasure is one move (R25). planned names the plan's place of the erasure, such as
+// planned erasure is one move (R25); on a sheet of lines the proposal then takes the runner's pick
+// instead (Proposal). planned names the plan's place of the erasure, such as
 // "line 2", and from where the strokes count.
 func plannedOf(took []int, undone []bool, planned, from string, notes []Note) (*int, []Note) {
 	var picked *int
@@ -385,7 +394,7 @@ func plannedOf(took []int, undone []bool, planned, from string, notes []Note) (*
 	case moves == 0:
 		notes = append(notes, Note{"sample.erasures", fmt.Sprintf("the sheet has no move of the eraser, and its plan sheet plans an erasure on %s: Undo makes slips only, so write the sheet again, erasing in one move of the eraser", planned)})
 	case taking > 1:
-		notes = append(notes, Note{"sample.erasures", fmt.Sprintf("%d moves of the eraser took strokes from %s, and the planned erasure is one move: if the eraser was lifted midway, write the sheet again", taking, from)})
+		notes = append(notes, Note{"sample.erasures", fmt.Sprintf("%d moves of the eraser took strokes from %s, and the planned erasure is one move: check the one the board picks below, and write the sheet again only if no move took the whole planned mistake away", taking, from)})
 	}
 	return picked, notes
 }

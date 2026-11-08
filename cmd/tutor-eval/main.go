@@ -77,7 +77,7 @@ const usage = `usage:
                              handwriting
   tutor-eval split -seed N [-dev K] [-dir D] [-bank F] [-plan F]
                              divide the recorded sheets into development and test, once
-  tutor-eval run -part dev|test|all [-kind judge|reading|hint|workbook|essay] [-repeats N]
+  tutor-eval run -part dev|test|all|recorded [-kind judge|reading|hint|workbook|essay] [-repeats N]
                  [-max-usd N] [-log F] [-stub] [-dir D] [-bank F] [-plan F] [-set D,B,P]...
                  [-reads LIST] [-workbook F] [-essays F] [-readers LIST]
                  [-two]
@@ -106,6 +106,10 @@ const usage = `usage:
                              the essays on samples of the protocol gets the runner's reports
                              too, .<reader>.report.json for each reader and pair, and their
                              measures in .protocol.csv
+  tutor-eval admit REPORT... the rule of admission on runners' reports (R80): the stage each
+                             admits its readers to, full or author, or why none, with the
+                             false alarms and false correct by answer slot, their bounds, and
+                             the SHA-256 of the file; no sample is named
   tutor-eval workbook [-file F] [-dir D]
                              check the pages of the workbook, read the samples of them that
                              draw drew, and sum up their boxes, the samples read and refused,
@@ -178,6 +182,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return runRun(context.Background(), operands, os.Stdin, stdout, stderr, os.Getenv, time.Now)
 	case "report":
 		return runReport(operands, stdout, stderr)
+	case "admit":
+		return runAdmit(operands, stdout, stderr)
 	case "workbook":
 		return runWorkbook(operands, stdout, stderr)
 	case "essays":

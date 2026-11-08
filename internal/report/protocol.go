@@ -13,6 +13,7 @@ import (
 	observationv1 "github.com/altnovatrail/spec/contracts/novatrail/observation/v1"
 	"github.com/altnovatrail/spec/types/formatv0"
 
+	"github.com/altnovatrail/tutor/admission"
 	"github.com/altnovatrail/tutor/internal/essay"
 	"github.com/altnovatrail/tutor/internal/evalsample"
 	"github.com/altnovatrail/tutor/internal/protocol"
@@ -43,11 +44,8 @@ type Named struct {
 // and its model with its setting — the model's ID, its effort and, without thinking, no-thinking —,
 // as tutor's list of admitted models will name it.
 func modelOf(rd runner.ReaderRecord) *evalv1.Model {
-	m := rd.Model + " " + rd.Effort
-	if rd.NoThinking {
-		m += " no-thinking"
-	}
-	return &evalv1.Model{Provider: "anthropic", Model: m}
+	m := admission.Model{Provider: "anthropic", ID: rd.Model, Effort: rd.Effort, NoThinking: rd.NoThinking}
+	return &evalv1.Model{Provider: string(m.Provider), Model: m.Name()}
 }
 
 // head is a report of a capability, by the runner's versions as the run's record names them, of the
@@ -159,9 +157,10 @@ func pairsOf(readers []runner.ReaderRecord) [][2]runner.ReaderRecord {
 	return out
 }
 
-// repeatsOf is how many repeats a reader reads in a run of the repeats: one when it reads once.
-func repeatsOf(rd runner.ReaderRecord, repeats int) int {
-	if rd.Once {
+// repeatsOf is how many repeats a reader reads in a run of the repeats: one when it reads once, but
+// in a run of admission, plain, where every reader reads in every repeat (reading.Plain).
+func repeatsOf(rd runner.ReaderRecord, repeats int, plain bool) int {
+	if rd.Once && !plain {
 		return 1
 	}
 	return repeats
@@ -237,12 +236,13 @@ func ReadingReports(l *reading.Log) []Named {
 		}
 		return readingOf(v)
 	}
+	plain := slices.Contains(l.Run.Reads, reading.Plain)
 	var out []Named
 	for _, rd := range l.Run.Readers {
 		if !asked[rd.Name] {
 			continue
 		}
-		out = append(out, report(rd.Name, repeatsOf(rd, l.Run.Repeats), func(sh *reading.SheetRecord, rep int) *evalv1.Reading {
+		out = append(out, report(rd.Name, repeatsOf(rd, l.Run.Repeats, plain), func(sh *reading.SheetRecord, rep int) *evalv1.Reading {
 			return alone(calls[key{sh.Set, sh.Sheet, rep, rd.Name}], sh.Key)
 		}, modelOf(rd)))
 	}
@@ -250,7 +250,7 @@ func ReadingReports(l *reading.Log) []Named {
 		if !asked[p[0].Name] || !asked[p[1].Name] {
 			continue
 		}
-		repeats := min(repeatsOf(p[0], l.Run.Repeats), repeatsOf(p[1], l.Run.Repeats))
+		repeats := min(repeatsOf(p[0], l.Run.Repeats, plain), repeatsOf(p[1], l.Run.Repeats, plain))
 		out = append(out, report(p[0].Name+"+"+p[1].Name, repeats, func(sh *reading.SheetRecord, rep int) *evalv1.Reading {
 			a, b := calls[key{sh.Set, sh.Sheet, rep, p[0].Name}], calls[key{sh.Set, sh.Sheet, rep, p[1].Name}]
 			for _, c := range []*reading.CallRecord{a, b} {
@@ -359,7 +359,7 @@ func WorkbookReports(l *workbook.Log) []Named {
 		if !asked[rd.Name] {
 			continue
 		}
-		out = append(out, report(rd.Name, repeatsOf(rd, l.Run.Repeats), func(pr *workbook.PageRecord, rep int) func(evalsample.Truth) *evalv1.Reading {
+		out = append(out, report(rd.Name, repeatsOf(rd, l.Run.Repeats, false), func(pr *workbook.PageRecord, rep int) func(evalsample.Truth) *evalv1.Reading {
 			c := calls[key{pr.Page, rep, rd.Name}]
 			if c == nil {
 				return none(notReached(l.End))
@@ -371,7 +371,7 @@ func WorkbookReports(l *workbook.Log) []Named {
 		if !asked[p[0].Name] || !asked[p[1].Name] {
 			continue
 		}
-		repeats := min(repeatsOf(p[0], l.Run.Repeats), repeatsOf(p[1], l.Run.Repeats))
+		repeats := min(repeatsOf(p[0], l.Run.Repeats, false), repeatsOf(p[1], l.Run.Repeats, false))
 		out = append(out, report(p[0].Name+"+"+p[1].Name, repeats, func(pr *workbook.PageRecord, rep int) func(evalsample.Truth) *evalv1.Reading {
 			a, b := calls[key{pr.Page, rep, p[0].Name}], calls[key{pr.Page, rep, p[1].Name}]
 			for _, c := range []*workbook.CallRecord{a, b} {

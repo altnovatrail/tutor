@@ -1,0 +1,150 @@
+package admission
+
+import (
+	"slices"
+
+	"github.com/altnovatrail/spec/types/admissionv0"
+)
+
+// ReasonModelNotAdmitted is the refusal that comes after the table's (R96 spec; Д98 RUN.md spec):
+// the table admits the request, but no model of the capability is admitted for it — none passed
+// tutor's rule of admission on the capability's eval set (R07 spec; R80).
+const ReasonModelNotAdmitted admissionv0.AnswerReason = "model_not_admitted"
+
+// Stage is how far a model passed the rule of admission (R80): StageFull, the target of the first
+// slice — the upper bound of the share of false alarms no more than 1 % (product 10 spec) —, or
+// StageAuthor, no false alarm and no false "correct" on the author's own handwriting, enough for
+// the first app, where the author alone learns (R76 spec), and for nothing more.
+type Stage string
+
+// The stages of admission.
+const (
+	StageAuthor Stage = "author"
+	StageFull   Stage = "full"
+)
+
+// rank orders the stages: full above author, and anything else below both, so that an entry of no
+// stage is never chosen and a least stage of none chooses only full.
+func (s Stage) rank() int {
+	switch s {
+	case StageAuthor:
+		return 1
+	case StageFull:
+		return 2
+	}
+	return 0
+}
+
+// Model is a model as an adapter of tutor calls it: its provider, by the code of the admission
+// table, its exact ID, the effort it spends and whether it answers without thinking. It names the
+// model of an adapter rather than copying it: its price and its name for people stay there.
+type Model struct {
+	Provider   admissionv0.Provider
+	ID         string
+	Effort     string
+	NoThinking bool
+}
+
+// Name is the model as a runner's report names it: its ID and effort, and "no-thinking" when it
+// answers without thinking, such as "claude-opus-5-5 high".
+func (m Model) Name() string {
+	name := m.ID + " " + m.Effort
+	if m.NoThinking {
+		name += " no-thinking"
+	}
+	return name
+}
+
+// Evidence is the runner's report that admitted an entry: the name of its eval set, the name of its
+// file, the SHA-256 of the file's bytes and the day of the run. A report of samples of measurement
+// stays where they lie, out of git (privacy 9 spec, П-10 and П-18), and the entry names it so.
+type Evidence struct {
+	Set, File, SHA256, Date string
+}
+
+// Entry is a line of the list of admitted models: a capability, the models that serve it — a
+// reading of handwriting has its pair, the strong reader first (R68 spec) —, the stage they passed,
+// the report that admitted them and the fingerprint of the prompt that report measured: another
+// prompt is another reading, and admits nothing until it is measured anew (R70 spec).
+type Entry struct {
+	Capability admissionv0.Capability
+	Models     []Model
+	Stage      Stage
+	Report     Evidence
+	Prompt     string
+}
+
+// Admitted is the list of admitted models, by capability in the order they are chosen (R07 spec):
+// a model is in it only once it passed the rule of admission. A model that needs its provider to
+// keep the work, such as one that needs 30-day retention at Anthropic, is not in it, since the
+// cells of platform AI rest on minimal retention (Д98 RUN.md spec).
+var Admitted = []Entry{
+	// The pair of the first app, on the author's own handwriting: 60 sheets, 3 repeats, no false
+	// alarm on 35 answer slots and no false "correct" on 25 (T126; R80 and its amendment of
+	// 2026-11-08). The report lies in samples/, out of git.
+	{
+		Capability: admissionv0.CapabilityHandwritingReading,
+		Models: []Model{
+			{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "high"},
+			{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"},
+		},
+		Stage: StageAuthor,
+		Report: Evidence{
+			Set:    "sheets-v1+free-v1+free-messy-v1+author-v1-recorded",
+			File:   "samples/runs/t126-admission.opus-high+haiku-medium.report.json",
+			SHA256: "f24554549003c5ccc7abe190544372ee72824712df2c7de2a96b7e5661a25428",
+			Date:   "2026-11-08",
+		},
+		Prompt: "94452c62dab0872381ccf556a2d54b4724d06a76887cd02c05c4f68679659cfb",
+	},
+}
+
+// Select chooses the models of a call: the first entry of the capability in Admitted, of the least
+// stage or above, whose every model the table admits for the route and the age category, with the
+// table's answer for its first model. Without such an entry it answers the first refusal of the
+// table for an entry of the capability, or, when the table refused none, ReasonModelNotAdmitted.
+// The least stage is the deployment's: StageAuthor only where the author alone learns, as in the
+// first app (R76 spec), and StageFull anywhere else; any other value chooses only StageFull. api
+// calls it before an attempt, and tutor before the call: with the same table, facts, request and
+// least stage it chooses the same.
+func (t *Table) Select(f Facts, c admissionv0.Capability, route admissionv0.AiRoute, category admissionv0.AgeCategory, least Stage) (Entry, Answer) {
+	return t.selectFrom(Admitted, f, c, route, category, least)
+}
+
+// selectFrom is Select over a list of its own.
+func (t *Table) selectFrom(list []Entry, f Facts, c admissionv0.Capability, route admissionv0.AiRoute, category admissionv0.AgeCategory, least Stage) (Entry, Answer) {
+	floor := StageFull.rank()
+	if least == StageAuthor {
+		floor = StageAuthor.rank()
+	}
+	var refused *Answer
+	for _, e := range list {
+		if e.Capability != c || len(e.Models) == 0 || e.Stage.rank() < floor {
+			continue
+		}
+		var first Answer
+		admitted := true
+		for i, m := range e.Models {
+			a := t.Admit(Request{Capability: c, AiRoute: route, Provider: m.Provider, AgeCategory: category}, f)
+			if i == 0 {
+				first = a
+			}
+			if !a.Admitted {
+				// One reader of a pair refused refuses the pair: neither call goes (R68 spec).
+				admitted = false
+				if refused == nil {
+					refused = &a
+				}
+				break
+			}
+		}
+		if admitted {
+			e.Models = slices.Clone(e.Models)
+			return e, first
+		}
+	}
+	if refused != nil {
+		return Entry{}, *refused
+	}
+	return Entry{}, Answer{Answer: admissionv0.Answer{Reason: reason(ReasonModelNotAdmitted)}, Version: t.version}
+}

@@ -487,3 +487,27 @@ func TestEssayReportsCauses(t *testing.T) {
 		t.Errorf("the measures: %+v", m)
 	}
 }
+
+// A run of admission, plain, has every reader read in every repeat, the strong one too, and pairs the
+// strong reader with each other: the pair's report has the repeats of the run, read by both.
+func TestReadingReportsPlain(t *testing.T) {
+	plain := []runner.ReaderRecord{{Name: "opus-high", Model: "claude-opus-5-5", Effort: "high", Once: true}, {Name: "haiku-medium", Model: "claude-haiku-5-5", Effort: "medium"}, {Name: "haiku-low", Model: "claude-haiku-5-5", Effort: "low"}}
+	l := &reading.Log{Run: reading.RunRecord{Kind: "run", CallKind: reading.CallKind, Part: "all", Sets: []string{"author"}, Readers: plain, Repeats: 2, Reads: []string{reading.Plain},
+		Runner: "v0.1.13", ModuleKit: "v0.2.3"}}
+	l.Sheets = []reading.SheetRecord{{Kind: "sheet", Set: "author", Sheet: 1, Key: "5", Sample: "s-1", Truth: []evalsample.Truth{{Item: 1, Slot: 1, Verdict: "correct"}}}}
+	for _, rd := range plain {
+		for rep := 1; rep <= 2; rep++ {
+			l.Calls = append(l.Calls, reading.CallRecord{Kind: "call", Call: reading.Call{Set: "author", Sheet: 1, Condition: reading.NoKey, Reader: rd.Name, Repeat: rep, Digit: 32, Drawn: 32}, Verdict: "correct", Value: "5"})
+		}
+	}
+	var names []string
+	for _, n := range report.ReadingReports(l) {
+		names = append(names, n.Name)
+		if n.Report.GetRepeats() != 2 || len(n.Report.GetSamples()[0].GetMeasured().GetAnswerSlots()[0].GetReadings()) != 2 {
+			t.Errorf("%s: %d repeats, %v", n.Name, n.Report.GetRepeats(), n.Report.GetSamples())
+		}
+	}
+	if strings.Join(names, " ") != "opus-high haiku-medium haiku-low opus-high+haiku-medium opus-high+haiku-low" {
+		t.Errorf("the reports are %v", names)
+	}
+}
