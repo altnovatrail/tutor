@@ -66,6 +66,13 @@ free-record *args:
 messy-record *args:
     go run ./cmd/tutor-eval board -record -dir samples/free-messy-v1 -bank eval/free-bank.json -plan eval/free-messy.json {{ args }}
 
+# This recipe asks for no key either. The author's 54 sheets of lines for the set of admission, of
+# nine tasks that gen sheets made, go to samples/author-v1, out of git. Its arguments go to
+# tutor-eval board.
+# Start the record mode on the sheets of the set of admission (T113 and T126 in RUN.md).
+admit-record *args:
+    go run ./cmd/tutor-eval board -record -dir samples/author-v1 -bank eval/author-bank.json -plan eval/author-sheets.json {{ args }}
+
 # This recipe asks for the Anthropic key for eval if it is not set yet, without showing it, so that
 # no key lands in the shell's history; with -stub the run needs none, and Enter skips it. Its
 # arguments go to tutor-eval run: -part dev or -part test, and the rest.

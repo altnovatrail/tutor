@@ -432,12 +432,13 @@ func TestRecordProposeErasures(t *testing.T) {
 		t.Errorf("lines %v, planned %v, differences %v; want lines 1, 0 and 2 and the first planned", got, p.Planned, p.Differences)
 	}
 
-	// Two moves of the eraser that took as many strokes from line 1: the earlier is taken, and the
-	// sheet is named. Made by Undo, the second does not count.
+	// Two moves of the eraser that took strokes from line 1: the later is taken, as the runner takes
+	// it and the save holds the pick to it (R75), and the sheet is named. Made by Undo, the second
+	// does not count.
 	two := slip(erasing(written(sh), sh), "s-again", 50)
 	p, out := propose(two)
-	if p.Planned == nil || *p.Planned != 0 {
-		t.Errorf("planned = %v, want the earlier of two moves that took as many strokes from line 1", p.Planned)
+	if p.Planned == nil || *p.Planned != 1 {
+		t.Errorf("planned = %v, want the later of two moves that took strokes from line 1", p.Planned)
 	}
 	noted(t, out["differences"], "sample.erasures", "2 moves of the eraser took strokes from line 1, and the planned erasure is one move")
 	if p, _ := propose(two, false, true); p.Planned == nil || *p.Planned != 0 || len(p.Differences) != 0 {
@@ -473,9 +474,17 @@ func TestRecordProposeErasures(t *testing.T) {
 	if p, _ := propose(second); !slices.Equal(erasureLines(second), []int{2, 1}) || p.Planned == nil || *p.Planned != 1 {
 		t.Errorf("lines %v, planned %v; want the first on line 2 and the second, with two strokes from line 1, planned", erasureLines(second), p.Planned)
 	}
-	if p, _ := propose(wide([]string{"x1", "x2"}, []string{"z1", "z2"})); p.Planned == nil || *p.Planned != 0 {
-		t.Errorf("planned %v; want the earlier of two that took as many", p.Planned)
+	if p, _ := propose(wide([]string{"x1", "x2"}, []string{"z1", "z2"})); p.Planned == nil || *p.Planned != 1 {
+		t.Errorf("planned %v; want the later of two on line 1", p.Planned)
 	}
+	// A move that took a stroke from line 1 but stood on line 2 is no planned erasure for the runner:
+	// none is proposed, and the sheet is named, so that the save refuses nothing the board proposed.
+	straddle := wide([]string{"x1", "y1", "y2"})
+	p, out = propose(straddle)
+	if !slices.Equal(erasureLines(straddle), []int{2}) || p.Planned != nil {
+		t.Errorf("lines %v, planned %v; want the move on line 2 and nothing planned", erasureLines(straddle), p.Planned)
+	}
+	noted(t, out["differences"], "sample.erasures", "but most of its strokes stood on another line")
 
 	// No erasure at all, or only Undo's: no move of the eraser, and the sheet is named. Moves that
 	// took nothing from the plan's line: nothing planned, and the page asks to pick one.

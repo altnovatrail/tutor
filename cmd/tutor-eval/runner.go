@@ -30,8 +30,10 @@ import (
 
 // The caps of the parts, in US dollars: $3 for the development and $6 for the test
 // (docs/architecture.md, 3.1, «Смета»; 3.4), and $2 for all the sheets of a plan, without the
-// split, which is how the author's three sheets of free writing run (3.4; T77).
-var partCaps = map[string]float64{"dev": 3, "test": 6, "all": 2}
+// split, which is how the author's three sheets of free writing run (3.4; T77); and $8 for the
+// sheets recorded so far, without the split, which is how the run of admission takes the author's
+// sheets, of a plan not written whole (T126; R80).
+var partCaps = map[string]float64{"dev": 3, "test": 6, "all": 2, "recorded": 8}
 
 // plans are the kinds of call that run asks, by -kind, each with how it plans a run over a part of
 // its sets of sheets and says what the run asks (T67): the judge, the reading (T68), the hint (T74),
@@ -100,12 +102,12 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	kind := flags.String("kind", "judge", "the kind of call to run: judge, reading, hint, workbook or essay")
 	var setValues setsFlag
 	flags.Var(&setValues, "set", "a set of sheets, DIR,BANK,PLAN, in place of -dir, -bank and -plan; given once for each set, for a reading or a hint over several")
-	part := flags.String("part", "", "the part of the split to run, dev or test, or all for every sheet of the plan, without the split; for the workbook and the essays, their pages and essays of that part, or all")
+	part := flags.String("part", "", "the part of the split to run, dev or test, or all for every sheet of the plan, without the split, or recorded for every sheet recorded so far, the rest of the plan left out; for the workbook and the essays, their pages and essays of that part, or all")
 	repeats := flags.Int("repeats", 3, "how many times each call is repeated: of every judge, every tutor of the hint and every assessor of the essays, and of every reader but Opus, which reads once")
-	readsList := flags.String("reads", "keys", "what a reading reads, joined by commas: keys, the finished sheet without a key, with the right key and with the false keys; heights, at 16, 24 and 48 px; states, the sheet as it was while it was written. For the workbook, bare, its pages at 32 px without the lines of the items; captions, with them and without, by default; and heights, at 16, 24 and 48 px")
+	readsList := flags.String("reads", "keys", "what a reading reads, joined by commas: keys, the finished sheet without a key, with the right key and with the false keys; heights, at 16, 24 and 48 px; states, the sheet as it was while it was written; plain, alone, the run of admission: the finished sheet without a key, by every reader in every repeat, Opus too, and the reader that reads once in a measurement, Opus, paired with each other. For the workbook, bare, its pages at 32 px without the lines of the items; captions, with them and without, by default; and heights, at 16, 24 and 48 px")
 	pagesFile := flags.String("workbook", workbookFile, "for -kind workbook, the file of the pages of the workbook")
 	essaysPath := flags.String("essays", essaysFile, "for -kind essay, the file of the essays")
-	maxUSD := flags.Float64("max-usd", 0, "start no call that could take the run past this many US dollars; $3 for dev, $6 for test ($8 for the essays) and $2 for all by default")
+	maxUSD := flags.Float64("max-usd", 0, "start no call that could take the run past this many US dollars; $3 for dev, $6 for test ($8 for the essays), $2 for all and $8 for recorded by default")
 	logPath := flags.String("log", "", "the log of the run, a new file out of git: in samples or synthetic, and in samples alone for sheets there; by default in runs next to the directory of the sheets, and for the workbook and the essays in synthetic/runs")
 	two := flags.Bool("two", false, "for -kind essay, assess in two calls: read the essay, then assess the text read (T92)")
 	stub := flags.Bool("stub", false, "ask no model: a stub answers by the markup, and the run needs no key and no network")
@@ -166,7 +168,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -reads is for -kind reading or workbook, and the %s reads nothing of it\n", *kind)
 		return exitUsage
 	case err != nil:
-		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -reads is %q: give keys, heights or states, joined by commas\n", *readsList)
+		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -reads is %q: %v\n", *readsList, err)
 		return exitUsage
 	}
 	o.reads = reads
@@ -179,8 +181,12 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		caps = k.caps
 	}
 	planned, ok := caps[*part]
+	if *part == "recorded" && *kind != "reading" {
+		// The sheets recorded so far are the run of admission's, of the reading alone (T126).
+		ok = false
+	}
 	if !ok {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -part is %q: give dev, test or all\n", *part)
+		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -part is %q: give dev, test or all, or recorded for the reading of the sheets recorded so far\n", *part)
 		return exitUsage
 	}
 	if !set["max-usd"] {
@@ -244,7 +250,11 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	e := r.Estimate()
 	say := what + fmt.Sprintf("%s, expected to cost $%.2f, and at most $%.2f if every call took its worst. The cap is $%.2f.\n", count(e.Calls, "call"), e.USD, e.WorstUSD, *maxUSD)
 	if *maxUSD > planned {
-		say += fmt.Sprintf("That is above the $%.2f that architecture 3.1 and 3.4 plan for -part %s.\n", planned, *part)
+		plan := "architecture 3.1 and 3.4"
+		if *part == "recorded" {
+			plan = "architecture 3.9"
+		}
+		say += fmt.Sprintf("That is above the $%.2f that %s plan for -part %s.\n", planned, plan, *part)
 	}
 	if e.USD > *maxUSD {
 		say += "The estimate is above the cap: the run will stop short of its calls unless -max-usd gives it more.\n"
@@ -440,6 +450,13 @@ func planReading(sets []sheetFlags, part string, o options) (*runner.Run, string
 	if o.reads.Keys {
 		what = append(what, fmt.Sprintf("by %s, without a key and with the right key, and with the false keys on %s", by, count(keyed, "correct sheet")))
 	}
+	if o.reads.Plain {
+		var readerNames []string
+		for _, rd := range readers {
+			readerNames = append(readerNames, rd.Name)
+		}
+		what = append(what, fmt.Sprintf("the run of admission: by %s in %s each, without a key at 32 px", strings.Join(readerNames, " and "), count(repeats, "repeat")))
+	}
 	if (o.reads.Heights || o.reads.States) && repeated != "" {
 		what = append(what, fmt.Sprintf("once by %s without a key, %s at other heights of digits and %s of %s", repeated, count(planned.Heights, "call"), count(planned.StateCalls, "call"), count(planned.States, "state")))
 	}
@@ -610,15 +627,19 @@ func readerConfig(rd runner.Reader) runner.Config { return rd.Config }
 
 // partName is what the run says of its part.
 func partName(part string) string {
-	if part == "all" {
+	switch part {
+	case "all":
 		return "All the sheets"
+	case "recorded":
+		return "The sheets recorded"
 	}
 	return fmt.Sprintf("The %s part", part)
 }
 
 // partSheets reads the plan of a set and the sheets of a part of its split, each recorded, passing
 // its check, and the very file the split took; or, for the part all, every sheet of the plan,
-// recorded and passing, with no split. Each sheet is of the set by its name. A sheet whose sample of
+// recorded and passing, with no split; or, for the part recorded, every sheet of the plan recorded so
+// far, the rest left out. Each sheet is of the set by its name. A sheet whose sample of
 // the protocol the runner refuses (section 13 of spec's text of the contracts) is not asked of, and
 // nothing of it goes to AI: refused names each, with its reason.
 func partSheets(f sheetFlags, set, part string) (plan *sample.Plan, chosen []sheets.Chosen, refused []refusal, err error) {
@@ -631,7 +652,7 @@ func partSheets(f sheetFlags, set, part string) (plan *sample.Plan, chosen []she
 		return nil, nil, nil, err
 	}
 	var numbers []int
-	if part == "all" {
+	if part == "all" || part == "recorded" {
 		for i := range rec.Sheets {
 			numbers = append(numbers, i+1)
 		}
@@ -657,8 +678,10 @@ func partSheets(f sheetFlags, set, part string) (plan *sample.Plan, chosen []she
 	for _, n := range numbers {
 		sh := rec.Sheets[n-1]
 		switch {
+		case sh.File == "" && part == "recorded":
+			continue
 		case sh.File == "":
-			return nil, nil, nil, fmt.Errorf("sheet %d is not recorded: -part all runs every sheet of the plan", n)
+			return nil, nil, nil, fmt.Errorf("sheet %d is not recorded: -part all runs every sheet of the plan, and -part recorded those recorded", n)
 		case sh.Refused != nil:
 			refused = append(refused, refusalOf(set+" sheet", n, set, sh.File, sh.Refused))
 			continue

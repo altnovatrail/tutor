@@ -12,10 +12,13 @@ import (
 // of a log that has no end.
 
 // partOf is what the title of a report calls the part of the sheets its run took: the dev or the
-// test part, or all the sheets.
+// test part, all the sheets, or the sheets recorded so far.
 func partOf(part string) string {
-	if part == "all" {
+	switch part {
+	case "all":
 		return "all the sheets"
+	case "recorded":
+		return "the sheets recorded"
 	}
 	return fmt.Sprintf("the %s part", part)
 }

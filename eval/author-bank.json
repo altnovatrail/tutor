@@ -1,0 +1,339 @@
+{
+  "format": "tutor-bank",
+  "version": 0,
+  "tasks": [
+    {
+      "id": "author-001",
+      "kind": "calculation",
+      "statement": "Вычисли 69 + 29 − 15 × 2.",
+      "key": "68",
+      "solution": [
+        "15 × 2 = 30",
+        "69 + 29 = 98",
+        "98 − 30 = 68"
+      ],
+      "traps": [
+        {
+          "id": "order-of-operations",
+          "description": "выполнил действия слева направо, не соблюдая порядка действий"
+        },
+        {
+          "id": "carry",
+          "description": "ошибся при сложении с переходом через десяток"
+        },
+        {
+          "id": "arithmetic",
+          "description": "ошибся в вычислении"
+        }
+      ],
+      "leaks": [
+        "15 × 2 = 30",
+        "98 − 30"
+      ],
+      "false_keys": [
+        {
+          "key": "58",
+          "solution": [
+            "15 × 2 = 30",
+            "69 + 29 = 88",
+            "88 − 30 = 58"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "author-002",
+      "kind": "linear-equation",
+      "statement": "Реши уравнение 3x + 8 = 32.",
+      "key": "x = 8",
+      "solution": [
+        "3x + 8 = 32",
+        "3x = 24",
+        "x = 8"
+      ],
+      "traps": [
+        {
+          "id": "sign-on-transfer",
+          "description": "перенёс слагаемое в другую часть уравнения, не сменив знак"
+        },
+        {
+          "id": "one-side-division",
+          "description": "разделил на коэффициент только одну часть уравнения"
+        }
+      ],
+      "leaks": [
+        "3x = 24",
+        "24 : 3"
+      ],
+      "false_keys": [
+        {
+          "key": "x = 40/3",
+          "solution": [
+            "3x + 8 = 32",
+            "3x = 40",
+            "x = 40/3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "author-003",
+      "kind": "linear-equation",
+      "statement": "Реши уравнение 7x − 1 = 4x + 14.",
+      "key": "x = 5",
+      "solution": [
+        "7x − 1 = 4x + 14",
+        "7x − 4x = 14 + 1",
+        "3x = 15",
+        "x = 5"
+      ],
+      "traps": [
+        {
+          "id": "sign-on-transfer",
+          "description": "перенёс слагаемое в другую часть уравнения, не сменив знак"
+        },
+        {
+          "id": "one-side-division",
+          "description": "разделил на коэффициент только одну часть уравнения"
+        }
+      ],
+      "leaks": [
+        "3x = 15",
+        "15 : 3"
+      ],
+      "false_keys": [
+        {
+          "key": "x = 13/3",
+          "solution": [
+            "7x − 1 = 4x + 14",
+            "7x − 4x = 14 − 1",
+            "3x = 13",
+            "x = 13/3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "author-004",
+      "kind": "calculation",
+      "statement": "Вычисли 12 + 49 − 11 × 3.",
+      "key": "28",
+      "solution": [
+        "11 × 3 = 33",
+        "12 + 49 = 61",
+        "61 − 33 = 28"
+      ],
+      "traps": [
+        {
+          "id": "order-of-operations",
+          "description": "выполнил действия слева направо, не соблюдая порядка действий"
+        },
+        {
+          "id": "carry",
+          "description": "ошибся при сложении с переходом через десяток"
+        },
+        {
+          "id": "arithmetic",
+          "description": "ошибся в вычислении"
+        }
+      ],
+      "leaks": [
+        "11 × 3 = 33",
+        "61 − 33"
+      ],
+      "false_keys": [
+        {
+          "key": "18",
+          "solution": [
+            "11 × 3 = 33",
+            "12 + 49 = 51",
+            "51 − 33 = 18"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "author-005",
+      "kind": "linear-equation",
+      "statement": "Реши уравнение 6x + 1 = 37.",
+      "key": "x = 6",
+      "solution": [
+        "6x + 1 = 37",
+        "6x = 36",
+        "x = 6"
+      ],
+      "traps": [
+        {
+          "id": "sign-on-transfer",
+          "description": "перенёс слагаемое в другую часть уравнения, не сменив знак"
+        },
+        {
+          "id": "one-side-division",
+          "description": "разделил на коэффициент только одну часть уравнения"
+        }
+      ],
+      "leaks": [
+        "6x = 36",
+        "36 : 6"
+      ],
+      "false_keys": [
+        {
+          "key": "x = 19/3",
+          "solution": [
+            "6x + 1 = 37",
+            "6x = 38",
+            "x = 19/3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "author-006",
+      "kind": "linear-equation",
+      "statement": "Реши уравнение 7x − 7 = 3x + 25.",
+      "key": "x = 8",
+      "solution": [
+        "7x − 7 = 3x + 25",
+        "7x − 3x = 25 + 7",
+        "4x = 32",
+        "x = 8"
+      ],
+      "traps": [
+        {
+          "id": "sign-on-transfer",
+          "description": "перенёс слагаемое в другую часть уравнения, не сменив знак"
+        },
+        {
+          "id": "one-side-division",
+          "description": "разделил на коэффициент только одну часть уравнения"
+        }
+      ],
+      "leaks": [
+        "4x = 32",
+        "32 : 4"
+      ],
+      "false_keys": [
+        {
+          "key": "x = 9/2",
+          "solution": [
+            "7x − 7 = 3x + 25",
+            "7x − 3x = 25 − 7",
+            "4x = 18",
+            "x = 9/2"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "author-007",
+      "kind": "calculation",
+      "statement": "Вычисли 58 + 32 − 15 × 4.",
+      "key": "30",
+      "solution": [
+        "15 × 4 = 60",
+        "58 + 32 = 90",
+        "90 − 60 = 30"
+      ],
+      "traps": [
+        {
+          "id": "order-of-operations",
+          "description": "выполнил действия слева направо, не соблюдая порядка действий"
+        },
+        {
+          "id": "carry",
+          "description": "ошибся при сложении с переходом через десяток"
+        },
+        {
+          "id": "arithmetic",
+          "description": "ошибся в вычислении"
+        }
+      ],
+      "leaks": [
+        "15 × 4 = 60",
+        "90 − 60"
+      ],
+      "false_keys": [
+        {
+          "key": "20",
+          "solution": [
+            "15 × 4 = 60",
+            "58 + 32 = 80",
+            "80 − 60 = 20"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "author-008",
+      "kind": "linear-equation",
+      "statement": "Реши уравнение 6x + 5 = 35.",
+      "key": "x = 5",
+      "solution": [
+        "6x + 5 = 35",
+        "6x = 30",
+        "x = 5"
+      ],
+      "traps": [
+        {
+          "id": "sign-on-transfer",
+          "description": "перенёс слагаемое в другую часть уравнения, не сменив знак"
+        },
+        {
+          "id": "one-side-division",
+          "description": "разделил на коэффициент только одну часть уравнения"
+        }
+      ],
+      "leaks": [
+        "6x = 30",
+        "30 : 6"
+      ],
+      "false_keys": [
+        {
+          "key": "x = 20/3",
+          "solution": [
+            "6x + 5 = 35",
+            "6x = 40",
+            "x = 20/3"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "author-009",
+      "kind": "linear-equation",
+      "statement": "Реши уравнение 7x − 7 = 2x + 28.",
+      "key": "x = 7",
+      "solution": [
+        "7x − 7 = 2x + 28",
+        "7x − 2x = 28 + 7",
+        "5x = 35",
+        "x = 7"
+      ],
+      "traps": [
+        {
+          "id": "sign-on-transfer",
+          "description": "перенёс слагаемое в другую часть уравнения, не сменив знак"
+        },
+        {
+          "id": "one-side-division",
+          "description": "разделил на коэффициент только одну часть уравнения"
+        }
+      ],
+      "leaks": [
+        "5x = 35",
+        "35 : 5"
+      ],
+      "false_keys": [
+        {
+          "key": "x = 21/5",
+          "solution": [
+            "7x − 7 = 2x + 28",
+            "7x − 2x = 28 − 7",
+            "5x = 21",
+            "x = 21/5"
+          ]
+        }
+      ]
+    }
+  ]
+}
