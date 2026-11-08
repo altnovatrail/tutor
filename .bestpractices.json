@@ -66,7 +66,7 @@
   "build_floss_tools_status": "Met",
   "build_floss_tools_justification": "All FLOSS: Go (BSD-3-Clause), golangci-lint (GPL-3.0, a development tool that ships nothing), govulncheck (BSD-3-Clause), go-licenses (Apache-2.0), Docker Engine (Apache-2.0), Node.js (MIT), which runs the documents check, and just (CC0-1.0).",
   "test_status": "Met",
-  "test_justification": "tutor's automated test suite is the go command's own, `go test`, over 105 test files beside the code they test, in this repository under Apache-2.0. The tests run on synthetic strokes and sheets that the code draws and call no AI model: the adapters are tested against a local fake server. `just test` runs them, and `just ci-test` runs them with the race detector and without the test cache, as the required check Go / test does on every pull request and on main: https://github.com/altnovatrail/tutor/blob/main/.github/workflows/ci.yml",
+  "test_justification": "tutor's automated test suite is the go command's own, `go test`, over 106 test files beside the code they test, in this repository under Apache-2.0. The tests run on synthetic strokes and sheets that the code draws and call no AI model: the adapters are tested against a local fake server. `just test` runs them, and `just ci-test` runs them with the race detector and without the test cache, as the required check Go / test does on every pull request and on main: https://github.com/altnovatrail/tutor/blob/main/.github/workflows/ci.yml",
   "test_invocation_status": "Met",
   "test_invocation_justification": "`go test ./...`, the standard way for Go, runs every test. `just test` runs it, `just ci-test` runs it with the race detector, as CI does, and `just --list` names the recipes.",
   "test_most_status": "Met",

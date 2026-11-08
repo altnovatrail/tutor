@@ -294,6 +294,13 @@ func e4Readers() []reading.Reader {
 	return runner.E4(reading.Readers(), func(rd reading.Reader) runner.Config { return rd.Config })
 }
 
+// The library reads with the bound of output the run of admission measured.
+func TestMaxOutputTokens(t *testing.T) {
+	if reading.MaxOutputTokens != runner.MaxOutputTokens {
+		t.Errorf("the library reads up to %d tokens, the runner %d", reading.MaxOutputTokens, runner.MaxOutputTokens)
+	}
+}
+
 // A run of admission reads the finished sheet without a key at 32 px alone, by every reader in every
 // repeat, Opus too, which stays marked the strong reader of the pair; plain goes with nothing else.
 func TestNewPlain(t *testing.T) {

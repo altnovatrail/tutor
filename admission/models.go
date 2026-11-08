@@ -81,7 +81,8 @@ type Entry struct {
 var Admitted = []Entry{
 	// The pair of the first app, on the author's own handwriting: 60 sheets, 3 repeats, no false
 	// alarm on 35 answer slots and no false "correct" on 25 (T126; R80 and its amendment of
-	// 2026-11-08). The report lies in samples/, out of git.
+	// 2026-11-08), measured again with version 2 of the reading's prompt (T115; R82). The report
+	// lies in samples/, out of git.
 	{
 		Capability: admissionv0.CapabilityHandwritingReading,
 		Models: []Model{
@@ -91,11 +92,11 @@ var Admitted = []Entry{
 		Stage: StageAuthor,
 		Report: Evidence{
 			Set:    "sheets-v1+free-v1+free-messy-v1+author-v1-recorded",
-			File:   "samples/runs/t126-admission.opus-high+haiku-medium.report.json",
-			SHA256: "f24554549003c5ccc7abe190544372ee72824712df2c7de2a96b7e5661a25428",
+			File:   "samples/runs/t115-admission-2.opus-high+haiku-medium.report.json",
+			SHA256: "284d8eacaa7337210ecb589449f0315bbb65ee20cb78fe7ae6fe0b9452e7bb2b",
 			Date:   "2026-11-08",
 		},
-		Prompt: "94452c62dab0872381ccf556a2d54b4724d06a76887cd02c05c4f68679659cfb",
+		Prompt: "c693bfa87760abec24fcf04073f8c786c682ba13d02569c9ec480da1f7e64d9d",
 	},
 }
 

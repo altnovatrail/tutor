@@ -1,6 +1,6 @@
 # The reading: the dev part
 
-The log reading-stub.jsonl, of the prompt 94452c62dab0, version 1. Readers: opus-high (claude-opus-5-5, high, once); haiku-low (claude-haiku-5-5, low); haiku-low-no-thinking (claude-haiku-5-5, low, without thinking). Repeats: 2. Reads: keys, heights, states. Sheets: 7 (lines 4, free 3). Calls: 198 made, 0 of them failed; $0.24 spent of the $10.00 cap.
+The log reading-stub.jsonl, of the prompt c693bfa87760, version 2. Readers: opus-high (claude-opus-5-5, high, once); haiku-low (claude-haiku-5-5, low); haiku-low-no-thinking (claude-haiku-5-5, low, without thinking). Repeats: 2. Reads: keys, heights, states. Sheets: 7 (lines 4, free 3). Calls: 198 made, 0 of them failed; $0.24 spent of the $10.00 cap.
 
 ## Does the key make the reading worse? The threshold of R03 (Т-23)
 
