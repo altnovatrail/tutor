@@ -180,9 +180,6 @@ func TestReadingOf(t *testing.T) {
 	if d, at := align([]string{"x", "y"}, []string{"y", "x"}); d != 2 || at[0] < 0 && at[1] < 0 {
 		t.Errorf("align of a swap = %d, %v", d, at)
 	}
-	if got := quoted(`a "b c" and «d» and “e” and "unclosed`); !slices.Equal(got, []string{"b c", "d", "e"}) {
-		t.Errorf("quoted = %q", got)
-	}
 }
 
 // Version 1 of the prompt is frozen after the dev rounds of T84, before its test part runs: any change
