@@ -8,13 +8,13 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// Every character of the text of both free-form plans, and of the text their planned erasures
-// take away, has its strokes in the font, and so has every small Russian letter: none of them comes
-// out a squiggle.
+// Every character of the text of the free-form plans and of the set of the words (T118), and of the
+// text their planned erasures take away, has its strokes in the font, and so has every small Russian
+// letter: none of them comes out a squiggle.
 func TestPlansHaveTheirLetters(t *testing.T) {
 	var text strings.Builder
 	text.WriteString("абвгдеёжзийклмнопрстуфхцчшщъыьэюя□△")
-	for _, path := range []string{"../../eval/free-sheets.json", "../../eval/free-author.json"} {
+	for _, path := range []string{"../../eval/free-sheets.json", "../../eval/free-author.json", "../../eval/words-sheets.json"} {
 		f, err := os.Open(path)
 		if err != nil {
 			t.Fatal(err)

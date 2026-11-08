@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 
 	"github.com/altnovatrail/tutor/internal/gen"
 	"github.com/altnovatrail/tutor/internal/newfile"
@@ -30,15 +31,18 @@ var generators = map[string]struct {
 // own seed and prefix. Of a bank and a plan it writes both files or neither.
 func runGen(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		_, _ = fmt.Fprintln(stderr, "tutor-eval gen: give sheets, near, workbook or essays")
+		_, _ = fmt.Fprintln(stderr, "tutor-eval gen: give sheets, near, workbook, essays or words")
 		return exitUsage
+	}
+	if args[0] == "words" {
+		return runGenWords(args[1:], stdout, stderr)
 	}
 	if f, ok := fileGenerators[args[0]]; ok {
 		return runGenFile(args[0], f, args[1:], stdout, stderr)
 	}
 	g, ok := generators[args[0]]
 	if !ok {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval gen: %q is nothing gen makes: give sheets, near, workbook or essays\n", args[0])
+		_, _ = fmt.Fprintf(stderr, "tutor-eval gen: %q is nothing gen makes: give sheets, near, workbook, essays or words\n", args[0])
 		return exitUsage
 	}
 	flags := flag.NewFlagSet("tutor-eval gen "+args[0], flag.ContinueOnError)
@@ -70,19 +74,9 @@ func runGen(args []string, stdout, stderr io.Writer) int {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval gen: %v\n", err)
 		return exitFail
 	}
-	for _, f := range []struct {
-		path string
-		v    any
-	}{{*bankPath, bank}, {*planPath, plan}} {
-		data, err := sample.Marshal(f.v)
-		if err == nil {
-			err = newfile.Write(f.path, data, 0o644)
-		}
-		if err != nil {
-			_ = os.Remove(*bankPath)
-			_, _ = fmt.Fprintf(stderr, "tutor-eval gen: %v\n", err)
-			return exitFail
-		}
+	if err := writeBoth(*bankPath, bank, *planPath, plan); err != nil {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval gen: %v\n", err)
+		return exitFail
 	}
 	_, _ = fmt.Fprintf(stdout, "%s and %s %s, of the seed %d: the bank %s and the plan %s.\n", count(len(bank.Tasks), "task"), count(len(plan.Sheets), "sheet"), g.what, *seed, *bankPath, *planPath)
 	return exitOK
@@ -146,4 +140,66 @@ func runGenFile(kind string, g fileGenerator, args []string, stdout, stderr io.W
 	}
 	_, _ = fmt.Fprintf(stdout, "%s of the seed %d: %s.\n", count(made, g.what), *seed, *path)
 	return exitOK
+}
+
+// runGenWords makes the set of the tutor's words (T118) of a plan of lines and its bank, from the
+// seed: a plan of parts of its sheets with a mistake, ten of them again with a note at the side, and
+// the file of the cases on it (gen.Words), as new files, both or neither. draw draws the plan, with
+// the same bank, and run -kind hint -cases asks the cases.
+func runGenWords(args []string, stdout, stderr io.Writer) int {
+	flags := flag.NewFlagSet("tutor-eval gen words", flag.ContinueOnError)
+	seed := flags.Uint64("seed", 1, "the number the notes, the traps found and the questions asked come from")
+	bankPath := flags.String("bank", "", "the bank of the plan of lines")
+	fromPath := flags.String("from", "", "the plan of lines whose sheets with a mistake the set takes")
+	planPath := flags.String("plan", "", "the new file of the plan of the set")
+	casesPath := flags.String("cases", "", "the new file of the cases")
+	if code, ok := parse(flags, args, stderr); !ok {
+		return code
+	}
+	if *bankPath == "" || *fromPath == "" || *planPath == "" || *casesPath == "" {
+		_, _ = fmt.Fprintln(stderr, "tutor-eval gen words: give -bank and -from, the bank and the plan of lines, and -plan and -cases, the new files to write")
+		return exitUsage
+	}
+	for _, path := range []string{*planPath, *casesPath} {
+		if _, err := os.Lstat(path); err == nil {
+			_, _ = fmt.Fprintf(stderr, "tutor-eval gen words: %s: file exists, and gen writes only new files\n", path)
+			return exitFail
+		}
+	}
+	bank, from, err := readPlan(*bankPath, *fromPath)
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval gen words: %v\n", err)
+		return exitFail
+	}
+	plan, cases, err := gen.Words(from, bank.Bank, filepath.Base(*planPath), *seed)
+	if err != nil {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval gen words: %v\n", err)
+		return exitFail
+	}
+	if err := writeBoth(*planPath, plan, *casesPath, cases); err != nil {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval gen words: %v\n", err)
+		return exitFail
+	}
+	_, _ = fmt.Fprintf(stdout, "%s and %s of the seed %d: the plan %s and the cases %s.\n", count(len(plan.Sheets), "sheet"), count(len(cases.Cases), "case"), *seed, *planPath, *casesPath)
+	return exitOK
+}
+
+// writeBoth writes two values as new files, both or neither: when the second cannot be written, the
+// first goes again, and a file that was there before is never removed.
+func writeBoth(firstPath string, first any, secondPath string, second any) error {
+	data, err := sample.Marshal(first)
+	if err == nil {
+		err = newfile.Write(firstPath, data, 0o644)
+	}
+	if err != nil {
+		return err
+	}
+	data, err = sample.Marshal(second)
+	if err == nil {
+		err = newfile.Write(secondPath, data, 0o644)
+	}
+	if err != nil {
+		_ = os.Remove(firstPath)
+	}
+	return err
 }

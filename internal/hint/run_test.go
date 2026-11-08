@@ -40,7 +40,7 @@ func TestTutors(t *testing.T) {
 func TestNew(t *testing.T) {
 	// Sheets 2 and 4 of the plan of free writing have a mistake; sheet 1 is correct.
 	free := chosen(t, "free", freePlan, freeBank, 2, 4)
-	r, err := hint.New("dev", []string{"free"}, free, e4Tutors(), 2)
+	r, err := hint.New("dev", []string{"free"}, free, e4Tutors(), 2, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -69,21 +69,21 @@ func TestNew(t *testing.T) {
 	if got := order[len(order)-1]; got != "2/4/3/en/haiku-low-no-thinking" {
 		t.Errorf("the run ends %s", got)
 	}
-	if _, err := hint.New("dev", nil, free, e4Tutors(), 0); err == nil {
+	if _, err := hint.New("dev", nil, free, e4Tutors(), 0, nil); err == nil {
 		t.Error("a run of no repeats is planned")
 	}
-	if _, err := hint.New("dev", nil, nil, e4Tutors(), 1); err == nil {
+	if _, err := hint.New("dev", nil, nil, e4Tutors(), 1, nil); err == nil {
 		t.Error("a run of no sheets is planned")
 	}
 	right := chosen(t, "free", freePlan, freeBank, 1)
-	if _, err := hint.New("dev", nil, right, e4Tutors(), 1); err == nil || !strings.Contains(err.Error(), "only after a wrong answer") {
+	if _, err := hint.New("dev", nil, right, e4Tutors(), 1, nil); err == nil || !strings.Contains(err.Error(), "only after a wrong answer") {
 		t.Errorf("a hint is planned on a correct sheet: %v", err)
 	}
 	broken := chosen(t, "free", freePlan, freeBank, 2)
 	empty := *broken[0].Sample
 	empty.Strokes, empty.Lines = nil, nil
 	broken[0].Sample = &empty
-	if _, err := hint.New("dev", nil, broken, e4Tutors(), 1); err == nil {
+	if _, err := hint.New("dev", nil, broken, e4Tutors(), 1, nil); err == nil {
 		t.Error("a hint is planned on a sheet with no strokes")
 	}
 }
@@ -97,7 +97,7 @@ func TestRunOnTheStub(t *testing.T) {
 	free := chosen(t, "free", freePlan, freeBank, 2, 8, 12)
 	near := chosen(t, "near", nearPlan, nearBank, 12)
 	all := append(append(lines, free...), near...)
-	r, err := hint.New("dev", []string{"lines", "free", "near"}, all, e4Tutors(), 1)
+	r, err := hint.New("dev", []string{"lines", "free", "near"}, all, e4Tutors(), 1, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -163,7 +163,7 @@ func TestRunOnTheStub(t *testing.T) {
 // without a first error.
 func TestRecord(t *testing.T) {
 	free := chosen(t, "free", freePlan, freeBank, 12)
-	r, err := hint.New("dev", []string{"free"}, free, e4Tutors()[:1], 1)
+	r, err := hint.New("dev", []string{"free"}, free, e4Tutors()[:1], 1, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -182,7 +182,7 @@ func TestRecord(t *testing.T) {
 	}
 	unmarked := *free[0].Sample
 	unmarked.Expected.FirstError = nil
-	r, err = hint.New("dev", []string{"free"}, []sheets.Chosen{{Set: "free", Number: 12, Sample: &unmarked, Task: free[0].Task, Plan: free[0].Plan}}, e4Tutors()[:1], 1)
+	r, err = hint.New("dev", []string{"free"}, []sheets.Chosen{{Set: "free", Number: 12, Sample: &unmarked, Task: free[0].Task, Plan: free[0].Plan}}, e4Tutors()[:1], 1, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -199,7 +199,7 @@ func TestChecked(t *testing.T) {
 	// Sheet 12 of free writing is the grasshopper's: the key 10, which its statement does not show,
 	// and the leak phrases «15 − 5», «в точке 15» and «at 15».
 	free := chosen(t, "free", freePlan, freeBank, 12)
-	r, err := hint.New("dev", []string{"free"}, free, e4Tutors()[:1], 1)
+	r, err := hint.New("dev", []string{"free"}, free, e4Tutors()[:1], 1, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

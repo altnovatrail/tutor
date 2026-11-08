@@ -16,6 +16,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/report"
 	"github.com/altnovatrail/tutor/internal/runner"
+	"github.com/altnovatrail/tutor/internal/wordsjudge"
 	"github.com/altnovatrail/tutor/internal/workbook"
 )
 
@@ -186,6 +187,12 @@ func reportOf(data []byte) (written, error) {
 			return nil, err
 		}
 		return report.NewHint(l)
+	case wordsjudge.CallKind:
+		l, err := wordsjudge.ReadLog(bytes.NewReader(data))
+		if err != nil {
+			return nil, err
+		}
+		return report.NewWordsJudge(l)
 	case workbook.CallKind:
 		l, err := workbook.ReadLog(bytes.NewReader(data))
 		if err != nil {
@@ -199,7 +206,7 @@ func reportOf(data []byte) (written, error) {
 		}
 		return report.NewEssays(l)
 	default:
-		return nil, fmt.Errorf("a log of the kind of call %q, and the report knows the judge, the reading, the hint, the workbook and the essays", kind)
+		return nil, fmt.Errorf("a log of the kind of call %q, and the report knows the judge, the reading, the hint, the workbook, the essays and the judge of the words", kind)
 	}
 }
 

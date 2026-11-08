@@ -2,7 +2,9 @@ package main
 
 import (
 	"bufio"
+	"bytes"
 	"context"
+	"crypto/sha256"
 	"errors"
 	"flag"
 	"fmt"
@@ -17,6 +19,7 @@ import (
 	"time"
 
 	"github.com/altnovatrail/tutor/internal/essay"
+	"github.com/altnovatrail/tutor/internal/evalsample"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/judge"
 	"github.com/altnovatrail/tutor/internal/measure"
@@ -72,6 +75,8 @@ type options struct {
 	essays        string
 	dir           string
 	workbookReads workbook.Reads
+	// cases is the file of the cases of the set of the words, for a hint (T118), or "".
+	cases string
 }
 
 // setsFlag is the flag -set, given once for each set of sheets: its directory, bank and plan.
@@ -110,6 +115,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	maxUSD := flags.Float64("max-usd", 0, "start no call that could take the run past this many US dollars; $3 for dev, $6 for test ($8 for the essays), $2 for all and $8 for recorded by default")
 	logPath := flags.String("log", "", "the log of the run, a new file out of git: in samples or synthetic, and in samples alone for sheets there; by default in runs next to the directory of the sheets, and for the workbook and the essays in synthetic/runs")
 	two := flags.Bool("two", false, "for -kind essay, assess in two calls: read the essay, then assess the text read (T92)")
+	casesPath := flags.String("cases", "", "for -kind hint, the file of the cases of the set of the words, such as eval/words-cases.json, on the one set of its plan, asked case by case (T118)")
 	stub := flags.Bool("stub", false, "ask no model: a stub answers by the markup, and the run needs no key and no network")
 	readersList := flags.String("readers", strings.Join(runner.E4Configs, ","), "the configurations to ask, joined by commas: "+strings.Join(runner.ConfigNames(), ", ")+"; the three of E4 by default")
 	if code, ok := parse(flags, args, stderr); !ok {
@@ -129,7 +135,11 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -two is for -kind essay, and the %s asks one call\n", *kind)
 		return exitUsage
 	}
-	o := options{two: *two, readers: names, repeats: *repeats, workbook: *pagesFile, essays: *essaysPath}
+	if *casesPath != "" && *kind != "hint" {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -cases is for -kind hint, and the %s asks no case of the words\n", *kind)
+		return exitUsage
+	}
+	o := options{two: *two, readers: names, repeats: *repeats, workbook: *pagesFile, essays: *essaysPath, cases: *casesPath}
 	if _, err := runner.Chosen(runner.Configs(), func(c runner.Config) runner.Config { return c }, o.readers); err != nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -readers is %q: %v\n", *readersList, err)
 		return exitUsage
@@ -247,19 +257,28 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		return exitFail
 	}
 
-	e := r.Estimate()
-	say := what + fmt.Sprintf("%s, expected to cost $%.2f, and at most $%.2f if every call took its worst. The cap is $%.2f.\n", count(e.Calls, "call"), e.USD, e.WorstUSD, *maxUSD)
+	above := ""
 	if *maxUSD > planned {
 		plan := "architecture 3.1 and 3.4"
 		if *part == "recorded" {
 			plan = "architecture 3.9"
 		}
-		say += fmt.Sprintf("That is above the $%.2f that %s plan for -part %s.\n", planned, plan, *part)
+		above = fmt.Sprintf("That is above the $%.2f that %s plan for -part %s.\n", planned, plan, *part)
 	}
-	if e.USD > *maxUSD {
+	return startRun(ctx, "tutor-eval run", r, what, above, path, *maxUSD, *stub, ask, stdin, stdout, stderr, now)
+}
+
+// startRun says what a planned run asks, how many calls and what they are expected to cost, and
+// starts it only once the author types yes (rule 4 of RUN.md): till then Ctrl-C ends it as any
+// command, and from then on it stops the run before the next call. It writes the log as a new file
+// at path, and says what the run made and spent. above says that the cap is above the plan's.
+func startRun(ctx context.Context, name string, r *runner.Run, what, above, path string, maxUSD float64, stub bool, ask runner.Asker, stdin io.Reader, stdout, stderr io.Writer, now func() time.Time) int {
+	e := r.Estimate()
+	say := what + fmt.Sprintf("%s, expected to cost $%.2f, and at most $%.2f if every call took its worst. The cap is $%.2f.\n", count(e.Calls, "call"), e.USD, e.WorstUSD, maxUSD) + above
+	if e.USD > maxUSD {
 		say += "The estimate is above the cap: the run will stop short of its calls unless -max-usd gives it more.\n"
 	}
-	if *stub {
+	if stub {
 		say += "The stub answers them by the markup and asks no one: it costs nothing, and it bills what the estimate expects.\n"
 	}
 	if _, err := fmt.Fprint(stdout, say+"Type yes to start the run: "); err != nil {
@@ -274,25 +293,25 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	ctx, stop := signal.NotifyContext(ctx, os.Interrupt)
 	defer stop()
 	if err := os.MkdirAll(filepath.Dir(path), 0o700); err != nil {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval run: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "%s: %v\n", name, err)
 		return exitFail
 	}
 	log, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
 	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval run: the log: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "%s: the log: %v\n", name, err)
 		return exitFail
 	}
-	res, err := r.Do(ctx, ask, *maxUSD, log, now)
+	res, err := r.Do(ctx, ask, maxUSD, log, now)
 	if cerr := log.Close(); err == nil {
 		err = cerr
 	}
 	_, _ = fmt.Fprintf(stdout, "%s made, $%.4f spent. The log: %s\n", count(res.Calls, "call"), res.SpentUSD, path)
 	switch {
 	case err != nil:
-		_, _ = fmt.Fprintf(stderr, "tutor-eval run: the log cannot be written, and the run stopped: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "%s: the log cannot be written, and the run stopped: %v\n", name, err)
 		return exitFail
 	case res.Stopped != "":
-		_, _ = fmt.Fprintf(stderr, "tutor-eval run: stopped short by %s\n", res.Stopped)
+		_, _ = fmt.Fprintf(stderr, "%s: stopped short by %s\n", name, res.Stopped)
 		return exitFail
 	}
 	return exitOK
@@ -472,10 +491,23 @@ func planHint(sets []sheetFlags, part string, o options) (*runner.Run, string, e
 	var names, counts []string
 	var refused []refusal
 	var wrong []sheets.Chosen
+	var set *hint.Set
 	taken := 0
 	for _, s := range sets {
 		name := setName(s)
-		_, chosen, off, err := partSheets(s, name, part)
+		var chosen []sheets.Chosen
+		var off []refusal
+		var err error
+		if o.cases != "" {
+			// The cases are checked against the very bank and plan the run takes its sheets of.
+			var bank *evalsample.Bank
+			var plan *sample.Plan
+			if bank, plan, set, err = casesOf(o.cases, sets); err == nil {
+				chosen, off, err = partOf(bank, plan, s, name, part)
+			}
+		} else {
+			_, chosen, off, err = partSheets(s, name, part)
+		}
 		if err != nil {
 			return nil, "", fmt.Errorf("%s: %w", name, err)
 		}
@@ -501,13 +533,45 @@ func planHint(sets []sheetFlags, part string, o options) (*runner.Run, string, e
 	for _, tu := range tutors {
 		by = append(by, tu.Name)
 	}
-	r, err := hint.New(part, names, wrong, tutors, o.repeats)
+	r, err := hint.New(part, names, wrong, tutors, o.repeats, set)
 	if err != nil {
 		return nil, "", err
+	}
+	if set != nil {
+		return r, refusedLine(refused) + fmt.Sprintf("%s: %s of the set of the words in %s, on %s with a mistake of %d in %s, by %s in %s, in version %d of the hint's prompt.\n",
+			partName(part), count(len(set.Cases.Cases), "case"), set.File, count(len(r.Items), "sheet"), taken, names[0], strings.Join(by, ", "), count(o.repeats, "repeat"), hint.Version), nil
 	}
 	return r, refusedLine(refused) + fmt.Sprintf("%s: %s with a mistake of %d in %s (%s), each at %d rungs in %d languages, by %s in %s, in version %d of the hint's prompt.\n",
 		partName(part), count(len(wrong), "sheet"), taken, count(len(sets), "set"), strings.Join(counts, ", "), len(hint.Rungs()), len(hint.Langs()),
 		strings.Join(by, ", "), count(o.repeats, "repeat"), hint.Version), nil
+}
+
+// casesOf reads the file of the cases of the set of the words and checks them against the one set of
+// sheets they are of: the plan the file names, by its file's name, with its bank, which it gives
+// for the run to take its sheets of (T118).
+func casesOf(path string, sets []sheetFlags) (*evalsample.Bank, *sample.Plan, *hint.Set, error) {
+	if len(sets) != 1 {
+		return nil, nil, nil, fmt.Errorf("the cases are of the sheets of one plan, and %s are given", count(len(sets), "set"))
+	}
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	cs, err := hint.ReadCases(bytes.NewReader(data))
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("%s: %w", path, err)
+	}
+	if cs.Plan != filepath.Base(sets[0].plan) {
+		return nil, nil, nil, fmt.Errorf("%s: the cases are of the plan %s, and the set's is %s", path, cs.Plan, sets[0].plan)
+	}
+	bank, plan, err := readPlan(sets[0].bank, sets[0].plan)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	if err := cs.Check(plan, bank.Bank); err != nil {
+		return nil, nil, nil, fmt.Errorf("%s: %w", path, err)
+	}
+	return bank, plan, &hint.Set{File: filepath.Base(path), SHA256: fmt.Sprintf("%x", sha256.Sum256(data)), Cases: cs}, nil
 }
 
 // planWorkbook plans a run of the reading of the workbook over the pages of a part, as the samples
@@ -647,9 +711,15 @@ func partSheets(f sheetFlags, set, part string) (plan *sample.Plan, chosen []she
 	if err != nil {
 		return nil, nil, nil, err
 	}
+	chosen, refused, err = partOf(bank, plan, f, set, part)
+	return plan, chosen, refused, err
+}
+
+// partOf is partSheets of a bank and a plan already read.
+func partOf(bank *evalsample.Bank, plan *sample.Plan, f sheetFlags, set, part string) (chosen []sheets.Chosen, refused []refusal, err error) {
 	rec, err := sheets.Read(f.dir, plan, bank, checkSamples)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, err
 	}
 	var numbers []int
 	if part == "all" || part == "recorded" {
@@ -659,17 +729,17 @@ func partSheets(f sheetFlags, set, part string) (plan *sample.Plan, chosen []she
 	} else {
 		sp, err := readSplit(f.dir, plan)
 		if errors.Is(err, fs.ErrNotExist) {
-			return nil, nil, nil, errors.New("the split is not made yet: tutor-eval split makes it, once, or -part all runs every sheet without it")
+			return nil, nil, errors.New("the split is not made yet: tutor-eval split makes it, once, or -part all runs every sheet without it")
 		}
 		if err != nil {
-			return nil, nil, nil, fmt.Errorf("%s: %w", sheets.SplitFile, err)
+			return nil, nil, fmt.Errorf("%s: %w", sheets.SplitFile, err)
 		}
 		list := sp.Test
 		if part == "dev" {
 			list = sp.Dev
 		}
 		if stale := sheets.Stale(rec, sp); len(stale) > 0 {
-			return nil, nil, nil, fmt.Errorf("the split's file no longer counts for sheets %s: the run asks of the files the split took", sheets.Numbers(stale))
+			return nil, nil, fmt.Errorf("the split's file no longer counts for sheets %s: the run asks of the files the split took", sheets.Numbers(stale))
 		}
 		for _, ss := range list {
 			numbers = append(numbers, ss.Number)
@@ -681,17 +751,17 @@ func partSheets(f sheetFlags, set, part string) (plan *sample.Plan, chosen []she
 		case sh.File == "" && part == "recorded":
 			continue
 		case sh.File == "":
-			return nil, nil, nil, fmt.Errorf("sheet %d is not recorded: -part all runs every sheet of the plan, and -part recorded those recorded", n)
+			return nil, nil, fmt.Errorf("sheet %d is not recorded: -part all runs every sheet of the plan, and -part recorded those recorded", n)
 		case sh.Refused != nil:
 			refused = append(refused, refusalOf(set+" sheet", n, set, sh.File, sh.Refused))
 			continue
 		case sh.Sample == nil:
-			return nil, nil, nil, fmt.Errorf("sheet %d does not pass its check: tutor-eval sheets says where", n)
+			return nil, nil, fmt.Errorf("sheet %d does not pass its check: tutor-eval sheets says where", n)
 		}
 		i := slices.IndexFunc(bank.Bank.Tasks, func(t sample.Task) bool { return t.ID == sh.Sample.Task })
 		chosen = append(chosen, sheets.Chosen{Set: set, Number: n, File: sh.File, Sample: sh.Sample, Task: &bank.Bank.Tasks[i], Plan: sh.Plan, ID: sh.ID, Truth: sh.Truth})
 	}
-	return plan, chosen, refused, nil
+	return chosen, refused, nil
 }
 
 // refusedLine names the sheets a run refuses, before what it asks: nothing of them goes to AI.
