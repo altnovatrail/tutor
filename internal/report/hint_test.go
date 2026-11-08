@@ -194,7 +194,7 @@ func TestHintLogOfTheStub(t *testing.T) {
 	} {
 		chosen = append(chosen, chosenOf(t, set.name, set.plan, set.bank, set.numbers...)...)
 	}
-	r, err := hint.New("dev", []string{"lines", "free", "near"}, chosen, runner.E4(hint.Tutors(), func(tu hint.Tutor) runner.Config { return tu.Config }), 1)
+	r, err := hint.New("dev", []string{"lines", "free", "near"}, chosen, runner.E4(hint.Tutors(), func(tu hint.Tutor) runner.Config { return tu.Config }), 1, nil)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -5,8 +5,9 @@
 // reading of the boxes of a page of the workbook (T79), or the assessment of an essay by its rubric
 // (T83), and its report command reports on a run by the kind of its log; its other commands serve the
 // board, check the files of banks, sheet plans, the workbook and the essays, convert the sheets of
-// tutor-sample v0 to samples of spec's eval protocol (T105), and write the open views of the
-// measurement's tasks for canvas's sample page (T37): run it without arguments for its commands.
+// tutor-sample v0 to samples of spec's eval protocol (T105), write the open views of the
+// measurement's tasks for canvas's sample page (T37), and make and judge the set of the tutor's
+// words (T118): run it without arguments for its commands.
 package main
 
 import (
@@ -72,6 +73,10 @@ const usage = `usage:
                              of their sheets — sheets of lines, six a task, or sheets of the
                              near key, two a task — or pages of the workbook or essays; new
                              files only
+  tutor-eval gen words [-seed N] -bank F -from F -plan F -cases F
+                             make the set of the tutor's words of a plan of lines: a plan of
+                             parts of its sheets with a mistake, ten again with a note at the
+                             side, and the cases of the words on it; new files only
   tutor-eval sheets [-dir D] [-bank F] [-plan F]
                              the summary of the recorded sheets against the plan, without the
                              handwriting
@@ -80,7 +85,7 @@ const usage = `usage:
   tutor-eval run -part dev|test|all|recorded [-kind judge|reading|hint|workbook|essay] [-repeats N]
                  [-max-usd N] [-log F] [-stub] [-dir D] [-bank F] [-plan F] [-set D,B,P]...
                  [-reads LIST] [-workbook F] [-essays F] [-readers LIST]
-                 [-two]
+                 [-two] [-cases F]
                              run the calls of a kind on a part of the split, or on all the
                              sheets, of one set or, for a reading or a hint, of each -set: the
                              estimate first, then calls to Claude once you type yes, and a log of
@@ -94,7 +99,14 @@ const usage = `usage:
                              a part of -essays, their samples in -dir, by their rubric, a call an
                              essay, or with -two the reading and the assessment of the text it
                              read, and logs there too; -dir is synthetic/ and the file's name by
-                             default
+                             default; a hint with -cases asks the cases of the set of the words
+                             on the one set of their plan
+  tutor-eval judge-words -log F|-controls F [-judge C] [-max-usd N] [-out F] [-stub]
+                             judge the hints of a log of the set of the words, or the judge's
+                             control phrases: whether each tells the learner's sex, keeps to
+                             the task, suits a child and takes up the note at the side; the
+                             estimate first, then calls once you type yes, and a log beside
+                             the hints' log, .judge.jsonl, or in synthetic/runs
   tutor-eval report LOG      the report of a run from its log, by its kind, asking no model:
                              of the judge, the criterion, and of the reading, the threshold of
                              R03, with the numbers in Markdown and CSV; of the hint, the leaks,
@@ -184,6 +196,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return runReport(operands, stdout, stderr)
 	case "admit":
 		return runAdmit(operands, stdout, stderr)
+	case "judge-words":
+		return runJudgeWords(context.Background(), operands, os.Stdin, stdout, stderr, os.Getenv, time.Now)
 	case "workbook":
 		return runWorkbook(operands, stdout, stderr)
 	case "essays":

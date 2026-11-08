@@ -1,0 +1,8 @@
+tutor,case,lang,judged,no_verdict,gender,gender_upper,off_task,off_task_upper,not_for_age,not_for_age_upper,mentions_note,mentions_note_of,mentions_note_upper,flagged,flagged_upper,rough,disagree
+opus-high,rung,ru,6,0,0,0.3930,0,0.3930,0,0.3930,0,0,1.0000,0,0.3930,0,0
+opus-high,rung,en,6,0,0,0.3930,0,0.3930,0,0.3930,0,0,1.0000,0,0.3930,0,0
+opus-high,otherwise,ru,3,0,0,0.6316,0,0.6316,0,0.6316,0,0,1.0000,0,0.6316,0,0
+opus-high,otherwise,en,3,0,0,0.6316,0,0.6316,0,0.6316,0,0,1.0000,0,0.6316,0,0
+opus-high,note,ru,6,0,0,0.3930,0,0.3930,0,0.3930,0,6,0.3930,0,0.3930,0,0
+opus-high,note,en,6,0,0,0.3930,0,0.3930,0,0.3930,0,6,0.3930,0,0.3930,0,0
+opus-high,all,all,30,0,0,0.0950,0,0.0950,0,0.0950,0,12,0.2209,0,0.0950,0,0

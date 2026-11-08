@@ -27,6 +27,8 @@ type Hint struct {
 	tutors []string
 	// byTutor are the calls that were asked, by tutor and by sheet.
 	byTutor map[string]map[sheetID][]*hint.CallRecord
+	// cases are the cases of a log of the set of the words, by their IDs (T118).
+	cases map[string]*hint.Case
 
 	// Cells are the calls of each tutor by language and rung, each tutor's followed by all its calls.
 	Cells []HintCell
@@ -48,6 +50,10 @@ type Hint struct {
 //   - OnError, of the hints that came: the box hits the part of the first error; NoBox gave none;
 //   - TrapRight of TrapOf: the model names the sheet's trap, on the sheets planned with one;
 //     NoTrapRight of NoTrapOf: it names none, on the sheets without.
+//
+// In a log of the set of the words (T118), a call without the work counts in neither OnError nor
+// NoBox, since it has nothing to box, and a call given the trap found counts in no trap's column,
+// since the model was told it.
 type HintCell struct {
 	Tutor                                    string
 	Lang                                     sample.Lang
@@ -98,7 +104,10 @@ func NewHint(l *hint.Log) (*Hint, error) {
 	case !l.Run.Checked:
 		return nil, errors.New("report: the run did not check its hints for leaks and form, as runs before T75 did not: run it again")
 	}
-	r := &Hint{log: l, sheets: map[sheetID]*hint.SheetRecord{}, byTutor: map[string]map[sheetID][]*hint.CallRecord{}}
+	r := &Hint{log: l, sheets: map[sheetID]*hint.SheetRecord{}, byTutor: map[string]map[sheetID][]*hint.CallRecord{}, cases: map[string]*hint.Case{}}
+	for i := range l.Run.Cases {
+		r.cases[l.Run.Cases[i].ID] = &l.Run.Cases[i]
+	}
 	for i := range l.Sheets {
 		sh := &l.Sheets[i]
 		id := sheetID{sh.Set, sh.Sheet}
@@ -143,12 +152,12 @@ func came(c *hint.CallRecord) bool { return !c.NotAsked && c.Error == "" }
 // all its calls.
 func (r *Hint) cell(tutor string, lang sample.Lang, rung hint.Rung) HintCell {
 	c := HintCell{Tutor: tutor, Lang: lang, Rung: rung}
-	var leaked, broken, platform, fell, hit, cameOf, askedOf []int
+	var leaked, broken, platform, fell, hit, boxOf, cameOf, askedOf []int
 	var times []int64
 	spent := 0.0
 	for _, id := range r.order {
 		sh := r.sheets[id]
-		var l, b, pb, f, h, n, a int
+		var l, b, pb, f, h, bo, n, a int
 		for _, call := range r.byTutor[tutor][id] {
 			if rung != 0 && (call.Rung != rung || call.Lang != lang) {
 				continue
@@ -201,18 +210,24 @@ func (r *Hint) cell(tutor string, lang sample.Lang, rung hint.Rung) HintCell {
 					c.Script++
 				}
 			}
-			switch {
-			case call.Box == nil:
-				c.NoBox++
-			case call.Hit == sh.FirstError:
-				h++
+			k := r.cases[call.Case]
+			if k == nil || k.Work {
+				bo++
+				switch {
+				case call.Box == nil:
+					c.NoBox++
+				case call.Hit == sh.FirstError:
+					h++
+				}
 			}
-			if sh.Trap != "" {
+			switch {
+			case k != nil && k.Found != "":
+			case sh.Trap != "":
 				c.TrapOf++
 				if call.Trap == sh.Trap {
 					c.TrapRight++
 				}
-			} else {
+			default:
 				c.NoTrapOf++
 				if call.Trap == "" {
 					c.NoTrapRight++
@@ -223,10 +238,10 @@ func (r *Hint) cell(tutor string, lang sample.Lang, rung hint.Rung) HintCell {
 			continue
 		}
 		c.Calls, c.Came = c.Calls+a, c.Came+n
-		leaked, broken, platform, fell, hit = append(leaked, l), append(broken, b), append(platform, pb), append(fell, f), append(hit, h)
+		leaked, broken, platform, fell, hit, boxOf = append(leaked, l), append(broken, b), append(platform, pb), append(fell, f), append(hit, h), append(boxOf, bo)
 		cameOf, askedOf = append(cameOf, n), append(askedOf, a)
 	}
-	c.Leaked, c.Broken, c.PlatformBroken, c.FellBack, c.OnError = share(leaked, cameOf), share(broken, cameOf), share(platform, cameOf), share(fell, askedOf), share(hit, cameOf)
+	c.Leaked, c.Broken, c.PlatformBroken, c.FellBack, c.OnError = share(leaked, cameOf), share(broken, cameOf), share(platform, cameOf), share(fell, askedOf), share(hit, boxOf)
 	c.TimeP50, c.TimeP95 = percentile(times, 0.50), percentile(times, 0.95)
 	if c.Calls > 0 {
 		c.MeanUSD = spent / float64(c.Calls)
@@ -341,7 +356,12 @@ func (r *Hint) Markdown(w io.Writer, logName string) error {
 		lang, rung := c.where()
 		fmt.Fprintf(&b, "| %s | %s | %s | %d | %s | %d | %d of %d | %d of %d |\n", c.Tutor, lang, rung, c.Came, c.OnError, c.NoBox, c.TrapRight, c.TrapOf, c.NoTrapRight, c.NoTrapOf)
 	}
-	b.WriteString("\nThe box is on the first error when it hits the part of the first error of the markup, as the judge's box does; the trap is the one the sheet was planned with, which the call did not get.\n")
+	b.WriteString("\nThe box is on the first error when it hits the part of the first error of the markup, as the judge's box does; the trap is the one the sheet was planned with, which the call did not get.")
+	if len(r.cases) > 0 {
+		b.WriteString(" Of the set of the words, a call without the work counts in neither column of the box, and a call given the trap the program found counts in neither column of the trap.")
+	}
+	b.WriteString("\n")
+	r.wordsMarkdown(&b)
 
 	b.WriteString("\n## Leaks by task\n\n")
 	b.WriteString("| Task | Its key searched for | Hints that came | Leaked | Found |\n|---|---|---|---|---|\n")
@@ -397,7 +417,7 @@ func (r *Hint) Summary() string {
 	for _, c := range r.Cells {
 		if c.All() {
 			fmt.Fprintf(&b, "%s: leaked before the check %d of %d, after it %d; form broken %d of %d, by R70 spec %d; fallback %d of %d; box on the first error %d of %d.\n",
-				c.Tutor, c.Leaked.Events, c.Came, c.After, c.Broken.Events, c.Came, c.PlatformBroken.Events, c.FellBack.Events, c.Calls, c.OnError.Events, c.Came)
+				c.Tutor, c.Leaked.Events, c.Came, c.After, c.Broken.Events, c.Came, c.PlatformBroken.Events, c.FellBack.Events, c.Calls, c.OnError.Events, c.OnError.Of)
 		}
 	}
 	return b.String()
