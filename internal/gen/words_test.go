@@ -155,3 +155,74 @@ func TestWordsRefused(t *testing.T) {
 		t.Errorf("a bank without the tasks: %v", err)
 	}
 }
+
+// The cases of the author's plans are what the generator makes of them and the seed 119, byte for
+// byte (T119).
+func TestWordsCasesFiles(t *testing.T) {
+	for _, f := range []struct{ bank, plan, cases string }{
+		{"bank.json", "sheets.json", "words-cases-sheets.json"},
+		{"free-bank.json", "free-messy.json", "words-cases-messy.json"},
+		{"author-bank.json", "author-sheets.json", "words-cases-author.json"},
+	} {
+		eval := func(name string) *os.File {
+			file, err := os.Open(filepath.Join("..", "..", "eval", name))
+			if err != nil {
+				t.Fatal(err)
+			}
+			t.Cleanup(func() { _ = file.Close() })
+			return file
+		}
+		bank, err := sample.ReadBank(eval(f.bank))
+		if err != nil {
+			t.Fatal(err)
+		}
+		plan, err := sample.ReadPlan(eval(f.plan))
+		if err != nil {
+			t.Fatal(err)
+		}
+		cs, err := gen.WordsCases(plan, bank, f.plan, 119)
+		if err != nil {
+			t.Fatal(err)
+		}
+		want, err := sample.Marshal(cs)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if got, err := os.ReadFile(filepath.Join("..", "..", "eval", f.cases)); err != nil || !bytes.Equal(got, want) {
+			t.Errorf("eval/%s is not what the generator makes of its seed: %v", f.cases, err)
+		}
+		wrong := 0
+		for _, sh := range plan.Sheets {
+			if sh.Expected.Outcome == sample.OutcomeError {
+				wrong++
+			}
+		}
+		if len(cs.Cases) != 9*wrong {
+			t.Errorf("%s: %d cases of %d sheets with a mistake", f.cases, len(cs.Cases), wrong)
+		}
+		for _, k := range cs.Cases {
+			sh := plan.Sheets[k.Sheet-1]
+			if k.Found != sh.Expected.Trap || k.Kind == hint.CaseNote || k.Note != "" {
+				t.Errorf("%s: case %s is %+v", f.cases, k.ID, k)
+			}
+		}
+	}
+}
+
+// A plan with no sheet with a mistake has no case, and a task the bank lacks is refused.
+func TestWordsCasesRefused(t *testing.T) {
+	plan, bank := linesGen1(t)
+	right := *plan
+	right.Sheets = nil
+	for _, sh := range plan.Sheets {
+		if sh.Expected.Outcome != sample.OutcomeError {
+			right.Sheets = append(right.Sheets, sh)
+		}
+	}
+	if _, err := gen.WordsCases(&right, bank, "p.json", 1); err == nil || !strings.Contains(err.Error(), "no sheet with a mistake") {
+		t.Errorf("a plan without mistakes: %v", err)
+	}
+	if _, err := gen.WordsCases(plan, &sample.Bank{}, "p.json", 1); err == nil || !strings.Contains(err.Error(), "not in the bank") {
+		t.Errorf("a bank without the tasks: %v", err)
+	}
+}

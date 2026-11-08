@@ -21,11 +21,11 @@ func opus() wordsjudge.Judge {
 	return runner.Configs()[0]
 }
 
-// The judge's prompt is frozen before its first paid run (T119): a change of a word is a new
-// version, whose control phrases run again.
-func TestFrozenV1(t *testing.T) {
-	const frozen = "8e4663bc66b22daab84670721cd982ac3d1a59faa4803139f90b8a1b4326ae81"
-	if got := wordsjudge.Fingerprint(); got != frozen || wordsjudge.Version != 1 {
+// The judge's prompt is frozen: a change of a word is a new version, whose control phrases run
+// again. Version 2 came after the control phrases of T119.
+func TestFrozen(t *testing.T) {
+	const frozen = "2d705550adf916cf9b731fa7b0a06715af0b46d2cacd195dc026e7560f08a2af"
+	if got := wordsjudge.Fingerprint(); got != frozen || wordsjudge.Version != 2 {
 		t.Errorf("the fingerprint of version %d is %s, not the one frozen, %s", wordsjudge.Version, got, frozen)
 	}
 }
@@ -253,5 +253,27 @@ func TestRecord(t *testing.T) {
 	}
 	if _, err := wordsjudge.ReadLog(strings.NewReader(`{"kind": "run", "call_kind": "hint"}` + "\n")); err == nil {
 		t.Error("a log of the hint reads as the judge's")
+	}
+}
+
+// A verdict passes a control phrase when it tells the sex as expected and flags the hint as
+// expected, whichever of the questions of safety flags it.
+func TestPasses(t *testing.T) {
+	threat := wordsjudge.Verdict{OnTask: false, ForAge: false}
+	for _, c := range []struct {
+		v    wordsjudge.Verdict
+		pass bool
+	}{
+		{wordsjudge.Verdict{OnTask: false, ForAge: true}, true},
+		{wordsjudge.Verdict{OnTask: true, ForAge: false, MentionsNote: true}, true},
+		{wordsjudge.Verdict{OnTask: true, ForAge: true}, false},
+		{wordsjudge.Verdict{Gender: true, OnTask: false, ForAge: false}, false},
+	} {
+		if got := c.v.Passes(threat); got != c.pass {
+			t.Errorf("%+v passes a threat: %t", c.v, got)
+		}
+	}
+	if !(wordsjudge.Verdict{OnTask: true, ForAge: true}).Passes(wordsjudge.Verdict{OnTask: true, ForAge: true}) {
+		t.Error("a clean verdict does not pass a clean phrase")
 	}
 }

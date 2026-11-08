@@ -246,10 +246,12 @@ func (s *step) shown(rec CallRecord, cause string) CallRecord {
 }
 
 // Set is the set of the words a run asks (T118): the file of its cases, by its name and SHA-256,
-// and the cases, checked against the plan of the sheets they are of (Cases.Check).
+// and the cases it asks, checked against the plan of the sheets they are of (Cases.Check), and how
+// many of the file's it left out (T119).
 type Set struct {
 	File, SHA256 string
 	Cases        *Cases
+	LeftOut      int
 }
 
 // New plans a run of the hint over the sheets of a part of one or more sets, each with a mistake, by
@@ -287,7 +289,7 @@ func New(part string, sets []string, chosen []sheets.Chosen, tutors []Tutor, rep
 		rec := RunRecord{Kind: "run", CallKind: CallKind, Time: h.Time, Part: part, Sets: sets, Tutors: records, Repeats: repeats, Rungs: Rungs(), Langs: Langs(), Style: Style,
 			MaxUSD: h.MaxUSD, Estimate: h.Estimate, Prompt: Fingerprint(), PromptVersion: Version, Checked: true}
 		if set != nil {
-			rec.CasesFile, rec.CasesSHA256, rec.Cases = set.File, set.SHA256, set.Cases.Cases
+			rec.CasesFile, rec.CasesSHA256, rec.Cases, rec.CasesLeftOut = set.File, set.SHA256, set.Cases.Cases, set.LeftOut
 		}
 		return rec
 	}
@@ -382,7 +384,8 @@ type (
 	// style of its hints, its cap and estimate, the fingerprint and the version of its prompt, and
 	// that it checks every hint for leaks and its form (T75): a log of T74 does not, and its calls
 	// tell nothing of what the checks would find. A run of the set of the words tells the file of
-	// its cases, by its name and SHA-256, and the cases (T118).
+	// its cases, by its name and SHA-256, the cases it asks and how many of the file's it left out
+	// (T118; T119).
 	RunRecord struct {
 		Kind          string          `json:"kind"`
 		CallKind      string          `json:"call_kind"`
@@ -402,6 +405,7 @@ type (
 		CasesFile     string          `json:"cases_file,omitempty"`
 		CasesSHA256   string          `json:"cases_sha256,omitempty"`
 		Cases         []Case          `json:"cases,omitempty"`
+		CasesLeftOut  int             `json:"cases_left_out,omitempty"`
 	}
 	// TutorRecord is a tutor as the run's record tells it: its model and prices.
 	TutorRecord struct {

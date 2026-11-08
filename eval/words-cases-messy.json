@@ -1,0 +1,660 @@
+{
+  "format": "tutor-words-cases",
+  "version": 1,
+  "plan": "free-messy.json",
+  "seed": 119,
+  "cases": [
+    {
+      "id": "w001",
+      "kind": "rung",
+      "sheet": 7,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "counted-twice",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w002",
+      "kind": "rung",
+      "sheet": 7,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "counted-twice",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w003",
+      "kind": "rung",
+      "sheet": 7,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "counted-twice",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w004",
+      "kind": "rung",
+      "sheet": 7,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "counted-twice",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w005",
+      "kind": "rung",
+      "sheet": 7,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "counted-twice",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w006",
+      "kind": "rung",
+      "sheet": 7,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "counted-twice",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "Which property of numbers helps here?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w007",
+      "kind": "rung",
+      "sheet": 8,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "halved-total",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w008",
+      "kind": "rung",
+      "sheet": 8,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "halved-total",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w009",
+      "kind": "rung",
+      "sheet": 8,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "halved-total",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w010",
+      "kind": "rung",
+      "sheet": 8,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "halved-total",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w011",
+      "kind": "rung",
+      "sheet": 8,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "halved-total",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w012",
+      "kind": "rung",
+      "sheet": 8,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "halved-total",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w013",
+      "kind": "rung",
+      "sheet": 9,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "not-inverted",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w014",
+      "kind": "rung",
+      "sheet": 9,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "not-inverted",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w015",
+      "kind": "rung",
+      "sheet": 9,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "not-inverted",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w016",
+      "kind": "rung",
+      "sheet": 9,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "not-inverted",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w017",
+      "kind": "rung",
+      "sheet": 9,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "not-inverted",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w018",
+      "kind": "rung",
+      "sheet": 9,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "not-inverted",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "Which property of numbers helps here?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w019",
+      "kind": "rung",
+      "sheet": 10,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "times-as-more",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w020",
+      "kind": "rung",
+      "sheet": 10,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "times-as-more",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w021",
+      "kind": "rung",
+      "sheet": 10,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "times-as-more",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w022",
+      "kind": "rung",
+      "sheet": 10,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "times-as-more",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w023",
+      "kind": "rung",
+      "sheet": 10,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "times-as-more",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Какое свойство чисел здесь помогает?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w024",
+      "kind": "rung",
+      "sheet": 10,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "times-as-more",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w025",
+      "kind": "otherwise",
+      "sheet": 7,
+      "rung": 1,
+      "lang": "ru",
+      "work": false,
+      "found": "counted-twice",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w026",
+      "kind": "otherwise",
+      "sheet": 7,
+      "rung": 2,
+      "lang": "ru",
+      "work": false,
+      "found": "counted-twice",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w027",
+      "kind": "otherwise",
+      "sheet": 7,
+      "rung": 3,
+      "lang": "ru",
+      "work": false,
+      "found": "counted-twice",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Что важно помнить о порядке шагов?",
+        "Как бы выглядел пример попроще?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w028",
+      "kind": "otherwise",
+      "sheet": 8,
+      "rung": 1,
+      "lang": "en",
+      "work": false,
+      "found": "halved-total",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w029",
+      "kind": "otherwise",
+      "sheet": 8,
+      "rung": 2,
+      "lang": "en",
+      "work": false,
+      "found": "halved-total",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w030",
+      "kind": "otherwise",
+      "sheet": 8,
+      "rung": 3,
+      "lang": "en",
+      "work": false,
+      "found": "halved-total",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "What matters about the order of the steps?",
+        "What comes out if you take numbers below ten?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w031",
+      "kind": "otherwise",
+      "sheet": 9,
+      "rung": 1,
+      "lang": "ru",
+      "work": false,
+      "found": "not-inverted",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w032",
+      "kind": "otherwise",
+      "sheet": 9,
+      "rung": 2,
+      "lang": "ru",
+      "work": false,
+      "found": "not-inverted",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w033",
+      "kind": "otherwise",
+      "sheet": 9,
+      "rung": 3,
+      "lang": "ru",
+      "work": false,
+      "found": "not-inverted",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Что важно помнить о порядке шагов?",
+        "Что выйдет, если взять числа до десяти?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w034",
+      "kind": "otherwise",
+      "sheet": 10,
+      "rung": 1,
+      "lang": "en",
+      "work": false,
+      "found": "times-as-more",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w035",
+      "kind": "otherwise",
+      "sheet": 10,
+      "rung": 2,
+      "lang": "en",
+      "work": false,
+      "found": "times-as-more",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w036",
+      "kind": "otherwise",
+      "sheet": 10,
+      "rung": 3,
+      "lang": "en",
+      "work": false,
+      "found": "times-as-more",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "What matters about the order of the steps?",
+        "What comes out if you take numbers below ten?"
+      ],
+      "note": "",
+      "note_kind": ""
+    }
+  ]
+}

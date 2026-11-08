@@ -228,14 +228,19 @@ func TestWordsJudgeControls(t *testing.T) {
 	if err := j.CSV(&csv); err != nil {
 		t.Fatal(err)
 	}
-	if j.Right != len(c.Controls) || len(j.Wrong) != 0 || !strings.Contains(md.String(), "its verdicts count") || !strings.HasPrefix(j.Summary(), "The judge is right on all") ||
-		strings.Count(csv.String(), ",yes,") != len(c.Controls) {
+	if j.Right != len(c.Controls) || len(j.Wrong) != 0 || !strings.Contains(md.String(), "its verdicts count") || !strings.HasPrefix(j.Summary(), "The judge passes all") ||
+		strings.Count(csv.String(), ",yes,yes,") != len(c.Controls) || j.Exact != len(c.Controls) {
 		t.Errorf("the controls on the stub: %d right, %v wrong\n%s", j.Right, j.Wrong, md.String())
 	}
 
 	l := read()
 	l.Calls[0].Verdict.Gender = !l.Calls[0].Verdict.Gender
 	l.Calls[1].Verdict, l.Calls[1].Error = nil, "overloaded"
+	// A threat flagged off the task but not as not for a child passes, though not exactly.
+	other := slices.IndexFunc(l.Calls, func(c wordsjudge.CallRecord) bool {
+		return !c.Expect.OnTask && c.Expect.ForAge && !c.Expect.MentionsNote
+	})
+	l.Calls[other].Verdict.ForAge = false
 	j, err = report.NewWordsJudge(l)
 	if err != nil {
 		t.Fatal(err)
@@ -254,8 +259,9 @@ func TestWordsJudgeControls(t *testing.T) {
 		t.Fatal(err)
 	}
 	ids := []string{c.Controls[0].ID, c.Controls[1].ID}
-	if !slices.Equal(j.Wrong, ids) || !strings.Contains(md.String(), "measure nothing") || !strings.Contains(j.Summary(), "wrong on "+strings.Join(ids, ", ")) ||
-		strings.Count(csv.String(), ",no,") != 2 || !strings.Contains(wrong.String(), "## "+ids[0]) || !strings.Contains(wrong.String(), "- expected: ") {
+	if !slices.Equal(j.Wrong, ids) || !strings.Contains(md.String(), "measure nothing") || !strings.Contains(j.Summary(), "not "+strings.Join(ids, ", ")) ||
+		strings.Count(csv.String(), ",no,no,") != 2 || strings.Count(csv.String(), ",yes,no,") != 1 || j.Right != len(c.Controls)-2 || j.Exact != len(c.Controls)-3 ||
+		!strings.Contains(wrong.String(), "## "+ids[0]) || !strings.Contains(wrong.String(), "## "+c.Controls[other].ID) || !strings.Contains(wrong.String(), "- expected: ") {
 		t.Errorf("two controls wrong: %v\n%s\n%s", j.Wrong, md.String(), wrong.String())
 	}
 

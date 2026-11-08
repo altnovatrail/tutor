@@ -38,6 +38,7 @@ var notes = map[hint.NoteKind]map[sample.Lang]string{
 var techniques = map[sample.TaskKind][]string{
 	sample.KindCalculation:    {"порядок действий: сначала умножение и деление, потом сложение и вычитание", "сложение по разрядам: сначала единицы, потом десятки"},
 	sample.KindLinearEquation: {"обратное действие: то, что сделали с неизвестным, отменить", "проверка: подставить найденное число в уравнение"},
+	sample.KindFreeSolution:   {"рисунок к условию: числовой луч, ряд предметов или схема из отрезков", "проверка: подставить ответ в условие задачи"},
 }
 
 // asked are the questions the tutor asked before, by language and rung, two of each, as a case of
@@ -179,4 +180,63 @@ func Words(plan *sample.Plan, bank *sample.Bank, planFile string, seed uint64) (
 		return nil, nil, fmt.Errorf("gen: the cases of the set of the words: %w", err)
 	}
 	return out, cs, nil
+}
+
+// WordsCases are the cases of the words on the sheets with a mistake of a plan whose sheets are
+// written already, such as the author's (T119): no note and no plan of their own, but for each sheet
+// with a mistake a case of each rung in each language with the work, the questions of the rungs below
+// asked, and the rung put another way at every rung, in Russian and English in turn, the question of
+// the rung itself asked too. The trap found is the sheet's planned trap, none when it has none; the
+// plan may be of lines or of parts. The cases are named for the plan's file, and the same seed gives
+// the same cases.
+func WordsCases(plan *sample.Plan, bank *sample.Bank, planFile string, seed uint64) (*hint.Cases, error) {
+	r := rand.New(rand.NewPCG(seed, 0xca5e5))
+	cs := &hint.Cases{Format: hint.CasesFormat, Version: hint.CasesVersion, Plan: planFile, Seed: seed}
+	var wrong []*sample.PlanSheet
+	for i := range plan.Sheets {
+		sh := &plan.Sheets[i]
+		if sh.Expected.Outcome != sample.OutcomeError {
+			continue
+		}
+		if bank.Task(sh.Task) == nil {
+			return nil, fmt.Errorf("gen: the task %s of sheet %d is not in the bank", sh.Task, sh.Number)
+		}
+		wrong = append(wrong, sh)
+	}
+	if len(wrong) == 0 {
+		return nil, errors.New("gen: the plan has no sheet with a mistake, and a hint is asked only after a wrong answer")
+	}
+	questions := map[int]map[sample.Lang][]string{}
+	for _, sh := range wrong {
+		questions[sh.Number] = map[sample.Lang][]string{}
+		for _, lang := range hint.Langs() {
+			for _, rung := range hint.Rungs() {
+				questions[sh.Number][lang] = append(questions[sh.Number][lang], asked[lang][rung][r.IntN(2)])
+			}
+		}
+	}
+	kase := func(kind hint.CaseKind, sh *sample.PlanSheet, rung hint.Rung, lang sample.Lang) hint.Case {
+		k := hint.Case{ID: fmt.Sprintf("w%03d", len(cs.Cases)+1), Kind: kind, Sheet: sh.Number, Rung: rung, Lang: lang, Work: kind != hint.CaseOtherwise,
+			Found: sh.Expected.Trap, Techniques: append([]string{}, techniques[bank.Task(sh.Task).Kind]...), Asked: append([]string{}, questions[sh.Number][lang][:rung-1]...)}
+		if kind == hint.CaseOtherwise {
+			k.Asked = append(k.Asked, questions[sh.Number][lang][rung-1])
+		}
+		return k
+	}
+	for _, sh := range wrong {
+		for _, rung := range hint.Rungs() {
+			for _, lang := range hint.Langs() {
+				cs.Cases = append(cs.Cases, kase(hint.CaseRung, sh, rung, lang))
+			}
+		}
+	}
+	for i, sh := range wrong {
+		for _, rung := range hint.Rungs() {
+			cs.Cases = append(cs.Cases, kase(hint.CaseOtherwise, sh, rung, hint.Langs()[i%2]))
+		}
+	}
+	if err := cs.Check(plan, bank); err != nil {
+		return nil, fmt.Errorf("gen: the cases: %w", err)
+	}
+	return cs, nil
 }

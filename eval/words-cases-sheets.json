@@ -1,0 +1,3105 @@
+{
+  "format": "tutor-words-cases",
+  "version": 1,
+  "plan": "sheets.json",
+  "seed": 119,
+  "cases": [
+    {
+      "id": "w001",
+      "kind": "rung",
+      "sheet": 3,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "order-of-operations",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w002",
+      "kind": "rung",
+      "sheet": 3,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "order-of-operations",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w003",
+      "kind": "rung",
+      "sheet": 3,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "order-of-operations",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w004",
+      "kind": "rung",
+      "sheet": 3,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "order-of-operations",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Which line makes you unsure?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w005",
+      "kind": "rung",
+      "sheet": 3,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "order-of-operations",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w006",
+      "kind": "rung",
+      "sheet": 3,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "order-of-operations",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "Which property of numbers helps here?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w007",
+      "kind": "rung",
+      "sheet": 5,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "order-of-operations",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w008",
+      "kind": "rung",
+      "sheet": 5,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "order-of-operations",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w009",
+      "kind": "rung",
+      "sheet": 5,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "order-of-operations",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w010",
+      "kind": "rung",
+      "sheet": 5,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "order-of-operations",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Which line makes you unsure?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w011",
+      "kind": "rung",
+      "sheet": 5,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "order-of-operations",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w012",
+      "kind": "rung",
+      "sheet": 5,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "order-of-operations",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w013",
+      "kind": "rung",
+      "sheet": 7,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "carry",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w014",
+      "kind": "rung",
+      "sheet": 7,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "carry",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w015",
+      "kind": "rung",
+      "sheet": 7,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "carry",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w016",
+      "kind": "rung",
+      "sheet": 7,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "carry",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w017",
+      "kind": "rung",
+      "sheet": 7,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "carry",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w018",
+      "kind": "rung",
+      "sheet": 7,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "carry",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "Which property of numbers helps here?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w019",
+      "kind": "rung",
+      "sheet": 9,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "unknown-subtrahend",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w020",
+      "kind": "rung",
+      "sheet": 9,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "unknown-subtrahend",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w021",
+      "kind": "rung",
+      "sheet": 9,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "unknown-subtrahend",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w022",
+      "kind": "rung",
+      "sheet": 9,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "unknown-subtrahend",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w023",
+      "kind": "rung",
+      "sheet": 9,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "unknown-subtrahend",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Какое свойство чисел здесь помогает?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w024",
+      "kind": "rung",
+      "sheet": 9,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "unknown-subtrahend",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w025",
+      "kind": "rung",
+      "sheet": 12,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "minus-before-brackets",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w026",
+      "kind": "rung",
+      "sheet": 12,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "minus-before-brackets",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w027",
+      "kind": "rung",
+      "sheet": 12,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "minus-before-brackets",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w028",
+      "kind": "rung",
+      "sheet": 12,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "minus-before-brackets",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Which line makes you unsure?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w029",
+      "kind": "rung",
+      "sheet": 12,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "minus-before-brackets",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Какое свойство чисел здесь помогает?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w030",
+      "kind": "rung",
+      "sheet": 12,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "minus-before-brackets",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "Which property of numbers helps here?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w031",
+      "kind": "rung",
+      "sheet": 14,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "extra-legs-by-four",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w032",
+      "kind": "rung",
+      "sheet": 14,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "extra-legs-by-four",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w033",
+      "kind": "rung",
+      "sheet": 14,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "extra-legs-by-four",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w034",
+      "kind": "rung",
+      "sheet": 14,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "extra-legs-by-four",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w035",
+      "kind": "rung",
+      "sheet": 14,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "extra-legs-by-four",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w036",
+      "kind": "rung",
+      "sheet": 14,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "extra-legs-by-four",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w037",
+      "kind": "rung",
+      "sheet": 15,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "parts-for-cuts",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w038",
+      "kind": "rung",
+      "sheet": 15,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "parts-for-cuts",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w039",
+      "kind": "rung",
+      "sheet": 15,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "parts-for-cuts",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w040",
+      "kind": "rung",
+      "sheet": 15,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "parts-for-cuts",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w041",
+      "kind": "rung",
+      "sheet": 15,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "parts-for-cuts",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Какое свойство чисел здесь помогает?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w042",
+      "kind": "rung",
+      "sheet": 15,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "parts-for-cuts",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "Which property of numbers helps here?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w043",
+      "kind": "rung",
+      "sheet": 17,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "one-side-division",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w044",
+      "kind": "rung",
+      "sheet": 17,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "one-side-division",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w045",
+      "kind": "rung",
+      "sheet": 17,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "one-side-division",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w046",
+      "kind": "rung",
+      "sheet": 17,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "one-side-division",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w047",
+      "kind": "rung",
+      "sheet": 17,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "one-side-division",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Какое свойство чисел здесь помогает?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w048",
+      "kind": "rung",
+      "sheet": 17,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "one-side-division",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w049",
+      "kind": "rung",
+      "sheet": 20,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "arithmetic",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w050",
+      "kind": "rung",
+      "sheet": 20,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "arithmetic",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w051",
+      "kind": "rung",
+      "sheet": 20,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "arithmetic",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w052",
+      "kind": "rung",
+      "sheet": 20,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "arithmetic",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w053",
+      "kind": "rung",
+      "sheet": 20,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "arithmetic",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Какое свойство чисел здесь помогает?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w054",
+      "kind": "rung",
+      "sheet": 20,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "arithmetic",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w055",
+      "kind": "rung",
+      "sheet": 21,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w056",
+      "kind": "rung",
+      "sheet": 21,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w057",
+      "kind": "rung",
+      "sheet": 21,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w058",
+      "kind": "rung",
+      "sheet": 21,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Which line makes you unsure?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w059",
+      "kind": "rung",
+      "sheet": 21,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w060",
+      "kind": "rung",
+      "sheet": 21,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "Which property of numbers helps here?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w061",
+      "kind": "rung",
+      "sheet": 25,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w062",
+      "kind": "rung",
+      "sheet": 25,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w063",
+      "kind": "rung",
+      "sheet": 25,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w064",
+      "kind": "rung",
+      "sheet": 25,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w065",
+      "kind": "rung",
+      "sheet": 25,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Какое свойство чисел здесь помогает?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w066",
+      "kind": "rung",
+      "sheet": 25,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "Which property of numbers helps here?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w067",
+      "kind": "rung",
+      "sheet": 26,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w068",
+      "kind": "rung",
+      "sheet": 26,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w069",
+      "kind": "rung",
+      "sheet": 26,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w070",
+      "kind": "rung",
+      "sheet": 26,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Which line makes you unsure?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w071",
+      "kind": "rung",
+      "sheet": 26,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w072",
+      "kind": "rung",
+      "sheet": 26,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "Which property of numbers helps here?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w073",
+      "kind": "rung",
+      "sheet": 28,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "arithmetic",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w074",
+      "kind": "rung",
+      "sheet": 28,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "arithmetic",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w075",
+      "kind": "rung",
+      "sheet": 28,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "arithmetic",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w076",
+      "kind": "rung",
+      "sheet": 28,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "arithmetic",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w077",
+      "kind": "rung",
+      "sheet": 28,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "arithmetic",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w078",
+      "kind": "rung",
+      "sheet": 28,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "arithmetic",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w079",
+      "kind": "rung",
+      "sheet": 30,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "gaps-for-posts",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w080",
+      "kind": "rung",
+      "sheet": 30,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "gaps-for-posts",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w081",
+      "kind": "rung",
+      "sheet": 30,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "gaps-for-posts",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w082",
+      "kind": "rung",
+      "sheet": 30,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "gaps-for-posts",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w083",
+      "kind": "rung",
+      "sheet": 30,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "gaps-for-posts",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w084",
+      "kind": "rung",
+      "sheet": 30,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "gaps-for-posts",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "Which property of numbers helps here?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w085",
+      "kind": "rung",
+      "sheet": 31,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "wrong-animal",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w086",
+      "kind": "rung",
+      "sheet": 31,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "wrong-animal",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w087",
+      "kind": "rung",
+      "sheet": 31,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "wrong-animal",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w088",
+      "kind": "rung",
+      "sheet": 31,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "wrong-animal",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w089",
+      "kind": "rung",
+      "sheet": 31,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "wrong-animal",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w090",
+      "kind": "rung",
+      "sheet": 31,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "wrong-animal",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "Which property of numbers helps here?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w091",
+      "kind": "rung",
+      "sheet": 33,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "cuts-plus-one",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w092",
+      "kind": "rung",
+      "sheet": 33,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "cuts-plus-one",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w093",
+      "kind": "rung",
+      "sheet": 33,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "cuts-plus-one",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w094",
+      "kind": "rung",
+      "sheet": 33,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "cuts-plus-one",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w095",
+      "kind": "rung",
+      "sheet": 33,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "cuts-plus-one",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Какое свойство чисел здесь помогает?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w096",
+      "kind": "rung",
+      "sheet": 33,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "cuts-plus-one",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w097",
+      "kind": "rung",
+      "sheet": 38,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "carry",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w098",
+      "kind": "rung",
+      "sheet": 38,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "carry",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w099",
+      "kind": "rung",
+      "sheet": 38,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "carry",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w100",
+      "kind": "rung",
+      "sheet": 38,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "carry",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w101",
+      "kind": "rung",
+      "sheet": 38,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "carry",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Какое свойство чисел здесь помогает?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w102",
+      "kind": "rung",
+      "sheet": 38,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "carry",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "Which property of numbers helps here?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w103",
+      "kind": "rung",
+      "sheet": 39,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "bracket-first-term",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w104",
+      "kind": "rung",
+      "sheet": 39,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "bracket-first-term",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w105",
+      "kind": "rung",
+      "sheet": 39,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "bracket-first-term",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w106",
+      "kind": "rung",
+      "sheet": 39,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "bracket-first-term",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w107",
+      "kind": "rung",
+      "sheet": 39,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "bracket-first-term",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w108",
+      "kind": "rung",
+      "sheet": 39,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "bracket-first-term",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w109",
+      "kind": "rung",
+      "sheet": 40,
+      "rung": 1,
+      "lang": "ru",
+      "work": true,
+      "found": "both-ends-added",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w110",
+      "kind": "rung",
+      "sheet": 40,
+      "rung": 1,
+      "lang": "en",
+      "work": true,
+      "found": "both-ends-added",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w111",
+      "kind": "rung",
+      "sheet": 40,
+      "rung": 2,
+      "lang": "ru",
+      "work": true,
+      "found": "both-ends-added",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w112",
+      "kind": "rung",
+      "sheet": 40,
+      "rung": 2,
+      "lang": "en",
+      "work": true,
+      "found": "both-ends-added",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w113",
+      "kind": "rung",
+      "sheet": 40,
+      "rung": 3,
+      "lang": "ru",
+      "work": true,
+      "found": "both-ends-added",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Какое свойство чисел здесь помогает?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w114",
+      "kind": "rung",
+      "sheet": 40,
+      "rung": 3,
+      "lang": "en",
+      "work": true,
+      "found": "both-ends-added",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w115",
+      "kind": "otherwise",
+      "sheet": 3,
+      "rung": 1,
+      "lang": "ru",
+      "work": false,
+      "found": "order-of-operations",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w116",
+      "kind": "otherwise",
+      "sheet": 3,
+      "rung": 2,
+      "lang": "ru",
+      "work": false,
+      "found": "order-of-operations",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w117",
+      "kind": "otherwise",
+      "sheet": 3,
+      "rung": 3,
+      "lang": "ru",
+      "work": false,
+      "found": "order-of-operations",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Что важно помнить о порядке шагов?",
+        "Как бы выглядел пример попроще?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w118",
+      "kind": "otherwise",
+      "sheet": 5,
+      "rung": 1,
+      "lang": "en",
+      "work": false,
+      "found": "order-of-operations",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Which line makes you unsure?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w119",
+      "kind": "otherwise",
+      "sheet": 5,
+      "rung": 2,
+      "lang": "en",
+      "work": false,
+      "found": "order-of-operations",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w120",
+      "kind": "otherwise",
+      "sheet": 5,
+      "rung": 3,
+      "lang": "en",
+      "work": false,
+      "found": "order-of-operations",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "What matters about the order of the steps?",
+        "What comes out if you take numbers below ten?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w121",
+      "kind": "otherwise",
+      "sheet": 7,
+      "rung": 1,
+      "lang": "ru",
+      "work": false,
+      "found": "carry",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w122",
+      "kind": "otherwise",
+      "sheet": 7,
+      "rung": 2,
+      "lang": "ru",
+      "work": false,
+      "found": "carry",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w123",
+      "kind": "otherwise",
+      "sheet": 7,
+      "rung": 3,
+      "lang": "ru",
+      "work": false,
+      "found": "carry",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Что важно помнить о порядке шагов?",
+        "Что выйдет, если взять числа до десяти?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w124",
+      "kind": "otherwise",
+      "sheet": 9,
+      "rung": 1,
+      "lang": "en",
+      "work": false,
+      "found": "unknown-subtrahend",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w125",
+      "kind": "otherwise",
+      "sheet": 9,
+      "rung": 2,
+      "lang": "en",
+      "work": false,
+      "found": "unknown-subtrahend",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w126",
+      "kind": "otherwise",
+      "sheet": 9,
+      "rung": 3,
+      "lang": "en",
+      "work": false,
+      "found": "unknown-subtrahend",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "What matters about the order of the steps?",
+        "What comes out if you take numbers below ten?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w127",
+      "kind": "otherwise",
+      "sheet": 12,
+      "rung": 1,
+      "lang": "ru",
+      "work": false,
+      "found": "minus-before-brackets",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w128",
+      "kind": "otherwise",
+      "sheet": 12,
+      "rung": 2,
+      "lang": "ru",
+      "work": false,
+      "found": "minus-before-brackets",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Какое свойство чисел здесь помогает?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w129",
+      "kind": "otherwise",
+      "sheet": 12,
+      "rung": 3,
+      "lang": "ru",
+      "work": false,
+      "found": "minus-before-brackets",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Какое свойство чисел здесь помогает?",
+        "Как бы выглядел пример попроще?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w130",
+      "kind": "otherwise",
+      "sheet": 14,
+      "rung": 1,
+      "lang": "en",
+      "work": false,
+      "found": "extra-legs-by-four",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w131",
+      "kind": "otherwise",
+      "sheet": 14,
+      "rung": 2,
+      "lang": "en",
+      "work": false,
+      "found": "extra-legs-by-four",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w132",
+      "kind": "otherwise",
+      "sheet": 14,
+      "rung": 3,
+      "lang": "en",
+      "work": false,
+      "found": "extra-legs-by-four",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "What matters about the order of the steps?",
+        "What would a simpler example look like?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w133",
+      "kind": "otherwise",
+      "sheet": 15,
+      "rung": 1,
+      "lang": "ru",
+      "work": false,
+      "found": "parts-for-cuts",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w134",
+      "kind": "otherwise",
+      "sheet": 15,
+      "rung": 2,
+      "lang": "ru",
+      "work": false,
+      "found": "parts-for-cuts",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Какое свойство чисел здесь помогает?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w135",
+      "kind": "otherwise",
+      "sheet": 15,
+      "rung": 3,
+      "lang": "ru",
+      "work": false,
+      "found": "parts-for-cuts",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Какое свойство чисел здесь помогает?",
+        "Как бы выглядел пример попроще?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w136",
+      "kind": "otherwise",
+      "sheet": 17,
+      "rung": 1,
+      "lang": "en",
+      "work": false,
+      "found": "one-side-division",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w137",
+      "kind": "otherwise",
+      "sheet": 17,
+      "rung": 2,
+      "lang": "en",
+      "work": false,
+      "found": "one-side-division",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w138",
+      "kind": "otherwise",
+      "sheet": 17,
+      "rung": 3,
+      "lang": "en",
+      "work": false,
+      "found": "one-side-division",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "What matters about the order of the steps?",
+        "What comes out if you take numbers below ten?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w139",
+      "kind": "otherwise",
+      "sheet": 20,
+      "rung": 1,
+      "lang": "ru",
+      "work": false,
+      "found": "arithmetic",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w140",
+      "kind": "otherwise",
+      "sheet": 20,
+      "rung": 2,
+      "lang": "ru",
+      "work": false,
+      "found": "arithmetic",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Какое свойство чисел здесь помогает?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w141",
+      "kind": "otherwise",
+      "sheet": 20,
+      "rung": 3,
+      "lang": "ru",
+      "work": false,
+      "found": "arithmetic",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Какое свойство чисел здесь помогает?",
+        "Что выйдет, если взять числа до десяти?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w142",
+      "kind": "otherwise",
+      "sheet": 21,
+      "rung": 1,
+      "lang": "en",
+      "work": false,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Which line makes you unsure?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w143",
+      "kind": "otherwise",
+      "sheet": 21,
+      "rung": 2,
+      "lang": "en",
+      "work": false,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "Which property of numbers helps here?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w144",
+      "kind": "otherwise",
+      "sheet": 21,
+      "rung": 3,
+      "lang": "en",
+      "work": false,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "Which property of numbers helps here?",
+        "What would a simpler example look like?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w145",
+      "kind": "otherwise",
+      "sheet": 25,
+      "rung": 1,
+      "lang": "ru",
+      "work": false,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w146",
+      "kind": "otherwise",
+      "sheet": 25,
+      "rung": 2,
+      "lang": "ru",
+      "work": false,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Какое свойство чисел здесь помогает?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w147",
+      "kind": "otherwise",
+      "sheet": 25,
+      "rung": 3,
+      "lang": "ru",
+      "work": false,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Какое свойство чисел здесь помогает?",
+        "Как бы выглядел пример попроще?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w148",
+      "kind": "otherwise",
+      "sheet": 26,
+      "rung": 1,
+      "lang": "en",
+      "work": false,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Which line makes you unsure?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w149",
+      "kind": "otherwise",
+      "sheet": 26,
+      "rung": 2,
+      "lang": "en",
+      "work": false,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "Which property of numbers helps here?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w150",
+      "kind": "otherwise",
+      "sheet": 26,
+      "rung": 3,
+      "lang": "en",
+      "work": false,
+      "found": "sign-on-transfer",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "Which property of numbers helps here?",
+        "What would a simpler example look like?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w151",
+      "kind": "otherwise",
+      "sheet": 28,
+      "rung": 1,
+      "lang": "ru",
+      "work": false,
+      "found": "arithmetic",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w152",
+      "kind": "otherwise",
+      "sheet": 28,
+      "rung": 2,
+      "lang": "ru",
+      "work": false,
+      "found": "arithmetic",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w153",
+      "kind": "otherwise",
+      "sheet": 28,
+      "rung": 3,
+      "lang": "ru",
+      "work": false,
+      "found": "arithmetic",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Что важно помнить о порядке шагов?",
+        "Как бы выглядел пример попроще?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w154",
+      "kind": "otherwise",
+      "sheet": 30,
+      "rung": 1,
+      "lang": "en",
+      "work": false,
+      "found": "gaps-for-posts",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w155",
+      "kind": "otherwise",
+      "sheet": 30,
+      "rung": 2,
+      "lang": "en",
+      "work": false,
+      "found": "gaps-for-posts",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "Which property of numbers helps here?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w156",
+      "kind": "otherwise",
+      "sheet": 30,
+      "rung": 3,
+      "lang": "en",
+      "work": false,
+      "found": "gaps-for-posts",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "Which property of numbers helps here?",
+        "What comes out if you take numbers below ten?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w157",
+      "kind": "otherwise",
+      "sheet": 31,
+      "rung": 1,
+      "lang": "ru",
+      "work": false,
+      "found": "wrong-animal",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w158",
+      "kind": "otherwise",
+      "sheet": 31,
+      "rung": 2,
+      "lang": "ru",
+      "work": false,
+      "found": "wrong-animal",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Что важно помнить о порядке шагов?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w159",
+      "kind": "otherwise",
+      "sheet": 31,
+      "rung": 3,
+      "lang": "ru",
+      "work": false,
+      "found": "wrong-animal",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Что важно помнить о порядке шагов?",
+        "Что выйдет, если взять числа до десяти?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w160",
+      "kind": "otherwise",
+      "sheet": 33,
+      "rung": 1,
+      "lang": "en",
+      "work": false,
+      "found": "cuts-plus-one",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w161",
+      "kind": "otherwise",
+      "sheet": 33,
+      "rung": 2,
+      "lang": "en",
+      "work": false,
+      "found": "cuts-plus-one",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w162",
+      "kind": "otherwise",
+      "sheet": 33,
+      "rung": 3,
+      "lang": "en",
+      "work": false,
+      "found": "cuts-plus-one",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Which line makes you unsure?",
+        "What matters about the order of the steps?",
+        "What would a simpler example look like?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w163",
+      "kind": "otherwise",
+      "sheet": 38,
+      "rung": 1,
+      "lang": "ru",
+      "work": false,
+      "found": "carry",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w164",
+      "kind": "otherwise",
+      "sheet": 38,
+      "rung": 2,
+      "lang": "ru",
+      "work": false,
+      "found": "carry",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Какое свойство чисел здесь помогает?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w165",
+      "kind": "otherwise",
+      "sheet": 38,
+      "rung": 3,
+      "lang": "ru",
+      "work": false,
+      "found": "carry",
+      "techniques": [
+        "порядок действий: сначала умножение и деление, потом сложение и вычитание",
+        "сложение по разрядам: сначала единицы, потом десятки"
+      ],
+      "asked": [
+        "Какая строка вызывает у тебя сомнение?",
+        "Какое свойство чисел здесь помогает?",
+        "Как бы выглядел пример попроще?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w166",
+      "kind": "otherwise",
+      "sheet": 39,
+      "rung": 1,
+      "lang": "en",
+      "work": false,
+      "found": "bracket-first-term",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w167",
+      "kind": "otherwise",
+      "sheet": 39,
+      "rung": 2,
+      "lang": "en",
+      "work": false,
+      "found": "bracket-first-term",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "What matters about the order of the steps?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w168",
+      "kind": "otherwise",
+      "sheet": 39,
+      "rung": 3,
+      "lang": "en",
+      "work": false,
+      "found": "bracket-first-term",
+      "techniques": [
+        "обратное действие: то, что сделали с неизвестным, отменить",
+        "проверка: подставить найденное число в уравнение"
+      ],
+      "asked": [
+        "What in the work is worth checking once more?",
+        "What matters about the order of the steps?",
+        "What would a simpler example look like?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w169",
+      "kind": "otherwise",
+      "sheet": 40,
+      "rung": 1,
+      "lang": "ru",
+      "work": false,
+      "found": "both-ends-added",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w170",
+      "kind": "otherwise",
+      "sheet": 40,
+      "rung": 2,
+      "lang": "ru",
+      "work": false,
+      "found": "both-ends-added",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Какое свойство чисел здесь помогает?"
+      ],
+      "note": "",
+      "note_kind": ""
+    },
+    {
+      "id": "w171",
+      "kind": "otherwise",
+      "sheet": 40,
+      "rung": 3,
+      "lang": "ru",
+      "work": false,
+      "found": "both-ends-added",
+      "techniques": [
+        "рисунок к условию: числовой луч, ряд предметов или схема из отрезков",
+        "проверка: подставить ответ в условие задачи"
+      ],
+      "asked": [
+        "Что стоит сверить в записи ещё раз?",
+        "Какое свойство чисел здесь помогает?",
+        "Что выйдет, если взять числа до десяти?"
+      ],
+      "note": "",
+      "note_kind": ""
+    }
+  ]
+}

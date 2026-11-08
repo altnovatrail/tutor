@@ -24,10 +24,11 @@ type WordsJudge struct {
 	// Cells are the hints judged of each tutor by kind of case and language, each tutor's followed
 	// by all its hints; none of a run of the controls.
 	Cells []JudgeCell
-	// Right and Wrong are the control phrases the judge answered as they expect and those it did
-	// not, failed calls among them; none of a run of the hints.
-	Right int
-	Wrong []string
+	// Right and Wrong are the control phrases the judge passed (wordsjudge.Verdict.Passes) and those
+	// it did not, failed calls among them, and Exact those whose four answers it gave as expected;
+	// none of a run of the hints.
+	Right, Exact int
+	Wrong        []string
 }
 
 // JudgeCell is what the judge said of the hints of a tutor of a kind of case in a language; a cell
@@ -60,10 +61,14 @@ func NewWordsJudge(l *wordsjudge.Log) (*WordsJudge, error) {
 			if c.Expect == nil {
 				return nil, fmt.Errorf("report: a call of the controls without its answers, %q", c.Control)
 			}
-			if c.Verdict != nil && c.Verdict.Same(c.Expect.Verdict()) {
-				r.Right++
-			} else {
+			switch {
+			case c.Verdict == nil || !c.Verdict.Passes(c.Expect.Verdict()):
 				r.Wrong = append(r.Wrong, c.Control)
+			case c.Verdict.Same(c.Expect.Verdict()):
+				r.Right++
+				r.Exact++
+			default:
+				r.Right++
 			}
 		}
 	case wordsjudge.OfLog:
@@ -163,7 +168,7 @@ func (r *WordsJudge) Markdown(w io.Writer, logName string) error {
 		of, logName, short(l.Run.Prompt), l.Run.PromptVersion, l.Run.File, short(l.Run.SHA256), configName(jd.Name, jd.Model, jd.Effort, jd.NoThinking), made, failed, spent, l.Run.MaxUSD)
 	b.WriteString(endNote(l.End))
 	if l.Run.Of == wordsjudge.OfControls {
-		fmt.Fprintf(&b, "\n## The control phrases\n\nThe judge gave every answer expected on %d of %d. ", r.Right, len(l.Calls))
+		fmt.Fprintf(&b, "\n## The control phrases\n\nThe judge passed %d of %d: it told the learner's sex as expected and flagged the hint as expected; it gave all four answers as expected on %d. ", r.Right, len(l.Calls), r.Exact)
 		if len(r.Wrong) == 0 {
 			b.WriteString("It measures the words: its verdicts count.\n")
 		} else {
@@ -188,16 +193,19 @@ func (r *WordsJudge) CSV(w io.Writer) error {
 	f := func(v float64) string { return strconv.FormatFloat(v, 'f', 4, 64) }
 	var rows [][]string
 	if r.log.Run.Of == wordsjudge.OfControls {
-		rows = append(rows, []string{"control", "lang", "right", "gender", "on_task", "for_age", "mentions_note"})
+		rows = append(rows, []string{"control", "lang", "right", "exact", "gender", "on_task", "for_age", "mentions_note"})
 		for _, c := range r.log.Calls {
-			right, v := "no", c.Verdict
-			if v != nil && v.Same(c.Expect.Verdict()) {
+			right, exact, v := "no", "no", c.Verdict
+			if v != nil && v.Passes(c.Expect.Verdict()) {
 				right = "yes"
+			}
+			if v != nil && v.Same(c.Expect.Verdict()) {
+				exact = "yes"
 			}
 			if v == nil {
 				v = &wordsjudge.Verdict{}
 			}
-			rows = append(rows, []string{c.Control, c.Lang, right, strconv.FormatBool(v.Gender), strconv.FormatBool(v.OnTask), strconv.FormatBool(v.ForAge), strconv.FormatBool(v.MentionsNote)})
+			rows = append(rows, []string{c.Control, c.Lang, right, exact, strconv.FormatBool(v.Gender), strconv.FormatBool(v.OnTask), strconv.FormatBool(v.ForAge), strconv.FormatBool(v.MentionsNote)})
 		}
 	} else {
 		rows = append(rows, []string{"tutor", "case", "lang", "judged", "no_verdict", "gender", "gender_upper", "off_task", "off_task_upper", "not_for_age", "not_for_age_upper",
@@ -219,9 +227,9 @@ func (r *WordsJudge) CSV(w io.Writer) error {
 func (r *WordsJudge) Summary() string {
 	if r.log.Run.Of == wordsjudge.OfControls {
 		if len(r.Wrong) == 0 {
-			return fmt.Sprintf("The judge is right on all %d control phrases.\n", r.Right)
+			return fmt.Sprintf("The judge passes all %d control phrases, %d of them with all four answers as expected.\n", r.Right, r.Exact)
 		}
-		return fmt.Sprintf("The judge is right on %d of %d control phrases, wrong on %s.\n", r.Right, len(r.log.Calls), strings.Join(r.Wrong, ", "))
+		return fmt.Sprintf("The judge passes %d of %d control phrases, not %s.\n", r.Right, len(r.log.Calls), strings.Join(r.Wrong, ", "))
 	}
 	var b strings.Builder
 	for _, c := range r.Cells {
@@ -242,7 +250,7 @@ func (r *WordsJudge) Readable() (suffix, label string, write func(w io.Writer, l
 // flagged writes every call the judge or the code flags, and every call without a verdict.
 func (r *WordsJudge) flagged(w io.Writer, logName string) error {
 	var b strings.Builder
-	fmt.Fprintf(&b, "# Flagged by the judge of the words: %s\n\nEvery call of the log whose verdict flags it, whose hint the code flags — the sex told by the rough search, the note taken up —, or that has no verdict; of the control phrases, every one the judge got wrong.\n", logName)
+	fmt.Fprintf(&b, "# Flagged by the judge of the words: %s\n\nEvery call of the log whose verdict flags it, whose hint the code flags — the sex told by the rough search, the note taken up —, or that has no verdict; of the control phrases, every one whose four answers the judge did not give as expected, passed or not.\n", logName)
 	n := 0
 	for _, c := range r.log.Calls {
 		v := c.Verdict
@@ -259,7 +267,11 @@ func (r *WordsJudge) flagged(w io.Writer, logName string) error {
 			fmt.Fprintf(&b, "\n## %s, %s, %s, %s, rung %d, sheet %d of %s, repeat %d\n\n", c.Case, c.Tutor, c.CaseKind, c.Lang, c.Rung, c.Sheet, c.Set, c.Repeat)
 		}
 		if c.Note != "" {
-			fmt.Fprintf(&b, "- note: «%s» (%s)\n", c.Note, c.NoteKind)
+			kind := ""
+			if c.NoteKind != "" {
+				kind = " (" + string(c.NoteKind) + ")"
+			}
+			fmt.Fprintf(&b, "- note: «%s»%s\n", c.Note, kind)
 		}
 		fmt.Fprintf(&b, "- hint: «%s»\n", c.Hint)
 		if v != nil {
