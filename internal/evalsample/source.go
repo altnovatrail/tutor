@@ -10,10 +10,14 @@ import (
 
 // Source is a file of tasks as a sample names it, the source file of its task reference (R69): its
 // path in the repository, from the root, with slashes, and the digest of the file, "sha256:" and 64
-// lowercase hexadecimal digits. A bank of sheets, the workbook and the essays are named alike.
+// lowercase hexadecimal digits. A bank of sheets, the workbook and the essays are named alike. A
+// file of tutor's tree at the tag of a release, which a sample names by that release (Releases),
+// has its tag too, and the digest of the release's file of open tasks, that tree's OpenTasks.
 type Source struct {
 	Path   string
 	Digest string
+	Tag    string
+	Open   string
 }
 
 // SourceOf is the source of the bytes data at the path given, from the repository's root.
@@ -58,8 +62,12 @@ func (s Source) reference(task, digest string) *evalv1.TaskReference {
 }
 
 // refuse refuses a sample whose task is not of the source, as section 13 has it: another source
-// than a file of tasks, a file of another path, or of another digest.
+// than a file of tasks, a file of another path, or of another digest; or, for a file of a release of
+// tutor, another source than that release (refuseTutor).
 func (s Source) refuse(ref *evalv1.TaskReference) *Refusal {
+	if s.Tag != "" {
+		return s.refuseTutor(ref.GetTutor())
+	}
 	src := ref.GetFile()
 	switch {
 	case src == nil:
@@ -68,6 +76,25 @@ func (s Source) refuse(ref *evalv1.TaskReference) *Refusal {
 		return refuse(evalv1.Refusal_REFUSAL_OTHER_TASK, "its task is of the file %s, and its set's is %s", src.GetBank(), s.Path)
 	case src.GetBankDigest() != s.Digest || src.GetFileDigest() != s.Digest:
 		return refuse(evalv1.Refusal_REFUSAL_OTHER_TASK, "its file of tasks is of another digest than %s's", s.Path)
+	}
+	return nil
+}
+
+// refuseTutor refuses a sample whose task is not of this file of the release of tutor at s.Tag: a
+// source of no release of tutor, another tag, another bank, or a file of open tasks or a bank of
+// another digest than the tree of that tag holds.
+func (s Source) refuseTutor(src *evalv1.TutorSource) *Refusal {
+	switch {
+	case src == nil:
+		return refuse(evalv1.Refusal_REFUSAL_OTHER_TASK, "its task is of no release of tutor, and its set's is %s of tutor %s", s.Path, s.Tag)
+	case src.GetTag() != s.Tag:
+		return refuse(evalv1.Refusal_REFUSAL_OTHER_TASK, "its task is of tutor %s, and its set's of tutor %s", src.GetTag(), s.Tag)
+	case src.GetBank() != s.Path:
+		return refuse(evalv1.Refusal_REFUSAL_OTHER_TASK, "its task is of the file %s, and its set's is %s", src.GetBank(), s.Path)
+	case src.GetFileDigest() != s.Open:
+		return refuse(evalv1.Refusal_REFUSAL_OTHER_TASK, "its file of open tasks is of another digest than tutor %s's", s.Tag)
+	case src.GetBankDigest() != s.Digest:
+		return refuse(evalv1.Refusal_REFUSAL_OTHER_TASK, "its file of tasks is of another digest than %s of tutor %s", s.Path, s.Tag)
 	}
 	return nil
 }

@@ -43,6 +43,11 @@ const usage = `usage:
   tutor-eval board -record [-addr A] [-dir D] [-bank F] [-plan F]
                                                       the record mode: write the sheets of the plan,
                                                       and each is saved as a sample of the protocol
+  tutor-eval canvas -dir D -at D [-name N] [-runs D] [-repeats N]
+                             check that the runner reads canvas's synthetic samples in -dir, by
+                             the tasks of tutor's tags they name, whose trees are in -at: each
+                             held to spec's rules, read, and run on the stub with its reports;
+                             it fails on a sample it cannot read or refuses but as a child's
   tutor-eval check FILE...   check banks, sheet plans, the pages of the workbook and the essays;
                              plans against a bank given with them
   tutor-eval convert -from D [-to D] [-bank F] [-plan F] [-seed N] [-shift S] [-writer-code F]
@@ -153,6 +158,8 @@ func run(args []string, stdout, stderr io.Writer) int {
 		return runBoard(operands, stdout, stderr, os.Getenv, serveHTTP)
 	case "convert":
 		return runConvert(operands, stdout, stderr)
+	case "canvas":
+		return runCanvas(context.Background(), operands, stdout, stderr, time.Now)
 	case "check":
 		if len(operands) == 0 {
 			_, _ = fmt.Fprintln(stderr, "tutor-eval check: no files given")

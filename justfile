@@ -275,6 +275,89 @@ sample-check:
 # spec submodule, which go.yml does not check out.
 ci-sample-check: sample-check
 
+# canvas's synthetic samples, which tutor's runner must read (R38 spec; R76 in docs/decisions.md):
+# the release of canvas by its exact tag, and the SHA-256 of its archive of the samples. The
+# archive's signature was verified once, when the tag was pinned, by
+# just -f spec/justfile release-verify canvas <tag> synthetic-samples_<tag>.tar.gz; from then on
+# this sum holds the file (RULES.md of spec, "Release files are verified"). A new tag of canvas is
+# pinned so again: both lines, the signature of its archive verified, and just canvas-check green.
+CANVAS_TAG := "v0.1.6"
+CANVAS_SYNTHETIC_SHA256 := "c538462f4a25274de49da6412b10ffaf163ce8a851222697e3aa954073c0166a"
+
+# Download the samples of the pinned release of canvas into synthetic/canvas-<tag>, checked against
+# their sum, with nothing in the archive but its samples, and write the tree of eval/ at each tag
+# of tutor they name into synthetic/tutor-trees/<tag>, by git archive: the runner reads a sample's
+# task with the bank at that tag, so a bank changed since takes nothing from the samples. A tag
+# the clone lacks is fetched without --depth, so a full clone stays full. Both are written anew.
+# Fetch canvas's synthetic samples and the trees of tutor's tags they name.
+canvas-fetch:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    tag={{ quote(CANVAS_TAG) }}
+    file="synthetic-samples_${tag}.tar.gz"
+    dir="synthetic/canvas-${tag}"
+    trees=synthetic/tutor-trees
+    tmp="$(mktemp -d)"
+    trap 'rm -rf "$tmp"' EXIT
+    curl -fsSL --proto '=https' --proto-redir '=https' --retry 3 --retry-all-errors \
+        -o "$tmp/$file" "https://github.com/altnovatrail/canvas/releases/download/${tag}/${file}"
+    (cd "$tmp" && echo {{ quote(CANVAS_SYNTHETIC_SHA256) }}"  $file" | sha256sum --check --strict --quiet) \
+        || { echo "canvas-fetch: $file is not the file its pinned SHA-256 holds" >&2; exit 1; }
+    if tar -tzf "$tmp/$file" | grep -qvE '^synthetic-[0-9]+\.json$'; then
+        echo "canvas-fetch: $file holds more than synthetic-NNN.json" >&2
+        exit 1
+    fi
+    rm -rf -- "$dir"
+    mkdir -p "$dir"
+    tar -xzf "$tmp/$file" -C "$dir" --no-same-owner --no-same-permissions
+    # The tags of tutor the samples name, each a version, as the runner takes one.
+    tags="$(node -e 'const fs = require("fs"); const dir = process.argv[1]; const tags = new Set();
+        for (const f of fs.readdirSync(dir)) { const t = JSON.parse(fs.readFileSync(dir + "/" + f, "utf8")).task?.tutor?.tag; if (/^v[0-9]+\.[0-9]+\.[0-9]+$/.test(t ?? "")) tags.add(t); }
+        console.log([...tags].sort().join("\n"));' "$dir")"
+    while read -r t; do
+        [ -n "$t" ] || continue
+        git rev-parse -q --verify "refs/tags/${t}^{commit}" >/dev/null \
+            || git fetch --quiet --no-tags origin "refs/tags/${t}:refs/tags/${t}"
+        rm -rf -- "${trees:?}/$t"
+        mkdir -p "$trees/$t"
+        git archive "$t" eval | tar -x -C "$trees/$t"
+    done <<< "$tags"
+
+# Check that the runner reads canvas's synthetic samples: each held to spec's rules, read by the
+# task it names at its tag of tutor, and run on the stub, with no key and no cost (tutor-eval canvas).
+# Check that the runner reads the samples of the pinned release of canvas.
+canvas-check: canvas-fetch
+    go run ./cmd/tutor-eval canvas -dir synthetic/canvas-{{ CANVAS_TAG }} -at synthetic/tutor-trees
+
+# The check fails on a spoiled sample: in a copy of the samples, the first names an open view of
+# another digest, which sample-check still passes, and the check refuses it as another task.
+# Check that tutor-eval canvas fails on a spoiled sample of canvas.
+canvas-check-test: canvas-fetch
+    #!/usr/bin/env bash
+    set -euo pipefail
+    src="synthetic/canvas-{{ CANVAS_TAG }}"
+    bad="${src}-spoiled"
+    out="$(mktemp)"
+    trap 'rm -f "$out"; rm -rf -- "$bad" "$bad-runs"' EXIT
+    rm -rf -- "$bad" "$bad-runs"
+    cp -r "$src" "$bad"
+    first="$(find "$bad" -maxdepth 1 -name '*.json' -printf '%f\n' | sort | head -n 1)"
+    zeros="$(printf '0%.0s' {1..64})"
+    sed -i -E "s/(\"open_view_digest\": \"sha256:)[0-9a-f]{64}\"/\1${zeros}\"/" "$bad/$first"
+    grep -qF "sha256:${zeros}" "$bad/$first" || { echo "canvas-check-test: the spoil did not take in $first" >&2; exit 1; }
+    if go run ./cmd/tutor-eval canvas -dir "$bad" -at synthetic/tutor-trees -runs "$bad-runs" >"$out" 2>&1; then
+        echo "canvas-check-test: the check passed a spoiled sample" >&2
+        exit 1
+    fi
+    grep -F "$first: " "$out" | grep -qF "refused as another task" \
+        || { echo "canvas-check-test: the check failed for another reason:" >&2; tail -n 5 "$out" >&2; exit 1; }
+    echo "canvas-check-test: ok"
+
+# Run the check of canvas's synthetic samples, and its test on a spoiled one, as the repository's
+# own job Canvas in ci.yml runs them: they need the spec submodule and the network.
+# Run canvas-check and canvas-check-test, as CI does.
+ci-canvas-check: canvas-check canvas-check-test
+
 # Fail on a known vulnerability in code this module reaches.
 ci-vuln:
     go run {{ GOVULNCHECK }} ./...

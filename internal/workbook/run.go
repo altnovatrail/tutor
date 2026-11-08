@@ -301,6 +301,9 @@ type (
 		Runner    string           `json:"runner,omitempty"`
 		ModuleKit string           `json:"module_kit,omitempty"`
 		Refused   []runner.Refused `json:"refused,omitempty"`
+		// Set names the set of the pages where they are not the samples of the file's directory, as
+		// canvas's synthetic samples are not (R76); "" names it by the file.
+		Set string `json:"set,omitempty"`
 	}
 	// ReaderRecord is a reader as the run's record tells it: its model and prices, and whether it
 	// reads once.

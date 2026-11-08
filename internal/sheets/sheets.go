@@ -18,10 +18,7 @@ import (
 	"slices"
 	"strings"
 
-	evalv1 "github.com/altnovatrail/spec/contracts/novatrail/eval/v1"
-
 	"github.com/altnovatrail/tutor/internal/evalsample"
-	"github.com/altnovatrail/tutor/internal/protocol"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/samplecheck"
 )
@@ -137,11 +134,7 @@ func Read(dir string, plan *sample.Plan, bank *evalsample.Bank, check samplechec
 			sh.Problems = []string{V0Problem}
 			continue
 		}
-		if at := broken[filepath.Join(dir, sh.File)]; len(at) > 0 {
-			sh.Refused = &evalsample.Refusal{Reason: evalv1.Refusal_REFUSAL_INVALID, Detail: fmt.Sprintf("sample-check finds it breaks a rule of sections 11 and 12, at %s", lineList(at)), Sample: evalsample.SampleID(data)}
-			continue
-		}
-		readProtocol(sh, data, bank)
+		readProtocol(sh, data, broken[filepath.Join(dir, sh.File)], bank)
 	}
 	return r, nil
 }
@@ -171,11 +164,12 @@ func OfProtocol(data []byte) bool {
 }
 
 // readProtocol reads a sheet's sample of the protocol as its plan sheet, and refuses it as section
-// 13 has it (evalsample.Read). A file that cannot be read strictly as a sample is invalid too.
-func readProtocol(sh *Sheet, data []byte, bank *evalsample.Bank) {
-	es, err := protocol.ReadSample(bytes.NewReader(data))
-	if err != nil {
-		sh.Refused = &evalsample.Refusal{Reason: evalv1.Refusal_REFUSAL_INVALID, Detail: "it cannot be read strictly as a sample of the protocol", Sample: evalsample.SampleID(data)}
+// 13 has it (evalsample.Read). A file that sample-check finds breaking a rule, at the lines broken,
+// or that cannot be read strictly as a sample is invalid too (evalsample.ReadChecked).
+func readProtocol(sh *Sheet, data []byte, broken []int, bank *evalsample.Bank) {
+	es, refused := evalsample.ReadChecked(data, broken)
+	if refused != nil {
+		sh.Refused = refused
 		return
 	}
 	read, refused, err := evalsample.Read(es, sh.Plan, bank)
@@ -196,18 +190,6 @@ func readProtocol(sh *Sheet, data []byte, bank *evalsample.Bank) {
 		return
 	}
 	sh.Sample, sh.Mouse, sh.ID, sh.Truth = read.Sample, read.Mouse, read.ID, read.Truth
-}
-
-// lineList names lines of a file.
-func lineList(at []int) string {
-	parts := make([]string, len(at))
-	for i, n := range at {
-		parts[i] = fmt.Sprint(n)
-	}
-	if len(at) == 1 {
-		return "line " + parts[0]
-	}
-	return "lines " + strings.Join(parts, ", ")
 }
 
 // V0Problem is the problem of a sheet whose file is of tutor-sample v0, which no reader but

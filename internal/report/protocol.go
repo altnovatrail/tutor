@@ -198,7 +198,9 @@ func ReadingReports(l *reading.Log) []Named {
 	}
 	var sheets []*reading.SheetRecord
 	for i := range l.Sheets {
-		if l.Sheets[i].Sample != "" && len(l.Sheets[i].Truth) == 1 {
+		// A sheet that shows no stroke has no answer slot a model reads: it is measured with none,
+		// as a page whose boxes are all empty is.
+		if l.Sheets[i].Sample != "" && len(l.Sheets[i].Truth) <= 1 {
 			sheets = append(sheets, &l.Sheets[i])
 		}
 	}
@@ -209,12 +211,15 @@ func ReadingReports(l *reading.Log) []Named {
 	report := func(name string, repeats int, read func(sh *reading.SheetRecord, rep int) *evalv1.Reading, readers ...*evalv1.Model) Named {
 		var measured []*evalv1.SampleResult
 		for _, sh := range sheets {
-			t := sh.Truth[0]
-			slot := &evalv1.AnswerSlotResult{AnswerSlot: &observationv1.AnswerSlotPlace{Item: int32(t.Item), Slot: int32(t.Slot)}, Truth: truthOf(t), Mirrored: t.Mirrored, CrossedOut: t.CrossedOut}
-			for rep := 1; rep <= repeats; rep++ {
-				slot.Readings = append(slot.Readings, read(sh, rep))
+			var slots []*evalv1.AnswerSlotResult
+			for _, t := range sh.Truth {
+				slot := &evalv1.AnswerSlotResult{AnswerSlot: &observationv1.AnswerSlotPlace{Item: int32(t.Item), Slot: int32(t.Slot)}, Truth: truthOf(t), Mirrored: t.Mirrored, CrossedOut: t.CrossedOut}
+				for rep := 1; rep <= repeats; rep++ {
+					slot.Readings = append(slot.Readings, read(sh, rep))
+				}
+				slots = append(slots, slot)
 			}
-			measured = append(measured, &evalv1.SampleResult{Sample: sh.Sample, Result: &evalv1.SampleResult_Measured{Measured: &evalv1.Measurement{AnswerSlots: []*evalv1.AnswerSlotResult{slot}}}})
+			measured = append(measured, &evalv1.SampleResult{Sample: sh.Sample, Result: &evalv1.SampleResult_Measured{Measured: &evalv1.Measurement{AnswerSlots: slots}}})
 		}
 		r := head(evalv1.Capability_CAPABILITY_HANDWRITING_READING, l.Run.Runner, l.Run.ModuleKit, set, repeats, readers...)
 		return Named{Name: name, Report: withRefused(r, measured, l.Run.Refused)}
@@ -286,7 +291,7 @@ func WorkbookReports(l *workbook.Log) []Named {
 	if len(pages) == 0 {
 		return nil
 	}
-	set := setName([]string{fileName(l.Run.File)}, l.Run.Part)
+	set := setName([]string{cmp.Or(l.Run.Set, fileName(l.Run.File))}, l.Run.Part)
 	// verdicts are module-kit's verdicts on an observation of a page, nil for none, by the slots of
 	// its items, each answer slot by its place.
 	verdicts := func(pr *workbook.PageRecord, obs *observationv1.Observation) map[[2]int]verdict.SlotVerdict {

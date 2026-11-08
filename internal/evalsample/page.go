@@ -9,6 +9,7 @@ import (
 
 	"github.com/altnovatrail/module-kit/observation"
 	mkview "github.com/altnovatrail/module-kit/openview"
+	"github.com/altnovatrail/module-kit/verdict"
 	evalv1 "github.com/altnovatrail/spec/contracts/novatrail/eval/v1"
 	observationv1 "github.com/altnovatrail/spec/contracts/novatrail/observation/v1"
 	"google.golang.org/protobuf/proto"
@@ -199,6 +200,21 @@ type Page struct {
 //
 // A sample of another ink or surface is no page the runner reads, and ReadPage gives ErrNotPage.
 func ReadPage(es *evalv1.Sample, w *Workbook) (*Page, *Refusal, error) {
+	return readPage(es, w, false)
+}
+
+// ReadMarkedPage reads a sample of a page of a set of a capability, as canvas's synthetic samples
+// are (section 13 of spec's text of the contracts): a page whose values are its own, not those the
+// workbook's file writes in its boxes. It refuses the sample as ReadPage does, and reads a final
+// geometry as well as a history. Its Page is the file's page with each box written as the sample's
+// markup has it (markedPage), the checks and keys the file's: markup that the run of the workbook
+// cannot stand for is an error, not a refusal.
+func ReadMarkedPage(es *evalv1.Sample, w *Workbook) (*Page, *Refusal, error) {
+	return readPage(es, w, true)
+}
+
+// readPage reads a sample as a page, as ReadPage does, and as ReadMarkedPage does when marked is set.
+func readPage(es *evalv1.Sample, w *Workbook, marked bool) (*Page, *Refusal, error) {
 	m := es.GetMarkup()
 	if m == nil {
 		return nil, refuse(evalv1.Refusal_REFUSAL_NO_MARKUP, "the sample has no markup, and the runner measures nothing on it"), nil
@@ -243,10 +259,22 @@ func ReadPage(es *evalv1.Sample, w *Workbook) (*Page, *Refusal, error) {
 		return nil, refuse(evalv1.Refusal_REFUSAL_CHILD, "a child wrote it, and nothing of a child's sample goes to AI until a contract with the provider admits children (П-3)"), nil
 	}
 	h, surface := es.GetHistory(), es.GetWorkbook()
-	if h == nil || surface == nil {
+	var strokes []sample.Stroke
+	switch g := es.GetGeometry(); {
+	case surface == nil:
+		return nil, nil, ErrNotPage
+	case h != nil:
+		strokes, _, _ = protocol.Ink(h)
+	case g != nil && marked:
+		strokes = protocol.Final(g.GetStrokes())
+	default:
 		return nil, nil, ErrNotPage
 	}
-	strokes, _, _ := protocol.Ink(h)
+	if marked {
+		if pg, err = markedPage(pg, m, filled, items); err != nil {
+			return nil, nil, err
+		}
+	}
 	byID := map[int32]sample.Stroke{}
 	for _, st := range strokes {
 		n, _ := protocol.StrokeNumber(st.ID)
@@ -265,6 +293,65 @@ func ReadPage(es *evalv1.Sample, w *Workbook) (*Page, *Refusal, error) {
 		ink.Boxes = append(ink.Boxes, box)
 	}
 	return &Page{Page: pg, Ink: ink, ID: es.GetId(), Truth: truth}, nil, nil
+}
+
+// ErrUnmarked is the error of a page whose markup the run of the workbook cannot stand for: what it
+// writes in its boxes, and what a right reader reads there, are the values of the page's file.
+var ErrUnmarked = errors.New("evalsample: the run of the workbook cannot stand for the markup of the page")
+
+// markedPage is a copy of the page of the workbook's file with each box written as the markup has
+// it, the checks the file's: a box the truth reads blank and holds no stroke is blank; a value, the
+// value written, of the scenario rewritten when the markup notes it crossed out, and else correct
+// or an error by module-kit's verdict on it, items; and a box whose truth is ambiguous by a digit
+// written mirrored is the key's value with a digit mirrored, as tutor draws one. A blank box with
+// strokes, a value in a box with none, and a box illegible or ambiguous for another cause are not
+// what the run of the workbook writes, and markedPage refuses them with ErrUnmarked. The page is the
+// run's, not a file's: a box rewritten has no value crossed out, and a mirrored box holds the key
+// whatever its digits, so no rule of the workbook's file holds it, and nothing draws it again.
+func markedPage(pg *sample.WorkbookPage, m *evalv1.Markup, filled map[[2]int]bool, items []verdict.ItemVerdict) (*sample.WorkbookPage, error) {
+	notes := map[[2]int]*evalv1.AnswerSlotNote{}
+	for _, n := range m.GetNotes() {
+		notes[[2]int{int(n.GetAnswerSlot().GetItem()), int(n.GetAnswerSlot().GetSlot())}] = n
+	}
+	read := map[[2]int]*observationv1.AnswerSlotObservation{}
+	for _, a := range m.GetTruth().GetAnswerSlots() {
+		read[[2]int{int(a.GetAnswerSlot().GetItem()), int(a.GetAnswerSlot().GetSlot())}] = a
+	}
+	out := &sample.WorkbookPage{Number: pg.Number, Part: pg.Part, Items: make([]sample.WorkbookItem, len(pg.Items))}
+	for i, it := range pg.Items {
+		out.Items[i] = sample.WorkbookItem{Text: it.Text, Boxes: make([]sample.WorkbookBox, len(it.Boxes))}
+		for k, b := range it.Boxes {
+			at := [2]int{i + 1, k + 1}
+			box := sample.WorkbookBox{Check: b.Check, Fraction: b.Fraction}
+			a, n := read[at], notes[at]
+			switch v := a.GetRead().(type) {
+			case *observationv1.AnswerSlotObservation_Value:
+				if !filled[at] {
+					return nil, fmt.Errorf("%w: the box %d.%d holds a value and no stroke", ErrUnmarked, at[0], at[1])
+				}
+				box.Written, box.Scenario = &v.Value, sample.BoxError
+				switch {
+				case n.GetCrossedOut():
+					box.Scenario = sample.BoxRewritten
+				case items[i].Slots[k].Verdict == verdict.Correct:
+					box.Scenario = sample.BoxCorrect
+				}
+			case *observationv1.AnswerSlotObservation_Unreadable:
+				switch {
+				case v.Unreadable == observationv1.Unreadable_UNREADABLE_BLANK && !filled[at]:
+					box.Scenario, box.Fraction = sample.BoxBlank, nil
+				case v.Unreadable == observationv1.Unreadable_UNREADABLE_AMBIGUOUS && n.GetMirrored() && filled[at]:
+					box.Written, box.Scenario = new(b.Check.Key), sample.BoxMirrored
+				default:
+					return nil, fmt.Errorf("%w: the box %d.%d is %s, with strokes %v", ErrUnmarked, at[0], at[1], v.Unreadable, filled[at])
+				}
+			default:
+				return nil, fmt.Errorf("%w: the truth reads nothing in the box %d.%d", ErrUnmarked, at[0], at[1])
+			}
+			out.Items[i].Boxes[k] = box
+		}
+	}
+	return out, nil
 }
 
 // slotOf reports whether a place is a box of the page.
