@@ -3,6 +3,7 @@ package evalsample
 import (
 	"errors"
 	"fmt"
+	"math"
 
 	"github.com/altnovatrail/module-kit/observation"
 	"github.com/altnovatrail/module-kit/verdict"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/altnovatrail/tutor/internal/lines"
 	"github.com/altnovatrail/tutor/internal/protocol"
+	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
@@ -76,42 +78,70 @@ type Sheet struct {
 // verdict of module-kit on the truth, by the task's key, and its first error the markup's. A sample
 // of another ink or surface is no sheet the runner reads, and Read gives an error, not a refusal.
 func Read(es *evalv1.Sample, sh *sample.PlanSheet, b *Bank) (*Sheet, *Refusal, error) {
+	s, _, r, err := readSheet(es, b, sh)
+	return s, r, err
+}
+
+// ReadSheet reads a sample of a sheet of a set of a capability, as canvas's synthetic samples are
+// (section 13 of spec's text of the contracts): a sample of any purpose, which no plan sheet of
+// tutor's names. It refuses the sample as Read does, but for the plan sheet, and reads a final
+// geometry as the strokes it shows, with no erasure and no time, as well as a history. Its plan sheet
+// is the sample's own (planOf), which it gives with the sheet; a sheet that shows no stroke has no
+// answer slot a model reads.
+func ReadSheet(es *evalv1.Sample, b *Bank) (*Sheet, *sample.PlanSheet, *Refusal, error) {
+	return readSheet(es, b, nil)
+}
+
+// readSheet reads a sample as a sheet, as Read does when the plan sheet is given, and as ReadSheet
+// does when it is nil.
+func readSheet(es *evalv1.Sample, b *Bank, sh *sample.PlanSheet) (*Sheet, *sample.PlanSheet, *Refusal, error) {
 	m := es.GetMarkup()
 	if m == nil {
-		return nil, refuse(evalv1.Refusal_REFUSAL_NO_MARKUP, "the sample has no markup, and the runner measures nothing on it"), nil
+		return nil, nil, refuse(evalv1.Refusal_REFUSAL_NO_MARKUP, "the sample has no markup, and the runner measures nothing on it"), nil
 	}
 	ref := es.GetTask()
 	if r := b.refuse(ref); r != nil {
-		return nil, r, nil
+		return nil, nil, r, nil
 	}
 	t := b.task(ref.GetTask())
 	if t == nil {
-		return nil, refuse(evalv1.Refusal_REFUSAL_OTHER_TASK, "the bank %s has no task %s", b.Path, ref.GetTask()), nil
+		return nil, nil, refuse(evalv1.Refusal_REFUSAL_OTHER_TASK, "the bank %s has no task %s", b.Path, ref.GetTask()), nil
 	}
-	if t.ID != sh.Task {
-		return nil, refuse(evalv1.Refusal_REFUSAL_OTHER_TASK, "its task is %s, and its plan sheet's %s", t.ID, sh.Task), nil
+	if sh != nil && t.ID != sh.Task {
+		return nil, nil, refuse(evalv1.Refusal_REFUSAL_OTHER_TASK, "its task is %s, and its plan sheet's %s", t.ID, sh.Task), nil
 	}
 	ft, digest, err := sheetTask(t)
 	if err != nil {
-		return nil, nil, fmt.Errorf("evalsample: the open view of %s: %w", t.ID, err)
+		return nil, nil, nil, fmt.Errorf("evalsample: the open view of %s: %w", t.ID, err)
 	}
 	if ref.GetOpenViewDigest() != digest {
-		return nil, refuse(evalv1.Refusal_REFUSAL_OTHER_TASK, "the open view of its task %s is of another digest than the bank's", t.ID), nil
+		return nil, nil, refuse(evalv1.Refusal_REFUSAL_OTHER_TASK, "the open view of its task %s is of another digest than the bank's", t.ID), nil
 	}
 	outcome, items, r := outcomeOf(ft, m)
 	if r != nil {
-		return nil, r, nil
+		return nil, nil, r, nil
 	}
 	truth := truthsOf(items, m, nil)
 	if es.GetWriter() == evalv1.Writer_WRITER_CHILD {
-		return nil, refuse(evalv1.Refusal_REFUSAL_CHILD, "a child wrote it, and nothing of a child's sample goes to AI until a contract with the provider admits children (П-3)"), nil
+		return nil, nil, refuse(evalv1.Refusal_REFUSAL_CHILD, "a child wrote it, and nothing of a child's sample goes to AI until a contract with the provider admits children (П-3)"), nil
 	}
 
 	h, sheet := es.GetHistory(), es.GetSheet()
-	if h == nil || sheet == nil {
-		return nil, nil, ErrNotSheet
+	var strokes []sample.Stroke
+	var erasures []sample.Erasure
+	switch g := es.GetGeometry(); {
+	case sheet == nil:
+		return nil, nil, nil, ErrNotSheet
+	case h != nil:
+		strokes, erasures, _ = protocol.Ink(h)
+	case g != nil && sh == nil:
+		strokes = protocol.Final(g.GetStrokes())
+	default:
+		return nil, nil, nil, ErrNotSheet
 	}
-	strokes, erasures, _ := protocol.Ink(h)
+	if sh == nil {
+		sh = planOf(t, m, outcome, truth)
+	}
 	s := &sample.Sample{
 		Format:   sample.SampleFormat,
 		Version:  new(sample.Version),
@@ -150,7 +180,39 @@ func Read(es *evalv1.Sample, sh *sample.PlanSheet, b *Bank) (*Sheet, *Refusal, e
 	for _, e := range h.GetEvents() {
 		mouse = mouse || e.GetWrite().GetPointer() == "mouse"
 	}
-	return &Sheet{Sample: s, Mouse: mouse, ID: es.GetId(), Truth: truth}, nil, nil
+	if len(render.Shown(s, math.MaxInt64)) == 0 {
+		// A sheet that shows no stroke goes to no model, as an empty box of a workbook does not.
+		truth = nil
+	}
+	return &Sheet{Sample: s, Mouse: mouse, ID: es.GetId(), Truth: truth}, sh, nil, nil
+}
+
+// planOf is the plan sheet of a sample that no plan of tutor's names, as its markup has it: its
+// task; no scenario, which the protocol does not carry (R69); its parts in their order, each a text
+// or a drawing in the main column, with the text of its markup and no figure to draw it by, and
+// their texts as its lines; the first part with the final answer as its answer line, or none; its
+// outcome by module-kit's verdict on the truth, and its first error the markup's; the trap of that
+// verdict, on a sheet with an error; and no planned erasure.
+func planOf(t *sample.Task, m *evalv1.Markup, o sample.Outcome, truth []Truth) *sample.PlanSheet {
+	sh := &sample.PlanSheet{Task: t.ID, Lines: []string{}, Expected: sample.Expected{Outcome: o}}
+	for i, p := range m.GetParts().GetParts() {
+		kind := sample.PartText
+		if p.GetKind() == evalv1.PartKind_PART_KIND_DRAWING {
+			kind = sample.PartDrawing
+		}
+		sh.Parts = append(sh.Parts, sample.PlanPart{Kind: kind, Place: sample.PlaceLeft, Text: p.GetText()})
+		sh.Lines = append(sh.Lines, p.GetText())
+		if p.GetFinalAnswer() && sh.Answer == 0 {
+			sh.Answer = i + 1
+		}
+	}
+	if m.GetParts().FirstError != nil {
+		sh.Expected.FirstError = new(int(m.GetParts().GetFirstError()))
+	}
+	if o == sample.OutcomeError && len(truth) == 1 {
+		sh.Expected.Trap = truth[0].Trap
+	}
+	return sh
 }
 
 // outcomeOf is the outcome of a sheet as the verdict of module-kit on its truth gives it, by the

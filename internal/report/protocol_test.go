@@ -217,6 +217,26 @@ func TestReadingReports(t *testing.T) {
 	}
 }
 
+// A sheet that shows no stroke goes to no model, and its report measures it with no answer slot, as
+// a page whose boxes are all empty.
+func TestReadingReportsBlankSheet(t *testing.T) {
+	l := &reading.Log{Run: reading.RunRecord{Kind: "run", CallKind: reading.CallKind, Part: "all", Sets: []string{"canvas"}, Readers: readers[1:], Repeats: 1, Runner: "v0.1.8", ModuleKit: "v0.2.3"}}
+	l.Sheets = []reading.SheetRecord{
+		{Kind: "sheet", Set: "canvas", Sheet: 1, Key: "5", Sample: "s-1", Truth: []evalsample.Truth{{Item: 1, Slot: 1, Verdict: "correct"}}},
+		{Kind: "sheet", Set: "canvas", Sheet: 2, Key: "5", Sample: "s-2"},
+	}
+	l.Calls = []reading.CallRecord{{Kind: "call", Call: reading.Call{Set: "canvas", Sheet: 1, Condition: reading.NoKey, Reader: "haiku-low", Repeat: 1, Digit: 32, Drawn: 32}, Verdict: "correct", Value: "5"}}
+	rs := report.ReadingReports(l)
+	if len(rs) != 1 {
+		t.Fatalf("%d reports", len(rs))
+	}
+	holds(t, rs[0].Name, rs[0].Report)
+	got := rs[0].Report.GetSamples()
+	if len(got) != 2 || len(got[0].GetMeasured().GetAnswerSlots()) != 1 || got[1].GetSample() != "s-2" || got[1].GetMeasured() == nil || len(got[1].GetMeasured().GetAnswerSlots()) != 0 {
+		t.Errorf("the samples: %v", got)
+	}
+}
+
 // A log of the workbook tells a report of each page's filled boxes with their truths and notes; a
 // reading of each by the record of the call bare at 32 px, a digit marked mirrored ambiguous to
 // module-kit; an answer with a cell missing is invalid, and the pair joins the two observations of

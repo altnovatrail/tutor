@@ -168,13 +168,9 @@ func readDir[T any](dir, kind string, numbers []int, check samplecheck.Check, re
 			x.Problems = []string{"(the file cannot be read)"}
 			continue
 		}
-		if lines := broken[path]; len(lines) > 0 {
-			x.Refused = &Refusal{Reason: evalv1.Refusal_REFUSAL_INVALID, Detail: fmt.Sprintf("sample-check finds it breaks a rule of sections 11 and 12, at %s", lineList(lines)), Sample: SampleID(data)}
-			continue
-		}
-		es, err := protocol.ReadSample(bytes.NewReader(data))
-		if err != nil {
-			x.Refused = &Refusal{Reason: evalv1.Refusal_REFUSAL_INVALID, Detail: "it cannot be read strictly as a sample of the protocol", Sample: SampleID(data)}
+		es, refused := ReadChecked(data, broken[path])
+		if refused != nil {
+			x.Refused = refused
 			continue
 		}
 		x.Seed = es.GetSynthetic().GetSeed()
@@ -188,8 +184,23 @@ func readDir[T any](dir, kind string, numbers []int, check samplecheck.Check, re
 	return d, nil
 }
 
-// lineList names lines of a file.
-func lineList(at []int) string {
+// ReadChecked reads the bytes of a sample's file once spec's sample-check has held them to the rules
+// of sections 11 and 12: a file it finds breaking a rule, at the lines broken, and one that cannot
+// be read strictly as a sample of the protocol are refused as invalid, by the ID the file names, if
+// it names one that can be read.
+func ReadChecked(data []byte, broken []int) (*evalv1.Sample, *Refusal) {
+	if len(broken) > 0 {
+		return nil, &Refusal{Reason: evalv1.Refusal_REFUSAL_INVALID, Detail: fmt.Sprintf("sample-check finds it breaks a rule of sections 11 and 12, at %s", LineList(broken)), Sample: SampleID(data)}
+	}
+	es, err := protocol.ReadSample(bytes.NewReader(data))
+	if err != nil {
+		return nil, &Refusal{Reason: evalv1.Refusal_REFUSAL_INVALID, Detail: "it cannot be read strictly as a sample of the protocol", Sample: SampleID(data)}
+	}
+	return es, nil
+}
+
+// LineList names lines of a file, as a refusal by sample-check names them.
+func LineList(at []int) string {
 	parts := make([]string, len(at))
 	for i, n := range at {
 		parts[i] = strconv.Itoa(n)

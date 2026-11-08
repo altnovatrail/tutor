@@ -95,6 +95,30 @@ func TestNew(t *testing.T) {
 	}
 }
 
+// A sheet that shows no stroke has no crop: the run asks nothing of it, as of an empty box of a
+// workbook, and tells it with no h_med, beside the sheets it reads.
+func TestNewBlankSheet(t *testing.T) {
+	free := chosen(t, "free", "../../eval/free-sheets.json", "../../eval/free-bank.json", 1, 2)
+	blank := *free[1].Sample
+	blank.Strokes, blank.Erasures = nil, nil
+	free[1].Sample = &blank
+	r, err := reading.New("dev", []string{"free"}, free, e4Readers(), 1, all)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, st := range r.Steps {
+		if rec := st.Call.Record(runner.Outcome{}).(reading.CallRecord); rec.Sheet == 2 {
+			t.Fatalf("the run asks of the blank sheet: %+v", rec.Call)
+		}
+	}
+	if len(r.Steps) == 0 || len(r.Items) != 2 {
+		t.Fatalf("%d calls, %d sheets told", len(r.Steps), len(r.Items))
+	}
+	if rec := r.Items[1].(reading.SheetRecord); rec.Sheet != 2 || rec.Median != 0 {
+		t.Errorf("the blank sheet is told %+v", rec)
+	}
+}
+
 // The heights and the states are read once, without a key, by Haiku alone: three heights and each
 // state of each sheet, in the first repeat, after the conditions of the key.
 func TestNewHeightsAndStates(t *testing.T) {

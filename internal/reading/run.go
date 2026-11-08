@@ -281,17 +281,22 @@ type sheetPlan struct {
 }
 
 // plan cuts the crops of a sheet that the run reads and makes its calls, but for their reader and
-// repeat.
+// repeat. A sheet that shows no stroke has no crop, and no call: it goes to no model, as an empty box
+// of a workbook does not, and the run tells it with no h_med.
 func plan(sh sheets.Chosen, reads Reads) (sheetPlan, error) {
 	s := sh.Sample
 	finished := render.Shown(s, math.MaxInt64)
+	sts := states.Of(s, sh.Plan != nil && len(sh.Plan.Parts) > 0)
+	p := &prepared{Chosen: sh, marked: MarkupOf(s, sh.Plan), states: sts, policies: states.PoliciesOf(s, sts)}
+	out := sheetPlan{sheet: p}
+	if len(finished) == 0 {
+		return out, nil
+	}
 	main, err := Prepare(finished, render.Digit)
 	if err != nil {
 		return sheetPlan{}, err
 	}
-	sts := states.Of(s, sh.Plan != nil && len(sh.Plan.Parts) > 0)
-	p := &prepared{Chosen: sh, marked: MarkupOf(s, sh.Plan), states: sts, policies: states.PoliciesOf(s, sts), median: main.Crop.Median}
-	out := sheetPlan{sheet: p}
+	p.median = main.Crop.Median
 	call := func(shown *Sheet, state int) Call {
 		return Call{Set: sh.Set, Sheet: sh.Number, Condition: NoKey, Digit: shown.Crop.Digit, Drawn: shown.Crop.Drawn, State: state}
 	}
