@@ -1,6 +1,6 @@
 # The hint: the dev part
 
-The log hint-stub.jsonl, of the prompt d8a2f994b155, version 1. Tutors: opus-high (claude-opus-5-5, high); haiku-low (claude-haiku-5-5, low); haiku-low-no-thinking (claude-haiku-5-5, low, without thinking). Repeats: 1. Rungs: 1, 2, 3. Languages: ru, en. Sheets with a mistake: 6 (lines 2, free 3, near 1). Calls: 108 made, 0 of them failed; $0.52 spent of the $10.00 cap.
+The log hint-stub.jsonl, of the prompt b23adf4fc6f9, version 2. Tutors: opus-high (claude-opus-5-5, high); haiku-low (claude-haiku-5-5, low); haiku-low-no-thinking (claude-haiku-5-5, low, without thinking). Repeats: 1. Rungs: 1, 2, 3. Languages: ru, en. Sheets with a mistake: 6 (lines 2, free 3, near 1). Calls: 108 made, 0 of them failed; $0.52 spent of the $10.00 cap.
 
 ## Leaks, before the check and after it, and the fallback texts
 
@@ -56,7 +56,7 @@ The leak check is the program's, as api runs it before the tutor's words reach t
 | haiku-low-no-thinking | en | 3 | 6 | 0 of 6, ≤ 0.393 | 0 | 0 | 0 | 0 | 0 of 6, ≤ 0.393 |
 | haiku-low-no-thinking | all | all | 36 | 0 of 36, ≤ 0.080 | 0 | 0 | 0 | 0 | 0 of 36, ≤ 0.080 |
 
-A hint is exactly one question in no more than two sentences, of 1 to 30 words, in the letters of its language: Cyrillic in Russian, where a Latin letter the statement shows may stand too, and Latin in English (R39). R70 spec sets the same rules with 30 words in Russian and 35 in English, which the last column counts.
+A hint is exactly one question in no more than two sentences, of 1 to 30 words in Russian and 35 in English, in the letters of its language: Cyrillic in Russian, where a Latin letter the statement shows may stand too, and Latin in English. These are the rules of R70 spec, which version 2 of the prompt is held to as api holds hints (words.Hint), so the last column counts the same as Broken.
 
 ## The place and the trap
 

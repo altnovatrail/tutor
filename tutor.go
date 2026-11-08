@@ -242,6 +242,12 @@ type call struct {
 // the outcome NotAdmitted, before any model is asked and with no usage; a route that does not fit
 // and a client that cannot be made are Failed.
 func (t *Tutor) prepare(c admissionv0.Capability, r Route) ([]call, admission.Answer, *Outcome) {
+	return t.prepareN(c, r, 0)
+}
+
+// prepareN is prepare of the first n models of the entry chosen, all of them when n is 0: a call
+// that asks one model makes no client of another.
+func (t *Tutor) prepareN(c admissionv0.Capability, r Route, n int) ([]call, admission.Answer, *Outcome) {
 	e, a, err := t.Choose(c, r)
 	if err != nil {
 		return nil, a, &Outcome{Kind: Failed, Err: err}
@@ -249,8 +255,12 @@ func (t *Tutor) prepare(c admissionv0.Capability, r Route) ([]call, admission.An
 	if !a.Admitted {
 		return nil, a, &Outcome{Kind: NotAdmitted, Admission: a}
 	}
-	calls := make([]call, 0, len(e.Models))
-	for _, m := range e.Models {
+	models := e.Models
+	if n > 0 && n < len(models) {
+		models = models[:n]
+	}
+	calls := make([]call, 0, len(models))
+	for _, m := range models {
 		client, err := t.client(m, r.Own)
 		if err != nil {
 			return nil, a, &Outcome{Kind: Failed, Admission: a, Err: err}

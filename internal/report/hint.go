@@ -329,7 +329,11 @@ func (r *Hint) Markdown(w io.Writer, logName string) error {
 		lang, rung := c.where()
 		fmt.Fprintf(&b, "| %s | %s | %s | %d | %s | %d | %d | %d | %d | %s |\n", c.Tutor, lang, rung, c.Came, c.Broken, c.Questions, c.Sentences, c.Words, c.Script, c.PlatformBroken)
 	}
-	fmt.Fprintf(&b, "\nA hint is exactly one question in no more than two sentences, of 1 to %d words, in the letters of its language: Cyrillic in Russian, where a Latin letter the statement shows may stand too, and Latin in English (R39). R70 spec sets the same rules with %d words in Russian and %d in English, which the last column counts.\n", hint.MaxWords, hint.PlatformWords(sample.LangRussian), hint.PlatformWords(sample.LangEnglish))
+	if l.Run.PromptVersion >= 2 {
+		fmt.Fprintf(&b, "\nA hint is exactly one question in no more than two sentences, of 1 to %d words in Russian and %d in English, in the letters of its language: Cyrillic in Russian, where a Latin letter the statement shows may stand too, and Latin in English. These are the rules of R70 spec, which version 2 of the prompt is held to as api holds hints (words.Hint), so the last column counts the same as Broken.\n", hint.PlatformWords(sample.LangRussian), hint.PlatformWords(sample.LangEnglish))
+	} else {
+		fmt.Fprintf(&b, "\nA hint is exactly one question in no more than two sentences, of 1 to %d words, in the letters of its language: Cyrillic in Russian, where a Latin letter the statement shows may stand too, and Latin in English (R39). R70 spec sets the same rules with %d words in Russian and %d in English, which the last column counts.\n", hint.MaxWords, hint.PlatformWords(sample.LangRussian), hint.PlatformWords(sample.LangEnglish))
+	}
 
 	b.WriteString("\n## The place and the trap\n\n")
 	b.WriteString("| Tutor | Language | Rung | Hints that came | Box on the first error | No box | The sheet's trap, on sheets with one | No trap, on sheets without |\n|---|---|---|---|---|---|---|---|\n")

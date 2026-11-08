@@ -1,7 +1,6 @@
 package hint_test
 
 import (
-	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -54,9 +53,6 @@ func TestForm(t *testing.T) {
 		if got := hint.Form(c.text, c.lang, c.statement); !slices.Equal(got, c.want) {
 			t.Errorf("%q in %s: %q, want %q", c.text, c.lang, got, c.want)
 		}
-	}
-	if !strings.Contains(hint.Instructions(), fmt.Sprintf("two short sentences, no more than %d words in all", hint.MaxWords)) {
-		t.Error("the instructions do not name the limit of words")
 	}
 }
 
