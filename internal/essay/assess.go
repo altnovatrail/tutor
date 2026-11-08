@@ -8,11 +8,10 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"unicode"
 
-	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/provider"
+	"github.com/altnovatrail/tutor/words"
 )
 
 // The assessment of an essay by the rubric (T83; docs/architecture.md, 3.4, «Оценка по рубрике»):
@@ -34,25 +33,25 @@ const Style = "a learner of any age who is learning to write short essays; use p
 // The rule of the feedback: at most MaxSentences sentences and MaxWords words, and a quoted span of
 // QuoteWords words or more only as the essay writes it (R05 spec). The prompt names them too.
 const (
-	MaxSentences = 3
+	MaxSentences = words.FeedbackSentences
 	MaxWords     = 60
-	QuoteWords   = 4
+	QuoteWords   = words.QuoteWords
 )
 
-// PlatformWords is the most words R70 spec lets the feedback have, raised from MaxWords by the
-// numbers of T84. The prompt and Feedback keep MaxWords, the limit of the measurement, which its
-// frozen prompt names (R45; R50).
-const PlatformWords = 80
+// PlatformWords is the most words R70 spec lets the feedback have in English (words.FeedbackWords),
+// raised from MaxWords by the numbers of T84. The prompt and Feedback keep MaxWords, the limit of the
+// measurement, which its frozen prompt names (R45; R50).
+var PlatformWords = words.FeedbackWords(string(sample.LangEnglish))
 
 // PlatformBroken is whether a feedback breaks the rule R70 spec sets, given what Feedback found it
 // breaks and its words: the same rule, with PlatformWords in place of MaxWords.
-func PlatformBroken(breaches []string, words int) bool {
+func PlatformBroken(breaches []string, n int) bool {
 	for _, b := range breaches {
 		if b != BreachWords {
 			return true
 		}
 	}
-	return words < 1 || words > PlatformWords
+	return words.Over(n, PlatformWords)
 }
 
 // The instructions of the assessment, one text for every essay.
@@ -226,87 +225,35 @@ func Marks(rubric []sample.Criterion, a *Answer) (marks []Mark, extra int) {
 	return marks, extra
 }
 
-// The breaches of the rule of the feedback, as the log names them.
+// The breaches of the rule of the feedback, as the log names them (words.Breach).
 const (
 	// BreachSentences: more than MaxSentences sentences.
-	BreachSentences = "sentences"
+	BreachSentences = string(words.Sentences)
 	// BreachWords: no word, or more than MaxWords.
-	BreachWords = "words"
+	BreachWords = string(words.Words)
 	// BreachQuote: a quoted span of QuoteWords words or more that the essay does not write.
-	BreachQuote = "quote"
+	BreachQuote = string(words.Quote)
 	// BreachScript: a letter that is not Latin: the feedback is in English.
-	BreachScript = "script"
+	BreachScript = string(words.Script)
 )
 
-// quotes are the quotation marks a feedback may quote the learner in, each opening mark with its
-// closing one. A straight single quote is an apostrophe too, as in "don't", and opens no quote.
-var quotes = map[rune]rune{'"': '"', '“': '”', '«': '»', '‘': '’'}
-
 // Feedback is what feedback breaks of its rule, in the order of the constants above, nil when it
-// keeps it, and how many words it has. Its sentences and words are counted as the hint's form
-// counts them (hint.Count). A
-// quoted span is the text between a quotation mark and its closing one; one of QuoteWords words or
-// more must be the essay's own words in a row, its title or its text, compared in small letters and
-// without the marks after them, so that the feedback quotes the learner and writes nothing for them.
-func Feedback(feedback string, e *sample.Essay) (breaches []string, words int) {
-	sentences, _, words := hint.Count(feedback)
-	var out []string
-	if sentences > MaxSentences {
-		out = append(out, BreachSentences)
+// keeps it, and how many words it has: the rule of the measurement (words.FeedbackForm, with
+// MaxWords), against the essay as it is written, its title and its text, so that the logs of epic E4
+// read as they were judged. The platform holds feedback to words.Feedback, against the text read.
+func Feedback(feedback string, e *sample.Essay) (breaches []string, n int) {
+	found, n := words.FeedbackForm(feedback, essayText(e), string(sample.LangEnglish), MaxWords)
+	for _, b := range found {
+		breaches = append(breaches, string(b))
 	}
-	if words < 1 || words > MaxWords {
-		out = append(out, BreachWords)
-	}
-	own := " " + strings.Join(plainWords(essayText(e)), " ") + " "
-	for _, q := range quoted(feedback) {
-		if w := plainWords(q); len(w) >= QuoteWords && !strings.Contains(own, " "+strings.Join(w, " ")+" ") {
-			out = append(out, BreachQuote)
-			break
-		}
-	}
-	for _, r := range feedback {
-		if unicode.IsLetter(r) && !unicode.Is(unicode.Latin, r) {
-			out = append(out, BreachScript)
-			break
-		}
-	}
-	return out, words
-}
-
-// quoted are the spans of a text between a quotation mark and its closing one.
-func quoted(text string) []string {
-	var out []string
-	rs := []rune(text)
-	for i := 0; i < len(rs); i++ {
-		closing, ok := quotes[rs[i]]
-		if !ok {
-			continue
-		}
-		for j := i + 1; j < len(rs); j++ {
-			if rs[j] == closing {
-				out = append(out, string(rs[i+1:j]))
-				i = j
-				break
-			}
-		}
-	}
-	return out
+	return breaches, n
 }
 
 // essayText is the essay as it is written (sample.Essay.Written).
 func essayText(e *sample.Essay) string { return e.Written() }
 
-// plainWords are the words of a text in small letters, without the marks around them: what the
-// reading and the quotes are compared by. A typographic apostrophe is the straight one.
-func plainWords(text string) []string {
-	var out []string
-	for _, f := range strings.Fields(strings.ReplaceAll(text, "’", "'")) {
-		if w := strings.ToLower(strings.TrimFunc(f, func(r rune) bool { return !unicode.IsLetter(r) && !unicode.IsDigit(r) })); w != "" {
-			out = append(out, w)
-		}
-	}
-	return out
-}
+// plainWords are the words of a text as quotes are compared by (words.Plain).
+func plainWords(text string) []string { return words.Plain(text) }
 
 // Reading is how a model read an essay: the words of the essay and how many of them the reading
 // got wrong, as the edit distance between the two in words, in small letters and without the marks
