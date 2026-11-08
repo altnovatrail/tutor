@@ -236,27 +236,28 @@ type call struct {
 	client provider.Model
 }
 
-// prepare chooses the models of a capability for a route and makes their clients: with the own key
-// by the key, on platform AI by the platform's key of the provider. A refusal of the admission is
+// prepare chooses the models of a capability for a route and makes their clients — with the own key
+// by the key, on platform AI by the platform's key of the provider — and gives the admission's
+// answer, which an outcome of the call carries. A refusal of the admission is
 // the outcome NotAdmitted, before any model is asked and with no usage; a route that does not fit
 // and a client that cannot be made are Failed.
-func (t *Tutor) prepare(c admissionv0.Capability, r Route) ([]call, *Outcome) {
+func (t *Tutor) prepare(c admissionv0.Capability, r Route) ([]call, admission.Answer, *Outcome) {
 	e, a, err := t.Choose(c, r)
 	if err != nil {
-		return nil, &Outcome{Kind: Failed, Err: err}
+		return nil, a, &Outcome{Kind: Failed, Err: err}
 	}
 	if !a.Admitted {
-		return nil, &Outcome{Kind: NotAdmitted, Admission: a}
+		return nil, a, &Outcome{Kind: NotAdmitted, Admission: a}
 	}
 	calls := make([]call, 0, len(e.Models))
 	for _, m := range e.Models {
 		client, err := t.client(m, r.Own)
 		if err != nil {
-			return nil, &Outcome{Kind: Failed, Admission: a, Err: err}
+			return nil, a, &Outcome{Kind: Failed, Admission: a, Err: err}
 		}
 		calls = append(calls, call{model: m, client: client})
 	}
-	return calls, nil
+	return calls, a, nil
 }
 
 // client is the client of a model: of the own key, made for the request; of the platform's key,
