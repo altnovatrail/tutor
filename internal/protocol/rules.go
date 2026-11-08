@@ -98,7 +98,9 @@ func Table(strokes []*evalv1.FinalStroke, boxes []*evalv1.PageBox) []*evalv1.Fil
 // the strokes it takes, ascending, and the box of their points in tenths; or none, nil and nil,
 // when it takes no stroke. The crop is one of the set, and the strokes are those its set was drawn
 // of. The box is widened first by SnapMargin thousandths of the crop's height drawn and takes a
-// stroke when it holds k of its n points, k ≥ 1 and SnapBelow × k ≥ SnapAbove × n.
+// stroke when it holds k of its n points, k ≥ 1 and SnapBelow × k ≥ SnapAbove × n. In eval, the
+// strokes are those a history of writing shows, never a sample's final geometry, whose points may
+// be other than those that came (the 2026-11-08 amendment to R94 of spec; R77).
 func Snap(set *evalv1.CropSet, crop *evalv1.Crop, box *observationv1.CropBox, strokes []*evalv1.FinalStroke) ([]int32, *evalv1.TenthsBox) {
 	B := set.GetInkBox()
 	H := min(int64(set.GetBundleMedian()), snapCeiling)
