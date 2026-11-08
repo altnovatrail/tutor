@@ -104,15 +104,18 @@ var Admitted = []Entry{
 // table's answer for its first model. Without such an entry it answers the first refusal of the
 // table for an entry of the capability, or, when the table refused none, ReasonModelNotAdmitted.
 // The least stage is the deployment's: StageAuthor only where the author alone learns, as in the
-// first app (R76 spec), and StageFull anywhere else; any other value chooses only StageFull. api
-// calls it before an attempt, and tutor before the call: with the same table, facts, request and
-// least stage it chooses the same.
-func (t *Table) Select(f Facts, c admissionv0.Capability, route admissionv0.AiRoute, category admissionv0.AgeCategory, least Stage) (Entry, Answer) {
-	return t.selectFrom(Admitted, f, c, route, category, least)
+// first app (R76 spec), and StageFull anywhere else; any other value chooses only StageFull.
+// Providers, when not nil, are the only providers whose models may serve: an own key is one
+// provider's, and on platform AI a provider without the platform's key cannot be called (T114).
+// When no entry of them is left, the answer is the table's for the first of them that it refuses,
+// as the table's reasons come before the model's. api calls it before an attempt, and tutor before
+// the call: with the same table, facts, request, least stage and providers it chooses the same.
+func (t *Table) Select(f Facts, c admissionv0.Capability, route admissionv0.AiRoute, category admissionv0.AgeCategory, least Stage, providers []admissionv0.Provider) (Entry, Answer) {
+	return t.selectFrom(Admitted, f, c, route, category, least, providers)
 }
 
 // selectFrom is Select over a list of its own.
-func (t *Table) selectFrom(list []Entry, f Facts, c admissionv0.Capability, route admissionv0.AiRoute, category admissionv0.AgeCategory, least Stage) (Entry, Answer) {
+func (t *Table) selectFrom(list []Entry, f Facts, c admissionv0.Capability, route admissionv0.AiRoute, category admissionv0.AgeCategory, least Stage, providers []admissionv0.Provider) (Entry, Answer) {
 	floor := StageFull.rank()
 	if least == StageAuthor {
 		floor = StageAuthor.rank()
@@ -120,6 +123,9 @@ func (t *Table) selectFrom(list []Entry, f Facts, c admissionv0.Capability, rout
 	var refused *Answer
 	for _, e := range list {
 		if e.Capability != c || len(e.Models) == 0 || e.Stage.rank() < floor {
+			continue
+		}
+		if providers != nil && slices.ContainsFunc(e.Models, func(m Model) bool { return !slices.Contains(providers, m.Provider) }) {
 			continue
 		}
 		var first Answer
@@ -145,6 +151,11 @@ func (t *Table) selectFrom(list []Entry, f Facts, c admissionv0.Capability, rout
 	}
 	if refused != nil {
 		return Entry{}, *refused
+	}
+	for _, p := range providers {
+		if a := t.Admit(Request{Capability: c, AiRoute: route, Provider: p, AgeCategory: category}, f); !a.Admitted {
+			return Entry{}, a
+		}
 	}
 	return Entry{}, Answer{Answer: admissionv0.Answer{Reason: reason(ReasonModelNotAdmitted)}, Version: t.version}
 }

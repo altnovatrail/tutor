@@ -51,12 +51,12 @@ func TestSelect(t *testing.T) {
 	adult := admissionv0.AgeCategoryAdult
 
 	// Google closes the first pair, so the second is chosen; the answer is its first model's.
-	e, a := table.selectFrom(testList, adultFacts, handwriting, admissionv0.AiRoutePlatformAi, adult, StageAuthor)
+	e, a := table.selectFrom(testList, adultFacts, handwriting, admissionv0.AiRoutePlatformAi, adult, StageAuthor, nil)
 	if !a.Admitted || !slices.Equal(e.Models, []Model{opus, haiku}) || e.Stage != StageAuthor || a.Cell.Provider != "anthropic" {
 		t.Fatalf("chose %+v, %+v", e, a)
 	}
 	// The same table, facts and request choose the same, before the attempt and at the call.
-	again, b := table.selectFrom(testList, adultFacts, handwriting, admissionv0.AiRoutePlatformAi, adult, StageAuthor)
+	again, b := table.selectFrom(testList, adultFacts, handwriting, admissionv0.AiRoutePlatformAi, adult, StageAuthor, nil)
 	if !slices.Equal(again.Models, e.Models) || b.Version != a.Version {
 		t.Errorf("chose %+v the second time", again)
 	}
@@ -66,20 +66,20 @@ func TestSelect(t *testing.T) {
 		t.Error("the choice shares its models with the list")
 	}
 	// The own key of an adult needs no fact.
-	if e, a := table.selectFrom(testList, Facts{}, handwriting, admissionv0.AiRouteOwnKey, adult, StageAuthor); !a.Admitted || e.Models[1] != haiku {
+	if e, a := table.selectFrom(testList, Facts{}, handwriting, admissionv0.AiRouteOwnKey, adult, StageAuthor, nil); !a.Admitted || e.Models[1] != haiku {
 		t.Errorf("the own key chose %+v, %+v", e, a)
 	}
 	// With no facts the table refuses the pair: its first refusal, not the model's.
-	if e, a := table.selectFrom(testList, Facts{}, handwriting, admissionv0.AiRoutePlatformAi, adult, StageAuthor); a.Admitted || *a.Reason != admissionv0.AnswerReasonCellClosed && *a.Reason != admissionv0.AnswerReasonFactMissing || e.Models != nil {
+	if e, a := table.selectFrom(testList, Facts{}, handwriting, admissionv0.AiRoutePlatformAi, adult, StageAuthor, nil); a.Admitted || *a.Reason != admissionv0.AnswerReasonCellClosed && *a.Reason != admissionv0.AnswerReasonFactMissing || e.Models != nil {
 		t.Errorf("no facts chose %+v, %+v", e, a)
 	}
 	// A child: the own key is closed whatever the list holds.
-	if _, a := table.selectFrom(testList, adultFacts, handwriting, admissionv0.AiRouteOwnKey, admissionv0.AgeCategoryUnder13, StageAuthor); a.Admitted || *a.Reason != admissionv0.AnswerReasonCellClosed {
+	if _, a := table.selectFrom(testList, adultFacts, handwriting, admissionv0.AiRouteOwnKey, admissionv0.AgeCategoryUnder13, StageAuthor, nil); a.Admitted || *a.Reason != admissionv0.AnswerReasonCellClosed {
 		t.Errorf("a child's own key: %+v", a)
 	}
 	// A capability with no model, or with an entry of none, refuses as the model's, after the table.
 	for _, c := range []admissionv0.Capability{admissionv0.CapabilityRubricAssessment, admissionv0.CapabilitySolutionAnalysis, "unknown"} {
-		if e, a := table.selectFrom(testList, adultFacts, c, admissionv0.AiRouteOwnKey, adult, StageAuthor); a.Admitted || *a.Reason != ReasonModelNotAdmitted || a.Version != table.Version() || e.Models != nil {
+		if e, a := table.selectFrom(testList, adultFacts, c, admissionv0.AiRouteOwnKey, adult, StageAuthor, nil); a.Admitted || *a.Reason != ReasonModelNotAdmitted || a.Version != table.Version() || e.Models != nil {
 			t.Errorf("%s chose %+v, %+v", c, e, a)
 		}
 	}
@@ -87,24 +87,40 @@ func TestSelect(t *testing.T) {
 	// reading on platform AI: the full pair is Google's, which the table closes. Any other least stage
 	// is as strict.
 	for _, least := range []Stage{StageFull, "", "trial"} {
-		if e, a := table.selectFrom(testList, adultFacts, handwriting, admissionv0.AiRoutePlatformAi, adult, least); a.Admitted || e.Models != nil {
+		if e, a := table.selectFrom(testList, adultFacts, handwriting, admissionv0.AiRoutePlatformAi, adult, least, nil); a.Admitted || e.Models != nil {
 			t.Errorf("the least stage %q chose %+v, %+v", least, e, a)
 		}
 	}
 	// An entry of the stage full serves the least stage full: the hint on an adult's own key.
-	if e, a := table.selectFrom(testList, Facts{}, admissionv0.CapabilityHint, admissionv0.AiRouteOwnKey, adult, StageFull); !a.Admitted || e.Stage != StageFull || e.Models[0] != gpt {
+	if e, a := table.selectFrom(testList, Facts{}, admissionv0.CapabilityHint, admissionv0.AiRouteOwnKey, adult, StageFull, nil); !a.Admitted || e.Stage != StageFull || e.Models[0] != gpt {
 		t.Errorf("the full hint on an adult's own key chose %+v, %+v", e, a)
+	}
+	// An own key of OpenAI takes no pair of Anthropic, though the table admits both: the hint of
+	// GPT is chosen, and the reading has none of that provider's.
+	if e, a := table.selectFrom(testList, Facts{}, admissionv0.CapabilityHint, admissionv0.AiRouteOwnKey, adult, StageAuthor, []admissionv0.Provider{"openai"}); !a.Admitted || e.Models[0] != gpt {
+		t.Errorf("an OpenAI key's hint chose %+v, %+v", e, a)
+	}
+	if e, a := table.selectFrom(testList, Facts{}, handwriting, admissionv0.AiRouteOwnKey, adult, StageAuthor, []admissionv0.Provider{"openai"}); a.Admitted || *a.Reason != ReasonModelNotAdmitted || e.Models != nil {
+		t.Errorf("an OpenAI key's reading chose %+v, %+v", e, a)
+	}
+	// A child's own key of OpenAI: the table refuses the cell, and that comes before the model.
+	if _, a := table.selectFrom(testList, Facts{}, handwriting, admissionv0.AiRouteOwnKey, admissionv0.AgeCategoryUnder13, StageAuthor, []admissionv0.Provider{"openai"}); a.Admitted || *a.Reason != admissionv0.AnswerReasonCellClosed {
+		t.Errorf("a child's OpenAI key: %+v", a)
+	}
+	// Platform AI with the key of Anthropic alone takes no entry of OpenAI.
+	if e, a := table.selectFrom(testList, Facts{}, admissionv0.CapabilityHint, admissionv0.AiRouteOwnKey, adult, StageAuthor, []admissionv0.Provider{"anthropic"}); a.Admitted || *a.Reason != ReasonModelNotAdmitted || e.Models != nil {
+		t.Errorf("the hint with Anthropic alone: %+v, %+v", e, a)
 	}
 	// The platform's list: the first app, where the author alone learns, reads by the author's pair;
 	// a deployment for anyone else has no reader yet, as the pair passed the stage author alone (T126).
-	e, a = table.Select(adultFacts, handwriting, admissionv0.AiRoutePlatformAi, adult, StageAuthor)
+	e, a = table.Select(adultFacts, handwriting, admissionv0.AiRoutePlatformAi, adult, StageAuthor, nil)
 	if !a.Admitted || e.Stage != StageAuthor || len(e.Models) != 2 || e.Models[0].Name() != "claude-opus-5-5 high" || e.Models[1].Name() != "claude-haiku-5-5 medium" {
 		t.Errorf("the first app chose %+v, %+v", e, a)
 	}
-	if e, a := table.Select(adultFacts, handwriting, admissionv0.AiRoutePlatformAi, adult, StageFull); a.Admitted || *a.Reason != ReasonModelNotAdmitted || e.Models != nil {
+	if e, a := table.Select(adultFacts, handwriting, admissionv0.AiRoutePlatformAi, adult, StageFull, nil); a.Admitted || *a.Reason != ReasonModelNotAdmitted || e.Models != nil {
 		t.Errorf("a deployment for others chose %+v, %+v", e, a)
 	}
-	if e, a := table.Select(Facts{}, handwriting, admissionv0.AiRoutePlatformAi, adult, StageAuthor); a.Admitted || *a.Reason != admissionv0.AnswerReasonFactMissing || e.Models != nil {
+	if e, a := table.Select(Facts{}, handwriting, admissionv0.AiRoutePlatformAi, adult, StageAuthor, nil); a.Admitted || *a.Reason != admissionv0.AnswerReasonFactMissing || e.Models != nil {
 		t.Errorf("the first app without its facts chose %+v, %+v", e, a)
 	}
 }
