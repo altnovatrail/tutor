@@ -484,10 +484,10 @@ func joinedSlot(key string, a, b *reading.CallRecord) (verdict.SlotVerdict, bool
 		return none, false, errors.New("a reader gives no observation")
 	}
 	j, err := observation.Join([]formatv0.Item{task.SheetItem(key)}, oa, ob)
-	if err != nil {
-		return none, false, err
+	var v verdict.SlotVerdict
+	if err == nil {
+		v, err = reading.SlotVerdict(key, j)
 	}
-	v, err := reading.SlotVerdict(key, j)
 	if err != nil {
 		return none, false, err
 	}

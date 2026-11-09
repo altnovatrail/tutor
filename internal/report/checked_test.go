@@ -49,3 +49,15 @@ func TestUncheckedRecordIsAFailure(t *testing.T) {
 		t.Error("two calls with no observation join")
 	}
 }
+
+// Two readings that join give module-kit's verdict on the join; a key that is no number gives none,
+// and the join tells why.
+func TestJoinedSlot(t *testing.T) {
+	read := reading.CallRecord{Kind: "call", Verdict: "correct", Value: "5"}
+	if v, value, err := joinedSlot("5", &read, &read); err != nil || !value || v.Verdict != verdict.Correct {
+		t.Errorf("the join of two fives: %v, %v, %v", v, value, err)
+	}
+	if v, _, err := joinedSlot("x", &read, &read); err == nil || v.Verdict != verdict.Unchecked {
+		t.Errorf("a key that is no number: %v, %v", v, err)
+	}
+}
