@@ -332,9 +332,26 @@ canvas-fetch:
 
 # Check that the runner reads canvas's synthetic samples: each held to spec's rules, read by the
 # task it names at its tag of tutor, and run on the stub, with no key and no cost (tutor-eval canvas).
-# Check that the runner reads the samples of the pinned release of canvas.
+# Then the runner's reports it wrote are held to section 14 of spec's contracts by spec's recipe
+# report-check, without a check of tutor's own (R87 in docs/decisions.md): the reports of the whole
+# set to all its samples, after --samples, and the reports of the sheets and of the pages, each of a
+# part of the set, alone. The runs log in a folder of their own, written anew.
+# Check that the runner reads the samples of the pinned release of canvas, and spec's check of its reports.
 canvas-check: canvas-fetch
-    go run ./cmd/tutor-eval canvas -dir synthetic/canvas-{{ CANVAS_TAG }} -at synthetic/tutor-trees
+    #!/usr/bin/env bash
+    set -euo pipefail
+    runs=synthetic/runs/canvas-check
+    rm -rf -- "$runs"
+    go run ./cmd/tutor-eval canvas -dir synthetic/canvas-{{ CANVAS_TAG }} -at synthetic/tutor-trees -runs "$runs"
+    shopt -s nullglob
+    whole=("$runs"/*-canvas-{{ CANVAS_TAG }}.*.report.json)
+    parts=("$runs"/*-canvas-{{ CANVAS_TAG }}-*.report.json)
+    if [ "${#whole[@]}" -eq 0 ] || [ "${#parts[@]}" -eq 0 ]; then
+        echo "canvas-check: the run wrote no runner's report of the set or of its parts" >&2
+        exit 1
+    fi
+    just -f spec/justfile report-check "${whole[@]}" --samples synthetic/canvas-{{ CANVAS_TAG }}/*.json
+    just -f spec/justfile report-check "${parts[@]}"
 
 # The check fails on a spoiled sample: in a copy of the samples, the first names an open view of
 # another digest, which sample-check still passes, and the check refuses it as another task.

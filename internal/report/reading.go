@@ -470,29 +470,29 @@ func (r *Reading) pair(strong, fast string) Pair {
 // errors of each reader beside it are. A call that failed, or gave no verdict, joins nothing, and
 // the sheet is not released.
 func joined(key string, a, b *reading.CallRecord) (verdict.Verdict, bool) {
-	v, value := joinedSlot(key, a, b)
+	v, value, _ := joinedSlot(key, a, b)
 	return v.Verdict, value
 }
 
 // joinedSlot is module-kit's verdict on the observations of two readers of a sheet joined, as
-// their records tell them, and whether the two read one value; unchecked, with none, when either
-// gives no observation.
-func joinedSlot(key string, a, b *reading.CallRecord) (verdict.SlotVerdict, bool) {
+// their records tell them, and whether the two read one value; unchecked, with an error, when
+// either gives no observation, the two do not join, or module-kit gives no verdict on the join.
+func joinedSlot(key string, a, b *reading.CallRecord) (verdict.SlotVerdict, bool, error) {
 	none := verdict.SlotVerdict{Verdict: verdict.Unchecked}
 	oa, ob := reading.RecordObservation(a), reading.RecordObservation(b)
 	if oa == nil || ob == nil {
-		return none, false
+		return none, false, errors.New("a reader gives no observation")
 	}
 	j, err := observation.Join([]formatv0.Item{task.SheetItem(key)}, oa, ob)
-	if err != nil {
-		return none, false
+	var v verdict.SlotVerdict
+	if err == nil {
+		v, err = reading.SlotVerdict(key, j)
 	}
-	v, err := reading.SlotVerdict(key, j)
 	if err != nil {
-		return none, false
+		return none, false, err
 	}
 	_, value := j.GetAnswerSlots()[0].GetRead().(*observationv1.AnswerSlotObservation_Value)
-	return v, value
+	return v, value, nil
 }
 
 // P is p of the hybrid: the share of sheets the fast reader does not confirm "correct" on, which

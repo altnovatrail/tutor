@@ -17,7 +17,7 @@ import (
 
 // causes are the causes of an unchecked reading, in the order the section names them.
 var causes = []evalv1.UncheckedCause{evalv1.UncheckedCause_UNCHECKED_CAUSE_FAILURE, evalv1.UncheckedCause_UNCHECKED_CAUSE_LIMIT,
-	evalv1.UncheckedCause_UNCHECKED_CAUSE_INVALID, evalv1.UncheckedCause_UNCHECKED_CAUSE_NO_MARK}
+	evalv1.UncheckedCause_UNCHECKED_CAUSE_INVALID, evalv1.UncheckedCause_UNCHECKED_CAUSE_CHECK, evalv1.UncheckedCause_UNCHECKED_CAUSE_NO_MARK}
 
 // ReportFile is the name of the file of a runner's report beside its log: the log's name without its
 // .jsonl, the report's name, and .report.json.
@@ -27,12 +27,14 @@ func ReportFile(logBase, name string) string { return logBase + "." + name + ".r
 func counted(c Count) string { return fmt.Sprintf("%d of %d", c.Events, c.Of) }
 
 // causesOf are the unchecked readings by cause, as the section writes them: failure / limit /
-// invalid, and no mark of an essay.
+// invalid, and the check of an answer slot, or no mark of an essay, whose rubric has no check.
 func causesOf(m map[evalv1.UncheckedCause]int, essays bool) string {
-	parts := []string{itoa(m[causes[0]]), itoa(m[causes[1]]), itoa(m[causes[2]])}
+	last := evalv1.UncheckedCause_UNCHECKED_CAUSE_CHECK
 	if essays {
-		parts = append(parts, itoa(m[causes[3]]))
+		last = evalv1.UncheckedCause_UNCHECKED_CAUSE_NO_MARK
 	}
+	parts := []string{itoa(m[evalv1.UncheckedCause_UNCHECKED_CAUSE_FAILURE]), itoa(m[evalv1.UncheckedCause_UNCHECKED_CAUSE_LIMIT]),
+		itoa(m[evalv1.UncheckedCause_UNCHECKED_CAUSE_INVALID]), itoa(m[last])}
 	return strings.Join(parts, " / ")
 }
 
@@ -68,7 +70,7 @@ func markdownProtocol(b *strings.Builder, logName string, reports []Named, refus
 		ReportFile(base, "<reader>"))
 	reading := reports[0].Report.GetCapability() == evalv1.Capability_CAPABILITY_HANDWRITING_READING
 	if reading {
-		b.WriteString("| Report | Readers | Repeats | Samples measured | Refused | Answer slots | Readings | False alarm | False \"correct\" | Needless \"unreadable\" | \"Unreadable\" kept | Another trap | Unchecked: failure / limit / invalid |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n")
+		b.WriteString("| Report | Readers | Repeats | Samples measured | Refused | Answer slots | Readings | False alarm | False \"correct\" | Needless \"unreadable\" | \"Unreadable\" kept | Another trap | Unchecked: failure / limit / invalid / check |\n|---|---|---|---|---|---|---|---|---|---|---|---|---|\n")
 		for _, n := range reports {
 			m := MeasuresOf(n.Report).Reading
 			measured, refusedN := samplesOf(n.Report)
@@ -140,7 +142,7 @@ func protocolCSV(w io.Writer, reports []Named) error {
 	cw := csv.NewWriter(w)
 	rows := [][]string{{"report", "readers", "repeats", "measured", "refused", "group", "readings", "false_alarm", "false_alarm_of", "false_correct", "false_correct_of",
 		"needless_unreadable", "needless_unreadable_of", "unreadable_kept", "unreadable_kept_of", "another_trap", "another_trap_of", "agreement", "agreement_of", "none", "kappa",
-		"unchecked_failure", "unchecked_limit", "unchecked_invalid", "unchecked_no_mark"}}
+		"unchecked_failure", "unchecked_limit", "unchecked_invalid", "unchecked_check", "unchecked_no_mark"}}
 	empty := Count{}
 	row := func(n Named, group string, readings int, fa, fc, nu, uk, at, ag Count, none int, k string, un map[evalv1.UncheckedCause]int) {
 		measured, refused := samplesOf(n.Report)

@@ -203,7 +203,7 @@ func TestReadingReports(t *testing.T) {
 	if err := r.ProtocolCSV(&csv); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(md.String(), "| haiku-low | claude-haiku-5-5 low no-thinking | 2 | 2 | 1 | 2 | 4 | 0 of 1 | 0 of 1 | 1 of 2 | 0 of 0 | 0 of 0 | 0 / 1 / 1 |") ||
+	if !strings.Contains(md.String(), "| haiku-low | claude-haiku-5-5 low no-thinking | 2 | 2 | 1 | 2 | 4 | 0 of 1 | 0 of 1 | 1 of 2 | 0 of 0 | 0 of 0 | 0 / 1 / 1 / 0 |") ||
 		!strings.Contains(md.String(), "in no report, since their files name no ID that can be read: free/b.json") || len(r.Reports()) != 3 {
 		t.Errorf("the section of the reports:\n%s", md.String())
 	}

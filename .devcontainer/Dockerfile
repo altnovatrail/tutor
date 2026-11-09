@@ -4,37 +4,47 @@
 # detected at RUN time via dpkg instead. A host that has Docker can build this, and that is the
 # whole requirement.
 #
-# Two stages. `toolchain` holds what it takes to check the schemas, the documents and the Go
-# code, and is the stage the automated checks run inside. `devcontainer` adds what a person
-# needs on top of that and is the default stage, so building this file with no target gives the
-# full environment.
+# Two stages. `toolchain` holds what it takes to check the repository — its documents, and its
+# code where it has any — and is the stage the automated checks run inside. `devcontainer` adds
+# what a person needs on top of that and is the default stage, so building this file with no
+# target gives the full environment.
 
-# -- toolchain: checks the schemas, the documents and the Go code ------------
+# -- toolchain: checks the repository ----------------------------------------
 
 FROM mcr.microsoft.com/devcontainers/base:3.0.12-noble@sha256:ec556aed93f62aa6d13fe72c5db09da4e29a7c9b87c568dbca0ee5717466926a AS toolchain
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
-# Node.js LTS: the JSON Schema validators and the document linters are npm packages.
+# Node.js LTS: the checks of spec's justfile — of the documents, of the licenses, of the files of
+# a release and, in spec, of the schemas — are npm packages, and a repository's TypeScript runs
+# on it too.
 ARG NODE_VERSION=24.21.0
 ARG JUST_VERSION=1.58.0
-# Go builds and tests tutor; golangci-lint runs its linters and formatters, gofmt and goimports
-# among them. The Go checks of CI run with both, in this stage, and CodeQL reads the code from a
-# build with this Go (R13 of docs/decisions.md). golangci-lint is under GPL-3.0. spec's R12
-# allows that of a development tool that ships nothing, as an exception named in the decision
-# that brings it in: here, R12 of docs/decisions.md.
+# Go: a repository's Go code is built, vetted and tested with it, and CodeQL reads that code from
+# a build with it, in /usr/local/go, where the shared CodeQL workflow of .github looks for Go in
+# this stage. In spec that code is its Go module, which code of the platform takes from a
+# release, and the Go tools in tools/, and spec's checks build the module's zip as the Go module
+# proxy will (R64 spec). Go comes with this file into the copy of every NovaTrail repository, whatever
+# its kind, and stays unused in one without Go code (R64 spec).
 ARG GO_VERSION=1.27.3
+# golangci-lint runs tutor's linters and formatters, gofmt and goimports among them: the Go checks
+# of CI run with it, in this stage (R13 of docs/decisions.md). It is under GPL-3.0, which spec's
+# R12 allows of a development tool that ships nothing, as an exception named in the decision that
+# brings it in: here, R12 of docs/decisions.md. It is tutor's own difference from the devcontainer
+# of spec's repo-template, and a move to a tag of spec adds it again.
 ARG GOLANGCI_LINT_VERSION=2.15.0
-# buf builds the image of the contracts of the spec submodule, which spec's recipe sample-check
-# holds the samples of the eval protocol to, here and in CI (R69 of docs/decisions.md). It is the
-# version spec's devcontainer pins at the tag of the submodule: the check runs spec's code with the
-# buf spec runs it with. Apache-2.0.
+# buf: the API contracts are protobuf files that buf formats, lints, compares with the previous
+# release and generates code from, and spec's checks run it on its contracts/ (R83 spec). It comes
+# with this file into the copy of every NovaTrail repository, as Go does, and stays unused in one
+# without contracts: the other repositories take the generated code from a release of spec. In
+# tutor it builds the image of the submodule's contracts, which spec's recipes sample-check and
+# report-check hold the eval protocol's files to, here and in CI (R69 of docs/decisions.md).
 ARG BUF_VERSION=1.75.0
 # The sha256 of every archive, per architecture, as its publisher lists it: SHASUMS256.txt of
-# the Node release, SHA256SUMS of the just release, the list at go.dev/dl for Go,
+# the Node release, SHA256SUMS of the just release, the sha256 go.dev/dl lists for Go,
 # golangci-lint-<version>-checksums.txt of the golangci-lint release, sha256.txt of the buf
-# release. A sum written here keeps an archive from being swapped once it has been read (R34
-# spec), and is raised together with its version.
+# release, whose binary comes as it is, with no archive. A sum written here keeps a download from
+# being swapped once it has been read (R34 spec), and is raised together with its version.
 ARG NODE_SHA256_AMD64=6e1db87ef58b8819e5d5402eff1536491b18edd8eb7bee5ef7897876e88dc5ff
 ARG NODE_SHA256_ARM64=724282c3b43aec998aa9527380465b45d229e021b58035f5f4f63095eabfe5d5
 ARG JUST_SHA256_AMD64=4a5cc2f53e6f0f8c59092a6cc38291eb729d46a7dd95d3ae582008881b84931d
@@ -53,13 +63,11 @@ ARG BUF_SHA256_ARM64=00eb190aa82df17f393e05b04889cc60a0b13b3259d336e21a87d5f23ab
 RUN arch="$(dpkg --print-architecture)"; \
     case "$arch" in \
         amd64) node_arch=x64; gnu_arch=x86_64; \
-            node_sha256="$NODE_SHA256_AMD64"; just_sha256="$JUST_SHA256_AMD64"; \
-            go_sha256="$GO_SHA256_AMD64"; golangci_lint_sha256="$GOLANGCI_LINT_SHA256_AMD64"; \
-            buf_sha256="$BUF_SHA256_AMD64" ;; \
+            node_sha256="$NODE_SHA256_AMD64"; just_sha256="$JUST_SHA256_AMD64"; go_sha256="$GO_SHA256_AMD64"; \
+            golangci_lint_sha256="$GOLANGCI_LINT_SHA256_AMD64"; buf_sha256="$BUF_SHA256_AMD64" ;; \
         arm64) node_arch=arm64; gnu_arch=aarch64; \
-            node_sha256="$NODE_SHA256_ARM64"; just_sha256="$JUST_SHA256_ARM64"; \
-            go_sha256="$GO_SHA256_ARM64"; golangci_lint_sha256="$GOLANGCI_LINT_SHA256_ARM64"; \
-            buf_sha256="$BUF_SHA256_ARM64" ;; \
+            node_sha256="$NODE_SHA256_ARM64"; just_sha256="$JUST_SHA256_ARM64"; go_sha256="$GO_SHA256_ARM64"; \
+            golangci_lint_sha256="$GOLANGCI_LINT_SHA256_ARM64"; buf_sha256="$BUF_SHA256_ARM64" ;; \
         *) echo "unsupported architecture: $arch" >&2; exit 1 ;; \
     esac; \
     workdir="$(mktemp -d)"; \
@@ -86,6 +94,7 @@ RUN arch="$(dpkg --print-architecture)"; \
     fetch "https://go.dev/dl/go${GO_VERSION}.linux-${arch}.tar.gz" \
         "$workdir/go-${GO_VERSION}-${arch}.tar.gz" "$go_sha256"; \
     tar -C /usr/local -xzf "$workdir/go-${GO_VERSION}-${arch}.tar.gz"; \
+    /usr/local/go/bin/go version; \
     \
     echo "golangci-lint ${GOLANGCI_LINT_VERSION}"; \
     fetch "https://github.com/golangci/golangci-lint/releases/download/v${GOLANGCI_LINT_VERSION}/golangci-lint-${GOLANGCI_LINT_VERSION}-linux-${arch}.tar.gz" \
@@ -94,6 +103,7 @@ RUN arch="$(dpkg --print-architecture)"; \
         -xzf "$workdir/golangci-lint-${GOLANGCI_LINT_VERSION}-${arch}.tar.gz" \
         "golangci-lint-${GOLANGCI_LINT_VERSION}-linux-${arch}/golangci-lint"; \
     install -m 0755 "$workdir/golangci-lint" /usr/local/bin/golangci-lint; \
+    golangci-lint version; \
     \
     echo "buf ${BUF_VERSION}"; \
     fetch "https://github.com/bufbuild/buf/releases/download/v${BUF_VERSION}/buf-Linux-${gnu_arch}" \
@@ -103,9 +113,9 @@ RUN arch="$(dpkg --print-architecture)"; \
     \
     rm -rf "$workdir"
 
-# GOTOOLCHAIN=local: the go command runs the Go installed here and never downloads another,
-# whatever a go.mod asks for. The exact version is this file's.
-ENV PATH="/usr/local/go/bin:/usr/local/node/bin:/home/vscode/.local/bin:${PATH}" \
+# GOTOOLCHAIN=local: the Go above runs every go command, and none downloads another Go because a
+# go.mod asks for a newer one: a go.mod that does fails, which is the signal to raise GO_VERSION.
+ENV PATH="/usr/local/node/bin:/usr/local/go/bin:/home/vscode/.local/bin:${PATH}" \
     GOTOOLCHAIN=local
 
 # -- devcontainer: the toolchain, plus what a person works with --------------
@@ -161,24 +171,31 @@ RUN arch="$(dpkg --print-architecture)"; \
     rm -rf "$workdir"
 
 # gopls is the language server that the Go extension in devcontainer.json starts. It is built
-# with the Go of the toolchain stage, and only here: the checks do not need it.
+# with the Go of the toolchain stage, and only here: the checks do not need it. This step and
+# gopls/ beside this file are the go kind's of spec's repo-template, and a move to a tag of spec
+# brings them with the rest of the devcontainer (R102 spec).
 ARG GOPLS_VERSION=0.24.0
 
 # gopls is built from its lock file, gopls/ in this folder. Its go.mod names gopls as a tool at an
 # exact version, and its go.sum holds the hash of every module the build takes. -mod=readonly
 # builds from that lock and nothing else: a module missing from go.sum, or with another hash, stops
-# the build, as a wrong sum stops an archive (R34 spec). The last line checks that the lock and
-# GOPLS_VERSION name the same version. The caches are removed in the same layer: go clean takes the
-# module cache, whose files the go command makes read-only, and the build cache.
+# the build, as a wrong sum stops an archive (R34 spec). The built gopls must name GOPLS_VERSION
+# exactly, so the lock and the ARG cannot drift apart; spec's tests and new-repo-check hold them
+# to each other too, since CI never builds this stage. Everything the step writes stays in one
+# folder that the same layer removes: go clean takes the module cache, whose files the go command
+# makes read-only, and the build cache, and XDG_CONFIG_HOME keeps the telemetry counters of go and
+# gopls there as well. The checks build the toolchain stage alone, with no context, and never
+# reach this COPY.
 COPY gopls/go.mod gopls/go.sum /tmp/gopls-build/src/
 RUN echo "gopls ${GOPLS_VERSION}"; \
-    export GOPATH=/tmp/gopls-build GOCACHE=/tmp/gopls-build/cache; \
-    cd /tmp/gopls-build/src; \
+    build=/tmp/gopls-build; \
+    export GOPATH="$build" GOCACHE="$build/cache" XDG_CONFIG_HOME="$build/config"; \
+    cd "$build/src"; \
     GOBIN=/usr/local/bin go install -mod=readonly tool; \
+    gopls version | grep -xF "golang.org/x/tools/gopls v${GOPLS_VERSION}"; \
     go clean -cache -modcache; \
     cd /; \
-    rm -rf /tmp/gopls-build; \
-    gopls version | grep -F "gopls v${GOPLS_VERSION}"
+    rm -rf "$build"
 
 # Claude Code comes from the registry at an exact version, rather than from an installer
 # script run off the network: what arrives is the package that version names, and npm checks
