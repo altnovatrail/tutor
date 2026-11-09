@@ -122,11 +122,15 @@ func failure(notAsked bool, err string, invalid bool) evalv1.UncheckedCause {
 	return evalv1.UncheckedCause_UNCHECKED_CAUSE_UNSPECIFIED
 }
 
-// readingOf is the reading of a verdict: unchecked with no cause the runner knows — a check that
-// module-kit refuses, which no bank gives — is a failure.
-func readingOf(v verdict.SlotVerdict) *evalv1.Reading {
+// checked is the reading of module-kit's verdict on a valid observation: unchecked there is the
+// check's — its predicate gave an error or no bool, or ran to its bound —, the task's and not the
+// model's (UNCHECKED_CAUSE_CHECK, contracts/README.md of spec, section 14; R87). No observation, a
+// join that fails and a check that module-kit refuses give no such verdict, and their callers count
+// them failures. tutor's own checks, a number or a fraction against a key, run no predicate, so it
+// is the tasks of modules that give it.
+func checked(v verdict.SlotVerdict) *evalv1.Reading {
 	if v.Verdict == verdict.Unchecked {
-		return unchecked(evalv1.UncheckedCause_UNCHECKED_CAUSE_FAILURE)
+		return unchecked(evalv1.UncheckedCause_UNCHECKED_CAUSE_CHECK)
 	}
 	return &evalv1.Reading{Verdict: verdictOf(v)}
 }
@@ -230,11 +234,15 @@ func ReadingReports(l *reading.Log) []Named {
 		if cause := failure(c.NotAsked, c.Error, c.Invalid); cause != evalv1.UncheckedCause_UNCHECKED_CAUSE_UNSPECIFIED {
 			return unchecked(cause)
 		}
-		v, err := reading.SlotVerdict(k, reading.RecordObservation(c))
+		obs := reading.RecordObservation(c)
+		if obs == nil {
+			return unchecked(evalv1.UncheckedCause_UNCHECKED_CAUSE_FAILURE)
+		}
+		v, err := reading.SlotVerdict(k, obs)
 		if err != nil {
 			return unchecked(evalv1.UncheckedCause_UNCHECKED_CAUSE_FAILURE)
 		}
-		return readingOf(v)
+		return checked(v)
 	}
 	plain := slices.Contains(l.Run.Reads, reading.Plain)
 	var out []Named
@@ -258,8 +266,11 @@ func ReadingReports(l *reading.Log) []Named {
 					return r
 				}
 			}
-			v, _ := joinedSlot(sh.Key, a, b)
-			return readingOf(v)
+			v, _, err := joinedSlot(sh.Key, a, b)
+			if err != nil {
+				return unchecked(evalv1.UncheckedCause_UNCHECKED_CAUSE_FAILURE)
+			}
+			return checked(v)
 		}, modelOf(p[0]), modelOf(p[1])))
 	}
 	return out
@@ -343,13 +354,14 @@ func WorkbookReports(l *workbook.Log) []Named {
 			return func(evalsample.Truth) *evalv1.Reading { return unchecked(cs) }
 		}
 		vs := verdicts(pr, obs)
-		if vs == nil {
-			// A check that module-kit refuses, which no file of the workbook gives, gives none.
+		if obs == nil || vs == nil {
+			// No observation — a box judged with no text, or one the run left unchecked — and a
+			// check that module-kit refuses, which no file of the workbook gives, give none.
 			return func(evalsample.Truth) *evalv1.Reading {
 				return unchecked(evalv1.UncheckedCause_UNCHECKED_CAUSE_FAILURE)
 			}
 		}
-		return func(t evalsample.Truth) *evalv1.Reading { return readingOf(vs[[2]int{t.Item, t.Slot}]) }
+		return func(t evalsample.Truth) *evalv1.Reading { return checked(vs[[2]int{t.Item, t.Slot}]) }
 	}
 	none := func(cs evalv1.UncheckedCause) func(evalsample.Truth) *evalv1.Reading {
 		return func(evalsample.Truth) *evalv1.Reading { return unchecked(cs) }
