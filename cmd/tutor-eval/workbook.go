@@ -113,9 +113,10 @@ func boxesCount(n int) string {
 }
 
 // workbookTally counts the boxes of each scenario, in the order of the scenarios, each with its
-// boxes of a number and of a fraction, and of the fractions written, those stacked and those inline.
+// boxes of a number and of a fraction, and of the fractions written, those stacked and those inline;
+// and its boxes of a time, where it has any.
 func workbookTally(wb *sample.Workbook) string {
-	type tally struct{ all, number, fraction, stacked, inline int }
+	type tally struct{ all, number, fraction, time, stacked, inline int }
 	by := map[sample.BoxScenario]*tally{}
 	for _, pg := range wb.Pages {
 		for _, it := range pg.Items {
@@ -126,9 +127,12 @@ func workbookTally(wb *sample.Workbook) string {
 					by[b.Scenario] = t
 				}
 				t.all++
-				if b.Check.Kind == sample.KindNumber {
+				switch b.Check.Kind {
+				case sample.KindNumber:
 					t.number++
-				} else {
+				case sample.KindTime:
+					t.time++
+				default:
 					t.fraction++
 				}
 				switch {
@@ -144,7 +148,11 @@ func workbookTally(wb *sample.Workbook) string {
 	var parts []string
 	for _, s := range sample.BoxScenarios {
 		if t := by[s]; t != nil {
-			parts = append(parts, fmt.Sprintf("%s %d (number %d, fraction %d: stacked %d, inline %d)", s, t.all, t.number, t.fraction, t.stacked, t.inline))
+			part := fmt.Sprintf("%s %d (number %d, fraction %d: stacked %d, inline %d", s, t.all, t.number, t.fraction, t.stacked, t.inline)
+			if t.time > 0 {
+				part += fmt.Sprintf("; time %d", t.time)
+			}
+			parts = append(parts, part+")")
 		}
 	}
 	return strings.Join(parts, "; ")

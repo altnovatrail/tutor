@@ -147,7 +147,7 @@ func TestCheck(t *testing.T) {
 		{"no statement", func(f *openview.File) { f.Banks[0].Tasks[0].Statement = nil }, "banks[0].tasks[0].statement"},
 		{"empty paragraph", func(f *openview.File) { f.Banks[0].Tasks[0].Statement[0].Text = text("") }, "banks[0].tasks[0].statement[0]"},
 		{"picture", func(f *openview.File) {
-			p := formatv0.PicturePath("posts.png")
+			p := formatv0.TaskPicturePath("posts.png")
 			f.Banks[0].Tasks[0].Statement[0] = open.StatementPart{Picture: &p}
 		}, "banks[0].tasks[0].statement[0]"},
 		{"givens", func(f *openview.File) { f.Banks[0].Tasks[0].Givens = []formatv0.Text{"7"} }, "banks[0].tasks[0].givens"},

@@ -16,7 +16,7 @@ import (
 	"time"
 
 	"github.com/altnovatrail/tutor/provider"
-	"github.com/altnovatrail/tutor/provider/claude"
+	"github.com/altnovatrail/tutor/provider/claude/catalog"
 )
 
 const (
@@ -31,7 +31,7 @@ const (
 // thinking or not.
 type Config struct {
 	Name       string
-	Model      claude.Model
+	Model      catalog.Model
 	Effort     string
 	NoThinking bool
 }
@@ -41,9 +41,9 @@ type Config struct {
 // the extended measurement adds: Opus 5.5 at medium, Sonnet 5.5 at low with thinking and without,
 // and Haiku 5.5 at medium (R50). A run asks those it names, the three of E4 by default (E4Configs).
 func Configs() []Config {
-	model := func(id string) claude.Model {
-		i := slices.IndexFunc(claude.Models, func(m claude.Model) bool { return m.ID == id })
-		return claude.Models[i]
+	model := func(id string) catalog.Model {
+		i := slices.IndexFunc(catalog.Models, func(m catalog.Model) bool { return m.ID == id })
+		return catalog.Models[i]
 	}
 	return []Config{
 		{Name: "opus-high", Model: model("claude-opus-5-5"), Effort: "high"},

@@ -16,6 +16,7 @@ import (
 
 	"github.com/altnovatrail/tutor/internal/board"
 	"github.com/altnovatrail/tutor/provider/claude"
+	"github.com/altnovatrail/tutor/provider/claude/catalog"
 	"github.com/altnovatrail/tutor/provider/gpt"
 )
 
@@ -42,8 +43,8 @@ func serveHTTP(s *http.Server) error { return s.ListenAndServe() }
 func choices(getenv func(string) string, stderr io.Writer) []board.Choice {
 	var offered []board.Choice
 	if key := getenv(anthropicKeyVar); key != "" {
-		for _, m := range claude.Models {
-			offered = append(offered, board.Choice{Model: claude.New(key, m), Efforts: claude.Efforts, Effort: startEffort, Ticked: m.ID == startModel,
+		for _, m := range catalog.Models {
+			offered = append(offered, board.Choice{Model: claude.New(key, m), Efforts: catalog.Efforts, Effort: startEffort, Ticked: m.ID == startModel,
 				NoThinking: m.NoThinkingEfforts()})
 		}
 	} else {

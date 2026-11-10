@@ -423,3 +423,39 @@ func TestChosen(t *testing.T) {
 		}
 	}
 }
+
+// model is a model for Models that answers its own ID.
+type model struct{ id string }
+
+func (m model) Name() string              { return m.id }
+func (m model) Price() (float64, float64) { return 0, 0 }
+func (m model) Ask(context.Context, provider.Request) (provider.Response, error) {
+	return provider.Response{JSON: `"` + m.id + `"`, Model: m.id}, nil
+}
+
+// Models asks each step's model by the client the adapter makes of it once, with the key, and a
+// model the adapter does not call fails its call alone.
+func TestModels(t *testing.T) {
+	var dialed []string
+	dial := func(id, key string) (provider.Model, error) {
+		dialed = append(dialed, id+" "+key)
+		if id == "claude-haiku-5-5" {
+			return nil, errors.New("no such model")
+		}
+		return model{id: id}, nil
+	}
+	ask := runner.Models(dial, "k")
+	configs := runner.Configs()
+	opus, haiku := configs[0], configs[1]
+	for range 2 {
+		if r, err := ask(context.Background(), runner.Step{Config: opus}, provider.Request{}); err != nil || r.Model != opus.Model.ID {
+			t.Fatalf("%s: %+v, %v", opus.Name, r, err)
+		}
+	}
+	if _, err := ask(context.Background(), runner.Step{Config: haiku}, provider.Request{}); err == nil {
+		t.Error("a model the adapter does not call answered")
+	}
+	if want := []string{"claude-opus-5-5 k", "claude-haiku-5-5 k"}; !slices.Equal(dialed, want) {
+		t.Errorf("dialed %v, want %v", dialed, want)
+	}
+}

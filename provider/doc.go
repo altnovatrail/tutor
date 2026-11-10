@@ -1,6 +1,8 @@
 // Package provider is the port through which tutor reaches the AI providers. Each provider has
 // an adapter that implements it, and a provider's SDK is imported by its adapter alone: that is
-// how the SDKs reach api's build only through tutor.
+// how the SDKs reach api's build only through tutor. The library does not build the adapters in:
+// a service gives it the Dial of each adapter it takes, so that a service of one provider's models
+// carries no other provider's SDK (Д185 RUN.md spec; R90).
 package provider
 
 import (
@@ -73,6 +75,10 @@ type Model interface {
 	// Ask sends the request and returns the answer.
 	Ask(ctx context.Context, r Request) (Response, error)
 }
+
+// Dial is an adapter as the library takes it: it makes the client of a model of its provider by the
+// model's exact ID (R07 spec) and a key, and refuses an ID it does not call.
+type Dial func(id, key string) (Model, error)
 
 // ErrNoAnswer is an answer that came back without the JSON asked for: the model refused, or ran
 // out of tokens before it finished.

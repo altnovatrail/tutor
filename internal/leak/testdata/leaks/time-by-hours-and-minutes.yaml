@@ -1,0 +1,34 @@
+# A key of a time is found by its hours and minutes: with a leading zero, and at the end of a
+# sentence. A longer run of digits, a time with letters right after it, and a time in words are no
+# times of the text. A plain number is still searched only for a key of a number.
+task:
+  id: half-past-seven
+  statement:
+    - text: It is 7 o'clock. What time will it be in half an hour? Write the time as hours and minutes, like 9:15.
+  canvas:
+    kind: handwriting_sheet
+  items:
+    - answer_slots:
+        - binding: anywhere
+          check: {kind: time, key: "7:30"}
+  solution:
+    - text: "Half an hour is 30 minutes, and 7:00 and 30 minutes is 7:30."
+  skills:
+    primary: [time-clocks]
+  band: grades-1-2
+  difficulty: 1
+texts:
+  - text: "The clock shows 07:30."
+    leaks: ["7:30"]
+  - text: "at 7:30"
+    leaks: ["7:30"]
+  - text: "17:30"
+    leaks: []
+  - text: "7:305"
+    leaks: []
+  - text: "7:30am"
+    leaks: []
+  - text: "half past seven"
+    leaks: []
+  - text: "30 minutes"
+    leaks: []

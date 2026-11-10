@@ -12,20 +12,22 @@ import (
 
 	"github.com/altnovatrail/tutor/admission"
 	"github.com/altnovatrail/tutor/provider"
-	"github.com/altnovatrail/tutor/provider/claude"
-	"github.com/altnovatrail/tutor/provider/gpt"
 )
 
 // Config is what api gives tutor when it starts (architecture 3.10): spec's admission table, the
 // deployment's facts, the least stage of admission its learners take — admission.StageAuthor only
-// where the author alone learns, as in the first app (R76 spec; R80) — and the platform's keys at
-// the AI providers, which api reads from Secret Manager (architecture 1). A provider with no key
-// here is no route of platform AI: Choose takes none of its models.
+// where the author alone learns, as in the first app (R76 spec; R80) —, the platform's keys at the
+// AI providers, which api reads from Secret Manager (architecture 1), and the adapters of the
+// providers whose models the service calls, such as claude.Dial of package provider/claude. The
+// library builds no adapter in, so that a service carries the SDKs of the adapters it gives alone
+// (Д185 RUN.md spec; R90). A provider with no adapter here is no route at all, and one with no key
+// no route of platform AI: Choose takes none of its models.
 type Config struct {
-	Table *admission.Table
-	Facts admission.Facts
-	Least admission.Stage
-	Keys  map[admissionv0.Provider]string
+	Table    *admission.Table
+	Facts    admission.Facts
+	Least    admission.Stage
+	Keys     map[admissionv0.Provider]string
+	Adapters map[admissionv0.Provider]provider.Dial
 }
 
 // Tutor is the library as api holds it: made once, at the start, and called by many requests at
@@ -35,19 +37,18 @@ type Tutor struct {
 	facts admission.Facts
 	least admission.Stage
 	keys  map[admissionv0.Provider]string
-	dial  dialer
+	// adapters are the adapters of Config, by provider.
+	adapters map[admissionv0.Provider]provider.Dial
 	// clients are the clients of the platform's keys, made once for each model and kept, so that
 	// a request does not build them again; a client of an own key lives only in its request.
 	mu      sync.Mutex
 	clients map[admission.Model]provider.Model
 }
 
-// dialer makes the client of a model of the list with a key: tutor makes it, so that the providers'
-// SDKs reach api's build through tutor alone (R15 spec). Tests give their own.
-type dialer func(m admission.Model, key string) (provider.Model, error)
-
-// New makes the library of a config. It refuses a config with no table, and a least stage that is
-// neither of the two: an empty one is the stage full, the strict one.
+// New makes the library of a config. It refuses a config with no table, a least stage that is
+// neither of the two — an empty one is the stage full, the strict one —, and a key of a provider the
+// config gives no adapter of, which would leave every model of the provider unchosen with no word
+// of why.
 func New(c Config) (*Tutor, error) {
 	if c.Table == nil {
 		return nil, errors.New("tutor: the config has no admission table")
@@ -60,23 +61,28 @@ func New(c Config) (*Tutor, error) {
 	default:
 		return nil, fmt.Errorf("tutor: the least stage %q is neither author nor full", c.Least)
 	}
-	return &Tutor{table: c.Table, facts: c.Facts, least: least, keys: maps.Clone(c.Keys), dial: dial, clients: map[admission.Model]provider.Model{}}, nil
-}
-
-// dial makes the client of a model of Anthropic or OpenAI, by the adapters of tutor.
-func dial(m admission.Model, key string) (provider.Model, error) {
-	switch m.Provider {
-	case "anthropic":
-		i := slices.IndexFunc(claude.Models, func(c claude.Model) bool { return c.ID == m.ID })
-		if i >= 0 {
-			return claude.New(key, claude.Models[i]), nil
-		}
-	case "openai":
-		if m.ID == gpt.Model {
-			return gpt.New(key), nil
+	adapters := map[admissionv0.Provider]provider.Dial{}
+	for p, d := range c.Adapters {
+		if d != nil {
+			adapters[p] = d
 		}
 	}
-	return nil, fmt.Errorf("tutor: no adapter calls %s of %s", m.ID, m.Provider)
+	for _, p := range slices.Sorted(maps.Keys(c.Keys)) {
+		if _, ok := adapters[p]; !ok && c.Keys[p] != "" {
+			return nil, fmt.Errorf("tutor: the config gives a key of %s and no adapter of it", p)
+		}
+	}
+	return &Tutor{table: c.Table, facts: c.Facts, least: least, keys: maps.Clone(c.Keys), adapters: adapters, clients: map[admission.Model]provider.Model{}}, nil
+}
+
+// dial makes the client of a model of the list with a key, by the adapter of its provider that the
+// config gave.
+func (t *Tutor) dial(m admission.Model, key string) (provider.Model, error) {
+	d, ok := t.adapters[m.Provider]
+	if !ok {
+		return nil, fmt.Errorf("tutor: the config gives no adapter of %s", m.Provider)
+	}
+	return d(m.ID, key)
 }
 
 // Route is what every call of the library carries besides its work (architecture 3.10): the AI
@@ -140,19 +146,21 @@ func (r Route) check() error {
 
 // Choose chooses the models of a capability for a route (admission.Table.Select): api calls it
 // before an attempt, and each call of the library before it calls a model, with the same answer
-// while the config is the same. On the own key it takes only the models of the key's provider, and
-// on platform AI only those of the providers it holds a key of. It refuses a route whose key does
-// not fit it.
+// while the config is the same. It takes only the models of the providers the config gives an
+// adapter of: on the own key only those of the key's provider, and on platform AI only those of the
+// providers it holds a key of. It refuses a route whose key does not fit it.
 func (t *Tutor) Choose(c admissionv0.Capability, r Route) (admission.Entry, admission.Answer, error) {
 	if err := r.check(); err != nil {
 		return admission.Entry{}, admission.Answer{}, err
 	}
 	providers := []admissionv0.Provider{}
 	if r.Own != nil {
-		providers = append(providers, r.Own.provider)
+		if _, ok := t.adapters[r.Own.provider]; ok {
+			providers = append(providers, r.Own.provider)
+		}
 	} else {
 		for _, p := range slices.Sorted(maps.Keys(t.keys)) {
-			if t.keys[p] != "" {
+			if _, ok := t.adapters[p]; ok && t.keys[p] != "" {
 				providers = append(providers, p)
 			}
 		}

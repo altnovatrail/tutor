@@ -31,6 +31,14 @@ type Client struct {
 	sdk openai.Client
 }
 
+// Dial is the adapter as the library takes it (provider.Dial): the client of Model, with the key.
+func Dial(id, key string) (provider.Model, error) {
+	if id != Model {
+		return nil, fmt.Errorf("gpt: the adapter calls no model %s", id)
+	}
+	return New(key), nil
+}
+
 // New returns a client with the given API key. The options are for tests: a fake server's URL.
 func New(apiKey string, opts ...option.RequestOption) *Client {
 	opts = append([]option.RequestOption{option.WithAPIKey(apiKey)}, opts...)

@@ -277,3 +277,19 @@ func TestRunWorkbook(t *testing.T) {
 		t.Errorf("a refused run made synthetic in cmd/tutor-eval: %v", err)
 	}
 }
+
+// The tally names the boxes of a time apart from the fractions, and only where there are any.
+func TestWorkbookTallyTime(t *testing.T) {
+	str := func(s string) *string { return &s }
+	wb := &sample.Workbook{Pages: []sample.WorkbookPage{{Items: []sample.WorkbookItem{{Boxes: []sample.WorkbookBox{
+		{Check: sample.BoxCheck{Kind: sample.KindTime, Key: "7:30"}, Scenario: sample.BoxCorrect, Written: str("7:30")},
+		{Check: sample.BoxCheck{Kind: sample.KindNumber, Key: "8"}, Scenario: sample.BoxCorrect, Written: str("8")},
+	}}}}}}
+	if got, want := workbookTally(wb), "correct 2 (number 1, fraction 0: stacked 0, inline 0; time 1)"; got != want {
+		t.Errorf("the tally is %q, want %q", got, want)
+	}
+	wb.Pages[0].Items[0].Boxes = wb.Pages[0].Items[0].Boxes[1:]
+	if got := workbookTally(wb); strings.Contains(got, "time") {
+		t.Errorf("a workbook of no time tallies %q", got)
+	}
+}

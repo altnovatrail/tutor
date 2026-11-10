@@ -1,7 +1,7 @@
 {
   "format": "tutor-open-tasks",
   "version": 0,
-  "module_format_version": "0.3",
+  "module_format_version": "0.4",
   "banks": [
     {
       "bank": "eval/bank.json",

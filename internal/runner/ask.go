@@ -4,19 +4,24 @@ import (
 	"context"
 
 	"github.com/altnovatrail/tutor/provider"
-	"github.com/altnovatrail/tutor/provider/claude"
 )
 
 // Asker asks a step's request of a model: Models asks Claude, and Stub answers by the markup.
 type Asker func(ctx context.Context, st Step, req provider.Request) (provider.Response, error)
 
-// Models asks the models of the steps' configurations with the Anthropic key.
-func Models(key string) Asker {
-	clients := map[string]*claude.Client{}
+// Models asks the models of the steps' configurations with the key, each by the client that the
+// adapter dial makes of it once, such as claude.Dial with the Anthropic key: the runner takes the
+// adapter from its caller, so that a package of the library that runs its own measurement takes no
+// SDK (R90). A model the adapter does not call fails its call, and the run goes on.
+func Models(dial provider.Dial, key string) Asker {
+	clients := map[string]provider.Model{}
 	return func(ctx context.Context, st Step, req provider.Request) (provider.Response, error) {
 		c, ok := clients[st.Config.Model.ID]
 		if !ok {
-			c = claude.New(key, st.Config.Model)
+			var err error
+			if c, err = dial(st.Config.Model.ID, key); err != nil {
+				return provider.Response{}, err
+			}
 			clients[st.Config.Model.ID] = c
 		}
 		return c.Ask(ctx, req)

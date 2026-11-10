@@ -53,11 +53,12 @@ func (r *Workbook) want(b *workbook.BoxRecord) workbook.Slot {
 // check and each writing of a fraction.
 const (
 	AllBoxes = "all"
-	// Number, Fraction and Reduced are the kinds of check: a number, a fraction of any form and one
-	// in lowest terms.
+	// Number, Fraction, Reduced and Time are the kinds of check: a number, a fraction of any form,
+	// one in lowest terms and a time of day.
 	Number   = "number"
 	Fraction = "fraction, any form"
 	Reduced  = "fraction in lowest terms"
+	Time     = "time"
 )
 
 // workbookGroups are the groups of a box: all, its scenario, its kind of check and, for a fraction,
@@ -67,6 +68,8 @@ func workbookGroups(b *workbook.BoxRecord) []string {
 	switch {
 	case b.Kind == sample.KindNumber:
 		groups = append(groups, Number)
+	case b.Kind == sample.KindTime:
+		groups = append(groups, Time)
 	case b.Form == formatv0.CheckFormReduced:
 		groups = append(groups, Reduced)
 	default:
@@ -112,7 +115,7 @@ func workbookGroupOrder() []string {
 	for _, s := range sample.BoxScenarios {
 		out = append(out, "scenario "+string(s))
 	}
-	return append(out, Number, Fraction, Reduced, "written "+string(sample.Stacked), "written "+string(sample.Inline))
+	return append(out, Number, Fraction, Reduced, Time, "written "+string(sample.Stacked), "written "+string(sample.Inline))
 }
 
 // WorkbookCell is the readings of a group of boxes by a reader in a condition at 32 px, in every

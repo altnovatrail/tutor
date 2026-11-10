@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"os/exec"
 	"strings"
 	"sync"
 	"testing"
@@ -38,11 +39,11 @@ type fakes struct {
 	keys   []string
 }
 
-func (fs *fakes) dial(m admission.Model, key string) (provider.Model, error) {
+func (fs *fakes) dial(id, key string) (provider.Model, error) {
 	fs.keys = append(fs.keys, key)
-	f, ok := fs.models[m.ID]
+	f, ok := fs.models[id]
 	if !ok {
-		return nil, fmt.Errorf("no fake of %s", m.ID)
+		return nil, fmt.Errorf("no fake of %s", id)
 	}
 	return f, nil
 }
@@ -61,11 +62,11 @@ func library(t *testing.T, facts string, fs *fakes) *Tutor {
 	if err != nil {
 		t.Fatal(err)
 	}
-	lib, err := New(Config{Table: table, Facts: f, Least: admission.StageAuthor, Keys: map[admissionv0.Provider]string{"anthropic": "platform-key"}})
+	lib, err := New(Config{Table: table, Facts: f, Least: admission.StageAuthor, Keys: map[admissionv0.Provider]string{"anthropic": "platform-key"},
+		Adapters: map[admissionv0.Provider]provider.Dial{"anthropic": fs.dial}})
 	if err != nil {
 		t.Fatal(err)
 	}
-	lib.dial = fs.dial
 	return lib
 }
 
@@ -211,15 +212,41 @@ func TestPlatformKeyAndAdapters(t *testing.T) {
 	if _, _, out := lib.prepare(admissionv0.CapabilityHandwritingReading, platform); out == nil || out.Kind != Failed || !strings.Contains(out.Err.Error(), "no fake") {
 		t.Errorf("a client that cannot be made: %+v", out)
 	}
-	// The adapters of tutor make the clients of the list's models, and of no other.
-	for _, m := range []admission.Model{{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "high"}, {Provider: "openai", ID: "gpt-6-astra", Effort: "high"}} {
-		if c, err := dial(m, "k"); err != nil || c == nil {
-			t.Errorf("%s: %v", m.ID, err)
+	// A key of a provider with no adapter is a config New refuses, and an adapter given as nil is
+	// none.
+	base := library(t, adultFacts, fs)
+	keys := map[admissionv0.Provider]string{"anthropic": "platform-key"}
+	for name, adapters := range map[string]map[admissionv0.Provider]provider.Dial{"none": nil, "nil": {"anthropic": nil}, "another provider's": {"openai": fs.dial}} {
+		if _, err := New(Config{Table: base.table, Facts: base.facts, Keys: keys, Adapters: adapters}); err == nil || !strings.Contains(err.Error(), "a key of anthropic and no adapter") {
+			t.Errorf("a key with %s adapter: %v", name, err)
 		}
 	}
-	for _, m := range []admission.Model{{Provider: "anthropic", ID: "claude-9"}, {Provider: "openai", ID: "gpt-1"}, {Provider: "google", ID: "gemini"}} {
-		if _, err := dial(m, "k"); err == nil {
-			t.Errorf("%s of %s dials", m.ID, m.Provider)
+	// Without an adapter of Anthropic its pair serves no own key of Anthropic either.
+	noAnthropic, err := New(Config{Table: base.table, Facts: base.facts, Least: admission.StageAuthor, Adapters: map[admissionv0.Provider]provider.Dial{"openai": fs.dial}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	own := Route{AI: admissionv0.AiRouteOwnKey, Category: admissionv0.AgeCategoryAdult, Own: NewOwnKey("anthropic", testKey)}
+	if _, _, out := noAnthropic.prepare(admissionv0.CapabilityHandwritingReading, own); out == nil || out.Kind != NotAdmitted || *out.Admission.Reason != admission.ReasonModelNotAdmitted {
+		t.Errorf("an own key of a provider with no adapter: %+v", out)
+	}
+	// A model chosen whose provider has no adapter fails, before any call: Choose never chooses one.
+	lib = library(t, adultFacts, fs)
+	if _, err := lib.dial(admission.Model{Provider: "openai", ID: "gpt-6-astra"}, "k"); err == nil || !strings.Contains(err.Error(), "no adapter of openai") {
+		t.Errorf("a model of no adapter: %v", err)
+	}
+}
+
+// The root package builds no adapter in: a service that takes the library carries the SDK of a
+// provider only when it takes the provider's adapter itself (Д185 RUN.md spec; R90).
+func TestRootImportsNoProvider(t *testing.T) {
+	out, err := exec.Command("go", "list", "-deps", ".").Output()
+	if err != nil {
+		t.Fatalf("go list: %v", err)
+	}
+	for _, dep := range strings.Fields(string(out)) {
+		if dep == "github.com/altnovatrail/tutor/provider/claude" || dep == "github.com/altnovatrail/tutor/provider/gpt" || strings.HasPrefix(dep, "github.com/anthropics/") || strings.HasPrefix(dep, "github.com/openai/") {
+			t.Errorf("the root package takes %s", dep)
 		}
 	}
 }
