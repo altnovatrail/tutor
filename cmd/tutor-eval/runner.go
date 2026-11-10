@@ -29,6 +29,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/sheets"
 	"github.com/altnovatrail/tutor/internal/workbook"
+	"github.com/altnovatrail/tutor/provider/claude"
 )
 
 // The caps of the parts, in US dollars: $3 for the development and $6 for the test
@@ -230,7 +231,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 			_, _ = fmt.Fprintf(stderr, "tutor-eval run: %s is not set: the run asks Claude; with -stub it asks no one\n", anthropicKeyVar)
 			return exitUsage
 		}
-		ask = runner.Models(key)
+		ask = claudeModels(key)
 	}
 
 	// What follows the plan is the same for every kind.
@@ -284,6 +285,10 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	}
 	return startRun(ctx, "tutor-eval run", r, what, above, path, *maxUSD, *stub, ask, stdin, stdout, stderr, now)
 }
+
+// claudeModels asks the models of a run's steps by the adapter of Claude, with the Anthropic key:
+// the runner takes the adapter from here, so that no package of the library takes the SDK (R90).
+func claudeModels(key string) runner.Asker { return runner.Models(claude.Dial, key) }
 
 // startRun says what a planned run asks, how many calls and what they are expected to cost, and
 // starts it only once the author types yes (rule 4 of RUN.md): till then Ctrl-C ends it as any

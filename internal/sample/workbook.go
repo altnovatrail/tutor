@@ -72,7 +72,8 @@ type WorkbookBox struct {
 }
 
 // BoxCheck is the check of a box, as the module format gives it (spec's format, section 15): the
-// kind, number or fraction; the key; the form of a fraction, nil for a number; and the trap values.
+// kind, number, fraction or time; the key; the form of a fraction, nil for a number and a time; and
+// the trap values.
 type BoxCheck struct {
 	Kind       CheckKind           `json:"kind"`
 	Key        string              `json:"key"`
@@ -83,10 +84,11 @@ type BoxCheck struct {
 // CheckKind is the kind of a box's check.
 type CheckKind string
 
-// The check kinds of the workbook (R41 spec).
+// The check kinds of the workbook (R41 spec), and from format 0.4 a time of day (R111 spec).
 const (
 	KindNumber   CheckKind = "number"
 	KindFraction CheckKind = "fraction"
+	KindTime     CheckKind = "time"
 )
 
 // TrapValue is a wrong value the check knows, and the trap it shows.
@@ -144,8 +146,21 @@ func PairOf(r rune) (rune, bool) {
 // Mirrorable are the digits a child writes mirrored (docs/architecture.md, section 3.1).
 const Mirrorable = "2579"
 
-// writtenValue is how a value is written in a box: digits, or a simple fraction of them.
-var writtenValue = regexp.MustCompile(`^(0|[1-9][0-9]*)(/[1-9][0-9]*)?$`)
+// writtenValue is how a value of a number or a fraction is written in a box: digits, or a simple
+// fraction of them; and writtenTime how a time is, hours, ":" and minutes, in the notation of a time
+// of the format (spec's format, section 15; R111 spec), so that a trap value can hold 5:60.
+var (
+	writtenValue = regexp.MustCompile(`^(0|[1-9][0-9]*)(/[1-9][0-9]*)?$`)
+	writtenTime  = regexp.MustCompile(`^[0-9]{1,2}:([0-9]{2}|[1-9][0-9]{2})$`)
+)
+
+// written is whether a value is written as the pages write a value of a check's kind.
+func written(kind CheckKind, value string) bool {
+	if kind == KindTime {
+		return writtenTime.MatchString(value)
+	}
+	return writtenValue.MatchString(value)
+}
 
 // Format is the check of a box as the module format writes it: the workbook's check is the
 // format's already, and a number has no form.
@@ -300,20 +315,20 @@ func checkItem(p *problems, path string, it WorkbookItem) {
 // (task.trap-values). It reports whether the check can judge the box's values.
 func checkCheck(p *problems, path string, c BoxCheck) bool {
 	switch {
-	case c.Kind == KindNumber && c.Form != nil:
-		p.add(path+".form", "is %q, but a number has no form", *c.Form)
+	case (c.Kind == KindNumber || c.Kind == KindTime) && c.Form != nil:
+		p.add(path+".form", "is %q, but a %s has no form", *c.Form, c.Kind)
 	case c.Kind == KindFraction && (c.Form == nil || *c.Form != formatv0.CheckFormAny && *c.Form != formatv0.CheckFormReduced):
 		p.add(path+".form", "is not %q or %q", formatv0.CheckFormAny, formatv0.CheckFormReduced)
-	case c.Kind != KindNumber && c.Kind != KindFraction:
-		p.add(path+".kind", "is %q, not %q or %q", c.Kind, KindNumber, KindFraction)
+	case c.Kind != KindNumber && c.Kind != KindFraction && c.Kind != KindTime:
+		p.add(path+".kind", "is %q, not %q, %q or %q", c.Kind, KindNumber, KindFraction, KindTime)
 		return false
 	}
 	v, err := c.Verdict(&c.Key)
-	if err != nil && writtenValue.MatchString(c.Key) {
+	if err != nil && written(c.Kind, c.Key) {
 		p.add(path, "is no check the format takes: %v", err)
 		return false
 	}
-	if err != nil || v.Verdict != verdict.Correct || !writtenValue.MatchString(c.Key) {
+	if err != nil || v.Verdict != verdict.Correct || !written(c.Kind, c.Key) {
 		p.add(path+".key", "%q is no key of a %s, as the format and the pages write it", c.Key, c.Kind)
 		return false
 	}
@@ -329,7 +344,7 @@ func checkCheck(p *problems, path string, c BoxCheck) bool {
 		seen[t.Trap] = true
 		v, _ := c.Verdict(&t.Value) // the key is one: the check is taken
 		switch {
-		case !writtenValue.MatchString(t.Value):
+		case !written(c.Kind, t.Value):
 			p.add(tp+".value", "%q is not written as the pages write values", t.Value)
 		case v.Verdict != verdict.NotYet:
 			p.add(tp+".value", "%q is %s, and a trap value is not yet right", t.Value, v.Verdict)
@@ -364,8 +379,8 @@ func checkBox(p *problems, path string, b WorkbookBox) {
 		p.add(path+".written", "is null, but only a box of the scenario %s is blank", BoxBlank)
 		return
 	}
-	if !writtenValue.MatchString(*b.Written) {
-		p.add(path+".written", "%q is not written as the pages write values: digits, or digits/digits", *b.Written)
+	if !written(b.Check.Kind, *b.Written) {
+		p.add(path+".written", "%q is not written as the pages write values: digits, digits/digits, or hours:minutes for a time", *b.Written)
 		return
 	}
 	switch {
@@ -374,7 +389,7 @@ func checkBox(p *problems, path string, b WorkbookBox) {
 	case fraction && *b.Fraction != Stacked && *b.Fraction != Inline:
 		p.add(path+".fraction", "is %q, not %q or %q", *b.Fraction, Stacked, Inline)
 	case !fraction && b.Fraction != nil:
-		p.add(path+".fraction", "is %q, but a number is no fraction", *b.Fraction)
+		p.add(path+".fraction", "is %q, but a %s is no fraction", *b.Fraction, b.Check.Kind)
 	}
 	if (b.Crossed != nil) != (b.Scenario == BoxRewritten) {
 		p.add(path+".crossed", "is given in a box of the scenario %s alone, and there it is", BoxRewritten)
@@ -404,7 +419,7 @@ func checkBox(p *problems, path string, b WorkbookBox) {
 		p.add(path+".written", "%q has none of the digits %s to mirror", *b.Written, Mirrorable)
 	}
 	if b.Crossed != nil {
-		if !writtenValue.MatchString(*b.Crossed) {
+		if !written(b.Check.Kind, *b.Crossed) {
 			p.add(path+".crossed", "%q is not written as the pages write values", *b.Crossed)
 		} else if c, _ := b.Check.Verdict(b.Crossed); c.Verdict != verdict.NotYet {
 			p.add(path+".crossed", "%q is %s, but what is crossed out is a wrong value", *b.Crossed, c.Verdict)

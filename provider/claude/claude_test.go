@@ -19,6 +19,7 @@ import (
 	"github.com/anthropics/anthropic-sdk-go/option"
 
 	"github.com/altnovatrail/tutor/provider"
+	"github.com/altnovatrail/tutor/provider/claude/catalog"
 )
 
 // The events of a streamed answer, as the API sends them: the start with the input tokens, a
@@ -128,7 +129,7 @@ func holds(t *testing.T, body string, wants ...string) {
 }
 
 func TestAsk(t *testing.T) {
-	c, f := fakeAPI(t, Models[2], reply{body: goodStream})
+	c, f := fakeAPI(t, catalog.Models[2], reply{body: goodStream})
 	resp, err := c.Ask(context.Background(), request)
 	if err != nil {
 		t.Fatal(err)
@@ -153,7 +154,7 @@ func TestAsk(t *testing.T) {
 
 // A value of the schema written as JSON goes out as it is written, in its own order.
 func TestSchemaOrder(t *testing.T) {
-	c, f := fakeAPI(t, Models[2], reply{body: goodStream})
+	c, f := fakeAPI(t, catalog.Models[2], reply{body: goodStream})
 	r := request
 	r.Schema = map[string]any{"type": "object", "properties": json.RawMessage(`{"verdict": {}, "mark": {}}`)}
 	if _, err := c.Ask(context.Background(), r); err != nil {
@@ -165,7 +166,7 @@ func TestSchemaOrder(t *testing.T) {
 // The model and the effort a request names are the ones that reach the API, and a request without
 // an effort leaves the model its own default.
 func TestModelAndEffort(t *testing.T) {
-	c, f := fakeAPI(t, Models[0], reply{body: goodStream})
+	c, f := fakeAPI(t, catalog.Models[0], reply{body: goodStream})
 	r := request
 	r.Effort = "low"
 	if _, err := c.Ask(context.Background(), r); err != nil {
@@ -186,7 +187,7 @@ func TestNoThinking(t *testing.T) {
 	for _, tt := range []struct {
 		model Model
 		want  string
-	}{{Models[0], `"thinking":{"type":"disabled"}`}, {Models[1], `"thinking":{"type":"between_tools"}`}} {
+	}{{catalog.Models[0], `"thinking":{"type":"disabled"}`}, {catalog.Models[1], `"thinking":{"type":"between_tools"}`}} {
 		t.Run(tt.model.Name, func(t *testing.T) {
 			c, f := fakeAPI(t, tt.model, reply{body: goodStream})
 			r := request
@@ -209,13 +210,13 @@ func TestRefusedBeforeCall(t *testing.T) {
 		noThinking bool
 		want       string
 	}{
-		{"an unknown effort", Models[2], "extreme", false, `no effort level "extreme"`},
-		{"Opus without thinking", Models[2], "low", true, "cannot answer without thinking"},
-		{"Fable without thinking", Models[3], "low", true, "cannot answer without thinking"},
-		{"Haiku without thinking at xhigh", Models[0], "xhigh", true, `at the effort "xhigh"`},
-		{"Haiku without thinking at max", Models[0], "max", true, `at the effort "max"`},
-		{"Sonnet without thinking at max", Models[1], "max", true, `at the effort "max"`},
-		{"Haiku without thinking and no effort", Models[0], "", true, `at the effort ""`},
+		{"an unknown effort", catalog.Models[2], "extreme", false, `no effort level "extreme"`},
+		{"Opus without thinking", catalog.Models[2], "low", true, "cannot answer without thinking"},
+		{"Fable without thinking", catalog.Models[3], "low", true, "cannot answer without thinking"},
+		{"Haiku without thinking at xhigh", catalog.Models[0], "xhigh", true, `at the effort "xhigh"`},
+		{"Haiku without thinking at max", catalog.Models[0], "max", true, `at the effort "max"`},
+		{"Sonnet without thinking at max", catalog.Models[1], "max", true, `at the effort "max"`},
+		{"Haiku without thinking and no effort", catalog.Models[0], "", true, `at the effort ""`},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -237,7 +238,7 @@ func TestFirstToken(t *testing.T) {
 	head := sse(evStart, evThinking, evSignature, evStop0, evText)
 	text := sse(evDelta1, evDelta2)
 	tail := sse(evStop1, evEnd, evMsgStop)
-	c := serve(t, Models[2], 0, func(w http.ResponseWriter, _ *http.Request) {
+	c := serve(t, catalog.Models[2], 0, func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/event-stream")
 		flusher := w.(http.Flusher)
 		for _, part := range []struct {
@@ -263,7 +264,7 @@ func TestFirstToken(t *testing.T) {
 // A request the SDK sends again after a failure counts as a retry.
 func TestRetry(t *testing.T) {
 	overloaded := reply{status: 529, header: http.Header{"Retry-After-Ms": {"0"}}, body: `{"type":"error","error":{"type":"overloaded_error","message":"Overloaded"}}`}
-	c, f := fakeAPI(t, Models[2], overloaded, reply{body: goodStream})
+	c, f := fakeAPI(t, catalog.Models[2], overloaded, reply{body: goodStream})
 	resp, err := c.Ask(context.Background(), request)
 	if err != nil {
 		t.Fatal(err)
@@ -277,7 +278,7 @@ func TestRetry(t *testing.T) {
 // partial, with the tokens counted so far.
 func TestFailures(t *testing.T) {
 	t.Run("a refused request", func(t *testing.T) {
-		c, f := fakeAPI(t, Models[2], reply{status: 400, body: `{"type":"error","error":{"type":"invalid_request_error","message":"bad"}}`})
+		c, f := fakeAPI(t, catalog.Models[2], reply{status: 400, body: `{"type":"error","error":{"type":"invalid_request_error","message":"bad"}}`})
 		resp, err := c.Ask(context.Background(), request)
 		var apiErr *anthropic.Error
 		if !errors.As(err, &apiErr) || apiErr.StatusCode != 400 || resp.InputTokens != 0 || resp.Partial || len(f.requests()) != 1 {
@@ -290,7 +291,7 @@ func TestFailures(t *testing.T) {
 	}
 	for name, body := range broken {
 		t.Run(name, func(t *testing.T) {
-			c, _ := fakeAPI(t, Models[2], reply{body: body})
+			c, _ := fakeAPI(t, catalog.Models[2], reply{body: body})
 			resp, err := c.Ask(context.Background(), request)
 			if err == nil || !resp.Partial || resp.InputTokens != 1300 {
 				t.Errorf("= %+v, %v, want a partial answer with its input tokens", resp, err)
@@ -298,7 +299,7 @@ func TestFailures(t *testing.T) {
 		})
 	}
 	t.Run("a stream the clock cuts off", func(t *testing.T) {
-		c := serve(t, Models[2], 0, func(w http.ResponseWriter, r *http.Request) {
+		c := serve(t, catalog.Models[2], 0, func(w http.ResponseWriter, r *http.Request) {
 			w.Header().Set("Content-Type", "text/event-stream")
 			_, _ = io.WriteString(w, sse(evStart))
 			w.(http.Flusher).Flush()
@@ -317,7 +318,7 @@ func TestFailures(t *testing.T) {
 // below with the setting Anthropic names for it, or not at all.
 func TestModels(t *testing.T) {
 	ids, names := map[string]bool{}, map[string]bool{}
-	for _, m := range Models {
+	for _, m := range catalog.Models {
 		if m.ID == "" || m.Name == "" || m.Input <= 0 || m.Output <= m.Input || ids[m.ID] || names[m.Name] {
 			t.Errorf("model %+v", m)
 		}
@@ -345,7 +346,7 @@ func TestNoAnswer(t *testing.T) {
 	}
 	for name, body := range tests {
 		t.Run(name, func(t *testing.T) {
-			c, _ := fakeAPI(t, Models[2], reply{body: body})
+			c, _ := fakeAPI(t, catalog.Models[2], reply{body: body})
 			resp, err := c.Ask(context.Background(), request)
 			if !errors.Is(err, provider.ErrNoAnswer) || resp.Partial || resp.InputTokens != 1300 || resp.OutputTokens == 0 {
 				t.Errorf("= %+v, %v, want ErrNoAnswer with the billed tokens", resp, err)
@@ -357,7 +358,7 @@ func TestNoAnswer(t *testing.T) {
 // The pictures go in their order in one message, each a block of its own after a block of its
 // label, and the text after them.
 func TestImages(t *testing.T) {
-	c, f := fakeAPI(t, Models[2], reply{body: goodStream})
+	c, f := fakeAPI(t, catalog.Models[2], reply{body: goodStream})
 	r := request
 	r.Images = []provider.Image{{Label: "Image 1: the sheet as it was finished.", PNG: []byte("one")},
 		{Label: "Image 2: the sheet before erasure 1.", PNG: []byte("two")}, {Label: "Image 3: the sheet before erasure 2.", PNG: []byte("three")}}
@@ -404,7 +405,7 @@ func TestImages(t *testing.T) {
 // Pictures the adapter will not send are refused before any call: none, an empty one, several
 // without their labels, more than MaxImages.
 func TestImagesRefused(t *testing.T) {
-	c, f := fakeAPI(t, Models[2], reply{body: goodStream})
+	c, f := fakeAPI(t, catalog.Models[2], reply{body: goodStream})
 	many := make([]provider.Image, MaxImages+1)
 	for i := range many {
 		many[i] = provider.Image{Label: fmt.Sprintf("Image %d:", i+1), PNG: []byte("png")}
@@ -445,5 +446,17 @@ func TestImagesRefused(t *testing.T) {
 	}
 	if bodies := f.requests(); len(bodies) != 2 || strings.Contains(bodies[1], `"image"`) || !strings.Contains(bodies[1], request.Text) {
 		t.Errorf("the request of a text alone is %v", bodies[len(bodies)-1:])
+	}
+}
+
+// The adapter as the library takes it makes the client of every model of the catalog, and of no other.
+func TestDial(t *testing.T) {
+	for _, m := range catalog.Models {
+		if c, err := Dial(m.ID, "k"); err != nil || c == nil || c.Name() != m.Name {
+			t.Errorf("%s: %v, %v", m.ID, c, err)
+		}
+	}
+	if _, err := Dial("claude-9", "k"); err == nil {
+		t.Error("an unknown model dials")
 	}
 }

@@ -8,11 +8,15 @@ import (
 
 	"github.com/altnovatrail/tutor"
 	"github.com/altnovatrail/tutor/admission"
+	"github.com/altnovatrail/tutor/provider"
+	"github.com/altnovatrail/tutor/provider/claude"
 )
 
 // api makes the library once, when it starts: spec's admission table, the facts of its deployment,
-// the least stage of its learners and the platform's keys, which it reads from Secret Manager. Before
-// an attempt it asks which models would read the learner's work, and whether any would.
+// the least stage of its learners, the platform's keys, which it reads from Secret Manager, and the
+// adapters of the providers it calls — here Anthropic's alone, so that its build carries no other
+// provider's SDK. Before an attempt it asks which models would read the learner's work, and whether
+// any would.
 func Example() {
 	table, err := admission.Platform()
 	if err != nil {
@@ -22,7 +26,9 @@ func Example() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	lib, err := tutor.New(tutor.Config{Table: table, Facts: facts, Least: admission.StageAuthor, Keys: map[admissionv0.Provider]string{"anthropic": "the platform's key"}})
+	lib, err := tutor.New(tutor.Config{Table: table, Facts: facts, Least: admission.StageAuthor,
+		Keys:     map[admissionv0.Provider]string{"anthropic": "the platform's key"},
+		Adapters: map[admissionv0.Provider]provider.Dial{"anthropic": claude.Dial}})
 	if err != nil {
 		log.Fatal(err)
 	}

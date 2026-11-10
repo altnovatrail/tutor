@@ -158,6 +158,11 @@ func TestReleaseRefusals(t *testing.T) {
 	if _, _, r, err := evalsample.ReadSheet(es, rb); err != nil || r == nil || !strings.Contains(r.Detail, "of no release of tutor") {
 		t.Errorf("a file of tasks against a release: %v %v", r, err)
 	}
+	// A task of a package of modules is not of the release either (Д164 RUN.md spec; R90).
+	es.Task.Source = &evalv1.TaskReference_Modules{Modules: &evalv1.ModuleSource{Tag: "v0.1.0", Module: "grade-3-math", Version: "1.0.0"}}
+	if _, _, r, err := evalsample.ReadSheet(es, rb); err != nil || r == nil || !strings.Contains(r.Detail, "of no release of tutor") {
+		t.Errorf("a task of modules against a release: %v %v", r, err)
+	}
 }
 
 // ReadSheet reads a sheet that no plan sheet names: its plan sheet is its markup's, of no scenario,

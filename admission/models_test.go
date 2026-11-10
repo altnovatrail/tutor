@@ -10,7 +10,7 @@ import (
 	"github.com/altnovatrail/spec/types/admissionv0"
 
 	"github.com/altnovatrail/tutor/internal/reading"
-	"github.com/altnovatrail/tutor/provider/claude"
+	"github.com/altnovatrail/tutor/provider/claude/catalog"
 )
 
 var (
@@ -187,8 +187,8 @@ func listFaults(list []Entry) []string {
 				out = append(out, fmt.Sprintf("entry %d: %s of %s, whose adapter the list does not check", i, m.ID, m.Provider))
 				continue
 			}
-			known := slices.ContainsFunc(claude.Models, func(c claude.Model) bool { return c.ID == m.ID })
-			if !known || !slices.Contains(claude.Efforts, m.Effort) || slices.Contains(requiresRetention, m.ID) {
+			known := slices.ContainsFunc(catalog.Models, func(c catalog.Model) bool { return c.ID == m.ID })
+			if !known || !slices.Contains(catalog.Efforts, m.Effort) || slices.Contains(requiresRetention, m.ID) {
 				out = append(out, fmt.Sprintf("entry %d: %s is no model the list may hold", i, m.Name()))
 			}
 		}

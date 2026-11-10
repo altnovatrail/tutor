@@ -321,6 +321,11 @@ func TestRefusals(t *testing.T) {
 		{"a task of a release", func(es *evalv1.Sample) {
 			es.Task.Source = &evalv1.TaskReference_Tutor{Tutor: &evalv1.TutorSource{Tag: "v0.1.4", Bank: b.Path}}
 		}, b, sh, evalv1.Refusal_REFUSAL_OTHER_TASK},
+		// A sample counts to the task of its own source, and one of a package of modules is never
+		// measured with a file of tutor's (Д164 RUN.md spec; R90).
+		{"a task of a package of modules", func(es *evalv1.Sample) {
+			es.Task.Source = &evalv1.TaskReference_Modules{Modules: &evalv1.ModuleSource{Tag: "v0.1.0", Module: "grade-3-math", Version: "1.0.0"}}
+		}, b, sh, evalv1.Refusal_REFUSAL_OTHER_TASK},
 		{"another bank", nil, other, sh, evalv1.Refusal_REFUSAL_OTHER_TASK},
 		{"a bank of another digest", func(es *evalv1.Sample) { es.Task.GetFile().BankDigest = "sha256:" + strings.Repeat("0", 64) }, b, sh, evalv1.Refusal_REFUSAL_OTHER_TASK},
 		{"no such task", func(es *evalv1.Sample) { es.Task.Task = "no-such-task" }, b, sh, evalv1.Refusal_REFUSAL_OTHER_TASK},

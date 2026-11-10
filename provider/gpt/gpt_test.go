@@ -182,4 +182,19 @@ func TestImages(t *testing.T) {
 	if label < 0 || image < 0 || text < 0 || label > image || image > text {
 		t.Errorf("the request holds the label at %d, the picture at %d and the text at %d; want them in that order:\n%s", label, image, text, body)
 	}
+	// The picture goes in the body of the request, never by /v1/files, which zero data retention
+	// does not cover (R121 spec; Д150 RUN.md spec); fakeAPI takes /responses alone.
+	if !strings.Contains(body, `"image_url":"data:image/png;base64,`) {
+		t.Errorf("the request sends the picture otherwise than in its body:\n%s", body)
+	}
+}
+
+// The adapter as the library takes it makes the client of Model, and of no other.
+func TestDial(t *testing.T) {
+	if c, err := Dial(Model, "k"); err != nil || c == nil {
+		t.Errorf("%s: %v, %v", Model, c, err)
+	}
+	if _, err := Dial("gpt-1", "k"); err == nil {
+		t.Error("an unknown model dials")
+	}
 }

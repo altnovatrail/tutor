@@ -169,3 +169,37 @@ func TestLeaningAndMirrored(t *testing.T) {
 		t.Errorf("a blank box is %+v", v)
 	}
 }
+
+// A box of a time (R111 spec): its key and its values in the notation of a time, hours and minutes,
+// a trap value with 60 minutes or more not yet right, and no form.
+func TestWorkbookTime(t *testing.T) {
+	timed := func() *sample.Workbook {
+		wb := testWorkbook()
+		wb.Pages[0].Items[0] = sample.WorkbookItem{Text: "Через час после 5:00 будет [ ]", Boxes: []sample.WorkbookBox{{
+			Check:    sample.BoxCheck{Kind: sample.KindTime, Key: "6:00", TrapValues: []sample.TrapValue{{Value: "5:60", Trap: "hundred-minutes-in-an-hour"}}},
+			Scenario: sample.BoxError, Written: ptr("5:60"),
+		}}}
+		return wb
+	}
+	if err := timed().Check(); err != nil {
+		t.Errorf("a good box of a time: %v", err)
+	}
+	box := func(wb *sample.Workbook) *sample.WorkbookBox { return &wb.Pages[0].Items[0].Boxes[0] }
+	for _, tt := range []struct {
+		name   string
+		change func(wb *sample.Workbook)
+		path   string
+		want   string
+	}{
+		{"a time with a form", func(wb *sample.Workbook) { box(wb).Check.Form = ptr(formatv0.CheckFormAny) }, "pages[0].items[0].boxes[0].check.form", "a time has no form"},
+		{"a key out of the notation", func(wb *sample.Workbook) { box(wb).Check.Key = "6" }, "pages[0].items[0].boxes[0].check.key", "no key of a time"},
+		{"a value out of the notation", func(wb *sample.Workbook) { box(wb).Written = ptr("5.60") }, "pages[0].items[0].boxes[0].written", "hours:minutes"},
+		{"a right value", func(wb *sample.Workbook) { box(wb).Written = ptr("06:00") }, "pages[0].items[0].boxes[0].written", "no trap value"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			wb := timed()
+			tt.change(wb)
+			has(t, wb.Check(), tt.path, tt.want)
+		})
+	}
+}

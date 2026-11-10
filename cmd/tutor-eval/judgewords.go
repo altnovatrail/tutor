@@ -61,7 +61,7 @@ func runJudgeWords(ctx context.Context, args []string, stdin io.Reader, stdout, 
 			_, _ = fmt.Fprintf(stderr, "%s: %s is not set: the judge asks Claude; with -stub it asks no one\n", name, anthropicKeyVar)
 			return exitUsage
 		}
-		ask = runner.Models(key)
+		ask = claudeModels(key)
 	}
 
 	file := *logOf + *controls

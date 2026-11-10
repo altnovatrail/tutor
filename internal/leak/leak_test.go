@@ -11,8 +11,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// The test vectors of the leak check are copies of format/vectors/leaks of spec at v0.3.3 (commit
-// a58a323), where they last changed in b217758, under Apache-2.0 as spec is. CI checks the
+// The test vectors of the leak check are copies of format/vectors/leaks of spec at v0.14.0 (commit
+// c318cb4), where they last changed in 8f12e24, under Apache-2.0 as spec is. CI checks the
 // repository out without the spec submodule, so the copies are what it tests; TestCopies holds them
 // to spec's wherever the submodule is there.
 const vectors = "testdata/leaks"
@@ -92,7 +92,7 @@ func (v *vector) task() Task {
 // Every text of every vector gives what the vector says the check finds in it, in any order.
 func TestVectors(t *testing.T) {
 	paths, err := filepath.Glob(filepath.Join(vectors, "*.yaml"))
-	if err != nil || len(paths) != 17 {
+	if err != nil || len(paths) != 19 {
 		t.Fatalf("the vectors are %v, %v", paths, err)
 	}
 	texts := 0
@@ -114,8 +114,8 @@ func TestVectors(t *testing.T) {
 			}
 		}
 	}
-	if texts != 85 {
-		t.Errorf("the vectors hold %d texts, want 85", texts)
+	if texts != 96 {
+		t.Errorf("the vectors hold %d texts, want 96", texts)
 	}
 }
 
@@ -198,6 +198,27 @@ func TestNumbers(t *testing.T) {
 	}
 }
 
+// The edges of the times of a text, as spec's implementation reads them (timesIn and timeOf of
+// tools/format-check): hours of one or two digits, minutes of two digits or of three that begin with
+// no zero, no character of a word right outside the run, and the search goes on after it.
+func TestTimes(t *testing.T) {
+	for _, c := range []struct {
+		text string
+		want []string
+	}{
+		{"07:30, 7:30. (17:30)", []string{"7:30", "7:30", "17:30"}},
+		{"5:60 and 10:100", []string{"5:60", "10:100"}},
+		{"7:3 7:030 123:30 7:3000", nil},
+		{"x7:30 7:30am 7:", nil},
+		{"7:30:15", []string{"7:30"}},
+		{"7 o'clock", nil},
+	} {
+		if got := timesIn(form(c.text)); !slices.Equal(got, c.want) {
+			t.Errorf("%q: %q, want %q", c.text, got, c.want)
+		}
+	}
+}
+
 // A phrase is found whole where its ends are characters of a word, and anywhere where they are
 // signs; a phrase whose normal form is empty is found nowhere; every place a phrase stands is tried,
 // not only the first.
@@ -244,6 +265,8 @@ func TestSearched(t *testing.T) {
 		{"predicate", Task{Items: []Item{item(nil, Key{"predicate", ""})}}, nil},
 		{"placeholder", Task{Items: []Item{item([]string{"and"}, Key{Number, "{x}"}, Key{Number, "42"})}}, []string{"42"}},
 		{"a fraction that is no fraction", Task{Items: []Item{item(nil, Key{Fraction, "0.5"}, Key{Fraction, "1/2"})}}, []string{"1/2"}},
+		{"a time in the statement", Task{Statement: []string{"The train leaves at 09:15."}, Items: []Item{item(nil, Key{Time, "9:15"})}}, nil},
+		{"a time that is no time", Task{Items: []Item{item(nil, Key{Time, "7:3"}, Key{Time, "7:030"}, Key{Time, "{h}:30"}, Key{Time, "7:30"})}}, []string{"7:30"}},
 	} {
 		ch := New(c.task)
 		if got := append(ch.Keys(), ch.Phrases()...); !slices.Equal(got, c.want) {

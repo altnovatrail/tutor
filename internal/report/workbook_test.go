@@ -303,3 +303,27 @@ func TestWorkbookMirrored(t *testing.T) {
 		t.Errorf("a log with no mirrored digit tells them: %+v, %v", r, err)
 	}
 }
+
+// A box of a time counts in the group of a time, not among the fractions (R111 spec).
+func TestWorkbookTime(t *testing.T) {
+	l := workbookLog()
+	for i := range l.Sheets {
+		l.Sheets[i].Boxes[0] = workbook.BoxRecord{Item: 1, Slot: 1, Kind: sample.KindTime, Key: "7:30", Scenario: sample.BoxCorrect, Written: str("7:30"), Verdict: verdict.Correct}
+	}
+	for i := range l.Calls {
+		l.Calls[i].Boxes[0] = workbook.Box{Item: 1, Slot: 1, Text: str("07:30"), Verdict: verdict.Correct}
+	}
+	r, err := report.NewWorkbook(l)
+	if err != nil {
+		t.Fatal(err)
+	}
+	readings := map[string]int{}
+	for _, c := range r.Cells {
+		if c.Condition == workbook.Bare {
+			readings[c.Group] = c.Readings
+		}
+	}
+	if readings[report.Time] != 3 || readings[report.Number] != 3 || readings[report.Fraction] != 0 {
+		t.Errorf("the groups at bare 32 px are %v: want 3 readings of a time, 3 of a number and none of a fraction", readings)
+	}
+}

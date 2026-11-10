@@ -1,0 +1,77 @@
+# The eval of tutor in CI, with the platform's keys for eval from Secret Manager of infra (R120
+# spec; Д149 in spec's RUN.md; R90 in docs/decisions.md). Only a job of the GitHub environment eval
+# gets them: the pool github-eval admits the token of that environment of this repository alone, and
+# no token of Dependabot. For now the job checks the way in and spends nothing: it reads the key of
+# Anthropic and has the key count the tokens of one word, which Anthropic does not bill ("Token
+# counting is free to use", platform.claude.com, Token counting, read 2026-11-10). The runs of eval
+# sets come here with epic E6, and with them the trigger on pull requests, once the keys are in
+# Secret Manager (Д6 in RUN.md). The environment eval admits main and refs/pull/*/merge alone, and
+# has no reviewers (R120 spec).
+name: Eval
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  eval:
+    name: Eval
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    environment: eval
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      # A pull request from a fork has no OIDC token, but one Dependabot opened has: the job fails
+      # on either, by the author of the pull request rather than by github.actor, who only started
+      # the run, and says why (R120 spec). Dependabot's change goes to a branch of the repository
+      # and is opened from there. On workflow_dispatch alone it lets every run through; it stands
+      # first now so that the trigger on pull requests (Д6 in RUN.md) comes with it in place.
+      - name: Who asks
+        env:
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          AUTHOR: ${{ github.event.pull_request.user.login }}
+        run: |
+          if [ "$GITHUB_EVENT_NAME" = pull_request ]; then
+            if [ "$HEAD_REPO" != "$GITHUB_REPOSITORY" ]; then
+              echo "::error::The pull request is from a fork, $HEAD_REPO: eval reads the platform's keys, and runs only on a branch of $GITHUB_REPOSITORY."
+              exit 1
+            fi
+            if [ "$AUTHOR" = "dependabot[bot]" ]; then
+              echo "::error::Dependabot opened the pull request: move its commit to a branch of your own and open the pull request from there."
+              exit 1
+            fi
+          fi
+
+      # Direct Workload Identity Federation, with no service account between (R120 spec).
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
+        with:
+          workload_identity_provider: projects/306463944576/locations/global/workloadIdentityPools/github-eval/providers/github
+
+      - id: keys
+        uses: google-github-actions/get-secretmanager-secrets@bc9c54b29fdffb8a47776820a7d26e77b379d262 # v3.0.0
+        with:
+          secrets: |-
+            anthropic:projects/novatrail/secrets/eval-key-anthropic
+
+      # The key answers Anthropic's API: a count of tokens, which costs nothing. The key goes in a
+      # header from the environment and is never printed; the action masks it in the log.
+      - name: The key answers
+        env:
+          ANTHROPIC_KEY: ${{ steps.keys.outputs.anthropic }}
+        run: |
+          # A failure of the network gives no status, and the step still says what failed.
+          status="$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' \
+              --header "x-api-key: $ANTHROPIC_KEY" \
+              --header 'anthropic-version: 2023-06-01' \
+              --header 'content-type: application/json' \
+              --data '{"model":"claude-haiku-5-5","messages":[{"role":"user","content":"eval"}]}' \
+              https://api.anthropic.com/v1/messages/count_tokens)" || status="no answer"
+          if [ "$status" != 200 ]; then
+            echo "::error::Anthropic answered the count of tokens with $status: the key of eval-key-anthropic is missing, wrong or without rights."
+            exit 1
+          fi
+          echo "The key of eval-key-anthropic counts tokens at Anthropic."
