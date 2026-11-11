@@ -63,11 +63,14 @@ func (t *Tutor) ReadSheet(ctx context.Context, r SheetReading) SheetRead {
 	}
 	req := reading.RequestOf(statement, r.Crop, cfg.Width, cfg.Height, nil)
 	req.MaxOutputTokens = reading.MaxOutputTokens
+	if err := checkText(req); err != nil {
+		return SheetRead{Outcome: Outcome{Kind: Failed, Admission: a, Err: err}}
+	}
 	reqs := make([]provider.Request, len(calls))
 	for i := range reqs {
 		reqs[i] = req
 	}
-	resps, out := ask(ctx, a, calls, reqs)
+	resps, out := ask(ctx, a, calls, reqs, kinds[admissionv0.CapabilityHandwritingReading].maxIn)
 	if out.Kind != Answered {
 		return SheetRead{Outcome: out}
 	}

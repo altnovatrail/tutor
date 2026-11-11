@@ -18,14 +18,15 @@ import (
 
 // fake is a model that answers as it is told and records what it was asked.
 type fake struct {
-	mu    sync.Mutex
-	asked []provider.Request
-	resp  provider.Response
-	err   error
+	mu     sync.Mutex
+	asked  []provider.Request
+	resp   provider.Response
+	err    error
+	prices provider.Prices
 }
 
-func (f *fake) Name() string              { return "fake" }
-func (f *fake) Price() (float64, float64) { return 0, 0 }
+func (f *fake) Name() string            { return "fake" }
+func (f *fake) Prices() provider.Prices { return f.prices }
 func (f *fake) Ask(_ context.Context, r provider.Request) (provider.Response, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -108,7 +109,7 @@ func TestPrepareAndAsk(t *testing.T) {
 	if refused != nil || len(calls) != 2 || calls[0].model.ID != "claude-opus-5-5" || fs.keys[0] != "platform-key" {
 		t.Fatalf("prepared %v, refused %+v, keys %v", calls, refused, fs.keys)
 	}
-	_, out := ask(context.Background(), admission.Answer{}, calls, []provider.Request{{Text: "a"}, {Text: "b"}})
+	_, out := ask(context.Background(), admission.Answer{}, calls, []provider.Request{{Text: "a"}, {Text: "b"}}, 0)
 	if out.Kind != Answered || out.Err != nil || len(out.Usage) != 2 || out.Usage[0].Model != "claude-opus-5-5" || out.Usage[0].ThinkingTokens != 80 || !out.Usage[1].Billed {
 		t.Errorf("the outcome is %+v", out)
 	}
@@ -121,12 +122,12 @@ func TestPrepareAndAsk(t *testing.T) {
 	// answer without JSON.
 	answered := haiku.resp
 	haiku.resp, haiku.err = provider.Response{}, errors.New("overloaded")
-	_, out = ask(context.Background(), admission.Answer{}, calls, []provider.Request{{}, {}})
+	_, out = ask(context.Background(), admission.Answer{}, calls, []provider.Request{{}, {}}, 0)
 	if out.Kind != Failed || len(out.Usage) != 1 || !strings.Contains(out.Err.Error(), "claude-haiku-5-5 medium of anthropic: overloaded") {
 		t.Errorf("one failed: %+v", out)
 	}
 	haiku.resp, haiku.err = answered, provider.ErrNoAnswer
-	if _, out = ask(context.Background(), admission.Answer{}, calls, []provider.Request{{}, {}}); out.Kind != Failed || len(out.Usage) != 2 {
+	if _, out = ask(context.Background(), admission.Answer{}, calls, []provider.Request{{}, {}}, 0); out.Kind != Failed || len(out.Usage) != 2 {
 		t.Errorf("no answer: %+v", out)
 	}
 }
@@ -280,14 +281,14 @@ func TestClients(t *testing.T) {
 func TestAskEdges(t *testing.T) {
 	broken := &fake{resp: provider.Response{Model: "claude-opus-5-5", InputTokens: 900, OutputTokens: 40, Partial: true}, err: errors.New("stream broke")}
 	calls := []call{{model: admission.Model{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "high"}, client: broken}, {model: admission.Model{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"}, client: panicky{}}}
-	_, out := ask(context.Background(), admission.Answer{}, calls, []provider.Request{{}, {}})
+	_, out := ask(context.Background(), admission.Answer{}, calls, []provider.Request{{}, {}}, 0)
 	if out.Kind != Failed || len(out.Usage) != 1 || out.Usage[0].Billed || out.Usage[0].InputTokens != 900 {
 		t.Errorf("a broken answer and a panic: %+v", out)
 	}
-	if _, out := ask(context.Background(), admission.Answer{}, calls[:1], []provider.Request{{}, {}}); out.Kind != Failed || !strings.Contains(out.Err.Error(), "2 requests for 1 models") || len(broken.asked) != 1 {
+	if _, out := ask(context.Background(), admission.Answer{}, calls[:1], []provider.Request{{}, {}}, 0); out.Kind != Failed || !strings.Contains(out.Err.Error(), "2 requests for 1 models") || len(broken.asked) != 1 {
 		t.Errorf("requests that do not fit: %+v", out)
 	}
-	_, out = ask(context.Background(), admission.Answer{}, calls[1:], []provider.Request{{}})
+	_, out = ask(context.Background(), admission.Answer{}, calls[1:], []provider.Request{{}}, 0)
 	if out.Kind != Failed || !strings.Contains(out.Err.Error(), "the adapter panicked: boom") {
 		t.Errorf("a panic: %+v", out)
 	}
@@ -296,8 +297,8 @@ func TestAskEdges(t *testing.T) {
 // panicky is a model whose adapter panics.
 type panicky struct{}
 
-func (panicky) Name() string              { return "panicky" }
-func (panicky) Price() (float64, float64) { return 0, 0 }
+func (panicky) Name() string            { return "panicky" }
+func (panicky) Prices() provider.Prices { return provider.Prices{} }
 func (panicky) Ask(context.Context, provider.Request) (provider.Response, error) {
 	panic("boom")
 }

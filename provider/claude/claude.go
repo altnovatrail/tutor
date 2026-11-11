@@ -49,8 +49,23 @@ func New(apiKey string, m Model, opts ...option.RequestOption) *Client {
 // Name is how the board shows the model.
 func (c *Client) Name() string { return c.model.Name }
 
-// Price is the model's price per million input and output tokens, in US dollars.
-func (c *Client) Price() (input, output float64) { return c.model.Input, c.model.Output }
+// Prices are what the model's tokens cost, by the catalog (docs/architecture.md, 3.7).
+func (c *Client) Prices() provider.Prices { return PricesOf(c.model) }
+
+// PricesOf are the prices of a model of the catalog, its long ones too where it has them.
+func PricesOf(m Model) provider.Prices {
+	p := prices(m)
+	if m.Long != nil {
+		long := prices(*m.Long)
+		p.LongAbove, p.Long = m.LongAbove, &long
+	}
+	return p
+}
+
+func prices(m Model) provider.Prices {
+	return provider.Prices{Input: m.Input, Output: m.Output, CacheRead: m.CacheRead,
+		CacheWrite: map[time.Duration]float64{catalog.TTL5m: m.Write5m, catalog.TTL1h: m.Write1h}, Read: catalog.PricesRead}
+}
 
 // Ask sends the pictures and the text and asks for JSON that follows the schema, at the request's
 // effort, and streams the answer, so that it sees when the answer's first text comes. Every model
@@ -97,15 +112,19 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 	if err == nil {
 		err = stream.Err()
 	}
-	// Tokens are billed whatever the answer, so they go back with an error too.
+	// Tokens are billed whatever the answer, so they go back with an error too. Anthropic counts the
+	// input without the cache: the writes and the read come beside it (docs/architecture.md, 3.7).
+	u := msg.Usage
 	resp := provider.Response{
-		Model:          msg.Model,
-		InputTokens:    msg.Usage.InputTokens,
-		OutputTokens:   msg.Usage.OutputTokens,
-		ThinkingTokens: msg.Usage.OutputTokensDetails.ThinkingTokens,
-		FirstToken:     first,
-		Retries:        max(attempts-1, 0),
-		Partial:        began && !counted,
+		Model:           msg.Model,
+		InputTokens:     u.InputTokens,
+		CacheWrites:     cacheWrites(u),
+		CacheReadTokens: u.CacheReadInputTokens,
+		OutputTokens:    u.OutputTokens,
+		ThinkingTokens:  u.OutputTokensDetails.ThinkingTokens,
+		FirstToken:      first,
+		Retries:         max(attempts-1, 0),
+		Partial:         began && !counted,
 	}
 	switch {
 	case err != nil:
@@ -189,4 +208,22 @@ func (c *Client) params(r provider.Request) anthropic.MessageNewParams {
 		}
 	}
 	return p
+}
+
+// cacheWrites are the writes to the cache of a usage, by how long the cache keeps them, none when
+// there are none. A write the usage does not divide by its time counts at five minutes, the time
+// Anthropic keeps a write for by default.
+func cacheWrites(u anthropic.Usage) []provider.CacheWrite {
+	var ws []provider.CacheWrite
+	m5, h1 := u.CacheCreation.Ephemeral5mInputTokens, u.CacheCreation.Ephemeral1hInputTokens
+	if rest := u.CacheCreationInputTokens - m5 - h1; rest > 0 {
+		m5 += rest
+	}
+	if m5 > 0 {
+		ws = append(ws, provider.CacheWrite{TTL: catalog.TTL5m, Tokens: m5})
+	}
+	if h1 > 0 {
+		ws = append(ws, provider.CacheWrite{TTL: catalog.TTL1h, Tokens: h1})
+	}
+	return ws
 }

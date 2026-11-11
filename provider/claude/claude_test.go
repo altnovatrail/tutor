@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"io"
 	"maps"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"slices"
@@ -147,8 +148,49 @@ func TestAsk(t *testing.T) {
 	if c.Name() != "Claude Opus 5.5" {
 		t.Errorf("name = %q", c.Name())
 	}
-	if in, out := c.Price(); in != 4 || out != 20 {
-		t.Errorf("price = %v, %v", in, out)
+	if p := c.Prices(); p.Input != 4 || p.Output != 20 || p.CacheRead != 0.20 || p.CacheWrite[catalog.TTL5m] != 5 || p.CacheWrite[catalog.TTL1h] != 8 || p.Long != nil || p.Read != catalog.PricesRead {
+		t.Errorf("prices = %+v", p)
+	}
+	if len(resp.CacheWrites) != 0 || resp.CacheReadTokens != 0 {
+		t.Errorf("a call without the cache has cache tokens: %+v", resp)
+	}
+}
+
+// The tokens of the cache come beside the input, which Anthropic counts without them: the writes by
+// how long the cache keeps them, a write not divided by its time at five minutes, and the read.
+func TestCacheTokens(t *testing.T) {
+	start := strings.Replace(evStart, `"usage":{"input_tokens":1300,"output_tokens":1}`,
+		`"usage":{"input_tokens":1300,"output_tokens":1,"cache_creation_input_tokens":260,"cache_read_input_tokens":500,"cache_creation":{"ephemeral_5m_input_tokens":150,"ephemeral_1h_input_tokens":100}}`, 1)
+	c, _ := fakeAPI(t, catalog.Models[2], reply{body: sse(start, evThinking, evSignature, evStop0, evText, evPing, evDelta1, evDelta2, evStop1, evEnd, evMsgStop)})
+	resp, err := c.Ask(context.Background(), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []provider.CacheWrite{{TTL: catalog.TTL5m, Tokens: 160}, {TTL: catalog.TTL1h, Tokens: 100}}
+	if resp.InputTokens != 1300 || resp.CacheReadTokens != 500 || !slices.Equal(resp.CacheWrites, want) {
+		t.Errorf("tokens = input %d, read %d, writes %+v", resp.InputTokens, resp.CacheReadTokens, resp.CacheWrites)
+	}
+	// 1300 × $4 + 160 × $5 + 100 × $8 + 500 × $0.20 + 45 × $20, a million each.
+	if usd, ok := c.Prices().Cost(resp); !ok || math.Abs(usd-0.0078) > 1e-12 {
+		t.Errorf("cost = %v, %v", usd, ok)
+	}
+}
+
+// Haiku 5.5 prices a prompt over 100 000 tokens, the cache counted in, higher.
+func TestLongPrices(t *testing.T) {
+	p := PricesOf(catalog.Models[0])
+	if p.LongAbove != 100000 || p.Long == nil || p.Long.Input != 0.50 || p.Long.Output != 2.50 || p.Long.CacheRead != 0.05 || p.Long.CacheWrite[catalog.TTL1h] != 1 {
+		t.Fatalf("Haiku's prices = %+v, long %+v", p, p.Long)
+	}
+	short, _ := p.Cost(provider.Response{InputTokens: 90000, OutputTokens: 1000})
+	long, _ := p.Cost(provider.Response{InputTokens: 90000, CacheReadTokens: 20000, OutputTokens: 1000})
+	if math.Abs(short-0.0095) > 1e-12 || math.Abs(long-0.0485) > 1e-12 {
+		t.Errorf("costs = %v and %v", short, long)
+	}
+	for _, m := range catalog.Models[1:] {
+		if p := PricesOf(m); p.LongAbove != 0 || p.Long != nil || p.CacheRead == 0 || p.CacheWrite[catalog.TTL5m] == 0 {
+			t.Errorf("%s: prices = %+v", m.ID, p)
+		}
 	}
 }
 

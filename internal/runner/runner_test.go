@@ -427,8 +427,8 @@ func TestChosen(t *testing.T) {
 // model is a model for Models that answers its own ID.
 type model struct{ id string }
 
-func (m model) Name() string              { return m.id }
-func (m model) Price() (float64, float64) { return 0, 0 }
+func (m model) Name() string            { return m.id }
+func (m model) Prices() provider.Prices { return provider.Prices{} }
 func (m model) Ask(context.Context, provider.Request) (provider.Response, error) {
 	return provider.Response{JSON: `"` + m.id + `"`, Model: m.id}, nil
 }

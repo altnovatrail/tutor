@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"net/http"
 	"slices"
+	"time"
 
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
@@ -48,8 +49,26 @@ func New(apiKey string, opts ...option.RequestOption) *Client {
 // Name is how the board shows the model.
 func (c *Client) Name() string { return "GPT-6 Astra" }
 
-// Price is GPT-6 Astra's price per million input and output tokens, in US dollars.
-func (c *Client) Price() (input, output float64) { return 10, 50 }
+// PricesRead is the day GPT-6 Astra's prices were read on OpenAI's Pricing page, its standard
+// tier (docs/architecture.md, section 4).
+const PricesRead = "2026-11-11"
+
+// The times the cache keeps a write for, each at its own price.
+const (
+	TTL30m = 30 * time.Minute
+	TTL12h = 12 * time.Hour
+)
+
+// LongAbove is the input tokens over which GPT-6 Astra prices a prompt otherwise: the page gives
+// those prices by a script alone, and they were not read, so a longer prompt has no estimate.
+const LongAbove = 272000
+
+// Prices are GPT-6 Astra's prices per million tokens, in US dollars, of its standard tier: input,
+// output, a read from the cache and a write to it for 30 minutes and for 12 hours.
+func (c *Client) Prices() provider.Prices {
+	return provider.Prices{Input: 10, Output: 50, CacheRead: 1,
+		CacheWrite: map[time.Duration]float64{TTL30m: 12.50, TTL12h: 25}, LongAbove: LongAbove, Read: PricesRead}
+}
 
 // Ask sends a picture and the text and asks for JSON that follows the schema. It sends one picture,
 // after its label, and refuses more before any call. That is the adapter's limit, not the model's:
@@ -106,13 +125,29 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 	if err != nil {
 		return provider.Response{Retries: max(attempts-1, 0)}, err
 	}
-	// Tokens are billed whatever the answer, so they go back with an error too.
+	// Tokens are billed whatever the answer, so they go back with an error too. OpenAI counts the
+	// tokens read from the cache and written to it in the input, and they come off it here
+	// (docs/architecture.md, 3.7 and section 4).
+	d := resp.Usage.InputTokensDetails
+	// A write the usage does not divide by its time counts at 30 minutes, the shortest it keeps.
+	m30, h12 := d.CacheWriteTokensDetails.Ttl30mTokens, d.CacheWriteTokensDetails.Ttl12hTokens
+	if rest := d.CacheWriteTokens - m30 - h12; rest > 0 {
+		m30 += rest
+	}
+	var writes []provider.CacheWrite
+	for _, w := range []provider.CacheWrite{{TTL: TTL30m, Tokens: m30}, {TTL: TTL12h, Tokens: h12}} {
+		if w.Tokens > 0 {
+			writes = append(writes, w)
+		}
+	}
 	out := provider.Response{
-		Model:          resp.Model,
-		InputTokens:    resp.Usage.InputTokens,
-		OutputTokens:   resp.Usage.OutputTokens,
-		ThinkingTokens: resp.Usage.OutputTokensDetails.ReasoningTokens,
-		Retries:        max(attempts-1, 0),
+		Model:           resp.Model,
+		InputTokens:     max(resp.Usage.InputTokens-d.CachedTokens-d.CacheWriteTokens, 0),
+		CacheWrites:     writes,
+		CacheReadTokens: d.CachedTokens,
+		OutputTokens:    resp.Usage.OutputTokens,
+		ThinkingTokens:  resp.Usage.OutputTokensDetails.ReasoningTokens,
+		Retries:         max(attempts-1, 0),
 	}
 	if resp.Status == responses.ResponseStatusIncomplete {
 		return out, fmt.Errorf("%w: the answer is incomplete (%s)", provider.ErrNoAnswer, resp.IncompleteDetails.Reason)

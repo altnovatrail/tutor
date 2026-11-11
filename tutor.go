@@ -214,16 +214,24 @@ const (
 )
 
 // Usage is a record of what one call of a model took (architecture 3.7): the provider and the model
-// the provider says answered, the input, output and thinking tokens, and whether those tokens are
-// the call's whole bill (provider.Billed). The cache and the price in dollars come with T120. It
-// holds no content and no identifier, and may be written to logs (R09 spec).
+// the provider says answered; the input tokens without the cache, those written to the cache by how
+// long it keeps them and those read from it, which add up to the input with no token counted twice;
+// the output tokens, and of them those spent thinking; whether those tokens are the call's whole
+// bill (provider.Billed); and its cost in US dollars by the table of prices (Tutor.Prices) — at its
+// worst when the tokens are not its whole bill —, which Priced says the prices hold. It is an
+// estimate: the provider bills. It holds no content and no identifier, and may be written to logs
+// (R09 spec).
 type Usage struct {
-	Provider       admissionv0.Provider
-	Model          string
-	InputTokens    int64
-	OutputTokens   int64
-	ThinkingTokens int64
-	Billed         bool
+	Provider        admissionv0.Provider
+	Model           string
+	InputTokens     int64
+	CacheWrites     []provider.CacheWrite
+	CacheReadTokens int64
+	OutputTokens    int64
+	ThinkingTokens  int64
+	Billed          bool
+	USD             float64
+	Priced          bool
 }
 
 // Outcome is how a call of the library ended: its kind; the reason of a limit; the admission's
@@ -302,8 +310,10 @@ func (t *Tutor) client(m admission.Model, own *OwnKey) (provider.Model, error) {
 // spec) — each its request with the model's effort and thinking as the list admitted them. It
 // returns the answers in the order of the calls and the outcome: Answered when every model
 // answered, else Failed, with the usage of each call that came back with tokens, a refused or a
-// broken answer too, since it is billed; Billed says whether its tokens are its whole bill. Which refusals are a limit or a refused key, the adapters tell with T121.
-func ask(ctx context.Context, a admission.Answer, calls []call, reqs []provider.Request) ([]provider.Response, Outcome) {
+// broken answer too, since it is billed; Billed says whether its tokens are its whole bill, and
+// a call that is not is priced at its worst: maxIn, the most input of the kind, and the request's
+// most output. Which refusals are a limit or a refused key, the adapters tell with T121.
+func ask(ctx context.Context, a admission.Answer, calls []call, reqs []provider.Request, maxIn int64) ([]provider.Response, Outcome) {
 	if len(reqs) != len(calls) {
 		return nil, Outcome{Kind: Failed, Admission: a, Err: fmt.Errorf("tutor: %d requests for %d models", len(reqs), len(calls))}
 	}
@@ -329,8 +339,8 @@ func ask(ctx context.Context, a admission.Answer, calls []call, reqs []provider.
 	for i, c := range calls {
 		// A call that came back with tokens is billed whatever ended it: a refused answer, one that
 		// broke off midway, one the context cut short.
-		if r := resps[i]; errs[i] == nil || errors.Is(errs[i], provider.ErrNoAnswer) || r.Partial || r.InputTokens > 0 || r.OutputTokens > 0 {
-			out.Usage = append(out.Usage, Usage{Provider: c.model.Provider, Model: r.Model, InputTokens: r.InputTokens, OutputTokens: r.OutputTokens, ThinkingTokens: r.ThinkingTokens, Billed: provider.Billed(r, errs[i])})
+		if r := resps[i]; errs[i] == nil || errors.Is(errs[i], provider.ErrNoAnswer) || r.Partial || r.Counted() {
+			out.Usage = append(out.Usage, usageOf(c.model, c.client, r, errs[i], maxIn, reqs[i].MaxOutputTokens))
 		}
 		if errs[i] != nil && out.Err == nil {
 			out.Kind, out.Err = Failed, fmt.Errorf("tutor: %s of %s: %w", c.model.Name(), c.model.Provider, errs[i])

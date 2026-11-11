@@ -21,7 +21,7 @@ import (
 
 // wordsMaxOutput is the most the call of words may write, thinking included: the bound of the
 // runner's calls, as for the reading, so that what the platform asks is what eval measures (R70
-// spec). The price of the kind of call and a tighter bound come with T120.
+// spec). A tighter bound would make the library ask what eval does not measure (R94).
 const wordsMaxOutput = 16000
 
 // Trap is a trap of a task that a model may name, by its ID, with its description from the
@@ -127,7 +127,10 @@ func (t *Tutor) Words(ctx context.Context, w WordsRequest) WordsAnswer {
 		return fail(fmt.Errorf("tutor: %w", err))
 	}
 	req.MaxOutputTokens = wordsMaxOutput
-	calls, a, refused := t.prepareN(capability, w.Route, 1)
+	if err := checkText(req); err != nil {
+		return fail(err)
+	}
+	calls, a, refused := t.prepareN(capability, w.Route, wordsKind.models)
 	if refused != nil {
 		return WordsAnswer{Outcome: *refused}
 	}
@@ -146,7 +149,7 @@ func (t *Tutor) Words(ctx context.Context, w WordsRequest) WordsAnswer {
 		}
 	}
 	// The words are one model's: an entry of more asks its first.
-	resps, out := ask(ctx, a, calls, []provider.Request{req})
+	resps, out := ask(ctx, a, calls, []provider.Request{req}, wordsKind.maxIn)
 	if out.Kind != Answered {
 		return WordsAnswer{Outcome: out}
 	}

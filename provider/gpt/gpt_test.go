@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"math"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -196,5 +198,28 @@ func TestDial(t *testing.T) {
 	}
 	if _, err := Dial("gpt-1", "k"); err == nil {
 		t.Error("an unknown model dials")
+	}
+}
+
+// OpenAI counts the tokens read from the cache and written to it in the input: they come off it, the
+// writes by how long the cache keeps them, a write not divided by its time at 30 minutes.
+func TestCacheTokens(t *testing.T) {
+	body := strings.Replace(goodAnswer, `"input_tokens_details":{"cached_tokens":0}`,
+		`"input_tokens_details":{"cached_tokens":100,"cache_write_tokens":70,"cache_write_tokens_details":{"ttl_30m_tokens":40,"ttl_12h_tokens":20}}`, 1)
+	c, _ := fakeAPI(t, reply{body: body})
+	resp, err := c.Ask(context.Background(), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []provider.CacheWrite{{TTL: TTL30m, Tokens: 50}, {TTL: TTL12h, Tokens: 20}}
+	if resp.InputTokens != 130 || resp.CacheReadTokens != 100 || !slices.Equal(resp.CacheWrites, want) {
+		t.Errorf("tokens = input %d, read %d, writes %+v", resp.InputTokens, resp.CacheReadTokens, resp.CacheWrites)
+	}
+	// 130 × $10 + 50 × $12.50 + 20 × $25 + 100 × $1 + 80 × $50, a million each.
+	if usd, ok := c.Prices().Cost(resp); !ok || math.Abs(usd-0.006525) > 1e-12 {
+		t.Errorf("cost = %v, %v", usd, ok)
+	}
+	if _, ok := c.Prices().Cost(provider.Response{InputTokens: LongAbove + 1}); ok {
+		t.Error("a prompt over the long context has a cost, though its prices were not read")
 	}
 }
