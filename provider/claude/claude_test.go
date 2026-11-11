@@ -502,3 +502,61 @@ func TestDial(t *testing.T) {
 		t.Error("an unknown model dials")
 	}
 }
+
+// Each refusal of the table of architecture 3.7 is its own error, sent once: the SDK sends it
+// again with a reply after it, so a second request would end in the good stream. A plain 429 and a
+// 401 that is no fault of the key are failures, and the 429 is sent again.
+func TestRefusals(t *testing.T) {
+	errorOf := func(status int, typ, message, code string) reply {
+		details := ""
+		if code != "" {
+			details = `,"details":{"error_code":"` + code + `"}`
+		}
+		return reply{status: status, header: http.Header{"Retry-After-Ms": {"0"}}, body: `{"type":"error","error":{"type":"` + typ + `","message":"` + message + `"` + details + `}}`}
+	}
+	for name, tt := range map[string]struct {
+		reply reply
+		limit provider.Limit
+		key   bool
+	}{
+		"a spend limit of the organization":            {errorOf(400, "invalid_request_error", "You have reached your specified API usage limits. You will regain access on 2026-12-01 at 00:00 UTC.", ""), provider.LimitOwner, false},
+		"a spend limit of a workspace":                 {errorOf(400, "invalid_request_error", "You have reached your specified workspace API usage limits. You will regain access on 2026-12-01 at 00:00 UTC.", ""), provider.LimitOwner, false},
+		"the cap of the tier":                          {errorOf(429, "rate_limit_error", "You have reached your API usage limits: your organization has crossed its monthly API usage threshold.", "enforced_spend_limit_reached"), provider.LimitTier, false},
+		"a balance spent":                              {errorOf(400, "invalid_request_error", "Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.", ""), provider.LimitBalance, false},
+		"a balance spent, at a status the SDK retries": {errorOf(500, "api_error", "Your credit balance is too low to access the Anthropic API.", ""), provider.LimitBalance, false},
+		"billing":     {errorOf(402, "billing_error", "There is an issue with your billing.", ""), provider.LimitBilling, false},
+		"a wrong key": {errorOf(401, "authentication_error", "invalid x-api-key", ""), "", true},
+	} {
+		t.Run(name, func(t *testing.T) {
+			c, f := fakeAPI(t, catalog.Models[2], tt.reply, reply{body: goodStream})
+			_, err := c.Ask(context.Background(), request)
+			var le *provider.LimitError
+			gotLimit := provider.Limit("")
+			if errors.As(err, &le) {
+				gotLimit = le.Limit
+			}
+			if gotLimit != tt.limit || errors.Is(err, provider.ErrKeyRefused) != tt.key {
+				t.Errorf("error = %v; want the limit %q, the key refused %v", err, tt.limit, tt.key)
+			}
+			if n := len(f.requests()); n != 1 {
+				t.Errorf("the refusal was sent %d times", n)
+			}
+		})
+	}
+	for name, first := range map[string]reply{
+		"a plain 429":          errorOf(429, "rate_limit_error", "Number of request tokens has exceeded your per-minute rate limit", ""),
+		"a 401 from a browser": errorOf(401, "authentication_error", "CORS requests are not allowed for this Organization because of its settings.", ""),
+	} {
+		t.Run(name, func(t *testing.T) {
+			c, f := fakeAPI(t, catalog.Models[2], first, first)
+			_, err := c.Ask(context.Background(), request)
+			var le *provider.LimitError
+			if err == nil || errors.As(err, &le) || errors.Is(err, provider.ErrKeyRefused) {
+				t.Errorf("error = %v; want a plain failure", err)
+			}
+			if want := map[int]int{429: 2, 401: 1}[first.status]; len(f.requests()) != want {
+				t.Errorf("sent %d times, want %d", len(f.requests()), want)
+			}
+		})
+	}
+}

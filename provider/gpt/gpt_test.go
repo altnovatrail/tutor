@@ -223,3 +223,39 @@ func TestCacheTokens(t *testing.T) {
 		t.Error("a prompt over the long context has a cost, though its prices were not read")
 	}
 }
+
+// Each refusal of OpenAI's billing is its own error by its code, sent once, and a wrong key is
+// refused; a plain 429 is a failure, sent again.
+func TestRefusals(t *testing.T) {
+	errorOf := func(status int, code string) reply {
+		typ := "insufficient_quota"
+		if code == "rate_limit_exceeded" {
+			typ = "requests"
+		}
+		return reply{status: status, header: http.Header{"Retry-After-Ms": {"0"}}, body: `{"error":{"message":"refused","type":"` + typ + `","code":"` + code + `"}}`}
+	}
+	for code, limit := range map[string]provider.Limit{
+		"credit_balance_exhausted":          provider.LimitBalance,
+		"project_spend_limit_exceeded":      provider.LimitOwner,
+		"organization_spend_limit_exceeded": provider.LimitOwner,
+		"organization_usage_limit_exceeded": provider.LimitTier,
+		"insufficient_quota":                provider.LimitBilling,
+	} {
+		t.Run(code, func(t *testing.T) {
+			c, sent := fakeAPI(t, errorOf(429, code), reply{body: goodAnswer})
+			_, err := c.Ask(context.Background(), request)
+			var le *provider.LimitError
+			if !errors.As(err, &le) || le.Limit != limit || len(sent()) != 1 {
+				t.Errorf("error = %v after %d requests; want the limit %q, sent once", err, len(sent()), limit)
+			}
+		})
+	}
+	c, sent := fakeAPI(t, errorOf(401, "invalid_api_key"), reply{body: goodAnswer})
+	if _, err := c.Ask(context.Background(), request); !errors.Is(err, provider.ErrKeyRefused) || len(sent()) != 1 {
+		t.Errorf("a wrong key: %v after %d requests", err, len(sent()))
+	}
+	c, sent = fakeAPI(t, errorOf(429, "rate_limit_exceeded"), errorOf(429, "rate_limit_exceeded"))
+	if _, err := c.Ask(context.Background(), request); err == nil || errors.Is(err, provider.ErrKeyRefused) || len(sent()) != 2 {
+		t.Errorf("a plain 429: %v after %d requests; want a failure sent again", err, len(sent()))
+	}
+}

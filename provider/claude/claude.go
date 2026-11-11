@@ -4,6 +4,7 @@ package claude
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -88,7 +89,9 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 		sent = time.Now()
 		return next(req)
 	})
-	stream := c.sdk.Messages.NewStreaming(ctx, c.params(r), count)
+	// A refusal for a limit or of the key is not sent again (provider.NoRetry).
+	var refused provider.Refusal
+	stream := c.sdk.Messages.NewStreaming(ctx, c.params(r), count, option.WithMiddleware(provider.NoRetry(Refusal, &refused)))
 	defer func() { _ = stream.Close() }()
 	var (
 		msg     anthropic.Message
@@ -128,7 +131,7 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 	}
 	switch {
 	case err != nil:
-		return resp, err
+		return resp, refused.Of(err)
 	case !counted:
 		return resp, errors.New("claude: the answer stopped before it was finished")
 	}
@@ -226,4 +229,47 @@ func cacheWrites(u anthropic.Usage) []provider.CacheWrite {
 		ws = append(ws, provider.CacheWrite{TTL: catalog.TTL1h, Tokens: h1})
 	}
 	return ws
+}
+
+// The messages that tell a refusal for a limit by their words (docs/architecture.md, 3.7 and section
+// 4). The words of a message are no contract: a refusal whose words change is a failure of AI until
+// the table and its tests follow, and the sources are read again before each release.
+const (
+	ownerLimit     = "You have reached your specified API usage limits"
+	workspaceLimit = "You have reached your specified workspace API usage limits"
+	lowBalance     = "Your credit balance is too low to access the Anthropic API"
+	// notTheKey begins a 401 that is no fault of the key: a request from a browser, which tutor never
+	// sends.
+	notTheKey = "CORS requests are not allowed for this Organization"
+)
+
+// Refusal reads an error response of the Messages API: a spend limit the owner set, 400
+// invalid_request_error with its words; the cap of the tier, 429 with the error code
+// enforced_spend_limit_reached; a balance spent, by its words at any status; a fault of billing,
+// 402; and the key refused, 401.
+func Refusal(status int, body []byte) provider.Refusal {
+	var e struct {
+		Error struct {
+			Type    string `json:"type"`
+			Message string `json:"message"`
+			Details struct {
+				ErrorCode string `json:"error_code"`
+			} `json:"details"`
+		} `json:"error"`
+	}
+	_ = json.Unmarshal(body, &e)
+	m := e.Error.Message
+	switch {
+	case strings.HasPrefix(m, lowBalance):
+		return provider.Refusal{Limit: provider.LimitBalance}
+	case status == http.StatusBadRequest && e.Error.Type == "invalid_request_error" && (strings.HasPrefix(m, ownerLimit) || strings.HasPrefix(m, workspaceLimit)):
+		return provider.Refusal{Limit: provider.LimitOwner}
+	case status == http.StatusTooManyRequests && e.Error.Details.ErrorCode == "enforced_spend_limit_reached":
+		return provider.Refusal{Limit: provider.LimitTier}
+	case status == http.StatusPaymentRequired:
+		return provider.Refusal{Limit: provider.LimitBilling}
+	case status == http.StatusUnauthorized && !strings.HasPrefix(m, notTheKey):
+		return provider.Refusal{Key: true}
+	}
+	return provider.Refusal{}
 }

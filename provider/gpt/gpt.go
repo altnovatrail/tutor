@@ -6,6 +6,7 @@ import (
 	"cmp"
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -94,6 +95,9 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 		attempts++
 		return next(req)
 	})
+	// A refusal for a limit or of the key is not sent again (provider.NoRetry).
+	var refused provider.Refusal
+	noRetry := option.WithMiddleware(provider.NoRetry(Refusal, &refused))
 	var content responses.ResponseInputMessageContentListParam
 	for _, im := range r.Images {
 		if im.Label != "" {
@@ -121,9 +125,9 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 		Reasoning:       shared.ReasoningParam{Effort: shared.ReasoningEffort(cmp.Or(r.Effort, Efforts[0]))},
 		MaxOutputTokens: openai.Int(r.MaxOutputTokens),
 		Store:           openai.Bool(false),
-	}, count)
+	}, count, noRetry)
 	if err != nil {
-		return provider.Response{Retries: max(attempts-1, 0)}, err
+		return provider.Response{Retries: max(attempts-1, 0)}, refused.Of(err)
 	}
 	// Tokens are billed whatever the answer, so they go back with an error too. OpenAI counts the
 	// tokens read from the cache and written to it in the input, and they come off it here
@@ -158,4 +162,34 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 	}
 	out.JSON = text
 	return out, nil
+}
+
+// Refusal reads an error response of the Responses API by its code (docs/architecture.md, 3.7 and
+// section 4): a balance spent, credit_balance_exhausted; a spend limit of the project or the
+// organization, project_spend_limit_exceeded or organization_spend_limit_exceeded; the usage limit
+// OpenAI assigns, organization_usage_limit_exceeded, each a 429; a 429 of the type insufficient_quota
+// with any other code, a refusal of billing whose cause the code does not name; and the key refused,
+// 401. OpenAI tells the cause of a refusal of billing by error.code, «The broader error.type can still
+// be insufficient_quota».
+func Refusal(status int, body []byte) provider.Refusal {
+	var e struct {
+		Error struct {
+			Code string `json:"code"`
+			Type string `json:"type"`
+		} `json:"error"`
+	}
+	_ = json.Unmarshal(body, &e)
+	switch {
+	case status == http.StatusTooManyRequests && e.Error.Code == "credit_balance_exhausted":
+		return provider.Refusal{Limit: provider.LimitBalance}
+	case status == http.StatusTooManyRequests && (e.Error.Code == "project_spend_limit_exceeded" || e.Error.Code == "organization_spend_limit_exceeded"):
+		return provider.Refusal{Limit: provider.LimitOwner}
+	case status == http.StatusTooManyRequests && e.Error.Code == "organization_usage_limit_exceeded":
+		return provider.Refusal{Limit: provider.LimitTier}
+	case status == http.StatusTooManyRequests && e.Error.Type == "insufficient_quota":
+		return provider.Refusal{Limit: provider.LimitBilling}
+	case status == http.StatusUnauthorized:
+		return provider.Refusal{Key: true}
+	}
+	return provider.Refusal{}
 }

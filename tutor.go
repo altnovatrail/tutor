@@ -202,15 +202,16 @@ func (k Kind) String() string {
 }
 
 // LimitReason is why a provider refused for a limit: one only the owner of the key can lift, each in
-// its own way (architecture 3.7).
-type LimitReason string
+// its own way (architecture 3.7). It is the adapters' own, provider.Limit, so that a reason they
+// tell is one the library gives.
+type LimitReason = provider.Limit
 
 // The reasons of a limit reached.
 const (
-	LimitOwner   LimitReason = "owner_limit"
-	LimitTier    LimitReason = "tier"
-	LimitBalance LimitReason = "balance"
-	LimitBilling LimitReason = "billing"
+	LimitOwner   = provider.LimitOwner
+	LimitTier    = provider.LimitTier
+	LimitBalance = provider.LimitBalance
+	LimitBilling = provider.LimitBilling
 )
 
 // Usage is a record of what one call of a model took (architecture 3.7): the provider and the model
@@ -312,7 +313,9 @@ func (t *Tutor) client(m admission.Model, own *OwnKey) (provider.Model, error) {
 // answered, else Failed, with the usage of each call that came back with tokens, a refused or a
 // broken answer too, since it is billed; Billed says whether its tokens are its whole bill, and
 // a call that is not is priced at its worst: maxIn, the most input of the kind, and the request's
-// most output. Which refusals are a limit or a refused key, the adapters tell with T121.
+// most output. A provider's refusal for a limit of any model is the outcome LimitReached with its
+// reason, and a refusal of the key KeyRefused (provider.LimitError, provider.ErrKeyRefused); the
+// usage of a model that answered stays, since it is billed.
 func ask(ctx context.Context, a admission.Answer, calls []call, reqs []provider.Request, maxIn int64) ([]provider.Response, Outcome) {
 	if len(reqs) != len(calls) {
 		return nil, Outcome{Kind: Failed, Admission: a, Err: fmt.Errorf("tutor: %d requests for %d models", len(reqs), len(calls))}
@@ -342,9 +345,36 @@ func ask(ctx context.Context, a admission.Answer, calls []call, reqs []provider.
 		if r := resps[i]; errs[i] == nil || errors.Is(errs[i], provider.ErrNoAnswer) || r.Partial || r.Counted() {
 			out.Usage = append(out.Usage, usageOf(c.model, c.client, r, errs[i], maxIn, reqs[i].MaxOutputTokens))
 		}
-		if errs[i] != nil && out.Err == nil {
-			out.Kind, out.Err = Failed, fmt.Errorf("tutor: %s of %s: %w", c.model.Name(), c.model.Provider, errs[i])
+		if errs[i] == nil {
+			continue
+		}
+		// A refusal for a limit ends the call whatever the others did, and a refused key comes next:
+		// the pair gives both observations or the outcome, never one (architecture 3.7).
+		kind, limit := Failed, LimitReason("")
+		var le *provider.LimitError
+		switch {
+		case errors.As(errs[i], &le):
+			kind, limit = LimitReached, le.Limit
+		case errors.Is(errs[i], provider.ErrKeyRefused):
+			kind = KeyRefused
+		}
+		if out.Err == nil || rank(kind) > rank(out.Kind) {
+			out.Kind, out.Limit, out.Err = kind, limit, fmt.Errorf("tutor: %s of %s: %w", c.model.Name(), c.model.Provider, errs[i])
 		}
 	}
 	return resps, out
+}
+
+// rank orders the kinds of a failed call, the one an outcome takes last: a limit, then a refused
+// key, then a failure of AI.
+func rank(k Kind) int {
+	switch k {
+	case LimitReached:
+		return 3
+	case KeyRefused:
+		return 2
+	case Failed:
+		return 1
+	}
+	return 0
 }
