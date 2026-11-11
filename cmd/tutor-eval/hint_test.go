@@ -20,6 +20,7 @@ import (
 // the learner reads. The report writes its three files beside the log, once, and a hint takes no
 // -reads.
 func TestHintOverSets(t *testing.T) {
+	t.Parallel()
 	parent, sets := drawnSets(t, drawnSet{"lines", measurementBank, measurementPlan}, drawnSet{"free", freeBank, freePlan}, drawnSet{"near", nearBank, nearPlan})
 	code, out, errs := runMeasure("yes\n", "-kind", "hint", "-part", "dev", "-stub", "-repeats", "1", "-set", sets[0], "-set", sets[1], "-set", sets[2])
 	if code != exitOK {

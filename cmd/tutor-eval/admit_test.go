@@ -12,6 +12,7 @@ import (
 // without a key, the report gives the pair's runner's report, and admit rules on it. The drawn sets
 // hold too few slots for a stage, and admit says so with the numbers and the file's SHA-256.
 func TestAdmitRun(t *testing.T) {
+	t.Parallel()
 	parent, sets := drawnSets(t)
 	// Two sheets of the plan are not written: -part all refuses, and -part recorded takes the rest.
 	dir := strings.SplitN(sets[0], ",", 2)[0]

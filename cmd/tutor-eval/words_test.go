@@ -73,6 +73,7 @@ func TestGenWords(t *testing.T) {
 // reported; the judge's control phrases too. A run of cases takes one set of their plan, and the
 // judge one log of the hint or the controls.
 func TestWordsOnTheStub(t *testing.T) {
+	t.Parallel()
 	parent, sets := drawnSets(t, drawnSet{"words-v1", wordsBank, wordsPlanF})
 	code, out, errs := runMeasure("yes\n", "-kind", "hint", "-part", "all", "-stub", "-repeats", "1", "-readers", "opus-high", "-max-usd", "10", "-cases", wordsCases, "-set", sets[0])
 	if code != exitOK || !strings.HasPrefix(out, "All the sheets: 330 cases of the set of the words in words-cases.json, on 40 sheets with a mistake of 40 in words-v1, by opus-high in 1 repeat, in version 2 of the hint's prompt.\n330 calls") {
@@ -236,6 +237,7 @@ func TestGenWordsCases(t *testing.T) {
 // admit-words reads the judge's control phrases and the logs of the hint with their judges' logs,
 // and prints the stage and the counts with every file's sum; it needs both, and every log's judge.
 func TestAdmitWordsCommand(t *testing.T) {
+	t.Parallel()
 	parent, sets := drawnSets(t, drawnSet{"words-v1", wordsBank, wordsPlanF})
 	if code, out, errs := runMeasure("yes\n", "-kind", "hint", "-part", "all", "-stub", "-repeats", "1", "-readers", "opus-high", "-max-usd", "10", "-cases", wordsCases, "-case-kinds", "otherwise,note", "-set", sets[0]); code != exitOK {
 		t.Fatalf("the run ends %d: %s%s", code, out, errs)

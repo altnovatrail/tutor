@@ -24,6 +24,7 @@ const (
 // their words, sentences and lines, and the crops of their pages at 32 px, within the tokens Claude
 // takes without scaling an image down, the same as the essays drawn in memory.
 func TestEssaysCommand(t *testing.T) {
+	t.Parallel()
 	code, out, errs := runIt("check", theEssays)
 	if want := theEssays + ": ok, 20 essays, 5 of them dev and 15 test\n"; code != exitOK || out != want {
 		t.Errorf("check = %d %q %q, want %q", code, out, errs, want)
@@ -182,6 +183,7 @@ func whyUnmet(e *sample.Essay, id string) string {
 // in every repeat; its report counts no false alarm on the stub and writes the feedback to read. It
 // takes no flag of the sheets, no file of the workbook and no -reads.
 func TestRunEssays(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	log := filepath.Join(dir, "essays.jsonl")
 	drawn := drawnOf(t, theEssays)

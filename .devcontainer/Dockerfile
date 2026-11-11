@@ -26,7 +26,7 @@ ARG JUST_VERSION=1.58.0
 # release, and the Go tools in tools/, and spec's checks build the module's zip as the Go module
 # proxy will (R64 spec). Go comes with this file into the copy of every NovaTrail repository, whatever
 # its kind, and stays unused in one without Go code (R64 spec).
-ARG GO_VERSION=1.27.3
+ARG GO_VERSION=1.27.4
 # golangci-lint runs tutor's linters and formatters, gofmt and goimports among them: the Go checks
 # of CI run with it, in this stage (R13 of docs/decisions.md). It is under GPL-3.0, which spec's
 # R12 allows of a development tool that ships nothing, as an exception named in the decision that
@@ -49,8 +49,8 @@ ARG NODE_SHA256_AMD64=6e1db87ef58b8819e5d5402eff1536491b18edd8eb7bee5ef7897876e8
 ARG NODE_SHA256_ARM64=724282c3b43aec998aa9527380465b45d229e021b58035f5f4f63095eabfe5d5
 ARG JUST_SHA256_AMD64=4a5cc2f53e6f0f8c59092a6cc38291eb729d46a7dd95d3ae582008881b84931d
 ARG JUST_SHA256_ARM64=748237128c4c40cbdabc65e841d05ceba13cc23a91eaba395495894c1d9764df
-ARG GO_SHA256_AMD64=65efbc80fdc1fa2cd2631cad5b481777a68e8725f34e89f50fc6ac714e379b40
-ARG GO_SHA256_ARM64=a06e99309dbcbdca1a8ccd2282c3ee146e55930886e26b4f1193269587165f49
+ARG GO_SHA256_AMD64=7226736c2339719cda28fbf3a54d71aa63bcefe376e98cef00034268dab24840
+ARG GO_SHA256_ARM64=3392582988a273a87ab5043ee1b2c9c17a2c3c00580bf9326c47a2e0aaaeac92
 ARG GOLANGCI_LINT_SHA256_AMD64=9b7fe6a6bf6334b98decf8d86b11415ea7889afdabdd1959fdce23af2a9ebcea
 ARG GOLANGCI_LINT_SHA256_ARM64=b4d8f17068b35ee6060cc2f69a16fb48740d706fbba81661c318649c114a6998
 ARG BUF_SHA256_AMD64=fad1e38d6909bbb583a4da81d8c02a01046e2cd663bde7e337dd24277393764b
