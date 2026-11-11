@@ -98,7 +98,37 @@ var Admitted = []Entry{
 		},
 		Prompt: "c693bfa87760abec24fcf04073f8c786c682ba13d02569c9ec480da1f7e64d9d",
 	},
+	// The words of the tutor — the analysis of the steps and the hint, one call of one model —, on the
+	// author's sheets with a mistake and the set of the words of T118: 300 hints of version 3 of the
+	// hint's prompt, judged by Opus 5.5 at high on version 3 of the judge's prompt, which passed all its
+	// control phrases (T127; R86, R100). The output of the rule lies in samples/, out of git.
+	{
+		Capability: admissionv0.CapabilitySolutionAnalysis,
+		Models:     []Model{{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "high"}},
+		Stage:      StageAuthor,
+		Report:     wordsEvidence,
+		Prompt:     wordsPrompt,
+	},
+	{
+		Capability: admissionv0.CapabilityHint,
+		Models:     []Model{{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "high"}},
+		Stage:      StageAuthor,
+		Report:     wordsEvidence,
+		Prompt:     wordsPrompt,
+	},
 }
+
+// wordsEvidence is the output of the rule of admission of the words that admitted them (T127), and
+// wordsPrompt the fingerprint of the hint's prompt it measured, version 3.
+var (
+	wordsEvidence = Evidence{
+		Set:    "sheets-v1+free-messy-v1+author-v1-recorded+words-v1",
+		File:   "samples/runs/t127-words.admit.md",
+		SHA256: "1e49fa51007867292f868869ce4888cfbfac6e6d3b45dbee86632998a72bd68a",
+		Date:   "2026-11-11",
+	}
+	wordsPrompt = "7d598021bf716157a54b4e60ac2c5583e0ea8429c43e9e0a30805ef99afdeeeb"
+)
 
 // Select chooses the models of a call: the first entry of the capability in Admitted, of the least
 // stage or above, whose every model the table admits for the route and the age category, with the

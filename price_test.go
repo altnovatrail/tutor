@@ -44,9 +44,13 @@ func TestPrice(t *testing.T) {
 	if !p.Expected || !p.Worst || !near(p.ExpectedUSD, expected) || !near(p.WorstUSD, worst) {
 		t.Errorf("price = %+v; want expected %v and worst %v", p, expected, worst)
 	}
-	// The words are admitted to no model: no price, and the admission says why.
-	if p, a, err := lib.Price(CallWords, platform); err != nil || a.Admitted || p != (CallPrice{}) {
+	// The words are Opus's alone (T127): their price is one call of it, by the tokens of T127.
+	if p, a, err := lib.Price(CallWords, platform); err != nil || !a.Admitted || !near(p.ExpectedUSD, (2356*4+437*20)/1e6) {
 		t.Errorf("the price of the words: %+v, %+v, %v", p, a, err)
+	}
+	withWords(t)
+	if p, a, err := lib.Price(CallWords, platform); err != nil || a.Admitted || p != (CallPrice{}) {
+		t.Errorf("the price of the words not admitted: %+v, %+v, %v", p, a, err)
 	}
 	if _, _, err := lib.Price("voice", platform); err == nil {
 		t.Error("a capability no call of the library serves has a price")

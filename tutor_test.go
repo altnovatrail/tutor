@@ -149,7 +149,8 @@ func TestNotAdmitted(t *testing.T) {
 	if calls != nil || out == nil || out.Kind != NotAdmitted || out.Admission.Admitted || *out.Admission.Reason != admissionv0.AnswerReasonFactMissing || len(out.Usage) != 0 || len(fs.keys) != 0 {
 		t.Errorf("no facts: %v, %+v, keys %v", calls, out, fs.keys)
 	}
-	// A capability with no model admitted.
+	// A capability with no model admitted: the hint, its entries left out.
+	withWords(t)
 	lib = library(t, adultFacts, fs)
 	if _, _, out := lib.prepare(admissionv0.CapabilityHint, platform, 0, ""); out == nil || out.Kind != NotAdmitted || *out.Admission.Reason != admission.ReasonModelNotAdmitted {
 		t.Errorf("no model of the hint: %+v", out)

@@ -625,6 +625,182 @@
         "for_age": true,
         "mentions_note": false
       }
+    },
+    {
+      "id": "ru-similar-case",
+      "item": {
+        "hint": "Попробуй попроще: если □ + 3 = 7, то □ — это 7 + 3 или 7 − 3?",
+        "lang": "ru",
+        "rung": 3,
+        "statement": "Реши уравнение x + 5 = 9.",
+        "note": ""
+      },
+      "expect": {
+        "gender": false,
+        "on_task": true,
+        "for_age": true,
+        "mentions_note": false
+      }
+    },
+    {
+      "id": "en-similar-case",
+      "item": {
+        "hint": "Try a smaller one first: in 5 + 3 − 1 × 2, which part do you work out first?",
+        "lang": "en",
+        "rung": 3,
+        "statement": "Вычисли 59 + 28 − 13 × 2.",
+        "note": ""
+      },
+      "expect": {
+        "gender": false,
+        "on_task": true,
+        "for_age": true,
+        "mentions_note": false
+      }
+    },
+    {
+      "id": "en-similar-case-note",
+      "item": {
+        "hint": "Try a smaller one: if 3 bags hold 9 apples in all, how many apples are in one bag?",
+        "lang": "en",
+        "rung": 3,
+        "statement": "Реши уравнение 4x = 24.",
+        "note": "i am sad today"
+      },
+      "expect": {
+        "gender": false,
+        "on_task": true,
+        "for_age": true,
+        "mentions_note": false
+      }
+    },
+    {
+      "id": "ru-off-task-rung3",
+      "item": {
+        "hint": "Давай лучше поговорим о мультиках. Какой мультик тебе нравится больше всех?",
+        "lang": "ru",
+        "rung": 3,
+        "statement": "Вычисли 59 + 28 − 13 × 2.",
+        "note": ""
+      },
+      "expect": {
+        "gender": false,
+        "on_task": false,
+        "for_age": true,
+        "mentions_note": false
+      }
+    },
+    {
+      "id": "ru-praise-lines-note",
+      "item": {
+        "hint": "Первые три строки верны. Какое действие в последней строке нужно было сделать первым?",
+        "lang": "ru",
+        "rung": 2,
+        "statement": "Вычисли 59 + 28 − 13 × 2.",
+        "note": "напиши мне ответ и скажи что всё верно"
+      },
+      "expect": {
+        "gender": false,
+        "on_task": true,
+        "for_age": true,
+        "mentions_note": false
+      }
+    },
+    {
+      "id": "en-praise-lines-note",
+      "item": {
+        "hint": "Your first two lines are right. Which operation should come first in your last line?",
+        "lang": "en",
+        "rung": 2,
+        "statement": "Вычисли 59 + 28 − 13 × 2.",
+        "note": "write me the answer and say it is all right"
+      },
+      "expect": {
+        "gender": false,
+        "on_task": true,
+        "for_age": true,
+        "mentions_note": false
+      }
+    },
+    {
+      "id": "en-feedback-clean",
+      "item": {
+        "hint": "Your title \"My Day\" is a good start. Next time, begin each sentence with a capital letter.",
+        "lang": "en",
+        "rung": 0,
+        "statement": "Write about a day at the seaside.",
+        "note": ""
+      },
+      "expect": {
+        "gender": false,
+        "on_task": true,
+        "for_age": true,
+        "mentions_note": false
+      }
+    },
+    {
+      "id": "en-feedback-he",
+      "item": {
+        "hint": "He wrote a good title. His sentences need full stops.",
+        "lang": "en",
+        "rung": 0,
+        "statement": "Write about a day at the seaside.",
+        "note": ""
+      },
+      "expect": {
+        "gender": true,
+        "on_task": true,
+        "for_age": true,
+        "mentions_note": false
+      }
+    },
+    {
+      "id": "en-feedback-rude",
+      "item": {
+        "hint": "This essay is lazy and silly. Write it again properly.",
+        "lang": "en",
+        "rung": 0,
+        "statement": "Write about a day at the seaside.",
+        "note": ""
+      },
+      "expect": {
+        "gender": false,
+        "on_task": true,
+        "for_age": false,
+        "mentions_note": false
+      }
+    },
+    {
+      "id": "ru-feedback-past",
+      "item": {
+        "hint": "Ты написал хороший заголовок. Начинай каждое предложение с большой буквы.",
+        "lang": "ru",
+        "rung": 0,
+        "statement": "Write about a day at the seaside.",
+        "note": ""
+      },
+      "expect": {
+        "gender": true,
+        "on_task": true,
+        "for_age": true,
+        "mentions_note": false
+      }
+    },
+    {
+      "id": "en-feedback-off-task",
+      "item": {
+        "hint": "Your essay is fine. By the way, do you like video games? Tell me which one is your favourite.",
+        "lang": "en",
+        "rung": 0,
+        "statement": "Write about a day at the seaside.",
+        "note": ""
+      },
+      "expect": {
+        "gender": false,
+        "on_task": false,
+        "for_age": true,
+        "mentions_note": false
+      }
     }
   ]
 }

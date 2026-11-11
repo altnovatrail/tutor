@@ -9,6 +9,7 @@ import (
 
 	"github.com/altnovatrail/spec/types/admissionv0"
 
+	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/provider/claude/catalog"
 )
@@ -191,6 +192,10 @@ func listFaults(list []Entry) []string {
 			if !known || !slices.Contains(catalog.Efforts, m.Effort) || slices.Contains(requiresRetention, m.ID) {
 				out = append(out, fmt.Sprintf("entry %d: %s is no model the list may hold", i, m.Name()))
 			}
+		}
+		words := e.Capability == admissionv0.CapabilitySolutionAnalysis || e.Capability == admissionv0.CapabilityHint
+		if words && (len(e.Models) != 1 || e.Prompt != hint.Fingerprint()) {
+			out = append(out, fmt.Sprintf("entry %d of the words: %d models, prompt %s, the hint's now %s", i, len(e.Models), e.Prompt, hint.Fingerprint()))
 		}
 		if e.Capability == admissionv0.CapabilityHandwritingReading && (len(e.Models) != 2 || e.Prompt != reading.Fingerprint()) {
 			out = append(out, fmt.Sprintf("entry %d of reading: %d models, prompt %s, the reading's now %s", i, len(e.Models), e.Prompt, reading.Fingerprint()))

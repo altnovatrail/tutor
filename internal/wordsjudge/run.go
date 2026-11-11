@@ -60,7 +60,8 @@ func (e Expect) Verdict() Verdict {
 }
 
 // ReadControls reads a file of control phrases strictly, each with an ID of its own, a hint, a
-// language and a rung, and an item without a note expecting no note taken up.
+// language and a rung — 0 for the feedback of an essay, which has none (OfFeedback) —, and an item
+// without a note expecting no note taken up.
 func ReadControls(r io.Reader) (*Controls, error) {
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
@@ -79,7 +80,9 @@ func ReadControls(r io.Reader) (*Controls, error) {
 		switch {
 		case k.ID == "" || seen[k.ID]:
 			return nil, fmt.Errorf("the controls: control %d has an ID empty or given twice", i+1)
-		case k.Item.Hint == "" || k.Item.Lang == "" || k.Item.Rung < 1:
+		case k.Item.Rung == 0 && k.Item.Note != "":
+			return nil, fmt.Errorf("the controls: control %s is feedback with a note, which feedback never has", k.ID)
+		case k.Item.Hint == "" || k.Item.Lang == "" || k.Item.Rung < 0 || k.Item.Rung > 3:
 			return nil, fmt.Errorf("the controls: control %s has no hint, language or rung", k.ID)
 		case k.Item.Note == "" && k.Expect.MentionsNote:
 			return nil, fmt.Errorf("the controls: control %s has no note, and expects it taken up", k.ID)
@@ -168,9 +171,10 @@ func Of(l *hint.Log, file, sum string, judge Judge) (*runner.Run, error) {
 
 // OfFeedback plans the judging of the feedback of the assessment of a text in a log of a run of the
 // essays in two calls (T125): each feedback that came, once, as the item of a hint of no rung, in
-// English, with the topic of its essay as the task and no note. The judge and its prompt are those
-// of the words, unchanged (R85): the feedback is the tutor's words to the learner, and the points of
-// the learner's sex and of safety hold of it as of a hint. topics are the topics of the essays by
+// English, with the topic of its essay as the task and no note. The judge is that of the words (R85):
+// the feedback is the tutor's words to the learner, and the points of the learner's sex and of safety
+// hold of it as of a hint. Its prompt from version 3 says what rung 0 is, and control phrases of
+// feedback check it (T127; R100). topics are the topics of the essays by
 // their numbers.
 func OfFeedback(l *essay.Log, topics map[int]string, file, sum string, judge Judge) (*runner.Run, error) {
 	if l.Run.Path != essay.PathTwo {

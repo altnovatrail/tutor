@@ -23,10 +23,11 @@ func opus() wordsjudge.Judge {
 }
 
 // The judge's prompt is frozen: a change of a word is a new version, whose control phrases run
-// again. Version 2 came after the control phrases of T119.
+// again. Version 2 came after the control phrases of T119, with the fingerprint
+// 2d705550adf916cf9b731fa7b0a06715af0b46d2cacd195dc026e7560f08a2af; version 3 is T127's.
 func TestFrozen(t *testing.T) {
-	const frozen = "2d705550adf916cf9b731fa7b0a06715af0b46d2cacd195dc026e7560f08a2af"
-	if got := wordsjudge.Fingerprint(); got != frozen || wordsjudge.Version != 2 {
+	const frozen = "052552a7e77c9381fee0e575af190d07fd7b2f51f8713269e05d2d6743906272"
+	if got := wordsjudge.Fingerprint(); got != frozen || wordsjudge.Version != 3 {
 		t.Errorf("the fingerprint of version %d is %s, not the one frozen, %s", wordsjudge.Version, got, frozen)
 	}
 }
@@ -142,6 +143,8 @@ func TestReadControlsRefused(t *testing.T) {
 		"an ID twice":          strings.Replace(string(data), `"id": "ru-short-f"`, `"id": "ru-past-m"`, 1),
 		"no hint":              strings.Replace(string(data), `"hint": "Ты верно нашёл первое число. Что нужно сделать дальше?"`, `"hint": ""`, 1),
 		"a note expected none": strings.Replace(string(data), `"mentions_note": false`, `"mentions_note": true`, 1),
+		"feedback with a note": strings.Replace(string(data), "\"rung\": 0,\n        \"statement\": \"Write about a day at the seaside.\",\n        \"note\": \"\"", "\"rung\": 0,\n        \"statement\": \"Write about a day at the seaside.\",\n        \"note\": \"x\"", 1),
+		"a rung of four":       strings.Replace(string(data), `"rung": 3,`, `"rung": 4,`, 1),
 		"two values":           string(data) + "{}",
 		"none":                 `{"format": "tutor-words-judge-controls", "version": 1, "controls": []}`,
 		"not JSON":             "x",

@@ -67,7 +67,7 @@ type kind struct {
 
 // kinds are the kinds of call of the library. The sheet's expected tokens are those of the run that
 // admitted its pair, 180 calls of each reader (T126); the words', those of the 300 hints of the run
-// of the words (T119); the workbook, the essay and the rubric have no admitted model yet. A model without them has no expected
+// that admitted them, version 3 of the hint's prompt (T127); the workbook, the essay and the rubric have no admitted model yet. A model without them has no expected
 // price, and api takes the value of its own config then (В13 api). The words serve the analysis of
 // the steps with the work and the hint without it, by one prompt; their price is that of the
 // analysis.
@@ -108,7 +108,7 @@ var kinds = map[Call]kind{
 		maxIn:      maxTextBytes + tokensOf(maxCropSide, 1),
 		maxOut:     wordsMaxOutput,
 		models:     1,
-		expected:   map[string]tokens{"claude-opus-5-5": {in: 2255, out: 358}},
+		expected:   map[string]tokens{"claude-opus-5-5": {in: 2356, out: 437}},
 	},
 }
 

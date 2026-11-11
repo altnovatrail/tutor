@@ -1,6 +1,6 @@
 # The hint: all the sheets
 
-The log words-stub.jsonl, of the prompt b23adf4fc6f9, version 2. Tutors: opus-high (claude-opus-5-5, high). Repeats: 1. Rungs: 1, 2, 3. Languages: ru, en. Sheets with a mistake: 4 (words-v1 4). Calls: 30 made, 0 of them failed; $0.45 spent of the $10.00 cap.
+The log words-stub.jsonl, of the prompt 7d598021bf71, version 3. Tutors: opus-high (claude-opus-5-5, high). Repeats: 1. Rungs: 1, 2, 3. Languages: ru, en. Sheets with a mistake: 4 (words-v1 4). Calls: 30 made, 0 of them failed; $0.45 spent of the $10.00 cap.
 
 ## Leaks, before the check and after it, and the fallback texts
 

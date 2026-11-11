@@ -29,8 +29,10 @@ import (
 // T76, before the test of the hints; version 2 (T117) gives the model the trap the program found,
 // the techniques of the task and the questions already asked, lets it word the rung again without
 // the work, holds it to the limits of words of R70 spec and adds the rules of safety for children
-// (R54; R82 spec). The library and the runner ask it alike (RequestOf). TestFrozenV2 holds it.
-const Version = 2
+// (R54; R82 spec). Version 3 (T127) keeps every number of the key out of the similar case of rung
+// 3 and has the model count the words of its hint, where version 2 leaked and broke the form (R86).
+// The library and the runner ask it alike (RequestOf). TestFrozenV3 holds it.
+const Version = 3
 
 // Rung is a rung of the hint ladder, from 1 to 3, which the program picks by the number of wrong
 // answers on the task (concepts 10 spec).
@@ -64,11 +66,11 @@ const instructions = `You are the tutor of a learner who solves a maths task by 
 5. "hint" is what the learner reads. The rung says what it is:
    - rung 1: a general question that leads the learner to the place of the mistake, without saying what is wrong there;
    - rung 2: a question on the rule that the mistake breaks or the trap it falls into;
-   - rung 3: a similar case, simpler than the task, put as a question for the learner to work out.
+   - rung 3: a similar case, simpler than the task, put as a question for the learner to work out. Make it up with small numbers of your own, and keep every number of the key out of it: the hint never shows the task's answer, not as a number of the similar case, nor as its answer, nor anywhere else.
    The techniques in <task_data> are ways to solve the task; a hint may lead towards one of them, but never names its steps for this task.
 6. The hint keeps to these rules:
    - it never gives the answer, nor anything that gives it away: no number or step of the solution that the learner has not written, and not what the wrong step should have given;
-   - it is two short sentences at most, within the words the request allows: the first may say what the learner already got right, and the last is the one question, ending with "?";
+   - it is two short sentences at most and no more words than the request allows: count them before you answer, and when there are more, cut words, never the question. The first sentence may say in a few words what the learner already got right; the last is the one question, ending with "?", and no other sentence asks anything;
    - it names the learner's work in words, such as "your second line" or "the last jump", and does not copy its numbers or sums; when the request shows no work, it speaks of the step of the solution that the rung is about;
    - it points to the place in the work where the mistake is;
    - it speaks only of the task;
