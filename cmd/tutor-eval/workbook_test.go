@@ -27,6 +27,7 @@ const (
 // the samples read, and the crops of the filled boxes at each height, 640 tokens a page of ten crops
 // of 200 × 200, the same as the pages drawn in memory.
 func TestWorkbookCommand(t *testing.T) {
+	t.Parallel()
 	code, out, errs := runIt("check", theWorkbook)
 	if want := theWorkbook + ": ok, workbook of 20 pages, 5 of them dev and 15 test; 200 items, 220 boxes\n"; code != exitOK || out != want {
 		t.Errorf("check = %d %q %q, want %q", code, out, errs, want)

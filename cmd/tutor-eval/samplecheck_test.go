@@ -19,7 +19,10 @@ func init() {
 	checkSamples = func([]string) (map[string][]int, error) { return map[string][]int{}, nil }
 }
 
-// checking runs the test with a check of its own in place of the one that passes every file.
+// checking runs the test with a check of its own in place of the one that passes every file. A test
+// that calls it stays sequential: Go starts the top-level tests that call t.Parallel only once every
+// sequential one has ended, so the heaviest tests of the package, which swap nothing, run in
+// parallel beside each other and never beside a swap (R92 in docs/decisions.md).
 func checking(t *testing.T, check samplecheck.Check) {
 	t.Helper()
 	was := checkSamples

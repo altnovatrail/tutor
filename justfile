@@ -265,10 +265,12 @@ ci-lint: lint
 # recipe, which is shell and not Go. The coverage of the tests goes to coverage/go.out, one Go
 # profile, which the coverage job of .github's shared go.yml sends to Codecov (R48 spec; R66). A
 # package's lines count by its own tests: -coverpkg=./... would make the profile 25 times larger
-# and the run twice as long for 1.4 points more (R66).
+# and the run twice as long for 1.4 points more (R66). The tests of cmd/tutor-eval take most of the
+# run under the race detector, about 7.5 minutes in CI: -timeout 15m holds them clear of go test's
+# default of 10 minutes, and the job's own timeout of 20 still stops a test that hangs (R92).
 ci-test: release-files-test
     mkdir -p coverage
-    go test -race -count=1 -covermode=atomic -coverprofile=coverage/go.out ./...
+    go test -race -count=1 -timeout 15m -covermode=atomic -coverprofile=coverage/go.out ./...
 
 # The drawn samples of spec's eval protocol that the tests hold to what tutor-eval draw writes,
 # one of each kind it draws (internal/evalsample's testdata), checked against the rules of sections

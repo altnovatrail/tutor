@@ -86,6 +86,7 @@ func edit(t *testing.T, path string, change func(map[string]any)) {
 // with -png the crop of every filled box at 32 px, 200 × 200; drawn again it draws none, and keeps
 // what is there. A crop that cannot be saved saves no sample of its page.
 func TestDrawPages(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	dir, pics := filepath.Join(root, "workbook"), filepath.Join(root, "png")
 	code, out, errs := runIt("draw", "-workbook", theWorkbook, "-dir", dir, "-png", pics)
@@ -125,6 +126,7 @@ func TestDrawPages(t *testing.T) {
 // draw -essays draws every essay as a sample of the protocol, essay-NN.json, and with -png the crop
 // of each at 32 px.
 func TestDrawEssays(t *testing.T) {
+	t.Parallel()
 	dir := drawnOf(t, theEssays)
 	if files, _ := filepath.Glob(filepath.Join(dir, "essay-*.json")); len(files) != 20 {
 		t.Errorf("%d samples of essays", len(files))

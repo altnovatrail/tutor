@@ -29,6 +29,7 @@ func draw(t *testing.T, dir string, at time.Time) string {
 // The command draws every sheet of the plan without a file, keeps the file already there, draws
 // nothing on a second run, and the summary then finds all 40 sheets passing, 39 drawn by code.
 func TestDraw(t *testing.T) {
+	t.Parallel()
 	dir := t.TempDir()
 	at := time.Date(2026, 10, 26, 9, 0, 0, 0, time.UTC)
 	_, plan, err := readPlan("../../eval/bank.json", "../../eval/sheets.json")
@@ -233,6 +234,7 @@ func TestDrawRefuses(t *testing.T) {
 // each one part that holds the whole solution as its answer, it does not draw: a sample's truth is
 // the value of its answer, and theirs is for the author's hand to write (R69).
 func TestDrawSheetsOfParts(t *testing.T) {
+	t.Parallel()
 	root := t.TempDir()
 	var out, errs bytes.Buffer
 	if code := runDraw([]string{"-dir", filepath.Join(root, "author"), "-bank", freeBank, "-plan", authorPlan}, &out, &errs, time.Now); code != exitFail ||

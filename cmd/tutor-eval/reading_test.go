@@ -48,6 +48,7 @@ func drawnSets(t *testing.T, of ...drawnSet) (string, []string) {
 // the verdict of its sheet's outcome with nothing read under the key. The report of the judge does
 // not read it.
 func TestReadingOverSets(t *testing.T) {
+	t.Parallel()
 	parent, sets := drawnSets(t)
 	code, out, errs := runMeasure("yes\n", "-kind", "reading", "-part", "dev", "-stub", "-repeats", "1", "-set", sets[0], "-set", sets[1])
 	if code != exitOK {
@@ -94,6 +95,7 @@ func TestReadingOverSets(t *testing.T) {
 // without a key, and Opus not at all, and the estimate says so; a state whose answer is not written
 // yet has no result.
 func TestReadingHeightsAndStates(t *testing.T) {
+	t.Parallel()
 	parent, sets := drawnSets(t)
 	code, out, errs := runMeasure("yes\n", "-kind", "reading", "-part", "dev", "-stub", "-reads", "heights,states", "-set", sets[1])
 	if code != exitOK {
@@ -136,6 +138,7 @@ func TestReadingHeightsAndStates(t *testing.T) {
 // The sets of a run are refused when -set is not DIR,BANK,PLAN, when it comes with -dir, when two
 // sets share a name or do not lie in one folder, and when the judge is given more than one.
 func TestSetsRefused(t *testing.T) {
+	t.Parallel()
 	parent, sets := drawnSets(t)
 	elsewhere := filepath.Join(t.TempDir(), "lines") + "," + measurementBank + "," + measurementPlan
 	for _, c := range []struct {
