@@ -560,3 +560,49 @@ func TestRefusals(t *testing.T) {
 		})
 	}
 }
+
+// The check counts the tokens of one word for the model, with no learner's content: a right key is
+// taken, a wrong one refused once, one without rights to the model is told apart, and a provider
+// that fails, or a model it no longer has, says nothing of the key. No error holds the key.
+func TestCheck(t *testing.T) {
+	const key = "the key of the owner in a test"
+	for name, tt := range map[string]struct {
+		status int
+		body   string
+		want   error
+	}{
+		"taken":         {200, `{"input_tokens":8}`, nil},
+		"wrong":         {401, `{"type":"error","error":{"type":"authentication_error","message":"invalid x-api-key"}}`, provider.ErrKeyRefused},
+		"no rights":     {403, `{"type":"error","error":{"type":"permission_error","message":"Your API key does not have permission to use the specified resource."}}`, provider.ErrNoRights},
+		"no such model": {404, `{"type":"error","error":{"type":"not_found_error","message":"model: claude-opus-5-5"}}`, nil},
+		"down":          {500, `{"type":"error","error":{"type":"api_error","message":"Internal server error"}}`, nil},
+	} {
+		t.Run(name, func(t *testing.T) {
+			var paths, bodies []string
+			srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				b, _ := io.ReadAll(r.Body)
+				paths, bodies = append(paths, r.URL.Path), append(bodies, string(b))
+				w.Header().Set("Content-Type", "application/json")
+				w.Header().Set("Retry-After-Ms", "0")
+				w.WriteHeader(tt.status)
+				_, _ = io.WriteString(w, tt.body)
+			}))
+			t.Cleanup(srv.Close)
+			c := New(key, catalog.Models[2], option.WithBaseURL(srv.URL), option.WithMaxRetries(1))
+			err := c.Check(context.Background())
+			switch {
+			case tt.status == 200 && err != nil, tt.want != nil && !errors.Is(err, tt.want), (tt.status == 500 || tt.status == 404) && (err == nil || errors.Is(err, provider.ErrKeyRefused) || errors.Is(err, provider.ErrNoRights)):
+				t.Errorf("check = %v", err)
+			}
+			if err != nil && strings.Contains(err.Error(), key) {
+				t.Errorf("the error holds the key: %v", err)
+			}
+			if paths[0] != "/v1/messages/count_tokens" || !strings.Contains(bodies[0], `"model":"claude-opus-5-5"`) || !strings.Contains(bodies[0], `"text":"ok"`) {
+				t.Errorf("the check asked %s with %s", paths[0], bodies[0])
+			}
+			if want := map[int]int{401: 1, 500: 2}[tt.status]; want > 0 && len(paths) != want {
+				t.Errorf("the check was sent %d times, want %d", len(paths), want)
+			}
+		})
+	}
+}

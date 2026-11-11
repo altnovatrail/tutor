@@ -78,6 +78,12 @@ type Model interface {
 	Prices() Prices
 	// Ask sends the request and returns the answer.
 	Ask(ctx context.Context, r Request) (Response, error)
+	// Check checks the client's key by a request of the provider without any learner's content, which
+	// costs nothing (R84 spec; docs/architecture.md, 3.7): nil when the provider took the key, else
+	// ErrKeyRefused for a wrong, revoked or expired key, ErrNoRights for a key without rights to the
+	// model, or the error of a provider that did not answer (Checked). An adapter does not let its
+	// SDK send it again after a refusal (NoRetry).
+	Check(ctx context.Context) error
 }
 
 // Dial is an adapter as the library takes it: it makes the client of a model of its provider by the

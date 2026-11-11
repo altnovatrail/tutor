@@ -23,10 +23,19 @@ type fake struct {
 	resp   provider.Response
 	err    error
 	prices provider.Prices
+	// checked counts the checks of the key, and checkErr is what they answer.
+	checked  int
+	checkErr error
 }
 
 func (f *fake) Name() string            { return "fake" }
 func (f *fake) Prices() provider.Prices { return f.prices }
+func (f *fake) Check(context.Context) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.checked++
+	return f.checkErr
+}
 func (f *fake) Ask(_ context.Context, r provider.Request) (provider.Response, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
@@ -297,8 +306,9 @@ func TestAskEdges(t *testing.T) {
 // panicky is a model whose adapter panics.
 type panicky struct{}
 
-func (panicky) Name() string            { return "panicky" }
-func (panicky) Prices() provider.Prices { return provider.Prices{} }
+func (panicky) Name() string                { return "panicky" }
+func (panicky) Prices() provider.Prices     { return provider.Prices{} }
+func (panicky) Check(context.Context) error { return nil }
 func (panicky) Ask(context.Context, provider.Request) (provider.Response, error) {
 	panic("boom")
 }

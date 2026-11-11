@@ -41,6 +41,26 @@ func (e *LimitError) Unwrap() error { return e.Err }
 // spec). Sending the call again does not help either.
 var ErrKeyRefused = errors.New("the provider refused the key")
 
+// ErrNoRights is a provider's answer to the check of a key that the key is right and has no rights
+// to the model: of its organization, workspace or project (R84 spec).
+var ErrNoRights = errors.New("the key has no rights to the model")
+
+// Checked is the error of the check of a key (Model.Check) that failed with err, with the refusal
+// NoRetry read and the HTTP status of the provider's answer, 0 when none came: the refusal — of the
+// key, or for a limit, which a right key may meet —, ErrNoRights for a 403, or err itself. A 404
+// is no fault of the key: it may be a model the provider no longer has.
+func Checked(err error, refused Refusal, status int) error {
+	switch {
+	case err == nil:
+		return nil
+	case refused != Refusal{}:
+		return refused.Of(err)
+	case status == http.StatusForbidden:
+		return fmt.Errorf("%w: %w", ErrNoRights, err)
+	}
+	return err
+}
+
 // Refusal is what an adapter reads from a provider's error response: the limit it refused for, or
 // whether it refused the key, or neither.
 type Refusal struct {

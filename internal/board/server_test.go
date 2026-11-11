@@ -35,8 +35,9 @@ type fakeModel struct {
 	asked   []provider.Request
 }
 
-func (f *fakeModel) Name() string            { return f.name }
-func (f *fakeModel) Prices() provider.Prices { return provider.Prices{Input: 4, Output: 20} }
+func (f *fakeModel) Name() string                { return f.name }
+func (f *fakeModel) Prices() provider.Prices     { return provider.Prices{Input: 4, Output: 20} }
+func (f *fakeModel) Check(context.Context) error { return nil }
 func (f *fakeModel) Ask(_ context.Context, r provider.Request) (provider.Response, error) {
 	f.mu.Lock()
 	f.asked = append(f.asked, r)

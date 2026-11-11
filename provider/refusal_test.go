@@ -81,3 +81,21 @@ func TestRefusalOf(t *testing.T) {
 type failing struct{ err error }
 
 func (f failing) Read([]byte) (int, error) { return 0, f.err }
+
+// The error of a check: a refusal first, then a 403 as no rights; a 404 or anything else as it is.
+func TestChecked(t *testing.T) {
+	cause := errors.New("from the provider")
+	var le *provider.LimitError
+	switch {
+	case provider.Checked(nil, provider.Refusal{Key: true}, 401) != nil:
+		t.Error("a check that went through failed")
+	case !errors.Is(provider.Checked(cause, provider.Refusal{Key: true}, 401), provider.ErrKeyRefused):
+		t.Error("a refused key is not refused")
+	case !errors.As(provider.Checked(cause, provider.Refusal{Limit: provider.LimitTier}, 429), &le):
+		t.Error("a limit is lost")
+	case !errors.Is(provider.Checked(cause, provider.Refusal{}, 403), provider.ErrNoRights):
+		t.Error("a 403 is not no rights")
+	case !errors.Is(provider.Checked(cause, provider.Refusal{}, 404), cause), errors.Is(provider.Checked(cause, provider.Refusal{}, 404), provider.ErrNoRights):
+		t.Error("a 404 is no rights")
+	}
+}

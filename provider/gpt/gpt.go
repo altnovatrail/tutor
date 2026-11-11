@@ -193,3 +193,18 @@ func Refusal(status int, body []byte) provider.Refusal {
 	}
 	return provider.Refusal{}
 }
+
+// Check checks the key by asking for the model's description, which writes no token and so is
+// billed nothing: OpenAI bills tokens (Pricing), and the list of models names no price — our
+// reading of the pages, read 2026-11-11. A 403 is a key without rights to the model
+// (provider.Checked).
+func (c *Client) Check(ctx context.Context) error {
+	var refused provider.Refusal
+	_, err := c.sdk.Models.Get(ctx, Model, option.WithMiddleware(provider.NoRetry(Refusal, &refused)))
+	status := 0
+	var apiErr *openai.Error
+	if errors.As(err, &apiErr) {
+		status = apiErr.StatusCode
+	}
+	return provider.Checked(err, refused, status)
+}

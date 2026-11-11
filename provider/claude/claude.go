@@ -273,3 +273,20 @@ func Refusal(status int, body []byte) provider.Refusal {
 	}
 	return provider.Refusal{}
 }
+
+// Check checks the key by counting the tokens of one word for the model: token counting is free
+// (Token counting, read 2026-11-11), and the word is no learner's. A 403 is a key without rights to
+// the model (provider.Checked).
+func (c *Client) Check(ctx context.Context) error {
+	var refused provider.Refusal
+	_, err := c.sdk.Messages.CountTokens(ctx, anthropic.MessageCountTokensParams{
+		Model:    c.model.ID,
+		Messages: []anthropic.MessageParam{anthropic.NewUserMessage(anthropic.NewTextBlock("ok"))},
+	}, option.WithMiddleware(provider.NoRetry(Refusal, &refused)))
+	status := 0
+	var apiErr *anthropic.Error
+	if errors.As(err, &apiErr) {
+		status = apiErr.StatusCode
+	}
+	return provider.Checked(err, refused, status)
+}

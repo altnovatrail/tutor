@@ -259,3 +259,47 @@ func TestRefusals(t *testing.T) {
 		t.Errorf("a plain 429: %v after %d requests; want a failure sent again", err, len(sent()))
 	}
 }
+
+// The check asks for the model's description, which writes no token: a right key is taken, a
+// wrong one refused once, one without rights to the model told apart, a limit passed on, and a
+// model gone or a failure of the provider says nothing of the key. No error holds the key.
+func TestCheck(t *testing.T) {
+	for status, want := range map[int]string{200: "taken", 401: "key", 403: "rights", 404: "plain", 429: "limit", 500: "plain"} {
+		var paths []string
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			paths = append(paths, r.Method+" "+r.URL.Path)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(status)
+			if status == 200 {
+				_, _ = io.WriteString(w, `{"id":"gpt-6-astra","object":"model","created":1,"owned_by":"openai"}`)
+				return
+			}
+			code := "x"
+			if status == 429 {
+				code = "credit_balance_exhausted"
+			}
+			_, _ = io.WriteString(w, `{"error":{"message":"no","type":"invalid_request_error","code":"`+code+`"}}`)
+		}))
+		c := New("the key of the owner in a test", option.WithBaseURL(srv.URL+"/v1/"), option.WithMaxRetries(1))
+		err := c.Check(context.Background())
+		srv.Close()
+		var le *provider.LimitError
+		got := "plain"
+		switch {
+		case err == nil:
+			got = "taken"
+		case errors.Is(err, provider.ErrKeyRefused):
+			got = "key"
+		case errors.Is(err, provider.ErrNoRights):
+			got = "rights"
+		case errors.As(err, &le):
+			got = "limit"
+		}
+		if got != want || err != nil && strings.Contains(err.Error(), "the key of the owner") {
+			t.Errorf("%d: check = %v", status, err)
+		}
+		if sent := map[int]int{500: 2}[status]; len(paths) != max(sent, 1) || paths[0] != "GET /v1/models/gpt-6-astra" {
+			t.Errorf("%d: the check asked %v", status, paths)
+		}
+	}
+}
