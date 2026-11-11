@@ -130,14 +130,15 @@ func (t *Tutor) Words(ctx context.Context, w WordsRequest) WordsAnswer {
 	if err := checkText(req); err != nil {
 		return fail(err)
 	}
-	calls, a, refused := t.prepareN(capability, w.Route, wordsKind.models)
+	k := kinds[CallWords]
+	calls, a, refused := t.prepare(capability, w.Route, k.models, k.prompt)
 	if refused != nil {
 		return WordsAnswer{Outcome: *refused}
 	}
 	if capability == admissionv0.CapabilitySolutionAnalysis {
 		// The one call words the hint too: the model of the analysis must be admitted for the hint
 		// as well (R59), not some other model.
-		he, ha, err := t.Choose(admissionv0.CapabilityHint, w.Route)
+		he, ha, err := t.choose(admissionv0.CapabilityHint, w.Route, k.prompt)
 		switch {
 		case err != nil:
 			return fail(err)
@@ -149,7 +150,7 @@ func (t *Tutor) Words(ctx context.Context, w WordsRequest) WordsAnswer {
 		}
 	}
 	// The words are one model's: an entry of more asks its first.
-	resps, out := ask(ctx, a, calls, []provider.Request{req}, wordsKind.maxIn)
+	resps, out := ask(ctx, a, calls, []provider.Request{req}, k.maxIn)
 	if out.Kind != Answered {
 		return WordsAnswer{Outcome: out}
 	}

@@ -43,16 +43,23 @@ func (k KeyCheck) String() string {
 	return fmt.Sprintf("key check %d", int(k))
 }
 
-// keyCapabilities are the capabilities a call of the library serves, whose models an own key is
-// needed for.
-var keyCapabilities = []admissionv0.Capability{admissionv0.CapabilityHandwritingReading, admissionv0.CapabilitySolutionAnalysis, admissionv0.CapabilityHint}
+// keyChoices are the capabilities a call of the library serves, each with the prompt of the call,
+// whose models an own key is needed for: the reading of a sheet and of a workbook page, and the
+// words, which serve the analysis of the steps with the work and the hint without it (kinds).
+func keyChoices() []kind {
+	out := []kind{{capability: admissionv0.CapabilityHint, prompt: kinds[CallWords].prompt}}
+	for _, c := range []Call{CallSheet, CallWorkbook, CallWords} {
+		out = append(out, kinds[c])
+	}
+	return out
+}
 
 // CheckKey checks an own key when its owner connects it (R84 spec): api checks it through tutor and
 // never calls a provider round it. The route is the own key's, with the profile's age category. The
-// key is checked for every model the library would call with it — the models Choose chooses for each
-// capability of a call, both readers of a pair —, each by a request of the provider without any
-// learner's content that costs nothing (provider.Model.Check). When Choose opens none, the provider
-// is closed to an own key at the profile, and no call goes. One wrong key is the end, then one model
+// key is checked for every model the library would call with it — the models each kind of call
+// chooses (ChooseCall), and those of the hint without the work, both readers of a pair —, each by
+// a request of the provider without any learner's content that costs nothing (provider.Model.Check).
+// When none is open, the provider is closed to an own key at the profile, and no call goes. One wrong key is the end, then one model
 // without rights, then a provider that did not answer. A refusal for a limit means the provider took
 // the key, and the limit shows on the calls. The error says what failed, for the logs, and never
 // holds the key.
@@ -64,8 +71,8 @@ func (t *Tutor) CheckKey(ctx context.Context, r Route) (KeyCheck, error) {
 		return KeyUnanswered, err
 	}
 	var models []admission.Model
-	for _, c := range keyCapabilities {
-		e, a, err := t.Choose(c, r)
+	for _, c := range keyChoices() {
+		e, a, err := t.choose(c.capability, r, c.prompt)
 		if err != nil {
 			return KeyUnanswered, err
 		}

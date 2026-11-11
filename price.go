@@ -8,8 +8,10 @@ import (
 	"github.com/altnovatrail/spec/types/admissionv0"
 
 	"github.com/altnovatrail/tutor/admission"
+	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/render"
+	"github.com/altnovatrail/tutor/internal/workbook"
 	"github.com/altnovatrail/tutor/provider"
 )
 
@@ -20,9 +22,14 @@ import (
 // this. A request of the words, the longest, takes about 5 400 bytes (internal/hint's testdata).
 const maxTextBytes = 24000
 
-// checkText refuses a request whose instructions and text are longer than maxTextBytes.
+// checkText refuses a request whose instructions, text and labels of its pictures are longer than
+// maxTextBytes.
 func checkText(r provider.Request) error {
-	if n := len(r.Instructions) + len(r.Text); n > maxTextBytes {
+	n := len(r.Instructions) + len(r.Text)
+	for _, im := range r.Images {
+		n += len(im.Label)
+	}
+	if n > maxTextBytes {
 		return fmt.Errorf("tutor: the request takes %d bytes of text, more than the %d its worst price holds", n, maxTextBytes)
 	}
 	return nil
@@ -31,44 +38,65 @@ func checkText(r provider.Request) error {
 // tokens are the input and output tokens of a call of one model.
 type tokens struct{ in, out int64 }
 
-// kind is a kind of call of the library by the capability it serves: the most input tokens it
-// takes, the most it may write, how many models of the entry chosen it asks, every one when 0, and
-// the tokens a call of each model is expected to take, by the model's exact ID, the averages of the
-// measurements of the model at the effort admitted.
+// Call is a kind of call of the library: the reading of a sheet, of a workbook page, and the call of
+// the words. Each serves a capability with a prompt of its own, and an entry of the list admits it
+// only when it measured that prompt (R70 spec).
+type Call string
+
+// The kinds of call of the library.
+const (
+	CallSheet    Call = "sheet"
+	CallWorkbook Call = "workbook"
+	CallWords    Call = "words"
+)
+
+// kind is a kind of call of the library: the capability it serves and the fingerprint of its
+// prompt, the most input tokens it takes, the most it may write, how many models of the entry
+// chosen it asks, every one when 0, and the tokens a call of each model is expected to take, by the
+// model's exact ID, the averages of the measurements of the model at the effort admitted.
 type kind struct {
+	capability    admissionv0.Capability
+	prompt        string
 	maxIn, maxOut int64
 	models        int
 	expected      map[string]tokens
 }
 
-// kinds are the kinds of call of the library. The reading's expected tokens are those of the run
-// that admitted its pair, 180 calls of each reader (T126); the words', those of the 300 hints of the
-// run of the words (T119). A model without them has no expected price, and api takes the value of
-// its own config then (В13 api).
-var kinds = map[admissionv0.Capability]kind{
-	admissionv0.CapabilityHandwritingReading: {
-		maxIn:  maxTextBytes + cropTokens(),
-		maxOut: reading.MaxOutputTokens,
+// kinds are the kinds of call of the library. The sheet's expected tokens are those of the run that
+// admitted its pair, 180 calls of each reader (T126); the words', those of the 300 hints of the run
+// of the words (T119); the workbook has no admitted model yet. A model without them has no expected
+// price, and api takes the value of its own config then (В13 api). The words serve the analysis of
+// the steps with the work and the hint without it, by one prompt; their price is that of the
+// analysis.
+var kinds = map[Call]kind{
+	CallSheet: {
+		capability: admissionv0.CapabilityHandwritingReading,
+		prompt:     reading.Fingerprint(),
+		maxIn:      maxTextBytes + tokensOf(maxCropSide, 1),
+		maxOut:     reading.MaxOutputTokens,
 		expected: map[string]tokens{
 			"claude-opus-5-5":  {in: 1354, out: 177},
 			"claude-haiku-5-5": {in: 1354, out: 502},
 		},
 	},
-	admissionv0.CapabilitySolutionAnalysis: wordsKind,
-	admissionv0.CapabilityHint:             wordsKind,
+	CallWorkbook: {
+		capability: admissionv0.CapabilityHandwritingReading,
+		prompt:     workbook.Fingerprint(),
+		maxIn:      maxTextBytes + tokensOf(maxBoxSide, maxBoxes),
+		maxOut:     reading.MaxOutputTokens,
+	},
+	CallWords: {
+		capability: admissionv0.CapabilitySolutionAnalysis,
+		prompt:     hint.Fingerprint(),
+		maxIn:      maxTextBytes + tokensOf(maxCropSide, 1),
+		maxOut:     wordsMaxOutput,
+		models:     1,
+		expected:   map[string]tokens{"claude-opus-5-5": {in: 2255, out: 358}},
+	},
 }
 
-// wordsKind is the call of the words, which serves both the analysis of the steps and the hint, and
-// asks the first model of the entry alone (Words).
-var wordsKind = kind{
-	maxIn:    maxTextBytes + cropTokens(),
-	maxOut:   wordsMaxOutput,
-	models:   1,
-	expected: map[string]tokens{"claude-opus-5-5": {in: 2255, out: 358}},
-}
-
-// cropTokens are the tokens of the picture of the largest crop the library takes.
-func cropTokens() int64 { return int64(render.Tokens(maxCropSide, maxCropSide)) }
+// tokensOf are the tokens of the pictures of n crops of side pixels on each side (render.Tokens).
+func tokensOf(side, n int) int64 { return int64(n * render.Tokens(side, side)) }
 
 // CallPrice is what a call of a capability is expected to cost and can cost at most, in US dollars,
 // over every model of the entry the call asks — both readers of a pair — (architecture 3.7): api
@@ -81,15 +109,15 @@ type CallPrice struct {
 	Expected, Worst       bool
 }
 
-// Price is the price of a call of a capability on a route, by the models Choose chooses and the
-// prices of their adapters, with the admission's answer: a refused route has no price. The prices
-// need no key, and a client made with none calls nothing, so the own key is not dialled for them.
-func (t *Tutor) Price(c admissionv0.Capability, r Route) (CallPrice, admission.Answer, error) {
+// Price is the price of a kind of call on a route, by the models ChooseCall chooses and the prices
+// of their adapters, with the admission's answer: a refused route has no price. The prices need no
+// key, and a client made with none calls nothing, so the own key is not dialled for them.
+func (t *Tutor) Price(c Call, r Route) (CallPrice, admission.Answer, error) {
 	k, ok := kinds[c]
 	if !ok {
-		return CallPrice{}, admission.Answer{}, fmt.Errorf("tutor: no call of the library serves %s", c)
+		return CallPrice{}, admission.Answer{}, fmt.Errorf("tutor: no call %q of the library", c)
 	}
-	e, a, err := t.Choose(c, r)
+	e, a, err := t.choose(k.capability, r, k.prompt)
 	if err != nil || !a.Admitted {
 		return CallPrice{}, a, err
 	}

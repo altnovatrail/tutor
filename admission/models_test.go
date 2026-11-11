@@ -198,3 +198,23 @@ func listFaults(list []Entry) []string {
 	}
 	return out
 }
+
+// SelectPrompt chooses only among the entries that measured the prompt named: the pair of the
+// reading of a sheet admits nothing of another prompt.
+func TestSelectPrompt(t *testing.T) {
+	table, err := Platform()
+	if err != nil {
+		t.Fatal(err)
+	}
+	f, err := ReadFacts(table, []byte("anthropic:\n  data_processing_agreement: [adult]\n  minimal_retention: [adult]\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, route, cat := admissionv0.CapabilityHandwritingReading, admissionv0.AiRoutePlatformAi, admissionv0.AgeCategoryAdult
+	if e, a := table.SelectPrompt(f, c, route, cat, StageAuthor, nil, reading.Fingerprint()); !a.Admitted || len(e.Models) != 2 {
+		t.Errorf("the prompt of the reading of a sheet: %+v, %+v", e, a)
+	}
+	if _, a := table.SelectPrompt(f, c, route, cat, StageAuthor, nil, "another prompt"); a.Admitted {
+		t.Errorf("another prompt is admitted: %+v", a)
+	}
+}

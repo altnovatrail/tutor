@@ -9,7 +9,6 @@ import (
 	"image/png"
 	"strings"
 
-	"github.com/altnovatrail/spec/types/admissionv0"
 	"github.com/altnovatrail/spec/types/formatv0"
 	"github.com/altnovatrail/spec/types/formatv0/open"
 
@@ -57,7 +56,8 @@ func (t *Tutor) ReadSheet(ctx context.Context, r SheetReading) SheetRead {
 	if err != nil {
 		return SheetRead{Outcome: Outcome{Kind: Failed, Err: err}}
 	}
-	calls, a, refused := t.prepare(admissionv0.CapabilityHandwritingReading, r.Route)
+	k := kinds[CallSheet]
+	calls, a, refused := t.prepare(k.capability, r.Route, 0, k.prompt)
 	if refused != nil {
 		return SheetRead{Outcome: *refused}
 	}
@@ -70,7 +70,7 @@ func (t *Tutor) ReadSheet(ctx context.Context, r SheetReading) SheetRead {
 	for i := range reqs {
 		reqs[i] = req
 	}
-	resps, out := ask(ctx, a, calls, reqs, kinds[admissionv0.CapabilityHandwritingReading].maxIn)
+	resps, out := ask(ctx, a, calls, reqs, k.maxIn)
 	if out.Kind != Answered {
 		return SheetRead{Outcome: out}
 	}

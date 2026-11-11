@@ -11,6 +11,7 @@ import (
 	"github.com/altnovatrail/spec/types/formatv0/open"
 
 	"github.com/altnovatrail/tutor/admission"
+	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/provider"
 )
 
@@ -22,7 +23,7 @@ func withWords(t *testing.T, capabilities ...admissionv0.Capability) {
 	t.Cleanup(func() { admission.Admitted = old })
 	list := slices.Clone(old)
 	for _, c := range capabilities {
-		list = append(list, admission.Entry{Capability: c, Stage: admission.StageAuthor,
+		list = append(list, admission.Entry{Capability: c, Stage: admission.StageAuthor, Prompt: hint.Fingerprint(),
 			Models: []admission.Model{{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "high"}}})
 	}
 	admission.Admitted = list
@@ -100,7 +101,7 @@ func TestWordsNotAdmitted(t *testing.T) {
 		t.Errorf("the hint alone, not admitted: %+v", got)
 	}
 	// The hint admitted, but of another model than the analysis: the analysis's model may not word it.
-	admission.Admitted = append(admission.Admitted, admission.Entry{Capability: admissionv0.CapabilityHint, Stage: admission.StageAuthor,
+	admission.Admitted = append(admission.Admitted, admission.Entry{Capability: admissionv0.CapabilityHint, Stage: admission.StageAuthor, Prompt: hint.Fingerprint(),
 		Models: []admission.Model{{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"}}})
 	if got := lib.Words(context.Background(), wordsOf(crop)); got.Outcome.Kind != NotAdmitted || *got.Outcome.Admission.Reason != admission.ReasonModelNotAdmitted {
 		t.Errorf("the hint of another model: %+v", got)

@@ -34,7 +34,7 @@ func near(a, b float64) bool { return math.Abs(a-b) < 1e-12 }
 // token at the higher of the input and a write to the cache, and its most output.
 func TestPrice(t *testing.T) {
 	lib, _, _ := pricedPair(t)
-	p, a, err := lib.Price(admissionv0.CapabilityHandwritingReading, platform)
+	p, a, err := lib.Price(CallSheet, platform)
 	if err != nil || !a.Admitted {
 		t.Fatalf("the price of a reading: %v, %+v", err, a)
 	}
@@ -45,10 +45,10 @@ func TestPrice(t *testing.T) {
 		t.Errorf("price = %+v; want expected %v and worst %v", p, expected, worst)
 	}
 	// The words are admitted to no model: no price, and the admission says why.
-	if p, a, err := lib.Price(admissionv0.CapabilityHint, platform); err != nil || a.Admitted || p != (CallPrice{}) {
+	if p, a, err := lib.Price(CallWords, platform); err != nil || a.Admitted || p != (CallPrice{}) {
 		t.Errorf("the price of the words: %+v, %+v, %v", p, a, err)
 	}
-	if _, _, err := lib.Price(admissionv0.CapabilityVoice, platform); err == nil {
+	if _, _, err := lib.Price("voice", platform); err == nil {
 		t.Error("a capability no call of the library serves has a price")
 	}
 }
@@ -57,13 +57,13 @@ func TestPrice(t *testing.T) {
 // give no worst.
 func TestPriceUnknown(t *testing.T) {
 	lib, opus, _ := pricedPair(t)
-	saved := kinds[admissionv0.CapabilityHandwritingReading]
-	defer func() { kinds[admissionv0.CapabilityHandwritingReading] = saved }()
+	saved := kinds[CallSheet]
+	defer func() { kinds[CallSheet] = saved }()
 	k := saved
 	k.expected = map[string]tokens{"claude-opus-5-5": {in: 1, out: 1}}
-	kinds[admissionv0.CapabilityHandwritingReading] = k
+	kinds[CallSheet] = k
 	opus.prices.LongAbove = 100
-	p, _, err := lib.Price(admissionv0.CapabilityHandwritingReading, platform)
+	p, _, err := lib.Price(CallSheet, platform)
 	if err != nil || p.Expected || p.Worst {
 		t.Errorf("price = %+v, %v; want neither expected nor worst", p, err)
 	}
@@ -91,7 +91,7 @@ func TestPrices(t *testing.T) {
 // whole bill costs its worst.
 func TestUsageCost(t *testing.T) {
 	lib, opus, haiku := pricedPair(t)
-	calls, a, refused := lib.prepare(admissionv0.CapabilityHandwritingReading, platform)
+	calls, a, refused := lib.prepare(admissionv0.CapabilityHandwritingReading, platform, 0, "")
 	if refused != nil {
 		t.Fatal(refused)
 	}
@@ -121,17 +121,17 @@ func TestUsageCost(t *testing.T) {
 // The words ask the first model of the entry alone, and their price is that one model's.
 func TestWordsPriceOneModel(t *testing.T) {
 	lib, _, _ := pricedPair(t)
-	saved := kinds[admissionv0.CapabilityHandwritingReading]
-	defer func() { kinds[admissionv0.CapabilityHandwritingReading] = saved }()
+	saved := kinds[CallSheet]
+	defer func() { kinds[CallSheet] = saved }()
 	k := saved
 	k.models = 1
-	kinds[admissionv0.CapabilityHandwritingReading] = k
-	p, _, err := lib.Price(admissionv0.CapabilityHandwritingReading, platform)
+	kinds[CallSheet] = k
+	p, _, err := lib.Price(CallSheet, platform)
 	if err != nil || !near(p.ExpectedUSD, (1354*4+177*20)/1e6) {
 		t.Errorf("the price of one model = %+v, %v", p, err)
 	}
-	if wordsKind.models != 1 {
-		t.Errorf("the words ask %d models", wordsKind.models)
+	if kinds[CallWords].models != 1 {
+		t.Errorf("the words ask %d models", kinds[CallWords].models)
 	}
 }
 

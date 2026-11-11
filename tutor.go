@@ -144,12 +144,30 @@ func (r Route) check() error {
 	return nil
 }
 
-// Choose chooses the models of a capability for a route (admission.Table.Select): api calls it
-// before an attempt, and each call of the library before it calls a model, with the same answer
-// while the config is the same. It takes only the models of the providers the config gives an
+// Choose chooses the models of a capability for a route (admission.Table.Select), the first entry
+// of the capability whatever prompt it measured. A call of the library chooses by its kind, which
+// names its prompt too (ChooseCall): that is the one api calls before an attempt, with the same
+// answer the call gets while the config is the same. It takes only the models of the providers the config gives an
 // adapter of: on the own key only those of the key's provider, and on platform AI only those of the
 // providers it holds a key of. It refuses a route whose key does not fit it.
 func (t *Tutor) Choose(c admissionv0.Capability, r Route) (admission.Entry, admission.Answer, error) {
+	return t.choose(c, r, "")
+}
+
+// ChooseCall chooses the models of a kind of call of the library for a route: of its capability, of
+// the entries that measured its prompt (admission.Table.SelectPrompt; R70 spec). api calls it before
+// an attempt, and the call before it calls a model.
+func (t *Tutor) ChooseCall(c Call, r Route) (admission.Entry, admission.Answer, error) {
+	k, ok := kinds[c]
+	if !ok {
+		return admission.Entry{}, admission.Answer{}, fmt.Errorf("tutor: no call %q of the library", c)
+	}
+	return t.choose(k.capability, r, k.prompt)
+}
+
+// choose is Choose, of the entries whose prompt is the one named, or of every entry when it is
+// empty.
+func (t *Tutor) choose(c admissionv0.Capability, r Route, prompt string) (admission.Entry, admission.Answer, error) {
 	if err := r.check(); err != nil {
 		return admission.Entry{}, admission.Answer{}, err
 	}
@@ -164,6 +182,10 @@ func (t *Tutor) Choose(c admissionv0.Capability, r Route) (admission.Entry, admi
 				providers = append(providers, p)
 			}
 		}
+	}
+	if prompt != "" {
+		e, a := t.table.SelectPrompt(t.facts, c, r.AI, r.Category, t.least, providers, prompt)
+		return e, a, nil
 	}
 	e, a := t.table.Select(t.facts, c, r.AI, r.Category, t.least, providers)
 	return e, a, nil
@@ -253,19 +275,14 @@ type call struct {
 	client provider.Model
 }
 
-// prepare chooses the models of a capability for a route and makes their clients — with the own key
-// by the key, on platform AI by the platform's key of the provider — and gives the admission's
-// answer, which an outcome of the call carries. A refusal of the admission is
+// prepare chooses the models of a capability for a route — of the entries that measured the prompt
+// named, or of every entry when it is empty —, the first n of them, all when n is 0, and makes their
+// clients — with the own key by the key, on platform AI by the platform's key of the provider —, and
+// gives the admission's answer, which an outcome of the call carries. A refusal of the admission is
 // the outcome NotAdmitted, before any model is asked and with no usage; a route that does not fit
-// and a client that cannot be made are Failed.
-func (t *Tutor) prepare(c admissionv0.Capability, r Route) ([]call, admission.Answer, *Outcome) {
-	return t.prepareN(c, r, 0)
-}
-
-// prepareN is prepare of the first n models of the entry chosen, all of them when n is 0: a call
-// that asks one model makes no client of another.
-func (t *Tutor) prepareN(c admissionv0.Capability, r Route, n int) ([]call, admission.Answer, *Outcome) {
-	e, a, err := t.Choose(c, r)
+// and a client that cannot be made are Failed. A call that asks one model makes no client of another.
+func (t *Tutor) prepare(c admissionv0.Capability, r Route, n int, prompt string) ([]call, admission.Answer, *Outcome) {
+	e, a, err := t.choose(c, r, prompt)
 	if err != nil {
 		return nil, a, &Outcome{Kind: Failed, Err: err}
 	}

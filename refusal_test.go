@@ -15,7 +15,7 @@ import (
 // and a limit outranks it.
 func TestRefusalOutcomes(t *testing.T) {
 	lib, opus, haiku := pricedPair(t)
-	calls, a, refused := lib.prepare(admissionv0.CapabilityHandwritingReading, platform)
+	calls, a, refused := lib.prepare(admissionv0.CapabilityHandwritingReading, platform, 0, "")
 	if refused != nil {
 		t.Fatal(refused)
 	}

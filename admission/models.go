@@ -115,6 +115,19 @@ func (t *Table) Select(f Facts, c admissionv0.Capability, route admissionv0.AiRo
 	return t.selectFrom(Admitted, f, c, route, category, least, providers)
 }
 
+// SelectPrompt is Select of the entries whose prompt is the one named: a call that asks another
+// prompt than the one an entry measured is another reading, and that entry admits nothing of it (R70
+// spec), such as the reading of a workbook page beside the reading of a sheet, of one capability.
+func (t *Table) SelectPrompt(f Facts, c admissionv0.Capability, route admissionv0.AiRoute, category admissionv0.AgeCategory, least Stage, providers []admissionv0.Provider, prompt string) (Entry, Answer) {
+	var list []Entry
+	for _, e := range Admitted {
+		if e.Prompt == prompt {
+			list = append(list, e)
+		}
+	}
+	return t.selectFrom(list, f, c, route, category, least, providers)
+}
+
 // selectFrom is Select over a list of its own.
 func (t *Table) selectFrom(list []Entry, f Facts, c admissionv0.Capability, route admissionv0.AiRoute, category admissionv0.AgeCategory, least Stage, providers []admissionv0.Provider) (Entry, Answer) {
 	floor := StageFull.rank()
