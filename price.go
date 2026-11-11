@@ -8,6 +8,7 @@ import (
 	"github.com/altnovatrail/spec/types/admissionv0"
 
 	"github.com/altnovatrail/tutor/admission"
+	"github.com/altnovatrail/tutor/internal/essay"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/render"
@@ -38,8 +39,8 @@ func checkText(r provider.Request) error {
 // tokens are the input and output tokens of a call of one model.
 type tokens struct{ in, out int64 }
 
-// Call is a kind of call of the library: the reading of a sheet, of a workbook page, and the call of
-// the words. Each serves a capability with a prompt of its own, and an entry of the list admits it
+// Call is a kind of call of the library: the reading of a sheet, of a workbook page and of an essay,
+// and the call of the words. Each serves a capability with a prompt of its own, and an entry of the list admits it
 // only when it measured that prompt (R70 spec).
 type Call string
 
@@ -48,6 +49,7 @@ const (
 	CallSheet    Call = "sheet"
 	CallWorkbook Call = "workbook"
 	CallWords    Call = "words"
+	CallEssay    Call = "essay"
 )
 
 // kind is a kind of call of the library: the capability it serves and the fingerprint of its
@@ -64,7 +66,7 @@ type kind struct {
 
 // kinds are the kinds of call of the library. The sheet's expected tokens are those of the run that
 // admitted its pair, 180 calls of each reader (T126); the words', those of the 300 hints of the run
-// of the words (T119); the workbook has no admitted model yet. A model without them has no expected
+// of the words (T119); the workbook and the essay have no admitted model yet. A model without them has no expected
 // price, and api takes the value of its own config then (В13 api). The words serve the analysis of
 // the steps with the work and the hint without it, by one prompt; their price is that of the
 // analysis.
@@ -85,6 +87,13 @@ var kinds = map[Call]kind{
 		maxIn:      maxTextBytes + tokensOf(maxBoxSide, maxBoxes),
 		maxOut:     reading.MaxOutputTokens,
 	},
+	CallEssay: {
+		capability: admissionv0.CapabilityHandwritingReading,
+		prompt:     essay.ReadFingerprint(),
+		maxIn:      maxTextBytes + tokensOf(maxCropSide, 1),
+		maxOut:     reading.MaxOutputTokens,
+		models:     1,
+	},
 	CallWords: {
 		capability: admissionv0.CapabilitySolutionAnalysis,
 		prompt:     hint.Fingerprint(),
@@ -93,6 +102,15 @@ var kinds = map[Call]kind{
 		models:     1,
 		expected:   map[string]tokens{"claude-opus-5-5": {in: 2255, out: 358}},
 	},
+}
+
+// asked are the models of an entry a call of the kind asks: the first models of them when the kind
+// asks some, all of them otherwise.
+func (k kind) asked(models []admission.Model) []admission.Model {
+	if k.models > 0 && k.models < len(models) {
+		return models[:k.models]
+	}
+	return models
 }
 
 // tokensOf are the tokens of the pictures of n crops of side pixels on each side (render.Tokens).
@@ -121,12 +139,8 @@ func (t *Tutor) Price(c Call, r Route) (CallPrice, admission.Answer, error) {
 	if err != nil || !a.Admitted {
 		return CallPrice{}, a, err
 	}
-	models := e.Models
-	if k.models > 0 && k.models < len(models) {
-		models = models[:k.models]
-	}
 	p := CallPrice{Expected: true, Worst: true}
-	for _, m := range models {
+	for _, m := range k.asked(e.Models) {
 		client, err := t.dial(m, "")
 		if err != nil {
 			return CallPrice{}, a, err

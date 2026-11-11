@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 
 	"github.com/altnovatrail/spec/types/admissionv0"
@@ -44,11 +45,11 @@ func (k KeyCheck) String() string {
 }
 
 // keyChoices are the capabilities a call of the library serves, each with the prompt of the call,
-// whose models an own key is needed for: the reading of a sheet and of a workbook page, and the
-// words, which serve the analysis of the steps with the work and the hint without it (kinds).
+// whose models an own key is needed for: every kind of call (kinds), in the order of their names,
+// and the hint without the work, which the words serve by their prompt too.
 func keyChoices() []kind {
-	out := []kind{{capability: admissionv0.CapabilityHint, prompt: kinds[CallWords].prompt}}
-	for _, c := range []Call{CallSheet, CallWorkbook, CallWords} {
+	out := []kind{{capability: admissionv0.CapabilityHint, prompt: kinds[CallWords].prompt, models: kinds[CallWords].models}}
+	for _, c := range slices.Sorted(maps.Keys(kinds)) {
 		out = append(out, kinds[c])
 	}
 	return out
@@ -79,7 +80,7 @@ func (t *Tutor) CheckKey(ctx context.Context, r Route) (KeyCheck, error) {
 		if !a.Admitted {
 			continue
 		}
-		for _, m := range e.Models {
+		for _, m := range c.asked(e.Models) {
 			if !slices.Contains(models, m) {
 				models = append(models, m)
 			}

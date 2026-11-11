@@ -165,7 +165,7 @@ func TestEssaysTwo(t *testing.T) {
 	met := func(v bool) *bool { return &v }
 	l := &essay.Log{
 		Run: essay.RunRecord{Kind: "run", CallKind: essay.CallKind, Part: "test", File: "f", Seed: 1, Repeats: 1, Prompt: "abcdef0123456789",
-			PromptVersion: essay.TwoVersion, Path: essay.PathTwo, MaxUSD: 7, Rubric: []sample.Criterion{{ID: "title"}, {ID: "spelling"}},
+			PromptVersion: 1, Path: essay.PathTwo, MaxUSD: 7, Rubric: []sample.Criterion{{ID: "title"}, {ID: "spelling"}},
 			Readers: []essay.ReaderRecord{{Name: "sonnet-low", Model: "claude-sonnet-5-5", Effort: "low"}}},
 		Sheets: []essay.EssayRecord{{Kind: "essay", Essay: 1, Part: "test", Unmet: []string{}}, {Kind: "essay", Essay: 2, Part: "test", Unmet: []string{"title"}}},
 		Calls: []essay.CallRecord{

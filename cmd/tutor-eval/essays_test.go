@@ -231,7 +231,7 @@ func TestRunEssaysTwo(t *testing.T) {
 	dir := t.TempDir()
 	log := filepath.Join(dir, "two.jsonl")
 	code, out, errs := runMeasure("yes\n", "-kind", "essay", "-two", "-essays", theEssays, "-dir", drawnOf(t, theEssays), "-part", "dev", "-stub", "-repeats", "1", "-readers", "sonnet-low", "-log", log)
-	if code != exitOK || !strings.Contains(out, "by sonnet-low in 1 repeat, two calls an essay, the reading and the assessment of the text it read, in version 1 of the prompts of the assessment in two calls.\n10 calls") {
+	if code != exitOK || !strings.Contains(out, "by sonnet-low in 1 repeat, two calls an essay, the reading and the assessment of the text it read, in version 2 of the prompts of the assessment in two calls.\n10 calls") {
 		t.Fatalf("the run in two calls ends %d:\n%s%s", code, out, errs)
 	}
 	if code, out, errs := runIt("report", log); code != exitOK || !strings.Contains(out, "sonnet-low: false alarms 0 of") {

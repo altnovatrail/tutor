@@ -156,13 +156,16 @@ func (t *Tutor) Choose(c admissionv0.Capability, r Route) (admission.Entry, admi
 
 // ChooseCall chooses the models of a kind of call of the library for a route: of its capability, of
 // the entries that measured its prompt (admission.Table.SelectPrompt; R70 spec). api calls it before
-// an attempt, and the call before it calls a model.
+// an attempt, and the call before it calls a model. The entry holds only the models the call asks:
+// the first alone for a call of one model.
 func (t *Tutor) ChooseCall(c Call, r Route) (admission.Entry, admission.Answer, error) {
 	k, ok := kinds[c]
 	if !ok {
 		return admission.Entry{}, admission.Answer{}, fmt.Errorf("tutor: no call %q of the library", c)
 	}
-	return t.choose(k.capability, r, k.prompt)
+	e, a, err := t.choose(k.capability, r, k.prompt)
+	e.Models = k.asked(e.Models)
+	return e, a, err
 }
 
 // choose is Choose, of the entries whose prompt is the one named, or of every entry when it is
