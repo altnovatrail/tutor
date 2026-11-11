@@ -161,9 +161,12 @@ type (
 		// Path is "two" for a run in two calls, the reading and the assessment of the text (T92), and
 		// empty for one call; the prompt and its version are then those of the two calls, and
 		// ReadPrompt the fingerprint of the reading alone, which an entry of the list of the reading of an
-		// essay names (ReadFingerprint; Tutor.ReadEssay).
+		// essay names (ReadFingerprint; Tutor.ReadEssay), and TextPrompt that of the assessment of the
+		// text alone, which an entry of the list of the assessment by a rubric names (TextFingerprint;
+		// Tutor.AssessEssay).
 		Path       string `json:"path,omitempty"`
 		ReadPrompt string `json:"read_prompt,omitempty"`
+		TextPrompt string `json:"text_prompt,omitempty"`
 		// Runner and ModuleKit are the versions of the build that ran, and Refused the samples it
 		// refused: what the runner's report takes of the run (R74).
 		Runner    string           `json:"runner,omitempty"`
@@ -341,7 +344,7 @@ func NewTwo(part, file, dir string, seed uint64, es *sample.Essays, essays []*ev
 			panic("essay: no output of an assessment of the text for the configuration " + rd.Name)
 		}
 	}
-	r, pics, err := prepare(part, file, dir, seed, es, essays, readers, repeats, RunRecord{Prompt: TwoFingerprint(), PromptVersion: TwoVersion, Path: PathTwo, ReadPrompt: ReadFingerprint()})
+	r, pics, err := prepare(part, file, dir, seed, es, essays, readers, repeats, RunRecord{Prompt: TwoFingerprint(), PromptVersion: TwoVersion, Path: PathTwo, ReadPrompt: ReadFingerprint(), TextPrompt: TextFingerprint()})
 	if err != nil {
 		return nil, err
 	}
@@ -391,7 +394,7 @@ func prepare(part, file, dir string, seed uint64, es *sample.Essays, essays []*e
 	}
 	r.Record = func(h runner.Head) any {
 		return RunRecord{Kind: "run", CallKind: CallKind, Time: h.Time, Part: part, File: file, Dir: dir, Seed: seed, Rubric: es.Rubric, Readers: records, Repeats: repeats,
-			MaxUSD: h.MaxUSD, Estimate: h.Estimate, Prompt: prompt.Prompt, PromptVersion: prompt.PromptVersion, Path: prompt.Path, ReadPrompt: prompt.ReadPrompt,
+			MaxUSD: h.MaxUSD, Estimate: h.Estimate, Prompt: prompt.Prompt, PromptVersion: prompt.PromptVersion, Path: prompt.Path, ReadPrompt: prompt.ReadPrompt, TextPrompt: prompt.TextPrompt,
 			Runner: h.Runner, ModuleKit: h.ModuleKit, Refused: h.Refused}
 	}
 	return r, pics, nil

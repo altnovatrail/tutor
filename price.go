@@ -40,7 +40,7 @@ func checkText(r provider.Request) error {
 type tokens struct{ in, out int64 }
 
 // Call is a kind of call of the library: the reading of a sheet, of a workbook page and of an essay,
-// and the call of the words. Each serves a capability with a prompt of its own, and an entry of the list admits it
+// the assessment of an essay by its rubric, and the call of the words. Each serves a capability with a prompt of its own, and an entry of the list admits it
 // only when it measured that prompt (R70 spec).
 type Call string
 
@@ -50,6 +50,7 @@ const (
 	CallWorkbook Call = "workbook"
 	CallWords    Call = "words"
 	CallEssay    Call = "essay"
+	CallRubric   Call = "rubric"
 )
 
 // kind is a kind of call of the library: the capability it serves and the fingerprint of its
@@ -66,7 +67,7 @@ type kind struct {
 
 // kinds are the kinds of call of the library. The sheet's expected tokens are those of the run that
 // admitted its pair, 180 calls of each reader (T126); the words', those of the 300 hints of the run
-// of the words (T119); the workbook and the essay have no admitted model yet. A model without them has no expected
+// of the words (T119); the workbook, the essay and the rubric have no admitted model yet. A model without them has no expected
 // price, and api takes the value of its own config then (В13 api). The words serve the analysis of
 // the steps with the work and the hint without it, by one prompt; their price is that of the
 // analysis.
@@ -94,6 +95,13 @@ var kinds = map[Call]kind{
 		maxOut:     reading.MaxOutputTokens,
 		models:     1,
 	},
+	CallRubric: {
+		capability: admissionv0.CapabilityRubricAssessment,
+		prompt:     essay.TextFingerprint(),
+		maxIn:      maxTextBytes,
+		maxOut:     rubricMaxOutput,
+		models:     1,
+	},
 	CallWords: {
 		capability: admissionv0.CapabilitySolutionAnalysis,
 		prompt:     hint.Fingerprint(),
@@ -112,6 +120,10 @@ func (k kind) asked(models []admission.Model) []admission.Model {
 	}
 	return models
 }
+
+// rubricMaxOutput is the most the assessment by a rubric may write, thinking included: the bound of
+// the runner's calls, as for every call of the library (R94).
+const rubricMaxOutput = 16000
 
 // tokensOf are the tokens of the pictures of n crops of side pixels on each side (render.Tokens).
 func tokensOf(side, n int) int64 { return int64(n * render.Tokens(side, side)) }

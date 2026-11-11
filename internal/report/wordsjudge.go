@@ -85,8 +85,13 @@ func NewWordsJudge(l *wordsjudge.Log) (*WordsJudge, error) {
 				langs = append(langs, c.Lang)
 			}
 		}
+		// The feedback of the essays has no kinds of case: its cells are by the tutor alone.
+		feedback := !slices.ContainsFunc(l.Calls, func(c wordsjudge.CallRecord) bool { return c.CaseKind != "" })
 		for _, tu := range tutors {
 			for _, kind := range hint.CaseKinds() {
+				if feedback {
+					break
+				}
 				for _, lang := range langs {
 					r.Cells = append(r.Cells, r.cell(JudgeCell{Tutor: tu, Kind: kind, Lang: lang}))
 				}

@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/altnovatrail/tutor/internal/essay"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/runner"
 	"github.com/altnovatrail/tutor/internal/sample"
@@ -275,5 +276,33 @@ func TestPasses(t *testing.T) {
 	}
 	if !(wordsjudge.Verdict{OnTask: true, ForAge: true}).Passes(wordsjudge.Verdict{OnTask: true, ForAge: true}) {
 		t.Error("a clean verdict does not pass a clean phrase")
+	}
+}
+
+// The feedback of a run in two calls is judged, each that came, with its essay's topic; a run in one
+// call, a feedback whose essay has no topic, and a log without feedback are refused.
+func TestOfFeedback(t *testing.T) {
+	assess := func(n int, answer string) essay.CallRecord {
+		return essay.CallRecord{Kind: "call", Call: essay.Call{Essay: n, Reader: "sonnet-low", Repeat: 1, Step: essay.StepAssess}, Answer: answer}
+	}
+	l := &essay.Log{Run: essay.RunRecord{Path: essay.PathTwo}, Calls: []essay.CallRecord{
+		{Kind: "call", Call: essay.Call{Essay: 1, Reader: "sonnet-low", Repeat: 1, Step: essay.StepRead}, Answer: `{"text": "x", "legible": true}`},
+		assess(1, `{"criteria": [], "feedback": "The title is good."}`),
+		assess(2, `{"criteria": [], "feedback": ""}`),
+	}}
+	r, err := wordsjudge.OfFeedback(l, map[int]string{1: "Write about your pet.", 2: "x"}, "two.jsonl", "sum", wordsjudge.Judge{Name: "sonnet-low"})
+	if err != nil || len(r.Steps) != 1 {
+		t.Fatalf("the feedback: %v, %+v", err, r)
+	}
+	if _, err := wordsjudge.OfFeedback(l, map[int]string{2: "x"}, "two.jsonl", "sum", wordsjudge.Judge{}); err == nil {
+		t.Error("a feedback without its topic is judged")
+	}
+	l.Run.Path = ""
+	if _, err := wordsjudge.OfFeedback(l, map[int]string{1: "x"}, "two.jsonl", "sum", wordsjudge.Judge{}); err == nil {
+		t.Error("a run in one call is judged")
+	}
+	l.Run.Path, l.Calls = essay.PathTwo, l.Calls[:1]
+	if _, err := wordsjudge.OfFeedback(l, map[int]string{1: "x"}, "two.jsonl", "sum", wordsjudge.Judge{}); err == nil {
+		t.Error("a log without feedback is judged")
 	}
 }

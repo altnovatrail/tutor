@@ -123,7 +123,7 @@ func TestNewTwo(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if l.Run.Path != PathTwo || l.Run.Prompt != TwoFingerprint() || l.Run.PromptVersion != TwoVersion || l.Run.ReadPrompt != ReadFingerprint() || len(l.Calls) != len(r.Steps) {
+	if l.Run.Path != PathTwo || l.Run.Prompt != TwoFingerprint() || l.Run.PromptVersion != TwoVersion || l.Run.ReadPrompt != ReadFingerprint() || l.Run.TextPrompt != TextFingerprint() || len(l.Calls) != len(r.Steps) {
 		t.Fatalf("the log reads back as %+v with %d calls", l.Run, len(l.Calls))
 	}
 	for i, c := range l.Calls {
@@ -175,14 +175,15 @@ func TestTwoAfterAFailedReading(t *testing.T) {
 	}
 }
 
-// Version 2 of the prompts of two calls is frozen before the run of T124: any change to a word a
-// model reads in either step changes the fingerprint, and this test fails. Version 1, frozen after
-// the first dev round of T92, had the fingerprint
-// eb30d0f3d3813b8e8e1413eb6b5c54d7a605ca507b611541566c538e5f90fbce; its logs keep it.
-func TestFrozenTwoV2(t *testing.T) {
-	const frozen = "0ebdfee5bf155003bd7b179ff0bacd704fd3c80adf4e5b5da61d03cd06f40ffa"
-	if got := TwoFingerprint(); got != frozen || TwoVersion != 2 {
-		t.Errorf("the fingerprint of version %d of the two calls is %s, not the one frozen before the run of T124, %s", TwoVersion, got, frozen)
+// Version 3 of the prompts of two calls is frozen before the runs of T124 and T125: any change to a
+// word a model reads in either step changes the fingerprint, and this test fails. Version 1, frozen
+// after the first dev round of T92, had the fingerprint
+// eb30d0f3d3813b8e8e1413eb6b5c54d7a605ca507b611541566c538e5f90fbce; its logs keep it. Version 2 ran
+// nowhere.
+func TestFrozenTwoV3(t *testing.T) {
+	const frozen = "00cf587cb7fbddeee65c167a7d59561b1942c1eea7b7f8b2bcd42ae4fb4002f1"
+	if got := TwoFingerprint(); got != frozen || TwoVersion != 3 {
+		t.Errorf("the fingerprint of version %d of the two calls is %s, not the one frozen before the runs of T124 and T125, %s", TwoVersion, got, frozen)
 	}
 }
 
