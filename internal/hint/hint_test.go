@@ -191,12 +191,14 @@ func TestFingerprint(t *testing.T) {
 	}
 }
 
-// Version 2 of the prompt is frozen before the measurement of the words (T119): any change to a word
+// Version 3 of the prompt is frozen after the dev round of T127, before its run: any change to a word
 // a tutor reads changes the fingerprint, and this test fails until the words are measured anew.
-func TestFrozenV2(t *testing.T) {
-	const frozen = "b23adf4fc6f966c83df1f0365121bee987495dfc08803b12bd71bb3b9aac7730"
-	if got := hint.Fingerprint(); got != frozen || hint.Version != 2 {
-		t.Errorf("the fingerprint of version %d is %s, not the one frozen before T119, %s", hint.Version, got, frozen)
+// Version 2, frozen before T119, had the fingerprint
+// b23adf4fc6f966c83df1f0365121bee987495dfc08803b12bd71bb3b9aac7730; its logs keep it.
+func TestFrozenV3(t *testing.T) {
+	const frozen = "7d598021bf716157a54b4e60ac2c5583e0ea8429c43e9e0a30805ef99afdeeeb"
+	if got := hint.Fingerprint(); got != frozen || hint.Version != 3 {
+		t.Errorf("the fingerprint of version %d is %s, not the one frozen after the dev round of T127, %s", hint.Version, got, frozen)
 	}
 }
 

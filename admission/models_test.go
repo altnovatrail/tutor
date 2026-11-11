@@ -9,6 +9,7 @@ import (
 
 	"github.com/altnovatrail/spec/types/admissionv0"
 
+	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/provider/claude/catalog"
 )
@@ -192,9 +193,33 @@ func listFaults(list []Entry) []string {
 				out = append(out, fmt.Sprintf("entry %d: %s is no model the list may hold", i, m.Name()))
 			}
 		}
+		words := e.Capability == admissionv0.CapabilitySolutionAnalysis || e.Capability == admissionv0.CapabilityHint
+		if words && (len(e.Models) != 1 || e.Prompt != hint.Fingerprint()) {
+			out = append(out, fmt.Sprintf("entry %d of the words: %d models, prompt %s, the hint's now %s", i, len(e.Models), e.Prompt, hint.Fingerprint()))
+		}
 		if e.Capability == admissionv0.CapabilityHandwritingReading && (len(e.Models) != 2 || e.Prompt != reading.Fingerprint()) {
 			out = append(out, fmt.Sprintf("entry %d of reading: %d models, prompt %s, the reading's now %s", i, len(e.Models), e.Prompt, reading.Fingerprint()))
 		}
 	}
 	return out
+}
+
+// SelectPrompt chooses only among the entries that measured the prompt named: the pair of the
+// reading of a sheet admits nothing of another prompt.
+func TestSelectPrompt(t *testing.T) {
+	table, err := Platform()
+	if err != nil {
+		t.Fatal(err)
+	}
+	f, err := ReadFacts(table, []byte("anthropic:\n  data_processing_agreement: [adult]\n  minimal_retention: [adult]\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	c, route, cat := admissionv0.CapabilityHandwritingReading, admissionv0.AiRoutePlatformAi, admissionv0.AgeCategoryAdult
+	if e, a := table.SelectPrompt(f, c, route, cat, StageAuthor, nil, reading.Fingerprint()); !a.Admitted || len(e.Models) != 2 {
+		t.Errorf("the prompt of the reading of a sheet: %+v, %+v", e, a)
+	}
+	if _, a := table.SelectPrompt(f, c, route, cat, StageAuthor, nil, "another prompt"); a.Admitted {
+		t.Errorf("another prompt is admitted: %+v", a)
+	}
 }

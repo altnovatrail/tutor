@@ -11,18 +11,21 @@ import (
 	"github.com/altnovatrail/spec/types/formatv0/open"
 
 	"github.com/altnovatrail/tutor/admission"
+	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// withWords admits Opus 5.5 at high for the capabilities named, for a test: the list of the
-// platform has no model of the words until their measurement (T119).
+// withWords admits Opus 5.5 at high for the capabilities named alone, for a test: the entries of
+// the words of the platform's list (T127) are left out, so that a test says which it admits.
 func withWords(t *testing.T, capabilities ...admissionv0.Capability) {
 	t.Helper()
 	old := admission.Admitted
 	t.Cleanup(func() { admission.Admitted = old })
-	list := slices.Clone(old)
+	list := slices.DeleteFunc(slices.Clone(old), func(e admission.Entry) bool {
+		return e.Capability == admissionv0.CapabilitySolutionAnalysis || e.Capability == admissionv0.CapabilityHint
+	})
 	for _, c := range capabilities {
-		list = append(list, admission.Entry{Capability: c, Stage: admission.StageAuthor,
+		list = append(list, admission.Entry{Capability: c, Stage: admission.StageAuthor, Prompt: hint.Fingerprint(),
 			Models: []admission.Model{{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "high"}}})
 	}
 	admission.Admitted = list
@@ -89,6 +92,7 @@ func TestWordsFails(t *testing.T) {
 func TestWordsNotAdmitted(t *testing.T) {
 	crop := cropPNG(t, 300, 120)
 	lib, opus := tutorOf(t, answered)
+	withWords(t)
 	if got := lib.Words(context.Background(), wordsOf(crop)); got.Outcome.Kind != NotAdmitted || *got.Outcome.Admission.Reason != admission.ReasonModelNotAdmitted {
 		t.Errorf("no model of the words: %+v", got)
 	}
@@ -100,7 +104,7 @@ func TestWordsNotAdmitted(t *testing.T) {
 		t.Errorf("the hint alone, not admitted: %+v", got)
 	}
 	// The hint admitted, but of another model than the analysis: the analysis's model may not word it.
-	admission.Admitted = append(admission.Admitted, admission.Entry{Capability: admissionv0.CapabilityHint, Stage: admission.StageAuthor,
+	admission.Admitted = append(admission.Admitted, admission.Entry{Capability: admissionv0.CapabilityHint, Stage: admission.StageAuthor, Prompt: hint.Fingerprint(),
 		Models: []admission.Model{{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"}}})
 	if got := lib.Words(context.Background(), wordsOf(crop)); got.Outcome.Kind != NotAdmitted || *got.Outcome.Admission.Reason != admission.ReasonModelNotAdmitted {
 		t.Errorf("the hint of another model: %+v", got)

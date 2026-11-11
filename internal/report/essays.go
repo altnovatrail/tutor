@@ -487,7 +487,7 @@ func pairs(l *essay.Log) []essay.CallRecord {
 			if p.Error == "" && (c.Error != "" || c.NotAsked) {
 				p.Error = "the assessment of the text: " + c.Error
 			}
-			if text, err := essay.ReadReading(p.Answer); err == nil {
+			if text, err := essay.ReadReadingOf(p.Answer, l.Run.PromptVersion); err == nil {
 				if a, err := essay.ReadText(c.Answer, text); err == nil {
 					data, _ := json.Marshal(a)
 					p.Answer = string(data)

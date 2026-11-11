@@ -48,32 +48,42 @@ type Request struct {
 }
 
 // Response is a model's answer: JSON that follows the request's schema, the model the provider
-// says answered, the tokens the call took — of the output tokens, those the model spent thinking
-// — when the first text of the answer came, counted from when the attempt that answered was sent,
+// says answered, the tokens the call took — the input tokens without the cache, those written to
+// the cache by how long it keeps them and those read from it, which add up to the input with no
+// token counted twice, and of the output tokens, those the model spent thinking —, when the first
+// text of the answer came, counted from when the attempt that answered was sent,
 // or zero where the adapter does not measure it, and how many times the SDK sent the request again
 // after a failed attempt. A call that fails with ErrNoAnswer still returns its tokens, since they
 // are billed. Partial is a streamed answer that began and broke off before the provider gave the
 // final count of its tokens: the tokens it holds are those counted so far, and the bill is not
 // known.
 type Response struct {
-	JSON           string
-	Model          string
-	InputTokens    int64
-	OutputTokens   int64
-	ThinkingTokens int64
-	FirstToken     time.Duration
-	Retries        int
-	Partial        bool
+	JSON            string
+	Model           string
+	InputTokens     int64
+	CacheWrites     []CacheWrite
+	CacheReadTokens int64
+	OutputTokens    int64
+	ThinkingTokens  int64
+	FirstToken      time.Duration
+	Retries         int
+	Partial         bool
 }
 
 // Model is one model of one provider.
 type Model interface {
 	// Name is how a person sees the model named, such as "Claude Opus 5.5".
 	Name() string
-	// Price is the price of a million input and of a million output tokens, in US dollars.
-	Price() (input, output float64)
+	// Prices are what its tokens cost (docs/architecture.md, 3.7).
+	Prices() Prices
 	// Ask sends the request and returns the answer.
 	Ask(ctx context.Context, r Request) (Response, error)
+	// Check checks the client's key by a request of the provider without any learner's content, which
+	// costs nothing (R84 spec; docs/architecture.md, 3.7): nil when the provider took the key, else
+	// ErrKeyRefused for a wrong, revoked or expired key, ErrNoRights for a key without rights to the
+	// model, or the error of a provider that did not answer (Checked). An adapter does not let its
+	// SDK send it again after a refusal (NoRetry).
+	Check(ctx context.Context) error
 }
 
 // Dial is an adapter as the library takes it: it makes the client of a model of its provider by the
@@ -122,6 +132,76 @@ func Billed(resp Response, err error) bool {
 		return true
 	}
 	cutOff := errors.Is(err, context.DeadlineExceeded) || errors.Is(err, context.Canceled)
-	unknown := resp.Partial || cutOff && resp.InputTokens == 0 && resp.OutputTokens == 0
+	unknown := resp.Partial || cutOff && !resp.Counted()
 	return !unknown
+}
+
+// Counted reports whether the response holds any token: of the input, the cache or the output. A
+// prompt read whole from the cache leaves the input without the cache at none.
+func (r Response) Counted() bool {
+	if r.InputTokens > 0 || r.CacheReadTokens > 0 || r.OutputTokens > 0 {
+		return true
+	}
+	for _, w := range r.CacheWrites {
+		if w.Tokens > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// CacheWrite is the input tokens a call wrote to the cache to keep for TTL: a provider prices a
+// write by how long the cache keeps it.
+type CacheWrite struct {
+	TTL    time.Duration
+	Tokens int64
+}
+
+// WorstInput is the most a token of the input can cost: its own price or that of a write to the
+// cache, whichever is higher, for a call whose bill is not known.
+func (p Prices) WorstInput() float64 {
+	worst := p.Input
+	for _, w := range p.CacheWrite {
+		worst = max(worst, w)
+	}
+	return worst
+}
+
+// Prices are what a model's tokens cost, in US dollars a million, as its provider's pricing page
+// gives them on the day Read names, as YYYY-MM-DD (docs/architecture.md, 3.7 and section 4):
+// input, output, a read from the cache and a write to it by how long the cache keeps it. Where a
+// prompt longer than LongAbove tokens, the cache counted in, pays other prices, Long holds them,
+// or nil when they were not read; LongAbove is 0 where the model has no such prices.
+type Prices struct {
+	Input, Output, CacheRead float64
+	CacheWrite               map[time.Duration]float64
+	LongAbove                int64
+	Long                     *Prices
+	Read                     string
+}
+
+// Cost is the cost in US dollars of the tokens of a response, and whether the prices hold them all:
+// not when they were never read, Read empty, nor when the prompt is longer than LongAbove and the
+// long prices were not read, nor when the cache kept a write for a time the prices name no price
+// of. It is an estimate: the provider bills.
+func (p Prices) Cost(r Response) (float64, bool) {
+	read := p.Read != ""
+	prompt := r.InputTokens + r.CacheReadTokens
+	for _, w := range r.CacheWrites {
+		prompt += w.Tokens
+	}
+	if p.LongAbove > 0 && prompt > p.LongAbove {
+		if p.Long == nil {
+			return 0, false
+		}
+		p = *p.Long
+	}
+	ok := read
+	usd := float64(r.InputTokens)*p.Input + float64(r.CacheReadTokens)*p.CacheRead + float64(r.OutputTokens)*p.Output
+	for _, w := range r.CacheWrites {
+		price, known := p.CacheWrite[w.TTL]
+		ok = ok && (known || w.Tokens == 0)
+		usd += float64(w.Tokens) * price
+	}
+	return usd / 1e6, ok
 }

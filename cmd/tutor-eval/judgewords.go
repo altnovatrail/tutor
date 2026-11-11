@@ -13,8 +13,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/altnovatrail/tutor/internal/essay"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/runner"
+	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/internal/wordsjudge"
 )
 
@@ -78,15 +80,21 @@ func runJudgeWords(ctx context.Context, args []string, stdin io.Reader, stdout, 
 	// samples.
 	folders := []string{syntheticFolder}
 	if *logOf != "" {
-		l, err := hint.ReadLog(bytes.NewReader(data))
-		if err == nil {
-			r, err = wordsjudge.Of(l, filepath.Base(file), sum, judge)
+		var err error
+		if runner.CallKind(data) == essay.CallKind {
+			r, err = feedbackRun(data, filepath.Base(file), sum, judge)
+			what = fmt.Sprintf("The feedback of %s that came, each judged once by %s, in version %d of the judge's prompt.\n", file, judge.Name, wordsjudge.Version)
+		} else {
+			what = fmt.Sprintf("The hints of %s that came, each judged once by %s, in version %d of the judge's prompt.\n", file, judge.Name, wordsjudge.Version)
+			var l *hint.Log
+			if l, err = hint.ReadLog(bytes.NewReader(data)); err == nil {
+				r, err = wordsjudge.Of(l, filepath.Base(file), sum, judge)
+			}
 		}
 		if err != nil {
 			_, _ = fmt.Fprintf(stderr, "%s: %s: %v\n", name, file, err)
 			return exitFail
 		}
-		what = fmt.Sprintf("The hints of %s that came, each judged once by %s, in version %d of the judge's prompt.\n", file, judge.Name, wordsjudge.Version)
 		if path == "" {
 			path = judgeLogOf(file)
 		}
@@ -121,4 +129,35 @@ func runJudgeWords(ctx context.Context, args []string, stdin io.Reader, stdout, 
 // name and .judge.jsonl, where admit-words finds it.
 func judgeLogOf(hintLog string) string {
 	return strings.TrimSuffix(hintLog, filepath.Ext(hintLog)) + ".judge.jsonl"
+}
+
+// feedbackRun plans the judging of the feedback of a log of the essays in two calls, with the topics
+// of its essays from the file of essays the log names, as the run named it, from where it ran: each
+// essay of the log must be the file's of its number, by its part and its unmet criteria, or the
+// topics would be another file's.
+func feedbackRun(data []byte, file, sum string, judge wordsjudge.Judge) (*runner.Run, error) {
+	l, err := essay.ReadLog(bytes.NewReader(data))
+	if err != nil {
+		return nil, err
+	}
+	f, err := os.Open(l.Run.File)
+	if err != nil {
+		return nil, fmt.Errorf("the essays of the log: %w", err)
+	}
+	defer func() { _ = f.Close() }()
+	es, err := sample.ReadEssays(f)
+	if err != nil {
+		return nil, err
+	}
+	topics := map[int]string{}
+	byNumber := map[int]*sample.Essay{}
+	for i, e := range es.Essays {
+		topics[e.Number], byNumber[e.Number] = e.Topic, &es.Essays[i]
+	}
+	for _, s := range l.Sheets {
+		if e := byNumber[s.Essay]; e == nil || e.Part != s.Part || !slices.Equal(e.Unmet, s.Unmet) {
+			return nil, fmt.Errorf("essay %d of the log is not the one of %s", s.Essay, l.Run.File)
+		}
+	}
+	return wordsjudge.OfFeedback(l, topics, file, sum, judge)
 }

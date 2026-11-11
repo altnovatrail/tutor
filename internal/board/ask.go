@@ -132,9 +132,17 @@ func prompt(t *Task, p picture) string {
 		p.width, p.height, t.Statement, t.Key, strings.Join(t.Solution, "\n"))
 }
 
+// cost is what a call cost by the model's prices: its input without the cache, the cache and its
+// output (provider.Prices.Cost). Prices that do not hold every token still give what they hold.
+func cost(m provider.Model, resp provider.Response) float64 {
+	usd, _ := m.Prices().Cost(resp)
+	return usd
+}
+
 // worstCost is the most one call to the model can cost.
 func worstCost(m provider.Model) float64 {
-	in, out := m.Price()
+	p := m.Prices()
+	in, out := p.Input, p.Output
 	return (inputTokensBudget*in + maxOutputTokens*out) / 1e6
 }
 
@@ -153,7 +161,6 @@ func ask(ctx context.Context, q question, t *Task, p picture) Result {
 		Effort:          q.effort,
 		NoThinking:      q.noThinking,
 	})
-	in, out := q.model.Price()
 	res := Result{
 		Model:          q.model.Name(),
 		ModelID:        resp.Model,
@@ -166,7 +173,7 @@ func ask(ctx context.Context, q question, t *Task, p picture) Result {
 		FirstTokenMs:   resp.FirstToken.Milliseconds(),
 		Retries:        resp.Retries,
 		LatencyMs:      time.Since(start).Milliseconds(),
-		CostUSD:        (float64(resp.InputTokens)*in + float64(resp.OutputTokens)*out) / 1e6,
+		CostUSD:        cost(q.model, resp),
 	}
 	if err != nil {
 		res.Error = describe(err)

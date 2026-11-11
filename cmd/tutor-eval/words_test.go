@@ -76,13 +76,13 @@ func TestWordsOnTheStub(t *testing.T) {
 	t.Parallel()
 	parent, sets := drawnSets(t, drawnSet{"words-v1", wordsBank, wordsPlanF})
 	code, out, errs := runMeasure("yes\n", "-kind", "hint", "-part", "all", "-stub", "-repeats", "1", "-readers", "opus-high", "-max-usd", "10", "-cases", wordsCases, "-set", sets[0])
-	if code != exitOK || !strings.HasPrefix(out, "All the sheets: 330 cases of the set of the words in words-cases.json, on 40 sheets with a mistake of 40 in words-v1, by opus-high in 1 repeat, in version 2 of the hint's prompt.\n330 calls") {
+	if code != exitOK || !strings.HasPrefix(out, "All the sheets: 330 cases of the set of the words in words-cases.json, on 40 sheets with a mistake of 40 in words-v1, by opus-high in 1 repeat, in version 3 of the hint's prompt.\n330 calls") {
 		t.Fatalf("the run ends %d: %s%s", code, out, errs)
 	}
 	log := filepath.Join(parent, "runs", "20261026-123000-000-hint-words-v1-all.jsonl")
 	code, out, errs = runJudge("yes\n", noKey, "-stub", "-log", log)
 	judged := strings.TrimSuffix(log, ".jsonl") + ".judge.jsonl"
-	if code != exitOK || !strings.HasPrefix(out, "The hints of "+log+" that came, each judged once by sonnet-low, in version 2 of the judge's prompt.\n330 calls") || !strings.HasSuffix(out, "The log: "+judged+"\n") {
+	if code != exitOK || !strings.HasPrefix(out, "The hints of "+log+" that came, each judged once by sonnet-low, in version 3 of the judge's prompt.\n330 calls") || !strings.HasSuffix(out, "The log: "+judged+"\n") {
 		t.Fatalf("the judge ends %d: %s%s", code, out, errs)
 	}
 	if code, out, errs := runIt("report", log); code != exitOK || !strings.Contains(out, "opus-high: leaked before the check 0 of 330") {
@@ -95,10 +95,10 @@ func TestWordsOnTheStub(t *testing.T) {
 		t.Errorf("a judge over a log of it: %d %s", code, errs)
 	}
 	controls := filepath.Join(t.TempDir(), "controls.jsonl")
-	if code, out, errs := runJudge("yes\n", noKey, "-stub", "-controls", wordsJudge, "-out", controls); code != exitOK || !strings.HasPrefix(out, "The 39 control phrases of "+wordsJudge) {
+	if code, out, errs := runJudge("yes\n", noKey, "-stub", "-controls", wordsJudge, "-out", controls); code != exitOK || !strings.HasPrefix(out, "The 50 control phrases of "+wordsJudge) {
 		t.Errorf("the controls: %d %s%s", code, out, errs)
 	}
-	if code, out, errs := runIt("report", controls); code != exitOK || !strings.HasPrefix(out, "The judge passes all 39 control phrases, 39 of them with all four answers as expected.\n") {
+	if code, out, errs := runIt("report", controls); code != exitOK || !strings.HasPrefix(out, "The judge passes all 50 control phrases, 50 of them with all four answers as expected.\n") {
 		t.Errorf("the report of the controls: %d %s%s", code, out, errs)
 	}
 	if code, out, _ := runJudge("no\n", noKey, "-stub", "-controls", wordsJudge, "-out", filepath.Join(t.TempDir(), "c.jsonl")); code != exitOK || !strings.HasSuffix(out, "The run is not started.\n") {
@@ -250,7 +250,7 @@ func TestAdmitWordsCommand(t *testing.T) {
 		}
 	}
 	code, out, errs := runIt("admit-words", "-controls", controls, log)
-	if code != exitOK || !strings.Contains(out, "- stage: author\n") || !strings.Contains(out, "- judge: sonnet-low, right on 39 of 39 control phrases\n") ||
+	if code != exitOK || !strings.Contains(out, "- stage: author\n") || !strings.Contains(out, "- judge: sonnet-low, right on 50 of 50 control phrases\n") ||
 		!strings.Contains(out, "- calls: 150, hints that came 150") || strings.Count(out, ": sha256 ") != 3 {
 		t.Errorf("admit-words = %d: %s%s", code, out, errs)
 	}

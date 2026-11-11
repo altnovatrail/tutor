@@ -229,14 +229,15 @@ func TestGolden(t *testing.T) {
 	}
 }
 
-// Version 2 of the prompt is frozen after the dev round of T99, before its test part runs: any
-// change to a word a reader reads changes the fingerprint, and this test fails. Version 1, frozen
-// after the dev round of T80, had the fingerprint 40a9244ba646d1edef4c99c6dc5060b5b38ccab74ad56ddf76792545b6590e8d;
-// its logs keep it.
-func TestFrozenV2(t *testing.T) {
-	const frozen = "885515cb2ad2a4aa3e49c1322e0d108099d66b93746309b5654cf7bacca6cf4b"
-	if got := workbook.Fingerprint(); got != frozen || workbook.Version != 2 {
-		t.Errorf("the fingerprint of version %d is %s, not the one frozen after the dev round of T99, %s", workbook.Version, got, frozen)
+// Version 3 of the prompt is frozen before its run (T123): any change to a word a reader reads
+// changes the fingerprint, and this test fails. Version 2, frozen after the dev round of T99, had the
+// fingerprint 885515cb2ad2a4aa3e49c1322e0d108099d66b93746309b5654cf7bacca6cf4b, and version 1, frozen
+// after the dev round of T80, 40a9244ba646d1edef4c99c6dc5060b5b38ccab74ad56ddf76792545b6590e8d; their
+// logs keep them.
+func TestFrozenV3(t *testing.T) {
+	const frozen = "26925af5e000d1c9cb30571f1e4f1b845852dedbb4da056b3b360a9eae3a5789"
+	if got := workbook.Fingerprint(); got != frozen || workbook.Version != 3 {
+		t.Errorf("the fingerprint of version %d is %s, not the one frozen before T123's run, %s", workbook.Version, got, frozen)
 	}
 }
 

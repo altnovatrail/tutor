@@ -4,6 +4,7 @@ package claude
 import (
 	"context"
 	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -49,8 +50,23 @@ func New(apiKey string, m Model, opts ...option.RequestOption) *Client {
 // Name is how the board shows the model.
 func (c *Client) Name() string { return c.model.Name }
 
-// Price is the model's price per million input and output tokens, in US dollars.
-func (c *Client) Price() (input, output float64) { return c.model.Input, c.model.Output }
+// Prices are what the model's tokens cost, by the catalog (docs/architecture.md, 3.7).
+func (c *Client) Prices() provider.Prices { return PricesOf(c.model) }
+
+// PricesOf are the prices of a model of the catalog, its long ones too where it has them.
+func PricesOf(m Model) provider.Prices {
+	p := prices(m)
+	if m.Long != nil {
+		long := prices(*m.Long)
+		p.LongAbove, p.Long = m.LongAbove, &long
+	}
+	return p
+}
+
+func prices(m Model) provider.Prices {
+	return provider.Prices{Input: m.Input, Output: m.Output, CacheRead: m.CacheRead,
+		CacheWrite: map[time.Duration]float64{catalog.TTL5m: m.Write5m, catalog.TTL1h: m.Write1h}, Read: catalog.PricesRead}
+}
 
 // Ask sends the pictures and the text and asks for JSON that follows the schema, at the request's
 // effort, and streams the answer, so that it sees when the answer's first text comes. Every model
@@ -73,7 +89,9 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 		sent = time.Now()
 		return next(req)
 	})
-	stream := c.sdk.Messages.NewStreaming(ctx, c.params(r), count)
+	// A refusal for a limit or of the key is not sent again (provider.NoRetry).
+	var refused provider.Refusal
+	stream := c.sdk.Messages.NewStreaming(ctx, c.params(r), count, option.WithMiddleware(provider.NoRetry(Refusal, &refused)))
 	defer func() { _ = stream.Close() }()
 	var (
 		msg     anthropic.Message
@@ -97,19 +115,23 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 	if err == nil {
 		err = stream.Err()
 	}
-	// Tokens are billed whatever the answer, so they go back with an error too.
+	// Tokens are billed whatever the answer, so they go back with an error too. Anthropic counts the
+	// input without the cache: the writes and the read come beside it (docs/architecture.md, 3.7).
+	u := msg.Usage
 	resp := provider.Response{
-		Model:          msg.Model,
-		InputTokens:    msg.Usage.InputTokens,
-		OutputTokens:   msg.Usage.OutputTokens,
-		ThinkingTokens: msg.Usage.OutputTokensDetails.ThinkingTokens,
-		FirstToken:     first,
-		Retries:        max(attempts-1, 0),
-		Partial:        began && !counted,
+		Model:           msg.Model,
+		InputTokens:     u.InputTokens,
+		CacheWrites:     cacheWrites(u),
+		CacheReadTokens: u.CacheReadInputTokens,
+		OutputTokens:    u.OutputTokens,
+		ThinkingTokens:  u.OutputTokensDetails.ThinkingTokens,
+		FirstToken:      first,
+		Retries:         max(attempts-1, 0),
+		Partial:         began && !counted,
 	}
 	switch {
 	case err != nil:
-		return resp, err
+		return resp, refused.Of(err)
 	case !counted:
 		return resp, errors.New("claude: the answer stopped before it was finished")
 	}
@@ -189,4 +211,82 @@ func (c *Client) params(r provider.Request) anthropic.MessageNewParams {
 		}
 	}
 	return p
+}
+
+// cacheWrites are the writes to the cache of a usage, by how long the cache keeps them, none when
+// there are none. A write the usage does not divide by its time counts at five minutes, the time
+// Anthropic keeps a write for by default.
+func cacheWrites(u anthropic.Usage) []provider.CacheWrite {
+	var ws []provider.CacheWrite
+	m5, h1 := u.CacheCreation.Ephemeral5mInputTokens, u.CacheCreation.Ephemeral1hInputTokens
+	if rest := u.CacheCreationInputTokens - m5 - h1; rest > 0 {
+		m5 += rest
+	}
+	if m5 > 0 {
+		ws = append(ws, provider.CacheWrite{TTL: catalog.TTL5m, Tokens: m5})
+	}
+	if h1 > 0 {
+		ws = append(ws, provider.CacheWrite{TTL: catalog.TTL1h, Tokens: h1})
+	}
+	return ws
+}
+
+// The messages that tell a refusal for a limit by their words (docs/architecture.md, 3.7 and section
+// 4). The words of a message are no contract: a refusal whose words change is a failure of AI until
+// the table and its tests follow, and the sources are read again before each release.
+const (
+	ownerLimit     = "You have reached your specified API usage limits"
+	workspaceLimit = "You have reached your specified workspace API usage limits"
+	lowBalance     = "Your credit balance is too low to access the Anthropic API"
+	// notTheKey begins a 401 that is no fault of the key: a request from a browser, which tutor never
+	// sends.
+	notTheKey = "CORS requests are not allowed for this Organization"
+)
+
+// Refusal reads an error response of the Messages API: a spend limit the owner set, 400
+// invalid_request_error with its words; the cap of the tier, 429 with the error code
+// enforced_spend_limit_reached; a balance spent, by its words at any status; a fault of billing,
+// 402; and the key refused, 401.
+func Refusal(status int, body []byte) provider.Refusal {
+	var e struct {
+		Error struct {
+			Type    string `json:"type"`
+			Message string `json:"message"`
+			Details struct {
+				ErrorCode string `json:"error_code"`
+			} `json:"details"`
+		} `json:"error"`
+	}
+	_ = json.Unmarshal(body, &e)
+	m := e.Error.Message
+	switch {
+	case strings.HasPrefix(m, lowBalance):
+		return provider.Refusal{Limit: provider.LimitBalance}
+	case status == http.StatusBadRequest && e.Error.Type == "invalid_request_error" && (strings.HasPrefix(m, ownerLimit) || strings.HasPrefix(m, workspaceLimit)):
+		return provider.Refusal{Limit: provider.LimitOwner}
+	case status == http.StatusTooManyRequests && e.Error.Details.ErrorCode == "enforced_spend_limit_reached":
+		return provider.Refusal{Limit: provider.LimitTier}
+	case status == http.StatusPaymentRequired:
+		return provider.Refusal{Limit: provider.LimitBilling}
+	case status == http.StatusUnauthorized && !strings.HasPrefix(m, notTheKey):
+		return provider.Refusal{Key: true}
+	}
+	return provider.Refusal{}
+}
+
+// Check checks the key by counting the tokens of one word for the model: token counting is free
+// (Token counting, read 2026-11-11), and the word is no learner's. A 403 is a key without rights to
+// the model (provider.Checked).
+func (c *Client) Check(ctx context.Context) error {
+	var refused provider.Refusal
+	_, err := c.sdk.Messages.CountTokens(ctx, anthropic.MessageCountTokensParams{
+		Model:    c.model.ID,
+		Messages: []anthropic.MessageParam{anthropic.NewUserMessage(anthropic.NewTextBlock("ok"))},
+	}, option.WithMiddleware(provider.NoRetry(Refusal, &refused)))
+	status := 0
+	var apiErr *anthropic.Error
+	if errors.As(err, &apiErr) {
+		status = apiErr.StatusCode
+	}
+	return provider.Checked(err, refused, status)
 }

@@ -7,6 +7,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/altnovatrail/tutor/internal/essay"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/runner"
 	"github.com/altnovatrail/tutor/provider"
@@ -59,7 +60,8 @@ func (e Expect) Verdict() Verdict {
 }
 
 // ReadControls reads a file of control phrases strictly, each with an ID of its own, a hint, a
-// language and a rung, and an item without a note expecting no note taken up.
+// language and a rung — 0 for the feedback of an essay, which has none (OfFeedback) —, and an item
+// without a note expecting no note taken up.
 func ReadControls(r io.Reader) (*Controls, error) {
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
@@ -78,7 +80,9 @@ func ReadControls(r io.Reader) (*Controls, error) {
 		switch {
 		case k.ID == "" || seen[k.ID]:
 			return nil, fmt.Errorf("the controls: control %d has an ID empty or given twice", i+1)
-		case k.Item.Hint == "" || k.Item.Lang == "" || k.Item.Rung < 1:
+		case k.Item.Rung == 0 && k.Item.Note != "":
+			return nil, fmt.Errorf("the controls: control %s is feedback with a note, which feedback never has", k.ID)
+		case k.Item.Hint == "" || k.Item.Lang == "" || k.Item.Rung < 0 || k.Item.Rung > 3:
 			return nil, fmt.Errorf("the controls: control %s has no hint, language or rung", k.ID)
 		case k.Item.Note == "" && k.Expect.MentionsNote:
 			return nil, fmt.Errorf("the controls: control %s has no note, and expects it taken up", k.ID)
@@ -160,6 +164,43 @@ func Of(l *hint.Log, file, sum string, judge Judge) (*runner.Run, error) {
 	}
 	if len(r.Steps) == 0 {
 		return nil, errors.New("wordsjudge: no hint came in the log to judge")
+	}
+	r.Record = record(OfLog, file, sum, judge)
+	return r, nil
+}
+
+// OfFeedback plans the judging of the feedback of the assessment of a text in a log of a run of the
+// essays in two calls (T125): each feedback that came, once, as the item of a hint of no rung, in
+// English, with the topic of its essay as the task and no note. The judge is that of the words (R85):
+// the feedback is the tutor's words to the learner, and the points of the learner's sex and of safety
+// hold of it as of a hint. Its prompt from version 3 says what rung 0 is, and control phrases of
+// feedback check it (T127; R100). topics are the topics of the essays by
+// their numbers.
+func OfFeedback(l *essay.Log, topics map[int]string, file, sum string, judge Judge) (*runner.Run, error) {
+	if l.Run.Path != essay.PathTwo {
+		return nil, errors.New("wordsjudge: the log is no run of the essays in two calls, whose feedback the library gives")
+	}
+	r := &runner.Run{}
+	for _, c := range l.Calls {
+		if c.Step != essay.StepAssess || c.NotAsked || c.Error != "" {
+			continue
+		}
+		var a struct {
+			Feedback string `json:"feedback"`
+		}
+		if err := json.Unmarshal([]byte(c.Answer), &a); err != nil || a.Feedback == "" {
+			continue
+		}
+		topic, ok := topics[c.Essay]
+		if !ok {
+			return nil, fmt.Errorf("wordsjudge: essay %d of the log has no topic", c.Essay)
+		}
+		it := Item{Hint: a.Feedback, Lang: "en", Statement: topic}
+		rec := CallRecord{Tutor: c.Reader, Set: "essays", Sheet: c.Essay, Lang: "en", Repeat: c.Repeat, Hint: a.Feedback}
+		r.Steps = append(r.Steps, runner.Step{Config: judge, In: input, Out: output, WorstIn: inputBudget, Call: &step{item: it, rec: rec, right: Verdict{OnTask: true, ForAge: true}}})
+	}
+	if len(r.Steps) == 0 {
+		return nil, errors.New("wordsjudge: no feedback came in the log to judge")
 	}
 	r.Record = record(OfLog, file, sum, judge)
 	return r, nil

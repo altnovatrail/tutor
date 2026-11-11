@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"math"
 	"net/http"
 	"net/http/httptest"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -196,5 +198,108 @@ func TestDial(t *testing.T) {
 	}
 	if _, err := Dial("gpt-1", "k"); err == nil {
 		t.Error("an unknown model dials")
+	}
+}
+
+// OpenAI counts the tokens read from the cache and written to it in the input: they come off it, the
+// writes by how long the cache keeps them, a write not divided by its time at 30 minutes.
+func TestCacheTokens(t *testing.T) {
+	body := strings.Replace(goodAnswer, `"input_tokens_details":{"cached_tokens":0}`,
+		`"input_tokens_details":{"cached_tokens":100,"cache_write_tokens":70,"cache_write_tokens_details":{"ttl_30m_tokens":40,"ttl_12h_tokens":20}}`, 1)
+	c, _ := fakeAPI(t, reply{body: body})
+	resp, err := c.Ask(context.Background(), request)
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := []provider.CacheWrite{{TTL: TTL30m, Tokens: 50}, {TTL: TTL12h, Tokens: 20}}
+	if resp.InputTokens != 130 || resp.CacheReadTokens != 100 || !slices.Equal(resp.CacheWrites, want) {
+		t.Errorf("tokens = input %d, read %d, writes %+v", resp.InputTokens, resp.CacheReadTokens, resp.CacheWrites)
+	}
+	// 130 × $10 + 50 × $12.50 + 20 × $25 + 100 × $1 + 80 × $50, a million each.
+	if usd, ok := c.Prices().Cost(resp); !ok || math.Abs(usd-0.006525) > 1e-12 {
+		t.Errorf("cost = %v, %v", usd, ok)
+	}
+	if _, ok := c.Prices().Cost(provider.Response{InputTokens: LongAbove + 1}); ok {
+		t.Error("a prompt over the long context has a cost, though its prices were not read")
+	}
+}
+
+// Each refusal of OpenAI's billing is its own error by its code, sent once, and a wrong key is
+// refused; a plain 429 is a failure, sent again.
+func TestRefusals(t *testing.T) {
+	errorOf := func(status int, code string) reply {
+		typ := "insufficient_quota"
+		if code == "rate_limit_exceeded" {
+			typ = "requests"
+		}
+		return reply{status: status, header: http.Header{"Retry-After-Ms": {"0"}}, body: `{"error":{"message":"refused","type":"` + typ + `","code":"` + code + `"}}`}
+	}
+	for code, limit := range map[string]provider.Limit{
+		"credit_balance_exhausted":          provider.LimitBalance,
+		"project_spend_limit_exceeded":      provider.LimitOwner,
+		"organization_spend_limit_exceeded": provider.LimitOwner,
+		"organization_usage_limit_exceeded": provider.LimitTier,
+		"insufficient_quota":                provider.LimitBilling,
+	} {
+		t.Run(code, func(t *testing.T) {
+			c, sent := fakeAPI(t, errorOf(429, code), reply{body: goodAnswer})
+			_, err := c.Ask(context.Background(), request)
+			var le *provider.LimitError
+			if !errors.As(err, &le) || le.Limit != limit || len(sent()) != 1 {
+				t.Errorf("error = %v after %d requests; want the limit %q, sent once", err, len(sent()), limit)
+			}
+		})
+	}
+	c, sent := fakeAPI(t, errorOf(401, "invalid_api_key"), reply{body: goodAnswer})
+	if _, err := c.Ask(context.Background(), request); !errors.Is(err, provider.ErrKeyRefused) || len(sent()) != 1 {
+		t.Errorf("a wrong key: %v after %d requests", err, len(sent()))
+	}
+	c, sent = fakeAPI(t, errorOf(429, "rate_limit_exceeded"), errorOf(429, "rate_limit_exceeded"))
+	if _, err := c.Ask(context.Background(), request); err == nil || errors.Is(err, provider.ErrKeyRefused) || len(sent()) != 2 {
+		t.Errorf("a plain 429: %v after %d requests; want a failure sent again", err, len(sent()))
+	}
+}
+
+// The check asks for the model's description, which writes no token: a right key is taken, a
+// wrong one refused once, one without rights to the model told apart, a limit passed on, and a
+// model gone or a failure of the provider says nothing of the key. No error holds the key.
+func TestCheck(t *testing.T) {
+	for status, want := range map[int]string{200: "taken", 401: "key", 403: "rights", 404: "plain", 429: "limit", 500: "plain"} {
+		var paths []string
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			paths = append(paths, r.Method+" "+r.URL.Path)
+			w.Header().Set("Content-Type", "application/json")
+			w.WriteHeader(status)
+			if status == 200 {
+				_, _ = io.WriteString(w, `{"id":"gpt-6-astra","object":"model","created":1,"owned_by":"openai"}`)
+				return
+			}
+			code := "x"
+			if status == 429 {
+				code = "credit_balance_exhausted"
+			}
+			_, _ = io.WriteString(w, `{"error":{"message":"no","type":"invalid_request_error","code":"`+code+`"}}`)
+		}))
+		c := New("the key of the owner in a test", option.WithBaseURL(srv.URL+"/v1/"), option.WithMaxRetries(1))
+		err := c.Check(context.Background())
+		srv.Close()
+		var le *provider.LimitError
+		got := "plain"
+		switch {
+		case err == nil:
+			got = "taken"
+		case errors.Is(err, provider.ErrKeyRefused):
+			got = "key"
+		case errors.Is(err, provider.ErrNoRights):
+			got = "rights"
+		case errors.As(err, &le):
+			got = "limit"
+		}
+		if got != want || err != nil && strings.Contains(err.Error(), "the key of the owner") {
+			t.Errorf("%d: check = %v", status, err)
+		}
+		if sent := map[int]int{500: 2}[status]; len(paths) != max(sent, 1) || paths[0] != "GET /v1/models/gpt-6-astra" {
+			t.Errorf("%d: the check asked %v", status, paths)
+		}
 	}
 }

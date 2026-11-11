@@ -9,6 +9,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/altnovatrail/tutor/internal/essay"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/runner"
 	"github.com/altnovatrail/tutor/internal/sample"
@@ -22,10 +23,11 @@ func opus() wordsjudge.Judge {
 }
 
 // The judge's prompt is frozen: a change of a word is a new version, whose control phrases run
-// again. Version 2 came after the control phrases of T119.
+// again. Version 2 came after the control phrases of T119, with the fingerprint
+// 2d705550adf916cf9b731fa7b0a06715af0b46d2cacd195dc026e7560f08a2af; version 3 is T127's.
 func TestFrozen(t *testing.T) {
-	const frozen = "2d705550adf916cf9b731fa7b0a06715af0b46d2cacd195dc026e7560f08a2af"
-	if got := wordsjudge.Fingerprint(); got != frozen || wordsjudge.Version != 2 {
+	const frozen = "052552a7e77c9381fee0e575af190d07fd7b2f51f8713269e05d2d6743906272"
+	if got := wordsjudge.Fingerprint(); got != frozen || wordsjudge.Version != 3 {
 		t.Errorf("the fingerprint of version %d is %s, not the one frozen, %s", wordsjudge.Version, got, frozen)
 	}
 }
@@ -141,6 +143,8 @@ func TestReadControlsRefused(t *testing.T) {
 		"an ID twice":          strings.Replace(string(data), `"id": "ru-short-f"`, `"id": "ru-past-m"`, 1),
 		"no hint":              strings.Replace(string(data), `"hint": "Ты верно нашёл первое число. Что нужно сделать дальше?"`, `"hint": ""`, 1),
 		"a note expected none": strings.Replace(string(data), `"mentions_note": false`, `"mentions_note": true`, 1),
+		"feedback with a note": strings.Replace(string(data), "\"rung\": 0,\n        \"statement\": \"Write about a day at the seaside.\",\n        \"note\": \"\"", "\"rung\": 0,\n        \"statement\": \"Write about a day at the seaside.\",\n        \"note\": \"x\"", 1),
+		"a rung of four":       strings.Replace(string(data), `"rung": 3,`, `"rung": 4,`, 1),
 		"two values":           string(data) + "{}",
 		"none":                 `{"format": "tutor-words-judge-controls", "version": 1, "controls": []}`,
 		"not JSON":             "x",
@@ -275,5 +279,33 @@ func TestPasses(t *testing.T) {
 	}
 	if !(wordsjudge.Verdict{OnTask: true, ForAge: true}).Passes(wordsjudge.Verdict{OnTask: true, ForAge: true}) {
 		t.Error("a clean verdict does not pass a clean phrase")
+	}
+}
+
+// The feedback of a run in two calls is judged, each that came, with its essay's topic; a run in one
+// call, a feedback whose essay has no topic, and a log without feedback are refused.
+func TestOfFeedback(t *testing.T) {
+	assess := func(n int, answer string) essay.CallRecord {
+		return essay.CallRecord{Kind: "call", Call: essay.Call{Essay: n, Reader: "sonnet-low", Repeat: 1, Step: essay.StepAssess}, Answer: answer}
+	}
+	l := &essay.Log{Run: essay.RunRecord{Path: essay.PathTwo}, Calls: []essay.CallRecord{
+		{Kind: "call", Call: essay.Call{Essay: 1, Reader: "sonnet-low", Repeat: 1, Step: essay.StepRead}, Answer: `{"text": "x", "legible": true}`},
+		assess(1, `{"criteria": [], "feedback": "The title is good."}`),
+		assess(2, `{"criteria": [], "feedback": ""}`),
+	}}
+	r, err := wordsjudge.OfFeedback(l, map[int]string{1: "Write about your pet.", 2: "x"}, "two.jsonl", "sum", wordsjudge.Judge{Name: "sonnet-low"})
+	if err != nil || len(r.Steps) != 1 {
+		t.Fatalf("the feedback: %v, %+v", err, r)
+	}
+	if _, err := wordsjudge.OfFeedback(l, map[int]string{2: "x"}, "two.jsonl", "sum", wordsjudge.Judge{}); err == nil {
+		t.Error("a feedback without its topic is judged")
+	}
+	l.Run.Path = ""
+	if _, err := wordsjudge.OfFeedback(l, map[int]string{1: "x"}, "two.jsonl", "sum", wordsjudge.Judge{}); err == nil {
+		t.Error("a run in one call is judged")
+	}
+	l.Run.Path, l.Calls = essay.PathTwo, l.Calls[:1]
+	if _, err := wordsjudge.OfFeedback(l, map[int]string{1: "x"}, "two.jsonl", "sum", wordsjudge.Judge{}); err == nil {
+		t.Error("a log without feedback is judged")
 	}
 }

@@ -106,7 +106,8 @@ const usage = `usage:
                              on the one set of their plan, those of the kinds -case-kinds names,
                              and with -part recorded those of the sheets recorded so far
   tutor-eval judge-words -log F|-controls F [-judge C] [-max-usd N] [-out F] [-stub]
-                             judge the hints of a log of the set of the words, or the judge's
+                             judge the hints of a log of the set of the words, the feedback
+                             of a log of the essays in two calls, run where that run ran, or the judge's
                              control phrases: whether each tells the learner's sex, keeps to
                              the task, suits a child and takes up the note at the side; the
                              estimate first, then calls once you type yes, and a log beside

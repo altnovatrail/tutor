@@ -144,12 +144,33 @@ func (r Route) check() error {
 	return nil
 }
 
-// Choose chooses the models of a capability for a route (admission.Table.Select): api calls it
-// before an attempt, and each call of the library before it calls a model, with the same answer
-// while the config is the same. It takes only the models of the providers the config gives an
+// Choose chooses the models of a capability for a route (admission.Table.Select), the first entry
+// of the capability whatever prompt it measured. A call of the library chooses by its kind, which
+// names its prompt too (ChooseCall): that is the one api calls before an attempt, with the same
+// answer the call gets while the config is the same. It takes only the models of the providers the config gives an
 // adapter of: on the own key only those of the key's provider, and on platform AI only those of the
 // providers it holds a key of. It refuses a route whose key does not fit it.
 func (t *Tutor) Choose(c admissionv0.Capability, r Route) (admission.Entry, admission.Answer, error) {
+	return t.choose(c, r, "")
+}
+
+// ChooseCall chooses the models of a kind of call of the library for a route: of its capability, of
+// the entries that measured its prompt (admission.Table.SelectPrompt; R70 spec). api calls it before
+// an attempt, and the call before it calls a model. The entry holds only the models the call asks:
+// the first alone for a call of one model.
+func (t *Tutor) ChooseCall(c Call, r Route) (admission.Entry, admission.Answer, error) {
+	k, ok := kinds[c]
+	if !ok {
+		return admission.Entry{}, admission.Answer{}, fmt.Errorf("tutor: no call %q of the library", c)
+	}
+	e, a, err := t.choose(k.capability, r, k.prompt)
+	e.Models = k.asked(e.Models)
+	return e, a, err
+}
+
+// choose is Choose, of the entries whose prompt is the one named, or of every entry when it is
+// empty.
+func (t *Tutor) choose(c admissionv0.Capability, r Route, prompt string) (admission.Entry, admission.Answer, error) {
 	if err := r.check(); err != nil {
 		return admission.Entry{}, admission.Answer{}, err
 	}
@@ -164,6 +185,10 @@ func (t *Tutor) Choose(c admissionv0.Capability, r Route) (admission.Entry, admi
 				providers = append(providers, p)
 			}
 		}
+	}
+	if prompt != "" {
+		e, a := t.table.SelectPrompt(t.facts, c, r.AI, r.Category, t.least, providers, prompt)
+		return e, a, nil
 	}
 	e, a := t.table.Select(t.facts, c, r.AI, r.Category, t.least, providers)
 	return e, a, nil
@@ -202,28 +227,37 @@ func (k Kind) String() string {
 }
 
 // LimitReason is why a provider refused for a limit: one only the owner of the key can lift, each in
-// its own way (architecture 3.7).
-type LimitReason string
+// its own way (architecture 3.7). It is the adapters' own, provider.Limit, so that a reason they
+// tell is one the library gives.
+type LimitReason = provider.Limit
 
 // The reasons of a limit reached.
 const (
-	LimitOwner   LimitReason = "owner_limit"
-	LimitTier    LimitReason = "tier"
-	LimitBalance LimitReason = "balance"
-	LimitBilling LimitReason = "billing"
+	LimitOwner   = provider.LimitOwner
+	LimitTier    = provider.LimitTier
+	LimitBalance = provider.LimitBalance
+	LimitBilling = provider.LimitBilling
 )
 
 // Usage is a record of what one call of a model took (architecture 3.7): the provider and the model
-// the provider says answered, the input, output and thinking tokens, and whether those tokens are
-// the call's whole bill (provider.Billed). The cache and the price in dollars come with T120. It
-// holds no content and no identifier, and may be written to logs (R09 spec).
+// the provider says answered; the input tokens without the cache, those written to the cache by how
+// long it keeps them and those read from it, which add up to the input with no token counted twice;
+// the output tokens, and of them those spent thinking; whether those tokens are the call's whole
+// bill (provider.Billed); and its cost in US dollars by the table of prices (Tutor.Prices) — at its
+// worst when the tokens are not its whole bill —, which Priced says the prices hold. It is an
+// estimate: the provider bills. It holds no content and no identifier, and may be written to logs
+// (R09 spec).
 type Usage struct {
-	Provider       admissionv0.Provider
-	Model          string
-	InputTokens    int64
-	OutputTokens   int64
-	ThinkingTokens int64
-	Billed         bool
+	Provider        admissionv0.Provider
+	Model           string
+	InputTokens     int64
+	CacheWrites     []provider.CacheWrite
+	CacheReadTokens int64
+	OutputTokens    int64
+	ThinkingTokens  int64
+	Billed          bool
+	USD             float64
+	Priced          bool
 }
 
 // Outcome is how a call of the library ended: its kind; the reason of a limit; the admission's
@@ -244,19 +278,14 @@ type call struct {
 	client provider.Model
 }
 
-// prepare chooses the models of a capability for a route and makes their clients — with the own key
-// by the key, on platform AI by the platform's key of the provider — and gives the admission's
-// answer, which an outcome of the call carries. A refusal of the admission is
+// prepare chooses the models of a capability for a route — of the entries that measured the prompt
+// named, or of every entry when it is empty —, the first n of them, all when n is 0, and makes their
+// clients — with the own key by the key, on platform AI by the platform's key of the provider —, and
+// gives the admission's answer, which an outcome of the call carries. A refusal of the admission is
 // the outcome NotAdmitted, before any model is asked and with no usage; a route that does not fit
-// and a client that cannot be made are Failed.
-func (t *Tutor) prepare(c admissionv0.Capability, r Route) ([]call, admission.Answer, *Outcome) {
-	return t.prepareN(c, r, 0)
-}
-
-// prepareN is prepare of the first n models of the entry chosen, all of them when n is 0: a call
-// that asks one model makes no client of another.
-func (t *Tutor) prepareN(c admissionv0.Capability, r Route, n int) ([]call, admission.Answer, *Outcome) {
-	e, a, err := t.Choose(c, r)
+// and a client that cannot be made are Failed. A call that asks one model makes no client of another.
+func (t *Tutor) prepare(c admissionv0.Capability, r Route, n int, prompt string) ([]call, admission.Answer, *Outcome) {
+	e, a, err := t.choose(c, r, prompt)
 	if err != nil {
 		return nil, a, &Outcome{Kind: Failed, Err: err}
 	}
@@ -302,8 +331,12 @@ func (t *Tutor) client(m admission.Model, own *OwnKey) (provider.Model, error) {
 // spec) — each its request with the model's effort and thinking as the list admitted them. It
 // returns the answers in the order of the calls and the outcome: Answered when every model
 // answered, else Failed, with the usage of each call that came back with tokens, a refused or a
-// broken answer too, since it is billed; Billed says whether its tokens are its whole bill. Which refusals are a limit or a refused key, the adapters tell with T121.
-func ask(ctx context.Context, a admission.Answer, calls []call, reqs []provider.Request) ([]provider.Response, Outcome) {
+// broken answer too, since it is billed; Billed says whether its tokens are its whole bill, and
+// a call that is not is priced at its worst: maxIn, the most input of the kind, and the request's
+// most output. A provider's refusal for a limit of any model is the outcome LimitReached with its
+// reason, and a refusal of the key KeyRefused (provider.LimitError, provider.ErrKeyRefused); the
+// usage of a model that answered stays, since it is billed.
+func ask(ctx context.Context, a admission.Answer, calls []call, reqs []provider.Request, maxIn int64) ([]provider.Response, Outcome) {
 	if len(reqs) != len(calls) {
 		return nil, Outcome{Kind: Failed, Admission: a, Err: fmt.Errorf("tutor: %d requests for %d models", len(reqs), len(calls))}
 	}
@@ -329,12 +362,39 @@ func ask(ctx context.Context, a admission.Answer, calls []call, reqs []provider.
 	for i, c := range calls {
 		// A call that came back with tokens is billed whatever ended it: a refused answer, one that
 		// broke off midway, one the context cut short.
-		if r := resps[i]; errs[i] == nil || errors.Is(errs[i], provider.ErrNoAnswer) || r.Partial || r.InputTokens > 0 || r.OutputTokens > 0 {
-			out.Usage = append(out.Usage, Usage{Provider: c.model.Provider, Model: r.Model, InputTokens: r.InputTokens, OutputTokens: r.OutputTokens, ThinkingTokens: r.ThinkingTokens, Billed: provider.Billed(r, errs[i])})
+		if r := resps[i]; errs[i] == nil || errors.Is(errs[i], provider.ErrNoAnswer) || r.Partial || r.Counted() {
+			out.Usage = append(out.Usage, usageOf(c.model, c.client, r, errs[i], maxIn, reqs[i].MaxOutputTokens))
 		}
-		if errs[i] != nil && out.Err == nil {
-			out.Kind, out.Err = Failed, fmt.Errorf("tutor: %s of %s: %w", c.model.Name(), c.model.Provider, errs[i])
+		if errs[i] == nil {
+			continue
+		}
+		// A refusal for a limit ends the call whatever the others did, and a refused key comes next:
+		// the pair gives both observations or the outcome, never one (architecture 3.7).
+		kind, limit := Failed, LimitReason("")
+		var le *provider.LimitError
+		switch {
+		case errors.As(errs[i], &le):
+			kind, limit = LimitReached, le.Limit
+		case errors.Is(errs[i], provider.ErrKeyRefused):
+			kind = KeyRefused
+		}
+		if out.Err == nil || rank(kind) > rank(out.Kind) {
+			out.Kind, out.Limit, out.Err = kind, limit, fmt.Errorf("tutor: %s of %s: %w", c.model.Name(), c.model.Provider, errs[i])
 		}
 	}
 	return resps, out
+}
+
+// rank orders the kinds of a failed call, the one an outcome takes last: a limit, then a refused
+// key, then a failure of AI.
+func rank(k Kind) int {
+	switch k {
+	case LimitReached:
+		return 3
+	case KeyRefused:
+		return 2
+	case Failed:
+		return 1
+	}
+	return 0
 }

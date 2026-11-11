@@ -231,11 +231,27 @@ func TestRunEssaysTwo(t *testing.T) {
 	dir := t.TempDir()
 	log := filepath.Join(dir, "two.jsonl")
 	code, out, errs := runMeasure("yes\n", "-kind", "essay", "-two", "-essays", theEssays, "-dir", drawnOf(t, theEssays), "-part", "dev", "-stub", "-repeats", "1", "-readers", "sonnet-low", "-log", log)
-	if code != exitOK || !strings.Contains(out, "by sonnet-low in 1 repeat, two calls an essay, the reading and the assessment of the text it read, in version 1 of the prompts of the assessment in two calls.\n10 calls") {
+	if code != exitOK || !strings.Contains(out, "by sonnet-low in 1 repeat, two calls an essay, the reading and the assessment of the text it read, in version 3 of the prompts of the assessment in two calls.\n10 calls") {
 		t.Fatalf("the run in two calls ends %d:\n%s%s", code, out, errs)
 	}
 	if code, out, errs := runIt("report", log); code != exitOK || !strings.Contains(out, "sonnet-low: false alarms 0 of") {
 		t.Errorf("the report of two calls ends %d: %s%s", code, out, errs)
+	}
+	// The judge of the words judges the feedback of a run in two calls, with the topics of its essays.
+	if code, out, errs := runJudge("yes\n", func(string) string { return "" }, "-log", log, "-stub"); code != exitOK || !strings.Contains(out, "The feedback of "+log+" that came, each judged once") {
+		t.Errorf("the judge of the feedback ends %d: %s%s", code, out, errs)
+	}
+	// A log whose essays are not those of the file it names is refused: the topics would be another's.
+	data, err := os.ReadFile(log)
+	if err != nil {
+		t.Fatal(err)
+	}
+	other := filepath.Join(dir, "other.jsonl")
+	if err := os.WriteFile(other, []byte(strings.Replace(string(data), `"kind":"essay","essay":1,"part":"dev"`, `"kind":"essay","essay":1,"part":"test"`, 1)), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if code, _, errs := runJudge("yes\n", func(string) string { return "" }, "-log", other, "-stub"); code != exitFail || !strings.Contains(errs, "is not the one of") {
+		t.Errorf("a log of other essays ends %d: %s", code, errs)
 	}
 	if code, _, errs := runMeasure("yes\n", "-kind", "reading", "-two", "-part", "dev", "-stub"); code != exitUsage || !strings.Contains(errs, "-two is for -kind essay") {
 		t.Errorf("-two for the reading ends %d: %s", code, errs)

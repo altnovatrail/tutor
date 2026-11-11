@@ -288,7 +288,8 @@ type Offer struct {
 func (s *Server) offers() []Offer {
 	offers := make([]Offer, len(s.choices))
 	for i, c := range s.choices {
-		in, out := c.Model.Price()
+		p := c.Model.Prices()
+		in, out := p.Input, p.Output
 		offers[i] = Offer{Model: c.Model.Name(), Input: in, Output: out, Efforts: c.Efforts, Effort: c.Effort, Ticked: c.Ticked,
 			NoThinking: append([]string{}, c.NoThinking...)}
 	}
