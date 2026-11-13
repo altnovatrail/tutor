@@ -3,11 +3,13 @@ package tutor
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 
 	"github.com/altnovatrail/spec/types/admissionv0"
 
+	"github.com/altnovatrail/tutor/admission"
 	"github.com/altnovatrail/tutor/provider"
 )
 
@@ -85,5 +87,23 @@ func TestCheckKeyPanic(t *testing.T) {
 	lib.adapters["anthropic"] = func(string, string) (provider.Model, error) { return p, nil }
 	if got, err := lib.CheckKey(context.Background(), ownRoute); got != KeyUnanswered || err == nil || !strings.Contains(err.Error(), "panicked: boom") {
 		t.Errorf("a panic: %v, %v", got, err)
+	}
+}
+
+// The check of a key takes the hint without the work from the kinds of call, as every other (R106):
+// with the hint's entry of the words' prompt alone it asks its model, and an entry of the hint on
+// another prompt opens nothing.
+func TestCheckKeyHint(t *testing.T) {
+	opus, haiku := &fake{}, &fake{}
+	lib := library(t, adultFacts, &fakes{models: map[string]*fake{"claude-opus-5-5": opus, "claude-haiku-5-5": haiku}})
+	withWords(t, admissionv0.CapabilityHint)
+	admission.Admitted = slices.DeleteFunc(slices.Clone(admission.Admitted), func(e admission.Entry) bool { return e.Capability != admissionv0.CapabilityHint })
+	if got, err := lib.CheckKey(context.Background(), ownRoute); got != KeyAccepted || err != nil || opus.checked != 1 || haiku.checked != 0 {
+		t.Errorf("the hint alone: %v, %v; checked %d and %d", got, err, opus.checked, haiku.checked)
+	}
+	admission.Admitted = []admission.Entry{{Capability: admissionv0.CapabilityHint, Stage: admission.StageAuthor, Prompt: "another prompt",
+		Models: []admission.Model{{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"}}}}
+	if got, err := lib.CheckKey(context.Background(), ownRoute); got != KeyProviderClosed || err != nil || haiku.checked != 0 {
+		t.Errorf("the hint of another prompt: %v, %v; checked %d", got, err, haiku.checked)
 	}
 }

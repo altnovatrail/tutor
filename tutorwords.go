@@ -7,7 +7,6 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/altnovatrail/spec/types/admissionv0"
 	"github.com/altnovatrail/spec/types/formatv0"
 	"github.com/altnovatrail/spec/types/formatv0/open"
 
@@ -87,7 +86,7 @@ type WordsAnswer struct {
 
 // Words asks the admitted model of the words for the analysis and the hint of a rung. With the work
 // it serves the analysis of the steps and the hint, so both must be admitted, and the model is the
-// analysis's; without it, the hint alone. A task without words, a crop that is no PNG of a sheet, a
+// analysis's (CallWords); without it, the hint alone (CallHint). A task without words, a crop that is no PNG of a sheet, a
 // rung the ladder has not, a language with no tag and no style of presentation fail before any
 // call; an answer off the schema, or naming a trap the request does not hold, fails the call.
 func (t *Tutor) Words(ctx context.Context, w WordsRequest) WordsAnswer {
@@ -113,14 +112,14 @@ func (t *Tutor) Words(ctx context.Context, w WordsRequest) WordsAnswer {
 	}
 	p := hint.Prompt{Statement: statement, Key: w.Key, Solution: w.Solution, Traps: traps, Found: w.Found,
 		Techniques: w.Techniques, Rung: hint.Rung(w.Rung), Language: w.Language, Style: w.Style, Asked: w.Asked}
-	capability := admissionv0.CapabilityHint
+	c := CallHint
 	if len(w.Crop) > 0 {
 		cfg, err := cropSize(w.Crop)
 		if err != nil {
 			return fail(err)
 		}
 		p.PNG, p.Width, p.Height = w.Crop, cfg.Width, cfg.Height
-		capability = admissionv0.CapabilitySolutionAnalysis
+		c = CallWords
 	}
 	req, err := hint.RequestOf(p)
 	if err != nil {
@@ -130,15 +129,15 @@ func (t *Tutor) Words(ctx context.Context, w WordsRequest) WordsAnswer {
 	if err := checkText(req); err != nil {
 		return fail(err)
 	}
-	k := kinds[CallWords]
-	calls, a, refused := t.prepare(capability, w.Route, k.models, k.prompt)
+	k := kinds[c]
+	calls, a, refused := t.prepare(k.capability, w.Route, k.models, k.prompt)
 	if refused != nil {
 		return WordsAnswer{Outcome: *refused}
 	}
-	if capability == admissionv0.CapabilitySolutionAnalysis {
+	if c == CallWords {
 		// The one call words the hint too: the model of the analysis must be admitted for the hint
 		// as well (R59), not some other model.
-		he, ha, err := t.choose(admissionv0.CapabilityHint, w.Route, k.prompt)
+		he, ha, err := t.ChooseCall(CallHint, w.Route)
 		switch {
 		case err != nil:
 			return fail(err)

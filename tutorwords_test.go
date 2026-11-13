@@ -159,3 +159,33 @@ func TestWordsRefuses(t *testing.T) {
 		t.Errorf("an empty crop: %+v", got)
 	}
 }
+
+// The hint without the work is a kind of call of its own (R106): ChooseCall takes the entry of the
+// hint that measured the words' prompt, not an entry of the hint on another prompt that stands
+// before it, as Choose by capability does, and the words without the work ask that entry's model.
+func TestChooseCallHint(t *testing.T) {
+	withWords(t, admissionv0.CapabilitySolutionAnalysis, admissionv0.CapabilityHint)
+	other := admission.Entry{Capability: admissionv0.CapabilityHint, Stage: admission.StageAuthor, Prompt: "another prompt",
+		Models: []admission.Model{{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"}}}
+	admission.Admitted = append([]admission.Entry{other}, admission.Admitted...)
+	opus := &fake{resp: provider.Response{JSON: answered, Model: "claude-opus-5-5"}}
+	haiku := &fake{resp: provider.Response{JSON: answered, Model: "claude-haiku-5-5"}}
+	lib := library(t, adultFacts, &fakes{models: map[string]*fake{"claude-opus-5-5": opus, "claude-haiku-5-5": haiku}})
+	if e, a, err := lib.Choose(admissionv0.CapabilityHint, platform); err != nil || !a.Admitted || e.Models[0].ID != "claude-haiku-5-5" {
+		t.Errorf("Choose(hint) = %+v, %+v, %v; want the first entry of the hint", e, a, err)
+	}
+	if e, a, err := lib.ChooseCall(CallHint, platform); err != nil || !a.Admitted || e.Prompt != hint.Fingerprint() || len(e.Models) != 1 || e.Models[0].ID != "claude-opus-5-5" {
+		t.Errorf("ChooseCall(CallHint) = %+v, %+v, %v; want the entry of the words' prompt", e, a, err)
+	}
+	if got := lib.Words(context.Background(), wordsOf(nil)); got.Outcome.Kind != Answered || len(opus.asked) != 1 || len(haiku.asked) != 0 {
+		t.Errorf("the hint without the work: %+v, asked %d and %d", got.Outcome, len(opus.asked), len(haiku.asked))
+	}
+	// An entry of the hint on another prompt alone admits neither.
+	admission.Admitted = []admission.Entry{other}
+	if _, a, err := lib.ChooseCall(CallHint, platform); err != nil || a.Admitted {
+		t.Errorf("ChooseCall(CallHint) of another prompt: %+v, %v", a, err)
+	}
+	if got := lib.Words(context.Background(), wordsOf(nil)); got.Outcome.Kind != NotAdmitted || len(haiku.asked) != 0 {
+		t.Errorf("the hint of another prompt: %+v, asked %d", got.Outcome, len(haiku.asked))
+	}
+}
