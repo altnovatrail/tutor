@@ -80,11 +80,10 @@ func (t *Tutor) ReadWorkbook(ctx context.Context, r WorkbookReading) WorkbookRea
 		crops[i] = workbook.Crop{Item: b.Item, Slot: b.Slot, PNG: b.Crop}
 		maxIn += int64(render.Tokens(cfg.Width, cfg.Height))
 	}
-	k := kinds[CallWorkbook]
 	if len(crops) == 0 {
 		// A page with no filled box goes to no model, and makes no client: each reader's observation
 		// is its own, so that changing one changes no other.
-		e, a, err := t.choose(k.capability, r.Route, k.prompt)
+		e, a, err := t.chooseCall(CallWorkbook, r.Route)
 		switch {
 		case err != nil:
 			return fail(err)
@@ -92,13 +91,13 @@ func (t *Tutor) ReadWorkbook(ctx context.Context, r WorkbookReading) WorkbookRea
 			return WorkbookRead{Outcome: Outcome{Kind: NotAdmitted, Admission: a}}
 		}
 		obs, _ := workbook.ObservationOf(places, []workbook.Reading{})
-		out := make([]*observationv1.Observation, len(e.Models))
+		out := make([]*observationv1.Observation, len(kinds[CallWorkbook].asked(e.Models)))
 		for i := range out {
 			out[i] = proto.Clone(obs).(*observationv1.Observation)
 		}
 		return WorkbookRead{Observations: out, Outcome: Outcome{Kind: Answered, Admission: a}}
 	}
-	calls, a, refused := t.prepare(k.capability, r.Route, 0, k.prompt)
+	calls, a, refused := t.prepare(CallWorkbook, r.Route)
 	if refused != nil {
 		return WorkbookRead{Outcome: *refused}
 	}

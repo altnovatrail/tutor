@@ -57,7 +57,7 @@ func (t *Tutor) ReadSheet(ctx context.Context, r SheetReading) SheetRead {
 		return SheetRead{Outcome: Outcome{Kind: Failed, Err: err}}
 	}
 	k := kinds[CallSheet]
-	calls, a, refused := t.prepare(k.capability, r.Route, 0, k.prompt)
+	calls, a, refused := t.prepare(CallSheet, r.Route)
 	if refused != nil {
 		return SheetRead{Outcome: *refused}
 	}

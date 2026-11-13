@@ -12,7 +12,6 @@ import (
 
 	observationv1 "github.com/altnovatrail/spec/contracts/novatrail/observation/v1"
 
-	"github.com/altnovatrail/tutor/admission"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/sample"
 	"github.com/altnovatrail/tutor/provider"
@@ -57,9 +56,6 @@ type WordsRequest struct {
 	Style      string
 	Asked      []string
 }
-
-// notAdmitted is the reason of a refusal by the list of admitted models.
-var notAdmitted = admission.ReasonModelNotAdmitted
 
 // question is the text of the item of a task's one answer slot bound anywhere, what it asks, or nil.
 func question(t *open.Task) *formatv0.Text {
@@ -129,27 +125,14 @@ func (t *Tutor) Words(ctx context.Context, w WordsRequest) WordsAnswer {
 	if err := checkText(req); err != nil {
 		return fail(err)
 	}
-	k := kinds[c]
-	calls, a, refused := t.prepare(k.capability, w.Route, k.models, k.prompt)
+	// With the work, the one call words the hint too: the hint must be admitted on the analysis's
+	// model (R84), which prepare holds, as ChooseCall, Price and CheckKey do.
+	calls, a, refused := t.prepare(c, w.Route)
 	if refused != nil {
 		return WordsAnswer{Outcome: *refused}
 	}
-	if c == CallWords {
-		// The one call words the hint too: the model of the analysis must be admitted for the hint
-		// as well (R59), not some other model.
-		he, ha, err := t.ChooseCall(CallHint, w.Route)
-		switch {
-		case err != nil:
-			return fail(err)
-		case !ha.Admitted:
-			return WordsAnswer{Outcome: Outcome{Kind: NotAdmitted, Admission: ha}}
-		case len(he.Models) == 0 || he.Models[0] != calls[0].model:
-			ha.Admitted, ha.Reason = false, &notAdmitted
-			return WordsAnswer{Outcome: Outcome{Kind: NotAdmitted, Admission: ha}}
-		}
-	}
 	// The words are one model's: an entry of more asks its first.
-	resps, out := ask(ctx, a, calls, []provider.Request{req}, k.maxIn)
+	resps, out := ask(ctx, a, calls, []provider.Request{req}, kinds[c].maxIn)
 	if out.Kind != Answered {
 		return WordsAnswer{Outcome: out}
 	}

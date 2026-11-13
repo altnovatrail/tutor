@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/altnovatrail/spec/types/admissionv0"
 	"github.com/altnovatrail/spec/types/formatv0/open"
 
 	"github.com/altnovatrail/tutor/provider"
@@ -103,7 +102,7 @@ func TestPrices(t *testing.T) {
 // whole bill costs its worst.
 func TestUsageCost(t *testing.T) {
 	lib, opus, haiku := pricedPair(t)
-	calls, a, refused := lib.prepare(admissionv0.CapabilityHandwritingReading, platform, 0, "")
+	calls, a, refused := lib.prepare(CallSheet, platform)
 	if refused != nil {
 		t.Fatal(refused)
 	}

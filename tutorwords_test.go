@@ -189,3 +189,50 @@ func TestChooseCallHint(t *testing.T) {
 		t.Errorf("the hint of another prompt: %+v, asked %d", got.Outcome, len(haiku.asked))
 	}
 }
+
+// The words with the work are admitted only with the hint on the analysis's model (R84), and every
+// place that decides on them holds it by one choice (Д13): with the hint of another model, of
+// another effort or on another prompt, neither ChooseCall nor Price nor the call admits the words,
+// and the check of a key asks only the models the calls would ask — the hint's own, not the
+// analysis's. With the hint on the same model, all of them admit it, as before.
+func TestWordsHintSameModel(t *testing.T) {
+	opus := admission.Model{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "high"}
+	for _, tt := range []struct {
+		name        string
+		hint        admission.Entry
+		admitted    bool
+		opus, haiku int
+		key         KeyCheck
+	}{
+		{"the same model", admission.Entry{Prompt: hint.Fingerprint(), Models: []admission.Model{opus}}, true, 1, 0, KeyAccepted},
+		{"another model", admission.Entry{Prompt: hint.Fingerprint(), Models: []admission.Model{{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"}}}, false, 0, 1, KeyAccepted},
+		{"another effort", admission.Entry{Prompt: hint.Fingerprint(), Models: []admission.Model{{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "medium"}}}, false, 1, 0, KeyAccepted},
+		{"another prompt", admission.Entry{Prompt: "another prompt", Models: []admission.Model{opus}}, false, 0, 0, KeyProviderClosed},
+	} {
+		withWords(t, admissionv0.CapabilitySolutionAnalysis)
+		h := tt.hint
+		h.Capability, h.Stage = admissionv0.CapabilityHint, admission.StageAuthor
+		// The analysis and the hint alone, so that the check of a key asks no reader of a sheet.
+		admission.Admitted = append(slices.DeleteFunc(slices.Clone(admission.Admitted), func(e admission.Entry) bool {
+			return e.Capability != admissionv0.CapabilitySolutionAnalysis
+		}), h)
+		lib, asked := tutorOf(t, answered)
+		haiku := &fake{}
+		lib.adapters["anthropic"] = (&fakes{models: map[string]*fake{"claude-opus-5-5": asked, "claude-haiku-5-5": haiku}}).dial
+
+		e, a, err := lib.ChooseCall(CallWords, platform)
+		if err != nil || a.Admitted != tt.admitted || (tt.admitted && (len(e.Models) != 1 || e.Models[0] != opus)) || (!tt.admitted && (e.Models != nil || a.Reason == nil)) {
+			t.Errorf("%s: ChooseCall(CallWords) = %+v, %+v, %v", tt.name, e, a, err)
+		}
+		if p, a, err := lib.Price(CallWords, platform); err != nil || a.Admitted != tt.admitted || (!tt.admitted && p != (CallPrice{})) {
+			t.Errorf("%s: Price(CallWords) = %+v, %+v, %v", tt.name, p, a, err)
+		}
+		got := lib.Words(context.Background(), wordsOf(cropPNG(t, 300, 120)))
+		if want := map[bool]Kind{true: Answered, false: NotAdmitted}[tt.admitted]; got.Outcome.Kind != want || got.Outcome.Admission.Admitted != tt.admitted || len(asked.asked) != map[bool]int{true: 1, false: 0}[tt.admitted] {
+			t.Errorf("%s: the words are %+v, asked %d", tt.name, got.Outcome, len(asked.asked))
+		}
+		if k, err := lib.CheckKey(context.Background(), ownRoute); k != tt.key || err != nil || asked.checked != tt.opus || haiku.checked != tt.haiku {
+			t.Errorf("%s: CheckKey = %v, %v; checked Opus %d and Haiku %d times", tt.name, k, err, asked.checked, haiku.checked)
+		}
+	}
+}
