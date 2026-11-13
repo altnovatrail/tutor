@@ -98,7 +98,7 @@ func TestSheets(t *testing.T) {
 }
 
 // The files of the extended measurement are what the generator makes of their seeds, byte for byte:
-// the same command makes them again (architecture 3.4, «Наборы T95»).
+// the same command makes them again (docs/measurements.md, 3.10).
 func TestFiles(t *testing.T) {
 	files := map[string]func() (*sample.Bank, *sample.Plan, error){
 		"near-gen": func() (*sample.Bank, *sample.Plan, error) { return gen.NearSheets(20, 1, "near-gen") },

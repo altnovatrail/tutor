@@ -491,7 +491,7 @@ The sources of the page of record mode (architecture 3.3; R25; T13). Read 2026-1
 
 The study «Рукопись ребёнка на канве и ИИ-наставник» ("A child's handwriting on the canvas and the AI tutor") — an [artifact](https://claude.ai/artifact/QLH6WzmmQs4MY5NvjMxb1D) of 2026-10-20: the report `files/child-handwriting.md` and nine working notes `files/notes/`. Read 2026-10-21; it is not in the repository.
 - The study's sections are A–J, its questions `И1`–`И32`: this is its own numbering. The numbers of decisions in it — `R03`, `R04`, `R05`, `R09` — are spec's numbers, not this log's.
-- The researchers read their sources on 2026-10-20, and their quotes are verbatim. Below is what R06 (the 2026-10-21 amendment), R08, R11 and architecture 3.1 rest on, with the primary source the study names. Apart from Google's terms and the law, sources 1.1 and sources 3.1, these primary sources were not read again here: the quotes are as the study gives them:
+- The researchers read their sources on 2026-10-20, and their quotes are verbatim. Below is what R06 (the 2026-10-21 amendment), R08, R11 and the 2026-10-21 plan of measurements 1.4–1.7 rest on, with the primary source the study names. Apart from Google's terms and the law, sources 1.1 and sources 3.1, these primary sources were not read again here: the quotes are as the study gives them:
 - **Google Cloud.** §20(f) and the archive of the terms of 2024-07-18 are in sources 1.1: they were checked here on 2026-10-21. By the study's reading, not a lawyer's, the prohibition of §20(d) closes Google's generative models to the whole platform, which is open to children (`И1`).
 - **The place on the handwriting.**
   - HG-Bench — 500 marked-up homework papers of Chinese K-12 pupils, a box counting at IoU ≥ 0.5: "no zero-shot system exceeds 55.22% on FA or 48.22% on FSm" ([arXiv 2606.25491](https://arxiv.org/html/2606.25491v1)).
@@ -523,7 +523,7 @@ The study «Рукопись ребёнка на канве и ИИ-настав
 
 ### 5.2. The analysis «Базовая канва и контракт „канва ↔ агент“»
 
-The analysis «Базовая канва и контракт „канва ↔ агент“» ("The base canvas and the contract 'canvas ↔ agent'") — the author sent it on 2026-10-21; it is not in the repository. It was written by a model that saw neither the code nor NovaTrail's decisions, so what is taken from it is questions, not facts: the amendment to R03, О-8 in architecture 3.1 and В15 of table 3 of [RUN.md](../RUN.md), which R43 spec closed. spec names it by the same title and with the same reservation: product 14 spec, now sources 8.4 spec (R10).
+The analysis «Базовая канва и контракт „канва ↔ агент“» ("The base canvas and the contract 'canvas ↔ agent'") — the author sent it on 2026-10-21; it is not in the repository. It was written by a model that saw neither the code nor NovaTrail's decisions, so what is taken from it is questions, not facts: the amendment to R03, О-8 in measurements 1.4–1.7 and В15 of table 3 of [RUN.md](../RUN.md), which R43 spec closed. spec names it by the same title and with the same reservation: product 14 spec, now sources 8.4 spec (R10).
 
 ### 5.3. canvas-api at commit 0901af0
 

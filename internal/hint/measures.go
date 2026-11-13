@@ -88,7 +88,7 @@ func number(w string) bool {
 }
 
 // Gendered are the words of a hint by which the rough search of T76 finds the learner's sex told
-// (docs/architecture.md, 3.4, «Итог замера подсказок»). In Russian: the hint speaks to the learner,
+// (docs/measurements.md, 3.6). In Russian: the hint speaks to the learner,
 // «ты» or «вы», and has a word that ends in a vowel and «л», «ла», «лся» or «лась», such as «нашёл»
 // or «решила», or it has «прав», «права», «молодец» or «умница». In English: a pronoun of the third
 // person that tells a sex, he, she, him, her, his, hers, himself or herself. It finds the sex of

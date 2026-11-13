@@ -12,11 +12,11 @@ import (
 	"github.com/altnovatrail/tutor/internal/essay"
 )
 
-// Essays is the report of a run of the assessment by the rubric (T83; docs/architecture.md, 3.4,
-// «Критерий сочинений»): the measure of О-22 for every reader — the criteria judged unmet that the
-// essay meets, the main one, and the agreement with the planned truth, criterion by criterion, with
-// Cohen's κ — and how the reader read the essays and kept the rule of the feedback. It has no
-// threshold: the measure has no target yet (О-22).
+// Essays is the report of a run of the assessment by the rubric (T83; docs/measurements.md, 3.8):
+// the measure of О-22 for every reader — the criteria judged unmet that the essay meets, the main
+// one, and the agreement with the planned truth, criterion by criterion, with Cohen's κ — and how
+// the reader read the essays and kept the rule of the feedback. It has no threshold: the measure
+// has no target yet (О-22).
 type Essays struct {
 	// protocol are the runner's reports of the protocol that the log tells (R74).
 	protocol []Named

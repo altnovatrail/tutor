@@ -13,20 +13,18 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// The plans of the free-form measurement, the document that shows them and the section that plans
-// the measurement (docs/architecture.md, section 3.4), as seen from this package's directory.
+// The plans of the free-form measurement and the document that shows them, as seen from this
+// package's directory. The measurement itself is docs/measurements.md, 3.3.
 const (
-	freePlan        = "../../eval/free-sheets.json"
-	authorPlan      = "../../eval/free-author.json"
-	freeSheetsDoc   = "../../docs/free-sheets.md"
-	architectureDoc = "../../docs/architecture.md"
+	freePlan      = "../../eval/free-sheets.json"
+	authorPlan    = "../../eval/free-author.json"
+	freeSheetsDoc = "../../docs/free-sheets.md"
 )
 
 // TestFreeSheetPlans checks the plans of the free-form measurement the way the author does, with
 // their bank; that each file is the plan as it is written; that the author's sheets are three free
 // solutions, one to a layout (the 2026-10-27 amendment to R28); and that the tables of
-// docs/free-sheets.md are the bank and the plans, byte for byte, and so are the two tables of
-// the sheets' composition in section 3.4 of docs/architecture.md.
+// docs/free-sheets.md are the bank and the plans, byte for byte.
 func TestFreeSheetPlans(t *testing.T) {
 	code, out, errs := runIt("check", freeBank, freePlan, authorPlan)
 	want := freeBank + ": ok, bank of 6 tasks\n" +
@@ -56,10 +54,6 @@ func TestFreeSheetPlans(t *testing.T) {
 		authorTable(t, author, layouts),
 	} {
 		sameTable(t, freeSheetsDoc, doc, freePlan+" and "+authorPlan, built)
-	}
-	architecture := readDoc(t, architectureDoc)
-	for _, built := range []string{composition, places} {
-		sameTable(t, architectureDoc, architecture, freePlan, built)
 	}
 }
 
@@ -210,8 +204,8 @@ func freeTaskTable(t *testing.T, bank *sample.Bank, layouts map[string]string) s
 // The scenarios of the free-form measurement, in the order of its tables.
 var freeScenarios = []sample.Scenario{sample.ScenarioCorrect, sample.ScenarioError, sample.ScenarioErasureFixed, sample.ScenarioErasureBroken}
 
-// compositionTable writes the composition of the plan by task and scenario, as section 3.4 has
-// it: a dash for none, and the totals in bold.
+// compositionTable writes the composition of the plan by task and scenario, as docs/free-sheets.md
+// has it: a dash for none, and the totals in bold.
 func compositionTable(bank *sample.Bank, plan *sample.Plan, layouts map[string]string) string {
 	var b strings.Builder
 	b.WriteString("| Задача | Раскладка | `correct` | `error` | `erasure-fixed` | `erasure-broken` | Всего |\n")
@@ -242,8 +236,8 @@ func compositionTable(bank *sample.Bank, plan *sample.Plan, layouts map[string]s
 	return b.String()
 }
 
-// placesTable writes where the first error and the planned erasure stand, by layout, as section
-// 3.4 has it.
+// placesTable writes where the first error and the planned erasure stand, by layout, as
+// docs/free-sheets.md has it.
 func placesTable(bank *sample.Bank, plan *sample.Plan, layouts map[string]string) string {
 	type counts struct {
 		sheets, errors, erasures int

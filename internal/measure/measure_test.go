@@ -55,7 +55,7 @@ func judgeNamed(name string) measure.Judge {
 func near(a, b float64) bool { return math.Abs(a-b) < 1e-9 }
 
 // Every judge has the output tokens a call is expected to take: about 50, and Haiku with thinking
-// about 300 (architecture 3.1); and so have the four the extended measurement adds (R50).
+// about 300 (docs/measurements.md, 1.1); and so have the four the extended measurement adds (R50).
 func TestJudges(t *testing.T) {
 	var got []string
 	for _, j := range measure.Judges() {
@@ -67,8 +67,8 @@ func TestJudges(t *testing.T) {
 }
 
 // The estimate counts the calls and what they cost by the prices of provider/claude and the
-// expected tokens of architecture 3.1: Opus 5.5 at high costs $0.0084 for form A and $0.0100 for
-// form B, as the table of the estimate there says.
+// expected tokens of docs/measurements.md, 1.1: Opus 5.5 at high costs $0.0084 for form A and
+// $0.0100 for form B, as the table of the estimate there says.
 func TestEstimate(t *testing.T) {
 	all := sheets(t)
 	r, err := measure.New("test", all[:1], []measure.Judge{judgeNamed("opus-high")}, 1, judge.V1)

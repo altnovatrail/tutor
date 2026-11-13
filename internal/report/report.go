@@ -1,10 +1,9 @@
 // Package report turns the log of a run into the measurement's numbers and its criterion (R24;
-// docs/architecture.md, 3.1, «Замер хода решения»), asking no model, and writes them as Markdown
-// and CSV. A report holds no handwriting: numbers, the numbers and scenarios of sheets, and the
-// names of judges and forms.
+// docs/measurements.md, 1.1), asking no model, and writes them as Markdown and CSV. A report holds
+// no handwriting: numbers, the numbers and scenarios of sheets, and the names of judges and forms.
 //
-// The report of a run of free writing, in version 2 of the judge's prompt, tells more (T65; 3.4,
-// «Замер свободной записи»): the boxes on the sheets with a mistake and form D against form A on
+// The report of a run of free writing, in version 2 of the judge's prompt, tells more (T65;
+// docs/measurements.md, 3.3): the boxes on the sheets with a mistake and form D against form A on
 // them, the data for R52 spec; the answers by layout and by where the first error stands; and the
 // answers sheet by sheet. The report of a log of E2 is as it was.
 package report
@@ -24,11 +23,11 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// Alpha is the threshold of the criterion's test (architecture 3.1).
+// Alpha is the threshold of the criterion's test (docs/measurements.md, 1.1).
 const Alpha = 0.05
 
 // MinSheets is how many sheets with a difference the test needs to be passed at all: with fewer,
-// the smallest p it can give is 1/16 (architecture 3.1).
+// the smallest p it can give is 1/16 (docs/measurements.md, 1.1).
 const MinSheets = 5
 
 // key is an answer's place: a sheet, a form, a judge and a repeat.
@@ -112,9 +111,9 @@ type Comparison struct {
 	Test
 }
 
-// Criterion is the main check of a judge (architecture 3.1): D against A over all the sheets, with
-// the false "correct" on sheets with a mistake and the false alarms on correct sheets of each form,
-// what it comes to, and whether it passes with Holm's correction for the judges.
+// Criterion is the main check of a judge (docs/measurements.md, 1.1): D against A over all the
+// sheets, with the false "correct" on sheets with a mistake and the false alarms on correct sheets
+// of each form, what it comes to, and whether it passes with Holm's correction for the judges.
 type Criterion struct {
 	Comparison
 	FalseCorrectA, FalseCorrectD int
@@ -463,9 +462,9 @@ func abs(x int64) int64 {
 	return x
 }
 
-// holm marks the judges that pass Holm's correction for all the judges as architecture 3.1 wrote it
-// before the first run (R05): the judge's own p below Alpha over the number of judges, the
-// threshold of Holm's first step. The writing process helps Claude if a judge that helps passes.
+// holm marks the judges that pass Holm's correction for all the judges as docs/measurements.md, 1.1,
+// has it from before the first run (R05): the judge's own p below Alpha over the number of judges,
+// the threshold of Holm's first step. The writing process helps Claude if a judge that helps passes.
 func (r *Report) holm() {
 	for i := range r.Main {
 		if r.Main[i].Helps < Alpha/float64(len(r.Main)) {

@@ -143,7 +143,7 @@ func PairOf(r rune) (rune, bool) {
 	return s, ok
 }
 
-// Mirrorable are the digits a child writes mirrored (docs/architecture.md, section 3.1).
+// Mirrorable are the digits a child writes mirrored (docs/measurements.md, 1.4).
 const Mirrorable = "2579"
 
 // writtenValue is how a value of a number or a fraction is written in a box: digits, or a simple

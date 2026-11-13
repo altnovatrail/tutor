@@ -26,7 +26,7 @@ import (
 )
 
 // MinPause is the shortest pause within a line that a state is read at, in milliseconds: the mean
-// pause of a child's writing (docs/architecture.md, 3.1).
+// pause of a child's writing (docs/measurements.md, 1.6).
 const MinPause = 400
 
 // Progress is how far a part of the markup was written by a moment.

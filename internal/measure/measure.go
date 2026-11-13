@@ -26,7 +26,7 @@ const inputBudget = 8000
 
 // The input tokens a call is expected to take, for the estimate, by the version of the prompt. Of
 // version 1: about 1 850 for form A, about 400 more with the journal and about 820 more for each
-// frame (docs/architecture.md, 3.1, «Смета»). Of version 2, by the measure of T63 from the test of
+// frame (docs/measurements.md, 1.1). Of version 2, by the measure of T63 from the test of
 // E2 — 1.3 tokens a word, number or sign of the instructions and 1.575 of the journal: its
 // instructions are about 150 of them longer, and its journal block and journal of parts about 130
 // and 120 of them, so about 2 050 for form A and 360 more with the journal (architecture 3.1,
@@ -37,7 +37,7 @@ var inputs = map[judge.Version]struct{ a, journal, frame int }{
 }
 
 // Judge is a configuration of the judge (R24): a configuration of the runner, and the output tokens
-// a call is expected to take, for the estimate (architecture 3.1).
+// a call is expected to take, for the estimate (docs/measurements.md, 1.1).
 type Judge struct {
 	runner.Config
 	Output int
@@ -45,10 +45,10 @@ type Judge struct {
 
 // Judges are the judges of the measurement, the configurations of the runner: Opus 5.5 at high,
 // Haiku 5.5 at low, and Haiku 5.5 at low without thinking (R24), and the four the extended
-// measurement adds (R50). A call is expected to write about 50 tokens, Haiku with thinking about 300
-// (architecture 3.1), Sonnet with thinking about 200 and Haiku at medium about 400. A configuration
-// without its output here is a mistake of the code, and Judges panics on it rather than estimate its
-// calls at nothing.
+// measurement adds (R50). A call is expected to write about 50 tokens, Haiku with thinking about
+// 300 (docs/measurements.md, 1.1), Sonnet with thinking about 200 and Haiku at medium about 400. A
+// configuration without its output here is a mistake of the code, and Judges panics on it rather
+// than estimate its calls at nothing.
 func Judges() []Judge {
 	outputs := map[string]int{
 		"opus-high": 50, "haiku-low": 300, "haiku-low-no-thinking": 50,

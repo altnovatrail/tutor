@@ -28,7 +28,7 @@ type Reader = runner.Reader
 
 // Readers are the readers, the configurations of the runner by their names. An observation of a
 // sheet comes to about 200 tokens, and Haiku with thinking writes about 300 more; Opus reads each
-// condition once, and neither the other heights nor the states (docs/architecture.md, 3.4). The four the extended measurement adds (R50) are estimated so: Opus at medium as at high, Sonnet with thinking between Haiku and Opus, without thinking as Haiku without it, and Haiku at medium above Haiku at low. A
+// condition once, and neither the other heights nor the states (docs/measurements.md, 3.5). The four the extended measurement adds (R50) are estimated so: Opus at medium as at high, Sonnet with thinking between Haiku and Opus, without thinking as Haiku without it, and Haiku at medium above Haiku at low. A
 // configuration without its reader here is a mistake of the code, and Readers panics on it rather
 // than estimate its calls at nothing or repeat it unasked.
 func Readers() []Reader {

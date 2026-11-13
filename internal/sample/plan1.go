@@ -129,8 +129,8 @@ func (pl *Plan) HasParts() bool {
 	return pl != nil && pl.Version != nil && *pl.Version == PlanParts
 }
 
-// Layout is the layout of a sheet of free writing (architecture 3.4): the task sets it, and a
-// drawing or a column on the sheet shows it.
+// Layout is the layout of a sheet of free writing (docs/measurements.md, 3.3): the task sets it,
+// and a drawing or a column on the sheet shows it.
 type Layout string
 
 // The layouts of a sheet of free writing.
