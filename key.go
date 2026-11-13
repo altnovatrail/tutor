@@ -44,21 +44,10 @@ func (k KeyCheck) String() string {
 	return fmt.Sprintf("key check %d", int(k))
 }
 
-// keyChoices are the capabilities a call of the library serves, each with the prompt of the call,
-// whose models an own key is needed for: every kind of call (kinds), in the order of their names,
-// and the hint without the work, which the words serve by their prompt too.
-func keyChoices() []kind {
-	out := []kind{{capability: admissionv0.CapabilityHint, prompt: kinds[CallWords].prompt, models: kinds[CallWords].models}}
-	for _, c := range slices.Sorted(maps.Keys(kinds)) {
-		out = append(out, kinds[c])
-	}
-	return out
-}
-
 // CheckKey checks an own key when its owner connects it (R84 spec): api checks it through tutor and
 // never calls a provider round it. The route is the own key's, with the profile's age category. The
 // key is checked for every model the library would call with it — the models each kind of call
-// chooses (ChooseCall), and those of the hint without the work, both readers of a pair —, each by
+// chooses (ChooseCall), the hint without the work among them, both readers of a pair —, each by
 // a request of the provider without any learner's content that costs nothing (provider.Model.Check).
 // When none is open, the provider is closed to an own key at the profile, and no call goes. One wrong key is the end, then one model
 // without rights, then a provider that did not answer. A refusal for a limit means the provider took
@@ -72,15 +61,16 @@ func (t *Tutor) CheckKey(ctx context.Context, r Route) (KeyCheck, error) {
 		return KeyUnanswered, err
 	}
 	var models []admission.Model
-	for _, c := range keyChoices() {
-		e, a, err := t.choose(c.capability, r, c.prompt)
+	for _, c := range slices.Sorted(maps.Keys(kinds)) {
+		k := kinds[c]
+		e, a, err := t.choose(k.capability, r, k.prompt)
 		if err != nil {
 			return KeyUnanswered, err
 		}
 		if !a.Admitted {
 			continue
 		}
-		for _, m := range c.asked(e.Models) {
+		for _, m := range k.asked(e.Models) {
 			if !slices.Contains(models, m) {
 				models = append(models, m)
 			}
