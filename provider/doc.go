@@ -98,7 +98,7 @@ var ErrNoAnswer = errors.New("no answer")
 // send: none, more than most, one without its PNG, or, of two or more, one without its label. A
 // request marked NoPicture is the one that has none, and it is refused with a picture or with a
 // blank text, which asks nothing (T92). Of several pictures each has a label, as Anthropic advises,
-// so that the text can name them (docs/architecture.md, section 4).
+// so that the text can name them (docs/sources.md, 1.4).
 func CheckImages(r Request, most int) error {
 	switch {
 	case r.NoPicture && len(r.Images) > 0:
@@ -168,7 +168,7 @@ func (p Prices) WorstInput() float64 {
 }
 
 // Prices are what a model's tokens cost, in US dollars a million, as its provider's pricing page
-// gives them on the day Read names, as YYYY-MM-DD (docs/architecture.md, 3.7 and section 4):
+// gives them on the day Read names, as YYYY-MM-DD (docs/architecture.md, 3.7; docs/sources.md, 1.14):
 // input, output, a read from the cache and a write to it by how long the cache keeps it. Where a
 // prompt longer than LongAbove tokens, the cache counted in, pays other prices, Long holds them,
 // or nil when they were not read; LongAbove is 0 where the model has no such prices.

@@ -131,7 +131,7 @@ func PNG(img image.Image) ([]byte, error) {
 }
 
 // Tokens is what a picture of w × h pixels costs in tokens of a Claude model's input,
-// ⌈w / 28⌉ × ⌈h / 28⌉ (Vision; docs/architecture.md, section 4), as the model takes it unresized.
+// ⌈w / 28⌉ × ⌈h / 28⌉ (Vision; docs/sources.md, 1.3), as the model takes it unresized.
 // A picture the model would resize is not charged so: the Claude adapter has the API refuse it
 // (oversized_image: error). The board's sheet, 1000 × 600, costs 792.
 func Tokens(w, h int) int { return ((w + 27) / 28) * ((h + 27) / 28) }

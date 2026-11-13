@@ -51,7 +51,7 @@ func New(apiKey string, opts ...option.RequestOption) *Client {
 func (c *Client) Name() string { return "GPT-6 Astra" }
 
 // PricesRead is the day GPT-6 Astra's prices were read on OpenAI's Pricing page, its standard
-// tier (docs/architecture.md, section 4).
+// tier (docs/sources.md, 1.14).
 const PricesRead = "2026-11-11"
 
 // The times the cache keeps a write for, each at its own price.
@@ -131,7 +131,7 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 	}
 	// Tokens are billed whatever the answer, so they go back with an error too. OpenAI counts the
 	// tokens read from the cache and written to it in the input, and they come off it here
-	// (docs/architecture.md, 3.7 and section 4).
+	// (docs/architecture.md, 3.7; docs/sources.md, 1.14).
 	d := resp.Usage.InputTokensDetails
 	// A write the usage does not divide by its time counts at 30 minutes, the shortest it keeps.
 	m30, h12 := d.CacheWriteTokensDetails.Ttl30mTokens, d.CacheWriteTokensDetails.Ttl12hTokens
@@ -164,8 +164,8 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 	return out, nil
 }
 
-// Refusal reads an error response of the Responses API by its code (docs/architecture.md, 3.7 and
-// section 4): a balance spent, credit_balance_exhausted; a spend limit of the project or the
+// Refusal reads an error response of the Responses API by its code (docs/architecture.md, 3.7;
+// docs/sources.md, 1.15): a balance spent, credit_balance_exhausted; a spend limit of the project or the
 // organization, project_spend_limit_exceeded or organization_spend_limit_exceeded; the usage limit
 // OpenAI assigns, organization_usage_limit_exceeded, each a 429; a 429 of the type insufficient_quota
 // with any other code, a refusal of billing whose cause the code does not name; and the key refused,

@@ -155,8 +155,8 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 }
 
 // MaxImages is the most pictures the adapter sends in one request. Above 20, a stricter limit of
-// size holds for every picture of the request (Vision, read 2026-10-26; docs/architecture.md,
-// section 4), and with oversized_image set to error a picture over it would fail the call. A
+// size holds for every picture of the request (Vision, read 2026-10-26; docs/sources.md,
+// 1.4), and with oversized_image set to error a picture over it would fail the call. A
 // request of the measurement holds three at most.
 const MaxImages = 20
 
@@ -178,7 +178,7 @@ func (c *Client) check(r provider.Request) error {
 
 // params is the request as the API takes it: one message of the pictures in their order, each a
 // block of its own after a block of its label, as Anthropic advises for several pictures ("Image
-// 1:", "Image 2:"; docs/architecture.md, section 4), and the text after them.
+// 1:", "Image 2:"; docs/sources.md, 1.4), and the text after them.
 func (c *Client) params(r provider.Request) anthropic.MessageNewParams {
 	content := make([]anthropic.ContentBlockParamUnion, 0, 2*len(r.Images)+1)
 	for _, im := range r.Images {
@@ -231,9 +231,10 @@ func cacheWrites(u anthropic.Usage) []provider.CacheWrite {
 	return ws
 }
 
-// The messages that tell a refusal for a limit by their words (docs/architecture.md, 3.7 and section
-// 4). The words of a message are no contract: a refusal whose words change is a failure of AI until
-// the table and its tests follow, and the sources are read again before each release.
+// The messages that tell a refusal for a limit by their words (docs/architecture.md, 3.7;
+// docs/sources.md, 1.15). The words of a message are no contract: a refusal whose words change
+// is a failure of AI until the table and its tests follow, and the sources are read again before
+// each release.
 const (
 	ownerLimit     = "You have reached your specified API usage limits"
 	workspaceLimit = "You have reached your specified workspace API usage limits"
