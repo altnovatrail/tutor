@@ -156,17 +156,42 @@ func (t *Tutor) Choose(c admissionv0.Capability, r Route) (admission.Entry, admi
 }
 
 // ChooseCall chooses the models of a kind of call of the library for a route: of its capability, of
-// the entries that measured its prompt (admission.Table.SelectPrompt; R70 spec). api calls it before
-// an attempt, and the call before it calls a model. The entry holds only the models the call asks:
-// the first alone for a call of one model.
+// the entries that measured its prompt (admission.Table.SelectPrompt; R70 spec), and for the words
+// with the work only with the hint on the same model (R84). api calls it before an attempt, and the
+// call before it calls a model. The entry holds only the models the call asks: the first alone for
+// a call of one model.
 func (t *Tutor) ChooseCall(c Call, r Route) (admission.Entry, admission.Answer, error) {
 	k, ok := kinds[c]
 	if !ok {
 		return admission.Entry{}, admission.Answer{}, fmt.Errorf("tutor: no call %q of the library", c)
 	}
-	e, a, err := t.choose(k.capability, r, k.prompt)
+	e, a, err := t.chooseCall(c, r)
 	e.Models = k.asked(e.Models)
 	return e, a, err
+}
+
+// chooseCall is ChooseCall with every model of the entry: the one choice of a kind of call that the
+// call, ChooseCall, Price and CheckKey make, so that what api's gateway admits and reserves a quota
+// for, and the models a key is checked for, are those the call asks (Д13). The words with the work
+// word the hint in the same call, so they are admitted only when the hint is admitted on the model
+// of the analysis (R84): when the model the hint without the work chooses, by the same prompt, is
+// the analysis's first. Otherwise the answer is the hint's refusal, or model_not_admitted when the
+// hint is another model's — another ID or another effort.
+func (t *Tutor) chooseCall(c Call, r Route) (admission.Entry, admission.Answer, error) {
+	k := kinds[c]
+	e, a, err := t.choose(k.capability, r, k.prompt)
+	if err != nil || !a.Admitted || c != CallWords {
+		return e, a, err
+	}
+	he, ha, err := t.chooseCall(CallHint, r)
+	if err != nil || !ha.Admitted {
+		return admission.Entry{}, ha, err
+	}
+	if len(he.Models) == 0 || len(e.Models) == 0 || he.Models[0] != e.Models[0] {
+		refusal := admission.ReasonModelNotAdmitted
+		return admission.Entry{}, admission.Answer{Answer: admissionv0.Answer{Reason: &refusal}, Version: a.Version}, nil
+	}
+	return e, a, nil
 }
 
 // choose is Choose, of the entries whose prompt is the one named, or of every entry when it is
@@ -286,24 +311,20 @@ type call struct {
 	client provider.Model
 }
 
-// prepare chooses the models of a capability for a route — of the entries that measured the prompt
-// named, or of every entry when it is empty —, the first n of them, all when n is 0, and makes their
-// clients — with the own key by the key, on platform AI by the platform's key of the provider —, and
+// prepare chooses the models of a kind of call for a route (chooseCall), those the kind asks, and
+// makes their clients — with the own key by the key, on platform AI by the platform's key of the provider —, and
 // gives the admission's answer, which an outcome of the call carries. A refusal of the admission is
 // the outcome NotAdmitted, before any model is asked and with no usage; a route that does not fit
 // and a client that cannot be made are Failed. A call that asks one model makes no client of another.
-func (t *Tutor) prepare(c admissionv0.Capability, r Route, n int, prompt string) ([]call, admission.Answer, *Outcome) {
-	e, a, err := t.choose(c, r, prompt)
+func (t *Tutor) prepare(c Call, r Route) ([]call, admission.Answer, *Outcome) {
+	e, a, err := t.chooseCall(c, r)
 	if err != nil {
 		return nil, a, &Outcome{Kind: Failed, Err: err}
 	}
 	if !a.Admitted {
 		return nil, a, &Outcome{Kind: NotAdmitted, Admission: a}
 	}
-	models := e.Models
-	if n > 0 && n < len(models) {
-		models = models[:n]
-	}
+	models := kinds[c].asked(e.Models)
 	calls := make([]call, 0, len(models))
 	for _, m := range models {
 		client, err := t.client(m, r.Own)

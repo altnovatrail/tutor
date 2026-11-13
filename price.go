@@ -157,7 +157,7 @@ func (t *Tutor) Price(c Call, r Route) (CallPrice, admission.Answer, error) {
 	if !ok {
 		return CallPrice{}, admission.Answer{}, fmt.Errorf("tutor: no call %q of the library", c)
 	}
-	e, a, err := t.choose(k.capability, r, k.prompt)
+	e, a, err := t.chooseCall(c, r)
 	if err != nil || !a.Admitted {
 		return CallPrice{}, a, err
 	}

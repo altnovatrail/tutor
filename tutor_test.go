@@ -124,7 +124,7 @@ func TestPrepareAndAsk(t *testing.T) {
 	fs := &fakes{models: map[string]*fake{"claude-opus-5-5": opus, "claude-haiku-5-5": haiku}}
 	lib := library(t, adultFacts, fs)
 
-	calls, _, refused := lib.prepare(admissionv0.CapabilityHandwritingReading, platform, 0, "")
+	calls, _, refused := lib.prepare(CallSheet, platform)
 	if refused != nil || len(calls) != 2 || calls[0].model.ID != "claude-opus-5-5" || fs.keys[0] != "platform-key" {
 		t.Fatalf("prepared %v, refused %+v, keys %v", calls, refused, fs.keys)
 	}
@@ -158,7 +158,7 @@ func TestAskTimes(t *testing.T) {
 	opus := &fake{resp: provider.Response{JSON: `{}`, Model: "claude-opus-5-5", InputTokens: 900, OutputTokens: 120, FirstToken: 7 * time.Millisecond, Retries: 1}}
 	haiku := &fake{resp: provider.Response{JSON: `{}`, Model: "claude-haiku-5-5", InputTokens: 900, OutputTokens: 60}, delay: 200 * time.Millisecond}
 	lib := library(t, adultFacts, &fakes{models: map[string]*fake{"claude-opus-5-5": opus, "claude-haiku-5-5": haiku}})
-	calls, a, refused := lib.prepare(admissionv0.CapabilityHandwritingReading, platform, 0, "")
+	calls, a, refused := lib.prepare(CallSheet, platform)
 	if refused != nil {
 		t.Fatal(refused)
 	}
@@ -186,19 +186,19 @@ func TestNotAdmitted(t *testing.T) {
 	fs := &fakes{models: map[string]*fake{}}
 	// No facts: platform AI is closed, and no client is made, no model asked.
 	lib := library(t, "", fs)
-	calls, _, out := lib.prepare(admissionv0.CapabilityHandwritingReading, platform, 0, "")
+	calls, _, out := lib.prepare(CallSheet, platform)
 	if calls != nil || out == nil || out.Kind != NotAdmitted || out.Admission.Admitted || *out.Admission.Reason != admissionv0.AnswerReasonFactMissing || len(out.Usage) != 0 || len(fs.keys) != 0 {
 		t.Errorf("no facts: %v, %+v, keys %v", calls, out, fs.keys)
 	}
 	// A capability with no model admitted: the hint, its entries left out.
 	withWords(t)
 	lib = library(t, adultFacts, fs)
-	if _, _, out := lib.prepare(admissionv0.CapabilityHint, platform, 0, ""); out == nil || out.Kind != NotAdmitted || *out.Admission.Reason != admission.ReasonModelNotAdmitted {
+	if _, _, out := lib.prepare(CallHint, platform); out == nil || out.Kind != NotAdmitted || *out.Admission.Reason != admission.ReasonModelNotAdmitted {
 		t.Errorf("no model of the hint: %+v", out)
 	}
 	// A child: platform AI is closed without the safeguards.
 	child := Route{AI: admissionv0.AiRoutePlatformAi, Category: admissionv0.AgeCategoryUnder13}
-	if _, _, out := lib.prepare(admissionv0.CapabilityHandwritingReading, child, 0, ""); out == nil || out.Kind != NotAdmitted {
+	if _, _, out := lib.prepare(CallSheet, child); out == nil || out.Kind != NotAdmitted {
 		t.Errorf("a child: %+v", out)
 	}
 	if len(fs.keys) != 0 {
@@ -210,13 +210,13 @@ func TestOwnKey(t *testing.T) {
 	fs := &fakes{models: map[string]*fake{"claude-opus-5-5": {}, "claude-haiku-5-5": {}}}
 	lib := library(t, "", fs)
 	own := Route{AI: admissionv0.AiRouteOwnKey, Category: admissionv0.AgeCategoryAdult, Own: NewOwnKey("anthropic", testKey)}
-	calls, _, out := lib.prepare(admissionv0.CapabilityHandwritingReading, own, 0, "")
+	calls, _, out := lib.prepare(CallSheet, own)
 	if out != nil || len(calls) != 2 || fs.keys[0] != testKey || fs.keys[1] != testKey {
 		t.Fatalf("the own key prepared %v, %+v, keys of %d", calls, out, len(fs.keys))
 	}
 	// An own key of another provider takes no model of Anthropic.
 	other := Route{AI: admissionv0.AiRouteOwnKey, Category: admissionv0.AgeCategoryAdult, Own: NewOwnKey("openai", testKey)}
-	if _, _, out := lib.prepare(admissionv0.CapabilityHandwritingReading, other, 0, ""); out == nil || out.Kind != NotAdmitted {
+	if _, _, out := lib.prepare(CallSheet, other); out == nil || out.Kind != NotAdmitted {
 		t.Errorf("an OpenAI key read by Anthropic: %+v", out)
 	}
 	// A route whose key does not fit it fails before anything.
@@ -226,7 +226,7 @@ func TestOwnKey(t *testing.T) {
 		"own key of no provider": {AI: admissionv0.AiRouteOwnKey, Category: admissionv0.AgeCategoryAdult, Own: NewOwnKey("", testKey)},
 		"platform with a key":    {AI: admissionv0.AiRoutePlatformAi, Category: admissionv0.AgeCategoryAdult, Own: NewOwnKey("anthropic", testKey)},
 	} {
-		_, _, out := lib.prepare(admissionv0.CapabilityHandwritingReading, r, 0, "")
+		_, _, out := lib.prepare(CallSheet, r)
 		if out == nil || out.Kind != Failed || strings.Contains(out.Err.Error(), testKey) {
 			t.Errorf("%s: %+v", name, out)
 		}
@@ -257,11 +257,11 @@ func TestPlatformKeyAndAdapters(t *testing.T) {
 	lib := library(t, adultFacts, fs)
 	lib.keys = nil
 	// Without the platform's key of Anthropic its pair serves no one on platform AI.
-	if _, _, out := lib.prepare(admissionv0.CapabilityHandwritingReading, platform, 0, ""); out == nil || out.Kind != NotAdmitted || *out.Admission.Reason != admission.ReasonModelNotAdmitted || len(fs.keys) != 0 {
+	if _, _, out := lib.prepare(CallSheet, platform); out == nil || out.Kind != NotAdmitted || *out.Admission.Reason != admission.ReasonModelNotAdmitted || len(fs.keys) != 0 {
 		t.Errorf("no platform key: %+v", out)
 	}
 	lib = library(t, adultFacts, fs)
-	if _, _, out := lib.prepare(admissionv0.CapabilityHandwritingReading, platform, 0, ""); out == nil || out.Kind != Failed || !strings.Contains(out.Err.Error(), "no fake") {
+	if _, _, out := lib.prepare(CallSheet, platform); out == nil || out.Kind != Failed || !strings.Contains(out.Err.Error(), "no fake") {
 		t.Errorf("a client that cannot be made: %+v", out)
 	}
 	// A key of a provider with no adapter is a config New refuses, and an adapter given as nil is
@@ -279,7 +279,7 @@ func TestPlatformKeyAndAdapters(t *testing.T) {
 		t.Fatal(err)
 	}
 	own := Route{AI: admissionv0.AiRouteOwnKey, Category: admissionv0.AgeCategoryAdult, Own: NewOwnKey("anthropic", testKey)}
-	if _, _, out := noAnthropic.prepare(admissionv0.CapabilityHandwritingReading, own, 0, ""); out == nil || out.Kind != NotAdmitted || *out.Admission.Reason != admission.ReasonModelNotAdmitted {
+	if _, _, out := noAnthropic.prepare(CallSheet, own); out == nil || out.Kind != NotAdmitted || *out.Admission.Reason != admission.ReasonModelNotAdmitted {
 		t.Errorf("an own key of a provider with no adapter: %+v", out)
 	}
 	// A model chosen whose provider has no adapter fails, before any call: Choose never chooses one.
@@ -309,7 +309,7 @@ func TestClients(t *testing.T) {
 	fs := &fakes{models: map[string]*fake{"claude-opus-5-5": {}, "claude-haiku-5-5": {}}}
 	lib := library(t, adultFacts, fs)
 	for range 3 {
-		if _, _, out := lib.prepare(admissionv0.CapabilityHandwritingReading, platform, 0, ""); out != nil {
+		if _, _, out := lib.prepare(CallSheet, platform); out != nil {
 			t.Fatal(out)
 		}
 	}
@@ -318,7 +318,7 @@ func TestClients(t *testing.T) {
 	}
 	own := Route{AI: admissionv0.AiRouteOwnKey, Category: admissionv0.AgeCategoryAdult, Own: NewOwnKey("anthropic", testKey)}
 	for range 2 {
-		if _, _, out := lib.prepare(admissionv0.CapabilityHandwritingReading, own, 0, ""); out != nil {
+		if _, _, out := lib.prepare(CallSheet, own); out != nil {
 			t.Fatal(out)
 		}
 	}

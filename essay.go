@@ -49,7 +49,7 @@ func (t *Tutor) ReadEssay(ctx context.Context, r EssayReading) EssayRead {
 		return fail(err)
 	}
 	k := kinds[CallEssay]
-	calls, a, refused := t.prepare(k.capability, r.Route, k.models, k.prompt)
+	calls, a, refused := t.prepare(CallEssay, r.Route)
 	if refused != nil {
 		return EssayRead{Outcome: *refused}
 	}

@@ -85,7 +85,7 @@ func (t *Tutor) AssessEssay(ctx context.Context, r RubricAssessment) RubricAsses
 		rubric[i] = sample.Criterion{ID: strconv.Itoa(i + 1), Text: c}
 	}
 	k := kinds[CallRubric]
-	calls, a, refused := t.prepare(k.capability, r.Route, k.models, k.prompt)
+	calls, a, refused := t.prepare(CallRubric, r.Route)
 	if refused != nil {
 		return none(*refused)
 	}

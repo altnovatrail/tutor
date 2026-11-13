@@ -63,7 +63,7 @@ func (t *Tutor) CheckKey(ctx context.Context, r Route) (KeyCheck, error) {
 	var models []admission.Model
 	for _, c := range slices.Sorted(maps.Keys(kinds)) {
 		k := kinds[c]
-		e, a, err := t.choose(k.capability, r, k.prompt)
+		e, a, err := t.chooseCall(c, r)
 		if err != nil {
 			return KeyUnanswered, err
 		}
