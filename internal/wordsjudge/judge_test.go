@@ -24,10 +24,11 @@ func opus() wordsjudge.Judge {
 
 // The judge's prompt is frozen: a change of a word is a new version, whose control phrases run
 // again. Version 2 came after the control phrases of T119, with the fingerprint
-// 2d705550adf916cf9b731fa7b0a06715af0b46d2cacd195dc026e7560f08a2af; version 3 is T127's.
+// 2d705550adf916cf9b731fa7b0a06715af0b46d2cacd195dc026e7560f08a2af; version 3 is T127's,
+// 052552a7e77c9381fee0e575af190d07fd7b2f51f8713269e05d2d6743906272; version 4 is T143's.
 func TestFrozen(t *testing.T) {
-	const frozen = "052552a7e77c9381fee0e575af190d07fd7b2f51f8713269e05d2d6743906272"
-	if got := wordsjudge.Fingerprint(); got != frozen || wordsjudge.Version != 3 {
+	const frozen = "58fe6a07d5d97ef6c477825f44f844e1edd3bb705c5823b4328bb75788ca22db"
+	if got := wordsjudge.Fingerprint(); got != frozen || wordsjudge.Version != 4 {
 		t.Errorf("the fingerprint of version %d is %s, not the one frozen, %s", wordsjudge.Version, got, frozen)
 	}
 }
@@ -41,6 +42,10 @@ func TestRequest(t *testing.T) {
 	}
 	if r.Text != "Task: Вычисли 2 + 3.\nRung: 2.\nLanguage: ru.\nNote at the side: мне грустно\n<hint>\nГде ошибка?\n</hint>" || !r.NoPicture || len(r.Images) != 0 || r.SchemaName != "words_judge" {
 		t.Errorf("the request is %+v", r)
+	}
+	r, _ = wordsjudge.Request(wordsjudge.Item{Hint: "Что помогло?", Lang: "ru", Statement: "Вычисли 2 + 3.", Correct: true})
+	if r.Text != "Task: Вычисли 2 + 3.\nThe words after a correct answer.\nLanguage: ru.\nNote at the side: none\n<hint>\nЧто помогло?\n</hint>" {
+		t.Errorf("a request of the words after a correct answer: %q", r.Text)
 	}
 	r, _ = wordsjudge.Request(wordsjudge.Item{Hint: "Where?", Lang: "en", Rung: 1})
 	if !strings.Contains(r.Text, "Note at the side: none\n") {
@@ -96,12 +101,16 @@ func TestControls(t *testing.T) {
 		flag bool
 		lang string
 	}
-	seen := map[side]bool{}
+	// The words after a correct answer try every question both ways in both languages too (T143).
+	seen, correct := map[side]bool{}, map[side]bool{}
 	for _, k := range c.Controls {
 		e := k.Expect
 		for q, flag := range map[string]bool{"gender": e.Gender, "on_task": !e.OnTask, "for_age": !e.ForAge, "mentions_note": e.MentionsNote} {
 			if q != "mentions_note" || k.Item.Note != "" {
 				seen[side{q, flag, k.Item.Lang}] = true
+				if k.Item.Correct {
+					correct[side{q, flag, k.Item.Lang}] = true
+				}
 			}
 		}
 		if k.Item.Note != "" && e.Gender {
@@ -113,6 +122,9 @@ func TestControls(t *testing.T) {
 			for _, flag := range []bool{true, false} {
 				if !seen[side{q, flag, lang}] {
 					t.Errorf("no control of %s %t in %s", q, flag, lang)
+				}
+				if !correct[side{q, flag, lang}] {
+					t.Errorf("no control of the words after a correct answer of %s %t in %s", q, flag, lang)
 				}
 			}
 		}
@@ -145,6 +157,7 @@ func TestReadControlsRefused(t *testing.T) {
 		"a note expected none": strings.Replace(string(data), `"mentions_note": false`, `"mentions_note": true`, 1),
 		"feedback with a note": strings.Replace(string(data), "\"rung\": 0,\n        \"statement\": \"Write about a day at the seaside.\",\n        \"note\": \"\"", "\"rung\": 0,\n        \"statement\": \"Write about a day at the seaside.\",\n        \"note\": \"x\"", 1),
 		"a rung of four":       strings.Replace(string(data), `"rung": 3,`, `"rung": 4,`, 1),
+		"correct with a rung":  strings.Replace(string(data), "\"rung\": 0,\n        \"statement\": \"Вычисли 59 + 28 − 13 × 2.\",\n        \"note\": \"\",\n        \"correct\": true", "\"rung\": 1,\n        \"statement\": \"Вычисли 59 + 28 − 13 × 2.\",\n        \"note\": \"\",\n        \"correct\": true", 1),
 		"two values":           string(data) + "{}",
 		"none":                 `{"format": "tutor-words-judge-controls", "version": 1, "controls": []}`,
 		"not JSON":             "x",

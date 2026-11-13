@@ -9,6 +9,7 @@ import (
 
 	"github.com/altnovatrail/spec/types/admissionv0"
 
+	"github.com/altnovatrail/tutor/internal/correct"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/provider/claude/catalog"
@@ -173,6 +174,21 @@ func TestAdmitted(t *testing.T) {
 			t.Errorf("%s: no fault", name)
 		}
 	}
+	// The words after a correct answer are one model's, admitted with their prompt now (R112).
+	words := Entry{Capability: admissionv0.CapabilityCorrectAnswerWords, Models: []Model{opus}, Stage: StageAuthor, Report: evidence, Prompt: correct.Fingerprint()}
+	if f := listFaults([]Entry{words}); len(f) != 0 {
+		t.Errorf("a good entry of the words after a correct answer has faults: %v", f)
+	}
+	for name, change := range map[string]func(*Entry){
+		"two models":     func(e *Entry) { e.Models = []Model{opus, haiku} },
+		"another prompt": func(e *Entry) { e.Prompt = hint.Fingerprint() },
+	} {
+		e := words
+		change(&e)
+		if len(listFaults([]Entry{e})) == 0 {
+			t.Errorf("the words after a correct answer, %s: no fault", name)
+		}
+	}
 }
 
 // listFaults are what makes a list of admitted models wrong, entry by entry.
@@ -196,6 +212,9 @@ func listFaults(list []Entry) []string {
 		words := e.Capability == admissionv0.CapabilitySolutionAnalysis || e.Capability == admissionv0.CapabilityHint
 		if words && (len(e.Models) != 1 || e.Prompt != hint.Fingerprint()) {
 			out = append(out, fmt.Sprintf("entry %d of the words: %d models, prompt %s, the hint's now %s", i, len(e.Models), e.Prompt, hint.Fingerprint()))
+		}
+		if e.Capability == admissionv0.CapabilityCorrectAnswerWords && (len(e.Models) != 1 || e.Prompt != correct.Fingerprint()) {
+			out = append(out, fmt.Sprintf("entry %d of the words after a correct answer: %d models, prompt %s, theirs now %s", i, len(e.Models), e.Prompt, correct.Fingerprint()))
 		}
 		if e.Capability == admissionv0.CapabilityHandwritingReading && (len(e.Models) != 2 || e.Prompt != reading.Fingerprint()) {
 			out = append(out, fmt.Sprintf("entry %d of reading: %d models, prompt %s, the reading's now %s", i, len(e.Models), e.Prompt, reading.Fingerprint()))

@@ -18,6 +18,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/altnovatrail/tutor/internal/correct"
 	"github.com/altnovatrail/tutor/internal/essay"
 	"github.com/altnovatrail/tutor/internal/evalsample"
 	"github.com/altnovatrail/tutor/internal/hint"
@@ -41,8 +42,9 @@ var partCaps = map[string]float64{"dev": 3, "test": 6, "all": 2, "recorded": 8}
 
 // plans are the kinds of call that run asks, by -kind, each with how it plans a run over a part of
 // its sets of sheets and says what the run asks (T67): the judge, the reading (T68), the hint (T74),
-// the reading of the workbook (T79), which reads the pages of the workbook and no sheets, and the
-// assessment by the rubric (T83), which reads the essays.
+// the reading of the workbook (T79), which reads the pages of the workbook and no sheets, the
+// assessment by the rubric (T83), which reads the essays, and the words after a correct answer
+// (T143), which ask the cases of their set.
 var plans = map[string]struct {
 	plan func(sets []sheetFlags, part string, o options) (*runner.Run, string, error)
 	// several is whether the kind runs over several sets: the judge runs on one, since its
@@ -59,6 +61,7 @@ var plans = map[string]struct {
 	"judge":    {plan: planJudge},
 	"reading":  {plan: planReading, several: true},
 	"hint":     {plan: planHint, several: true},
+	"correct":  {plan: planCorrect},
 	"workbook": {plan: planWorkbook, file: "workbook"},
 	"essay":    {plan: planEssays, file: "essays", caps: map[string]float64{"dev": 3, "test": 8, "all": 2}},
 }
@@ -76,10 +79,11 @@ type options struct {
 	essays        string
 	dir           string
 	workbookReads workbook.Reads
-	// cases is the file of the cases of the set of the words, for a hint (T118), or "", and kinds
-	// the kinds of case it asks, all of them when none is named (T119).
+	// cases is the file of the cases of the set of the words, for a hint (T118), or of the set of
+	// the words after a correct answer (T143), or "", and kinds the kinds of case it asks, all of
+	// them when none is named (T119).
 	cases string
-	kinds []hint.CaseKind
+	kinds []string
 }
 
 // setsFlag is the flag -set, given once for each set of sheets: its directory, bank and plan.
@@ -107,7 +111,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	flags := flag.NewFlagSet("tutor-eval run", flag.ContinueOnError)
 	var f sheetFlags
 	f.add(flags)
-	kind := flags.String("kind", "judge", "the kind of call to run: judge, reading, hint, workbook or essay")
+	kind := flags.String("kind", "judge", "the kind of call to run: judge, reading, hint, correct, workbook or essay")
 	var setValues setsFlag
 	flags.Var(&setValues, "set", "a set of sheets, DIR,BANK,PLAN, in place of -dir, -bank and -plan; given once for each set, for a reading or a hint over several")
 	part := flags.String("part", "", "the part of the split to run, dev or test, or all for every sheet of the plan, without the split, or recorded for every sheet recorded so far, the rest of the plan left out; for the workbook and the essays, their pages and essays of that part, or all")
@@ -118,8 +122,8 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	maxUSD := flags.Float64("max-usd", 0, "start no call that could take the run past this many US dollars; $3 for dev, $6 for test ($8 for the essays), $2 for all and $8 for recorded by default")
 	logPath := flags.String("log", "", "the log of the run, a new file out of git: in samples or synthetic, and in samples alone for sheets there; by default in runs next to the directory of the sheets, and for the workbook and the essays in synthetic/runs")
 	two := flags.Bool("two", false, "for -kind essay, assess in two calls: read the essay, then assess the text read (T92)")
-	casesPath := flags.String("cases", "", "for -kind hint, the file of the cases of the set of the words, such as eval/words-cases.json, on the one set of its plan, asked case by case (T118)")
-	kindsList := flags.String("case-kinds", "", "with -cases, the kinds of case to ask, joined by commas: rung, otherwise, note; all of them by default")
+	casesPath := flags.String("cases", "", "for -kind hint, the file of the cases of the set of the words, such as eval/words-cases.json, and for -kind correct, of the set of the words after a correct answer, eval/correct-cases.json, on the one set of its plan, asked case by case (T118; T143)")
+	kindsList := flags.String("case-kinds", "", "with -cases, the kinds of case to ask, joined by commas: of a hint rung, otherwise, note; of the words after a correct answer work, choice, note; all of them by default")
 	stub := flags.Bool("stub", false, "ask no model: a stub answers by the markup, and the run needs no key and no network")
 	readersList := flags.String("readers", strings.Join(runner.E4Configs, ","), "the configurations to ask, joined by commas: "+strings.Join(runner.ConfigNames(), ", ")+"; the three of E4 by default")
 	if code, ok := parse(flags, args, stderr); !ok {
@@ -139,8 +143,12 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -two is for -kind essay, and the %s asks one call\n", *kind)
 		return exitUsage
 	}
-	if *casesPath != "" && *kind != "hint" {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -cases is for -kind hint, and the %s asks no case of the words\n", *kind)
+	if *casesPath != "" && *kind != "hint" && *kind != "correct" {
+		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -cases is for -kind hint and correct, and the %s asks no case of the words\n", *kind)
+		return exitUsage
+	}
+	if *kind == "correct" && *casesPath == "" {
+		_, _ = fmt.Fprintln(stderr, "tutor-eval run: -kind correct asks the cases of its set: give -cases, such as eval/correct-cases.json")
 		return exitUsage
 	}
 	o := options{two: *two, readers: names, repeats: *repeats, workbook: *pagesFile, essays: *essaysPath, cases: *casesPath}
@@ -149,13 +157,14 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 			_, _ = fmt.Fprintln(stderr, "tutor-eval run: -case-kinds is for -cases, the cases of the set of the words")
 			return exitUsage
 		}
+		known, names := caseKindsOf(*kind)
 		for _, k := range strings.Split(*kindsList, ",") {
-			kind := hint.CaseKind(strings.TrimSpace(k))
-			if !slices.Contains(hint.CaseKinds(), kind) {
-				_, _ = fmt.Fprintf(stderr, "tutor-eval run: -case-kinds is %q: give rung, otherwise or note, joined by commas\n", *kindsList)
+			k = strings.TrimSpace(k)
+			if !slices.Contains(known, k) {
+				_, _ = fmt.Fprintf(stderr, "tutor-eval run: -case-kinds is %q: give %s, joined by commas\n", *kindsList, names)
 				return exitUsage
 			}
-			o.kinds = append(o.kinds, kind)
+			o.kinds = append(o.kinds, k)
 		}
 	}
 	if _, err := runner.Chosen(runner.Configs(), func(c runner.Config) runner.Config { return c }, o.readers); err != nil {
@@ -579,28 +588,40 @@ func planHint(sets []sheetFlags, part string, o options) (*runner.Run, string, e
 // of the sheets with a mistake the part holds — not those left out of the split, refused by their
 // check or, of the sheets recorded so far, not recorded yet (T119); and says what it left out, which
 // the run's record counts. A run with no case left is refused.
-func keepCases(set *hint.Set, wrong []sheets.Chosen, kinds []hint.CaseKind) (string, error) {
-	held := map[int]bool{}
-	for _, sh := range wrong {
-		held[sh.Number] = true
-	}
+func keepCases(set *hint.Set, wrong []sheets.Chosen, kinds []string) (string, error) {
 	all := *set.Cases
-	all.Cases = nil
-	unheld, other := 0, 0
-	for _, k := range set.Cases.Cases {
-		switch {
-		case len(kinds) > 0 && !slices.Contains(kinds, k.Kind):
-			other++
-		case !held[k.Sheet]:
-			unheld++
-		default:
-			all.Cases = append(all.Cases, k)
-		}
-	}
+	var other, unheld int
+	all.Cases, other, unheld = kept(set.Cases.Cases, wrong, kinds, func(k hint.Case) (string, int) { return string(k.Kind), k.Sheet })
 	if len(all.Cases) == 0 {
 		return "", fmt.Errorf("%s: no case is left to ask", set.File)
 	}
 	set.Cases, set.LeftOut = &all, other+unheld
+	return leftOut(other, unheld), nil
+}
+
+// kept are the cases of the kinds named, all when none is, of the sheets held, with how many of
+// other kinds and of sheets not held it left out.
+func kept[K any](cases []K, held []sheets.Chosen, kinds []string, of func(K) (kind string, sheet int)) (out []K, other, unheld int) {
+	on := map[int]bool{}
+	for _, sh := range held {
+		on[sh.Number] = true
+	}
+	for _, k := range cases {
+		kind, sheet := of(k)
+		switch {
+		case len(kinds) > 0 && !slices.Contains(kinds, kind):
+			other++
+		case !on[sheet]:
+			unheld++
+		default:
+			out = append(out, k)
+		}
+	}
+	return out, other, unheld
+}
+
+// leftOut says what a run left out of the cases of its set, which the run's record counts.
+func leftOut(other, unheld int) string {
 	var left []string
 	if other > 0 {
 		left = append(left, count(other, "case")+" of other kinds")
@@ -609,37 +630,131 @@ func keepCases(set *hint.Set, wrong []sheets.Chosen, kinds []hint.CaseKind) (str
 		left = append(left, count(unheld, "case")+" of sheets the run does not hold")
 	}
 	if len(left) == 0 {
-		return "", nil
+		return ""
 	}
-	return " (" + strings.Join(left, " and ") + " left out)", nil
+	return " (" + strings.Join(left, " and ") + " left out)"
+}
+
+// caseKindsOf are the kinds of case of the set a kind of call asks, and how to name them.
+func caseKindsOf(kind string) ([]string, string) {
+	var out []string
+	if kind == "correct" {
+		for _, k := range correct.CaseKinds() {
+			out = append(out, string(k))
+		}
+		return out, "work, choice or note"
+	}
+	for _, k := range hint.CaseKinds() {
+		out = append(out, string(k))
+	}
+	return out, "rung, otherwise or note"
 }
 
 // casesOf reads the file of the cases of the set of the words and checks them against the one set of
 // sheets they are of: the plan the file names, by its file's name, with its bank, which it gives
 // for the run to take its sheets of (T118).
 func casesOf(path string, sets []sheetFlags) (*evalsample.Bank, *sample.Plan, *hint.Set, error) {
+	var cs *hint.Cases
+	bank, plan, sum, err := casesFile(path, sets, func(data []byte) (string, func(*sample.Plan, *sample.Bank) error, error) {
+		var err error
+		if cs, err = hint.ReadCases(bytes.NewReader(data)); err != nil {
+			return "", nil, err
+		}
+		return cs.Plan, cs.Check, nil
+	})
+	if err != nil {
+		return nil, nil, nil, err
+	}
+	return bank, plan, &hint.Set{File: filepath.Base(path), SHA256: sum, Cases: cs}, nil
+}
+
+// casesFile reads a file of cases of a set and checks them against the one set of sheets they are of:
+// the plan the file names, by its file's name, with its bank, which it gives for the run to take its
+// sheets of, with the SHA-256 of the file. read reads the cases, and gives the plan they name and
+// their check.
+func casesFile(path string, sets []sheetFlags, read func([]byte) (string, func(*sample.Plan, *sample.Bank) error, error)) (*evalsample.Bank, *sample.Plan, string, error) {
 	if len(sets) != 1 {
-		return nil, nil, nil, fmt.Errorf("the cases are of the sheets of one plan, and %s are given", count(len(sets), "set"))
+		return nil, nil, "", fmt.Errorf("the cases are of the sheets of one plan, and %s are given", count(len(sets), "set"))
 	}
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, "", err
 	}
-	cs, err := hint.ReadCases(bytes.NewReader(data))
+	of, check, err := read(data)
 	if err != nil {
-		return nil, nil, nil, fmt.Errorf("%s: %w", path, err)
+		return nil, nil, "", fmt.Errorf("%s: %w", path, err)
 	}
-	if cs.Plan != filepath.Base(sets[0].plan) {
-		return nil, nil, nil, fmt.Errorf("%s: the cases are of the plan %s, and the set's is %s", path, cs.Plan, sets[0].plan)
+	if of != filepath.Base(sets[0].plan) {
+		return nil, nil, "", fmt.Errorf("%s: the cases are of the plan %s, and the set's is %s", path, of, sets[0].plan)
 	}
 	bank, plan, err := readPlan(sets[0].bank, sets[0].plan)
 	if err != nil {
-		return nil, nil, nil, err
+		return nil, nil, "", err
 	}
-	if err := cs.Check(plan, bank.Bank); err != nil {
-		return nil, nil, nil, fmt.Errorf("%s: %w", path, err)
+	if err := check(plan, bank.Bank); err != nil {
+		return nil, nil, "", fmt.Errorf("%s: %w", path, err)
 	}
-	return bank, plan, &hint.Set{File: filepath.Base(path), SHA256: fmt.Sprintf("%x", sha256.Sum256(data)), Cases: cs}, nil
+	return bank, plan, fmt.Sprintf("%x", sha256.Sum256(data)), nil
+}
+
+// planCorrect plans a run of the words after a correct answer over the cases of their set, on the
+// sheets whose answer is right of a part of its one set, and says what it asks: the cases, the sheets
+// they are of, the tutors and repeats, and the version of the prompt (T143). A part with no such
+// sheet, or with no case left to ask, is refused before the question.
+func planCorrect(sets []sheetFlags, part string, o options) (*runner.Run, string, error) {
+	var cs *correct.Cases
+	bank, plan, sum, err := casesFile(o.cases, sets, func(data []byte) (string, func(*sample.Plan, *sample.Bank) error, error) {
+		var err error
+		if cs, err = correct.ReadCases(bytes.NewReader(data)); err != nil {
+			return "", nil, err
+		}
+		return cs.Plan, cs.Check, nil
+	})
+	if err != nil {
+		return nil, "", err
+	}
+	name := setName(sets[0])
+	chosen, refused, err := partOf(bank, plan, sets[0], name, part)
+	if err != nil {
+		return nil, "", fmt.Errorf("%s: %w", name, err)
+	}
+	var right []sheets.Chosen
+	for _, sh := range chosen {
+		if correct.Right(sh) {
+			right = append(right, sh)
+		}
+	}
+	if len(right) == 0 {
+		return nil, "", fmt.Errorf("%s: no sheet whose answer is right in %s, and the words after a correct answer are asked only after a right one", partName(part), name)
+	}
+	tutors, err := runner.Chosen(hint.Tutors(), func(tu hint.Tutor) runner.Config { return tu.Config }, o.readers)
+	if err != nil {
+		return nil, "", err
+	}
+	var by []string
+	for _, tu := range tutors {
+		by = append(by, tu.Name)
+	}
+	set := &correct.Set{File: filepath.Base(o.cases), SHA256: sum, Cases: cs}
+	all := *cs
+	var other, unheld int
+	all.Cases, other, unheld = kept(cs.Cases, right, o.kinds, func(k correct.Case) (string, int) { return string(k.Kind), k.Sheet })
+	if len(all.Cases) == 0 {
+		return nil, "", fmt.Errorf("%s: no case is left to ask", set.File)
+	}
+	set.Cases, set.LeftOut = &all, other+unheld
+	// Only the sheets the cases kept are of are drawn into crops.
+	asked := map[int]bool{}
+	for _, k := range all.Cases {
+		asked[k.Sheet] = true
+	}
+	right = slices.DeleteFunc(right, func(sh sheets.Chosen) bool { return !asked[sh.Number] })
+	r, err := correct.New(part, name, right, tutors, o.repeats, set)
+	if err != nil {
+		return nil, "", err
+	}
+	return r, refusedLine(refused) + fmt.Sprintf("%s: %s of the set of the words after a correct answer in %s%s, on %s whose answer is right of %d in %s, by %s in %s, in version %d of their prompt.\n",
+		partName(part), count(len(all.Cases), "case"), set.File, leftOut(other, unheld), count(len(r.Items), "sheet"), len(chosen), name, strings.Join(by, ", "), count(o.repeats, "repeat"), correct.Version), nil
 }
 
 // planWorkbook plans a run of the reading of the workbook over the pages of a part, as the samples

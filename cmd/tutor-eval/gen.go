@@ -32,12 +32,26 @@ var generators = map[string]struct {
 // own seed and prefix. Of a bank and a plan it writes both files or neither.
 func runGen(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		_, _ = fmt.Fprintln(stderr, "tutor-eval gen: give sheets, near, workbook, essays, words or words-cases")
+		_, _ = fmt.Fprintln(stderr, "tutor-eval gen: give sheets, near, workbook, essays, words, words-cases or correct")
 		return exitUsage
 	}
 	switch args[0] {
 	case "words":
-		return runGenWords(args[1:], stdout, stderr)
+		return runGenSet("words", args[1:], stdout, stderr, func(from *sample.Plan, bank *sample.Bank, planFile string, seed uint64) (*sample.Plan, any, int, error) {
+			plan, cases, err := gen.Words(from, bank, planFile, seed)
+			if err != nil {
+				return nil, nil, 0, err
+			}
+			return plan, cases, len(cases.Cases), nil
+		})
+	case "correct":
+		return runGenSet("correct", args[1:], stdout, stderr, func(from *sample.Plan, bank *sample.Bank, planFile string, seed uint64) (*sample.Plan, any, int, error) {
+			plan, cases, err := gen.Correct(from, bank, planFile, seed)
+			if err != nil {
+				return nil, nil, 0, err
+			}
+			return plan, cases, len(cases.Cases), nil
+		})
 	case "words-cases":
 		return runGenWordsCases(args[1:], stdout, stderr)
 	}
@@ -46,7 +60,7 @@ func runGen(args []string, stdout, stderr io.Writer) int {
 	}
 	g, ok := generators[args[0]]
 	if !ok {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval gen: %q is nothing gen makes: give sheets, near, workbook, essays, words or words-cases\n", args[0])
+		_, _ = fmt.Fprintf(stderr, "tutor-eval gen: %q is nothing gen makes: give sheets, near, workbook, essays, words, words-cases or correct\n", args[0])
 		return exitUsage
 	}
 	flags := flag.NewFlagSet("tutor-eval gen "+args[0], flag.ContinueOnError)
@@ -146,45 +160,47 @@ func runGenFile(kind string, g fileGenerator, args []string, stdout, stderr io.W
 	return exitOK
 }
 
-// runGenWords makes the set of the tutor's words (T118) of a plan of lines and its bank, from the
-// seed: a plan of parts of its sheets with a mistake, ten of them again with a note at the side, and
-// the file of the cases on it (gen.Words), as new files, both or neither. draw draws the plan, with
-// the same bank, and run -kind hint -cases asks the cases.
-func runGenWords(args []string, stdout, stderr io.Writer) int {
-	flags := flag.NewFlagSet("tutor-eval gen words", flag.ContinueOnError)
-	seed := flags.Uint64("seed", 1, "the number the notes, the traps found and the questions asked come from")
+// runGenSet makes a set of the tutor's words of a plan of lines and its bank, from the seed, as new
+// files, both or neither: of the words of the hint, words (T118), a plan of parts of its sheets with
+// a mistake, ten of them again with a note at the side, and the file of the cases on it (gen.Words),
+// which run -kind hint -cases asks; of the words after a correct answer, correct (T143), the same of
+// its sheets whose answer is right (gen.Correct), which run -kind correct -cases asks. draw draws the
+// plan, with the same bank.
+func runGenSet(name string, args []string, stdout, stderr io.Writer, build func(from *sample.Plan, bank *sample.Bank, planFile string, seed uint64) (*sample.Plan, any, int, error)) int {
+	flags := flag.NewFlagSet("tutor-eval gen "+name, flag.ContinueOnError)
+	seed := flags.Uint64("seed", 1, "the number the notes, the traps found, the techniques and the questions asked come from")
 	bankPath := flags.String("bank", "", "the bank of the plan of lines")
-	fromPath := flags.String("from", "", "the plan of lines whose sheets with a mistake the set takes")
+	fromPath := flags.String("from", "", "the plan of lines whose sheets the set takes: with a mistake for words, whose answer is right for correct")
 	planPath := flags.String("plan", "", "the new file of the plan of the set")
 	casesPath := flags.String("cases", "", "the new file of the cases")
 	if code, ok := parse(flags, args, stderr); !ok {
 		return code
 	}
 	if *bankPath == "" || *fromPath == "" || *planPath == "" || *casesPath == "" {
-		_, _ = fmt.Fprintln(stderr, "tutor-eval gen words: give -bank and -from, the bank and the plan of lines, and -plan and -cases, the new files to write")
+		_, _ = fmt.Fprintf(stderr, "tutor-eval gen %s: give -bank and -from, the bank and the plan of lines, and -plan and -cases, the new files to write\n", name)
 		return exitUsage
 	}
 	for _, path := range []string{*planPath, *casesPath} {
 		if _, err := os.Lstat(path); err == nil {
-			_, _ = fmt.Fprintf(stderr, "tutor-eval gen words: %s: file exists, and gen writes only new files\n", path)
+			_, _ = fmt.Fprintf(stderr, "tutor-eval gen %s: %s: file exists, and gen writes only new files\n", name, path)
 			return exitFail
 		}
 	}
 	bank, from, err := readPlan(*bankPath, *fromPath)
 	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval gen words: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "tutor-eval gen %s: %v\n", name, err)
 		return exitFail
 	}
-	plan, cases, err := gen.Words(from, bank.Bank, filepath.Base(*planPath), *seed)
+	plan, cases, n, err := build(from, bank.Bank, filepath.Base(*planPath), *seed)
 	if err != nil {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval gen words: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "tutor-eval gen %s: %v\n", name, err)
 		return exitFail
 	}
 	if err := writeBoth(*planPath, plan, *casesPath, cases); err != nil {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval gen words: %v\n", err)
+		_, _ = fmt.Fprintf(stderr, "tutor-eval gen %s: %v\n", name, err)
 		return exitFail
 	}
-	_, _ = fmt.Fprintf(stdout, "%s and %s of the seed %d: the plan %s and the cases %s.\n", count(len(plan.Sheets), "sheet"), count(len(cases.Cases), "case"), *seed, *planPath, *casesPath)
+	_, _ = fmt.Fprintf(stdout, "%s and %s of the seed %d: the plan %s and the cases %s.\n", count(len(plan.Sheets), "sheet"), count(n, "case"), *seed, *planPath, *casesPath)
 	return exitOK
 }
 

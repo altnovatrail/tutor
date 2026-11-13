@@ -90,26 +90,9 @@ func Words(plan *sample.Plan, bank *sample.Bank, planFile string, seed uint64) (
 		return nil, nil, fmt.Errorf("gen: %d sheets with a mistake, %d of them of the scenario error: the set needs more than %d and %d", len(wrong), len(plain), WordsNoFound, WordsNotes)
 	}
 	r := rand.New(rand.NewPCG(seed, 0x30d5))
-	v := sample.PlanParts
-	out := &sample.Plan{Format: sample.PlanFormat, Version: &v}
-	add := func(sh sample.PlanSheet, note string) {
-		parts := make([]sample.PlanPart, 0, len(sh.Lines)+1)
-		for _, l := range sh.Lines {
-			parts = append(parts, sample.PlanPart{Kind: sample.PartText, Place: sample.PlaceLeft, Text: l})
-		}
-		if note != "" {
-			parts = append(parts, sample.PlanPart{Kind: sample.PartText, Place: sample.PlaceRight, Text: note})
-		}
-		sh.Number = len(out.Sheets) + 1
-		if e := sh.Erasure; e != nil {
-			c := *e
-			sh.Erasure = &c
-		}
-		sh.SetParts(parts)
-		out.Sheets = append(out.Sheets, sh)
-	}
+	out := partsPlan()
 	for _, i := range wrong {
-		add(plan.Sheets[i], "")
+		addParts(out, plan.Sheets[i], "")
 	}
 	type noted struct {
 		kind hint.NoteKind
@@ -118,7 +101,7 @@ func Words(plan *sample.Plan, bank *sample.Bank, planFile string, seed uint64) (
 	var marked []noted
 	for i, pick := range r.Perm(len(plain))[:WordsNotes] {
 		n := noted{hint.NoteKinds()[i/2], hint.Langs()[i%2]}
-		add(plan.Sheets[plain[pick]], notes[n.kind][n.lang])
+		addParts(out, plan.Sheets[plain[pick]], notes[n.kind][n.lang])
 		marked = append(marked, n)
 	}
 
@@ -180,6 +163,31 @@ func Words(plan *sample.Plan, bank *sample.Bank, planFile string, seed uint64) (
 		return nil, nil, fmt.Errorf("gen: the cases of the set of the words: %w", err)
 	}
 	return out, cs, nil
+}
+
+// partsPlan is an empty plan of parts.
+func partsPlan() *sample.Plan {
+	v := sample.PlanParts
+	return &sample.Plan{Format: sample.PlanFormat, Version: &v}
+}
+
+// addParts adds a sheet of a plan of lines to a plan of parts, numbered next: its lines the parts
+// of the main column, in their order, and a note at the side after them, when there is one.
+func addParts(out *sample.Plan, sh sample.PlanSheet, note string) {
+	parts := make([]sample.PlanPart, 0, len(sh.Lines)+1)
+	for _, l := range sh.Lines {
+		parts = append(parts, sample.PlanPart{Kind: sample.PartText, Place: sample.PlaceLeft, Text: l})
+	}
+	if note != "" {
+		parts = append(parts, sample.PlanPart{Kind: sample.PartText, Place: sample.PlaceRight, Text: note})
+	}
+	sh.Number = len(out.Sheets) + 1
+	if e := sh.Erasure; e != nil {
+		c := *e
+		sh.Erasure = &c
+	}
+	sh.SetParts(parts)
+	out.Sheets = append(out.Sheets, sh)
 }
 
 // WordsCases are the cases of the words on the sheets with a mistake of a plan whose sheets are

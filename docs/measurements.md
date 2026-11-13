@@ -1218,6 +1218,19 @@ The estimate of "The set of words":
 - **Against reading.** The words take about twice the reading pair's time: p50 5.5 s against 2.4 s (section 3.13). Both are the model's time, without the overhead of `api` and the network to the device. What else is in the ≈ 10 s of the words in `api` (T45 `api`), this measurement does not say. From the release of T139 on, each record of usage carries its model's time (architecture 3.7), and the log of `api` shows it.
 - **What it does not decide.** The effort `medium` for the words, which might be faster, is measured at the next admission of the words, by a paid run (Д11).
 
+### 3.17. The words after a correct answer: the trial of the prompt
+
+**The trial** (T143, 2026-11-13; R112). Version 1 of the prompt of `internal/correct`, before it was frozen: Opus 5.5 · `high`, one repeat, then the judge of the words, version 4, Opus 5.5 · `high` on its words. The sheets are of a set drawn as the set of admission is (architecture 3.4, "The set of the words after a correct answer"), but from `lines-gen-2` and the seed 1143, so that the set of admission stays unseen by the prompt: 28 of its 110 cases, on 17 sheets — 12 with the work on 6 sheets of the three scenarios, 2 of a task without techniques; 6 without the work, 2 without techniques; 10 of a note, one sheet of each kind, both languages. The day's prices were checked on Anthropic's Pricing page before the runs: the same as sources 1.14. The logs — `synthetic/runs/correct-trial-1*`, outside git; only numbers came here.
+
+| Calls | Came and shown | Leak before the check | Form, `words.Correct` | Sex, rough search | Sex, judge | Off the task | Not for a child | Note taken up, judge | Echo of a note |
+|---|---|---|---|---|---|---|---|---|---|
+| 28 | 28 | 0 | 0 | 0 | 0 | 0 | 0 | 0 of 10 | 0 of 10 |
+
+- **The words.** Each praises a step of the solution by what it does — «умножение сделано первым», "the added number is taken away from both sides" — and asks, last, which technique or rule helped, mostly naming one of the task's; without techniques it asks how the answer, or x, was found. Without the work it praises the step of the solution in the task's data. No number of the key or of the work, no «молодец», no past tense about the learner in Russian; a Latin x stands in a Russian question where the statement shows it. The prompt needed no edit.
+- **The tokens and the time.** Input on average 1,415 tokens — 1,334 with the work, 1,212 without, 1,634 with a note —, output 367, thinking included; $0.0130 a call; time p50 4.9 s, p95 7.3 s. The judge: 1,407 in and 57 out a call.
+- **The spending.** 56 calls at Anthropic — 28 of the words, $0.3642, and 28 of the judge, $0.1894 —, $0.5536 of the ceiling of $2.
+- **What it does not decide.** Admission: the set of admission, its 110 cases, the judge's control phrases of version 4 and the expected tokens of `CallCorrect` are T144.
+
 ## 4. Claude Code sessions
 
 ### 4.1. The spending of tutor's sessions

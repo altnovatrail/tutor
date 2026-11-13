@@ -7,6 +7,7 @@ import (
 	"io"
 	"time"
 
+	"github.com/altnovatrail/tutor/internal/correct"
 	"github.com/altnovatrail/tutor/internal/essay"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/runner"
@@ -60,8 +61,8 @@ func (e Expect) Verdict() Verdict {
 }
 
 // ReadControls reads a file of control phrases strictly, each with an ID of its own, a hint, a
-// language and a rung — 0 for the feedback of an essay, which has none (OfFeedback) —, and an item
-// without a note expecting no note taken up.
+// language and a rung — 0 for the feedback of an essay, which has none (OfFeedback), and for the
+// words after a correct answer (OfCorrect) —, and an item without a note expecting no note taken up.
 func ReadControls(r io.Reader) (*Controls, error) {
 	dec := json.NewDecoder(r)
 	dec.DisallowUnknownFields()
@@ -80,8 +81,10 @@ func ReadControls(r io.Reader) (*Controls, error) {
 		switch {
 		case k.ID == "" || seen[k.ID]:
 			return nil, fmt.Errorf("the controls: control %d has an ID empty or given twice", i+1)
-		case k.Item.Rung == 0 && k.Item.Note != "":
+		case k.Item.Rung == 0 && !k.Item.Correct && k.Item.Note != "":
 			return nil, fmt.Errorf("the controls: control %s is feedback with a note, which feedback never has", k.ID)
+		case k.Item.Correct && k.Item.Rung != 0:
+			return nil, fmt.Errorf("the controls: control %s is of the words after a correct answer, which have no rung", k.ID)
 		case k.Item.Hint == "" || k.Item.Lang == "" || k.Item.Rung < 0 || k.Item.Rung > 3:
 			return nil, fmt.Errorf("the controls: control %s has no hint, language or rung", k.ID)
 		case k.Item.Note == "" && k.Expect.MentionsNote:
@@ -169,6 +172,46 @@ func Of(l *hint.Log, file, sum string, judge Judge) (*runner.Run, error) {
 	return r, nil
 }
 
+// OfCorrect plans the judging of the words after a correct answer of a log of their set (T143): the
+// words of every call that came, once, in the order of the log, with the statement of its sheet's task
+// and the note of its case. The judge that is always right answers by the code's measures, as of a
+// hint (Of). file and sum name the log.
+func OfCorrect(l *correct.Log, file, sum string, judge Judge) (*runner.Run, error) {
+	cases := map[string]*correct.Case{}
+	for i := range l.Run.Cases {
+		cases[l.Run.Cases[i].ID] = &l.Run.Cases[i]
+	}
+	statements := map[string]string{}
+	for _, sh := range l.Sheets {
+		statements[fmt.Sprintf("%s/%d", sh.Set, sh.Sheet)] = sh.Statement
+	}
+	r := &runner.Run{}
+	for _, c := range l.Calls {
+		if !c.Came() || c.Words == "" {
+			continue
+		}
+		k := cases[c.Case]
+		if k == nil {
+			return nil, fmt.Errorf("wordsjudge: a call of the case %q, which the log does not tell", c.Case)
+		}
+		it := Item{Hint: c.Words, Lang: string(c.Lang), Statement: statements[fmt.Sprintf("%s/%d", c.Set, c.Sheet)], Note: k.Note, Correct: true}
+		rec := CallRecord{Tutor: c.Tutor, Set: c.Set, Sheet: c.Sheet, Case: c.Case, CaseKind: hint.CaseKind(k.Kind), NoteKind: k.NoteKind, Lang: string(c.Lang),
+			Repeat: c.Repeat, Hint: c.Words, Note: k.Note, Gendered: c.Gendered, NoteEcho: c.NoteEcho}
+		right := Verdict{Gender: len(c.Gendered) > 0, OnTask: true, ForAge: true, MentionsNote: len(c.NoteEcho) > 0}
+		r.Steps = append(r.Steps, runner.Step{Config: judge, In: input, Out: output, WorstIn: inputBudget, Call: &step{item: it, rec: rec, right: right}})
+	}
+	if len(r.Steps) == 0 {
+		return nil, errors.New("wordsjudge: no words came in the log to judge")
+	}
+	rec := record(OfLog, file, sum, judge)
+	r.Record = func(h runner.Head) any {
+		run := rec(h).(RunRecord)
+		run.Words = correct.CallKind
+		return run
+	}
+	return r, nil
+}
+
 // OfFeedback plans the judging of the feedback of the assessment of a text in a log of a run of the
 // essays in two calls (T125): each feedback that came, once, as the item of a hint of no rung, in
 // English, with the topic of its essay as the task and no note. The judge is that of the words (R85):
@@ -237,7 +280,8 @@ func record(of, file, sum string, judge Judge) func(h runner.Head) any {
 type (
 	// RunRecord tells the run: what it judges, the hints of a log or the control phrases, the file by
 	// its name and SHA-256, the judge, the cap and the estimate, and the fingerprint and version of
-	// the judge's prompt.
+	// the judge's prompt; and of a log of the words after a correct answer, their kind of call, correct
+	// (T143).
 	RunRecord struct {
 		Kind          string          `json:"kind"`
 		CallKind      string          `json:"call_kind"`
@@ -250,6 +294,7 @@ type (
 		Estimate      runner.Estimate `json:"estimate"`
 		Prompt        string          `json:"prompt"`
 		PromptVersion int             `json:"prompt_version"`
+		Words         string          `json:"words,omitempty"`
 	}
 	// JudgeRecord is the judge as the run's record tells it: its model and prices.
 	JudgeRecord struct {

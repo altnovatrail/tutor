@@ -1,8 +1,9 @@
 // Package words holds the checks of the tutor's words that api makes before they reach the
-// learner, beside the leak check (R70 spec; architecture 1 and 3.5): the form of a hint and the rule
-// of feedback by a rubric. The eval of tutor measures the models by the same code, so that what it
-// admits is what the platform lets through. Both checks only count: they read no meaning, and what a
-// word, a sentence and a quote are, this package decides.
+// learner, beside the leak check (R70 spec; architecture 1 and 3.5): the form of a hint, the form of
+// the words after a correct answer and the rule of feedback by a rubric. The eval of tutor measures
+// the models by the same code, so that what it admits is what the platform lets through. The checks
+// only count: they read no meaning, and what a word, a sentence and a quote are, this package
+// decides.
 package words
 
 import (
@@ -24,6 +25,8 @@ const (
 	Questions Breach = "questions"
 	// Sentences: more sentences than the check takes.
 	Sentences Breach = "sentences"
+	// Last: the question of the words after a correct answer is not their last sentence.
+	Last Breach = "last"
 	// Words: no word, or more than the limit of the language.
 	Words Breach = "words"
 	// Quote: a quoted span of QuoteWords words or more that the learner did not write.
@@ -80,7 +83,7 @@ func Hint(text, language, statement string) []Breach {
 // hints to 30 words in either language, as its prompt said (R39).
 func HintForm(text, language, statement string, maxWords int) []Breach {
 	runes := []rune(norm.NFKC.String(text))
-	sentences, questions, n := count(runes)
+	sentences, questions, n, _ := count(runes)
 	var out []Breach
 	if questions != 1 {
 		out = append(out, Questions)
@@ -88,6 +91,39 @@ func HintForm(text, language, statement string, maxWords int) []Breach {
 	if sentences > HintSentences {
 		out = append(out, Sentences)
 	}
+	return append(out, rest(runes, n, language, statement, maxWords)...)
+}
+
+// Correct is what the words after a correct answer break of their form, in the order of the
+// breaches; nil when they keep it: the praise of a step and one question on the technique that
+// helped (concepts 7, 10 spec), as option (2) of architecture 2.8 sets it — exactly one question,
+// and it the last sentence, so that no more than one sentence of praise stands before it; 1 to
+// HintWords words of the language; and the letters of its script, as a hint's.
+func Correct(text, language, statement string) []Breach {
+	return CorrectForm(text, language, statement, HintWords(language))
+}
+
+// CorrectForm is Correct with a limit of words of its own, 0 for none.
+func CorrectForm(text, language, statement string, maxWords int) []Breach {
+	runes := []rune(norm.NFKC.String(text))
+	sentences, questions, n, last := count(runes)
+	var out []Breach
+	if questions != 1 {
+		out = append(out, Questions)
+	}
+	if sentences > HintSentences {
+		out = append(out, Sentences)
+	}
+	if questions > 0 && !last {
+		out = append(out, Last)
+	}
+	return append(out, rest(runes, n, language, statement, maxWords)...)
+}
+
+// rest is what a text of n words breaks of the parts the forms of a hint and of the words after a
+// correct answer share: the words, the script and the language.
+func rest(runes []rune, n int, language, statement string, maxWords int) []Breach {
+	var out []Breach
 	if Over(n, maxWords) {
 		out = append(out, Words)
 	}
@@ -176,11 +212,12 @@ func readable(language string) bool {
 // and a run with no word before it ends none. So "0.5" ends nothing, but an abbreviation such as
 // «т. е.» ends a sentence: a limit of the rule.
 func Count(text string) (sentences, questions, words int) {
-	return count([]rune(norm.NFKC.String(text)))
+	sentences, questions, words, _ = count([]rune(norm.NFKC.String(text)))
+	return sentences, questions, words
 }
 
-// count is Count of a text read after NFKC, as runes.
-func count(runes []rune) (sentences, questions, words int) {
+// count is Count of a text read after NFKC, as runes, and whether its last sentence is a question.
+func count(runes []rune) (sentences, questions, words int, last bool) {
 	inWord, hasWord := false, false
 	for i := 0; i < len(runes); i++ {
 		r := runes[i]
@@ -209,13 +246,14 @@ func count(runes []rune) (sentences, questions, words int) {
 			if question {
 				questions++
 			}
-			hasWord = false
+			last, hasWord = question, false
 		}
 	}
 	if hasWord {
 		sentences++
+		last = false
 	}
-	return sentences, questions, words
+	return sentences, questions, words, last
 }
 
 // inNumber is whether the character at i is a point, a comma or a slash between two digits.

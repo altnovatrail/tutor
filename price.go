@@ -9,6 +9,7 @@ import (
 	"github.com/altnovatrail/spec/types/admissionv0"
 
 	"github.com/altnovatrail/tutor/admission"
+	"github.com/altnovatrail/tutor/internal/correct"
 	"github.com/altnovatrail/tutor/internal/essay"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/reading"
@@ -41,7 +42,8 @@ func checkText(r provider.Request) error {
 type tokens struct{ in, out int64 }
 
 // Call is a kind of call of the library: the reading of a sheet, of a workbook page and of an essay,
-// the assessment of an essay by its rubric, and the call of the words, with the work and without it.
+// the assessment of an essay by its rubric, the call of the words, with the work and without it, and
+// the words after a correct answer.
 // Each serves a capability with a prompt of its own, and an entry of the list admits it only when it
 // measured that prompt (R70 spec).
 type Call string
@@ -54,6 +56,7 @@ const (
 	CallHint     Call = "hint"
 	CallEssay    Call = "essay"
 	CallRubric   Call = "rubric"
+	CallCorrect  Call = "correct"
 )
 
 // kind is a kind of call of the library: the capability it serves and the fingerprint of its
@@ -73,7 +76,9 @@ type kind struct {
 // that admitted them, version 3 of the hint's prompt (T127); the workbook, the essay and the rubric have no admitted model yet. A model without them has no expected
 // price, and api takes the value of its own config then (В13 api). The words serve the analysis of
 // the steps with the work, CallWords, and the hint without it, CallHint, by one prompt; T127
-// measured the hint with the work, so the hint without it has no expected tokens (R106).
+// measured the hint with the work, so the hint without it has no expected tokens (R106). The words
+// after a correct answer are one kind with the work and without it, and their worst is with it;
+// they have no expected tokens until their admission measures them (R112).
 var kinds = map[Call]kind{
 	CallSheet: {
 		capability: admissionv0.CapabilityHandwritingReading,
@@ -117,6 +122,13 @@ var kinds = map[Call]kind{
 		capability: admissionv0.CapabilityHint,
 		prompt:     hint.Fingerprint(),
 		maxIn:      maxTextBytes,
+		maxOut:     wordsMaxOutput,
+		models:     1,
+	},
+	CallCorrect: {
+		capability: admissionv0.CapabilityCorrectAnswerWords,
+		prompt:     correct.Fingerprint(),
+		maxIn:      maxTextBytes + tokensOf(maxCropSide, 1),
 		maxOut:     wordsMaxOutput,
 		models:     1,
 	},
