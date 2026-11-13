@@ -2,12 +2,10 @@ package claude
 
 import (
 	"context"
-	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
-	"sync"
 	"sync/atomic"
 	"testing"
 
@@ -18,27 +16,9 @@ import (
 	"go.opentelemetry.io/otel/trace/embedded"
 	"go.opentelemetry.io/otel/trace/noop"
 
+	"github.com/altnovatrail/tutor/internal/providertest"
 	"github.com/altnovatrail/tutor/provider/claude/catalog"
 )
-
-// sent is what reached the network: each request's address and headers. The transport answers
-// itself, so a request to whatever address is seen, and none leaves the test.
-type sent struct {
-	mu       sync.Mutex
-	requests []*http.Request
-}
-
-func (s *sent) RoundTrip(r *http.Request) (*http.Response, error) {
-	s.mu.Lock()
-	s.requests = append(s.requests, r)
-	s.mu.Unlock()
-	body, kind := goodStream, "text/event-stream"
-	if strings.HasSuffix(r.URL.Path, "/count_tokens") {
-		body, kind = `{"input_tokens":1}`, "application/json"
-	}
-	return &http.Response{StatusCode: http.StatusOK, Header: http.Header{"Content-Type": {kind}},
-		Body: io.NopCloser(strings.NewReader(body)), Request: r}, nil
-}
 
 // spans counts the tracers the SDK asks the process's TracerProvider for: it asks for one before
 // each span. Its spans record nothing, but carry the trace of the caller's context, which the SDK
@@ -110,7 +90,12 @@ func TestNoEnvironment(t *testing.T) {
 			t.Setenv(k, v)
 		}
 		p.tracers.Store(0)
-		s := &sent{}
+		s := &providertest.Sent{Answer: func(r *http.Request) (string, string) {
+			if strings.HasSuffix(r.URL.Path, "/count_tokens") {
+				return `{"input_tokens":1}`, "application/json"
+			}
+			return goodStream, "text/event-stream"
+		}}
 		c := New("test-key", catalog.Models[2], option.WithHTTPClient(&http.Client{Transport: s}))
 		if _, err := c.Ask(ctx, request); err != nil {
 			t.Fatalf("Ask: %v", err)
@@ -118,23 +103,11 @@ func TestNoEnvironment(t *testing.T) {
 		if err := c.Check(ctx); err != nil {
 			t.Fatalf("Check: %v", err)
 		}
-		want := []string{"https://api.anthropic.com/v1/messages", "https://api.anthropic.com/v1/messages/count_tokens"}
-		if len(s.requests) != len(want) {
-			t.Fatalf("%d requests, want %d", len(s.requests), len(want))
-		}
-		for i, r := range s.requests {
-			if got := r.URL.Scheme + "://" + r.URL.Host + r.URL.Path; got != want[i] {
-				t.Errorf("the request went to %s, want %s", got, want[i])
-			}
-			if got := r.Header.Get("X-Api-Key"); got != "test-key" {
-				t.Errorf("the key sent is %q", got)
-			}
-			for _, h := range []string{"Authorization", "X-From-Env", "Anthropic-Beta", "Anthropic-Workspace-Id", "Traceparent", "Tracestate"} {
-				if v := r.Header.Get(h); v != "" {
-					t.Errorf("the request has %s: %s", h, v)
-				}
-			}
-		}
+		s.Check(t, providertest.Want{
+			URLs:      []string{"https://api.anthropic.com/v1/messages", "https://api.anthropic.com/v1/messages/count_tokens"},
+			KeyHeader: "X-Api-Key", Key: "test-key",
+			Absent: []string{"Authorization", "X-From-Env", "Anthropic-Beta", "Anthropic-Workspace-Id", "Traceparent", "Tracestate"},
+		})
 		if n := p.tracers.Load(); n != 0 {
 			t.Errorf("the SDK asked the process for %d tracers", n)
 		}
