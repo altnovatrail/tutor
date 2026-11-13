@@ -30,7 +30,7 @@ const inputBudget = 8000
 // E2 — 1.3 tokens a word, number or sign of the instructions and 1.575 of the journal: its
 // instructions are about 150 of them longer, and its journal block and journal of parts about 130
 // and 120 of them, so about 2 050 for form A and 360 more with the journal (architecture 3.1,
-// «Раннер»). A frame is the same picture in both.
+// "The runner"). A frame is the same picture in both.
 var inputs = map[judge.Version]struct{ a, journal, frame int }{
 	judge.V1: {a: 1850, journal: 400, frame: 820},
 	judge.V2: {a: 2050, journal: 360, frame: 820},

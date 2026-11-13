@@ -73,21 +73,21 @@ func TestEssaysDoc(t *testing.T) {
 	}
 }
 
-// criterionNames say in Russian what each criterion means, and who checks its truth.
+// criterionNames say what each criterion means, and who checks its truth.
 var criterionNames = map[string][2]string{
-	sample.CriterionTitle:     {"у сочинения есть заголовок, на своей первой строке", "программа: заголовок есть — от 1 до 6 слов, с заглавной буквы, без знака в конце"},
-	sample.CriterionSentences: {"в сочинении не меньше пяти предложений", "программа: предложения считаются по знакам конца"},
-	sample.CriterionCapitals:  {"каждое предложение начинается с заглавной буквы и кончается точкой, вопросительным или восклицательным знаком", "программа"},
-	sample.CriterionLinking:   {"мысли связаны словами вроде because, but, so, then или first", "программа, по закрытому списку связующих слов"},
-	sample.CriterionOnTopic:   {"сочинение держится темы задачи", "только план и вычитка автора"},
-	sample.CriterionSpelling:  {"частые слова написаны без ошибок", "программа: слова с ошибкой перечислены в файле и стоят в тексте"},
+	sample.CriterionTitle:     {"the essay has a title, on a line of its own, the first", "the program: a title is there — 1 to 6 words, with a capital letter, with no mark at the end"},
+	sample.CriterionSentences: {"the essay has no fewer than five sentences", "the program: sentences are counted by the marks at their ends"},
+	sample.CriterionCapitals:  {"every sentence starts with a capital letter and ends with a full stop, a question mark or an exclamation mark", "the program"},
+	sample.CriterionLinking:   {"the thoughts are linked by words such as because, but, so, then or first", "the program, by a closed list of linking words"},
+	sample.CriterionOnTopic:   {"the essay keeps to the topic of the task", "only the plan and the author's proofreading"},
+	sample.CriterionSpelling:  {"common words are spelled without mistakes", "the program: the misspelled words are listed in the file and stand in the text"},
 }
 
 // essaysRubricTable writes the table of docs/essays.md with the criteria of the rubric: the ID, the
 // text a model reads, what it means and who checks its truth.
 func essaysRubricTable(es *sample.Essays) string {
 	var b strings.Builder
-	b.WriteString("| ID | Текст критерия | Что значит | Истину сверяет |\n|---|---|---|---|\n")
+	b.WriteString("| ID | Text of the criterion | What it means | Who checks the truth |\n|---|---|---|---|\n")
 	for _, c := range es.Rubric {
 		fmt.Fprintf(&b, "| `%s` | %s | %s | %s |\n", c.ID, c.Text, criterionNames[c.ID][0], criterionNames[c.ID][1])
 	}
@@ -99,18 +99,18 @@ func essaysRubricTable(es *sample.Essays) string {
 func essaysCountTable(es *sample.Essays) string {
 	unmet := es.Tally()
 	var b strings.Builder
-	b.WriteString("| Критерий | Не выполнен | Разработка | Тест |\n|---|---|---|---|\n")
+	b.WriteString("| Criterion | Not met | Dev | Test |\n|---|---|---|---|\n")
 	for _, id := range sample.Criteria {
 		n := unmet[id]
 		fmt.Fprintf(&b, "| `%s` | %d | %d | %d |\n", id, n[0]+n[1], n[0], n[1])
 	}
 	n := unmet[""]
-	fmt.Fprintf(&b, "| **выполнены все** | %d | %d | %d |", n[0]+n[1], n[0], n[1])
+	fmt.Fprintf(&b, "| **all met** | %d | %d | %d |", n[0]+n[1], n[0], n[1])
 	return b.String()
 }
 
 // essaysHeading heads the last section of docs/essays.md, the essays one by one.
-const essaysHeading = "## Сочинения по одному\n"
+const essaysHeading = "## The essays one by one\n"
 
 // essaysSection writes the last section of docs/essays.md: each essay, its part, topic, words and
 // sentences, the criteria it does not meet and why, and its title and text as written.
@@ -118,18 +118,18 @@ func essaysSection(es *sample.Essays) string {
 	var b strings.Builder
 	b.WriteString(essaysHeading)
 	for _, e := range es.Essays {
-		title := "без заголовка"
+		title := "no title"
 		if e.Title != nil {
 			title = *e.Title
 		}
 		fmt.Fprintf(&b, "\n### %d. %s\n\n", e.Number, title)
-		fmt.Fprintf(&b, "- **Часть:** %s.\n", map[string]string{sample.PartDev: "разработка", sample.PartTest: "тест"}[e.Part])
-		fmt.Fprintf(&b, "- **Тема:** %s\n", e.Topic)
-		fmt.Fprintf(&b, "- **Слов** — %d, **предложений** — %d.\n", len(sample.Words(e.Text)), len(sample.Sentences(e.Text)))
+		fmt.Fprintf(&b, "- **Part:** %s.\n", map[string]string{sample.PartDev: "dev", sample.PartTest: "test"}[e.Part])
+		fmt.Fprintf(&b, "- **Topic:** %s\n", e.Topic)
+		fmt.Fprintf(&b, "- **Words** — %d, **sentences** — %d.\n", len(sample.Words(e.Text)), len(sample.Sentences(e.Text)))
 		if len(e.Unmet) == 0 {
-			b.WriteString("- **Не выполнено:** ничего.\n")
+			b.WriteString("- **Not met:** none.\n")
 		} else {
-			b.WriteString("- **Не выполнено:**\n")
+			b.WriteString("- **Not met:**\n")
 			for i, id := range e.Unmet {
 				end := ";"
 				if i == len(e.Unmet)-1 {
@@ -147,34 +147,34 @@ func essaysSection(es *sample.Essays) string {
 	return b.String()
 }
 
-// whyUnmet says in Russian why an essay does not meet a criterion.
+// whyUnmet says why an essay does not meet a criterion.
 func whyUnmet(e *sample.Essay, id string) string {
 	switch id {
 	case sample.CriterionTitle:
-		return "заголовка нет"
+		return "there is no title"
 	case sample.CriterionSentences:
-		return fmt.Sprintf("%d предложения", len(sample.Sentences(e.Text)))
+		return fmt.Sprintf("%d sentences", len(sample.Sentences(e.Text)))
 	case sample.CriterionCapitals:
 		var why []string
 		ss := sample.Sentences(e.Text)
 		for _, i := range sample.LowerStarts(e.Text) {
 			words := sample.Words(ss[i-1])
-			why = append(why, fmt.Sprintf("предложение %d начинается со строчной: «%s …»", i, strings.Join(words[:min(2, len(words))], " ")))
+			why = append(why, fmt.Sprintf("sentence %d starts with a small letter: \"%s …\"", i, strings.Join(words[:min(2, len(words))], " ")))
 		}
 		if sample.Unended(e.Text) {
-			why = append(why, "последнее предложение — без знака в конце")
+			why = append(why, "the last sentence has no mark at the end")
 		}
 		return strings.Join(why, ", ")
 	case sample.CriterionLinking:
-		return "ни одного связующего слова, и даже and и or нет"
+		return "not one linking word, not even and or or"
 	case sample.CriterionOnTopic:
-		return "всё сочинение — о другом"
+		return "the whole essay is about something else"
 	case sample.CriterionSpelling:
 		var why []string
 		for _, m := range e.Misspelled {
-			why = append(why, fmt.Sprintf("%s вместо %s", m.Written, m.Word))
+			why = append(why, fmt.Sprintf("%s instead of %s", m.Written, m.Word))
 		}
-		return "с ошибкой: " + strings.Join(why, ", ")
+		return "misspelled: " + strings.Join(why, ", ")
 	}
 	return ""
 }

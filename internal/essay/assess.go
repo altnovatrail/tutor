@@ -14,7 +14,7 @@ import (
 	"github.com/altnovatrail/tutor/words"
 )
 
-// The assessment of an essay by the rubric (T83; docs/architecture.md, 3.4, «Оценка по рубрике»):
+// The assessment of an essay by the rubric (T83; docs/architecture.md, 3.4, "Assessment by the rubric"):
 // one call an essay, which shows the model the crop of the page and gives it the topic and the
 // criteria of the rubric as a marked block of data (R02 spec). The model writes down the essay as it
 // is written, judges whether it meets each criterion and on what in it, and writes the learner

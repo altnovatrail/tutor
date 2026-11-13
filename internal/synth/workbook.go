@@ -12,7 +12,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// A page of the workbook (T78; docs/architecture.md, 3.4, «Рабочая тетрадь») is laid out by the
+// A page of the workbook (T78; docs/architecture.md, 3.4, "Workbook") is laid out by the
 // numbers of R35 canvas — a page of 1000 × 1400 units, boxes of 100 × 100, margins of 40, rows 100
 // high and 32 apart, the line 56 from the item's left edge and a box 16 from a word — in a layout
 // of tutor's own, simpler than canvas's: every item on a row of its own, its boxes where the widths

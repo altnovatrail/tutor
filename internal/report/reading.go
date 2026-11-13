@@ -19,8 +19,8 @@ import (
 	"github.com/altnovatrail/tutor/internal/task"
 )
 
-// Reading is what a run of the reading comes to (T71, T72; docs/architecture.md, 3.4, «Чтение в
-// наблюдение»): the threshold of R03 for every reader, the readings by reader and condition, the
+// Reading is what a run of the reading comes to (T71, T72; docs/architecture.md, 3.4,
+// "Reading into an observation"): the threshold of R03 for every reader, the readings by reader and condition, the
 // rule of two readers (R08), the other heights of digits, the states and the readings by each
 // policy of reading on its own (О-8, О-21). It holds no handwriting: numbers, the sets and numbers of sheets,
 // and the names of readers and conditions.

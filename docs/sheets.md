@@ -1,49 +1,49 @@
-# План листов замера хода письма
+# The sheet plan of the measurement of the course of writing
 
-> Что автор пишет на каждом из 40 листов замера хода письма (T15; R24). Листы пишутся в режиме записи доски и там же размечаются (R25; T49, T50, T13, T47, T51). Как устроен замер и какой ответ модели в нём верен — [measurements.md](measurements.md), раздел 1.1.
+> What the author writes on each of the 40 sheets of the measurement of the course of writing (T15; R24). The sheets are written in the board's record mode and marked up there too (R25; T49, T50, T13, T47, T51). How the measurement is built and which answer of the model is correct in it — [measurements.md](measurements.md), section 1.1.
 >
-> Задачи — банк замера, файл `eval/bank.json` в формате `tutor-bank` v0 (R15). В нём у каждой задачи — ключ, эталонное решение по строкам, ловушки, фразы-утечки и ложные ключи. Утечки и ложные ключи этот замер не использует, но их требует формат. Банк и план — синтетическое содержание под Apache-2.0: их написал исполнитель, а не ученики.
+> The tasks are the bank of the measurement, the file `eval/bank.json` in the format `tutor-bank` v0 (R15). In it each task has a key, a reference solution by lines, traps, leak phrases and false keys. This measurement does not use the leaks and the false keys, but the format requires them. The bank and the plan are synthetic content under Apache-2.0: the executor wrote them, not learners.
 >
-> План — ещё и файл данных `eval/sheets.json` в формате `tutor-sheet-plan` v0 ([architecture.md](architecture.md), раздел 3.1, «Формат плана листов»; T49). Из него доска в режиме записи подставляет разметку листа (R25). Таблица «Листы» ниже — тот же план: тест `cmd/tutor-eval` собирает её из файла и сверяет с этим документом побайтно, так что лист правится в обоих местах.
+> The plan is also the data file `eval/sheets.json` in the format `tutor-sheet-plan` v0 ([architecture.md](architecture.md), section 3.1, "Format of the sheet plan"; T49). From it the board in record mode fills in the sheet's markup (R25). The table "Sheets" below is the same plan: a test of `cmd/tutor-eval` builds it from the file and checks it against this document byte for byte, so a sheet is edited in both places.
 
-## Задачи
+## Tasks
 
-Десять задач: четыре уравнения, три цепочки вычислений и три короткие задачи со свободным решением. Пять из них — задачи доски, дословно и под теми же ID: `equation-1`, `equation-2`, `chain-1`, `chain-2` и `posts`. Что они те же, проверяет тест `cmd/tutor-eval`, а весь банк — `tutor-eval check eval/bank.json`.
+Ten tasks: four equations, three chains of calculations and three short tasks with a free solution. Five of them are tasks of the board, word for word and under the same IDs: `equation-1`, `equation-2`, `chain-1`, `chain-2` and `posts`. That they are the same is checked by a test of `cmd/tutor-eval`, and the whole bank by `tutor-eval check eval/bank.json`.
 
-| ID | Вид | Условие | Ключ |
+| ID | Kind | Statement | Key |
 |---|---|---|---|
-| `equation-1` | `linear-equation` | Реши уравнение 3x + 1 = 7. | `x = 2` |
-| `equation-2` | `linear-equation` | Реши уравнение 2(x − 3) = 10. | `x = 8` |
-| `equation-3` | `linear-equation` | Реши уравнение 9 − (x − 2) = 4. | `x = 7` |
-| `equation-4` | `linear-equation` | Реши уравнение 5x − 4 = 2x + 8. | `x = 4` |
-| `chain-1` | `calculation` | Вычисли 17 + 49 − 14 × 2. | `38` |
-| `chain-2` | `calculation` | Вычисли (47 + 19) : 6. | `11` |
-| `chain-3` | `calculation` | Вычисли 120 − 4 × (18 + 7). | `20` |
-| `posts` | `free-solution` | Вдоль дорожки длиной 20 м через каждые 5 м стоят столбы, первый — в начале, последний — в конце. Сколько всего столбов? | `5` |
-| `rabbits` | `free-solution` | Во дворе гуляют куры и кролики. У них вместе 5 голов и 14 ног. Сколько во дворе кроликов? | `2` |
-| `logs` | `free-solution` | Бревно распилили на 6 частей. Каждый распил занимает 2 минуты. Сколько минут пилили бревно? | `10` |
+| `equation-1` | `linear-equation` | «Реши уравнение 3x + 1 = 7.» | `x = 2` |
+| `equation-2` | `linear-equation` | «Реши уравнение 2(x − 3) = 10.» | `x = 8` |
+| `equation-3` | `linear-equation` | «Реши уравнение 9 − (x − 2) = 4.» | `x = 7` |
+| `equation-4` | `linear-equation` | «Реши уравнение 5x − 4 = 2x + 8.» | `x = 4` |
+| `chain-1` | `calculation` | «Вычисли 17 + 49 − 14 × 2.» | `38` |
+| `chain-2` | `calculation` | «Вычисли (47 + 19) : 6.» | `11` |
+| `chain-3` | `calculation` | «Вычисли 120 − 4 × (18 + 7).» | `20` |
+| `posts` | `free-solution` | «Вдоль дорожки длиной 20 м через каждые 5 м стоят столбы, первый — в начале, последний — в конце. Сколько всего столбов?» | `5` |
+| `rabbits` | `free-solution` | «Во дворе гуляют куры и кролики. У них вместе 5 голов и 14 ног. Сколько во дворе кроликов?» | `2` |
+| `logs` | `free-solution` | «Бревно распилили на 6 частей. Каждый распил занимает 2 минуты. Сколько минут пилили бревно?» | `10` |
 
-## Как читать план
+## How to read the plan
 
-- **Лист** — одна задача банка и один сценарий формата образца (раздел 3.1, «Формат образца»). У листов, которые автор пишет сам, `writer` — `author`, а у нарисованных кодом — `synthetic` (R26). Исход задаёт сценарий: у `correct`, `erasure-fixed` и `answer-not-last` — `correct`, у `error` и `erasure-broken` — `error`.
-- **Строки на листе** — что остаётся на листе к «Готово», сверху вниз, по строке решения на строку листа. Это и задуманный текст строк в разметке.
-  - Условие на лист не пишется: его показывает доска.
-  - Пояснений после «—», как в эталонных решениях банка, на листе нет.
-  - Дробь — в строку, через косую черту: `8/3`.
-- **Ответ** — номер строки с итогом. На листах `answer-not-last` после неё идёт проверка.
-- **Первая ошибка** — номер первой неверной строки и ловушка задачи, в которую попадает ошибка.
-  - Первую ошибку у задачи любого вида задаёт эта разметка (R24). Неверная строка — та, с которой решение пошло не так, даже если вычисление в ней верно. Так, в `chain-1` строка `66 − 14 = 52` верно вычтена, но это шаг не по порядку действий.
-  - Правила видов задач, по которым строки сверяла программа, ушли вместе с проверкой по строкам (R19). Вид задачи в банке остался её названием.
-  - Строки после первой ошибки следуют из написанного: второй ошибки на листе нет.
-- **Стирание по сценарию** — номер строки, которая написана на месте стёртого, что стёрто — ошибка или верный шаг — и его текст, а после стрелки — что написано вместо.
-  - Порядок письма: строки до этого места; стёртое; его стирание; на его месте — новое; дальше — остальные строки.
-  - Стирание по сценарию у листа одно (раздел 3.1, «Формат образца»). Ластик доски пишет одним стиранием всё, чего коснулся за одно движение (R25). Если поднять его посреди стирания по сценарию, лист пишется заново.
-  - «Часть строки» — стирается только это число, а остальная строка остаётся.
-- **Помарки** — стирания не по сценарию — разрешены на любом листе. Разметки у них нет (R11).
+- **Sheet** — one task of the bank and one scenario of the sample format (section 3.1, "Sample format"). Sheets the author writes themselves have `writer` `author`, and those drawn by code have `synthetic` (R26). The scenario sets the outcome: `correct`, `erasure-fixed` and `answer-not-last` have `correct`, `error` and `erasure-broken` have `error`.
+- **Lines on the sheet** — what remains on the sheet by Done, top to bottom, one line of the solution to one line of the sheet. This is also the intended text of the lines in the markup.
+  - The statement is not written on the sheet: the board shows it.
+  - The explanations after "—", as in the bank's reference solutions, are not on the sheet.
+  - A fraction is inline, with a slash: `8/3`.
+- **Answer** — the number of the line with the result. On the `answer-not-last` sheets a check follows it.
+- **First error** — the number of the first wrong line and the task's trap that the error falls into.
+  - This markup sets the first error of a task of any kind (R24). The wrong line is the one from which the solution went wrong, even if the calculation in it is right. So, in `chain-1` the line `66 − 14 = 52` is subtracted right, but it is a step out of the order of operations.
+  - The rules of the task kinds, by which the program checked the lines, went away together with the check by lines (R19). A task's kind in the bank remained its name.
+  - The lines after the first error follow from what is written: there is no second error on the sheet.
+- **Planned erasure** — the number of the line that is written in the place of what was erased, what was erased — a mistake or a correct step — and its text, and after the arrow, what is written instead.
+  - The order of writing: the lines up to this place; what is erased; its erasure; in its place, the new one; then the remaining lines.
+  - A sheet has one planned erasure (section 3.1, "Sample format"). The board's eraser writes as one erasure everything it touched in one movement (R25). If it is lifted in the middle of a planned erasure, the sheet is written anew.
+  - "Part of a line" — only this number is erased, and the rest of the line remains.
+- **Stray erasures** — erasures not by the scenario — are allowed on any sheet. They have no markup (R11).
 
-## Сколько каких листов
+## How many sheets of each kind
 
-| Задача | `correct` | `error` | `erasure-fixed` | `erasure-broken` | `answer-not-last` |
+| Task | `correct` | `error` | `erasure-fixed` | `erasure-broken` | `answer-not-last` |
 |---|---|---|---|---|---|
 | `equation-1` | 1 | 1 | 1 | — | 1 |
 | `equation-2` | 2 | 1 | — | 1 | — |
@@ -55,94 +55,94 @@
 | `posts` | 1 | 1 | — | 1 | 1 |
 | `rabbits` | 1 | 1 | 1 | 1 | — |
 | `logs` | 1 | 1 | 1 | 1 | — |
-| **всего** | **12** | **12** | **7** | **7** | **2** |
+| **total** | **12** | **12** | **7** | **7** | **2** |
 
-Листов со стиранием по сценарию — 14. Первая ошибка стоит в разных строках: в первой — на 5 листах, во второй — на 9, в третьей — на 2 и в четвёртой — на 3.
+Sheets with a planned erasure — 14. The first error stands in different lines: in the first on 5 sheets, in the second on 9, in the third on 2 and in the fourth on 3.
 
-Порядок листов смешан. Соседние листы — разные задачи и разные сценарии, а в каждом десятке — все десять задач: три листа `correct`, три `error` и четыре — остальных сценариев. Так усталость и привычка к доске не ложатся на один сценарий. На разработочную и тестовую части листы делит не план, а `tutor-eval split` после записи (T48).
+The order of the sheets is mixed. Neighbouring sheets are different tasks and different scenarios, and each ten has all ten tasks: three sheets `correct`, three `error` and four of the other scenarios. So fatigue and getting used to the board do not fall on one scenario. Not the plan but `tutor-eval split` after the recording divides the sheets into the dev part and the test part (T48).
 
-## Как писать листы
+## How to write the sheets
 
-Это шаги автора в T26. Как устроена страница записи, подробно, — [architecture.md](architecture.md), раздел 3.3.
+These are the author's steps in T26. How the record page is built, in detail — [architecture.md](architecture.md), section 3.3.
 
-Листов в плане 40, и нужны все: деление (шаг 8) начинается, только когда записаны и проходят проверку все листы плана. На лист — 3–5 минут. Писать можно в несколько заходов: доска помнит, какие листы уже сохранены. Листы, которые автор писать не стал, рисует код — шаг 6 (R26).
+The plan has 40 sheets, and all are needed: the split (step 8) starts only when all the sheets of the plan are recorded and pass the check. A sheet takes 3–5 minutes. The sheets can be written in several sittings: the board remembers which sheets are already saved. The sheets the author chose not to write are drawn by code — step 6 (R26).
 
-1. **Запуск.** В терминале devcontainer — `just record`. Откройте адрес, который назовёт терминал. Ключ не нужен: режим записи моделей не спрашивает.
-2. **Лист.** Стрелки в шапке выбирают лист плана. Доска показывает:
-   - условие задачи;
-   - строки, которые надо написать, и строку ответа;
-   - у листа с ошибкой — первую ошибку и ловушку;
-   - у листа со стиранием по сценарию — что написать, стереть и написать вместо;
-   - сколько раз лист уже сохранён.
+1. **Start.** In the devcontainer's terminal — `just record`. Open the address the terminal names. No key is needed: record mode asks no models.
+2. **Sheet.** The arrows in the header choose a sheet of the plan. The board shows:
+   - the task's statement;
+   - the lines to be written, and the answer line;
+   - for a sheet with an error, the first error and the trap;
+   - for a sheet with a planned erasure, what to write, erase and write instead;
+   - how many times the sheet has already been saved.
 
-   Чтобы уйти с несохранённого листа, стрелку нажимают второй раз, в пределах 4 с: первое нажатие только предупреждает.
-3. **Письмо.** Пишите пером или мышью, своим обычным почерком: все листы замера — `author`. Одна строка решения — одна строка на листе, сверху вниз, как в плане. Условие на лист не пишется.
-   - **Ластик** — кнопка Eraser или обратный конец пера. Eraser остаётся включённым, пока его не нажмут снова: после стирания нажмите его ещё раз, чтобы писать дальше.
-   - **Помарки разрешены.** Доска считает их помарками сама, и размечать их не надо. На листах без стирания по сценарию помарку можно стереть и ластиком, и Undo. На листах `erasure-fixed` и `erasure-broken` помарки стирайте только Undo, а ластик берите для одного стирания по сценарию: движение ластика по строке плана доска может принять за стирание по сценарию.
-   - **Стирание по сценарию** идёт в порядке письма из плана:
-     1. строки до этого места;
-     2. то, что будет стёрто;
-     3. одно движение ластика по нему;
-     4. новое на его месте;
-     5. остальные строки.
+   To leave an unsaved sheet, the arrow is pressed a second time, within 4 s: the first press only warns.
+3. **Writing.** Write with a pen or a mouse, in your usual handwriting: all the sheets of the measurement are `author`. One line of the solution is one line on the sheet, top to bottom, as in the plan. The statement is not written on the sheet.
+   - **The eraser** — the Eraser button or the back end of the pen. Eraser stays on until it is pressed again: after erasing, press it once more to go on writing.
+   - **Stray erasures are allowed.** The board itself counts them as such, and they need no markup. On sheets without a planned erasure a stray mark can be erased both with the eraser and with Undo. On the `erasure-fixed` and `erasure-broken` sheets erase stray marks only with Undo, and take the eraser for the one planned erasure: the board may take a movement of the eraser over a line of the plan for the planned erasure.
+   - **The planned erasure** goes in the order of writing from the plan:
+     1. the lines up to this place;
+     2. what will be erased;
+     3. one movement of the eraser over it;
+     4. the new one in its place;
+     5. the remaining lines.
 
-     Если ластик поднят посреди стирания по сценарию, лист пишется заново: Start over, нажатый второй раз в пределах 4 с. Clear снимает все штрихи, но лист идёт дальше, и это помарка, как Undo (R75). «Часть строки» в плане значит, что стирается только это число, а остальная строка остаётся.
-   - **Паузы** — как получатся: время пишется само, а журнал хода называет только паузы от 6 с.
-4. **«Готово»** — кнопка Done. Лист запирается, доска делит штрихи на строки и подставляет разметку из плана. Проверьте:
-   - **строки** — по одной полосе на строку плана. Если доска ошиблась, выделите штрихи на листе и перенесите их: Move them to — в другую строку или в новую, a new line, — а случайный штрих — Not a line. Строки можно и объединить;
-   - **ответ, исход, первую ошибку и ловушку** — их доска берёт из плана;
-   - **стирание по сценарию** — доска сама берёт движение ластика по строке плана. Проверьте, что выбрано то движение.
+     If the eraser is lifted in the middle of a planned erasure, the sheet is written anew: Start over, pressed a second time within 4 s. Clear removes all the strokes, but the sheet goes on, and this is a stray erasure, as Undo is (R75). "Part of a line" in the plan means that only this number is erased, and the rest of the line remains.
+   - **Pauses** — as they come: the time is written by itself, and the log of the course names only pauses from 6 s.
+4. **"Done"** — the Done button. The sheet locks, the board divides the strokes into lines and fills in the markup from the plan. Check:
+   - **the lines** — one band per line of the plan. If the board got it wrong, select the strokes on the sheet and move them: Move them to — into another line or into a new one, a new line, — and a stray stroke — Not a line. Lines can also be merged;
+   - **the answer, the outcome, the first error and the trap** — the board takes them from the plan;
+   - **the planned erasure** — the board itself takes the movement of the eraser over a line of the plan. Check that the right movement is chosen.
 
-   Что не так, доска пишет рядом с полями. Back возвращает к письму, и время разметки в запись не идёт.
-5. **Save.** Лист сохраняется в `samples/sheets-v1`, вне git, образцом протокола eval `spec` с историей письма (R75). Штрих, который не попал ни в одну строку, доска называет, и лист не сохраняется, пока штрих не перенесён в строку или не стёрт. Код писавшего — файл `samples/writer-code`: его делает первое сохранение. До деления переписанный лист сохраняется ещё раз, и считается последний файл.
-6. **Остальные листы.** `go run ./cmd/tutor-eval draw` рисует каждый лист плана, у которого ещё нет файла, и сохраняет его рядом, с `writer` `synthetic`. Листы автора остаются как были. Почерка автора в нарисованных листах нет.
-7. **Сводка.** Затем — `go run ./cmd/tutor-eval sheets`. Листы, сохранённые до T105 файлами `tutor-sample` v0 в `samples/sheets`, переведены в `samples/sheets-v1` командой `go run ./cmd/tutor-eval convert -from samples/sheets`: сводка читает только образцы протокола. Она говорит, сколько листов записано и сколько проходит проверку, по задачам, сценариям и исходам. Почерка в ней нет, и её можно показать агенту.
-8. **Деление.** Один раз, до первой правки промпта, — `go run ./cmd/tutor-eval split -seed N` с любым своим числом N. Деление не перезаписывается (T48). После деления листы не переписывайте: прогон берёт файлы, которые взяло деление, и лист, сохранённый заново, остановит его до старта. Если лист всё же переписан, удалите его новый файл из `samples/sheets`.
-9. **Проверка.** `git status` не должен показать ни одного файла из `samples/`: листы — вне git (R05).
+   What is wrong, the board writes next to the fields. Back returns to writing, and the time of the markup does not go into the record.
+5. **Save.** The sheet is saved in `samples/sheets-v1`, outside git, as a sample of the eval protocol of `spec` with the history of writing (R75). A stroke that fell into no line the board names, and the sheet is not saved until the stroke is moved into a line or erased. The writer's code is the file `samples/writer-code`: the first save makes it. Before the split a rewritten sheet is saved once more, and the last file counts.
+6. **The other sheets.** `go run ./cmd/tutor-eval draw` draws each sheet of the plan that has no file yet and saves it alongside, with `writer` `synthetic`. The author's sheets stay as they were. There is no handwriting of the author in the drawn sheets.
+7. **Summary.** Then — `go run ./cmd/tutor-eval sheets`. The sheets saved before T105 as files `tutor-sample` v0 in `samples/sheets` were converted into `samples/sheets-v1` by the command `go run ./cmd/tutor-eval convert -from samples/sheets`: the summary reads only samples of the protocol. It says how many sheets are recorded and how many pass the check, by task, scenario and outcome. There is no handwriting in it, and it can be shown to an agent.
+8. **Split.** Once, before the first edit of the prompt, — `go run ./cmd/tutor-eval split -seed N` with any number N of your own. The split is not overwritten (T48). After the split do not rewrite the sheets: the run takes the files the split took, and a sheet saved anew will stop it before the start. If a sheet is rewritten all the same, delete its new file from `samples/sheets`.
+9. **Check.** `git status` must show no file from `samples/`: the sheets are outside git (R05).
 
-Дальше — разработочный прогон, `just measure -part dev` (T27). Он платный, и запускает его автор: сначала прогон называет смету и ждёт «yes».
+Next — the dev run, `just measure -part dev` (T27). It is paid, and the author starts it: first the run names the estimate and waits for "yes".
 
-## Листы
+## Sheets
 
-| № | Задача | Сценарий | Строки на листе | Ответ | Первая ошибка | Стирание по сценарию |
+| No. | Task | Scenario | Lines on the sheet | Answer | First error | Planned erasure |
 |---|---|---|---|---|---|---|
 | 1 | `posts` | `correct` | `20 : 5 = 4`; `4 + 1 = 5`; `Ответ: 5 столбов` | 3 | — | — |
-| 2 | `equation-4` | `erasure-fixed` | `5x − 4 = 2x + 8`; `5x − 2x = 8 + 4`; `3x = 12`; `x = 4` | 4 | — | 2: ошибка `5x − 2x = 8 − 4` → `5x − 2x = 8 + 4` |
+| 2 | `equation-4` | `erasure-fixed` | `5x − 4 = 2x + 8`; `5x − 2x = 8 + 4`; `3x = 12`; `x = 4` | 4 | — | 2: mistake `5x − 2x = 8 − 4` → `5x − 2x = 8 + 4` |
 | 3 | `chain-1` | `error` | `17 + 49 = 66`; `66 − 14 = 52`; `52 × 2 = 104` | 3 | 2: `order-of-operations` | — |
 | 4 | `equation-2` | `correct` | `2(x − 3) = 10`; `x − 3 = 5`; `x = 8` | 3 | — | — |
 | 5 | `chain-3` | `error` | `120 − 4 = 116`; `18 + 7 = 25`; `116 × 25 = 2900` | 3 | 1: `order-of-operations` | — |
-| 6 | `logs` | `erasure-fixed` | `6 − 1 = 5`; `5 × 2 = 10`; `Ответ: 10 минут` | 3 | — | 1: ошибка `6 × 2 = 12` → `6 − 1 = 5` |
+| 6 | `logs` | `erasure-fixed` | `6 − 1 = 5`; `5 × 2 = 10`; `Ответ: 10 минут` | 3 | — | 1: mistake `6 × 2 = 12` → `6 − 1 = 5` |
 | 7 | `chain-2` | `error` | `47 + 19 = 56`; `56 : 6 = 9 (ост. 2)` | 2 | 1: `carry` | — |
 | 8 | `rabbits` | `correct` | `5 × 2 = 10`; `14 − 10 = 4`; `4 : 2 = 2`; `Ответ: 2 кролика` | 4 | — | — |
-| 9 | `equation-3` | `erasure-broken` | `9 − (x − 2) = 4`; `9 − x + 2 = 4`; `11 − x = 4`; `x = 15` | 4 | 4: `unknown-subtrahend` | 4: верный шаг `7` → `15`, часть строки |
+| 9 | `equation-3` | `erasure-broken` | `9 − (x − 2) = 4`; `9 − x + 2 = 4`; `11 − x = 4`; `x = 15` | 4 | 4: `unknown-subtrahend` | 4: correct step `7` → `15`, part of a line |
 | 10 | `equation-1` | `answer-not-last` | `3x + 1 = 7`; `3x = 6`; `x = 2`; `Проверка: 3 × 2 + 1 = 7` | 3 | — | — |
 | 11 | `chain-1` | `correct` | `14 × 2 = 28`; `17 + 49 − 28 = 38` | 2 | — | — |
 | 12 | `equation-3` | `error` | `9 − (x − 2) = 4`; `9 − x − 2 = 4`; `7 − x = 4`; `x = 3` | 4 | 2: `minus-before-brackets` | — |
 | 13 | `posts` | `answer-not-last` | `20 : 5 = 4`; `4 + 1 = 5`; `Ответ: 5 столбов`; `Проверка: 4 × 5 = 20` | 3 | — | — |
-| 14 | `rabbits` | `erasure-broken` | `5 × 2 = 10`; `14 − 10 = 4`; `4 : 4 = 1`; `Ответ: 1 кролик` | 4 | 3: `extra-legs-by-four` | 3: верный шаг `4 : 2 = 2` → `4 : 4 = 1` |
+| 14 | `rabbits` | `erasure-broken` | `5 × 2 = 10`; `14 − 10 = 4`; `4 : 4 = 1`; `Ответ: 1 кролик` | 4 | 3: `extra-legs-by-four` | 3: correct step `4 : 2 = 2` → `4 : 4 = 1` |
 | 15 | `logs` | `error` | `6 × 2 = 12`; `Ответ: 12 минут` | 2 | 1: `parts-for-cuts` | — |
 | 16 | `equation-2` | `correct` | `2(x − 3) = 10`; `2x − 6 = 10`; `2x = 16`; `x = 8` | 4 | — | — |
 | 17 | `equation-4` | `error` | `5x − 4 = 2x + 8`; `5x − 2x = 8 + 4`; `3x = 12`; `x = 12` | 4 | 4: `one-side-division` | — |
 | 18 | `chain-2` | `correct` | `47 + 19 = 66`; `66 : 6 = 11`; `Ответ: 11` | 3 | — | — |
-| 19 | `equation-1` | `erasure-fixed` | `3x + 1 = 7`; `3x = 6`; `x = 2` | 3 | — | 2: ошибка `3x = 7 + 1` → `3x = 6` |
-| 20 | `chain-3` | `erasure-broken` | `18 + 7 = 25`; `4 × 25 = 80`; `120 − 80 = 40` | 3 | 2: `arithmetic` | 2: верный шаг `100` → `80`, часть строки |
+| 19 | `equation-1` | `erasure-fixed` | `3x + 1 = 7`; `3x = 6`; `x = 2` | 3 | — | 2: mistake `3x = 7 + 1` → `3x = 6` |
+| 20 | `chain-3` | `erasure-broken` | `18 + 7 = 25`; `4 × 25 = 80`; `120 − 80 = 40` | 3 | 2: `arithmetic` | 2: correct step `100` → `80`, part of a line |
 | 21 | `equation-1` | `error` | `3x + 1 = 7`; `3x = 7 + 1`; `3x = 8`; `x = 8/3` | 4 | 2: `sign-on-transfer` | — |
-| 22 | `rabbits` | `erasure-fixed` | `5 × 2 = 10`; `14 − 10 = 4`; `4 : 2 = 2`; `Ответ: 2 кролика` | 4 | — | 3: ошибка `4 : 4 = 1` → `4 : 2 = 2` |
+| 22 | `rabbits` | `erasure-fixed` | `5 × 2 = 10`; `14 − 10 = 4`; `4 : 2 = 2`; `Ответ: 2 кролика` | 4 | — | 3: mistake `4 : 4 = 1` → `4 : 2 = 2` |
 | 23 | `equation-3` | `correct` | `9 − (x − 2) = 4`; `11 − x = 4`; `x = 11 − 4`; `x = 7` | 4 | — | — |
-| 24 | `chain-1` | `erasure-fixed` | `17 + 49 = 66`; `14 × 2 = 28`; `66 − 28 = 38` | 3 | — | 2: ошибка `66 − 14 = 52` → `14 × 2 = 28` |
+| 24 | `chain-1` | `erasure-fixed` | `17 + 49 = 66`; `14 × 2 = 28`; `66 − 28 = 38` | 3 | — | 2: mistake `66 − 14 = 52` → `14 × 2 = 28` |
 | 25 | `equation-2` | `error` | `2(x − 3) = 10`; `x − 3 = 5`; `x = 2` | 3 | 3: `sign-on-transfer` | — |
-| 26 | `equation-4` | `erasure-broken` | `5x − 4 = 2x + 8`; `5x − 2x = 8 − 4`; `3x = 4`; `x = 4/3` | 4 | 2: `sign-on-transfer` | 2: верный шаг `5x − 2x = 8 + 4` → `5x − 2x = 8 − 4` |
+| 26 | `equation-4` | `erasure-broken` | `5x − 4 = 2x + 8`; `5x − 2x = 8 − 4`; `3x = 4`; `x = 4/3` | 4 | 2: `sign-on-transfer` | 2: correct step `5x − 2x = 8 + 4` → `5x − 2x = 8 − 4` |
 | 27 | `logs` | `correct` | `6 − 1 = 5`; `5 × 2 = 10`; `Ответ: 10 минут` | 3 | — | — |
 | 28 | `chain-2` | `error` | `47 + 19 = 66`; `66 : 6 = 10` | 2 | 2: `arithmetic` | — |
 | 29 | `chain-3` | `correct` | `18 + 7 = 25`; `4 × 25 = 100`; `120 − 100 = 20` | 3 | — | — |
-| 30 | `posts` | `erasure-broken` | `20 : 5 = 4`; `Ответ: 4 столба` | 2 | 2: `gaps-for-posts` | 2: верный шаг `4 + 1 = 5` → `Ответ: 4 столба` |
+| 30 | `posts` | `erasure-broken` | `20 : 5 = 4`; `Ответ: 4 столба` | 2 | 2: `gaps-for-posts` | 2: correct step `4 + 1 = 5` → `Ответ: 4 столба` |
 | 31 | `rabbits` | `error` | `5 × 4 = 20`; `20 − 14 = 6`; `6 : 2 = 3`; `Ответ: 3 кролика` | 4 | 4: `wrong-animal` | — |
 | 32 | `equation-4` | `correct` | `5x − 4 = 2x + 8`; `3x = 12`; `x = 4` | 3 | — | — |
-| 33 | `logs` | `erasure-broken` | `6 + 1 = 7`; `7 × 2 = 14`; `Ответ: 14 минут` | 3 | 1: `cuts-plus-one` | 1: верный шаг `6 − 1 = 5` → `6 + 1 = 7` |
-| 34 | `equation-3` | `erasure-fixed` | `9 − (x − 2) = 4`; `9 − x + 2 = 4`; `11 − x = 4`; `x = 7` | 4 | — | 2: ошибка `9 − x − 2 = 4` → `9 − x + 2 = 4` |
+| 33 | `logs` | `erasure-broken` | `6 + 1 = 7`; `7 × 2 = 14`; `Ответ: 14 минут` | 3 | 1: `cuts-plus-one` | 1: correct step `6 − 1 = 5` → `6 + 1 = 7` |
+| 34 | `equation-3` | `erasure-fixed` | `9 − (x − 2) = 4`; `9 − x + 2 = 4`; `11 − x = 4`; `x = 7` | 4 | — | 2: mistake `9 − x − 2 = 4` → `9 − x + 2 = 4` |
 | 35 | `equation-1` | `correct` | `3x + 1 = 7`; `3x = 7 − 1`; `3x = 6`; `x = 2` | 4 | — | — |
-| 36 | `chain-2` | `erasure-fixed` | `47 + 19 = 66`; `66 : 6 = 11` | 2 | — | 1: ошибка `56` → `66`, часть строки |
+| 36 | `chain-2` | `erasure-fixed` | `47 + 19 = 66`; `66 : 6 = 11` | 2 | — | 1: mistake `56` → `66`, part of a line |
 | 37 | `chain-1` | `correct` | `14 × 2 = 28`; `17 + 49 = 66`; `66 − 28 = 38` | 3 | — | — |
 | 38 | `chain-3` | `error` | `18 + 7 = 15`; `4 × 15 = 60`; `120 − 60 = 60` | 3 | 1: `carry` | — |
-| 39 | `equation-2` | `erasure-broken` | `2(x − 3) = 10`; `2x − 3 = 10`; `2x = 13`; `x = 13/2` | 4 | 2: `bracket-first-term` | 2: верный шаг `2x − 6 = 10` → `2x − 3 = 10` |
+| 39 | `equation-2` | `erasure-broken` | `2(x − 3) = 10`; `2x − 3 = 10`; `2x = 13`; `x = 13/2` | 4 | 2: `bracket-first-term` | 2: correct step `2x − 6 = 10` → `2x − 3 = 10` |
 | 40 | `posts` | `error` | `20 : 5 = 4`; `4 + 2 = 6`; `Ответ: 6 столбов` | 3 | 2: `both-ends-added` | — |

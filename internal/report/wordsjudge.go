@@ -14,7 +14,7 @@ import (
 )
 
 // WordsJudge is what a run of the judge of the words comes to (T118; docs/architecture.md, 3.4,
-// «Набор слов»): of the control phrases, whether the judge gave every answer they expect, and where
+// "The set of words"): of the control phrases, whether the judge gave every answer they expect, and where
 // it did not; of the hints of a log of the set of the words, by tutor, kind of case and language,
 // the hints it flags for each question, against the rough search of the learner's sex; and the
 // file of every hint flagged, by the judge or by the code, for the executor to read. It holds no

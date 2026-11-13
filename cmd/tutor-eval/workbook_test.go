@@ -78,9 +78,9 @@ func TestWorkbookDoc(t *testing.T) {
 
 // scenarioNames are the scenarios of a box as the document names them.
 var scenarioNames = map[sample.BoxScenario]string{
-	sample.BoxCorrect: "верно", sample.BoxError: "ошибка", sample.BoxNearKey: "почти-ключ",
-	sample.BoxSimilarDigits: "похожие цифры", sample.BoxMirrored: "зеркальная цифра",
-	sample.BoxRewritten: "зачёркнуто", sample.BoxBlank: "пусто",
+	sample.BoxCorrect: "correct", sample.BoxError: "error", sample.BoxNearKey: "near key",
+	sample.BoxSimilarDigits: "similar digits", sample.BoxMirrored: "mirrored digit",
+	sample.BoxRewritten: "crossed out", sample.BoxBlank: "blank",
 }
 
 // workbookCountTable writes the table of docs/workbook.md that counts the boxes of each scenario:
@@ -123,7 +123,7 @@ func workbookCountTable(wb *sample.Workbook) string {
 		}
 	}
 	var s strings.Builder
-	s.WriteString("| Сценарий | Окошек | Число | Дробь | Из дробей несократимая | Столбиком | В строку | Разработка | Тест |\n|---|---|---|---|---|---|---|---|---|\n")
+	s.WriteString("| Scenario | Boxes | Number | Fraction | Of them in lowest terms | Stacked | Inline | Dev | Test |\n|---|---|---|---|---|---|---|---|---|\n")
 	row := func(name string, t tally) {
 		fmt.Fprintf(&s, "| %s | %d | %d | %d | %d | %d | %d | %d | %d |\n", name, t.all, t.number, t.fraction, t.reduced, t.stacked, t.inline, t.dev, t.test)
 	}
@@ -132,7 +132,7 @@ func workbookCountTable(wb *sample.Workbook) string {
 			row(scenarioNames[sc], *t)
 		}
 	}
-	row("**всего**", total)
+	row("**total**", total)
 	return strings.TrimSuffix(s.String(), "\n")
 }
 
@@ -142,15 +142,15 @@ func workbookCountTable(wb *sample.Workbook) string {
 func workbookBoxTable(t *testing.T, wb *sample.Workbook) string {
 	t.Helper()
 	var s strings.Builder
-	s.WriteString("| Стр. | № | Строка пункта | Окошко | Проверка | Ключ | Ловушки | Написано | Сценарий | Вердикт |\n|---|---|---|---|---|---|---|---|---|---|\n")
+	s.WriteString("| Page | No. | Item line | Box | Check | Key | Traps | Written | Scenario | Verdict |\n|---|---|---|---|---|---|---|---|---|---|\n")
 	for _, pg := range wb.Pages {
 		for i, it := range pg.Items {
 			for k, b := range it.Boxes {
-				check := "число"
+				check := "number"
 				if b.Check.Kind == sample.KindFraction {
-					check = "дробь"
+					check = "fraction"
 					if *b.Check.Form == formatv0.CheckFormReduced {
-						check = "несократимая дробь"
+						check = "fraction in lowest terms"
 					}
 				}
 				traps := make([]string, len(b.Check.TrapValues))
@@ -176,12 +176,12 @@ func writtenCell(t *testing.T, b sample.WorkbookBox) string {
 	switch {
 	case b.Fraction == nil:
 	case *b.Fraction == sample.Stacked:
-		how = " столбиком"
+		how = " stacked"
 	default:
-		how = " в строку"
+		how = " inline"
 	}
 	if b.Crossed != nil {
-		return cell(t, *b.Crossed) + how + " зачёркнуто, " + cell(t, *b.Written) + how
+		return cell(t, *b.Crossed) + how + " crossed out, " + cell(t, *b.Written) + how
 	}
 	return cell(t, *b.Written) + how
 }
@@ -207,7 +207,7 @@ func nonNil(s *string) *string {
 
 // verdictCell is a verdict as the document names it, with its reason or its trap.
 func verdictCell(v workbook.Slot) string {
-	name := map[verdict.Verdict]string{verdict.Correct: "верно", verdict.NotYet: "пока нет", verdict.Unreadable: "не прочитать", verdict.Unchecked: "без проверки"}[v.Verdict]
+	name := map[verdict.Verdict]string{verdict.Correct: "correct", verdict.NotYet: "not yet", verdict.Unreadable: "unreadable", verdict.Unchecked: "unchecked"}[v.Verdict]
 	switch {
 	case v.Trap != "":
 		return name + ", " + v.Trap

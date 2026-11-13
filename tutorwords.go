@@ -30,7 +30,7 @@ type Trap struct {
 	ID, Description string
 }
 
-// WordsRequest is a call of the tutor's words (architecture 3.10, «разбор и подсказка»): the analysis
+// WordsRequest is a call of the tutor's words (architecture 3.10, "analysis and hint"): the analysis
 // of the steps and the hint of a rung, in one call, as architecture 4.1 of spec draws it.
 //   - Crop is the PNG of the crop of the work, sent again, as the server keeps none (R09 spec); nil
 //     when the learner asks to have the rung put another way, which sends no work (R82 spec);

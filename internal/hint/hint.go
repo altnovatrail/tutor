@@ -1,5 +1,5 @@
 // Package hint is the call of the review and the hint (T74; docs/architecture.md, 3.4,
-// «Подсказка»): once the program has found the final answer not yet right, a model finds the first
+// "Hint"): once the program has found the final answer not yet right, a model finds the first
 // mistake in the work and words the tutor's question for the rung of the hint ladder that the
 // program chose, in one call, as architecture 4.1 spec draws it (R28). The model sees the crop of
 // the finished sheet, the task, its key and solution and the traps the task names, in a block of

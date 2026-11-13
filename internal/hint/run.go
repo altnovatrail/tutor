@@ -32,7 +32,7 @@ type Tutor struct {
 // Tutors are the configurations of the runner, each with the output it is expected to take:
 // the box, the trap and a hint of two short sentences come to about 200 tokens. Finding the first
 // mistake, the judge of free writing thought about 100 more on Opus and about 240 on Haiku with
-// thinking (docs/architecture.md, 3.4, «Подсказка»). The four configurations the extended measurement
+// thinking (docs/architecture.md, 3.4, "Hint"). The four configurations the extended measurement
 // adds (R50) are estimated so: Opus at medium as at high, Sonnet with thinking between Haiku and
 // Opus, without thinking as Haiku without it, and Haiku at medium above Haiku at low. A
 // configuration without its output here is a mistake of the code, and Tutors panics on it rather

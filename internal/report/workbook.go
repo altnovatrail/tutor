@@ -18,7 +18,7 @@ import (
 )
 
 // Workbook is the report of a run of the reading of the workbook (T80; docs/architecture.md, 3.4,
-// «Рабочая тетрадь»; docs/measurements.md, 3.7): how each reader read the filled boxes at 32 px,
+// "Workbook"; docs/measurements.md, 3.7): how each reader read the filled boxes at 32 px,
 // bare and captioned, by scenario, by kind of check and by how a fraction is written; the items;
 // whether the line of an item helps or harms the reading; and the other heights of digits against
 // 32 px.
