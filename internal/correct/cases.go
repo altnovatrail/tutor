@@ -1,9 +1,6 @@
 package correct
 
 import (
-	"bytes"
-	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"slices"
@@ -70,24 +67,12 @@ type Case struct {
 // ReadCases reads a file of cases strictly: no field it does not know, no list left null, and one
 // value only.
 func ReadCases(r io.Reader) (*Cases, error) {
-	data, err := io.ReadAll(r)
-	if err != nil {
+	var c Cases
+	if err := hint.ReadStrict(r, &c); err != nil {
 		return nil, err
 	}
-	dec := json.NewDecoder(bytes.NewReader(data))
-	dec.DisallowUnknownFields()
-	var c Cases
-	if err := dec.Decode(&c); err != nil {
-		return nil, fmt.Errorf("the cases: %w", err)
-	}
-	if dec.More() {
-		return nil, errors.New("the cases: more than one value in the file")
-	}
-	switch {
-	case c.Format != CasesFormat || c.Version != CasesVersion:
-		return nil, fmt.Errorf("the cases: format %q version %d, not %q version %d", c.Format, c.Version, CasesFormat, CasesVersion)
-	case len(c.Cases) == 0:
-		return nil, errors.New("the cases: none")
+	if err := hint.CheckHead(c.Format, c.Version, CasesFormat, CasesVersion, len(c.Cases)); err != nil {
+		return nil, err
 	}
 	for i, k := range c.Cases {
 		if k.Techniques == nil {
@@ -126,15 +111,8 @@ func (c *Cases) Check(plan *sample.Plan, bank *sample.Bank) error {
 		if bank.Task(sh.Task) == nil {
 			return fmt.Errorf("%s: the task %s of sheet %d is not in the bank", at, sh.Task, k.Sheet)
 		}
-		note := ""
-		if n := len(sh.Parts); n > 0 && sh.Parts[n-1].Place == sample.PlaceRight {
-			note = sh.Parts[n-1].Text
-		}
-		switch {
-		case k.Kind == CaseNote && (k.Note == "" || k.Note != note || !slices.Contains(hint.NoteKinds(), k.NoteKind)):
-			return fmt.Errorf("%s: a case of a note gives the note of sheet %d, %q, and its kind", at, k.Sheet, note)
-		case k.Kind != CaseNote && (k.Note != "" || k.NoteKind != "" || note != ""):
-			return fmt.Errorf("%s: a case of the kind %s is of a sheet without a note, and gives none", at, k.Kind)
+		if err := hint.CheckNote(at, k.Kind == CaseNote, string(k.Kind), k.Note, k.NoteKind, sh); err != nil {
+			return err
 		}
 	}
 	return nil

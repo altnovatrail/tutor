@@ -102,9 +102,8 @@ type Prompt struct {
 func RequestOf(p Prompt) (provider.Request, error) {
 	// The language is a tag that words.Correct can read, with a name the model can read: a check of
 	// the words that fails closed on its language would withhold every paid answer.
-	tag, err := language.Parse(p.Language)
-	name := display.English.Tags().Name(tag)
-	if err != nil || !words.Readable(p.Language) || name == "" || tag.IsRoot() {
+	name, ok := hint.LanguageName(p.Language)
+	if !ok {
 		return provider.Request{}, fmt.Errorf("correct: %q is no language the words are written in", p.Language)
 	}
 	limit := noLimit
