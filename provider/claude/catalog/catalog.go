@@ -26,7 +26,7 @@ type Model struct {
 }
 
 // PricesRead is the day the prices of Models were read on Anthropic's Pricing page
-// (docs/architecture.md, section 4).
+// (docs/sources.md, 1.14).
 const PricesRead = "2026-11-11"
 
 // The times the cache keeps a write for, each at its own price.
@@ -38,7 +38,7 @@ const (
 // Models are the current Claude models, cheapest first, with the IDs of Anthropic's Models overview,
 // read 2026-10-23, and the prices of its Pricing page, read on PricesRead. Haiku 5.5 alone prices a
 // prompt over 100 000 tokens higher, the cache counted in; the others take their whole context at
-// one price (docs/architecture.md, section 4). Haiku 5.5 turns its
+// one price (docs/sources.md, 1.14). Haiku 5.5 turns its
 // thinking off with "disabled"; Sonnet 5.5 refuses that and turns it off with "between_tools",
 // which without tools leaves an answer of text alone; on Opus 5.5 and Fable 5.1 thinking cannot
 // be turned off (Thinking, read 2026-10-25).
