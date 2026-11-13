@@ -7,6 +7,7 @@ import (
 	"maps"
 	"slices"
 	"sync"
+	"time"
 
 	"github.com/altnovatrail/spec/types/admissionv0"
 
@@ -243,10 +244,14 @@ const (
 // the provider says answered; the input tokens without the cache, those written to the cache by how
 // long it keeps them and those read from it, which add up to the input with no token counted twice;
 // the output tokens, and of them those spent thinking; whether those tokens are the call's whole
-// bill (provider.Billed); and its cost in US dollars by the table of prices (Tutor.Prices) — at its
-// worst when the tokens are not its whole bill —, which Priced says the prices hold. It is an
-// estimate: the provider bills. It holds no content and no identifier, and may be written to logs
-// (R09 spec).
+// bill (provider.Billed); its cost in US dollars by the table of prices (Tutor.Prices) — at its
+// worst when the tokens are not its whole bill —, which Priced says the prices hold, and it is an
+// estimate: the provider bills; how long the call took, from when the library asked the adapter to
+// when the answer or the failure came back, the SDK's retries counted in — the span the eval runner
+// times as latency_ms (R107) —, and how many times the SDK sent it again; and when the first text of
+// the answer came, counted from the attempt that answered, or zero where none came or the adapter
+// does not measure it, as GPT's does not. It holds no content and no identifier, and may be written
+// to logs (R09 spec).
 type Usage struct {
 	Provider        admissionv0.Provider
 	Model           string
@@ -258,6 +263,9 @@ type Usage struct {
 	Billed          bool
 	USD             float64
 	Priced          bool
+	Latency         time.Duration
+	Retries         int
+	FirstToken      time.Duration
 }
 
 // Outcome is how a call of the library ended: its kind; the reason of a limit; the admission's
@@ -328,8 +336,9 @@ func (t *Tutor) client(m admission.Model, own *OwnKey) (provider.Model, error) {
 }
 
 // ask asks every model of the calls at once — the readers of a pair go in parallel (Д89 RUN.md
-// spec) — each its request with the model's effort and thinking as the list admitted them. It
-// returns the answers in the order of the calls and the outcome: Answered when every model
+// spec) — each its request with the model's effort and thinking as the list admitted them, and times
+// each, so that its record of usage says which model held the call. It returns the answers in the
+// order of the calls and the outcome: Answered when every model
 // answered, else Failed, with the usage of each call that came back with tokens, a refused or a
 // broken answer too, since it is billed; Billed says whether its tokens are its whole bill, and
 // a call that is not is priced at its worst: maxIn, the most input of the kind, and the request's
@@ -342,14 +351,17 @@ func ask(ctx context.Context, a admission.Answer, calls []call, reqs []provider.
 	}
 	resps := make([]provider.Response, len(calls))
 	errs := make([]error, len(calls))
+	took := make([]time.Duration, len(calls))
 	var wg sync.WaitGroup
 	for i, c := range calls {
 		req := reqs[i]
 		req.Effort, req.NoThinking = c.model.Effort, c.model.NoThinking
 		wg.Go(func() {
+			start := time.Now()
 			// A panic of an adapter or its SDK fails the call rather than the process of api, which
 			// would not recover it in a goroutine of its own.
 			defer func() {
+				took[i] = time.Since(start)
 				if p := recover(); p != nil {
 					errs[i] = fmt.Errorf("the adapter panicked: %v", p)
 				}
@@ -363,7 +375,7 @@ func ask(ctx context.Context, a admission.Answer, calls []call, reqs []provider.
 		// A call that came back with tokens is billed whatever ended it: a refused answer, one that
 		// broke off midway, one the context cut short.
 		if r := resps[i]; errs[i] == nil || errors.Is(errs[i], provider.ErrNoAnswer) || r.Partial || r.Counted() {
-			out.Usage = append(out.Usage, usageOf(c.model, c.client, r, errs[i], maxIn, reqs[i].MaxOutputTokens))
+			out.Usage = append(out.Usage, usageOf(c.model, c.client, r, errs[i], took[i], maxIn, reqs[i].MaxOutputTokens))
 		}
 		if errs[i] == nil {
 			continue
