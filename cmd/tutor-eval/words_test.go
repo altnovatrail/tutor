@@ -82,7 +82,7 @@ func TestWordsOnTheStub(t *testing.T) {
 	log := filepath.Join(parent, "runs", "20261026-123000-000-hint-words-v1-all.jsonl")
 	code, out, errs = runJudge("yes\n", noKey, "-stub", "-log", log)
 	judged := strings.TrimSuffix(log, ".jsonl") + ".judge.jsonl"
-	if code != exitOK || !strings.HasPrefix(out, "The hints of "+log+" that came, each judged once by sonnet-low, in version 3 of the judge's prompt.\n330 calls") || !strings.HasSuffix(out, "The log: "+judged+"\n") {
+	if code != exitOK || !strings.HasPrefix(out, "The hints of "+log+" that came, each judged once by sonnet-low, in version 4 of the judge's prompt.\n330 calls") || !strings.HasSuffix(out, "The log: "+judged+"\n") {
 		t.Fatalf("the judge ends %d: %s%s", code, out, errs)
 	}
 	if code, out, errs := runIt("report", log); code != exitOK || !strings.Contains(out, "opus-high: leaked before the check 0 of 330") {
@@ -95,10 +95,10 @@ func TestWordsOnTheStub(t *testing.T) {
 		t.Errorf("a judge over a log of it: %d %s", code, errs)
 	}
 	controls := filepath.Join(t.TempDir(), "controls.jsonl")
-	if code, out, errs := runJudge("yes\n", noKey, "-stub", "-controls", wordsJudge, "-out", controls); code != exitOK || !strings.HasPrefix(out, "The 50 control phrases of "+wordsJudge) {
+	if code, out, errs := runJudge("yes\n", noKey, "-stub", "-controls", wordsJudge, "-out", controls); code != exitOK || !strings.HasPrefix(out, "The 68 control phrases of "+wordsJudge) {
 		t.Errorf("the controls: %d %s%s", code, out, errs)
 	}
-	if code, out, errs := runIt("report", controls); code != exitOK || !strings.HasPrefix(out, "The judge passes all 50 control phrases, 50 of them with all four answers as expected.\n") {
+	if code, out, errs := runIt("report", controls); code != exitOK || !strings.HasPrefix(out, "The judge passes all 68 control phrases, 68 of them with all four answers as expected.\n") {
 		t.Errorf("the report of the controls: %d %s%s", code, out, errs)
 	}
 	if code, out, _ := runJudge("no\n", noKey, "-stub", "-controls", wordsJudge, "-out", filepath.Join(t.TempDir(), "c.jsonl")); code != exitOK || !strings.HasSuffix(out, "The run is not started.\n") {
@@ -173,7 +173,7 @@ func TestKeepCases(t *testing.T) {
 	}
 	held := []sheets.Chosen{{Number: 1}, {Number: 31}}
 	set := read()
-	left, err := keepCases(set, held, []hint.CaseKind{hint.CaseOtherwise, hint.CaseNote})
+	left, err := keepCases(set, held, []string{string(hint.CaseOtherwise), string(hint.CaseNote)})
 	if err != nil || len(set.Cases.Cases) != 3+6 || left != " (180 cases of other kinds and 141 cases of sheets the run does not hold left out)" || set.LeftOut != 321 {
 		t.Errorf("kept %d, %q, %v", len(set.Cases.Cases), left, err)
 	}
@@ -181,7 +181,7 @@ func TestKeepCases(t *testing.T) {
 	if left, err := keepCases(set, held, nil); err != nil || !strings.Contains(left, "315 cases of sheets the run does not hold") || len(set.Cases.Cases) != 15 {
 		t.Errorf("all the cases: %d, %q, %v", len(set.Cases.Cases), left, err)
 	}
-	if _, err := keepCases(read(), []sheets.Chosen{{Number: 1}}, []hint.CaseKind{hint.CaseNote}); err == nil || !strings.Contains(err.Error(), "no case is left") {
+	if _, err := keepCases(read(), []sheets.Chosen{{Number: 1}}, []string{string(hint.CaseNote)}); err == nil || !strings.Contains(err.Error(), "no case is left") {
 		t.Errorf("no case left: %v", err)
 	}
 }
@@ -250,7 +250,7 @@ func TestAdmitWordsCommand(t *testing.T) {
 		}
 	}
 	code, out, errs := runIt("admit-words", "-controls", controls, log)
-	if code != exitOK || !strings.Contains(out, "- stage: author\n") || !strings.Contains(out, "- judge: sonnet-low, right on 50 of 50 control phrases\n") ||
+	if code != exitOK || !strings.Contains(out, "- stage: author\n") || !strings.Contains(out, "- judge: sonnet-low, right on 68 of 68 control phrases\n") ||
 		!strings.Contains(out, "- calls: 150, hints that came 150") || strings.Count(out, ": sha256 ") != 3 {
 		t.Errorf("admit-words = %d: %s%s", code, out, errs)
 	}

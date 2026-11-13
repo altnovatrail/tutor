@@ -49,6 +49,44 @@ func TestHint(t *testing.T) {
 	}
 }
 
+// The form of the words after a correct answer, part by part: option (2) of architecture 2.8.
+func TestCorrect(t *testing.T) {
+	ru30 := strings.Repeat("слово ", 29) + "что?"
+	ru31 := strings.Repeat("слово ", 30) + "что?"
+	cases := []struct {
+		name, text, lang, statement string
+		want                        []Breach
+	}{
+		{"praise and a question", "Столбик сложен по разрядам аккуратно. Какой приём помог?", "ru", "", nil},
+		{"a question alone", "Which way helped you find the answer?", "en", "", nil},
+		{"the question first", "Какой приём помог? Столбик сложен аккуратно.", "ru", "", []Breach{Last}},
+		{"a tail after the question", "Which way helped? Well done", "en", "", []Breach{Last}},
+		{"two sentences of praise", "Good start. The column is neat. Which way helped?", "en", "", []Breach{Sentences}},
+		{"no question", "The column is neat.", "en", "", []Breach{Questions}},
+		{"two questions", "Was it neat? Which way helped?", "en", "", []Breach{Questions}},
+		{"two questions, the last not one", "Was it neat? Which way helped? Good.", "en", "", []Breach{Questions, Sentences, Last}},
+		{"30 words in Russian", ru30, "ru", "", nil},
+		{"31 words in Russian", ru31, "ru", "", []Breach{Words}},
+		{"a number is one word", "Getting 0.5 by 1/2 is neat. Which way helped?", "en", "", nil},
+		{"an abbreviation ends a sentence", "Ответ, т. е. число, верен. Что помогло?", "ru", "", []Breach{Sentences}},
+		{"Latin the statement shows", "Значение x найдено верно. Что помогло?", "ru", "Реши 3x + 1 = 7.", nil},
+		{"Cyrillic in English", "Which way helped with х?", "en", "", []Breach{Script}},
+		{"no language", "Что помогло?", "", "", []Breach{Language}},
+	}
+	for _, c := range cases {
+		if got := Correct(c.text, c.lang, c.statement); !slices.Equal(got, c.want) {
+			t.Errorf("%s: %v, want %v", c.name, got, c.want)
+		}
+	}
+	if got := CorrectForm(ru31, "ru", "", 0); got != nil {
+		t.Errorf("no limit: %v", got)
+	}
+	// A hint keeps its form: the question may stand first.
+	if got := Hint("Какой приём помог? Столбик сложен аккуратно.", "ru", ""); got != nil {
+		t.Errorf("a hint with the question first: %v", got)
+	}
+}
+
 // The rule of feedback, part by part, against the text read.
 func TestFeedback(t *testing.T) {
 	read := "My best day. We went to the sea and we swam all day long."

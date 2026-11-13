@@ -147,6 +147,15 @@ func Request(t *sample.Task, sh *reading.Sheet, rung Rung, lang sample.Lang) (pr
 		Key: t.Key, Solution: t.Solution, Traps: t.Traps, Rung: rung, Language: string(lang), Style: Style})
 }
 
+// LanguageName is the English name of a language by its tag, as the model reads it, and whether the
+// tag is one that the checks of words can read (words.Readable) and that names a language: the
+// tutor's words and the words after a correct answer (internal/correct) are asked only in such.
+func LanguageName(tag string) (string, bool) {
+	t, err := language.Parse(tag)
+	name := display.English.Tags().Name(t)
+	return name, err == nil && words.Readable(tag) && name != "" && !t.IsRoot()
+}
+
 // RequestOf is what a hint asks of a model: the instructions, the crop after its label when there
 // is one, and the text: the size of the crop or that there is none, the task, the rung, the
 // language, the words it allows (words.HintWords) and the style, the block of the task's data and,
@@ -161,9 +170,8 @@ func RequestOf(p Prompt) (provider.Request, error) {
 	}
 	// The language is a tag that words.Hint can read, with a name the model can read: a check of the
 	// hint that fails closed on its language would send every paid answer to the fallback text.
-	tag, err := language.Parse(p.Language)
-	name := display.English.Tags().Name(tag)
-	if err != nil || !words.Readable(p.Language) || name == "" || tag.IsRoot() {
+	name, ok := LanguageName(p.Language)
+	if !ok {
 		return provider.Request{}, fmt.Errorf("hint: %q is no language a hint is written in", p.Language)
 	}
 	limit := noLimit

@@ -52,7 +52,7 @@ func TestGen(t *testing.T) {
 		args []string
 		says string
 	}{
-		{nil, "give sheets, near, workbook, essays, words or words-cases"},
+		{nil, "give sheets, near, workbook, essays, words, words-cases or correct"},
 		{[]string{"tasks"}, `"tasks" is nothing gen makes`},
 		{[]string{"near", "-bank", bank}, "give -bank and -plan"},
 		{[]string{"near", "-tasks", "0", "-bank", "a", "-plan", "b"}, "0 tasks"},

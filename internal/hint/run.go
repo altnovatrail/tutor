@@ -126,9 +126,14 @@ func (s *step) Request() (provider.Request, error) {
 
 // known are the texts whose numbers a hint may have without taking up a note: the statement, the
 // solution and the lines of the sheet but the note.
-func (s *step) known(note string) []string {
-	out := append([]string{s.sheet.Task.Statement}, s.sheet.Task.Solution...)
-	for _, l := range s.sheet.Sample.Lines {
+func (s *step) known(note string) []string { return Known(s.sheet.Chosen, note) }
+
+// Known are the texts of a sheet whose numbers words may have without taking up its note (Echo): the
+// statement, the solution and the lines of the sheet but the note. The words after a correct answer
+// count the echo by the same texts (internal/correct).
+func Known(sh sheets.Chosen, note string) []string {
+	out := append([]string{sh.Task.Statement}, sh.Task.Solution...)
+	for _, l := range sh.Sample.Lines {
 		if l.Text != note {
 			out = append(out, l.Text)
 		}

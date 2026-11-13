@@ -91,24 +91,12 @@ type Case struct {
 // ReadCases reads a file of cases strictly: no field it does not know, no list left null, and one
 // value only.
 func ReadCases(r io.Reader) (*Cases, error) {
-	data, err := io.ReadAll(r)
-	if err != nil {
+	var c Cases
+	if err := ReadStrict(r, &c); err != nil {
 		return nil, err
 	}
-	dec := json.NewDecoder(bytes.NewReader(data))
-	dec.DisallowUnknownFields()
-	var c Cases
-	if err := dec.Decode(&c); err != nil {
-		return nil, fmt.Errorf("the cases: %w", err)
-	}
-	if dec.More() {
-		return nil, errors.New("the cases: more than one value in the file")
-	}
-	switch {
-	case c.Format != CasesFormat || c.Version != CasesVersion:
-		return nil, fmt.Errorf("the cases: format %q version %d, not %q version %d", c.Format, c.Version, CasesFormat, CasesVersion)
-	case len(c.Cases) == 0:
-		return nil, errors.New("the cases: none")
+	if err := CheckHead(c.Format, c.Version, CasesFormat, CasesVersion, len(c.Cases)); err != nil {
+		return nil, err
 	}
 	for i, k := range c.Cases {
 		if k.Techniques == nil || k.Asked == nil {
@@ -116,6 +104,53 @@ func ReadCases(r io.Reader) (*Cases, error) {
 		}
 	}
 	return &c, nil
+}
+
+// ReadStrict reads a file of cases into v strictly: no field it does not know, and one value only.
+// The cases of the set of words read so, and those of the words after a correct answer
+// (internal/correct).
+func ReadStrict(r io.Reader, v any) error {
+	data, err := io.ReadAll(r)
+	if err != nil {
+		return err
+	}
+	dec := json.NewDecoder(bytes.NewReader(data))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(v); err != nil {
+		return fmt.Errorf("the cases: %w", err)
+	}
+	if dec.More() {
+		return errors.New("the cases: more than one value in the file")
+	}
+	return nil
+}
+
+// CheckHead holds a file of cases read to its format and version, and to some case.
+func CheckHead(format string, version int, wantFormat string, wantVersion, cases int) error {
+	switch {
+	case format != wantFormat || version != wantVersion:
+		return fmt.Errorf("the cases: format %q version %d, not %q version %d", format, version, wantFormat, wantVersion)
+	case cases == 0:
+		return errors.New("the cases: none")
+	}
+	return nil
+}
+
+// CheckNote checks the note of a case against its sheet of the plan: on a case of a note, the very
+// text of the sheet's note at the side, its last part, and a kind the set knows; on another case,
+// none, of a sheet without one. at names the case in the error.
+func CheckNote(at string, noted bool, kind string, note string, noteKind NoteKind, sh *sample.PlanSheet) error {
+	own := ""
+	if n := len(sh.Parts); n > 0 && sh.Parts[n-1].Place == sample.PlaceRight {
+		own = sh.Parts[n-1].Text
+	}
+	switch {
+	case noted && (note == "" || note != own || !slices.Contains(NoteKinds(), noteKind)):
+		return fmt.Errorf("%s: a case of a note gives the note of sheet %d, %q, and its kind", at, sh.Number, own)
+	case !noted && (note != "" || noteKind != "" || own != ""):
+		return fmt.Errorf("%s: a case of the kind %s is of a sheet without a note, and gives none", at, kind)
+	}
+	return nil
 }
 
 // Check checks the cases against the plan of their sheets and its bank: every ID once; a kind, rung
@@ -153,15 +188,8 @@ func (c *Cases) Check(plan *sample.Plan, bank *sample.Bank) error {
 		if k.Found != "" && !slices.ContainsFunc(task.Traps, func(t sample.Trap) bool { return t.ID == k.Found }) {
 			return fmt.Errorf("%s: the trap found, %q, is none of the task's", at, k.Found)
 		}
-		note := ""
-		if n := len(sh.Parts); n > 0 && sh.Parts[n-1].Place == sample.PlaceRight {
-			note = sh.Parts[n-1].Text
-		}
-		switch {
-		case k.Kind == CaseNote && (k.Note == "" || k.Note != note || !slices.Contains(NoteKinds(), k.NoteKind)):
-			return fmt.Errorf("%s: a case of a note gives the note of sheet %d, %q, and its kind", at, k.Sheet, note)
-		case k.Kind != CaseNote && (k.Note != "" || k.NoteKind != "" || note != ""):
-			return fmt.Errorf("%s: a case of the kind %s is of a sheet without a note, and gives none", at, k.Kind)
+		if err := CheckNote(at, k.Kind == CaseNote, string(k.Kind), k.Note, k.NoteKind, sh); err != nil {
+			return err
 		}
 		for _, q := range k.Asked {
 			if strings.TrimSpace(q) == "" {

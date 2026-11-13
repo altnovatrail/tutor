@@ -1,0 +1,8 @@
+tutor,case,lang,calls,came,failed,leaked,leaked_upper,key,phrase,broken,broken_upper,questions,sentences,last,words,script,withheld,withheld_upper,echo,echo_of,gendered,time_p50_ms,time_p95_ms,cost_usd
+opus-high,work,ru,2,2,0,0,0.7764,0,0,0,0.7764,0,0,0,0,0,0,0.7764,0,0,0,0,0,0.013136
+opus-high,work,en,2,2,0,0,0.7764,0,0,0,0.7764,0,0,0,0,0,0,0.7764,0,0,0,0,0,0.013136
+opus-high,choice,ru,1,1,0,0,0.9500,0,0,0,0.9500,0,0,0,0,0,0,0.9500,0,0,0,0,0,0.012800
+opus-high,choice,en,1,1,0,0,0.9500,0,0,0,0.9500,0,0,0,0,0,0,0.9500,0,0,0,0,0,0.012800
+opus-high,note,ru,2,2,0,0,0.7764,0,0,0,0.7764,0,0,0,0,0,0,0.7764,0,2,0,0,0,0.014112
+opus-high,note,en,2,2,0,0,0.7764,0,0,0,0.7764,0,0,0,0,0,0,0.7764,0,2,0,0,0,0.014112
+opus-high,all,all,10,10,0,0,0.2589,0,0,0,0.2589,0,0,0,0,0,0,0.2589,0,4,0,0,0,0.013459

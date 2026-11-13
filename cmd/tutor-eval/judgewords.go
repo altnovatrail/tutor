@@ -13,6 +13,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/altnovatrail/tutor/internal/correct"
 	"github.com/altnovatrail/tutor/internal/essay"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/runner"
@@ -33,7 +34,7 @@ const judgeCap = 3.0
 func runJudgeWords(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer, getenv func(string) string, now func() time.Time) int {
 	const name = "tutor-eval judge-words"
 	flags := flag.NewFlagSet(name, flag.ContinueOnError)
-	logOf := flags.String("log", "", "the log of a run of the hint on the set of the words, whose hints the judge reads")
+	logOf := flags.String("log", "", "the log of a run of the hint on the set of the words, whose hints the judge reads, of the words after a correct answer on their set, or of the essays in two calls, whose feedback it reads")
 	controls := flags.String("controls", "", "the file of the judge's control phrases, such as eval/words-judge.json, in place of -log")
 	judgeName := flags.String("judge", "sonnet-low", "the configuration that judges: "+strings.Join(runner.ConfigNames(), ", "))
 	maxUSD := flags.Float64("max-usd", judgeCap, "start no call that could take the run past this many US dollars")
@@ -81,10 +82,17 @@ func runJudgeWords(ctx context.Context, args []string, stdin io.Reader, stdout, 
 	folders := []string{syntheticFolder}
 	if *logOf != "" {
 		var err error
-		if runner.CallKind(data) == essay.CallKind {
+		switch runner.CallKind(data) {
+		case essay.CallKind:
 			r, err = feedbackRun(data, filepath.Base(file), sum, judge)
 			what = fmt.Sprintf("The feedback of %s that came, each judged once by %s, in version %d of the judge's prompt.\n", file, judge.Name, wordsjudge.Version)
-		} else {
+		case correct.CallKind:
+			what = fmt.Sprintf("The words after a correct answer of %s that came, each judged once by %s, in version %d of the judge's prompt.\n", file, judge.Name, wordsjudge.Version)
+			var l *correct.Log
+			if l, err = correct.ReadLog(bytes.NewReader(data)); err == nil {
+				r, err = wordsjudge.OfCorrect(l, filepath.Base(file), sum, judge)
+			}
+		default:
 			what = fmt.Sprintf("The hints of %s that came, each judged once by %s, in version %d of the judge's prompt.\n", file, judge.Name, wordsjudge.Version)
 			var l *hint.Log
 			if l, err = hint.ReadLog(bytes.NewReader(data)); err == nil {

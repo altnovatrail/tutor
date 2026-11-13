@@ -9,6 +9,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/altnovatrail/tutor/internal/correct"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/wordsjudge"
 )
@@ -85,10 +86,18 @@ func NewWordsJudge(l *wordsjudge.Log) (*WordsJudge, error) {
 				langs = append(langs, c.Lang)
 			}
 		}
-		// The feedback of the essays has no kinds of case: its cells are by the tutor alone.
+		// The feedback of the essays has no kinds of case: its cells are by the tutor alone. The words
+		// after a correct answer have kinds of their own (T143).
 		feedback := !slices.ContainsFunc(l.Calls, func(c wordsjudge.CallRecord) bool { return c.CaseKind != "" })
+		kinds := hint.CaseKinds()
+		if l.Run.Words == correct.CallKind {
+			kinds = nil
+			for _, k := range correct.CaseKinds() {
+				kinds = append(kinds, hint.CaseKind(k))
+			}
+		}
 		for _, tu := range tutors {
-			for _, kind := range hint.CaseKinds() {
+			for _, kind := range kinds {
 				if feedback {
 					break
 				}
@@ -166,7 +175,10 @@ func (r *WordsJudge) Markdown(w io.Writer, logName string) error {
 	jd := l.Run.Judge
 	made, failed, spent := tally(l.Calls, func(c *wordsjudge.CallRecord) (bool, bool, float64) { return !c.NotAsked, c.Verdict == nil, c.CostUSD })
 	of := "the hints of a log"
-	if l.Run.Of == wordsjudge.OfControls {
+	switch {
+	case l.Run.Words == correct.CallKind:
+		of = "the words after a correct answer of a log"
+	case l.Run.Of == wordsjudge.OfControls:
 		of = "the control phrases"
 	}
 	fmt.Fprintf(&b, "# The judge of the words: %s\n\nThe log %s, of the prompt %s, version %d, judging %s, sha256 %s. Judge: %s. Calls: %d made, %d of them without a verdict; $%.2f spent of the $%.2f cap.\n",
@@ -228,6 +240,15 @@ func (r *WordsJudge) CSV(w io.Writer) error {
 	return cw.Error()
 }
 
+// what names what the judge judged: the words after a correct answer, or hints, as of a log of the
+// hint or of the feedback.
+func (r *WordsJudge) what() string {
+	if r.log.Run.Words == correct.CallKind {
+		return "words"
+	}
+	return "hints"
+}
+
 // Summary is what the report says on the terminal.
 func (r *WordsJudge) Summary() string {
 	if r.log.Run.Of == wordsjudge.OfControls {
@@ -239,8 +260,8 @@ func (r *WordsJudge) Summary() string {
 	var b strings.Builder
 	for _, c := range r.Cells {
 		if c.All() {
-			fmt.Fprintf(&b, "%s: %d hints judged; the sex told %d, off the task %d, not for a child %d, the note taken up %d of %d; flagged %d; the rough search and the judge differ on %d.\n",
-				c.Tutor, c.Judged, c.Gender.Events, c.OffTask.Events, c.NotForAge.Events, c.MentionsNote.Events, c.MentionsNote.Of, c.Flagged.Events, c.Disagree)
+			fmt.Fprintf(&b, "%s: %d %s judged; the sex told %d, off the task %d, not for a child %d, the note taken up %d of %d; flagged %d; the rough search and the judge differ on %d.\n",
+				c.Tutor, c.Judged, r.what(), c.Gender.Events, c.OffTask.Events, c.NotForAge.Events, c.MentionsNote.Events, c.MentionsNote.Of, c.Flagged.Events, c.Disagree)
 		}
 	}
 	return b.String()
@@ -265,10 +286,13 @@ func (r *WordsJudge) flagged(w io.Writer, logName string) error {
 			continue
 		}
 		n++
-		if c.Control != "" {
+		switch {
+		case c.Control != "":
 			fmt.Fprintf(&b, "\n## %s, %s, rung %d\n\n", c.Control, c.Lang, c.Rung)
 			fmt.Fprintf(&b, "- expected: %s\n", answers(c.Expect.Verdict()))
-		} else {
+		case r.log.Run.Words == correct.CallKind:
+			fmt.Fprintf(&b, "\n## %s, %s, %s, %s, sheet %d of %s, repeat %d\n\n", c.Case, c.Tutor, c.CaseKind, c.Lang, c.Sheet, c.Set, c.Repeat)
+		default:
 			fmt.Fprintf(&b, "\n## %s, %s, %s, %s, rung %d, sheet %d of %s, repeat %d\n\n", c.Case, c.Tutor, c.CaseKind, c.Lang, c.Rung, c.Sheet, c.Set, c.Repeat)
 		}
 		if c.Note != "" {
@@ -278,7 +302,11 @@ func (r *WordsJudge) flagged(w io.Writer, logName string) error {
 			}
 			fmt.Fprintf(&b, "- note: «%s»%s\n", c.Note, kind)
 		}
-		fmt.Fprintf(&b, "- hint: «%s»\n", c.Hint)
+		label := "hint"
+		if r.log.Run.Words == correct.CallKind {
+			label = "words"
+		}
+		fmt.Fprintf(&b, "- %s: «%s»\n", label, c.Hint)
 		if v != nil {
 			fmt.Fprintf(&b, "- judge: %s; %s\n", answers(*v), v.Why)
 		} else {
