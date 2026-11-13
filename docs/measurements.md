@@ -1201,6 +1201,23 @@ The estimate of "The set of words":
 - **The rule admitted Opus** at the rung "author" to solution analysis and the hint — two entries of the list with the rule's output, `samples/runs/t127-words.admit.md`, its sha256 1e49fa51…d68a and the prompt fingerprint of the hint (architecture 3.9). With Sonnet as the judge the rule would not have admitted it: the 2 "off task" are its false alarms.
 - **Spent $11.08**, against a ceiling of $7, then $8, which the author lifted with the words «не экономь»: hints $5.45, the judge Sonnet $0.84 and Opus $1.81, control phrases $0.84, the trial run $0.46. Another $1.68 went on two attempts that the spending limit of the workspace `api-dev`, then of the organization, cut short — the adapter recognized the refusals as "limit reached", the cause — the owner's limit (T121).
 
+**The time of the hint on prompt version 3** (T139, 2026-11-13; R107; Д222, DEBT.md of `spec`). No new run: the logs of T127 above, the hint prompt version 3, Opus 5.5 · `high`, the request with the sheet's crop that `Tutor.Words` sends as the call `CallWords` (`hint.RequestOf`). Every call that came back with a hint counts: the admission run's 300, the 102 answered calls of the two attempts the limit cut short — a case asked in two attempts counts twice, they are two calls —, and the 23 of the trial run; the 145 refusals for the limit do not. The time of a call is from sending to reply, as the runner writes it (`latency_ms`), and the first token is when the first text of the answer came (`first_token_ms`). The percentile is the nearest rank, as in `tutor-eval report`; a script over the logs gave the same numbers twice. Only numbers came here.
+
+| Calls of | Calls | Time p50 | p90 | Largest | First token p50 | p90 |
+|---|---|---|---|---|---|---|
+| the author's sheets | 150 | 5.7 s | 8.0 s | 13.5 s | 5.0 s | 7.2 s |
+| the set of T118 | 150 | 5.3 s | 7.2 s | 9.5 s | 4.7 s | 6.5 s |
+| the two attempts the limit cut short | 102 | 5.0 s | 6.8 s | 9.2 s | 4.6 s | 6.4 s |
+| the trial run, `lines-gen-2` | 23 | 6.8 s | 8.8 s | 11.2 s | 6.0 s | 8.0 s |
+| in all | 425 | 5.5 s | 7.6 s | 13.5 s | 4.8 s | 6.9 s |
+| in all, rung 1 | 137 | 5.0 s | 6.4 s | 8.7 s | 4.4 s | 5.7 s |
+| in all, rung 2 | 134 | 5.1 s | 6.8 s | 9.8 s | 4.6 s | 6.0 s |
+| in all, rung 3 | 154 | 6.4 s | 8.5 s | 13.5 s | 5.7 s | 7.9 s |
+
+- **The model thinks most of the time.** From the first token to the end — p50 0.7 s, p90 0.8 s: the text of the hint comes fast, and the seconds before it go on thinking at `high`. Rung 3, which composes a similar case, is the slowest.
+- **Against reading.** The words take about twice the reading pair's time: p50 5.5 s against 2.4 s (section 3.13). Both are the model's time, without the overhead of `api` and the network to the device. What else is in the ≈ 10 s of the words in `api` (T45 `api`), this measurement does not say. From the release of T139 on, each record of usage carries its model's time (architecture 3.7), and the log of `api` shows it.
+- **What it does not decide.** The effort `medium` for the words, which might be faster, is measured at the next admission of the words, by a paid run (Д11).
+
 ## 4. Claude Code sessions
 
 ### 4.1. The spending of tutor's sessions

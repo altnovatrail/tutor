@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"slices"
+	"time"
 
 	"github.com/altnovatrail/spec/types/admissionv0"
 
@@ -223,12 +224,14 @@ func worstCost(p provider.Prices, in, out int64) (float64, bool) {
 	return (float64(in)*p.WorstInput() + float64(out)*p.Output) / 1e6, ok
 }
 
-// usageOf is the record of usage of a call that came back, with its cost: by the tokens it took, or
-// at its worst when they are not its whole bill (provider.Billed) — the most input of its kind, the
-// cache counted in, and the request's most output.
-func usageOf(m admission.Model, client provider.Model, r provider.Response, err error, maxIn, maxOut int64) Usage {
+// usageOf is the record of usage of a call that came back after took, with its retries, when its
+// first text came and its cost: by the tokens it took, or at its worst when they are not its whole
+// bill (provider.Billed) — the most input of its kind, the cache counted in, and the request's most
+// output.
+func usageOf(m admission.Model, client provider.Model, r provider.Response, err error, took time.Duration, maxIn, maxOut int64) Usage {
 	u := Usage{Provider: m.Provider, Model: r.Model, InputTokens: r.InputTokens, CacheWrites: slices.Clone(r.CacheWrites), CacheReadTokens: r.CacheReadTokens,
-		OutputTokens: r.OutputTokens, ThinkingTokens: r.ThinkingTokens, Billed: provider.Billed(r, err)}
+		OutputTokens: r.OutputTokens, ThinkingTokens: r.ThinkingTokens, Billed: provider.Billed(r, err),
+		Latency: took, Retries: r.Retries, FirstToken: r.FirstToken}
 	prices := client.Prices()
 	if u.Billed {
 		u.USD, u.Priced = prices.Cost(r)

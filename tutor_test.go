@@ -9,6 +9,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/altnovatrail/spec/types/admissionv0"
 
@@ -16,12 +17,13 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// fake is a model that answers as it is told and records what it was asked.
+// fake is a model that answers as it is told, after its delay, and records what it was asked.
 type fake struct {
 	mu     sync.Mutex
 	asked  []provider.Request
 	resp   provider.Response
 	err    error
+	delay  time.Duration
 	prices provider.Prices
 	// checked counts the checks of the key, and checkErr is what they answer.
 	checked  int
@@ -36,11 +38,19 @@ func (f *fake) Check(context.Context) error {
 	f.checked++
 	return f.checkErr
 }
-func (f *fake) Ask(_ context.Context, r provider.Request) (provider.Response, error) {
+func (f *fake) Ask(ctx context.Context, r provider.Request) (provider.Response, error) {
 	f.mu.Lock()
-	defer f.mu.Unlock()
 	f.asked = append(f.asked, r)
-	return f.resp, f.err
+	resp, err, delay := f.resp, f.err, f.delay
+	f.mu.Unlock()
+	if delay > 0 {
+		select {
+		case <-time.After(delay):
+		case <-ctx.Done():
+			return provider.Response{}, ctx.Err()
+		}
+	}
+	return resp, err
 }
 
 // fakes dials a fake for each model by its ID, and records the keys it was given.
@@ -138,6 +148,37 @@ func TestPrepareAndAsk(t *testing.T) {
 	haiku.resp, haiku.err = answered, provider.ErrNoAnswer
 	if _, out = ask(context.Background(), admission.Answer{}, calls, []provider.Request{{}, {}}, 0); out.Kind != Failed || len(out.Usage) != 2 {
 		t.Errorf("no answer: %+v", out)
+	}
+}
+
+// Each model's record of usage carries its own time and retries, so that the log shows which reader
+// of a pair held the call, and when its first text came, where its adapter measures that: GPT's does
+// not, and the Haiku here stands for it (R107). A billed answer without the JSON is timed too.
+func TestAskTimes(t *testing.T) {
+	opus := &fake{resp: provider.Response{JSON: `{}`, Model: "claude-opus-5-5", InputTokens: 900, OutputTokens: 120, FirstToken: 7 * time.Millisecond, Retries: 1}}
+	haiku := &fake{resp: provider.Response{JSON: `{}`, Model: "claude-haiku-5-5", InputTokens: 900, OutputTokens: 60}, delay: 200 * time.Millisecond}
+	lib := library(t, adultFacts, &fakes{models: map[string]*fake{"claude-opus-5-5": opus, "claude-haiku-5-5": haiku}})
+	calls, a, refused := lib.prepare(admissionv0.CapabilityHandwritingReading, platform, 0, "")
+	if refused != nil {
+		t.Fatal(refused)
+	}
+	start := time.Now()
+	_, out := ask(context.Background(), a, calls, []provider.Request{{}, {}}, 0)
+	took := time.Since(start)
+	if out.Kind != Answered || len(out.Usage) != 2 {
+		t.Fatalf("the outcome is %+v", out)
+	}
+	o, h := out.Usage[0], out.Usage[1]
+	// Opus answers at once and Haiku after its delay: each record carries its own time.
+	if o.Latency <= 0 || h.Latency < 200*time.Millisecond || o.Latency >= h.Latency || h.Latency > took {
+		t.Errorf("Opus took %v and Haiku %v of %v; want each its own, Haiku the longer", o.Latency, h.Latency, took)
+	}
+	if o.FirstToken != 7*time.Millisecond || o.Retries != 1 || h.FirstToken != 0 || h.Retries != 0 {
+		t.Errorf("Opus %v after %d retries and Haiku %v after %d; want 7ms after 1, and none", o.FirstToken, o.Retries, h.FirstToken, h.Retries)
+	}
+	haiku.err = provider.ErrNoAnswer
+	if _, out = ask(context.Background(), a, calls, []provider.Request{{}, {}}, 0); len(out.Usage) != 2 || out.Usage[1].Latency < 200*time.Millisecond {
+		t.Errorf("a billed answer without the JSON: %+v", out.Usage)
 	}
 }
 
