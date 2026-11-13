@@ -96,7 +96,7 @@ func TestPlanOfParts(t *testing.T) {
 }
 
 // TestSheetPlan checks the measurement's plan the way the author does, against its bank, and that
-// the table «Листы» of docs/sheets.md is the plan, byte for byte: the table built from the file
+// the table "Sheets" of docs/sheets.md is the plan, byte for byte: the table built from the file
 // is the one in the document.
 func TestSheetPlan(t *testing.T) {
 	var stdout, stderr bytes.Buffer
@@ -119,13 +119,13 @@ func TestSheetPlan(t *testing.T) {
 	sameTable(t, sheetsDoc, readDoc(t, sheetsDoc), measurementPlan, sheetTable(t, plan))
 }
 
-// sheetTable writes the table «Листы» of docs/sheets.md from a plan, as the document has it: a
+// sheetTable writes the table "Sheets" of docs/sheets.md from a plan, as the document has it: a
 // line to a sheet, every text in backquotes, the lines of a sheet joined by "; ", and a dash
 // where the sheet has no first error or no planned erasure.
 func sheetTable(t *testing.T, plan *sample.Plan) string {
 	t.Helper()
 	var b strings.Builder
-	b.WriteString("| № | Задача | Сценарий | Строки на листе | Ответ | Первая ошибка | Стирание по сценарию |\n")
+	b.WriteString("| No. | Task | Scenario | Lines on the sheet | Answer | First error | Planned erasure |\n")
 	b.WriteString("|---|---|---|---|---|---|---|\n")
 	for _, sh := range plan.Sheets {
 		lines := make([]string, len(sh.Lines))
@@ -173,7 +173,7 @@ func erasureCell(t *testing.T, sh sample.PlanSheet) string {
 	if e == nil {
 		return "—"
 	}
-	erased := map[sample.Erased]string{sample.ErasedMistake: "ошибка", sample.ErasedCorrectStep: "верный шаг"}
+	erased := map[sample.Erased]string{sample.ErasedMistake: "mistake", sample.ErasedCorrectStep: "correct step"}
 	s := fmt.Sprintf("%d: %s %s → %s", e.Line, erased[e.Erased], cell(t, e.Text), cell(t, e.Replacement))
 	var part sample.PlanPart
 	if e.Line >= 1 && e.Line <= len(sh.Parts) {
@@ -181,11 +181,11 @@ func erasureCell(t *testing.T, sh sample.PlanSheet) string {
 	}
 	switch {
 	case part.Kind == sample.PartDrawing:
-		return s + ", в рисунке"
+		return s + ", in the drawing"
 	case part.Figure.Column != nil:
-		return s + ", в столбике"
+		return s + ", in a column"
 	case e.PartOfLine:
-		return s + ", часть строки"
+		return s + ", part of a line"
 	}
 	return s
 }

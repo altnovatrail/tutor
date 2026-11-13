@@ -123,7 +123,7 @@ func readPlanFile(t *testing.T, path string) *sample.Plan {
 func nearTaskTable(t *testing.T, b *sample.Bank) string {
 	t.Helper()
 	var s strings.Builder
-	s.WriteString("| ID | Ключ | Почти-ложный ключ | Похожие цифры |\n|---|---|---|---|\n")
+	s.WriteString("| ID | Key | Near-false key | Similar digits |\n|---|---|---|---|\n")
 	for _, task := range b.Tasks {
 		at, toward, ok := synth.SimilarDigit(task.Key)
 		if !ok {
@@ -139,7 +139,7 @@ func nearTaskTable(t *testing.T, b *sample.Bank) string {
 func nearSheetTable(t *testing.T, pl *sample.Plan) string {
 	t.Helper()
 	var s strings.Builder
-	s.WriteString("| № | Задача | Строки на листе | Исход | Цифра ответа клонится к |\n|---|---|---|---|---|\n")
+	s.WriteString("| No. | Task | Lines on the sheet | Outcome | The answer's digit leans toward |\n|---|---|---|---|---|\n")
 	for _, sh := range pl.Sheets {
 		lines := make([]string, len(sh.Lines))
 		for i, l := range sh.Lines {

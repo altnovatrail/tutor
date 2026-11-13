@@ -101,10 +101,10 @@ func partsPlanFile(t *testing.T, path string) *sample.Plan {
 // The layouts of a sheet of free-form writing, as section 3.4 names them: the task sets the
 // layout, and a drawing or a column on the sheet shows it.
 const (
-	layoutNumberLine = "числовая прямая"
-	layoutRow        = "рисунок: ряд предметов"
-	layoutScheme     = "рисунок: схема отрезками"
-	layoutSide       = "запись сбоку"
+	layoutNumberLine = "number line"
+	layoutRow        = "drawing: a row of objects"
+	layoutScheme     = "drawing: a scheme of segments"
+	layoutSide       = "working at the side"
 )
 
 // layoutOf names the layout of a sheet by its parts (sample.PlanSheet.Layout), or "" when none
@@ -148,7 +148,7 @@ var authorFree = sample.PlanPart{Kind: sample.PartText, Place: sample.PlaceWide,
 // correct free solution of its task, the whole sheet one part, with no planned erasure.
 func authorsFree(t *testing.T, author *sample.Plan, layouts map[string]string) {
 	t.Helper()
-	want := []string{layoutNumberLine, "рисунок", layoutSide}
+	want := []string{layoutNumberLine, "drawing", layoutSide}
 	var got []string
 	for _, sh := range author.Sheets {
 		got = append(got, group(layouts[sh.Task]))
@@ -162,12 +162,12 @@ func authorsFree(t *testing.T, author *sample.Plan, layouts map[string]string) {
 	}
 }
 
-// authorTable writes the table «Листы автора» of docs/free-sheets.md: a sheet to a line, with its
+// authorTable writes the table "The author's sheets" of docs/free-sheets.md: a sheet to a line, with its
 // task, the layout of the task's sheets of code, its scenario and its one part.
 func authorTable(t *testing.T, author *sample.Plan, layouts map[string]string) string {
 	t.Helper()
 	var b strings.Builder
-	b.WriteString("| № | Задача | Раскладка у листов кода | Сценарий | Часть на листе |\n")
+	b.WriteString("| No. | Task | Layout of the sheets of code | Scenario | Part on the sheet |\n")
 	b.WriteString("|---|---|---|---|---|\n")
 	for _, sh := range author.Sheets {
 		fmt.Fprintf(&b, "| %d | %s | %s | %s | %s |\n", sh.Number, cell(t, sh.Task), layouts[sh.Task], cell(t, string(sh.Scenario)), partCell(t, sh.Parts[0]))
@@ -175,28 +175,25 @@ func authorTable(t *testing.T, author *sample.Plan, layouts map[string]string) s
 	return strings.TrimSuffix(b.String(), "\n")
 }
 
-// partPlace says where part n of a sheet stands (sample.PlanSheet.Region), in the words of the
-// test. The part is one of the sheet's: tutor-eval check has passed the plan before.
+// partPlace says where part n of a sheet stands (sample.PlanSheet.Region), in the words of
+// section 3.4 and of the tables. The part is one of the sheet's: tutor-eval check has passed the
+// plan before.
 func partPlace(sh sample.PlanSheet, n int) string {
 	return map[sample.Region]string{sample.RegionDrawing: "in the drawing", sample.RegionSide: "at the side", sample.RegionText: "in the text"}[sh.Region(n)]
 }
-
-// whereRu says the same as partPlace in the words of section 3.4: «в рисунке», «в тексте»,
-// «сбоку».
-var whereRu = map[string]string{"in the drawing": "в рисунке", "in the text": "в тексте", "at the side": "сбоку"}
 
 // freeTaskTable writes the table of tasks of docs/free-sheets.md from the bank: a task to a line,
 // with the layout its sheets show.
 func freeTaskTable(t *testing.T, bank *sample.Bank, layouts map[string]string) string {
 	t.Helper()
 	var b strings.Builder
-	b.WriteString("| ID | Раскладка | Условие | Ключ |\n")
+	b.WriteString("| ID | Layout | Statement | Key |\n")
 	b.WriteString("|---|---|---|---|\n")
 	for _, task := range bank.Tasks {
 		if strings.Contains(task.Statement, "|") {
 			t.Fatalf("the statement of %q holds a vertical bar, which would break its cell", task.ID)
 		}
-		fmt.Fprintf(&b, "| %s | %s | %s | %s |\n", cell(t, task.ID), layouts[task.ID], task.Statement, cell(t, task.Key))
+		fmt.Fprintf(&b, "| %s | %s | «%s» | %s |\n", cell(t, task.ID), layouts[task.ID], task.Statement, cell(t, task.Key))
 	}
 	return strings.TrimSuffix(b.String(), "\n")
 }
@@ -208,7 +205,7 @@ var freeScenarios = []sample.Scenario{sample.ScenarioCorrect, sample.ScenarioErr
 // has it: a dash for none, and the totals in bold.
 func compositionTable(bank *sample.Bank, plan *sample.Plan, layouts map[string]string) string {
 	var b strings.Builder
-	b.WriteString("| Задача | Раскладка | `correct` | `error` | `erasure-fixed` | `erasure-broken` | Всего |\n")
+	b.WriteString("| Task | Layout | `correct` | `error` | `erasure-fixed` | `erasure-broken` | Total |\n")
 	b.WriteString("|---|---|---|---|---|---|---|\n")
 	totals := make([]int, len(freeScenarios)+1)
 	for _, task := range bank.Tasks {
@@ -229,7 +226,7 @@ func compositionTable(bank *sample.Bank, plan *sample.Plan, layouts map[string]s
 		}
 		b.WriteString("\n")
 	}
-	b.WriteString("| **всего** | |")
+	b.WriteString("| **total** | |")
 	for _, n := range totals {
 		fmt.Fprintf(&b, " **%s** |", dash(n))
 	}
@@ -258,25 +255,25 @@ func placesTable(bank *sample.Bank, plan *sample.Plan, layouts map[string]string
 			c.sheets++
 			if n := sh.Expected.FirstError; n != nil {
 				c.errors++
-				c.first[whereRu[partPlace(sh, *n)]]++
+				c.first[partPlace(sh, *n)]++
 			}
 			if e := sh.Erasure; e != nil {
 				c.erasures++
-				c.erased[whereRu[partPlace(sh, e.Line)]]++
+				c.erased[partPlace(sh, e.Line)]++
 			}
 		}
 	}
 	split := func(m map[string]int) string {
-		return dash(m["в рисунке"]) + " / " + dash(m["в тексте"]) + " / " + dash(m["сбоку"])
+		return dash(m["in the drawing"]) + " / " + dash(m["in the text"]) + " / " + dash(m["at the side"])
 	}
 	var b strings.Builder
-	b.WriteString("| Раскладка | Листов | С ошибкой | Первая ошибка: в рисунке / в тексте / сбоку | Стираний | Стирание: в рисунке / в тексте / сбоку |\n")
+	b.WriteString("| Layout | Sheets | With a mistake | First error: in the drawing / in the text / at the side | Erasures | Erasure: in the drawing / in the text / at the side |\n")
 	b.WriteString("|---|---|---|---|---|---|\n")
 	for _, g := range order {
 		c := by[g]
 		fmt.Fprintf(&b, "| %s | %d | %d | %s | %d | %s |\n", g, c.sheets, c.errors, split(c.first), c.erasures, split(c.erased))
 	}
-	fmt.Fprintf(&b, "| **всего** | **%d** | **%d** | **%s** | **%d** | **%s** |", total.sheets, total.errors, split(total.first), total.erasures, split(total.erased))
+	fmt.Fprintf(&b, "| **total** | **%d** | **%d** | **%s** | **%d** | **%s** |", total.sheets, total.errors, split(total.first), total.erasures, split(total.erased))
 	return b.String()
 }
 
@@ -293,7 +290,7 @@ func dash(n int) string {
 func partsTable(t *testing.T, plan *sample.Plan) string {
 	t.Helper()
 	var b strings.Builder
-	b.WriteString("| № | Задача | Сценарий | Части на листе | Ответ | Первая ошибка | Стирание по сценарию |\n")
+	b.WriteString("| No. | Task | Scenario | Parts on the sheet | Answer | First error | Planned erasure |\n")
 	b.WriteString("|---|---|---|---|---|---|---|\n")
 	for _, sh := range plan.Sheets {
 		parts := make([]string, len(sh.Parts))
@@ -310,13 +307,13 @@ func partsTable(t *testing.T, plan *sample.Plan) string {
 // by its text alone.
 func partCell(t *testing.T, p sample.PlanPart) string {
 	t.Helper()
-	place := map[sample.Place]string{sample.PlaceLeft: "", sample.PlaceRight: "сбоку", sample.PlaceWide: "во всю ширину"}[p.Place]
+	place := map[sample.Place]string{sample.PlaceLeft: "", sample.PlaceRight: "at the side", sample.PlaceWide: "full width"}[p.Place]
 	var what []string
 	switch {
 	case p.Kind == sample.PartDrawing:
-		what = append(what, "рисунок")
+		what = append(what, "drawing")
 	case p.Figure.Column != nil:
-		what = append(what, "столбиком")
+		what = append(what, "column")
 	}
 	if place != "" {
 		what = append(what, place)
@@ -327,12 +324,12 @@ func partCell(t *testing.T, p sample.PlanPart) string {
 	return strings.Join(what, " ") + ": " + cell(t, p.Text)
 }
 
-// drawingTable writes the table «Рисунки» of docs/free-sheets.md: each drawing of the plan, and
+// drawingTable writes the table "Drawings" of docs/free-sheets.md: each drawing of the plan, and
 // the drawing before the planned erasure that takes some of it.
 func drawingTable(t *testing.T, plan *sample.Plan) string {
 	t.Helper()
 	var b strings.Builder
-	b.WriteString("| № | Часть | Рисунок | До стирания |\n")
+	b.WriteString("| No. | Part | Drawing | Before the erasure |\n")
 	b.WriteString("|---|---|---|---|\n")
 	for _, sh := range plan.Sheets {
 		for j, p := range sh.Parts {
@@ -364,18 +361,18 @@ func figureCell(t *testing.T, f sample.Figure) string {
 		for i, j := range nl.Jumps {
 			jumps[i] = fmt.Sprintf("%d → %d", j.From, j.To)
 		}
-		return fmt.Sprintf("прямая от %d до %d с шагом %d; подписи %s; дуги %s", nl.From, nl.To, nl.Step, orNone(labels), orNone(jumps))
+		return fmt.Sprintf("line from %d to %d in steps of %d; labels %s; arcs %s", nl.From, nl.To, nl.Step, orNone(labels), orNone(jumps))
 	case f.Row != nil:
 		r := f.Row
-		numbers := "без номеров"
+		numbers := "without numbers"
 		if r.Numbers {
-			numbers = "с номерами"
+			numbers = "with numbers"
 		}
-		objects := map[string]string{sample.ObjectHouse: "домиков"}[r.Object]
+		objects := map[string]string{sample.ObjectHouse: "houses"}[r.Object]
 		if objects == "" {
 			t.Fatalf("a row of %q: the table names the objects of a row it knows", r.Object)
 		}
-		return fmt.Sprintf("ряд %s: %d слева от отмеченного и %d справа, %s", objects, r.Left, r.Right, numbers)
+		return fmt.Sprintf("a row of %s: %d left of the marked one and %d right of it, %s", objects, r.Left, r.Right, numbers)
 	case f.Scheme != nil:
 		s := f.Scheme
 		said := make([]string, 0, len(s.Segments)+1)
@@ -384,17 +381,17 @@ func figureCell(t *testing.T, f sample.Figure) string {
 			for i, pc := range seg.Pieces {
 				pieces[i] = strconv.Itoa(pc.Length) + labelOf(pc.Label)
 			}
-			segment := "отрезок"
+			segment := "segment"
 			if seg.Label != "" {
 				segment += " " + seg.Label
 			}
 			said = append(said, segment+" — "+strings.Join(pieces, " + "))
 		}
-		brace := "скобка без подписи"
+		brace := "a brace without a label"
 		if s.Total != "" {
-			brace = "скобка" + labelOf(s.Total)
+			brace = "a brace" + labelOf(s.Total)
 		}
-		return "схема: " + strings.Join(append(said, brace), "; ")
+		return "scheme: " + strings.Join(append(said, brace), "; ")
 	}
 	t.Fatal("a drawing with no figure")
 	return ""

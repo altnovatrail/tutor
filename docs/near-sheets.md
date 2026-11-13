@@ -1,16 +1,16 @@
-# План листов с почти-ключом
+# The sheet plan with a near key
 
-> Что код рисует на 12 листах с почти-ключом (T70; R36). На этих листах итог отличается от ключа одной похожей цифрой: так видно, сдвигает ли ключ чтение (R03; Т-23). Как устроен замер чтения и как считается порог, — [architecture.md](architecture.md), раздел 3.4, «Чтение в наблюдение».
+> What code draws on the 12 sheets with a near key (T70; R36). On these sheets the result differs from the key by one similar digit: so it is seen whether the key shifts the reading (R03; Т-23). How the measurement of reading is built and how the threshold is counted — [architecture.md](architecture.md), section 3.4, "Reading into an observation".
 >
-> Задачи — банк `eval/near-bank.json` в формате `tutor-bank` v0 (R15). Это копии шести задач банка E2, `eval/bank.json`, дословно, кроме ложных ключей: у каждой вместо прежнего ложного ключа — почти-ложный. Банк E2 не меняется (R28). Банк и план — синтетическое содержание под Apache-2.0: их написал исполнитель, а не ученики.
+> The tasks are the bank `eval/near-bank.json` in the format `tutor-bank` v0 (R15). These are copies of six tasks of the bank of E2, `eval/bank.json`, word for word, but for the false keys: each has a near-false key in place of its former false key. The bank of E2 does not change (R28). The bank and the plan are synthetic content under Apache-2.0: the executor wrote them, not learners.
 >
-> План — файл `eval/near-sheets.json` в формате `tutor-sheet-plan` v0, как план E2 ([architecture.md](architecture.md), раздел 3.1, «Формат плана листов»). Таблицы ниже — тот же банк и тот же план: тест `cmd/tutor-eval` собирает их из файлов и сверяет с этим документом побайтно, так что лист правится в обоих местах.
+> The plan is the file `eval/near-sheets.json` in the format `tutor-sheet-plan` v0, as the plan of E2 is ([architecture.md](architecture.md), section 3.1, "Format of the sheet plan"). The tables below are the same bank and the same plan: a test of `cmd/tutor-eval` builds them from the files and checks them against this document byte for byte, so a sheet is edited in both places.
 
-## Задачи
+## Tasks
 
-Шесть задач E2. У каждой почти-ложный ключ — ключ, у которого последняя цифра заменена похожей: 1 и 7, 4 и 9, 8 и 3, 5 и 6. Решение почти-ложного ключа — верное решение, в последней строке которого заменена та же цифра. Так ключ и решение отличаются от листа одной цифрой, и больше ничем. Что копии равны задачам E2, а почти-ложные ключи — такие, проверяет тест `cmd/tutor-eval`, а банк и план — `tutor-eval check eval/near-bank.json eval/near-sheets.json`.
+The six tasks of E2. Each has a near-false key — the key with its last digit replaced by a similar one: 1 and 7, 4 and 9, 8 and 3, 5 and 6. The solution of the near-false key is the correct solution with the same digit replaced in its last line. So the key and the solution differ from the sheet by one digit, and by nothing else. That the copies equal the tasks of E2, and that the near-false keys are such, is checked by a test of `cmd/tutor-eval`, and the bank and the plan by `tutor-eval check eval/near-bank.json eval/near-sheets.json`.
 
-| ID | Ключ | Почти-ложный ключ | Похожие цифры |
+| ID | Key | Near-false key | Similar digits |
 |---|---|---|---|
 | `chain-2` | `11` | `17` | 1 → 7 |
 | `equation-3` | `x = 7` | `x = 1` | 7 → 1 |
@@ -19,20 +19,20 @@
 | `chain-1` | `38` | `33` | 8 → 3 |
 | `posts` | `5` | `6` | 5 → 6 |
 
-0 и 6, 2 и 7 в пары не взяты: у 6 и у 7 тогда было бы по две пары.
+0 and 6, 2 and 7 are not taken as pairs: 6 and 7 would then have two pairs each.
 
-## Как читать план
+## How to read the plan
 
-- **Лист** — одна задача банка, сценарий `similar-digits`. По два листа на задачу:
-  - **верный** — строки верного решения. Его читают и с почти-ложным ключом: так видно, не прочитает ли модель ключ вместо написанного;
-  - **с ошибкой** — те же строки, но в ответе — почти-ложный ключ. Первая ошибка — строка ответа, ловушки нет. Его читают с верным ключом: так видно, не даст ли ключ ложное «верно».
-- **Строки на листе** — что остаётся на листе, сверху вниз. Строка ответа — последняя. У `posts` строки — те же, что на листах E2 этой задачи, а у остальных — строки решения банка.
-- **Цифра ответа клонится к** — последнюю цифру строки ответа код рисует сдвинутой к цифре её пары на долю `synth.SimilarShift`. Доля 0 — цифра шрифта, 1 — цифра пары. Доля — 0,1: наибольшая из 0,5, 0,4, 0,3, 0,2 и 0,1, при которой Opus без ключа прочитал верно не меньше 11 листов из 12 этого плана, нарисованных зерном 2 (T73; R36, поправка 2026-10-28).
-- **Деление** — одно, `tutor-eval split -seed 70 -dev 4`: 4 разработочных листа и 8 тестовых. Набор `synthetic/near` нарисован зерном 1 и поделён 2026-10-28, когда доля заморожена, — до первой правки промпта чтения. В разработке — листы 7, 9, 11 и 12: три верных и один с ошибкой.
+- **Sheet** — one task of the bank, scenario `similar-digits`. Two sheets per task:
+  - **the correct one** — the lines of the correct solution. It is read also with the near-false key: so it is seen whether the model reads the key instead of what is written;
+  - **the one with an error** — the same lines, but the answer is the near-false key. The first error is the answer line, there is no trap. It is read with the correct key: so it is seen whether the key gives a false "correct".
+- **Lines on the sheet** — what remains on the sheet, top to bottom. The answer line is the last. For `posts` the lines are the same as on the sheets of E2 of this task, and for the others they are the lines of the bank's solution.
+- **The answer's digit leans toward** — code draws the last digit of the answer line shifted toward the digit of its pair by the share `synth.SimilarShift`. Share 0 is the font's digit, 1 the pair's digit. The share is 0.1: the largest of 0.5, 0.4, 0.3, 0.2 and 0.1 at which Opus without a key read correctly no fewer than 11 sheets of the 12 of this plan, drawn with seed 2 (T73; the 2026-10-28 amendment to R36).
+- **Split** — one, `tutor-eval split -seed 70 -dev 4`: 4 dev sheets and 8 test sheets. The set `synthetic/near` is drawn with seed 1 and split on 2026-10-28, when the share was frozen, — before the first edit of the prompt of reading. In the dev part are sheets 7, 9, 11 and 12: three correct ones and one with an error.
 
-## Листы
+## Sheets
 
-| № | Задача | Строки на листе | Исход | Цифра ответа клонится к |
+| No. | Task | Lines on the sheet | Outcome | The answer's digit leans toward |
 |---|---|---|---|---|
 | 1 | `chain-2` | `47 + 19 = 66`; `66 : 6 = 11` | `correct` | 1 → 7 |
 | 2 | `chain-2` | `47 + 19 = 66`; `66 : 6 = 17` | `error` | 7 → 1 |

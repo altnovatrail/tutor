@@ -68,7 +68,7 @@ A release comes out by itself after each merge into `main` that changes what the
 
 ## Documents
 
-The documents are in English; the work plan, its technical debt and the archives of its epics are in Russian. Until tasks T133 to T136 of the plan move and translate them, the documents under `docs/` are still in Russian, but for the sources and the measurements, which tasks T132 and T133 moved into files of their own in English.
+The documents are in English; the work plan, its technical debt and the archives of its epics are in Russian. Until tasks T135 and T136 of the plan translate it, the decision log under `docs/` is still in Russian; the other documents there are in English: tasks T132 and T133 moved the sources and the measurements into files of their own in English, and task T134 translated the rest.
 
 - [docs/architecture.md](docs/architecture.md) — the component: what it does and does not do, its data and links, and what is still to decide.
 - [docs/decisions.md](docs/decisions.md) — the decision log: what was decided, why, and what was rejected.

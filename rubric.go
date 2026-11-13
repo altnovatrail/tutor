@@ -17,7 +17,7 @@ import (
 )
 
 // RubricAssessment is an essay to assess by the criteria of its task's rubric (architecture 3.10,
-// «оценка по рубрике»), the second of the two calls of a task with a rubric (architecture 3.5; R75
+// "assessment by the rubric"), the second of the two calls of a task with a rubric (architecture 3.5; R75
 // spec): the text the reading of the essay wrote down, the statement of the task as its topic, the
 // criteria of the rubric in their order, in the module's explanation language, the presentation
 // style — only what of it changes the words (Д74 RUN.md spec) —, the language of the feedback by its

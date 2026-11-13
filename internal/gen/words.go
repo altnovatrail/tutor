@@ -9,7 +9,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// The set of the tutor's words (T118; docs/architecture.md, 3.4, «Набор слов»): the sheets with a
+// The set of the tutor's words (T118; docs/architecture.md, 3.4, "The set of words"): the sheets with a
 // mistake of a plan of lines, written again as a plan of parts, ten of them once more with a note at
 // the side, and the cases of the words on them.
 

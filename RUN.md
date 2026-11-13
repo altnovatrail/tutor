@@ -130,6 +130,7 @@
 - T131 — сделана 2026-11-12: `tutor` на `spec` `v0.16.3` — подмодуль, модули Go `spec` и контрактов и `module-kit` `v0.3.1`, — хук сессии, `gopls-lsp`, правила частей `.claude/rules/`, правила этого файла по заготовке и таблица 4 в [DEBT.md](DEBT.md) (R102). Тело — [docs/plan/E6.md](docs/plan/E6.md).
 - T132 — сделана 2026-11-12: «Источники» — в [docs/sources.md](docs/sources.md), на английском, 25 записей пяти тем; ссылки architecture и комментариев Go — на записи, а раздел 4 — указатель для журнала, архивов и `spec`. Тело — [docs/plan/E6.md](docs/plan/E6.md).
 - T133 — сделана 2026-11-13: замеры — в [docs/measurements.md](docs/measurements.md), на английском: замер E2 и план 2026-10-21, серии T40 и T45, замеры E4 и таблица сессий; 3.1 и 3.4 architecture — устройство eval с указателем, куда ушёл каждый блок, а ссылки Go — на новые места. Тело — [docs/plan/E6.md](docs/plan/E6.md).
+- T134 — сделана 2026-11-13: [docs/architecture.md](docs/architecture.md) и пять описаний листов — на английском, 656 КБ русского текста; слова таблиц листов, которые сверяют тесты Go, и цитаты меток architecture в коде и в measurements — английские. Тело — [docs/plan/E6.md](docs/plan/E6.md).
 
 **Строка 7.12 сквозного плана `spec`** — экономия токенов по R143 spec и R145 spec: переход на тег линии 0.16, перестройка документов по образцу `spec` и перевод `docs/` на английский — по общему тексту T123 `spec` и строке 7.12 его таблицы отличий (архив E10 `spec`, `spec/docs/plan/E10.md`, «T123»). У `tutor` она больше одной проверки — `docs/` на русском около 1,8 МБ, — и по правилу 11 она разбита на шесть задач. Решение автора 2026-11-12 — «Вся 7.12 по частям, сейчас», не дожидаясь пилота `module-kit`, строки 7.1 (R102). Каждая задача — своя сессия (R143 spec), и сессия перевода раздаёт куски субагентам, как велит `spec/tools/translation/README.md`.
 
@@ -138,18 +139,9 @@
 | [x] | T131 | Переход на `spec` `v0.16.3` и порядок работы | Claude | да | — |
 | [x] | T132 | «Источники» — в `docs/sources.md` | Claude | да | T131 |
 | [x] | T133 | Замеры — в `docs/measurements.md` | Claude | да | T131 |
-| [ ] | T134 | Перевод `docs/architecture.md` и описаний листов | Claude | — | T132, T133 |
+| [x] | T134 | Перевод `docs/architecture.md` и описаний листов | Claude | — | T132, T133 |
 | [ ] | T135 | Перевод журнала решений: начало и R01–R50 | Claude | — | T131 |
 | [ ] | T136 | Перевод журнала с R51, бюджеты и замер «после» | Claude | да | T134, T135 |
-
-#### T134. Перевод `docs/architecture.md` и описаний листов
-
-- **Цель:** `docs/architecture.md` — то, что в нём осталось после T132 и T133, около 517 КБ (T133), — и описания листов `docs/sheets.md`, `docs/free-sheets.md`, `docs/near-sheets.md`, `docs/workbook.md` и `docs/essays.md`, около 124 КБ, — на английском.
-- **Почему:** шаг 6 общего текста T123 `spec`; RULES.md spec, Hard rules, Language (R143 spec; R102).
-- **Сделать:** по `spec/tools/translation/README.md` и образцу T136–T139 `spec`: коммит до перевода, куски `split`, субагенты Opus по ≈ 100 КБ с этим текстом и глоссарием concepts 15 spec, `join`, `just -f spec/justfile translation-anchors`, `just -f spec/justfile translation-check <ref> <файл>…` и слепое чтение `sample`. Цитата источника — на своём языке, префиксы О-, П-, Т-, Д и В — кириллицей; номера разделов не меняются, так что ссылки RUN.md, `DEBT.md`, журнала и архивов на них остаются верными.
-- **Как проверить:** `translation-check` каждого файла — чисто; слепое чтение — расхождений нет или они исправлены; `docs-check-repo`; `/code-review high`.
-- **Разделы:** RULES.md spec, Hard rules; `spec/tools/translation/README.md`; concepts 15 spec; T136–T139 `spec`.
-- **Стоимость:** $0 — субагенты сессии, без API.
 
 #### T135. Перевод журнала решений: начало и R01–R50
 

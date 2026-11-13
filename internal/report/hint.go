@@ -14,7 +14,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// Hint is what a run of the hint comes to (T75; R39; docs/architecture.md, 3.4, «Подсказка»): by
+// Hint is what a run of the hint comes to (T75; R39; docs/architecture.md, 3.4, "Hint"): by
 // tutor, language and rung, the hints the leak check found the answer in, before the check and after
 // it, the hints that break their form, the fallback texts by cause, the box on the part of the first
 // error and the model's trap against the sheet's, and the time and cost of a call; the leaks by

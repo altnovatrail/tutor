@@ -13,7 +13,7 @@ import (
 const EssaysFormat = "tutor-essays"
 
 // Essays is the synthetic essays of the measurement of the assessment by a rubric (T82;
-// docs/architecture.md, 3.4, «Сочинения»): one rubric, the criteria a module's task with a rubric
+// docs/architecture.md, 3.4, "Essays"): one rubric, the criteria a module's task with a rubric
 // would give (spec's format, section 15), and short essays in English, each with its topic, its
 // title and its text, and which criteria of the rubric it does not meet, as planned. Code draws each
 // essay in memory from a seed (synth.Essay): no file of a page is written.

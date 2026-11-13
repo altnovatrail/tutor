@@ -1,178 +1,178 @@
-# План листов замера свободной записи
+# The sheet plan of the measurement of free writing
 
-> Что код рисует на каждом из 40 листов замера свободной записи и что автор пишет мышью на трёх своих (T57, T62; R28). Как устроен замер и какой ответ судьи в нём верен — [measurements.md](measurements.md), раздел 3.3.
+> What code draws on each of the 40 sheets of the measurement of free writing, and what the author writes with a mouse on their three (T57, T62; R28). How the measurement is built and which answer of the judge is correct in it — [measurements.md](measurements.md), section 3.3.
 >
-> Задачи — банк свободной записи, файл `eval/free-bank.json` в формате `tutor-bank` v0 (R15; T52). Банк и планы — синтетическое содержание под Apache-2.0: их написал исполнитель, а не ученики.
+> The tasks are the bank of free writing, the file `eval/free-bank.json` in the format `tutor-bank` v0 (R15; T52). The bank and the plans are synthetic content under Apache-2.0: the executor wrote them, not learners.
 >
-> Планы — файлы данных в формате `tutor-sheet-plan` v1 ([architecture.md](architecture.md), раздел 3.1, «Формат плана листов», версия 1):
-> - `eval/free-sheets.json` — 40 листов, их рисует код (T59, T60);
-> - `eval/free-author.json` — три листа автора, свободные решения трёх задач, по листу на раскладку (T62).
+> The plans are data files in the format `tutor-sheet-plan` v1 ([architecture.md](architecture.md), section 3.1, "Format of the sheet plan", version 1):
+> - `eval/free-sheets.json` — 40 sheets, drawn by code (T59, T60);
+> - `eval/free-author.json` — the three sheets of the author, free solutions of three tasks, one sheet per layout (T62).
 >
-> Таблицы ниже — те же банк и планы: тест `cmd/tutor-eval` собирает их из файлов и сверяет с этим документом побайтно, так что лист правится в обоих местах.
+> The tables below are the same bank and plans: a test of `cmd/tutor-eval` builds them from the files and checks them against this document byte for byte, so a sheet is edited in both places.
 
-## Задачи
+## Tasks
 
-Шесть задач доски со свободной записью, задачи 6–11, — дословно и под теми же ID ([architecture.md](architecture.md), раздел 3.3). Раскладку листа задаёт задача: у двух — числовая прямая, у двух — рисунок, ряд домиков или схема отрезками, а у двух счёт идёт сбоку, столбиком. Что задачи банка — те же, что на доске, проверяет тест `cmd/tutor-eval`, а весь банк — `tutor-eval check eval/free-bank.json`.
+The six tasks of the board with free writing, tasks 6–11, word for word and under the same IDs ([architecture.md](architecture.md), section 3.3). The task sets the sheet's layout: two have a number line, two a drawing, a row of houses or a scheme of segments, and in two the counting goes at the side, in a column. That the tasks of the bank are the same as on the board is checked by a test of `cmd/tutor-eval`, and the whole bank by `tutor-eval check eval/free-bank.json`.
 
-| ID | Раскладка | Условие | Ключ |
+| ID | Layout | Statement | Key |
 |---|---|---|---|
-| `grasshopper` | числовая прямая | Кузнечик сидит на числовой прямой в точке 3. Он прыгнул три раза вправо, каждый раз на 4, а потом один раз влево на 5. В какой точке он оказался? | `10` |
-| `backwards` | числовая прямая | Задумали число. К нему прибавили 7, потом вычли 12 и получили 15. Какое число задумали? | `20` |
-| `houses` | рисунок: ряд предметов | В ряд стоят домики. Домик с флажком — четвёртый слева и шестой справа. Сколько домиков в ряду? | `9` |
-| `stamps` | рисунок: схема отрезками | У двух братьев вместе 20 марок. У старшего на 6 марок больше, чем у младшего. Сколько марок у младшего? | `7` |
-| `pages` | запись сбоку | Страницы книги пронумеровали подряд, с 1 по 75. Сколько всего цифр написали? | `141` |
-| `album` | запись сбоку | Тетрадь стоит 14 рублей, а альбом — в 3 раза дороже. Сколько стоят вместе 2 альбома и 5 тетрадей? | `154` |
+| `grasshopper` | number line | «Кузнечик сидит на числовой прямой в точке 3. Он прыгнул три раза вправо, каждый раз на 4, а потом один раз влево на 5. В какой точке он оказался?» | `10` |
+| `backwards` | number line | «Задумали число. К нему прибавили 7, потом вычли 12 и получили 15. Какое число задумали?» | `20` |
+| `houses` | drawing: a row of objects | «В ряд стоят домики. Домик с флажком — четвёртый слева и шестой справа. Сколько домиков в ряду?» | `9` |
+| `stamps` | drawing: a scheme of segments | «У двух братьев вместе 20 марок. У старшего на 6 марок больше, чем у младшего. Сколько марок у младшего?» | `7` |
+| `pages` | working at the side | «Страницы книги пронумеровали подряд, с 1 по 75. Сколько всего цифр написали?» | `141` |
+| `album` | working at the side | «Тетрадь стоит 14 рублей, а альбом — в 3 раза дороже. Сколько стоят вместе 2 альбома и 5 тетрадей?» | `154` |
 
-## Как читать план
+## How to read the plan
 
-- **Лист** — одна задача банка и один сценарий формата образца ([architecture.md](architecture.md), раздел 3.1, «Формат образца»). У листов кода `writer` — `synthetic`, у листов автора — `author` (R26). Исход задаёт сценарий: у `correct` и `erasure-fixed` — `correct`, у `error` и `erasure-broken` — `error`.
-- **Части на листе** — что остаётся на листе к концу, в том порядке, в каком решение пишется и читается. У части — номер, вид и место:
-  - без пометки — строка текста в главной колонке, слева;
-  - «столбиком сбоку» — вычисление столбиком справа от главной колонки, как писал автор в пилоте: сверху первое число, под ним знак и второе число, черта и итог. В таблице столбик записан в строку;
-  - «рисунок» — числовая прямая, ряд домиков или схема отрезками, в главной колонке или «во всю ширину» листа. В таблице — его описание словами: это текст части в разметке образца. Что нарисовано, — в таблице «Рисунки».
+- **Sheet** — one task of the bank and one scenario of the sample format ([architecture.md](architecture.md), section 3.1, "Sample format"). The sheets of code have `writer` `synthetic`, the author's sheets have `author` (R26). The scenario sets the outcome: `correct` and `erasure-fixed` have `correct`, `error` and `erasure-broken` have `error`.
+- **Parts on the sheet** — what remains on the sheet by the end, in the order in which the solution is written and read. A part has a number, a kind and a place:
+  - with no mark — a line of text in the main column, on the left;
+  - "column at the side" — a calculation in a column to the right of the main column, as the author wrote in the pilot: the first number on top, under it the sign and the second number, a bar and the result. In the table the column is written inline;
+  - "drawing" — a number line, a row of houses or a scheme of segments, in the main column or "full width", across the whole sheet. In the table, its description in words: this is the text of the part in the sample's markup. What is drawn is in the table "Drawings".
 
-  Условие на лист не пишется: его показывает доска. Пояснений после «—», как в эталонных решениях банка, на листе нет.
-- **□ и △** — неизвестные, как писал их автор в пилоте:
-  - на трёх листах `backwards` — в тексте: условие записано равенством `□ + 7 − 12 = 15`, и □ — задуманное число;
-  - на трёх листах `stamps` — подписи отрезков схемы: □ — отрезок младшего брата, о чьих марках спрашивает задача, △ — старшего. На схеме без подписей не видно, какой отрезок чей, поэтому ловушка `longer-segment` стоит только на листах с □ и △.
-- **Ответ** — номер части с итогом. Это всегда текст и всегда последняя часть.
-- **Первая ошибка** — номер части и ловушка задачи, в которую попадает ошибка.
-  - Первую ошибку задаёт разметка (R24). Неверная часть — та, с которой решение пошло не так, даже если вычисление в ней верно: так, в задаче о кузнечике `15 + 5 = 20` верно сложено, но прыжок — не в ту сторону.
-  - Части после неё следуют из написанного: второй ошибки на листе нет. Рисунок после неверной строки рисует то, что в ней написано.
-  - Ошибки — ловушки банка, без тонкостей сверх них (R28, поправка 2026-10-27): неверная дуга кончается в двух делениях от верной или дальше, а не на соседнем, и у неверного столбика неверен шаг, а не одна цифра. Описок в вычислении нет: каждое равенство на листах верно.
-- **Стирание по сценарию** — номер части, написанной на месте стёртого, что стёрто — ошибка или верный шаг, — и что было, а после стрелки — что стало:
-  - в тексте — строка целиком, а с пометкой «часть строки» — одно её число, и остальная строка остаётся;
-  - «в столбике» — одно его число. Если стёрто верхнее или нижнее число, итог пишется уже после стирания;
-  - «в рисунке» — его элементы, а стёртое и новое названы словами, кусками его описания. Каким рисунок был к стиранию, — в таблице «Рисунки», столбец «До стирания»: стирание убирает то, чего нет в итоговом рисунке, а потом дорисовывается новое.
+  The statement is not written on the sheet: the board shows it. The explanations after "—", as in the bank's reference solutions, are not on the sheet.
+- **□ and △** — unknowns, as the author wrote them in the pilot:
+  - on three `backwards` sheets, in the text: the statement is written as the equality `□ + 7 − 12 = 15`, and □ is the number thought of;
+  - on three `stamps` sheets, the labels of the scheme's segments: □ is the segment of the younger brother, whose stamps the task asks about, △ that of the elder. On a scheme without labels it is not seen which segment is whose, so the trap `longer-segment` stands only on the sheets with □ and △.
+- **Answer** — the number of the part with the result. It is always text and always the last part.
+- **First error** — the number of the part and the task's trap that the error falls into.
+  - The markup sets the first error (R24). The wrong part is the one from which the solution went wrong, even if the calculation in it is right: so, in the task about the grasshopper `15 + 5 = 20` is added right, but the jump is in the wrong direction.
+  - The parts after it follow from what is written: there is no second error on the sheet. A drawing after a wrong line draws what is written in it.
+  - The errors are the bank's traps, with no subtleties beyond them (the 2026-10-27 amendment to R28): a wrong arc ends two divisions or more from the correct one, not on the neighbouring one, and a wrong column has a wrong step, not one digit. There are no slips in the calculation: every equality on the sheets is right.
+- **Planned erasure** — the number of the part written in the place of what was erased, what was erased — a mistake or a correct step, — and what was there, and after the arrow, what came instead:
+  - in the text — the whole line, and with the mark "part of a line", one number of it, and the rest of the line remains;
+  - "in a column" — one number of it. If the top or the bottom number is erased, the result is written only after the erasure;
+  - "in the drawing" — its elements, and what was erased and what is new are named in words, by pieces of its description. What the drawing was like by the erasure is in the table "Drawings", the column "Before the erasure": the erasure removes what is not in the final drawing, and then the new is drawn in.
 
-  Порядок письма: части до этого места; стёртое; его стирание, одним движением ластика; новое на его месте; дальше — остальные части.
-- **Помарки** — стирания не по сценарию — разрешены на любом листе. Разметки у них нет (R11).
+  The order of writing: the parts up to this place; what is erased; its erasure, in one movement of the eraser; the new in its place; then the remaining parts.
+- **Stray erasures** — erasures not by the scenario — are allowed on any sheet. They have no markup (R11).
 
-## Сколько каких листов
+## How many sheets of each kind
 
-Состав — тот, что записала T54 ([measurements.md](measurements.md), раздел 3.3):
+The composition is the one T54 recorded ([measurements.md](measurements.md), section 3.3):
 
-| Задача | Раскладка | `correct` | `error` | `erasure-fixed` | `erasure-broken` | Всего |
+| Task | Layout | `correct` | `error` | `erasure-fixed` | `erasure-broken` | Total |
 |---|---|---|---|---|---|---|
-| `grasshopper` | числовая прямая | 2 | 2 | 2 | 1 | 7 |
-| `backwards` | числовая прямая | 2 | 2 | 1 | 2 | 7 |
-| `houses` | рисунок: ряд предметов | 2 | 2 | 2 | 1 | 7 |
-| `stamps` | рисунок: схема отрезками | 2 | 2 | 1 | 1 | 6 |
-| `pages` | запись сбоку | 2 | 2 | 1 | 1 | 6 |
-| `album` | запись сбоку | 2 | 2 | 1 | 2 | 7 |
-| **всего** | | **12** | **12** | **8** | **8** | **40** |
+| `grasshopper` | number line | 2 | 2 | 2 | 1 | 7 |
+| `backwards` | number line | 2 | 2 | 1 | 2 | 7 |
+| `houses` | drawing: a row of objects | 2 | 2 | 2 | 1 | 7 |
+| `stamps` | drawing: a scheme of segments | 2 | 2 | 1 | 1 | 6 |
+| `pages` | working at the side | 2 | 2 | 1 | 1 | 6 |
+| `album` | working at the side | 2 | 2 | 1 | 2 | 7 |
+| **total** | | **12** | **12** | **8** | **8** | **40** |
 
-Где стоят первая ошибка и стирание по сценарию, по раскладкам. «В рисунке» — в рисунке, «в тексте» — в строке главной колонки, «сбоку» — в записи сбоку, справа от неё, а запись сбоку на этих листах — всегда столбик:
+Where the first error and the planned erasure stand, by layout. "In the drawing" — in the drawing, "in the text" — in a line of the main column, "at the side" — in the working at the side, to the right of it, and the working at the side on these sheets is always a column:
 
-| Раскладка | Листов | С ошибкой | Первая ошибка: в рисунке / в тексте / сбоку | Стираний | Стирание: в рисунке / в тексте / сбоку |
+| Layout | Sheets | With a mistake | First error: in the drawing / in the text / at the side | Erasures | Erasure: in the drawing / in the text / at the side |
 |---|---|---|---|---|---|
-| числовая прямая | 14 | 7 | 4 / 3 / — | 6 | 3 / 3 / — |
-| рисунок | 13 | 6 | 3 / 3 / — | 5 | 3 / 2 / — |
-| запись сбоку | 13 | 7 | — / 3 / 4 | 5 | — / 2 / 3 |
-| **всего** | **40** | **20** | **7 / 9 / 4** | **16** | **6 / 7 / 3** |
+| number line | 14 | 7 | 4 / 3 / — | 6 | 3 / 3 / — |
+| drawing | 13 | 6 | 3 / 3 / — | 5 | 3 / 2 / — |
+| working at the side | 13 | 7 | — / 3 / 4 | 5 | — / 2 / 3 |
+| **total** | **40** | **20** | **7 / 9 / 4** | **16** | **6 / 7 / 3** |
 
-Стирание по сценарию, а с ним и кадры, — на 16 листах. Первая ошибка стоит в разных частях листа: в первой — на 9 листах, во второй — на 10 и в третьей — на 1, а в ответе — ни на одном.
+The planned erasure, and with it the frames, is on 16 sheets. The first error stands in different parts of the sheet: in the first on 9 sheets, in the second on 10 and in the third on 1, and in the answer on none.
 
-Порядок листов смешан. Соседние листы — разные задачи и разные сценарии, а в каждом десятке — три листа `correct`, три `error`, два `erasure-fixed` и два `erasure-broken`. На разработочную и тестовую части листы делит не план, а `tutor-eval split -seed 20261027` — один раз, до первой правки промпта (T66).
+The order of the sheets is mixed. Neighbouring sheets are different tasks and different scenarios, and each ten has three sheets `correct`, three `error`, two `erasure-fixed` and two `erasure-broken`. Not the plan but `tutor-eval split -seed 20261027` divides the sheets into the dev part and the test part — once, before the first edit of the prompt (T66).
 
-## Листы автора
+## The author's sheets
 
-Три листа — свободные решения трёх задач, по одной на раскладку их листов кода: кузнечик на числовой прямой, марки на схеме, альбом со счётом сбоку (R28, поправка 2026-10-27). Автор решает задачу так, как решил бы сам: сценария, планового стирания и нарочной ошибки у этих листов нет, и весь лист — одна часть. Что листы автора такие, проверяет тест `cmd/tutor-eval`.
+Three sheets — free solutions of three tasks, one per layout of their sheets of code: the grasshopper on the number line, the stamps on the scheme, the album with the counting at the side (the 2026-10-27 amendment to R28). The author solves the task the way they would solve it themselves: these sheets have no scenario, no planned erasure and no deliberate error, and the whole sheet is one part. That the author's sheets are such is checked by a test of `cmd/tutor-eval`.
 
-Деления и порога у листов автора нет: их прогон — после заморозки промпта, а отчёт — рядом с синтетикой, по листам (T77).
+The author's sheets have no split and no threshold: their run is after the prompt is frozen, and the report is next to the synthetic sheets, by sheet (T77).
 
-| № | Задача | Раскладка у листов кода | Сценарий | Часть на листе |
+| No. | Task | Layout of the sheets of code | Scenario | Part on the sheet |
 |---|---|---|---|---|
-| 1 | `grasshopper` | числовая прямая | `correct` | во всю ширину: `свободное решение целиком` |
-| 2 | `stamps` | рисунок: схема отрезками | `correct` | во всю ширину: `свободное решение целиком` |
-| 3 | `album` | запись сбоку | `correct` | во всю ширину: `свободное решение целиком` |
+| 1 | `grasshopper` | number line | `correct` | full width: `свободное решение целиком` |
+| 2 | `stamps` | drawing: a scheme of segments | `correct` | full width: `свободное решение целиком` |
+| 3 | `album` | working at the side | `correct` | full width: `свободное решение целиком` |
 
-## Как писать листы автора
+## How to write the author's sheets
 
-Это шаг автора в T62: рецепт `just free-record`, каталог `samples/free`.
-1. Выберите лист стрелками, решите задачу мышью — как угодно, — и нажмите Done.
-2. Доска обведёт весь лист одной рамкой: это одна часть, и разметки править не нужно. Нажмите Save.
-3. Ошиблись нечаянно — нажмите Clear и решите заново: лист автора — верное решение. Помарки стирайте как удобно — ластиком или Undo.
+This is the author's step in T62: the recipe `just free-record`, the directory `samples/free`.
+1. Choose a sheet with the arrows, solve the task with the mouse — in any way you like, — and press Done.
+2. The board will outline the whole sheet with one box: this is one part, and the markup needs no editing. Press Save.
+3. Made a mistake by accident — press Clear and solve it anew: the author's sheet is a correct solution. Erase stray marks as is convenient — with the eraser or Undo.
 
-После Save — сводка `go run ./cmd/tutor-eval sheets -dir samples/free -bank eval/free-bank.json -plan eval/free-author.json`. Почерка в ней нет, и её вывод уходит исполнителю. `git status` не должен показать ни одного файла из `samples/`: листы — вне git (R05).
+After Save — the summary `go run ./cmd/tutor-eval sheets -dir samples/free -bank eval/free-bank.json -plan eval/free-author.json`. There is no handwriting in it, and its output goes to the executor. `git status` must show no file from `samples/`: the sheets are outside git (R05).
 
-## Листы кода
+## The sheets of code
 
-Листы рисует `tutor-eval draw -seed 1` в каталог `synthetic/free`, с `writer` `synthetic` (T59, T60).
+The sheets are drawn by `tutor-eval draw -seed 1` into the directory `synthetic/free`, with `writer` `synthetic` (T59, T60).
 
-| № | Задача | Сценарий | Части на листе | Ответ | Первая ошибка | Стирание по сценарию |
+| No. | Task | Scenario | Parts on the sheet | Answer | First error | Planned erasure |
 |---|---|---|---|---|---|---|
-| 1 | `grasshopper` | `correct` | 1) рисунок во всю ширину: `числовая прямая: прыжки вправо 3 → 7 → 11 → 15 и прыжок влево 15 → 10`; 2) `3 + 4 + 4 + 4 = 15`; 3) `15 − 5 = 10`; 4) `Ответ: в точке 10` | 4 | — | — |
-| 2 | `album` | `error` | 1) столбиком сбоку: `14 × 3 = 42`; 2) столбиком сбоку: `42 × 5 = 210`; 3) столбиком сбоку: `14 × 2 = 28`; 4) `210 + 28 = 238`; 5) `Ответ: 238 рублей` | 5 | 2: `swapped-counts` | — |
-| 3 | `houses` | `erasure-fixed` | 1) рисунок во всю ширину: `ряд домиков — 3 слева от домика с флажком, он сам и 5 справа, под домиками номера от 1 до 9`; 2) `3 + 1 + 5 = 9`; 3) `Ответ: 9 домиков` | 3 | — | 1: ошибка `4 слева` → `3 слева`, в рисунке |
-| 4 | `backwards` | `erasure-broken` | 1) `15 + 12 = 27`; 2) рисунок во всю ширину: `числовая прямая, с конца: прыжок вправо 15 → 27 и прыжок влево 27 → 22`; 3) `Ответ: 22` | 3 | 2: `jump-length` | 2: верный шаг `27 → 20` → `27 → 22`, в рисунке |
-| 5 | `stamps` | `correct` | 1) рисунок: `схема: отрезок младшего □ и отрезок старшего △ длиннее на 6, вместе 20`; 2) `20 − 6 = 14`; 3) `14 : 2 = 7`; 4) `Ответ: 7 марок` | 4 | — | — |
-| 6 | `pages` | `error` | 1) `с 1 по 75: по 2 цифры`; 2) столбиком сбоку: `75 × 2 = 150`; 3) `Ответ: 150 цифр` | 3 | 1: `all-two-digit` | — |
-| 7 | `grasshopper` | `erasure-fixed` | 1) рисунок во всю ширину: `числовая прямая: прыжки вправо 3 → 7 → 11 → 15 и прыжок влево 15 → 10`; 2) `3 + 4 + 4 + 4 = 15`; 3) `15 − 5 = 10`; 4) `Ответ: в точке 10` | 4 | — | 1: ошибка `7 → 13` → `7 → 11`, в рисунке |
-| 8 | `stamps` | `erasure-broken` | 1) рисунок: `схема: отрезок младшего □ длиннее на 6 и отрезок старшего △, вместе 20`; 2) `(20 − 6) : 2 = 7`; 3) `7 + 6 = 13`; 4) `Ответ: 13 марок` | 4 | 1: `longer-segment` | 1: верный шаг `△ длиннее на 6` → `□ длиннее на 6`, в рисунке |
-| 9 | `album` | `correct` | 1) столбиком сбоку: `14 × 3 = 42`; 2) столбиком сбоку: `42 × 2 = 84`; 3) столбиком сбоку: `14 × 5 = 70`; 4) `84 + 70 = 154`; 5) `Ответ: 154 рубля` | 5 | — | — |
-| 10 | `houses` | `error` | 1) рисунок во всю ширину: `ряд домиков — 4 слева от домика с флажком, он сам и 5 справа`; 2) `4 + 1 + 5 = 10`; 3) `Ответ: 10 домиков` | 3 | 1: `place-for-count` | — |
-| 11 | `backwards` | `correct` | 1) `□ + 7 − 12 = 15`; 2) `□ = 15 + 12 − 7`; 3) рисунок во всю ширину: `числовая прямая, с конца: прыжок вправо 15 → 27 и прыжок влево 27 → 20`; 4) `Ответ: 20` | 4 | — | — |
-| 12 | `grasshopper` | `error` | 1) рисунок во всю ширину: `числовая прямая: прыжки вправо 3 → 7 → 11 → 15 и прыжок влево 15 → 12`; 2) `Ответ: в точке 12` | 2 | 1: `jump-length` | — |
-| 13 | `pages` | `erasure-broken` | 1) `с 1 по 9: 9 цифр`; 2) `с 10 по 75: 65 стр.`; 3) столбиком сбоку: `65 × 2 = 130`; 4) `9 + 130 = 139`; 5) `Ответ: 139 цифр` | 5 | 2: `count-from-to` | 2: верный шаг `66` → `65`, часть строки |
-| 14 | `stamps` | `erasure-fixed` | 1) рисунок: `схема: отрезок младшего □ и отрезок старшего △ длиннее на 6, вместе 20`; 2) `(20 − 6) : 2 = 7`; 3) `Ответ: 7 марок` | 3 | — | 1: ошибка `□ длиннее на 6` → `△ длиннее на 6`, в рисунке |
-| 15 | `album` | `correct` | 1) `14 × 3 = 42`; 2) столбиком сбоку: `42 × 2 = 84`; 3) столбиком сбоку: `14 × 5 = 70`; 4) столбиком сбоку: `84 + 70 = 154`; 5) `Ответ: 154 рубля` | 5 | — | — |
-| 16 | `backwards` | `error` | 1) рисунок во всю ширину: `числовая прямая, с конца: прыжок вправо 15 → 25 и прыжок влево 25 → 18`; 2) `25 − 7 = 18`; 3) `Ответ: 18` | 3 | 1: `jump-length` | — |
-| 17 | `houses` | `erasure-broken` | 1) рисунок во всю ширину: `ряд домиков — 3 слева от домика с флажком, он сам и 5 справа`; 2) `3 + 5 = 8`; 3) `Ответ: 8 домиков` | 3 | 2: `self-forgotten` | 2: верный шаг `3 + 1 + 5 = 9` → `3 + 5 = 8` |
-| 18 | `pages` | `erasure-fixed` | 1) `с 1 по 9: 9 цифр`; 2) `с 10 по 75: по 2 цифры`; 3) столбиком сбоку: `75 − 9 = 66`; 4) столбиком сбоку: `66 × 2 = 132`; 5) `9 + 132 = 141`; 6) `Ответ: 141 цифра` | 6 | — | 3: ошибка `10` → `9`, в столбике |
-| 19 | `houses` | `correct` | 1) рисунок во всю ширину: `ряд домиков — 3 слева от домика с флажком, он сам и 5 справа, под домиками номера от 1 до 9`; 2) `Ответ: 9 домиков` | 2 | — | — |
-| 20 | `stamps` | `error` | 1) рисунок: `схема: отрезок младшего и отрезок старшего, длиннее на 6, — вместе 20`; 2) `20 : 2 = 10`; 3) `Ответ: 10 марок` | 3 | 2: `halved-total` | — |
-| 21 | `album` | `erasure-broken` | 1) столбиком сбоку: `14 × 3 = 42`; 2) столбиком сбоку: `14 × 2 = 28`; 3) столбиком сбоку: `42 × 5 = 210`; 4) `28 + 210 = 238`; 5) `Ответ: 238 рублей` | 5 | 2: `swapped-counts` | 2: верный шаг `5` → `2`, в столбике |
-| 22 | `grasshopper` | `correct` | 1) рисунок во всю ширину: `числовая прямая: прыжки вправо 3 → 7 → 11 → 15 и прыжок влево 15 → 10`; 2) `Ответ: в точке 10` | 2 | — | — |
-| 23 | `houses` | `error` | 1) рисунок во всю ширину: `ряд домиков — 3 слева от домика с флажком, он сам и 6 справа, под домиками номера от 1 до 10`; 2) `Ответ: 10 домиков` | 2 | 1: `place-for-count` | — |
-| 24 | `backwards` | `erasure-fixed` | 1) `□ + 7 − 12 = 15`; 2) рисунок во всю ширину: `числовая прямая, с конца: прыжок вправо 15 → 27 и прыжок влево 27 → 20`; 3) `15 + 12 − 7 = 20`; 4) `Ответ: 20` | 4 | — | 3: ошибка `15 − 12 + 7 = 10` → `15 + 12 − 7 = 20` |
-| 25 | `pages` | `correct` | 1) `с 1 по 9: 9 цифр`; 2) `с 10 по 75: 66 стр.`; 3) столбиком сбоку: `66 × 2 = 132`; 4) столбиком сбоку: `132 + 9 = 141`; 5) `Ответ: 141 цифра` | 5 | — | — |
-| 26 | `grasshopper` | `erasure-broken` | 1) рисунок во всю ширину: `числовая прямая: прыжки вправо 3 → 7 → 11 → 13 и прыжок влево 13 → 8`; 2) `13 − 5 = 8`; 3) `Ответ: в точке 8` | 3 | 1: `jump-length` | 1: верный шаг `11 → 15` → `11 → 13`, в рисунке |
-| 27 | `stamps` | `error` | 1) рисунок: `схема: отрезок младшего и отрезок старшего, длиннее на 6, — вместе 20`; 2) `20 + 6 = 26`; 3) `26 : 2 = 13`; 4) `Ответ: 13 марок` | 4 | 2: `difference-added` | — |
-| 28 | `houses` | `erasure-fixed` | 1) рисунок во всю ширину: `ряд домиков — 3 слева от домика с флажком, он сам и 5 справа`; 2) `3 + 1 + 5 = 9`; 3) `Ответ: 9 домиков` | 3 | — | 2: ошибка `4 + 6 = 10` → `3 + 1 + 5 = 9` |
-| 29 | `backwards` | `correct` | 1) рисунок во всю ширину: `числовая прямая, с конца: прыжок вправо 15 → 27 и прыжок влево 27 → 20`; 2) `15 + 12 = 27`; 3) `27 − 7 = 20`; 4) `Ответ: 20` | 4 | — | — |
-| 30 | `pages` | `error` | 1) `с 1 по 9: 9 цифр`; 2) `с 10 по 75: по 2 цифры`; 3) столбиком сбоку: `75 − 10 = 65`; 4) столбиком сбоку: `65 × 2 = 130`; 5) `9 + 130 = 139`; 6) `Ответ: 139 цифр` | 6 | 3: `count-from-to` | — |
-| 31 | `album` | `erasure-fixed` | 1) `14 × 3 = 42`; 2) столбиком сбоку: `42 × 2 = 84`; 3) столбиком сбоку: `14 × 5 = 70`; 4) `84 + 70 = 154`; 5) `Ответ: 154 рубля` | 5 | — | 3: ошибка `2` → `5`, в столбике |
-| 32 | `backwards` | `error` | 1) `□ + 7 − 12 = 15`; 2) `15 − 12 + 7 = 10`; 3) рисунок во всю ширину: `числовая прямая, с конца: прыжок влево 15 → 3 и прыжок вправо 3 → 10`; 4) `Ответ: 10` | 4 | 2: `not-inverted` | — |
-| 33 | `houses` | `correct` | 1) рисунок во всю ширину: `ряд домиков — 3 слева от домика с флажком, он сам и 5 справа`; 2) `4 + 6 − 1 = 9`; 3) `Ответ: 9 домиков` | 3 | — | — |
-| 34 | `album` | `erasure-broken` | 1) `14 + 3 = 17`; 2) столбиком сбоку: `17 × 2 = 34`; 3) столбиком сбоку: `14 × 5 = 70`; 4) `34 + 70 = 104`; 5) `Ответ: 104 рубля` | 5 | 1: `times-as-more` | 1: верный шаг `14 × 3 = 42` → `14 + 3 = 17` |
-| 35 | `grasshopper` | `error` | 1) `3 + 4 + 4 + 4 = 15`; 2) `15 + 5 = 20`; 3) рисунок во всю ширину: `числовая прямая: прыжки вправо 3 → 7 → 11 → 15 → 20`; 4) `Ответ: в точке 20` | 4 | 2: `jump-direction` | — |
-| 36 | `stamps` | `correct` | 1) рисунок: `схема: отрезок младшего и отрезок старшего, длиннее на 6, — вместе 20`; 2) `(20 − 6) : 2 = 7`; 3) `Ответ: 7 марок` | 3 | — | — |
-| 37 | `backwards` | `erasure-broken` | 1) `15 + 12 = 27`; 2) `27 + 7 = 34`; 3) рисунок во всю ширину: `числовая прямая, с конца: прыжки вправо 15 → 27 → 34`; 4) `Ответ: 34` | 4 | 2: `not-inverted` | 2: верный шаг `27 − 7 = 20` → `27 + 7 = 34` |
-| 38 | `album` | `error` | 1) столбиком сбоку: `14 + 3 = 17`; 2) столбиком сбоку: `17 × 2 = 34`; 3) столбиком сбоку: `14 × 5 = 70`; 4) `34 + 70 = 104`; 5) `Ответ: 104 рубля` | 5 | 1: `times-as-more` | — |
-| 39 | `pages` | `correct` | 1) столбиком сбоку: `75 − 9 = 66`; 2) столбиком сбоку: `66 × 2 = 132`; 3) `132 + 9 = 141`; 4) `Ответ: 141 цифра` | 4 | — | — |
-| 40 | `grasshopper` | `erasure-fixed` | 1) `3 + 4 + 4 + 4 = 15`; 2) `15 − 5 = 10`; 3) рисунок во всю ширину: `числовая прямая: прыжки вправо 3 → 7 → 11 → 15 и прыжок влево 15 → 10`; 4) `Ответ: в точке 10` | 4 | — | 1: ошибка `3 + 4 + 4 = 11` → `3 + 4 + 4 + 4 = 15` |
+| 1 | `grasshopper` | `correct` | 1) drawing full width: `числовая прямая: прыжки вправо 3 → 7 → 11 → 15 и прыжок влево 15 → 10`; 2) `3 + 4 + 4 + 4 = 15`; 3) `15 − 5 = 10`; 4) `Ответ: в точке 10` | 4 | — | — |
+| 2 | `album` | `error` | 1) column at the side: `14 × 3 = 42`; 2) column at the side: `42 × 5 = 210`; 3) column at the side: `14 × 2 = 28`; 4) `210 + 28 = 238`; 5) `Ответ: 238 рублей` | 5 | 2: `swapped-counts` | — |
+| 3 | `houses` | `erasure-fixed` | 1) drawing full width: `ряд домиков — 3 слева от домика с флажком, он сам и 5 справа, под домиками номера от 1 до 9`; 2) `3 + 1 + 5 = 9`; 3) `Ответ: 9 домиков` | 3 | — | 1: mistake `4 слева` → `3 слева`, in the drawing |
+| 4 | `backwards` | `erasure-broken` | 1) `15 + 12 = 27`; 2) drawing full width: `числовая прямая, с конца: прыжок вправо 15 → 27 и прыжок влево 27 → 22`; 3) `Ответ: 22` | 3 | 2: `jump-length` | 2: correct step `27 → 20` → `27 → 22`, in the drawing |
+| 5 | `stamps` | `correct` | 1) drawing: `схема: отрезок младшего □ и отрезок старшего △ длиннее на 6, вместе 20`; 2) `20 − 6 = 14`; 3) `14 : 2 = 7`; 4) `Ответ: 7 марок` | 4 | — | — |
+| 6 | `pages` | `error` | 1) `с 1 по 75: по 2 цифры`; 2) column at the side: `75 × 2 = 150`; 3) `Ответ: 150 цифр` | 3 | 1: `all-two-digit` | — |
+| 7 | `grasshopper` | `erasure-fixed` | 1) drawing full width: `числовая прямая: прыжки вправо 3 → 7 → 11 → 15 и прыжок влево 15 → 10`; 2) `3 + 4 + 4 + 4 = 15`; 3) `15 − 5 = 10`; 4) `Ответ: в точке 10` | 4 | — | 1: mistake `7 → 13` → `7 → 11`, in the drawing |
+| 8 | `stamps` | `erasure-broken` | 1) drawing: `схема: отрезок младшего □ длиннее на 6 и отрезок старшего △, вместе 20`; 2) `(20 − 6) : 2 = 7`; 3) `7 + 6 = 13`; 4) `Ответ: 13 марок` | 4 | 1: `longer-segment` | 1: correct step `△ длиннее на 6` → `□ длиннее на 6`, in the drawing |
+| 9 | `album` | `correct` | 1) column at the side: `14 × 3 = 42`; 2) column at the side: `42 × 2 = 84`; 3) column at the side: `14 × 5 = 70`; 4) `84 + 70 = 154`; 5) `Ответ: 154 рубля` | 5 | — | — |
+| 10 | `houses` | `error` | 1) drawing full width: `ряд домиков — 4 слева от домика с флажком, он сам и 5 справа`; 2) `4 + 1 + 5 = 10`; 3) `Ответ: 10 домиков` | 3 | 1: `place-for-count` | — |
+| 11 | `backwards` | `correct` | 1) `□ + 7 − 12 = 15`; 2) `□ = 15 + 12 − 7`; 3) drawing full width: `числовая прямая, с конца: прыжок вправо 15 → 27 и прыжок влево 27 → 20`; 4) `Ответ: 20` | 4 | — | — |
+| 12 | `grasshopper` | `error` | 1) drawing full width: `числовая прямая: прыжки вправо 3 → 7 → 11 → 15 и прыжок влево 15 → 12`; 2) `Ответ: в точке 12` | 2 | 1: `jump-length` | — |
+| 13 | `pages` | `erasure-broken` | 1) `с 1 по 9: 9 цифр`; 2) `с 10 по 75: 65 стр.`; 3) column at the side: `65 × 2 = 130`; 4) `9 + 130 = 139`; 5) `Ответ: 139 цифр` | 5 | 2: `count-from-to` | 2: correct step `66` → `65`, part of a line |
+| 14 | `stamps` | `erasure-fixed` | 1) drawing: `схема: отрезок младшего □ и отрезок старшего △ длиннее на 6, вместе 20`; 2) `(20 − 6) : 2 = 7`; 3) `Ответ: 7 марок` | 3 | — | 1: mistake `□ длиннее на 6` → `△ длиннее на 6`, in the drawing |
+| 15 | `album` | `correct` | 1) `14 × 3 = 42`; 2) column at the side: `42 × 2 = 84`; 3) column at the side: `14 × 5 = 70`; 4) column at the side: `84 + 70 = 154`; 5) `Ответ: 154 рубля` | 5 | — | — |
+| 16 | `backwards` | `error` | 1) drawing full width: `числовая прямая, с конца: прыжок вправо 15 → 25 и прыжок влево 25 → 18`; 2) `25 − 7 = 18`; 3) `Ответ: 18` | 3 | 1: `jump-length` | — |
+| 17 | `houses` | `erasure-broken` | 1) drawing full width: `ряд домиков — 3 слева от домика с флажком, он сам и 5 справа`; 2) `3 + 5 = 8`; 3) `Ответ: 8 домиков` | 3 | 2: `self-forgotten` | 2: correct step `3 + 1 + 5 = 9` → `3 + 5 = 8` |
+| 18 | `pages` | `erasure-fixed` | 1) `с 1 по 9: 9 цифр`; 2) `с 10 по 75: по 2 цифры`; 3) column at the side: `75 − 9 = 66`; 4) column at the side: `66 × 2 = 132`; 5) `9 + 132 = 141`; 6) `Ответ: 141 цифра` | 6 | — | 3: mistake `10` → `9`, in a column |
+| 19 | `houses` | `correct` | 1) drawing full width: `ряд домиков — 3 слева от домика с флажком, он сам и 5 справа, под домиками номера от 1 до 9`; 2) `Ответ: 9 домиков` | 2 | — | — |
+| 20 | `stamps` | `error` | 1) drawing: `схема: отрезок младшего и отрезок старшего, длиннее на 6, — вместе 20`; 2) `20 : 2 = 10`; 3) `Ответ: 10 марок` | 3 | 2: `halved-total` | — |
+| 21 | `album` | `erasure-broken` | 1) column at the side: `14 × 3 = 42`; 2) column at the side: `14 × 2 = 28`; 3) column at the side: `42 × 5 = 210`; 4) `28 + 210 = 238`; 5) `Ответ: 238 рублей` | 5 | 2: `swapped-counts` | 2: correct step `5` → `2`, in a column |
+| 22 | `grasshopper` | `correct` | 1) drawing full width: `числовая прямая: прыжки вправо 3 → 7 → 11 → 15 и прыжок влево 15 → 10`; 2) `Ответ: в точке 10` | 2 | — | — |
+| 23 | `houses` | `error` | 1) drawing full width: `ряд домиков — 3 слева от домика с флажком, он сам и 6 справа, под домиками номера от 1 до 10`; 2) `Ответ: 10 домиков` | 2 | 1: `place-for-count` | — |
+| 24 | `backwards` | `erasure-fixed` | 1) `□ + 7 − 12 = 15`; 2) drawing full width: `числовая прямая, с конца: прыжок вправо 15 → 27 и прыжок влево 27 → 20`; 3) `15 + 12 − 7 = 20`; 4) `Ответ: 20` | 4 | — | 3: mistake `15 − 12 + 7 = 10` → `15 + 12 − 7 = 20` |
+| 25 | `pages` | `correct` | 1) `с 1 по 9: 9 цифр`; 2) `с 10 по 75: 66 стр.`; 3) column at the side: `66 × 2 = 132`; 4) column at the side: `132 + 9 = 141`; 5) `Ответ: 141 цифра` | 5 | — | — |
+| 26 | `grasshopper` | `erasure-broken` | 1) drawing full width: `числовая прямая: прыжки вправо 3 → 7 → 11 → 13 и прыжок влево 13 → 8`; 2) `13 − 5 = 8`; 3) `Ответ: в точке 8` | 3 | 1: `jump-length` | 1: correct step `11 → 15` → `11 → 13`, in the drawing |
+| 27 | `stamps` | `error` | 1) drawing: `схема: отрезок младшего и отрезок старшего, длиннее на 6, — вместе 20`; 2) `20 + 6 = 26`; 3) `26 : 2 = 13`; 4) `Ответ: 13 марок` | 4 | 2: `difference-added` | — |
+| 28 | `houses` | `erasure-fixed` | 1) drawing full width: `ряд домиков — 3 слева от домика с флажком, он сам и 5 справа`; 2) `3 + 1 + 5 = 9`; 3) `Ответ: 9 домиков` | 3 | — | 2: mistake `4 + 6 = 10` → `3 + 1 + 5 = 9` |
+| 29 | `backwards` | `correct` | 1) drawing full width: `числовая прямая, с конца: прыжок вправо 15 → 27 и прыжок влево 27 → 20`; 2) `15 + 12 = 27`; 3) `27 − 7 = 20`; 4) `Ответ: 20` | 4 | — | — |
+| 30 | `pages` | `error` | 1) `с 1 по 9: 9 цифр`; 2) `с 10 по 75: по 2 цифры`; 3) column at the side: `75 − 10 = 65`; 4) column at the side: `65 × 2 = 130`; 5) `9 + 130 = 139`; 6) `Ответ: 139 цифр` | 6 | 3: `count-from-to` | — |
+| 31 | `album` | `erasure-fixed` | 1) `14 × 3 = 42`; 2) column at the side: `42 × 2 = 84`; 3) column at the side: `14 × 5 = 70`; 4) `84 + 70 = 154`; 5) `Ответ: 154 рубля` | 5 | — | 3: mistake `2` → `5`, in a column |
+| 32 | `backwards` | `error` | 1) `□ + 7 − 12 = 15`; 2) `15 − 12 + 7 = 10`; 3) drawing full width: `числовая прямая, с конца: прыжок влево 15 → 3 и прыжок вправо 3 → 10`; 4) `Ответ: 10` | 4 | 2: `not-inverted` | — |
+| 33 | `houses` | `correct` | 1) drawing full width: `ряд домиков — 3 слева от домика с флажком, он сам и 5 справа`; 2) `4 + 6 − 1 = 9`; 3) `Ответ: 9 домиков` | 3 | — | — |
+| 34 | `album` | `erasure-broken` | 1) `14 + 3 = 17`; 2) column at the side: `17 × 2 = 34`; 3) column at the side: `14 × 5 = 70`; 4) `34 + 70 = 104`; 5) `Ответ: 104 рубля` | 5 | 1: `times-as-more` | 1: correct step `14 × 3 = 42` → `14 + 3 = 17` |
+| 35 | `grasshopper` | `error` | 1) `3 + 4 + 4 + 4 = 15`; 2) `15 + 5 = 20`; 3) drawing full width: `числовая прямая: прыжки вправо 3 → 7 → 11 → 15 → 20`; 4) `Ответ: в точке 20` | 4 | 2: `jump-direction` | — |
+| 36 | `stamps` | `correct` | 1) drawing: `схема: отрезок младшего и отрезок старшего, длиннее на 6, — вместе 20`; 2) `(20 − 6) : 2 = 7`; 3) `Ответ: 7 марок` | 3 | — | — |
+| 37 | `backwards` | `erasure-broken` | 1) `15 + 12 = 27`; 2) `27 + 7 = 34`; 3) drawing full width: `числовая прямая, с конца: прыжки вправо 15 → 27 → 34`; 4) `Ответ: 34` | 4 | 2: `not-inverted` | 2: correct step `27 − 7 = 20` → `27 + 7 = 34` |
+| 38 | `album` | `error` | 1) column at the side: `14 + 3 = 17`; 2) column at the side: `17 × 2 = 34`; 3) column at the side: `14 × 5 = 70`; 4) `34 + 70 = 104`; 5) `Ответ: 104 рубля` | 5 | 1: `times-as-more` | — |
+| 39 | `pages` | `correct` | 1) column at the side: `75 − 9 = 66`; 2) column at the side: `66 × 2 = 132`; 3) `132 + 9 = 141`; 4) `Ответ: 141 цифра` | 4 | — | — |
+| 40 | `grasshopper` | `erasure-fixed` | 1) `3 + 4 + 4 + 4 = 15`; 2) `15 − 5 = 10`; 3) drawing full width: `числовая прямая: прыжки вправо 3 → 7 → 11 → 15 и прыжок влево 15 → 10`; 4) `Ответ: в точке 10` | 4 | — | 1: mistake `3 + 4 + 4 = 11` → `3 + 4 + 4 + 4 = 15` |
 
-## Рисунки
+## Drawings
 
-Каждый рисунок плана кода: деления, подписи и дуги числовой прямой, домики ряда, отрезки схемы с их кусками и подписями. Отрезки схемы идут сверху вниз, а куски отрезка — слева направо, длиной в единицах схемы. У рисунка, в котором стирание по сценарию, — ещё он сам до стирания.
+Each drawing of the plan of code: the divisions, labels and arcs of a number line, the houses of a row, the segments of a scheme with their pieces and labels. The segments of a scheme go top to bottom, and the pieces of a segment left to right, their length in units of the scheme. For a drawing that the planned erasure touches, the table also gives the drawing itself before the erasure.
 
-| № | Часть | Рисунок | До стирания |
+| No. | Part | Drawing | Before the erasure |
 |---|---|---|---|
-| 1 | 1 | прямая от 0 до 16 с шагом 1; подписи 0, 3, 7, 10, 11, 15; дуги 3 → 7, 7 → 11, 11 → 15, 15 → 10 | — |
-| 3 | 1 | ряд домиков: 3 слева от отмеченного и 5 справа, с номерами | ряд домиков: 4 слева от отмеченного и 0 справа, без номеров |
-| 4 | 2 | прямая от 10 до 30 с шагом 1; подписи 10, 15, 22, 27; дуги 15 → 27, 27 → 22 | прямая от 10 до 30 с шагом 1; подписи 10, 15, 20, 27; дуги 15 → 27, 27 → 20 |
-| 5 | 1 | схема: отрезок □ — 7; отрезок △ — 7 + 6 «6»; скобка «20» | — |
-| 7 | 1 | прямая от 0 до 16 с шагом 1; подписи 0, 3, 7, 10, 11, 15; дуги 3 → 7, 7 → 11, 11 → 15, 15 → 10 | прямая от 0 до 16 с шагом 1; подписи 0, 3, 7, 13; дуги 3 → 7, 7 → 13 |
-| 8 | 1 | схема: отрезок □ — 7 + 6 «6»; отрезок △ — 7; скобка «20» | схема: отрезок □ — 7; отрезок △ — 7 + 6 «6»; скобка «20» |
-| 10 | 1 | ряд домиков: 4 слева от отмеченного и 5 справа, без номеров | — |
-| 11 | 3 | прямая от 10 до 30 с шагом 1; подписи 10, 15, 20, 27; дуги 15 → 27, 27 → 20 | — |
-| 12 | 1 | прямая от 0 до 16 с шагом 1; подписи 0, 3, 7, 11, 12, 15; дуги 3 → 7, 7 → 11, 11 → 15, 15 → 12 | — |
-| 14 | 1 | схема: отрезок □ — 7; отрезок △ — 7 + 6 «6»; скобка «20» | схема: отрезок □ — 7 + 6 «6»; отрезок △ — 7; скобка «20» |
-| 16 | 1 | прямая от 10 до 30 с шагом 1; подписи 10, 15, 18, 25; дуги 15 → 25, 25 → 18 | — |
-| 17 | 1 | ряд домиков: 3 слева от отмеченного и 5 справа, без номеров | — |
-| 19 | 1 | ряд домиков: 3 слева от отмеченного и 5 справа, с номерами | — |
-| 20 | 1 | схема: отрезок — 7; отрезок — 7 + 6 «6»; скобка «20» | — |
-| 22 | 1 | прямая от 0 до 16 с шагом 1; подписи 0, 3, 7, 10, 11, 15; дуги 3 → 7, 7 → 11, 11 → 15, 15 → 10 | — |
-| 23 | 1 | ряд домиков: 3 слева от отмеченного и 6 справа, с номерами | — |
-| 24 | 2 | прямая от 10 до 30 с шагом 1; подписи 10, 15, 20, 27; дуги 15 → 27, 27 → 20 | — |
-| 26 | 1 | прямая от 0 до 16 с шагом 1; подписи 0, 3, 7, 8, 11, 13; дуги 3 → 7, 7 → 11, 11 → 13, 13 → 8 | прямая от 0 до 16 с шагом 1; подписи 0, 3, 7, 11, 15; дуги 3 → 7, 7 → 11, 11 → 15 |
-| 27 | 1 | схема: отрезок — 7; отрезок — 7 + 6 «6»; скобка «20» | — |
-| 28 | 1 | ряд домиков: 3 слева от отмеченного и 5 справа, без номеров | — |
-| 29 | 1 | прямая от 10 до 30 с шагом 1; подписи 10, 15, 20, 27; дуги 15 → 27, 27 → 20 | — |
-| 32 | 3 | прямая от 0 до 20 с шагом 1; подписи 0, 3, 10, 15; дуги 15 → 3, 3 → 10 | — |
-| 33 | 1 | ряд домиков: 3 слева от отмеченного и 5 справа, без номеров | — |
-| 35 | 3 | прямая от 0 до 20 с шагом 1; подписи 0, 3, 7, 11, 15, 20; дуги 3 → 7, 7 → 11, 11 → 15, 15 → 20 | — |
-| 36 | 1 | схема: отрезок — 7; отрезок — 7 + 6 «6»; скобка «20» | — |
-| 37 | 3 | прямая от 10 до 35 с шагом 1; подписи 10, 15, 27, 34; дуги 15 → 27, 27 → 34 | — |
-| 40 | 3 | прямая от 0 до 16 с шагом 1; подписи 0, 3, 7, 10, 11, 15; дуги 3 → 7, 7 → 11, 11 → 15, 15 → 10 | — |
+| 1 | 1 | line from 0 to 16 in steps of 1; labels 0, 3, 7, 10, 11, 15; arcs 3 → 7, 7 → 11, 11 → 15, 15 → 10 | — |
+| 3 | 1 | a row of houses: 3 left of the marked one and 5 right of it, with numbers | a row of houses: 4 left of the marked one and 0 right of it, without numbers |
+| 4 | 2 | line from 10 to 30 in steps of 1; labels 10, 15, 22, 27; arcs 15 → 27, 27 → 22 | line from 10 to 30 in steps of 1; labels 10, 15, 20, 27; arcs 15 → 27, 27 → 20 |
+| 5 | 1 | scheme: segment □ — 7; segment △ — 7 + 6 «6»; a brace «20» | — |
+| 7 | 1 | line from 0 to 16 in steps of 1; labels 0, 3, 7, 10, 11, 15; arcs 3 → 7, 7 → 11, 11 → 15, 15 → 10 | line from 0 to 16 in steps of 1; labels 0, 3, 7, 13; arcs 3 → 7, 7 → 13 |
+| 8 | 1 | scheme: segment □ — 7 + 6 «6»; segment △ — 7; a brace «20» | scheme: segment □ — 7; segment △ — 7 + 6 «6»; a brace «20» |
+| 10 | 1 | a row of houses: 4 left of the marked one and 5 right of it, without numbers | — |
+| 11 | 3 | line from 10 to 30 in steps of 1; labels 10, 15, 20, 27; arcs 15 → 27, 27 → 20 | — |
+| 12 | 1 | line from 0 to 16 in steps of 1; labels 0, 3, 7, 11, 12, 15; arcs 3 → 7, 7 → 11, 11 → 15, 15 → 12 | — |
+| 14 | 1 | scheme: segment □ — 7; segment △ — 7 + 6 «6»; a brace «20» | scheme: segment □ — 7 + 6 «6»; segment △ — 7; a brace «20» |
+| 16 | 1 | line from 10 to 30 in steps of 1; labels 10, 15, 18, 25; arcs 15 → 25, 25 → 18 | — |
+| 17 | 1 | a row of houses: 3 left of the marked one and 5 right of it, without numbers | — |
+| 19 | 1 | a row of houses: 3 left of the marked one and 5 right of it, with numbers | — |
+| 20 | 1 | scheme: segment — 7; segment — 7 + 6 «6»; a brace «20» | — |
+| 22 | 1 | line from 0 to 16 in steps of 1; labels 0, 3, 7, 10, 11, 15; arcs 3 → 7, 7 → 11, 11 → 15, 15 → 10 | — |
+| 23 | 1 | a row of houses: 3 left of the marked one and 6 right of it, with numbers | — |
+| 24 | 2 | line from 10 to 30 in steps of 1; labels 10, 15, 20, 27; arcs 15 → 27, 27 → 20 | — |
+| 26 | 1 | line from 0 to 16 in steps of 1; labels 0, 3, 7, 8, 11, 13; arcs 3 → 7, 7 → 11, 11 → 13, 13 → 8 | line from 0 to 16 in steps of 1; labels 0, 3, 7, 11, 15; arcs 3 → 7, 7 → 11, 11 → 15 |
+| 27 | 1 | scheme: segment — 7; segment — 7 + 6 «6»; a brace «20» | — |
+| 28 | 1 | a row of houses: 3 left of the marked one and 5 right of it, without numbers | — |
+| 29 | 1 | line from 10 to 30 in steps of 1; labels 10, 15, 20, 27; arcs 15 → 27, 27 → 20 | — |
+| 32 | 3 | line from 0 to 20 in steps of 1; labels 0, 3, 10, 15; arcs 15 → 3, 3 → 10 | — |
+| 33 | 1 | a row of houses: 3 left of the marked one and 5 right of it, without numbers | — |
+| 35 | 3 | line from 0 to 20 in steps of 1; labels 0, 3, 7, 11, 15, 20; arcs 3 → 7, 7 → 11, 11 → 15, 15 → 20 | — |
+| 36 | 1 | scheme: segment — 7; segment — 7 + 6 «6»; a brace «20» | — |
+| 37 | 3 | line from 10 to 35 in steps of 1; labels 10, 15, 27, 34; arcs 15 → 27, 27 → 34 | — |
+| 40 | 3 | line from 0 to 16 in steps of 1; labels 0, 3, 7, 10, 11, 15; arcs 3 → 7, 7 → 11, 11 → 15, 15 → 10 | — |

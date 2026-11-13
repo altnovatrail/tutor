@@ -23,7 +23,7 @@ import (
 // picture that would cost both readers a large input for nothing.
 const maxCropSide = 4096
 
-// SheetReading is a handwriting sheet to read (architecture 3.10, «чтение листа»): the PNG of the
+// SheetReading is a handwriting sheet to read (architecture 3.10, "reading a sheet"): the PNG of the
 // crop of its visible strokes, as app sends it (the contract between app and api, SheetWork), the
 // open view of its task, and the route. The model sees the crop and the statement, never the key
 // (R67 spec).

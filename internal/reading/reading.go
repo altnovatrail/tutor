@@ -1,5 +1,5 @@
 // Package reading is the reading of a sheet into an observation (T68; docs/architecture.md, 3.4,
-// «Чтение в наблюдение»): a model reads the work as it is written, part by part, and its final
+// "Reading into an observation"): a model reads the work as it is written, part by part, and its final
 // answer, without deciding whether it is right (concepts 9.1 spec). The program gives the verdict
 // on the observation, by the check of the kind number (internal/value), and tells what of it was
 // read under a key (R03). The measurement asks the reading in three conditions: without a key,

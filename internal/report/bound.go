@@ -2,8 +2,8 @@ package report
 
 import "math"
 
-// Upper is the one-sided upper bound of 95 % of a share counted over sheets (docs/architecture.md,
-// 3.1, «Метрики»): the Clopper–Pearson bound on the effective size n / Deff, where Deff is the
+// Upper is the one-sided upper bound of 95 % of a share counted over sheets (docs/measurements.md,
+// 1.6): the Clopper–Pearson bound on the effective size n / Deff, where Deff is the
 // design effect of the sheets, 1 at least. events[i] of totals[i] are the sheet i's. With no events
 // the bound is 1 − 0.05^(1/n_eff), about 3 / n_eff; with no totals at all it is 1.
 func Upper(events, totals []int) float64 {

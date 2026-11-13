@@ -1,48 +1,48 @@
-# Сочинения
+# Essays
 
-> Что исполнитель написал в 20 синтетических сочинениях на английском и что в них верно по плану (T82; R44). На них замер E4 меряет, как Claude оценивает сочинение по критериям автора — оценку по рубрике — и пишет отзыв (R41 spec; О-22). Как устроены вызов и отчёт, — [architecture.md](architecture.md), раздел 3.4, «Сочинения».
+> What the executor wrote in 20 synthetic essays in English, and what in them is correct by the plan (T82; R44). On them the measurement E4 measures how Claude assesses an essay by the author's criteria — assessment by the rubric — and writes feedback (R41 spec; О-22). How the call and the report are built — [architecture.md](architecture.md), section 3.4, "Essays".
 >
-> Сочинения — файл `eval/essays.json` в формате `tutor-essays` v0 (R44). Это синтетическое содержание под Apache-2.0: сочинения написал исполнитель, а не ученики, на выдуманные темы и без имён (П-20). Файлов страниц нет: штрихи рисует код в памяти, из файла и зерна. Рубрика, счёт и сочинения ниже — тот же файл: тест `cmd/tutor-eval` собирает их из файла и сверяет с этим документом побайтно, так что сочинение правится в обоих местах.
+> The essays are the file `eval/essays.json` in the format `tutor-essays` v0 (R44). This is synthetic content under Apache-2.0: the essays were written by the executor, not by learners, on made-up topics and without names (П-20). There are no files of pages: the code draws the strokes in memory, from the file and the seed. The rubric, the counts and the essays below are the same file: a test of `cmd/tutor-eval` builds them from the file and compares them with this document byte for byte, so an essay is edited in both places.
 >
-> **Вычитка автора** подтверждает плановую истину как оценку взрослого: выполнен ли каждый критерий так, как сказано у сочинения. Где взрослый оценил бы иначе, — замечание к сочинению.
+> **The author's proofreading** confirms the planned truth as an adult's assessment: whether each criterion is met as stated for the essay. Where an adult would assess otherwise, that is a remark on the essay.
 
-## Как читать
+## How to read
 
-- **Рубрика** — одна на все сочинения, шесть критериев. Текст критерия — по-английски, как его дал бы модуль: язык объяснений модуля сочинений — английский (R41 spec). Модель получает критерии и тему блоком данных задачи (R02 spec).
-- **Тема** — условие задачи, по-английски. Темы выдуманные и общие, не о жизни ученика, как рекомендует П-20.
-- **Истина** — выполнен ли критерий, по плану. Пять критериев из шести программа считает сама и сверяет с планом при проверке файла, `tutor-eval check`. «По теме» держат только план и эта вычитка.
-- **Без спорных случаев** — расхождение с истиной должно быть ошибкой модели, а не спором о правиле. Правила держит проверка файла, а то, чего программа не видит, — план и вычитка:
-  - **предложения** — у выполненного критерия их 5–9, у невыполненного 3–4, длинные, через запятые. Предложение кончается точкой, вопросительным или восклицательным знаком, а после знака — пробел или конец текста;
-  - **заглавные и точки** — не выполнено, если предложение начинается со строчной буквы, которая пишется не как своя заглавная: a b d e f g h i m n q r t y. У c, o, s, w и других заглавная отличается только ростом, и на почерке это спорно. Второй случай — последнее предложение без знака в конце. Пропущенной точки внутри текста нет: иначе спорно, сколько там предложений. Программа видит её, только если следующее слово — с заглавной, а перед строчной её держат план и вычитка;
-  - **связующие слова** — выполнено, если разных связующих слов не меньше двух: because, but, so, then, first, next, finally, also, however, later, when. Не выполнено — ни одного, и даже and, or, after, before, while, until, if, although и since нет. Всё между этими случаями проверка отвергает. Программа считает слова, а не смысл: «so bright» и «the first customers» мыслей не связывают. Что у каждого сочинения, где критерий выполнен, и без таких слов связующих не меньше двух, держит вычитка;
-  - **орфография** — не выполнено, если 2–3 частых слова написаны с ошибкой. Связующие слова с ошибкой не пишутся;
-  - **по теме** — не выполнено, если всё сочинение — о другом предмете, и заголовок тоже;
-  - **без имён** — заглавная буква внутри предложения стоит только у «I», в тексте и в теме. Так проверка держит сочинения без имён (П-20). Заголовок пишется с заглавных, и имя в нём находит только вычитка;
-  - **знаки** — латинские буквы, апостроф внутри слова, пробел, запятая и знаки конца. В тексте — 40–80 слов, в заголовке — 1–6.
-- **Доли** — каждый критерий не выполнен в 5 сочинениях из 20: в одном из разработки и в четырёх из теста. Всего не выполнено 30 критериев из 120. Все шесть выполняют 4 сочинения — одно в разработке и три в тесте, — а у остальных не выполнено от одного до трёх. Выполненных критериев больше: главная мера О-22 — критерий, который модель назвала невыполненным, хотя он выполнен.
-- **Деление** — сочинения 1–5 — разработка, 6–20 — тест (T84).
+- **Rubric** — one for all the essays, six criteria. The text of a criterion is in English, as a module would give it: the explanation language of the essays module is English (R41 spec). The model gets the criteria and the topic as a block of the task's data (R02 spec).
+- **Topic** — the task statement, in English. The topics are made up and general, not about the learner's life, as П-20 recommends.
+- **Truth** — whether the criterion is met, by the plan. Five criteria of the six the program computes itself and compares with the plan when the file is checked, `tutor-eval check`. "On topic" is held only by the plan and this proofreading.
+- **No disputable cases** — a divergence from the truth must be the model's error, not a dispute about a rule. The check of the file holds the rules, and what the program does not see, the plan and the proofreading hold:
+  - **sentences** — where the criterion is met there are 5–9 of them, where it is not met 3–4, long ones, joined by commas. A sentence ends with a full stop, a question mark or an exclamation mark, and after the mark comes a space or the end of the text;
+  - **capitals and stops** — not met if a sentence starts with a small letter that is not written like its own capital: a b d e f g h i m n q r t y. For c, o, s, w and others the capital differs only in height, and in handwriting this is disputable. The second case is the last sentence with no mark at the end. There is no missing full stop inside the text: otherwise how many sentences there are would be disputable. The program sees one only if the next word starts with a capital, and before a small letter the plan and the proofreading hold it;
+  - **linking words** — met if there are at least two different linking words: because, but, so, then, first, next, finally, also, however, later, when. Not met — not one, and not even and, or, after, before, while, until, if, although or since. The check rejects everything between these cases. The program counts words, not meaning: "so bright" and "the first customers" link no thoughts. That each essay where the criterion is met has at least two linking words even without such words, the proofreading holds;
+  - **spelling** — not met if 2–3 common words are misspelled. Linking words are never misspelled;
+  - **on topic** — not met if the whole essay is about another subject, and its title too;
+  - **no names** — a capital letter inside a sentence stands only in "I", in the text and in the topic. So the check keeps the essays free of names (П-20). The title is written with capitals, and only the proofreading finds a name in it;
+  - **characters** — Latin letters, an apostrophe inside a word, a space, a comma and the end marks. The text has 40–80 words, the title 1–6.
+- **Shares** — each criterion is not met in 5 essays of 20: in one of the dev part and in four of the test part. In all, 30 criteria of 120 are not met. All six are met by 4 essays — one in the dev part and three in the test part — and the others have one to three not met. Met criteria are the majority: the main measure of О-22 is a criterion that the model called not met although it is met.
+- **Split** — essays 1–5 are the dev part, 6–20 the test part (T84).
 
-## Как устроена страница
+## How a page is built
 
-- **Лист** — 1000 × 1400 единиц, лист для рукописи формата `spec`: у задачи с рубрикой канва — `handwriting_sheet` с линейкой. Заголовок — первая строка, а текст под ним перенесён по словам, по 28–40 знаков в строке. Длину строки каждое сочинение берёт из зерна, так что и почерк у них разного размера.
-- **Почерк** — синтетика `tutor`, латинские буквы — свои штрихи (R43). Между словами — промежуток в два пробела: в полпробела строки с вычислениями слова сливались.
-- **Вырезка** — по правилу протокола eval при 32 px, как у всех замеров: только чернила. Масштаб задаёт медиана высот связок штрихов, а в тексте это рост строчной буквы: она и рисуется высотой D′, а заглавные — почти вдвое выше (В36). Где картинка при 32 px не укладывается в 1568 токенов, правило уменьшает D′. На 20 сочинениях D′ — 23–32 px, вырезка — 864–1216 × 671–1330 px, 936–1564 токена.
-- **Посмотреть** вырезки — то, что увидит модель, — можно командой `go run ./cmd/tutor-eval essays -png synthetic/png/essays`. Каталог — в `synthetic/`, вне git. *2026-11-07 (T107; R71): сочинения — образцы протокола eval, и вырезки сохраняет `draw`, когда их рисует: `go run ./cmd/tutor-eval draw -essays eval/essays.json -dir synthetic/png/drawn-essays -png synthetic/png/essays`, в каталог, где сочинений ещё нет.*
+- **Sheet** — 1000 × 1400 units, a handwriting sheet of the `spec` format: for a task with a rubric the canvas is `handwriting_sheet` with ruled lines. The title is the first line, and the text below it is wrapped by words, 28–40 characters to a line. Each essay takes its line length from the seed, so their handwriting is of different sizes too.
+- **Handwriting** — `tutor`'s synthetic handwriting, where Latin letters are strokes of its own (R43). Between words there is a gap of two spaces: at half a space, the words of the lines with calculations ran together.
+- **Crop** — by the crop rule of the eval protocol at 32 px, as in all the measurements: only the ink. The scale is set by the median of the heights of the stroke bundles, and in a text that is the height of a small letter: it is drawn D′ high, and the capitals almost twice as high (В36). Where the picture at 32 px does not fit in 1568 tokens, the rule reduces D′. On the 20 essays D′ is 23–32 px, a crop 864–1216 × 671–1330 px, 936–1564 tokens.
+- **To view** the crops — what the model will see — run `go run ./cmd/tutor-eval essays -png synthetic/png/essays`. The directory is in `synthetic/`, outside git. *2026-11-07 (T107; R71): the essays are samples of the eval protocol, and `draw` saves the crops as it draws them: `go run ./cmd/tutor-eval draw -essays eval/essays.json -dir synthetic/png/drawn-essays -png synthetic/png/essays`, into a directory with no essays in it yet.*
 
-## Рубрика
+## Rubric
 
-| ID | Текст критерия | Что значит | Истину сверяет |
+| ID | Text of the criterion | What it means | Who checks the truth |
 |---|---|---|---|
-| `title` | It has a title on its own first line. | у сочинения есть заголовок, на своей первой строке | программа: заголовок есть — от 1 до 6 слов, с заглавной буквы, без знака в конце |
-| `sentences` | It has at least five sentences. | в сочинении не меньше пяти предложений | программа: предложения считаются по знакам конца |
-| `capitals-and-stops` | Every sentence begins with a capital letter and ends with a full stop, a question mark or an exclamation mark. | каждое предложение начинается с заглавной буквы и кончается точкой, вопросительным или восклицательным знаком | программа |
-| `linking-words` | It links its ideas with words such as because, but, so, then or first. | мысли связаны словами вроде because, but, so, then или first | программа, по закрытому списку связующих слов |
-| `on-topic` | It keeps to the topic of the task. | сочинение держится темы задачи | только план и вычитка автора |
-| `spelling` | Common words are spelled correctly. | частые слова написаны без ошибок | программа: слова с ошибкой перечислены в файле и стоят в тексте |
+| `title` | It has a title on its own first line. | the essay has a title, on a line of its own, the first | the program: a title is there — 1 to 6 words, with a capital letter, with no mark at the end |
+| `sentences` | It has at least five sentences. | the essay has no fewer than five sentences | the program: sentences are counted by the marks at their ends |
+| `capitals-and-stops` | Every sentence begins with a capital letter and ends with a full stop, a question mark or an exclamation mark. | every sentence starts with a capital letter and ends with a full stop, a question mark or an exclamation mark | the program |
+| `linking-words` | It links its ideas with words such as because, but, so, then or first. | the thoughts are linked by words such as because, but, so, then or first | the program, by a closed list of linking words |
+| `on-topic` | It keeps to the topic of the task. | the essay keeps to the topic of the task | only the plan and the author's proofreading |
+| `spelling` | Common words are spelled correctly. | common words are spelled without mistakes | the program: the misspelled words are listed in the file and stand in the text |
 
-## Сколько каких сочинений
+## How many essays of each kind
 
-| Критерий | Не выполнен | Разработка | Тест |
+| Criterion | Not met | Dev | Test |
 |---|---|---|---|
 | `title` | 5 | 1 | 4 |
 | `sentences` | 5 | 1 | 4 |
@@ -50,18 +50,18 @@
 | `linking-words` | 5 | 1 | 4 |
 | `on-topic` | 5 | 1 | 4 |
 | `spelling` | 5 | 1 | 4 |
-| **выполнены все** | 4 | 1 | 3 |
+| **all met** | 4 | 1 | 3 |
 
-Разработка и тест — числа сочинений 1–5 и 6–20.
+Dev and Test are the numbers of essays 1–5 and of essays 6–20.
 
-## Сочинения по одному
+## The essays one by one
 
 ### 1. The Bread Robot
 
-- **Часть:** разработка.
-- **Тема:** Imagine a robot that bakes bread. Write a short essay about one day of its work.
-- **Слов** — 69, **предложений** — 6.
-- **Не выполнено:** ничего.
+- **Part:** dev.
+- **Topic:** Imagine a robot that bakes bread. Write a short essay about one day of its work.
+- **Words** — 69, **sentences** — 6.
+- **Not met:** none.
 
 > The Bread Robot
 >
@@ -69,11 +69,11 @@
 
 ### 2. Under the Waves
 
-- **Часть:** разработка.
-- **Тема:** Imagine a town under the sea. Write a short essay about what a visitor sees there.
-- **Слов** — 74, **предложений** — 3.
-- **Не выполнено:**
-  - `sentences` — 3 предложения.
+- **Part:** dev.
+- **Topic:** Imagine a town under the sea. Write a short essay about what a visitor sees there.
+- **Words** — 74, **sentences** — 3.
+- **Not met:**
+  - `sentences` — 3 sentences.
 
 > Under the Waves
 >
@@ -81,35 +81,35 @@
 
 ### 3. My First Morning
 
-- **Часть:** разработка.
-- **Тема:** Imagine an island that nobody has found yet. Write a short essay about your first morning there.
-- **Слов** — 68, **предложений** — 8.
-- **Не выполнено:**
-  - `spelling` — с ошибкой: realy вместо really, beautifull вместо beautiful.
+- **Part:** dev.
+- **Topic:** Imagine an island that nobody has found yet. Write a short essay about your first morning there.
+- **Words** — 68, **sentences** — 8.
+- **Not met:**
+  - `spelling` — misspelled: realy instead of really, beautifull instead of beautiful.
 
 > My First Morning
 >
 > I wake up on a quiet beach. The sand is warm and the sky is pink. First I walk to the trees to look for water. I find a small river with clear, cold water. Then I see a bird with long blue feathers. It is realy beautifull. I sit on a rock and wait for the sun. Nobody knows about this place, but I am not afraid.
 
-### 4. без заголовка
+### 4. no title
 
-- **Часть:** разработка.
-- **Тема:** Imagine a tree that can talk. Write a short essay about what it tells you.
-- **Слов** — 57, **предложений** — 6.
-- **Не выполнено:**
-  - `title` — заголовка нет;
-  - `on-topic` — всё сочинение — о другом.
+- **Part:** dev.
+- **Topic:** Imagine a tree that can talk. Write a short essay about what it tells you.
+- **Words** — 57, **sentences** — 6.
+- **Not met:**
+  - `title` — there is no title;
+  - `on-topic` — the whole essay is about something else.
 
 > The bicycle race starts at nine in the morning. Hundreds of riders wait at the line because the streets are closed for them. When the whistle blows, they rush forward. The crowd cheers loudly, but the wind is strong. Then the riders climb a steep hill near the river. The winner finishes in less than two hours.
 
 ### 5. The Flying Umbrella
 
-- **Часть:** разработка.
-- **Тема:** Imagine an umbrella that can fly. Write a short essay about where it goes.
-- **Слов** — 52, **предложений** — 7.
-- **Не выполнено:**
-  - `capitals-and-stops` — предложение 5 начинается со строчной: «the umbrella …»;
-  - `linking-words` — ни одного связующего слова, и даже and и or нет.
+- **Part:** dev.
+- **Topic:** Imagine an umbrella that can fly. Write a short essay about where it goes.
+- **Words** — 52, **sentences** — 7.
+- **Not met:**
+  - `capitals-and-stops` — sentence 5 starts with a small letter: "the umbrella …";
+  - `linking-words` — not one linking word, not even and or or.
 
 > The Flying Umbrella
 >
@@ -117,33 +117,33 @@
 
 ### 6. The Lighthouse Cat
 
-- **Часть:** тест.
-- **Тема:** Imagine a cat that lives in a lighthouse. Write a short essay about one night of its life.
-- **Слов** — 67, **предложений** — 6.
-- **Не выполнено:** ничего.
+- **Part:** test.
+- **Topic:** Imagine a cat that lives in a lighthouse. Write a short essay about one night of its life.
+- **Words** — 67, **sentences** — 6.
+- **Not met:** none.
 
 > The Lighthouse Cat
 >
 > Every evening the cat climbs the long stairs of the lighthouse. At the top it sits next to the big lamp because the glass is warm. It watches the dark sea and the little boats. When a storm comes, the waves crash against the rocks. The cat is not scared, so it stays by the light all night. In the morning it sleeps on a soft blanket.
 
-### 7. без заголовка
+### 7. no title
 
-- **Часть:** тест.
-- **Тема:** Imagine a library where the books whisper at night. Write a short essay about what you hear there.
-- **Слов** — 68, **предложений** — 6.
-- **Не выполнено:**
-  - `title` — заголовка нет.
+- **Part:** test.
+- **Topic:** Imagine a library where the books whisper at night. Write a short essay about what you hear there.
+- **Words** — 68, **sentences** — 6.
+- **Not met:**
+  - `title` — there is no title.
 
 > The library is quiet in the day, but at night the books begin to whisper. I hide behind a tall shelf and listen. An old book of maps talks about mountains and deserts. A small book of poems sings a soft song. Then a book about the sea tells a story of a lost ship. I stay until the sun rises because every book has something to say.
 
 ### 8. The Shy Dragon
 
-- **Часть:** тест.
-- **Тема:** Imagine a dragon that is afraid of the dark. Write a short essay about how it finds its courage.
-- **Слов** — 66, **предложений** — 9.
-- **Не выполнено:**
-  - `linking-words` — ни одного связующего слова, и даже and и or нет;
-  - `spelling` — с ошибкой: freind вместо friend, beleive вместо believe.
+- **Part:** test.
+- **Topic:** Imagine a dragon that is afraid of the dark. Write a short essay about how it finds its courage.
+- **Words** — 66, **sentences** — 9.
+- **Not met:**
+  - `linking-words` — not one linking word, not even and or or;
+  - `spelling` — misspelled: freind instead of friend, beleive instead of believe.
 
 > The Shy Dragon
 >
@@ -151,12 +151,12 @@
 
 ### 9. A Balloon Ride
 
-- **Часть:** тест.
-- **Тема:** Imagine a snowman who wants to see the summer. Write a short essay about its wish.
-- **Слов** — 70, **предложений** — 3.
-- **Не выполнено:**
-  - `sentences` — 3 предложения;
-  - `on-topic` — всё сочинение — о другом.
+- **Part:** test.
+- **Topic:** Imagine a snowman who wants to see the summer. Write a short essay about its wish.
+- **Words** — 70, **sentences** — 3.
+- **Not met:**
+  - `sentences` — 3 sentences;
+  - `on-topic` — the whole essay is about something else.
 
 > A Balloon Ride
 >
@@ -164,11 +164,11 @@
 
 ### 10. Above the Clouds
 
-- **Часть:** тест.
-- **Тема:** Imagine a city in the clouds. Write a short essay about a day you spend there.
-- **Слов** — 64, **предложений** — 6.
-- **Не выполнено:**
-  - `capitals-and-stops` — последнее предложение — без знака в конце.
+- **Part:** test.
+- **Topic:** Imagine a city in the clouds. Write a short essay about a day you spend there.
+- **Words** — 64, **sentences** — 6.
+- **Not met:**
+  - `capitals-and-stops` — the last sentence has no mark at the end.
 
 > Above the Clouds
 >
@@ -176,34 +176,34 @@
 
 ### 11. The Walking Shoe
 
-- **Часть:** тест.
-- **Тема:** Imagine a shoe that can walk on its own. Write a short essay about where it goes.
-- **Слов** — 66, **предложений** — 7.
-- **Не выполнено:** ничего.
+- **Part:** test.
+- **Topic:** Imagine a shoe that can walk on its own. Write a short essay about where it goes.
+- **Words** — 66, **sentences** — 7.
+- **Not met:** none.
 
 > The Walking Shoe
 >
 > One morning a brown shoe decides to go for a walk. First it hops down the steps of the house. Then it walks along the street and looks in the shop windows. A dog barks at it, but the shoe is brave. It visits the park because it wants to see the ducks. At sunset it comes home, tired and dusty. It sleeps well that night.
 
-### 12. без заголовка
+### 12. no title
 
-- **Часть:** тест.
-- **Тема:** Imagine a garden on the roof of a tall building. Write a short essay about what grows there.
-- **Слов** — 59, **предложений** — 6.
-- **Не выполнено:**
-  - `title` — заголовка нет;
-  - `capitals-and-stops` — предложение 3 начинается со строчной: «bees come …»;
-  - `spelling` — с ошибкой: wonderfull вместо wonderful, evry вместо every.
+- **Part:** test.
+- **Topic:** Imagine a garden on the roof of a tall building. Write a short essay about what grows there.
+- **Words** — 59, **sentences** — 6.
+- **Not met:**
+  - `title` — there is no title;
+  - `capitals-and-stops` — sentence 3 starts with a small letter: "bees come …";
+  - `spelling` — misspelled: wonderfull instead of wonderful, evry instead of every.
 
 > High above the busy streets there is a garden on a roof. Tomatoes grow in big pots, and beans climb up long sticks. bees come from far away because the flowers are so bright. In the evening the wind is cool, but the plants are strong. The view of the city is wonderfull. I water the garden evry day.
 
 ### 13. The Fishing Boat
 
-- **Часть:** тест.
-- **Тема:** Imagine a clock that runs backwards. Write a short essay about a day when it changes everything.
-- **Слов** — 61, **предложений** — 6.
-- **Не выполнено:**
-  - `on-topic` — всё сочинение — о другом.
+- **Part:** test.
+- **Topic:** Imagine a clock that runs backwards. Write a short essay about a day when it changes everything.
+- **Words** — 61, **sentences** — 6.
+- **Not met:**
+  - `on-topic` — the whole essay is about something else.
 
 > The Fishing Boat
 >
@@ -211,37 +211,37 @@
 
 ### 14. The Singing Whale
 
-- **Часть:** тест.
-- **Тема:** Imagine a whale that sings to ships. Write a short essay about its song.
-- **Слов** — 62, **предложений** — 4.
-- **Не выполнено:**
-  - `sentences` — 4 предложения;
-  - `linking-words` — ни одного связующего слова, и даже and и or нет.
+- **Part:** test.
+- **Topic:** Imagine a whale that sings to ships. Write a short essay about its song.
+- **Words** — 62, **sentences** — 4.
+- **Not met:**
+  - `sentences` — 4 sentences;
+  - `linking-words` — not one linking word, not even and or or.
 
 > The Singing Whale
 >
 > Far out in the ocean lives a giant blue whale with a voice as deep as thunder. Every night it swims beside the big ships, singing a slow song about the moon, the stars, the warm southern seas. The sailors on the decks stop their work to listen, their eyes full of tears. The song stays in their hearts for many years.
 
-### 15. без заголовка
+### 15. no title
 
-- **Часть:** тест.
-- **Тема:** Imagine a door in the side of a mountain. Write a short essay about what is behind it.
-- **Слов** — 61, **предложений** — 6.
-- **Не выполнено:**
-  - `title` — заголовка нет;
-  - `spelling` — с ошибкой: diffrent вместо different, peple вместо people.
+- **Part:** test.
+- **Topic:** Imagine a door in the side of a mountain. Write a short essay about what is behind it.
+- **Words** — 61, **sentences** — 6.
+- **Not met:**
+  - `title` — there is no title;
+  - `spelling` — misspelled: diffrent instead of different, peple instead of people.
 
 > At the foot of the mountain there is a small green door. I knock three times, and it opens slowly. Behind it is a long tunnel with glowing stones on the walls. I follow the tunnel because I hear music. At the end I find a hall full of diffrent instruments. There are no peple, but the instruments play by themselves.
 
 ### 16. The Snail's Journey
 
-- **Часть:** тест.
-- **Тема:** Imagine a bus that can fly over the city. Write a short essay about a trip on it.
-- **Слов** — 56, **предложений** — 7.
-- **Не выполнено:**
-  - `capitals-and-stops` — предложение 4 начинается со строчной: «its shell …»;
-  - `linking-words` — ни одного связующего слова, и даже and и or нет;
-  - `on-topic` — всё сочинение — о другом.
+- **Part:** test.
+- **Topic:** Imagine a bus that can fly over the city. Write a short essay about a trip on it.
+- **Words** — 56, **sentences** — 7.
+- **Not met:**
+  - `capitals-and-stops` — sentence 4 starts with a small letter: "its shell …";
+  - `linking-words` — not one linking word, not even and or or;
+  - `on-topic` — the whole essay is about something else.
 
 > The Snail's Journey
 >
@@ -249,10 +249,10 @@
 
 ### 17. The Fallen Star
 
-- **Часть:** тест.
-- **Тема:** Imagine a small star that falls into a field. Write a short essay about what happens next.
-- **Слов** — 72, **предложений** — 7.
-- **Не выполнено:** ничего.
+- **Part:** test.
+- **Topic:** Imagine a small star that falls into a field. Write a short essay about what happens next.
+- **Words** — 72, **sentences** — 7.
+- **Not met:** none.
 
 > The Fallen Star
 >
@@ -260,37 +260,37 @@
 
 ### 18. The Ice Bridge
 
-- **Часть:** тест.
-- **Тема:** Imagine a bridge made of ice. Write a short essay about crossing it.
-- **Слов** — 64, **предложений** — 3.
-- **Не выполнено:**
-  - `sentences` — 3 предложения;
-  - `spelling` — с ошибкой: slipery вместо slippery, beatiful вместо beautiful.
+- **Part:** test.
+- **Topic:** Imagine a bridge made of ice. Write a short essay about crossing it.
+- **Words** — 64, **sentences** — 3.
+- **Not met:**
+  - `sentences` — 3 sentences;
+  - `spelling` — misspelled: slipery instead of slippery, beatiful instead of beautiful.
 
 > The Ice Bridge
 >
 > The bridge over the frozen river is made of clear blue ice, and it shines like glass in the winter sun. I walk across it very carefully because the surface is slipery, but the view is so beatiful that I forget to be scared. When I reach the other side, I look back and see my footprints sparkling on the ice like tiny stars.
 
-### 19. без заголовка
+### 19. no title
 
-- **Часть:** тест.
-- **Тема:** Imagine a painter who paints with the wind. Write a short essay about one of the pictures.
-- **Слов** — 65, **предложений** — 3.
-- **Не выполнено:**
-  - `title` — заголовка нет;
-  - `sentences` — 3 предложения;
-  - `on-topic` — всё сочинение — о другом.
+- **Part:** test.
+- **Topic:** Imagine a painter who paints with the wind. Write a short essay about one of the pictures.
+- **Words** — 65, **sentences** — 3.
+- **Not met:**
+  - `title` — there is no title;
+  - `sentences` — 3 sentences;
+  - `on-topic` — the whole essay is about something else.
 
 > In a quiet village there is a turtle that runs a tiny shop full of buttons, ribbons and old keys. Every customer has to wait a long time because the turtle walks very slowly from the shelves to the counter. Nobody minds the wait, so the shop is always busy, and children love to watch the turtle count the coins with its small green feet.
 
 ### 20. The Changing Map
 
-- **Часть:** тест.
-- **Тема:** Imagine a map that changes every night. Write a short essay about where it takes you.
-- **Слов** — 59, **предложений** — 7.
-- **Не выполнено:**
-  - `capitals-and-stops` — предложение 3 начинается со строчной: «the path …», предложение 6 начинается со строчной: «each night …»;
-  - `linking-words` — ни одного связующего слова, и даже and и or нет.
+- **Part:** test.
+- **Topic:** Imagine a map that changes every night. Write a short essay about where it takes you.
+- **Words** — 59, **sentences** — 7.
+- **Not met:**
+  - `capitals-and-stops` — sentence 3 starts with a small letter: "the path …", sentence 6 starts with a small letter: "each night …";
+  - `linking-words` — not one linking word, not even and or or.
 
 > The Changing Map
 >

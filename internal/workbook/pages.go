@@ -1,5 +1,5 @@
 // Package workbook is the measurement of the workbook in epic E4 (T78–T80; docs/architecture.md,
-// 3.4, «Рабочая тетрадь»): its pages, which code draws in memory from eval/workbook.json, and the
+// 3.4, "Workbook"): its pages, which code draws in memory from eval/workbook.json, and the
 // crop of each filled box, which is all a reading of the page sees (R53 spec, amendment of
 // 2026-10-27): the ink of the box's strokes alone, cut by the rule of the eval protocol, without the
 // box's frame and the print of its line. A blank box gives no crop.

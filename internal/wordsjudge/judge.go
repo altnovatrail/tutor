@@ -1,5 +1,5 @@
-// Package wordsjudge is the judge of the tutor's words (T118; docs/architecture.md, 3.4, «Набор
-// слов»): a model that reads a hint of the set of the words and says whether it tells the learner's
+// Package wordsjudge is the judge of the tutor's words (T118; docs/architecture.md, 3.4,
+// "The set of words"): a model that reads a hint of the set of the words and says whether it tells the learner's
 // sex, keeps to the task, suits a child and takes up the note at the side of the work, if there is
 // one. R70 spec has the eval check the learner's sex, since no program checks it without false
 // alarms, and R54 the safety of the words, which no check of api reads. The judge's errors are

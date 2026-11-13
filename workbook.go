@@ -34,7 +34,7 @@ type BoxCrop struct {
 	Crop       []byte
 }
 
-// WorkbookReading is a workbook page to read (architecture 3.10, «чтение тетради»): the open view of
+// WorkbookReading is a workbook page to read (architecture 3.10, "reading the workbook"): the open view of
 // its task, the crops of its filled boxes, and the route. A box the learner left blank has no crop
 // and goes to no model (R86 spec). The model sees the crops and their places, never the line of an
 // item nor the key.

@@ -14,8 +14,8 @@ import (
 // WorkbookFormat is the name a file of the workbook's pages declares in its "format" field.
 const WorkbookFormat = "tutor-workbook"
 
-// Workbook is the synthetic pages of the workbook (T78; docs/architecture.md, 3.4, «Рабочая
-// тетрадь»): each a page of items, an item a line of text with boxes, as the module format writes
+// Workbook is the synthetic pages of the workbook (T78; docs/architecture.md, 3.4,
+// "Workbook"): each a page of items, an item a line of text with boxes, as the module format writes
 // an item of a workbook (spec's format, section 14), and for each box its check and what code writes
 // in it by hand, and why. Code draws the pages in memory from a seed (synth.PageOf): no file of a page
 // is written.
@@ -100,7 +100,7 @@ type TrapValue struct {
 // BoxScenario is what a box is written to test.
 type BoxScenario string
 
-// The scenarios of a box (docs/architecture.md, 3.4, «Рабочая тетрадь»).
+// The scenarios of a box (docs/architecture.md, 3.4, "Workbook").
 const (
 	// BoxCorrect: the key's value, written plainly.
 	BoxCorrect BoxScenario = "correct"

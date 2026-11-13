@@ -15,8 +15,8 @@ import (
 )
 
 // The heights of digits, the states and the readings of a sheet by each policy of reading on its
-// own, in the report of a run of the reading (T72; docs/architecture.md, 3.4, «Чтение в
-// наблюдение»; R08; О-8; О-21).
+// own, in the report of a run of the reading (T72; docs/architecture.md, 3.4,
+// "Reading into an observation"; R08; О-8; О-21).
 
 // The groups of sheets the heights are told by: every sheet, and the sheets whose writing has small
 // letters apart from those without them. On the first the crop's estimate may fall to the height of

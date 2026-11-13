@@ -12,7 +12,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// The eval set of the tutor's words (T118; docs/architecture.md, 3.4, «Набор слов»): a capability
+// The eval set of the tutor's words (T118; docs/architecture.md, 3.4, "The set of words"): a capability
 // whose input is no sample has an eval set of its own form, tutor's (§ 13 of spec's text of the
 // contracts). A case is a call of the words as api asks it — a sheet with a mistake, a rung, a
 // language, the trap the program found at the cell of the rung, the techniques of the task and the

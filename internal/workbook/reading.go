@@ -21,7 +21,7 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// The reading of a page of the workbook (T79; docs/architecture.md, 3.4, «Рабочая тетрадь»): one
+// The reading of a page of the workbook (T79; docs/architecture.md, 3.4, "Workbook"): one
 // call a page, which shows the model the crop of every filled box, each labelled with its place,
 // item and slot, and asks what each box holds, as it is written. The program gives each box its
 // verdict by the box's check, and each item by its boxes, module-kit's (R56 spec; R73); a blank box

@@ -18,9 +18,9 @@ From architecture 3.1: the notes of 2026-10-23 and 2026-10-25, «Замер хо
 
 **The measurement of the course of writing** (R24):
 - **question** — whether the course of writing, that is the order of writing and erasing, helps the model judge a finished sheet. The model gives an assessment and the place of the first error, as on the board (R19; architecture 3.3);
-- **sheets** — about 40. The author writes them in the board's record mode (R25; T49, T50, T13, T47, T51), on a 1000 × 600 sheet. The file is `tutor-sample` v0 (architecture 3.1, «Формат образца»), outside git.
+- **sheets** — about 40. The author writes them in the board's record mode (R25; T49, T50, T13, T47, T51), on a 1000 × 600 sheet. The file is `tutor-sample` v0 (architecture 3.1, "Sample format"), outside git.
   - The tasks are the task bank of T15, `eval/bank.json`: 10 tasks — four equations, three chains and three short free ones, among them five tasks of the board.
-  - The sheet plan is [sheets.md](sheets.md) and the file `eval/sheets.json` (T49; architecture 3.1, «Формат плана листов»): 12 `correct`, 12 `error`, 7 each of `erasure-fixed` and `erasure-broken`, 2 `answer-not-last`, four sheets per task;
+  - The sheet plan is [sheets.md](sheets.md) and the file `eval/sheets.json` (T49; architecture 3.1, "Format of the sheet plan"): 12 `correct`, 12 `error`, 7 each of `erasure-fixed` and `erasure-broken`, 2 `answer-not-last`, four sheets per task;
 - **judges** — Opus 5.5 · `high`, Haiku 5.5 · `low` and Haiku 5.5 · `low` without thinking. A judge sees the key and the reference solution, as on the board and in the solution analysis of R11;
 - **forms** (R11):
   - (A) the picture only;
@@ -96,26 +96,26 @@ From architecture 3.1, «Итог замера» (R102; T133).
 
 From the blocks of architecture 3.1 on how things are built — what was measured on the sheets of code and on the stub run (R102; T133). How things are built stayed there.
 
-From the block «Вырезка»:
+From the block "Crop":
 
 - **the height estimate on synthetic sheets** (T69):
   - on sheets without lowercase letters, `h_med` is within 10 % of the digit height of the handwriting on all 10 sheets of E2;
   - the synthetic sheets write lowercase letters in print and apart, and each is a stroke bundle of its own, about half a digit tall. Where they are half of the bundles, `h_med` falls to the height of a lowercase letter: so on 10 sheets of E2 of 30 with lowercase letters and on 19 sheets of free writing of 40;
   - the digits of such a crop come out larger than D, up to twice, and the crop is sometimes wider than the sheet.
 
-From the block «Журнал частей, версия 2»:
+From the block "The log of parts, version 2":
 
 On 40 sheets of code with seeds 1, 2 and 77 the parts journal is 350–643 bytes, no more than 10 steps and 7 parts. With seed 1 an erased entry is on 10 sheets of 16 with erasing, and the journal finds all the parts of the markup on exactly 30 sheets of 40: on the rest, a part corrected after a pause is two groups. The reference outputs are `internal/journal/testdata/parts.txt`.
 
 *Tokens* are estimated on the test of E2: on its 30 sheets the input of form B is larger than the input of form A by 111 tokens plus 1.575 tokens per piece of the journal's text — a word, a number, a sign or a line break — the same for all three judges. By this measure the parts journal on the sheets of code is about 137–284 tokens, and a test keeps it no longer than 300. On three of the author's sheets it is 12–26 steps, 11–19 parts and about 320–560 tokens: the mouse breaks the writing into small groups (T62). The difference of the inputs of B and A in the run of T66 will show the journal's tokens exactly.
 
-From the block «Раннер свободной записи» — the stub over the whole synthetic set:
+From the block "The runner of free writing" — the stub over the whole synthetic set:
 
 On 2026-10-27 it went the whole way on 40 sheets, 3 repeats: 1,008 calls, $3.87 by the estimate, and that is the about $3.9 of the plan of T54 (measurements 3.3). Its report is 14, 13 and 13 sheets by layout and 7, 9 and 4 by the place of the first error, as in the plan. The log and the report lie in `synthetic/runs`, outside git.
 
 ### 1.4. Plan of 2026-10-21: roles, calls, tasks and samples
 
-From architecture 3.1, «План 2026-10-21», — history: the plan and criterion of the measurement, written down before the first run, which never took place under this plan. The measurement of the course of writing took from it only what measurements 1.1 names, while the sample format, the bank format and the storage of samples are in force and stayed in architecture 3.1 (R29; R102; T133).
+From architecture 3.1, "Plan of 2026-10-21", — history: the plan and criterion of the measurement, written down before the first run, which never took place under this plan. The measurement of the course of writing took from it only what measurements 1.1 names, while the sample format, the bank format and the storage of samples are in force and stayed in architecture 3.1 (R29; R102; T133).
 
 The plan and criterion of the measurement are written down before the first run (T01; R03, R05, R06). Four checks from the research «Рукопись ребёнка на канве и ИИ-наставник» (sources 5.1) were added when E2 was planned, also before the first run (R08), and Google was removed from the measurement (R06, the 2026-10-21 amendment). T08 chose the kinds of input for reading and for analysis, also before the first run (R11). The code and the runs are epic E2 in [RUN.md](../RUN.md) (R04). The measurement answers Т-23 and gives data to О-8 and to the question of the order of writing, П-21.
 
@@ -157,7 +157,7 @@ Each task has a key, a solution, traps and leak phrases, as a task of a module h
   - erasures — with time.
 
   The history is needed so that the model sees what was written earlier and what later, what was erased and where there was a pause, and understands the course of the reasoning;
-- **with what** — the samples page of `canvas`, a build from its release, without the network, with the measurement's tasks from the release of `tutor` (T37; the amendment to R25 spec; R16). It writes the file in the sample format of `canvas` (R09 canvas), and the runner reads it (T32; R38 spec). `tutor`'s own record page — one HTML file in `tools/` (T13) — is put off: it is the fallback if the page of `canvas` comes too late for the samples. *2026-10-25 (R24): the samples of the measurement of the course of the solution are written by the board's record mode, in the format of architecture 3.1, «Формат образца» (T13).* *2026-11-02 (T37; R64): the measurement's tasks are in the release of `tutor`, from the first release after the merge of T37, as a file of open views (architecture 3.1, «Формат файла открытых видов»).* *2026-11-08 (T32; R76): the runner reads the synthetic sheets of `canvas` as samples of the protocol, and CI checks it — architecture 3.1, «Синтетика `canvas`».*
+- **with what** — the samples page of `canvas`, a build from its release, without the network, with the measurement's tasks from the release of `tutor` (T37; the amendment to R25 spec; R16). It writes the file in the sample format of `canvas` (R09 canvas), and the runner reads it (T32; R38 spec). `tutor`'s own record page — one HTML file in `tools/` (T13) — is put off: it is the fallback if the page of `canvas` comes too late for the samples. *2026-10-25 (R24): the samples of the measurement of the course of the solution are written by the board's record mode, in the format of architecture 3.1, "Sample format" (T13).* *2026-11-02 (T37; R64): the measurement's tasks are in the release of `tutor`, from the first release after the merge of T37, as a file of open views (architecture 3.1, "Format of the file of open views").* *2026-11-08 (T32; R76): the runner reads the synthetic sheets of `canvas` as samples of the protocol, and CI checks it — architecture 3.1, "`canvas`'s synthetic sheets".*
 - **markup** — before sending and while writing, not after the fact: the task, the intended text of each line, places illegible on purpose, the error scenario, who wrote. An erasure by scenario has its line and what was erased: an error that was then corrected, or a correct step. The other erasures count as stray erasures (R11);
 - **scenarios** per task:
   - correct solutions with different writing;
@@ -176,7 +176,7 @@ Each task has a key, a solution, traps and leak phrases, as a task of a module h
 
 ### 1.5. Plan of 2026-10-21: input, reading, analysis and matrix
 
-From architecture 3.1, «План 2026-10-21», — the continuation of measurements 1.4 (R29; R102; T133).
+From architecture 3.1, "Plan of 2026-10-21", — the continuation of measurements 1.4 (R29; R102; T133).
 
 **The kind of input** (R11). The starting point was three options, as T77 canvas-api. T08 compared them also with the edit history, key frames and the action log — on the research «Рукопись ребёнка на канве и ИИ-наставник» (sources 5.1).
 
@@ -216,18 +216,18 @@ The option with the box goes without the course of the solution. Analysis and th
 - a layer of the erased: a frame before an erasure shows the erased in context;
 - a picture with time in colour: models without fine-tuning have not seen such an encoding.
 
-The PNG is drawn only from the visible strokes, without the grid and the task's text, by the box of the work with a margin of 12 px. The median height of a stroke group is 16, 24, 32 or 48 px, the main one 32 (R08). Since T69 the scale is by stroke bundles, by the crop rule of the eval protocol: architecture 3.1, «Рендер листа» (R08, the 2026-10-27 amendment; R35).
+The PNG is drawn only from the visible strokes, without the grid and the task's text, by the box of the work with a margin of 12 px. The median height of a stroke group is 16, 24, 32 or 48 px, the main one 32 (R08). Since T69 the scale is by stroke bundles, by the crop rule of the eval protocol: architecture 3.1, "Rendering a sheet" (R08, the 2026-10-27 amendment; R35).
 
 **States** (О-8):
 - the whole work, as when sent by the button;
 - after each line;
 - a pause inside a line: «1» of «12».
 
-The states are built from the strokes and read without the key. How the runner chooses them is architecture 3.4, «Чтение в наблюдение» (T69; R35).
+The states are built from the strokes and read without the key. How the runner chooses them is architecture 3.4, "Reading into an observation" (T69; R35).
 
 **A hint** is asked for at each rung of the ladder, 1–3 (concepts 10 spec), in two explanation languages — Russian and English. The leak check looks for the key in any writing, including in words in both languages, and for the task's leak phrases.
 
-*2026-10-28 (T75): so it was before R31. Now the leak check follows the text of the format of `spec`, in its section on it: the key by value, if the statement does not show it, and numbers in words are caught only by the leak phrases (architecture 3.4, «Подсказка»; R39).*
+*2026-10-28 (T75): so it was before R31. Now the leak check follows the text of the format of `spec`, in its section on it: the key by value, if the statement does not show it, and numbers in words are caught only by the leak phrases (architecture 3.4, "Hint"; R39).*
 
 **Solution analysis** — on each sheet, in two options of place (R08):
 - on the margins of a copy of the crop — the labels of the stroke groups with thin leader lines, not over the ink; the model names the label;
@@ -265,7 +265,7 @@ The IDs are exact (R07 spec). New models do not accept their own `temperature` o
 
 ### 1.6. Plan of 2026-10-21: metrics, criterion and report
 
-From architecture 3.1, «План 2026-10-21», — the continuation of measurements 1.5 (R29; R102; T133).
+From architecture 3.1, "Plan of 2026-10-21", — the continuation of measurements 1.5 (R29; R102; T133).
 
 **Metrics** — on the test part. For shares, a one-sided 95 % upper bound is computed.
 - **How the bound is computed.** The lines of one sheet are linked by the writer, the task and the scenario, so the bound is computed "by sheets", as in T74 canvas-api. It is the Clopper–Pearson bound on the effective size: n / Deff, where Deff is the design effect by sheets, no less than 1.
@@ -318,7 +318,7 @@ Time and cost are observed. Observed in the same way are the place on the canvas
 
 ### 1.7. Plan of 2026-10-21: estimate, access and what is out of scope
 
-From architecture 3.1, «План 2026-10-21», — the continuation of measurements 1.6 (R29; R102; T133).
+From architecture 3.1, "Plan of 2026-10-21", — the continuation of measurements 1.6 (R29; R102; T133).
 
 **Estimate** — the executor's estimate at the prices of sources 1.2, sources 1.3, sources 1.8 on 2026-10-20, before the first run. It was recomputed twice:
 - when E2 was planned — the checks of R08 were added, and Google left the measurement (R06, the 2026-10-21 amendment);
@@ -388,7 +388,7 @@ The keys live in the devcontainer's environment variables, not in the repository
 
 ### 2.1. Series T40 and T45 on the board
 
-From architecture 3.12, «Что известно — доска» (R102; T133). The research that reads them stayed in architecture 3.12.
+From architecture 3.12, "What is known — the board" (R102; T133). The research that reads them stayed in architecture 3.12.
 
 Before T45 the model answered with an analysis, and from T45 with only an assessment and the place of the error. Since T45 the board gets Claude's answer as a stream and records the time to the first token, the thinking tokens and the SDK's retries (architecture 3.3):
 
@@ -485,7 +485,7 @@ From architecture 3.4: the note of 2026-10-26, «Что меряется», «Н
   - "correct" or "not yet" out of place — the verdict of a state while the answer line is not finished, by kind of state, with an upper bound by sheet. Where the answer is finished, the verdict is checked against the outcome of the sheet, but for a state on which what is later erased is still visible: what it shows, the markup does not say. Failed calls enter no share;
   - the readings per sheet by each policy — mean, median and maximum — and their cost at the mean cost of a call;
 - **О-21** — how unfinished work is read (T72): the accuracy of the finished parts; a result given before the answer line; a started part read as if finished whole;
-- **hints** — written down on 2026-10-28, before the first run (T75; R39). There is no threshold: the report observes, by configuration, language and rung, with a 95 % upper bound by sheet — architecture 3.4, «Подсказка»:
+- **hints** — written down on 2026-10-28, before the first run (T75; R39). There is no threshold: the report observes, by configuration, language and rung, with a 95 % upper bound by sheet — architecture 3.4, "Hint":
   - leaks before the check — the key or a phrase that the leak check found — and after it, in what the learner will read;
   - form violations by rule;
   - the fallback text by cause;
@@ -584,12 +584,12 @@ From architecture 3.4, «Замер свободной записи» (R102; T13
 
 The pilot (measurements 3.2) showed that Opus 5.5 makes no errors on free writing with the mouse either, and Haiku 5.5 does. So for Opus the answer is most likely "not shown" again, by construction, and the question is decided on Haiku. There were no errors in the drawing in the pilot: the sheets of code give them.
 
-*The sheets* — 40, drawn by code (T59, T60), in `synthetic/free`. The tasks are the free writing bank `eval/free-bank.json` (T52), and the task sets the sheet's layout. How many sheets of which kind there are by task and scenario, and where on the sheet the first error and the erasure stand by scenario, are two tables in [free-sheets.md](free-sheets.md), «Сколько каких листов»: until T133 they stood here too, and a test of `cmd/tutor-eval` checks them against the plan files (T133).
+*The sheets* — 40, drawn by code (T59, T60), in `synthetic/free`. The tasks are the free writing bank `eval/free-bank.json` (T52), and the task sets the sheet's layout. How many sheets of which kind there are by task and scenario, and where on the sheet the first error and the erasure stand by scenario, are two tables in [free-sheets.md](free-sheets.md), "How many sheets of each kind": until T133 they stood here too, and a test of `cmd/tutor-eval` checks them against the plan files (T133).
 
 There are 20 correct sheets: `correct` and `erasure-fixed`. With an error, also 20: `error` and `erasure-broken`. An erasure by scenario, and with it frames, is on 16 sheets.
 
-In the second table of [free-sheets.md](free-sheets.md), «Сколько каких листов»:
-- «В тексте» is in the main column, «сбоку» in the record at the side.
+In the second table of [free-sheets.md](free-sheets.md), "How many sheets of each kind":
+- "In the text" is in the main column, "at the side" in the working at the side.
 - **The first error in the drawing** is on 7 sheets with an error of the 13 that have a drawing. It comes from the traps whose error is seen in the drawing itself, those named for the free writing bank in measurements 3.1:
   - a jump of the wrong length, `jump-length`;
   - an extra object on one side of the row, `place-for-count`;
@@ -615,8 +615,8 @@ They have no split and no threshold. Their run comes after the prompt is frozen 
 *The judges* — Opus 5.5 · `high`, Haiku 5.5 · `low` and Haiku 5.5 · `low` without thinking, with an answer limit of 16,000 tokens. The judge sees the key and the reference solution.
 
 *The forms* — A–D of measurements 1.1 (R11):
-- the journal of the course is version 2: about the parts of the sheet by their place, `journal.OfParts` (T63; architecture 3.1, «Журнал частей, версия 2»);
-- the prompt is version 2: drawings and records at the side are part of the solution in it (T64; architecture 3.1, «Версии промпта»);
+- the journal of the course is version 2: about the parts of the sheet by their place, `journal.OfParts` (T63; architecture 3.1, "The log of parts, version 2");
+- the prompt is version 2: drawings and records at the side are part of the solution in it (T64; architecture 3.1, "Versions of the prompt");
 - C and D only on sheets with frames, and on a sheet without frames D is the same as B.
 
 *An answer is right* as in measurements 1.1, but by writing parts, not by lines:
@@ -688,9 +688,9 @@ From architecture 3.4, «Итог замера свободной записи»
 
 ### 3.5. Reading into an observation: estimate and result
 
-From architecture 3.4: the estimate of «Чтения в наблюдение» and «Итог замера чтения» (R102; T133). The call kind `reading` is in architecture 3.4.
+From architecture 3.4: the estimate of "Reading into an observation" and «Итог замера чтения» (R102; T133). The call kind `reading` is in architecture 3.4.
 
-The estimate of «Чтения в наблюдение»:
+The estimate of "Reading into an observation":
 
 - **the estimate** — about 1,210 text tokens, 150 more with the key block, and the crop's tokens, ⌈w / 28⌉ × ⌈h / 28⌉. By the free `count_tokens` on 2026-10-28 on ten sheets of both plans, the text is 1,194–1,246, the key block another 100–162, and the crop's tokens matched the formula. The output is about 200 tokens, for Haiku with thinking about 500. The dev part of the two sets, `free` and `lines`, with one repeat and everything the run reads, is 442 calls: 150 key conditions, 120 heights and 172 states, 86 on 20 sheets, at $0.64 by the estimate;
 
@@ -715,9 +715,9 @@ The estimate of «Чтения в наблюдение»:
 
 ### 3.6. Hints: estimate, result and the author's sheets
 
-From architecture 3.4: the estimate of «Подсказки», «Итог замера подсказок» and «Итог прогонов на листах автора» (R102; T133). The call kind `hint` is in architecture 3.4.
+From architecture 3.4: the estimate of "Hint", «Итог замера подсказок» and «Итог прогонов на листах автора» (R102; T133). The call kind `hint` is in architecture 3.4.
 
-The estimate of «Подсказки»:
+The estimate of "Hint":
 
 - **the estimate** — about 1,700 text tokens and the crop's tokens. By the free `count_tokens` on 2026-10-28 on ten sheets of the three sets, the text is 1,618–1,751 tokens, the same for Opus and Haiku. The output is about 300 tokens for Opus, 500 for Haiku with thinking and 200 without it. That is by the judge of free writing: in the test of T66 it wrote in form A 124 tokens on average for Opus, 96 of them thinking, and 267 for Haiku with thinking, and a hint adds a trap and a text to the box. By the stub:
   - the dev part of the three sets, one repeat, is 198 calls, $0.96;
@@ -796,9 +796,9 @@ The estimate of «Подсказки»:
 
 ### 3.7. Workbook: estimate, criterion and result
 
-From architecture 3.4: the estimate of «Чтения ячеек», «Критерий тетради» and «Итог замера тетради» (R102; T133). The set and the call kind `workbook` are in architecture 3.4.
+From architecture 3.4: the estimate of "Reading the slots", «Критерий тетради» and «Итог замера тетради» (R102; T133). The set and the call kind `workbook` are in architecture 3.4.
 
-The estimate of «Чтения ячеек»:
+The estimate of "Reading the slots":
 
 - **The estimate** on the stub: the dev part — 5 pages, 70 calls, about $0.33; the test with heights — 15 pages, 300 calls, about $1.04. On the stub, every box's verdict matches the page's truth.
 
@@ -1150,9 +1150,9 @@ From architecture 3.4: «Зеркальная цифра по `spec` `v0.3.3`» 
 
 ### 3.16. The tutor's words: estimate and results
 
-From architecture 3.4: the estimate of «Набора слов», «Итог замера слов» and «Итог второго замера слов» (R102; T133). The words set is in architecture 3.4.
+From architecture 3.4: the estimate of "The set of words", «Итог замера слов» and «Итог второго замера слов» (R102; T133). The words set is in architecture 3.4.
 
-The estimate of «Набора слов»:
+The estimate of "The set of words":
 
 - **The estimate per configuration**, by the prices of sources 1.3: hints of Opus 5.5 · `high` — about $4.80, the judge — about $3.96. T119 decides.
 

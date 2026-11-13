@@ -15,7 +15,7 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// EssayReading is an essay to read (architecture 3.10, «чтение сочинения»), the first of the two
+// EssayReading is an essay to read (architecture 3.10, "reading an essay"), the first of the two
 // calls of a task with a rubric (architecture 3.5; R75 spec): the PNG of the crop of the sheet, the
 // open view of its task and the route. The model sees the crop alone, without the topic and the
 // rubric.
