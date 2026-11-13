@@ -2,7 +2,7 @@
 
 > The results of tutor's measurements: what was measured, how, on what, and what numbers came out. [architecture.md](architecture.md) describes how things are built and refers here; it holds no numbers of measurements itself (RULES.md, How we work; R143 spec). A measurement is cited by section, like any document: `measurements 1.1`. The model is measurements spec.
 >
-> Sections 1–3 stood in architecture 3.1, 3.4 and 3.12 until T133, in Russian, and their text moved here translated, not retold (R102; T133). Each record opens with the block of architecture it came from, and the pointers at the start of architecture 3.1, 3.4 and 3.12 name where each block went: the decision log, the archives of `docs/plan/` and spec cite those blocks, and they are not rewritten. The names of blocks of architecture stay Russian in «…» while architecture is Russian. What was decided from a measurement and what code builds on it — the formats, the prompts, the runner, the call kinds and their reports — stayed in architecture.
+> Sections 1–3 stood in architecture 3.1, 3.4 and 3.12 until T133, in Russian, and their text moved here translated, not retold (R102; T133). Each record opens with the block of architecture it came from, and the pointers at the start of architecture 3.1, 3.4 and 3.12 name where each block went: the decision log, the archives of `docs/plan/` and spec cite those blocks, and they are not rewritten. The names of the blocks of architecture that moved here stay Russian in «…»: by them the pointers of architecture and the decision log find them (T134; T136). What was decided from a measurement and what code builds on it — the formats, the prompts, the runner, the call kinds and their reports — stayed in architecture.
 >
 > An external fact a measurement rests on — a price, a provider's terms — is a record of [sources.md](sources.md). The sheets and the logs of the runs are not here: they lie in `samples/` and `synthetic/`, outside git, and a document takes only numbers and words from them (CLAUDE.md, samples/).
 
@@ -1212,7 +1212,11 @@ What tutor's Claude Code sessions spend, by the measurement of measurements 1.1 
 | 2026-10-13T00:00 … 2026-11-12T14:27 | "before": tutor's row of measurements 1.9 spec | 28 | 11,509 / 6,806 | 398.5 / 119.5 | 53 | $1,896.62 |
 | 2026-11-12T20:32 … 2026-11-12T21:49 | T131: spec `v0.16.3` and the ways of working of line 0.16 | 1 | 132 / 43 | 244.2 / 114.9 | 0 | $13.00 |
 | 2026-11-12T21:49 … 2026-11-13T03:46 | T132: the sources | 1 | 98 / 52 | 244.8 / 93.7 | 0 | $14.22 |
-| 2026-11-13T03:46 … 2026-11-13T05:11 | T133: the measurements, until its review | 1 | 131 / 176 | 216.1 / 88.1 | 0 | $20.45 |
+| 2026-11-13T03:46 … 2026-11-13T05:57 | T133: the measurements | 1 | 163 / 217 | 227.7 / 88.6 | 1 | $24.63 |
+| 2026-11-13T05:57 … 2026-11-13T14:08 | T134: architecture and the sheet documents in English | 1 | 125 / 256 | 180.1 / 88.2 | 0 | $22.90 |
+| 2026-11-13T14:08 … 2026-11-13T14:42 | T135: the decision log to R50 in English | 1 | 64 / 195 | 98.3 / 85.0 | 0 | $12.09 |
+| 2026-11-13T14:42 … 2026-11-13T15:05 | T136: the log from R51 in English, the budgets, until its review | 1 | 81 / 155 | 148.7 / 104.7 | 0 | $13.82 |
+| 2026-11-12T20:32 … 2026-11-13T15:05 | "after": row 7.12, T131–T136 | 6 | 663 / 918 | 202.4 / 92.0 | 1 | $100.66 |
 
-- Read 2026-11-13. A task's window runs from the start of its session to the start of the next one. The row of T131 is its whole session; its «Сделано» gives the numbers before its review: 106 / 43 calls, 221.1 / 114.9 thousand, $10.76.
-- The rows of the tasks are not comparable with "before": one session each, on documents, against a month of code and paid runs. The comparison is T136's measurement "after" and T124 spec.
+- Read 2026-11-13. A task's window runs from the start of its session to the start of the next one. The row of T131 is its whole session; its «Сделано» gives the numbers before its review: 106 / 43 calls, 221.1 / 114.9 thousand, $10.76. Until T136, the row of T133 was its session before its review, 2026-11-13T03:46 … 2026-11-13T05:11: 131 / 176 calls, 216.1 / 88.1 thousand, $20.45; it is its whole session now, as the other rows. The row of T136 runs to its review, as does "after", and the rows of the six tasks add up to "after".
+- "After" is the six sessions of row 7.12, to the review of T136: the context of a main call is 202.4 thousand against 398.5 "before", −49%, and of a subagent's 92.0 against 119.5, −23%, with 1 compaction in 663 main calls against 53 in 11,509. The windows differ in work: a month of code and paid runs against six sessions on documents, a session for each task. The comparison over the same kind of work is T124 spec.
