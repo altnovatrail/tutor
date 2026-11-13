@@ -28,9 +28,10 @@ const Model = "gpt-6-astra"
 // chosen among levels (R20).
 var Efforts = []string{"high"}
 
-// Client calls GPT-6 Astra.
+// Client calls GPT-6 Astra, by the two services of the SDK it needs.
 type Client struct {
-	sdk openai.Client
+	responses responses.ResponseService
+	models    openai.ModelService
 }
 
 // Dial is the adapter as the library takes it (provider.Dial): the client of Model, with the key.
@@ -41,10 +42,19 @@ func Dial(id, key string) (provider.Model, error) {
 	return New(key), nil
 }
 
-// New returns a client with the given API key. The options are for tests: a fake server's URL.
+// New returns a client with the given API key. The client takes nothing from the process's
+// environment: openai.NewClient always puts first the SDK's defaults — the address, keys, the
+// organization, the project and headers of the variables OPENAI_… — and its switch without them
+// is internal, so the services are built without it, with the options the SDK's own defaults
+// without the environment have: the adapter's client, provider.HTTPClient, and the production
+// address (R105; docs/sources.md, 1.17). The options are for tests: a fake server's URL.
 func New(apiKey string, opts ...option.RequestOption) *Client {
-	opts = append([]option.RequestOption{option.WithAPIKey(apiKey)}, opts...)
-	return &Client{sdk: openai.NewClient(opts...)}
+	opts = append([]option.RequestOption{
+		option.WithHTTPClient(provider.HTTPClient()),
+		option.WithEnvironmentProduction(),
+		option.WithAPIKey(apiKey),
+	}, opts...)
+	return &Client{responses: responses.NewResponseService(opts...), models: openai.NewModelService(opts...)}
 }
 
 // Name is how the board shows the model.
@@ -109,7 +119,7 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 		}})
 	}
 	content = append(content, responses.ResponseInputContentParamOfInputText(r.Text))
-	resp, err := c.sdk.Responses.New(ctx, responses.ResponseNewParams{
+	resp, err := c.responses.New(ctx, responses.ResponseNewParams{
 		Model:        Model,
 		Instructions: openai.String(r.Instructions),
 		Input: responses.ResponseNewParamsInputUnion{OfInputItemList: responses.ResponseInputParam{
@@ -200,7 +210,7 @@ func Refusal(status int, body []byte) provider.Refusal {
 // (provider.Checked).
 func (c *Client) Check(ctx context.Context) error {
 	var refused provider.Refusal
-	_, err := c.sdk.Models.Get(ctx, Model, option.WithMiddleware(provider.NoRetry(Refusal, &refused)))
+	_, err := c.models.Get(ctx, Model, option.WithMiddleware(provider.NoRetry(Refusal, &refused)))
 	status := 0
 	var apiErr *openai.Error
 	if errors.As(err, &apiErr) {

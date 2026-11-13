@@ -11,6 +11,8 @@ require (
 	github.com/anthropics/anthropic-sdk-go v1.84.0
 	github.com/openai/openai-go/v3 v3.94.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
+	go.opentelemetry.io/otel v1.33.0
+	go.opentelemetry.io/otel/trace v1.33.0
 	golang.org/x/text v0.43.0
 	google.golang.org/protobuf v1.36.12
 	gopkg.in/yaml.v3 v3.0.1
@@ -30,9 +32,7 @@ require (
 	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/tidwall/sjson v1.2.5 // indirect
 	go.opentelemetry.io/auto/sdk v1.1.0 // indirect
-	go.opentelemetry.io/otel v1.33.0 // indirect
 	go.opentelemetry.io/otel/metric v1.33.0 // indirect
-	go.opentelemetry.io/otel/trace v1.33.0 // indirect
 	go.starlark.net v0.0.0-20261021141710-4f4267fb140d // indirect
 	go.yaml.in/yaml/v4 v4.0.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect

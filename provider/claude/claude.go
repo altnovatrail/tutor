@@ -40,10 +40,20 @@ func Dial(id, key string) (provider.Model, error) {
 	return New(key, catalog.Models[i]), nil
 }
 
-// New returns a client of the model with the given API key. The options are for tests: a fake
-// server's URL.
+// New returns a client of the model with the given API key. The client takes nothing from the
+// process's environment: not the SDK's defaults — the address, a key, a token, a profile, the
+// federation, headers — and not its OpenTelemetry tracing, which by default writes spans into the
+// process's TracerProvider, sends their trace context to Anthropic and, by a variable, puts the
+// requests and the answers in them. The call goes to the production address, with the key and the
+// adapter's client, provider.HTTPClient (R105; docs/sources.md, 1.17). The options are for tests:
+// a fake server's URL.
 func New(apiKey string, m Model, opts ...option.RequestOption) *Client {
-	opts = append([]option.RequestOption{option.WithAPIKey(apiKey)}, opts...)
+	opts = append([]option.RequestOption{
+		option.WithoutEnvironmentDefaults(),
+		option.WithoutOpenTelemetry(),
+		option.WithHTTPClient(provider.HTTPClient()),
+		option.WithAPIKey(apiKey),
+	}, opts...)
 	return &Client{sdk: anthropic.NewClient(opts...), model: m}
 }
 
