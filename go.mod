@@ -9,7 +9,7 @@ require (
 	github.com/altnovatrail/spec v0.16.7
 	github.com/altnovatrail/spec/contracts v0.16.7
 	github.com/anthropics/anthropic-sdk-go v1.84.0
-	github.com/openai/openai-go/v3 v3.94.0
+	github.com/openai/openai-go/v3 v3.98.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
 	go.opentelemetry.io/otel v1.33.0
 	go.opentelemetry.io/otel/trace v1.33.0
