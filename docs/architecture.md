@@ -59,7 +59,7 @@
 
 *2026-11-11: subsection 2.8, words after a correct answer, is opened — beyond the card, by Д188 RUN.md `spec`.*
 
-*2026-11-13: an item of subsection 2.6 is opened — the facts of section 3.12 that no source holds now (T140).*
+*2026-11-13: an item of subsection 2.6 is opened — the facts of section 3.12 that no source holds now (T140) — and decided the same day (R108).*
 
 The items "To decide when detailed" of the card — a subsection per item. Each is decided by a task of its own of epic E1 in [RUN.md](../RUN.md). The epic was postponed until the conclusions of the measurement (R04, the 2026-10-21 amendment), and from 2026-10-26 also until E4 (R28). E4 was done 2026-10-29, with the extended measurement and T99, and on the same day the epic came back (R52): subsections 2.2–2.5 and 2.7 are decided by its tasks. A decided item names its entry of the log, and the decision itself moves into section 3. A question that goes beyond this repository goes «в реестр spec» (RULES.md, Across repositories).
 
@@ -115,6 +115,8 @@ Decided by the research of epic E2 and the answers of `spec` (R49) — section 3
 - that SmolVLM and Florence-2 read printed formulas: their cards name neither formulas nor handwriting.
 
 **Options:** (a) the text stays, with a mark at each place pointing to the record and to this subsection; (b) the numbers are replaced by the nearest copies and the models' line by what the cards say — sources of other dates in one table, and a change of the text of a decided subsection; (c) the rows without a copy leave the table. **Recommendation:** (a). The conclusions of section 3.12 do not rest on them: the series T45 of the board replaced the estimates by other people's speeds; the one inference the numbers of Artificial Analysis carry, that the effort moves the time to the first token and not the speed, holds on its copies of Opus 5.5 · `low` and · `high` of the evening of 2026-10-25 (sources 2.2); and the four models are out because none of them claims finished handwriting, which their sources confirm.
+
+*2026-11-13 (R108): decided — option (a), the author's decision. The text of section 3.12 stays with its marks, and the records of sources 1.6, 2.2 and 2.3 hold what was found; nothing is to do.*
 
 ### 2.7. Assessment by the rubric
 
