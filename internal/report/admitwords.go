@@ -16,9 +16,9 @@ const (
 	// one of them.
 	WordsRepeated = 0.05
 	// V1Leaked and V1Broken are the upper bounds of the shares of version 1 of the hint's prompt,
-	// Opus 5.5 at high in the extended measurement (T95; docs/architecture.md, 3.4, «Итог большого
-	// прогона»): 4 hints of 900 leaked before the check, at most 0.010, and 8 broke the form of R70
-	// spec, at most 0.016. Version 2 is no worse when its shares are within them.
+	// Opus 5.5 at high in the extended measurement (T95; docs/measurements.md, 3.12): 4 hints of
+	// 900 leaked before the check, at most 0.010, and 8 broke the form of R70 spec, at most 0.016.
+	// Version 2 is no worse when its shares are within them.
 	V1Leaked = 0.010
 	V1Broken = 0.016
 )

@@ -40,5 +40,5 @@ var font = map[rune]glyph{
 // squiggle stands for every character the font does not have.
 var squiggle = glyph{{{0.1, 0.7}, {0.3, 0.4}, {0.5, 0.7}, {0.7, 0.4}, {0.9, 0.7}}}
 
-// mirrorable are the digits a child writes mirrored (docs/architecture.md, section 3.1).
+// mirrorable are the digits a child writes mirrored (docs/measurements.md, 1.4).
 const mirrorable = "2579"

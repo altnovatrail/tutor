@@ -98,7 +98,7 @@ func TestRunCap(t *testing.T) {
 	}
 	// A cap above the plan's is the author's to give, and the run says so before asking.
 	code, out, _ = runMeasure("no\n", append([]string{"-part", "test", "-stub", "-max-usd", "60"}, where...)...)
-	if code != exitOK || !strings.Contains(out, "That is above the $6.00 that architecture 3.1 and 3.4 plan for -part test.") {
+	if code != exitOK || !strings.Contains(out, "That is above the $6.00 that measurements 1.1 and 3.1 plan for -part test.") {
 		t.Errorf("a run with a cap of $60 says\n%s", out)
 	}
 }

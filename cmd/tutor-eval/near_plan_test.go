@@ -12,7 +12,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/synth"
 )
 
-// The bank and the plan of the near set (T70; docs/architecture.md, 3.4), and the document that
+// The bank and the plan of the near set (T70; docs/measurements.md, 3.1), and the document that
 // shows them as tables, as seen from this package's directory.
 const (
 	nearBank      = "../../eval/near-bank.json"

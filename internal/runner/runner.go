@@ -37,9 +37,10 @@ type Config struct {
 }
 
 // Configs are the configurations of the measurements: the three of E4 first — Opus 5.5 at high,
-// Haiku 5.5 at low, and Haiku 5.5 at low without thinking (R24; architecture 3.4) —, then the four
-// the extended measurement adds: Opus 5.5 at medium, Sonnet 5.5 at low with thinking and without,
-// and Haiku 5.5 at medium (R50). A run asks those it names, the three of E4 by default (E4Configs).
+// Haiku 5.5 at low, and Haiku 5.5 at low without thinking (R24; docs/measurements.md, 3.1) —, then
+// the four the extended measurement adds: Opus 5.5 at medium, Sonnet 5.5 at low with thinking and
+// without, and Haiku 5.5 at medium (R50). A run asks those it names, the three of E4 by default
+// (E4Configs).
 func Configs() []Config {
 	model := func(id string) catalog.Model {
 		i := slices.IndexFunc(catalog.Models, func(m catalog.Model) bool { return m.ID == id })

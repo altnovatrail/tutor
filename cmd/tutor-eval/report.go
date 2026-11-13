@@ -20,19 +20,20 @@ import (
 	"github.com/altnovatrail/tutor/internal/workbook"
 )
 
-// runReport turns the log of a run into its report, asking no model, by the kind of call the log
-// is of (T67). Of the judge, whose log tells no kind (R24): the criterion and the numbers of
-// architecture 3.1 in Markdown, and the answers by judge and form in CSV. Of the reading (T71): the
-// threshold of R03 a reader each, the readings by reader and condition and the rule of two readers
-// in Markdown, and the readings in CSV. Of the hint (T75): the leaks before the check and after it,
-// the form, the fallback texts and the place by tutor, language and rung in Markdown and CSV, and
-// about 30 hints for the author to read in a third file, .hints.md. Of the workbook (T80): the boxes
-// by reader, condition and group, the items, the line of the item against none and the other
-// heights in Markdown, and the boxes in CSV. Of the essays (T83): the criteria by reader, the
-// reading and the feedback in Markdown, every judgement in CSV, and the feedback for the author to
-// read in a third file, .feedback.md. They go next to the log under its name, as new files. A report holds no handwriting: numbers, sheets by their sets, numbers and
-// scenarios, the names of judges, forms, readers, conditions and tutors, and of the hint the tasks'
-// statements, the plan's texts and the words the models wrote.
+// runReport turns the log of a run into its report, asking no model, by the kind of call the log is
+// of (T67). Of the judge, whose log tells no kind (R24): the criterion and the numbers of
+// docs/measurements.md, 1.1 and 1.2, in Markdown, and the answers by judge and form in CSV. Of the
+// reading (T71): the threshold of R03 a reader each, the readings by reader and condition and the
+// rule of two readers in Markdown, and the readings in CSV. Of the hint (T75): the leaks before the
+// check and after it, the form, the fallback texts and the place by tutor, language and rung in
+// Markdown and CSV, and about 30 hints for the author to read in a third file, .hints.md. Of the
+// workbook (T80): the boxes by reader, condition and group, the items, the line of the item against
+// none and the other heights in Markdown, and the boxes in CSV. Of the essays (T83): the criteria
+// by reader, the reading and the feedback in Markdown, every judgement in CSV, and the feedback for
+// the author to read in a third file, .feedback.md. They go next to the log under its name, as new
+// files. A report holds no handwriting: numbers, sheets by their sets, numbers and scenarios, the
+// names of judges, forms, readers, conditions and tutors, and of the hint the tasks' statements,
+// the plan's texts and the words the models wrote.
 func runReport(args []string, stdout, stderr io.Writer) int {
 	const use = "usage: tutor-eval report LOG"
 	switch {

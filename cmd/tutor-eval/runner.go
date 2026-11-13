@@ -33,8 +33,8 @@ import (
 )
 
 // The caps of the parts, in US dollars: $3 for the development and $6 for the test
-// (docs/architecture.md, 3.1, «Смета»; 3.4), and $2 for all the sheets of a plan, without the
-// split, which is how the author's three sheets of free writing run (3.4; T77); and $8 for the
+// (docs/measurements.md, 1.1 and 3.1), and $2 for all the sheets of a plan, without the
+// split, which is how the author's three sheets of free writing run (3.1; T77); and $8 for the
 // sheets recorded so far, without the split, which is how the run of admission takes the author's
 // sheets, of a plan not written whole (T126; R80).
 var partCaps = map[string]float64{"dev": 3, "test": 6, "all": 2, "recorded": 8}
@@ -277,7 +277,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 
 	above := ""
 	if *maxUSD > planned {
-		plan := "architecture 3.1 and 3.4"
+		plan := "measurements 1.1 and 3.1"
 		if *part == "recorded" {
 			plan = "architecture 3.9"
 		}

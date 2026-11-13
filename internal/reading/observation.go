@@ -403,7 +403,7 @@ func UnderKey(o *Observation, m Marked, g Given) Under {
 // written illegibly on purpose an observation reads exactly as written, compared as squash compares,
 // and how many there are: each part of writing of the observation counts for one part of the markup
 // at most. An illegible part has no text to read, and a reader that guesses it is not right for it. The accuracy of the
-// reading of a sheet is the one over the other (T71; docs/architecture.md, 3.1).
+// reading of a sheet is the one over the other (T71; docs/measurements.md, 1.6).
 func PartsRead(o *Observation, m Marked) (read, of int) {
 	var seen []string
 	if o != nil {
