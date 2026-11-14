@@ -1229,7 +1229,51 @@ The estimate of "The set of words":
 - **The words.** Each praises a step of the solution by what it does — «умножение сделано первым», "the added number is taken away from both sides" — and asks, last, which technique or rule helped, mostly naming one of the task's; without techniques it asks how the answer, or x, was found. Without the work it praises the step of the solution in the task's data. No number of the key or of the work, no «молодец», no past tense about the learner in Russian; a Latin x stands in a Russian question where the statement shows it. The prompt needed no edit.
 - **The tokens and the time.** Input on average 1,415 tokens — 1,334 with the work, 1,212 without, 1,634 with a note —, output 367, thinking included; $0.0130 a call; time p50 4.9 s, p95 7.3 s. The judge: 1,407 in and 57 out a call.
 - **The spending.** 56 calls at Anthropic — 28 of the words, $0.3642, and 28 of the judge, $0.1894 —, $0.5536 of the ceiling of $2.
-- **What it does not decide.** Admission: the set of admission, its 110 cases, the judge's control phrases of version 4 and the expected tokens of `CallCorrect` are T144.
+- **What it does not decide.** Admission: the set of admission, its 110 cases, the judge's control phrases of version 4 and the expected tokens of `CallCorrect` are T144. *2026-11-14 (T144; R113): done — section 3.18.*
+
+### 3.18. The words after a correct answer: the admission; the hint at `medium`, in part
+
+**The admission** (T144, 2026-11-13 and 14; R113). The set of admission of architecture 3.4, "The set of the words after a correct answer": its 110 cases on the 40 sheets of `synthetic/correct-v1`, one repeat, version 1 of the prompt of `internal/correct`, the fingerprint `ee01e82a…`, by Opus 5.5 · `high`; then the judge of the words, version 4, Opus 5.5 · `high`, on each word that came. The prices were checked on Anthropic's Pricing page on 2026-11-13, before the first run: the same as sources 1.14; the runs went on past midnight UTC. The logs and the rule's output are `synthetic/t144/`, outside git; only numbers came here.
+- **The judge on its control phrases** — right on 68 of 68, 62 of them with all four answers exact.
+- **The words:**
+
+  | Case | Calls | Came and shown | Leak before the check | Form, `words.Correct` | Sex, rough search | Sex, judge | Off the task | Not for a child | Note taken up, judge | Echo of a note |
+  |---|---|---|---|---|---|---|---|---|---|---|
+  | `work` | 60 | 60 | 0 | 0 | 0 | 0 | 0 | 0 | — | — |
+  | `choice` | 30 | 30 | 0 | 0 | 0 | 0 | 0 | 0 | — | — |
+  | `note` | 20 | 20 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
+  | in all | 110 | 110 | 0 (≤ 0.010) | 0 (≤ 0.016) | 0 | 0 | 0 | 0 | 0 of 20 | 0 of 20 |
+
+- **The rule** `report.AdmitCorrect` gave the rung "author". Its output, `synthetic/t144/correct.admit.md`, sha256 `0998a694…b969b`, is the evidence of the entry of the list (architecture 3.9).
+- **The tokens and the time.** The output counts the thinking. The percentile is the nearest rank, as in T139 (section 3.16):
+
+  | Case | Calls | Input | Output | Of it thinking | $ a call | Time p50 | p90 | First token p50 |
+  |---|---|---|---|---|---|---|---|---|
+  | `work` | 60 | 1,362 | 386 | 329 | 0.0132 | 5.1 s | 6.9 s | 4.7 s |
+  | `choice` | 30 | 1,206 | 407 | 349 | 0.0130 | 5.0 s | 6.8 s | 4.7 s |
+  | `note` | 20 | 1,648 | 441 | 382 | 0.0154 | 5.5 s | 7.0 s | 5.2 s |
+  | in all | 110 | 1,371 | 402 | 344 | 0.0135 | 5.1 s | 7.0 s | 4.8 s |
+
+  The averages of all, 1,371 and 402, are the expected tokens of `CallCorrect` in `price.go`.
+- **The spending** — the control phrases $0.5601 (68 calls), the words $1.4871 (110), the judge $0.7228 (110).
+
+**The hint at `medium`, in part** (T144, 2026-11-14; Д11). The hint prompt version 3, Opus 5.5 · `medium`, one repeat, was to run on the 300 cases of T127 (section 3.16): the 150 of the set of T118, "differently" and notes, in `synthetic/words-v1`, and the 150 of the author's sheets. The account's prepaid credit ran out during the run — the author's console showed the balance at −$0.17, with $220.19 spent in November of a spending limit of $300, which caps spending and holds no money. Anthropic refused the last 14 cases of the synthetic part, all of the kind `note`, and all 150 of the author's sheets: «Your credit balance is too low to access the Anthropic API». A refusal costs nothing. The author decided not to finish the measurement now. So 136 hints came, and the judge read none: the numbers are by code, and beside them the same 136 cases at `high` from the logs of T127. The logs are `synthetic/t144/words-medium-syn*`, and the refused runs `samples/runs/t144-words-medium-*`, outside git.
+- **By code**, on the 136: leak before the check 0, the form of R70 spec broken 1 — not exactly one question —, a repeat of a past question 0 of 120, a box without the work 0 of 90, an echo of the note 0 of 46, the sex told by the rough search 0. The rule of words (R86) needs the judge and every planned case, so it says nothing of `medium` here.
+- **The time and the tokens** — the same 136 cases:
+
+  | Cases | Calls | `high` p50 | `medium` p50 | `high` p90 | `medium` p90 | First token p50, `high` / `medium` | Output, `high` / `medium` | $ a call, `high` / `medium` |
+  |---|---|---|---|---|---|---|---|---|
+  | rung 1 | 46 | 5.0 s | 2.4 s | 6.6 s | 5.5 s | 4.4 / 1.4 s | 336 / 159 | 0.0160 / 0.0125 |
+  | rung 2 | 46 | 5.1 s | 4.1 s | 6.7 s | 5.1 s | 4.6 / 3.5 s | 386 / 266 | 0.0172 / 0.0147 |
+  | rung 3 | 44 | 5.8 s | 5.4 s | 7.7 s | 6.6 s | 5.1 / 4.7 s | 473 / 423 | 0.0189 / 0.0179 |
+  | "differently" | 90 | 4.9 s | 3.9 s | 6.3 s | 5.8 s | 4.4 / 3.4 s | 360 / 251 | 0.0160 / 0.0138 |
+  | notes | 46 | 6.0 s | 4.9 s | 7.7 s | 6.5 s | 5.1 / 4.1 s | 469 / 338 | 0.0200 / 0.0174 |
+  | in all | 136 | 5.2 s | 4.4 s | 7.2 s | 6.2 s | 4.7 / 3.8 s | 397 / 280 | 0.0173 / 0.0150 |
+
+- **What this means.** At `medium` the model thinks less — 203 tokens of thinking a call against 321 — and answers 0.8 s sooner at p50 and 1.0 s at p90, most at rung 1 and least at rung 3, which composes a similar case. What it does not say: whether the hints at `medium` stay on the task and for a child — the judge — and how they do on the author's handwriting, where `high` broke the form once in T127. Д11 stays open.
+- **The spending** — 136 calls, $2.0401; the 164 refusals cost nothing.
+
+**The spending of T144** — 424 calls at Anthropic, $4.8101, of a ceiling of $12. The console's spending for November grew by the same sum, with the trial of T143.
 
 ## 4. Claude Code sessions
 
@@ -1248,7 +1292,9 @@ What tutor's Claude Code sessions spend, by the measurement of measurements 1.1 
 | 2026-11-13T14:42 … 2026-11-13T15:05 | T136: the log from R51 in English, the budgets, until its review | 1 | 81 / 155 | 148.7 / 104.7 | 0 | $13.82 |
 | 2026-11-12T20:32 … 2026-11-13T15:05 | "after": row 7.12, T131–T136 | 6 | 663 / 918 | 202.4 / 92.0 | 1 | $100.66 |
 | 2026-11-13T15:36 … 2026-11-13T18:46 | epic E7: its planning, T137–T140 and its archive | 5 | 406 / 61 | 147.6 / 64.4 | 0 | $26.58 |
+| 2026-11-13T18:46 … 2026-11-14T01:10 | epic E8: its planning, T141–T144 and its archive | 5 | 519 / 252 | 195.3 / 87.5 | 1 | $47.93 |
 
 - Read 2026-11-13. A task's window runs from the start of its session to the start of the next one. The row of T131 is its whole session; its «Сделано» gives the numbers before its review: 106 / 43 calls, 221.1 / 114.9 thousand, $10.76. Until T136, the row of T133 was its session before its review, 2026-11-13T03:46 … 2026-11-13T05:11: 131 / 176 calls, 216.1 / 88.1 thousand, $20.45; it is its whole session now, as the other rows. The row of T136 runs to its review, as does "after", and the rows of the six tasks add up to "after".
 - "After" is the six sessions of row 7.12, to the review of T136: the context of a main call is 202.4 thousand against 398.5 "before", −49%, and of a subagent's 92.0 against 119.5, −23%, with 1 compaction in 663 main calls against 53 in 11,509. The windows differ in work: a month of code and paid runs against six sessions on documents, a session for each task. The comparison over the same kind of work is T124 spec.
 - Epic E7, read 2026-11-13 at its archive (R108): five sessions from its planning — the session of R104, then one for each task, and the archive in the session of T140 —, the row to the measurement itself, before the archive's commit. The context of a main call is 147.6 thousand, 27% below the reference of tutor, the row "after" of 7.12, 202.4 thousand, over 406 main calls: the threshold of R145 spec, 25% above the reference over at least 300 calls, gives no analysis.
+- Epic E8, read 2026-11-14 at its archive (R114): five sessions from its planning, which began in the session of T140 right after the row of E7, then one for each task, and the archive in the session of T144; the row to the measurement itself, before the archive's commit. The context of a main call is 195.3 thousand, 3.5% below the reference of tutor, 202.4 thousand, over 519 main calls: the threshold of R145 spec gives no analysis. The one compaction is in the session of T143, whose main context reached 366 thousand.

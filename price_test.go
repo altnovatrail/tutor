@@ -47,6 +47,11 @@ func TestPrice(t *testing.T) {
 	if p, a, err := lib.Price(CallWords, platform); err != nil || !a.Admitted || !near(p.ExpectedUSD, (2356*4+437*20)/1e6) {
 		t.Errorf("the price of the words: %+v, %+v, %v", p, a, err)
 	}
+	// The words after a correct answer are Opus's alone too, on the list's own entry: one call of it,
+	// by the tokens of the run that admitted them (T144).
+	if p, a, err := lib.Price(CallCorrect, platform); err != nil || !a.Admitted || !p.Expected || !near(p.ExpectedUSD, (1371*4+402*20)/1e6) {
+		t.Errorf("the price of the words after a correct answer: %+v, %+v, %v", p, a, err)
+	}
 	// The hint without the work is the same model with no picture, and has no expected tokens: T127
 	// measured the hint with the work. Its worst is the bound of the text and the most output.
 	if p, a, err := lib.Price(CallHint, platform); err != nil || !a.Admitted || p.Expected || !p.Worst || !near(p.WorstUSD, (24000*5+16000*20)/1e6) {

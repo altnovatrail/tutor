@@ -85,7 +85,7 @@ const usage = `usage:
                              handwriting
   tutor-eval split -seed N [-dev K] [-dir D] [-bank F] [-plan F]
                              divide the recorded sheets into development and test, once
-  tutor-eval run -part dev|test|all|recorded [-kind judge|reading|hint|workbook|essay] [-repeats N]
+  tutor-eval run -part dev|test|all|recorded [-kind judge|reading|hint|correct|workbook|essay] [-repeats N]
                  [-max-usd N] [-log F] [-stub] [-dir D] [-bank F] [-plan F] [-set D,B,P]...
                  [-reads LIST] [-workbook F] [-essays F] [-readers LIST]
                  [-two] [-cases F] [-case-kinds LIST]

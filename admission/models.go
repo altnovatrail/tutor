@@ -116,6 +116,23 @@ var Admitted = []Entry{
 		Report:     wordsEvidence,
 		Prompt:     wordsPrompt,
 	},
+	// The words after a correct answer — the praise of a step and a question on the technique —, on
+	// their synthetic set: 110 cases on 40 sheets whose answer is right, with the work, without it and
+	// with a note, of version 1 of their prompt, judged by Opus 5.5 at high on version 4 of the judge's
+	// prompt, which passed all its 68 control phrases (T144; R112, R113). The output of the rule lies
+	// in synthetic/, out of git.
+	{
+		Capability: admissionv0.CapabilityCorrectAnswerWords,
+		Models:     []Model{{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "high"}},
+		Stage:      StageAuthor,
+		Report: Evidence{
+			Set:    "correct-v1",
+			File:   "synthetic/t144/correct.admit.md",
+			SHA256: "0998a69466f62bc6c167d1cf71da6c737ee3e96a94e02d6fd13fd1b57e6b969b",
+			Date:   "2026-11-14",
+		},
+		Prompt: "ee01e82ada7c347c45f56828d86342897569ec7517fc52265963a76f31def1d9",
+	},
 }
 
 // wordsEvidence is the output of the rule of admission of the words that admitted them (T127), and
