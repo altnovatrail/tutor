@@ -78,7 +78,8 @@ type kind struct {
 // the steps with the work, CallWords, and the hint without it, CallHint, by one prompt; T127
 // measured the hint with the work, so the hint without it has no expected tokens (R106). The words
 // after a correct answer are one kind with the work and without it, and their worst is with it;
-// they have no expected tokens until their admission measures them (R112).
+// their expected tokens are those of the 110 calls of the run that admitted them, with the work,
+// without it and with a note, version 1 of their prompt (T144; R113).
 var kinds = map[Call]kind{
 	CallSheet: {
 		capability: admissionv0.CapabilityHandwritingReading,
@@ -131,6 +132,7 @@ var kinds = map[Call]kind{
 		maxIn:      maxTextBytes + tokensOf(maxCropSide, 1),
 		maxOut:     wordsMaxOutput,
 		models:     1,
+		expected:   map[string]tokens{"claude-opus-5-5": {in: 1371, out: 402}},
 	},
 }
 

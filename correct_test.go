@@ -15,8 +15,8 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// withCorrect admits Opus 5.5 at high for the words after a correct answer alone, with the prompt
-// named, for a test: the platform's list has no entry of them until their admission (T144).
+// withCorrect puts in place of the list's entry of the words after a correct answer, for a test, one
+// of Opus 5.5 at high with the prompt named, or none when the prompt is empty.
 func withCorrect(t *testing.T, prompt string) {
 	t.Helper()
 	old := admission.Admitted
@@ -131,8 +131,8 @@ func TestCorrectAnswerWordsRefuses(t *testing.T) {
 }
 
 // The words after a correct answer are one model's: ChooseCall takes their entry, Price is one call
-// of it with no expected tokens, at worst the bound of the text and the largest crop, and the check
-// of a key asks the model.
+// of it, expected by the tokens of the run that admitted them (T144) and at worst the bound of the
+// text and the largest crop, and the check of a key asks the model.
 func TestCorrectAnswerWordsCall(t *testing.T) {
 	withCorrect(t, correct.Fingerprint())
 	opus := &fake{resp: provider.Response{JSON: praised, Model: "claude-opus-5-5"}, prices: opusPrices}
@@ -142,7 +142,7 @@ func TestCorrectAnswerWordsCall(t *testing.T) {
 		t.Errorf("ChooseCall(CallCorrect) = %+v, %+v, %v", e, a, err)
 	}
 	maxIn := float64(24000 + 147*147)
-	if p, a, err := lib.Price(CallCorrect, platform); err != nil || !a.Admitted || p.Expected || !p.Worst || !near(p.WorstUSD, (maxIn*5+16000*20)/1e6) {
+	if p, a, err := lib.Price(CallCorrect, platform); err != nil || !a.Admitted || !p.Expected || !near(p.ExpectedUSD, (1371*4+402*20)/1e6) || !p.Worst || !near(p.WorstUSD, (maxIn*5+16000*20)/1e6) {
 		t.Errorf("Price(CallCorrect) = %+v, %+v, %v", p, a, err)
 	}
 	admission.Admitted = slices.DeleteFunc(slices.Clone(admission.Admitted), func(e admission.Entry) bool {
