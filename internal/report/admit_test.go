@@ -144,3 +144,99 @@ func TestAdmitExamples(t *testing.T) {
 		}
 	}
 }
+
+// pageReport is a report of reading the workbook by a pair, with module-kit's verdicts: one page of
+// the boxes of every kind, each box read in every repeat as its kind says, the boxes noted mirrored
+// or crossed out as their markup notes them.
+func pageReport(boxes ...pageBoxes) *evalv1.Report {
+	r := admissionReport()
+	r.EvalSet = &evalv1.Report_CapabilitySet{CapabilitySet: &evalv1.CapabilityEvalSet{Name: "workbook-gen-test"}}
+	page := &evalv1.Measurement{}
+	for _, b := range boxes {
+		for range b.n {
+			slot := &evalv1.AnswerSlotResult{Truth: &evalv1.Verdict{Verdict: b.truth}, Mirrored: b.mirrored, CrossedOut: b.crossed}
+			for _, v := range b.reads {
+				slot.Readings = append(slot.Readings, &evalv1.Reading{Verdict: &evalv1.Verdict{Verdict: v}})
+			}
+			page.AnswerSlots = append(page.AnswerSlots, slot)
+		}
+	}
+	r.Samples = []*evalv1.SampleResult{{Sample: "page-021", Result: &evalv1.SampleResult_Measured{Measured: page}}}
+	return r
+}
+
+// pageBoxes are n boxes of a page whose truth is truth, read as reads says, mirrored or crossed out.
+type pageBoxes struct {
+	n                 int
+	truth             string
+	reads             []string
+	mirrored, crossed bool
+}
+
+var wrong3 = []string{"not_yet", "not_yet", "not_yet"}
+
+// The rule of the workbook counts the boxes an adult writes, and the mirrored and the crossed-out
+// boxes apart, with no target: an alarm on them takes no stage away. It gives the stage author alone,
+// though the bounds come within the target of the stage full.
+func TestAdmitWorkbook(t *testing.T) {
+	adult := []pageBoxes{{30, "correct", right3, false, false}, {20, "not_yet", wrong3, false, false}}
+	apart := []pageBoxes{
+		{4, "unreadable", []string{"unreadable", "not_yet", "correct"}, true, false},
+		{3, "correct", []string{"correct", "not_yet", "correct"}, false, true},
+	}
+	d := report.AdmitWorkbook(pageReport(append(adult, apart...)...))
+	if d.Stage != admission.StageAuthor || d.Why != "" || d.Alarm != (report.SlotShare{Of: 30, Upper: d.Alarm.Upper}) || d.Correct.Of != 20 || d.Correct.Events != 0 {
+		t.Errorf("the boxes an adult writes are %+v and %+v, stage %q, why %q", d.Alarm, d.Correct, d.Stage, d.Why)
+	}
+	if m := d.Mirrored; m.Alarm.Events != 4 || m.Alarm.Of != 4 || m.Correct.Events != 4 || m.Correct.Of != 4 {
+		t.Errorf("the mirrored boxes are %+v", m)
+	}
+	if c := d.CrossedOut; c.Alarm.Events != 3 || c.Alarm.Of != 3 || c.Correct.Of != 0 {
+		t.Errorf("the crossed-out boxes are %+v", c)
+	}
+	if m := d.Measures.All; m.Readings != 3*57 {
+		t.Errorf("the measures of section 14 count %d readings, not every box's", m.Readings)
+	}
+	// Admit's rule over all the boxes takes the alarms on the mirrored and crossed-out boxes.
+	if s := report.Admit(pageReport(append(adult, apart...)...)); s.Stage != "" || !strings.Contains(s.Why, "7 false alarms and 4 false correct") {
+		t.Errorf("Admit on the page is %q, %q", s.Stage, s.Why)
+	}
+	full := report.AdmitWorkbook(pageReport(pageBoxes{n: 300, truth: "correct", reads: right3}, pageBoxes{n: 300, truth: "not_yet", reads: wrong3}))
+	if full.Stage != admission.StageAuthor || full.Alarm.Upper > report.FullTarget || full.Correct.Upper > report.FullTarget {
+		t.Errorf("the bounds %.4f and %.4f give the stage %q", full.Alarm.Upper, full.Correct.Upper, full.Stage)
+	}
+	for _, c := range []struct {
+		name  string
+		boxes []pageBoxes
+		why   string
+	}{
+		{"an alarm on a box an adult writes", append([]pageBoxes{{1, "correct", []string{"correct", "correct", "not_yet"}, false, false}}, adult...), "1 false alarms and 0 false correct"},
+		{"a false correct on a near key", append([]pageBoxes{{1, "not_yet", []string{"not_yet", "correct", "not_yet"}, false, false}}, adult...), "0 false alarms and 1 false correct"},
+		{"too few boxes an adult writes", []pageBoxes{{29, "correct", right3, false, false}, {20, "not_yet", wrong3, false, false}, {40, "correct", right3, false, true}}, "29 slots a false alarm"},
+		{"too few for a false correct", []pageBoxes{{30, "correct", right3, false, false}, {19, "not_yet", wrong3, false, false}, {40, "unreadable", []string{"unreadable", "unreadable", "unreadable"}, true, false}}, "19 slots a false correct"},
+	} {
+		if d := report.AdmitWorkbook(pageReport(c.boxes...)); d.Stage != "" || !strings.Contains(d.Why, c.why) {
+			t.Errorf("%s: stage %q, why %q; want %q", c.name, d.Stage, d.Why, c.why)
+		}
+	}
+}
+
+// The rule of the workbook refuses as Admit refuses: verdicts not module-kit's, another capability,
+// no pair, a refused sample.
+func TestAdmitWorkbookRefuses(t *testing.T) {
+	cases := map[string]func(*evalv1.Report){
+		"verdicts":        func(r *evalv1.Report) { r.Verdicts.Code = evalv1.VerdictCode_VERDICT_CODE_RUNNER },
+		"handwriting":     func(r *evalv1.Report) { r.Capability = evalv1.Capability_CAPABILITY_RUBRIC_ASSESSMENT },
+		"names 1 readers": func(r *evalv1.Report) { r.Readers = r.Readers[:1] },
+		"refused 1": func(r *evalv1.Report) {
+			r.Samples = append(r.Samples, &evalv1.SampleResult{Sample: "page-022", Result: &evalv1.SampleResult_Refused{Refused: evalv1.Refusal_REFUSAL_CHILD}})
+		},
+	}
+	for want, change := range cases {
+		r := pageReport(pageBoxes{n: 30, truth: "correct", reads: right3}, pageBoxes{n: 20, truth: "not_yet", reads: wrong3})
+		change(r)
+		if d := report.AdmitWorkbook(r); d.Stage != "" || !strings.Contains(d.Why, want) {
+			t.Errorf("%s: stage %q, why %q", want, d.Stage, d.Why)
+		}
+	}
+}

@@ -116,7 +116,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	flags.Var(&setValues, "set", "a set of sheets, DIR,BANK,PLAN, in place of -dir, -bank and -plan; given once for each set, for a reading or a hint over several")
 	part := flags.String("part", "", "the part of the split to run, dev or test, or all for every sheet of the plan, without the split, or recorded for every sheet recorded so far, the rest of the plan left out; for the workbook and the essays, their pages and essays of that part, or all")
 	repeats := flags.Int("repeats", 3, "how many times each call is repeated: of every judge, every tutor of the hint and every assessor of the essays, and of every reader but Opus, which reads once")
-	readsList := flags.String("reads", "keys", "what a reading reads, joined by commas: keys, the finished sheet without a key, with the right key and with the false keys; heights, at 16, 24 and 48 px; states, the sheet as it was while it was written; plain, alone, the run of admission: the finished sheet without a key, by every reader in every repeat, Opus too, and the reader that reads once in a measurement, Opus, paired with each other. For the workbook, bare, its pages at 32 px without the lines of the items; captions, with them and without, by default; and heights, at 16, 24 and 48 px")
+	readsList := flags.String("reads", "keys", "what a reading reads, joined by commas: keys, the finished sheet without a key, with the right key and with the false keys; heights, at 16, 24 and 48 px; states, the sheet as it was while it was written; plain, alone, the run of admission: the finished sheet without a key, by every reader in every repeat, Opus too, and the reader that reads once in a measurement, Opus, paired with each other. For the workbook, bare, its pages at 32 px without the lines of the items; captions, with them and without, by default; heights, at 16, 24 and 48 px; and plain, alone, the run of admission: the bare pages at 32 px by every reader in every repeat, Opus too")
 	pagesFile := flags.String("workbook", workbookFile, "for -kind workbook, the file of the pages of the workbook")
 	essaysPath := flags.String("essays", essaysFile, "for -kind essay, the file of the essays")
 	maxUSD := flags.Float64("max-usd", 0, "start no call that could take the run past this many US dollars; $3 for dev, $6 for test ($8 for the essays), $2 for all and $8 for recorded by default")
@@ -185,7 +185,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		}
 		if k.file == "workbook" {
 			if o.workbookReads, ok = workbookFlags(set, *readsList); !ok {
-				_, _ = fmt.Fprintf(stderr, "tutor-eval run: -reads is %q: for the workbook, give bare, captions or heights, joined by commas\n", *readsList)
+				_, _ = fmt.Fprintf(stderr, "tutor-eval run: -reads is %q: for the workbook, give bare, captions or heights, joined by commas, or plain alone\n", *readsList)
 				return exitUsage
 			}
 		}
@@ -793,6 +793,12 @@ func planWorkbook(_ []sheetFlags, part string, o options) (*runner.Run, string, 
 		what = append(what, fmt.Sprintf("bare and with the lines of the items at %d px, by %s", render.Digit, by))
 	case o.workbookReads.Bare:
 		what = append(what, fmt.Sprintf("bare at %d px, by %s", render.Digit, by))
+	case o.workbookReads.Plain:
+		var names []string
+		for _, rd := range readers {
+			names = append(names, rd.Name)
+		}
+		what = append(what, fmt.Sprintf("the run of admission: bare at %d px, by %s in %s each", render.Digit, strings.Join(names, " and "), count(o.repeats, "repeat")))
 	}
 	if o.workbookReads.Heights && repeated != "" {
 		what = append(what, fmt.Sprintf("bare at 16, 24 and 48 px, once by %s", repeated))

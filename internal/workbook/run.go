@@ -52,12 +52,19 @@ const (
 // Reads are what a run reads of its pages: the pages at 32 px, bare and captioned, captions; the
 // bare pages at 32 px alone, bare, as the platform reads them, with no line of the item (the
 // 2026-10-28 amendment to R53 spec; R50); and the bare pages at the other heights of digits,
-// heights, read once, by the readers that do not read once (R08; R28).
+// heights, read once, by the readers that do not read once (R08; R28). Plain is the run of admission
+// (T155; R124): the bare pages at 32 px alone, by every reader in every repeat, Opus too, as the
+// admission run of a sheet reads (reading.Plain); it goes with nothing else. A reader that reads once
+// in a measurement keeps the mark in its record: it is the strong reader of the pair.
 type Reads struct {
-	Bare, Captions, Heights bool
+	Bare, Captions, Heights, Plain bool
 }
 
-// ParseReads reads what a run reads from a list of bare, captions and heights, joined by commas.
+// Plain is the name of the reads of a run of admission, as Names and the log write it.
+const Plain = "plain"
+
+// ParseReads reads what a run reads from a list of bare, captions and heights, joined by commas, or
+// of plain alone.
 func ParseReads(list string) (Reads, error) {
 	var r Reads
 	for _, name := range strings.Split(list, ",") {
@@ -68,9 +75,14 @@ func ParseReads(list string) (Reads, error) {
 			r.Captions = true
 		case "heights":
 			r.Heights = true
+		case Plain:
+			r.Plain = true
 		default:
-			return r, fmt.Errorf("workbook: %q is nothing a run reads: give bare, captions or heights, joined by commas", name)
+			return r, fmt.Errorf("workbook: %q is nothing a run reads: give bare, captions, heights or plain, joined by commas", name)
 		}
+	}
+	if r.Plain && (r.Bare || r.Captions || r.Heights) {
+		return r, fmt.Errorf("workbook: plain is read alone, without bare, captions or heights")
 	}
 	return r, nil
 }
@@ -86,6 +98,9 @@ func (r Reads) Names() []string {
 	}
 	if r.Heights {
 		out = append(out, "heights")
+	}
+	if r.Plain {
+		out = append(out, Plain)
 	}
 	return out
 }
@@ -157,7 +172,8 @@ func Pages(wb *sample.Workbook, part string) []*sample.WorkbookPage {
 //   - bare: the crops at 32 px, bare. A reader that reads once asks only in the first repeat;
 //   - captions: the crops at 32 px, bare and captioned, so too;
 //   - heights: the bare crops at 16, 24 and 48 px, in the first repeat, by the readers that do not
-//     read once.
+//     read once;
+//   - plain: the crops at 32 px, bare, in every repeat, by every reader, the one that reads once too.
 func New(part, file, dir string, seed uint64, pages []*evalsample.Page, readers []Reader, repeats int, reads Reads) (*runner.Run, error) {
 	if repeats < 1 {
 		return nil, fmt.Errorf("workbook: %d repeats", repeats)
@@ -199,7 +215,7 @@ func New(part, file, dir string, seed uint64, pages []*evalsample.Page, readers 
 	// that read once.
 	var records []ReaderRecord
 	for _, rd := range readers {
-		if reads.Bare || reads.Captions || !rd.Once {
+		if reads.Bare || reads.Captions || reads.Plain || !rd.Once {
 			records = append(records, rd.Record())
 		}
 	}
@@ -224,10 +240,11 @@ func New(part, file, dir string, seed uint64, pages []*evalsample.Page, readers 
 				continue
 			}
 			for _, rd := range readers {
-				if rd.Once && rep > 1 {
+				// In a run of admission every reader reads in every repeat, the strong one too.
+				if rd.Once && rep > 1 && !reads.Plain {
 					continue
 				}
-				if reads.Bare || reads.Captions {
+				if reads.Bare || reads.Captions || reads.Plain {
 					add(rd, rep, p, Bare, render.Digit)
 				}
 				if reads.Captions {

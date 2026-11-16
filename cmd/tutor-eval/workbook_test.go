@@ -230,6 +230,48 @@ func TestRunWorkbookBare(t *testing.T) {
 	}
 }
 
+// The run of admission of the workbook on the stub: the bare pages by the pair in every repeat, Opus
+// too, the pair's runner's report of every repeat, and admit -kind workbook rules on it by the rule
+// of the workbook, with the mirrored and the crossed-out boxes in rows of their own (R124). The dev
+// part holds too few boxes an adult writes for a stage, and admit says so.
+func TestAdmitWorkbookRun(t *testing.T) {
+	log := filepath.Join(t.TempDir(), "workbook.jsonl")
+	code, out, errs := runMeasure("yes\n", "-kind", "workbook", "-workbook", theWorkbook, "-dir", drawnOf(t, theWorkbook), "-part", "dev", "-stub", "-repeats", "2", "-reads", "plain", "-readers", "opus-high,haiku-medium", "-log", log)
+	if code != exitOK || !strings.Contains(out, "the run of admission: bare at 32 px, by opus-high and haiku-medium in 2 repeats each, a call a page,") || !strings.Contains(out, "20 calls") {
+		t.Fatalf("the run ends %d:\n%s%s", code, out, errs)
+	}
+	if code, out, errs := runIt("report", log); code != exitOK {
+		t.Fatalf("the report ends %d: %s%s", code, out, errs)
+	}
+	pair := strings.TrimSuffix(log, ".jsonl") + ".opus-high+haiku-medium.report.json"
+	code, out, errs = runIt("admit", "-kind", "workbook", pair)
+	if code != exitOK {
+		t.Fatalf("admit ends %d: %s", code, errs)
+	}
+	for _, want := range []string{
+		"## " + filepath.Base(pair),
+		"- stage: none: 10 slots a false correct could happen on, fewer than 20",
+		"- set: workbook-dev, 2 repeats",
+		"- false alarms: 0 of 30 answer slots",
+		"- the shares above are of the boxes an adult writes; the rule gives the stage author alone (R124)\n",
+		"- mirrored boxes, without a target: false alarms 0 of 5, false correct 0 of 5\n",
+		"- crossed-out boxes, without a target: false alarms 0 of 5, false correct 0 of 0\n\n",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("admit -kind workbook says\n%s\nwithout %q", out, want)
+		}
+	}
+	if code, out, _ := runIt("admit", pair); code != exitOK || strings.Contains(out, "mirrored") {
+		t.Errorf("admit of a sheet ends %d:\n%s", code, out)
+	}
+	if code, _, errs := runIt("admit", "-kind", "essay", pair); code != exitUsage || !strings.Contains(errs, "give sheet or workbook") {
+		t.Errorf("admit -kind essay ends %d: %s", code, errs)
+	}
+	if code, _, errs := runMeasure("yes\n", "-kind", "workbook", "-workbook", theWorkbook, "-dir", drawnOf(t, theWorkbook), "-part", "dev", "-stub", "-reads", "plain,bare", "-log", log+"2"); code != exitUsage || !strings.Contains(errs, "or plain alone") {
+		t.Errorf("plain with bare ends %d: %s", code, errs)
+	}
+}
+
 // A run of the reading of the workbook on the stub goes the whole way, a call a page, and logs the
 // pages and the calls; it takes the samples of the pages and no sheets, logs in synthetic by
 // default, and reads captions and heights alone.
@@ -259,7 +301,7 @@ func TestRunWorkbook(t *testing.T) {
 		{[]string{"-seed", "2"}, "flag provided but not defined: -seed"},
 		{[]string{"-essays", theEssays}, "-essays is not for -kind workbook"},
 		{[]string{"-set", "a,b,c"}, "-set names sheets"},
-		{[]string{"-reads", "keys"}, `-reads is "keys": for the workbook, give bare, captions or heights`},
+		{[]string{"-reads", "keys"}, `-reads is "keys": for the workbook, give bare, captions or heights, joined by commas, or plain alone`},
 		// The tests run in cmd/tutor-eval, where synthetic is a folder git does not ignore.
 		{nil, "cmd/tutor-eval/synthetic/runs is in the git work tree"},
 	} {

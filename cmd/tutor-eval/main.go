@@ -128,10 +128,13 @@ const usage = `usage:
                              the essays on samples of the protocol gets the runner's reports
                              too, .<reader>.report.json for each reader and pair, and their
                              measures in .protocol.csv
-  tutor-eval admit REPORT... the rule of admission on runners' reports (R80): the stage each
+  tutor-eval admit [-kind sheet|workbook] REPORT...
+                             the rule of admission on runners' reports (R80): the stage each
                              admits its readers to, full or author, or why none, with the
                              false alarms and false correct by answer slot, their bounds, and
-                             the SHA-256 of the file; no sample is named
+                             the SHA-256 of the file; -kind workbook, the rule of the workbook
+                             (R124): the stage author on the boxes an adult writes, and the
+                             mirrored and crossed-out boxes beside; no sample is named
   tutor-eval workbook [-file F] [-dir D]
                              check the pages of the workbook, read the samples of them that
                              draw drew, and sum up their boxes, the samples read and refused,
