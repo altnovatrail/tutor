@@ -184,6 +184,17 @@ func TestPlatform(t *testing.T) {
 	if a := table.Admit(adult("anthropic", admissionv0.AiRoutePlatformAi), facts); !a.Admitted {
 		t.Errorf("anthropic, platform AI, adult, with its facts: %s", asJSON(t, a))
 	}
+	// From table 0.4 platform AI of an adult needs the processor agreement alone, under the
+	// provider's usual retention, which version 4 of the privacy policy names (the second
+	// 2026-11-15 amendment to R96 spec; R149 spec): the operator of novatrail withdraws
+	// minimal_retention, and adults keep their platform AI.
+	agreement, err := ReadFacts(table, []byte("anthropic:\n  data_processing_agreement: [adult]\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if a := table.Admit(adult("anthropic", admissionv0.AiRoutePlatformAi), agreement); !a.Admitted {
+		t.Errorf("anthropic, platform AI, adult, the agreement alone: %s", asJSON(t, a))
+	}
 }
 
 func TestClosedByDefault(t *testing.T) {

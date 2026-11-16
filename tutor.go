@@ -16,13 +16,13 @@ import (
 )
 
 // Config is what api gives tutor when it starts (architecture 3.10): spec's admission table, the
-// deployment's facts, the least stage of admission its learners take — admission.StageAuthor only
-// where the author alone learns, as in the first app (R76 spec; R80) —, the platform's keys at the
-// AI providers, which api reads from Secret Manager (architecture 1), and the adapters of the
-// providers whose models the service calls, such as claude.Dial of package provider/claude. The
-// library builds no adapter in, so that a service carries the SDKs of the adapters it gives alone
-// (Д185 RUN.md spec; R90). A provider with no adapter here is no route at all, and one with no key
-// no route of platform AI: Choose takes none of its models.
+// deployment's facts, the least stage of admission its learners take — admission.StageAuthor where
+// the operator names it, as novatrail does for adults (the 2026-11-15 amendment to R76 spec; R80)
+// —, the platform's keys at the AI providers, which api reads from Secret Manager (architecture
+// 1), and the adapters of the providers whose models the service calls, such as claude.Dial of
+// package provider/claude. The library builds no adapter in, so that a service carries the SDKs of
+// the adapters it gives alone (Д185 RUN.md spec; R90). A provider with no adapter here is no route
+// at all, and one with no key no route of platform AI: Choose takes none of its models.
 type Config struct {
 	Table    *admission.Table
 	Facts    admission.Facts
