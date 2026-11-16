@@ -1315,4 +1315,4 @@ What was measured: the time of `ci-test` before and after R118 — `go test -rac
 
 - The profile `coverage/go.out` has the same 9,604 lines before and after, and each package the same coverage: a package's lines count by its own tests, whichever run they are in.
 - Most of what remains is compiling with the empty cache, twice: the packages of `RACE` and their dependencies, the SDKs of the providers among them, with the detector, and the module without it. The cache of Go in CI is row 7.13 of `spec`'s COORDINATION.md (T149).
-- In CI on `main`, «Go / test» took 517 s on 2026-11-16 at 143321f and 374 s at eddb825, the runs 43805472220 and 43811335056; the job on the pull request of T148 is in its «Сделано», [plan/E10.md](plan/E10.md).
+- In CI, «Go / test»: on `main` on 2026-11-16, 517 s at 143321f and 374 s at eddb825, of which the step `ci-test` 326 s (the runs 43805472220 and 43811335056); on pull request #178 of T148, its first commit ef19739, 196 s, of which `ci-test` 156 s (the run 43817071698). The other jobs did not change, and their times vary from run to run: «Canvas» 87 s against 117 and 142 on `main`, «Go / lint» 125 s against 91 and 120.

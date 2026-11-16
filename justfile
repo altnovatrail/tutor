@@ -263,8 +263,9 @@ ci-lint: lint
 
 # The packages whose code or tests start goroutines, which ci-test runs with the race detector: the
 # library's calls to the models, the board's checks, and the adapters' tests on servers of
-# httptest. The rest start none, and under the detector cmd/tutor-eval and internal/evalsample
-# alone took 273 s and 166 s of the job's 413 (measurements 3.1 spec), so they run without it.
+# httptest. The rest start none, but for the runner's parallel tests, which share nothing they
+# write (R92); under the detector cmd/tutor-eval and internal/evalsample alone took 273 s and
+# 166 s of the job's 413 (measurements 3.1 spec), so the rest run without it.
 # TestRaceStartsGoroutines, in tutor_test.go, holds this list to the code both ways (R118).
 RACE := ". ./internal/board ./provider/claude ./provider/gpt"
 
@@ -282,7 +283,11 @@ ci-test: release-files-test
     mkdir -p coverage
     rm -f coverage/go.out coverage/race.out coverage/rest.out
     race="$(go list {{ RACE }})"
-    rest="$(go list ./... | grep -vxF -e "$race")"
+    rest="$(go list ./... | grep -vxF -e "$race" || true)"
+    if [ -z "$rest" ]; then
+        echo "ci-test: RACE names every package, and the run without the detector would have none" >&2
+        exit 1
+    fi
     status=0
     # shellcheck disable=SC2086 # the lists are import paths, one word each
     go test -race -count=1 -timeout 15m -covermode=atomic -coverprofile=coverage/race.out $race || status=1
