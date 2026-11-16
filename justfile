@@ -261,16 +261,38 @@ release-files-test:
 # Run lint, the linters and the formatting check, under the name go.yml runs.
 ci-lint: lint
 
-# Run every test, with the race detector and without the test cache, and the check of the release
-# recipe, which is shell and not Go. The coverage of the tests goes to coverage/go.out, one Go
-# profile, which the coverage job of .github's shared go.yml sends to Codecov (R48 spec; R66). A
-# package's lines count by its own tests: -coverpkg=./... would make the profile 25 times larger
-# and the run twice as long for 1.4 points more (R66). The tests of cmd/tutor-eval take most of the
-# run under the race detector, about 7.5 minutes in CI: -timeout 15m holds them clear of go test's
-# default of 10 minutes, and the job's own timeout of 20 still stops a test that hangs (R92).
+# The packages whose code or tests start goroutines, which ci-test runs with the race detector: the
+# library's calls to the models, the board's checks, and the adapters' tests on servers of
+# httptest. The rest start none, and under the detector cmd/tutor-eval and internal/evalsample
+# alone took 273 s and 166 s of the job's 413 (measurements 3.1 spec), so they run without it.
+# TestRaceStartsGoroutines, in tutor_test.go, holds this list to the code both ways (R118).
+RACE := ". ./internal/board ./provider/claude ./provider/gpt"
+
+# Run every test, without the test cache, and the check of the release recipe, which is shell and
+# not Go: the packages of RACE with the race detector, then the rest without it. The coverage of
+# both runs goes to coverage/go.out, one Go profile in one mode, which the coverage job of .github's
+# shared go.yml sends to Codecov (R48 spec; R66). A package's lines count by its own tests:
+# -coverpkg=./... would make the profile 25 times larger and the run twice as long for 1.4 points
+# more (R66). -timeout 15m is the margin R92 gave the race detector, and the job's own timeout of
+# 20 still stops a test that hangs. Both runs go to the end, so that a failure of the first does
+# not hide one of the second.
 ci-test: release-files-test
+    #!/usr/bin/env bash
+    set -euo pipefail
     mkdir -p coverage
-    go test -race -count=1 -timeout 15m -covermode=atomic -coverprofile=coverage/go.out ./...
+    rm -f coverage/go.out coverage/race.out coverage/rest.out
+    race="$(go list {{ RACE }})"
+    rest="$(go list ./... | grep -vxF -e "$race")"
+    status=0
+    # shellcheck disable=SC2086 # the lists are import paths, one word each
+    go test -race -count=1 -timeout 15m -covermode=atomic -coverprofile=coverage/race.out $race || status=1
+    # shellcheck disable=SC2086
+    go test -count=1 -timeout 15m -covermode=atomic -coverprofile=coverage/rest.out $rest || status=1
+    if [ "$status" -ne 0 ]; then
+        exit "$status"
+    fi
+    { cat coverage/race.out; tail -n +2 coverage/rest.out; } > coverage/go.out
+    rm -f coverage/race.out coverage/rest.out
 
 # The drawn samples of spec's eval protocol that the tests hold to what tutor-eval draw writes,
 # one of each kind it draws (internal/evalsample's testdata), checked against the rules of sections

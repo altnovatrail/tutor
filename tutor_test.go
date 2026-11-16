@@ -5,7 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -300,6 +306,73 @@ func TestRootImportsNoProvider(t *testing.T) {
 		if dep == "github.com/altnovatrail/tutor/provider/claude" || dep == "github.com/altnovatrail/tutor/provider/gpt" || strings.HasPrefix(dep, "github.com/anthropics/") || strings.HasPrefix(dep, "github.com/openai/") {
 			t.Errorf("the root package takes %s", dep)
 		}
+	}
+}
+
+// The packages ci-test runs with the race detector, RACE of the justfile, are those whose code or
+// tests start goroutines: a go statement, a Go method, as sync.WaitGroup's or errgroup's, or a
+// server of httptest, whose handlers run on goroutines of their own. A package that comes to start
+// one fails until it is in RACE, and one that no longer does, until it leaves (R118).
+func TestRaceStartsGoroutines(t *testing.T) {
+	justfile, err := os.ReadFile("justfile")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := regexp.MustCompile(`(?m)^RACE := "([^"]*)"$`).FindSubmatch(justfile)
+	if m == nil {
+		t.Fatal(`the justfile has no line RACE := "…"`)
+	}
+	race := map[string]bool{}
+	for _, dir := range strings.Fields(string(m[1])) {
+		race[filepath.Clean(dir)] = true
+	}
+	out, err := exec.Command("go", "list", "-f", `{{.Dir}}|{{join .GoFiles ","}},{{join .TestGoFiles ","}},{{join .XTestGoFiles ","}}`, "./...").Output()
+	if err != nil {
+		t.Fatalf("go list: %v", err)
+	}
+	root, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for line := range strings.Lines(string(out)) {
+		abs, names, _ := strings.Cut(strings.TrimSpace(line), "|")
+		dir, err := filepath.Rel(root, abs)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var starts []string
+		fset := token.NewFileSet()
+		for name := range strings.SplitSeq(names, ",") {
+			if name == "" {
+				continue
+			}
+			f, err := parser.ParseFile(fset, filepath.Join(dir, name), nil, parser.SkipObjectResolution)
+			if err != nil {
+				t.Fatal(err)
+			}
+			ast.Inspect(f, func(n ast.Node) bool {
+				switch n := n.(type) {
+				case *ast.GoStmt:
+					starts = append(starts, fmt.Sprintf("%s: a go statement", fset.Position(n.Pos())))
+				case *ast.SelectorExpr:
+					x, _ := n.X.(*ast.Ident)
+					if n.Sel.Name == "Go" || x != nil && x.Name == "httptest" && strings.HasPrefix(n.Sel.Name, "New") && strings.HasSuffix(n.Sel.Name, "Server") {
+						starts = append(starts, fmt.Sprintf("%s: %s", fset.Position(n.Pos()), n.Sel.Name))
+					}
+				}
+				return true
+			})
+		}
+		switch {
+		case len(starts) > 0 && !race[dir]:
+			t.Errorf("%s starts goroutines and is not in RACE of the justfile: %s", dir, strings.Join(starts, "; "))
+		case len(starts) == 0 && race[dir]:
+			t.Errorf("%s is in RACE of the justfile and starts no goroutine", dir)
+		}
+		delete(race, dir)
+	}
+	for dir := range race {
+		t.Errorf("%s is in RACE of the justfile and is no package of the module", dir)
 	}
 }
 
