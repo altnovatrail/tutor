@@ -13,8 +13,9 @@ const ReasonModelNotAdmitted admissionv0.AnswerReason = "model_not_admitted"
 
 // Stage is how far a model passed the rule of admission (R80): StageFull, the target of the first
 // slice — the upper bound of the share of false alarms no more than 1 % (product 10 spec) —, or
-// StageAuthor, no false alarm and no false "correct" on the author's own handwriting, enough for
-// the first app, where the author alone learns (R76 spec), and for nothing more.
+// StageAuthor, no false alarm and no false "correct" on the author's own handwriting, the rung a
+// deployment names for adults: on novatrail "author", and "full" the target measured on the samples
+// of adult volunteers (the 2026-11-15 amendment to R76 spec; R149 spec).
 type Stage string
 
 // The stages of admission.
@@ -151,8 +152,9 @@ var (
 // stage or above, whose every model the table admits for the route and the age category, with the
 // table's answer for its first model. Without such an entry it answers the first refusal of the
 // table for an entry of the capability, or, when the table refused none, ReasonModelNotAdmitted.
-// The least stage is the deployment's: StageAuthor only where the author alone learns, as in the
-// first app (R76 spec), and StageFull anywhere else; any other value chooses only StageFull.
+// The least stage is the deployment's: StageAuthor where its operator names it, as novatrail does
+// for adults (the 2026-11-15 amendment to R76 spec; R149 spec), and StageFull otherwise; any other
+// value chooses only StageFull.
 // Providers, when not nil, are the only providers whose models may serve: an own key is one
 // provider's, and on platform AI a provider without the platform's key cannot be called (T114).
 // When no entry of them is left, the answer is the table's for the first of them that it refuses,
