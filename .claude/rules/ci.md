@@ -12,7 +12,7 @@ paths:
 
 `.github/workflows/ci.yml` runs NovaTrail's shared checks from `.github`'s shared workflows, pinned to a release of `.github` by SHA with its version beside it (R03 .github): "Secrets" (gitleaks), "DCO", "Documents" — `docs-check-repo` — and "Go", the shared `go.yml`, whose recipes are the go rule, [go.md](go.md) (R13). Beside them run tutor's own jobs, in the `toolchain` stage: "Samples", `just ci-sample-check` (R69), and "Canvas", `just ci-canvas-check` (R76), the eval rule's checks, [eval.md](eval.md). CodeQL, Scorecard and SonarCloud run beside them too, and every pull request runs every check, documents only or not; a merge waits for them all and for `codecov/patch` (R30 spec). Their findings are closed before the next task, by rule 12 of RUN.md. A key-like constant in a test fails "Secrets" over the branch's whole history: write test keys as plain words.
 
-`.github/workflows/eval.yml` runs the eval with the platform's keys for eval from Secret Manager of `infra`, in the GitHub environment `eval`, and only by hand until the keys are there (R90; Д6 of DEBT.md).
+`.github/workflows/eval.yml` runs the eval with the platform's keys for eval from Secret Manager of `infra`, in the GitHub environment `eval`, and only by hand until the keys are there (R90; Д6 of run/DEBT.md).
 
 ## The release
 
