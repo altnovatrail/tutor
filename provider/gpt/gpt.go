@@ -180,8 +180,8 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 // OpenAI assigns, organization_usage_limit_exceeded, each a 429; a 429 of the type insufficient_quota
 // with any other code, a refusal of billing whose cause the code does not name; and the key refused,
 // 401. OpenAI tells the cause of a refusal of billing by error.code, «The broader error.type can still
-// be insufficient_quota».
-func Refusal(status int, body []byte) provider.Refusal {
+// be insufficient_quota». No refusal of OpenAI says when access returns, so none carries a time.
+func Refusal(status int, body []byte, _ time.Time) provider.Refusal {
 	var e struct {
 		Error struct {
 			Code string `json:"code"`

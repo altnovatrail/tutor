@@ -6,12 +6,13 @@ import (
 	"net/http"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/altnovatrail/tutor/provider"
 )
 
 // byStatus classifies a 402 as billing and a 401 as the key, whatever the body says.
-func byStatus(status int, _ []byte) provider.Refusal {
+func byStatus(status int, _ []byte, _ time.Time) provider.Refusal {
 	switch status {
 	case http.StatusPaymentRequired:
 		return provider.Refusal{Limit: provider.LimitBilling}
@@ -39,7 +40,7 @@ func TestNoRetry(t *testing.T) {
 		var last provider.Refusal
 		body := `{"error":{"message":"` + strings.Repeat("x", 70000) + `"}}`
 		got := passes(t, &http.Response{StatusCode: status, Header: http.Header{}, Body: io.NopCloser(strings.NewReader(body))}, &last)
-		refusal := byStatus(status, nil) != provider.Refusal{}
+		refusal := byStatus(status, nil, time.Time{}) != provider.Refusal{}
 		if (got.Header.Get("x-should-retry") == "false") != refusal || (last != provider.Refusal{}) != refusal {
 			t.Errorf("%d: header %q, refusal %+v", status, got.Header.Get("x-should-retry"), last)
 		}
@@ -63,12 +64,48 @@ func TestNoRetry(t *testing.T) {
 	}
 }
 
+// The time a refusal is read at is the provider's, from the response's Date header; with no date,
+// or one that is none, it is the clock's.
+func TestNoRetryAnsweredAt(t *testing.T) {
+	var at time.Time
+	mw := provider.NoRetry(func(_ int, _ []byte, when time.Time) provider.Refusal {
+		at = when
+		return provider.Refusal{}
+	}, &provider.Refusal{})
+	answer := func(date string) time.Time {
+		t.Helper()
+		h := http.Header{}
+		if date != "" {
+			h.Set("Date", date)
+		}
+		if _, err := mw(&http.Request{}, func(*http.Request) (*http.Response, error) {
+			return &http.Response{StatusCode: http.StatusTooManyRequests, Header: h, Body: io.NopCloser(strings.NewReader("{}"))}, nil
+		}); err != nil {
+			t.Fatal(err)
+		}
+		return at
+	}
+	if got, want := answer("Mon, 30 Nov 2026 23:59:59 GMT"), time.Date(2026, 11, 30, 23, 59, 59, 0, time.UTC); !got.Equal(want) {
+		t.Errorf("the Date header gives %v, want %v", got, want)
+	}
+	for _, date := range []string{"", "yesterday"} {
+		before := time.Now()
+		if got := answer(date); got.Before(before) || got.After(time.Now()) {
+			t.Errorf("the date %q gives %v, not the clock's", date, got)
+		}
+	}
+}
+
 // A refusal wraps the provider's error into its own.
 func TestRefusalOf(t *testing.T) {
 	cause := errors.New("402")
 	var le *provider.LimitError
-	if err := (provider.Refusal{Limit: provider.LimitBilling}).Of(cause); !errors.As(err, &le) || le.Limit != provider.LimitBilling || !errors.Is(err, cause) || !strings.Contains(err.Error(), "billing") {
+	if err := (provider.Refusal{Limit: provider.LimitBilling}).Of(cause); !errors.As(err, &le) || le.Limit != provider.LimitBilling || !le.Returns.IsZero() || !errors.Is(err, cause) || !strings.Contains(err.Error(), "billing") {
 		t.Errorf("a limit: %v", err)
+	}
+	returns := time.Date(2026, 12, 1, 0, 0, 0, 0, time.UTC)
+	if err := (provider.Refusal{Limit: provider.LimitTier, Returns: returns}).Of(cause); !errors.As(err, &le) || le.Limit != provider.LimitTier || !le.Returns.Equal(returns) {
+		t.Errorf("a limit with when access returns: %v, %+v", err, le)
 	}
 	if err := (provider.Refusal{Key: true}).Of(cause); !errors.Is(err, provider.ErrKeyRefused) || !errors.Is(err, cause) {
 		t.Errorf("a key: %v", err)
