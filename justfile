@@ -139,9 +139,9 @@ open-tasks:
     go run ./cmd/tutor-eval open -file "$new" eval/bank.json eval/free-bank.json eval/workbook.json eval/essays.json
     mv "$new" eval/open-tasks.json
 
-# What .github's shared release.yml runs to build a release, in the toolchain stage of the commit
-# it releases, from that commit's tree as git archive writes it, and then signs every file (R62 in
-# docs/decisions.md; R18 .github). The release is the Go module's tag, which api builds from, and
+# What .github's shared release.yml runs to build a release, in the toolchain-core stage of the
+# commit it releases, from that commit's tree as git archive writes it, and then signs every file
+# (R62 in docs/decisions.md; R18 .github). The release is the Go module's tag, which api builds from, and
 # its files are the source of that commit, tutor_<version>_source.tar.gz; the open views of the
 # measurement's tasks, tutor_<version>_open-tasks.json, a copy of eval/open-tasks.json, which
 # canvas's CI puts into its sample page (R64); and SHA256SUMS over both. dist/ is made afresh and

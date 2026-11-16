@@ -8,7 +8,8 @@ Table 3 of [RUN.md](../RUN.md): the author's open questions from tasks' «Отк
 
 ## Table 3. Questions to the author
 
-Numbers are not reused: next — В85.
+Numbers are not reused: next — В86.
 
 | ID | Question | From | Options | Recommendation |
 |---|---|---|---|---|
+| В85 | «В реестр spec»: `just new-repo-draft tutor go 3.6 v0.18.4` writes into a copy of the kind `go` the comment of `spec`'s own stage `toolchain`, "spec's tests need nothing the core lacks, so here the stage adds nothing", which in a copy names the wrong repository's tests; `tutor` rewrote it by hand (R121), and every copy of the kinds `go` and `typescript` gets the same sentence | T150, `.devcontainer/Dockerfile` | (a) `new-repo` writes a sentence for a copy — what the kind adds, or that it adds nothing; (b) leave it, each move to a tag rewrites the comment | (a): one template text instead of a hand edit on every move, and `new-repo-check` can then hold it |
