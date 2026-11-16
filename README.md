@@ -70,7 +70,7 @@ A release comes out by itself after each merge into `main` that changes what the
 
 ## Documents
 
-The documents and the work plan are in English; the bodies of the plan's tasks and the archives of its epics are in Russian. Tasks T132 and T133 of the plan moved the sources and the measurements into files of their own in English, task T134 translated the rest of the documents, and tasks T135 and T136 the decision log.
+The documents and the work plan are in English; the description of its current epic, its table of tasks, the bodies of the tasks and the archives of its epics are in Russian. Tasks T132 and T133 of the plan moved the sources and the measurements into files of their own in English, task T134 translated the rest of the documents, and tasks T135 and T136 the decision log.
 
 - [docs/architecture.md](docs/architecture.md) — the component: what it does and does not do, its data and links, and what is still to decide.
 - [docs/decisions.md](docs/decisions.md) — the decision log: what was decided, why, and what was rejected.

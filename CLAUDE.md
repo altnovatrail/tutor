@@ -14,7 +14,7 @@ Its card in spec is architecture 3.6 spec. The card is the summary and this repo
 
 ## Documents
 
-The documents under `docs/` are in English, but for the epic archives `docs/plan/`, which stay in Russian; RUN.md and `run/` are in English, but for the bodies of tasks (R143 spec, R153 spec, R154 spec). T132 and T133 wrote `docs/sources.md` and `docs/measurements.md` in English, T134 translated `docs/architecture.md` and the sheet documents, and T135 and T136 the decision log (R102). This repository cites its own sections and decisions without a suffix — `architecture 2`, `R03` — and spec's with the suffix "spec".
+The documents under `docs/` are in English, but for the epic archives `docs/plan/`, which stay in Russian; RUN.md and `run/` are in English, but for the epic's description, table 1 and the bodies of tasks (R143 spec, R153 spec, R154 spec). T132 and T133 wrote `docs/sources.md` and `docs/measurements.md` in English, T134 translated `docs/architecture.md` and the sheet documents, and T135 and T136 the decision log (R102). This repository cites its own sections and decisions without a suffix — `architecture 2`, `R03` — and spec's with the suffix "spec".
 
 - [docs/architecture.md](docs/architecture.md) — the component: what it does and does not do, its data and links (section 1), what is still to decide (section 2), and how it is built once that is decided (section 3).
 - [docs/decisions.md](docs/decisions.md) — this repository's decision log, `R01`…: read it before proposing a change. Other repositories cite its entries as `R03 tutor`.

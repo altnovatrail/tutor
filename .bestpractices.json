@@ -22,7 +22,7 @@
   "discussion_status": "Met",
   "discussion_justification": "GitHub issues and pull requests: searchable, addressable by URL, open to anyone with a GitHub account, and nothing to install. https://github.com/altnovatrail/tutor/issues",
   "english_status": "Met",
-  "english_justification": "The README, CLAUDE.md, AGENTS.md, the documents under docs/ but for the archives of the epics, the code, its comments and the prompts are in English, and issues and pull requests are accepted in English or Russian. The work plan, RUN.md and its tables under run/, is in English too, but for the bodies of its tasks, which, with the archives of its epics under docs/plan/, are in Russian, the author's working language.",
+  "english_justification": "The README, CLAUDE.md, AGENTS.md, the documents under docs/ but for the archives of the epics, the code, its comments and the prompts are in English, and issues and pull requests are accepted in English or Russian. The work plan, RUN.md and its tables under run/, is in English too, but for the description of its current epic, its table of tasks and the bodies of its tasks, which, with the archives of its epics under docs/plan/, are in Russian, the author's working language.",
   "maintained_status": "Met",
   "maintained_justification": "Under active development: 104 pull requests merged since the repository was created on 2026-10-19, the latest on 2026-11-01. https://github.com/altnovatrail/tutor/commits/main",
   "repo_public_status": "Met",

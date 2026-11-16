@@ -1,6 +1,6 @@
 # RUN.md — work plan of tutor
 
-What tutor does, does not do and has still to decide — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.18.3: the component's card — architecture 3.6 spec; the order of repositories — repositories 6 spec. Small tasks, one at a time, gathered in epics; only the current epic is in detail, or two when a second runs beside it (R04; R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). No `run/TASKS.md`: a task outside an epic stands in table 1 (R103, R116).
+What tutor does, does not do and has still to decide — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.18.3: the component's card — architecture 3.6 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, gathered in epics; only the current epic is in detail, or two when a second runs beside it (R04; R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). No `run/TASKS.md`: a task outside an epic stands in table 1 (R103, R116).
 
 Language (R154 spec): rules and tables in English, terse, for the session; the epic's description, table 1 and the bodies of tasks in Russian — the author writes and reviews them.
 
@@ -58,7 +58,7 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | Статус | ID | Задача | Кто | План | Зависит от |
 |---|---|---|---|---|---|
 | [x] | T145 | Переход на тег `spec` v0.18.3 | Claude | — | — |
-| [ ] | T146 | План по R153–R155 spec: таблицы в `run/`, план на английском | Claude | — | T145 |
+| [x] | T146 | План по R153–R155 spec: таблицы в `run/`, план на английском | Claude | — | T145 |
 | [ ] | T147 | CI на релизе `.github` v0.1.24 | Claude | — | T145 |
 
 **Порядок:** T145 — первой, по тексту оркестратора. T146 и T147 друг от друга не зависят, но обе меняют план и `docs/decisions.md`, поэтому идут по одной: T146, затем T147.
@@ -68,18 +68,6 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 ## Epic E9. Переход на тег `spec` v0.18.3
 
 Открыт 2026-11-16 (R115); результат, основа и порядок — у таблицы 1. Поведение кода эпик не меняет: модули Go `spec` поднимаются с правкой комментариев и теста таблицы допуска 0.4, а CI меняет только ссылки на общие workflow.
-
-#### T146. План по R153–R155 spec: таблицы в `run/`, план на английском
-
-- **Цель:** план `tutor` — в раскладке и на языке заготовки `spec` v0.18.3: таблицы 2, 3 и 4 — `run/EPICS.md`, `run/QUESTIONS.md`, `run/DEBT.md`; правила RUN.md и таблицы — по-английски, коротко, для сессии; тела задач и архивы эпиков — по-русски (Д250 spec).
-- **Почему:** вторая часть перехода T145 по правилу 11 (R115): R153–R155 spec пришли с тегом v0.18.3, а `docs-check` и `just inbox` `spec` держат старую раскладку только до последнего переехавшего репозитория (Д250 spec).
-- **Сделать:**
-  1. По заготовке `just new-repo-draft tutor go 3.6 v0.18.3` на клоне `spec` v0.18.3 во временной папке: `run/EPICS.md` — таблица 2; `run/QUESTIONS.md` — таблица 3 со следующим свободным номером; `run/DEBT.md` — таблица 4 вместо `DEBT.md`, его строки по-английски, а абзацы закрытых долгов уходят из начала таблицы (Д250 spec); `docs-budgets.json` — пределы новых файлов, если нужны.
-  2. RUN.md — правила «Как пользоваться» и «Как устроен план: эпики» по-английски, коротко, по заготовке, номера правил прежние, с отличиями, которые держат решения этого журнала: правило 4 — R110 (доска, eval, ключ), правило 12 — SonarCloud, CodeQL и Scorecard. R103 — задачи вне эпика нет, она встаёт в эпик, — против `run/TASKS.md` R155 spec: взвесить и записать; поправка 2026-11-13 к R19 spec оставляет репозиторию его правило, если оно ставит такую задачу в эпик. Таблица 1 и тела задач — по-русски.
-  3. CLAUDE.md — раздел Documents по заготовке: RUN.md и `run/`; README.md — план по-английски; ссылки на `DEBT.md` в `docs/`, `.claude/rules/` и коде — на `run/DEBT.md`; [docs/plan/questions.md](docs/plan/questions.md) — ссылка из правил таблицы 3; архивы `docs/plan/` не переписываются.
-  4. Решение журнала — раскладка и язык плана, что взято из заготовки и что нет; поправки к R19, R23, R103 и к записям, которые называют `DEBT.md`.
-- **Как проверить:** `just -f spec/justfile docs-check-repo` — зелёный, таблицы 3 и 4 — в `run/`, без запасного чтения старой раскладки; `node` с `rowsForSpec` из `spec/tools/inbox/inbox.mjs` находит таблицу 3 в `run/QUESTIONS.md`; `/code-review high`, один круг.
-- **Разделы:** R153, R154, R155 spec; Д250 spec; R19 spec и её поправка 2026-11-13; R19, R23, R103, R110, R115.
 
 #### T147. CI на релизе `.github` v0.1.24
 
