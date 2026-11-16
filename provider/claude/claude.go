@@ -254,11 +254,13 @@ const (
 	notTheKey = "CORS requests are not allowed for this Organization"
 )
 
-// Refusal reads an error response of the Messages API: a spend limit the owner set, 400
-// invalid_request_error with its words; the cap of the tier, 429 with the error code
-// enforced_spend_limit_reached; a balance spent, by its words at any status; a fault of billing,
-// 402; and the key refused, 401.
-func Refusal(status int, body []byte) provider.Refusal {
+// Refusal reads an error response of the Messages API, answered at the time at: a spend limit the
+// owner set, 400 invalid_request_error with its words; the cap of the tier, 429 with the error code
+// enforced_spend_limit_reached, which lets the key go at 00:00 UTC on the first day of the next
+// month (docs/architecture.md, 3.7; sources 2.8 spec); a balance spent, by its words at any
+// status; a fault of billing, 402; and the key refused, 401. The owner's limit names when access
+// returns only in the words of its message, which are no contract, so it returns with no time.
+func Refusal(status int, body []byte, at time.Time) provider.Refusal {
 	var e struct {
 		Error struct {
 			Type    string `json:"type"`
@@ -276,13 +278,19 @@ func Refusal(status int, body []byte) provider.Refusal {
 	case status == http.StatusBadRequest && e.Error.Type == "invalid_request_error" && (strings.HasPrefix(m, ownerLimit) || strings.HasPrefix(m, workspaceLimit)):
 		return provider.Refusal{Limit: provider.LimitOwner}
 	case status == http.StatusTooManyRequests && e.Error.Details.ErrorCode == "enforced_spend_limit_reached":
-		return provider.Refusal{Limit: provider.LimitTier}
+		return provider.Refusal{Limit: provider.LimitTier, Returns: nextMonth(at)}
 	case status == http.StatusPaymentRequired:
 		return provider.Refusal{Limit: provider.LimitBilling}
 	case status == http.StatusUnauthorized && !strings.HasPrefix(m, notTheKey):
 		return provider.Refusal{Key: true}
 	}
 	return provider.Refusal{}
+}
+
+// nextMonth is 00:00 UTC on the first day of the month after the one at falls on, in UTC.
+func nextMonth(at time.Time) time.Time {
+	at = at.UTC()
+	return time.Date(at.Year(), at.Month()+1, 1, 0, 0, 0, 0, time.UTC)
 }
 
 // Check checks the key by counting the tokens of one word for the model: token counting is free

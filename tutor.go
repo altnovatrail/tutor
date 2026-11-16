@@ -293,16 +293,20 @@ type Usage struct {
 	FirstToken      time.Duration
 }
 
-// Outcome is how a call of the library ended: its kind; the reason of a limit; the admission's
-// answer, which on NotAdmitted refuses; and a record of usage for each call of a model that came
-// back, in the order of the models, none on NotAdmitted. Err says what failed, for the logs: it
-// carries no content and no key.
+// Outcome is how a call of the library ended: its kind; the reason of a limit, and when access
+// returns, where the provider's terms say it — at Anthropic, the cap of the tier, at 00:00 UTC on
+// the first day of the next month by the provider's clock —, zero where they do not (architecture
+// 3.7), which api gives the key's owner as access_returns; the admission's answer, which on
+// NotAdmitted refuses; and a record of usage for each call of a model that came back, in the order
+// of the models, none on NotAdmitted. Err says what failed, for the logs: it carries no content
+// and no key.
 type Outcome struct {
-	Kind      Kind
-	Limit     LimitReason
-	Admission admission.Answer
-	Usage     []Usage
-	Err       error
+	Kind          Kind
+	Limit         LimitReason
+	AccessReturns time.Time
+	Admission     admission.Answer
+	Usage         []Usage
+	Err           error
 }
 
 // call is a model of the entry chosen with its client.
@@ -402,20 +406,28 @@ func ask(ctx context.Context, a admission.Answer, calls []call, reqs []provider.
 			continue
 		}
 		// A refusal for a limit ends the call whatever the others did, and a refused key comes next:
-		// the pair gives both observations or the outcome, never one (architecture 3.7).
-		kind, limit := Failed, LimitReason("")
+		// the pair gives both observations or the outcome, never one (architecture 3.7). Of two
+		// limits, the one that holds the call longer: one with no time to return, which only the
+		// owner lifts, then the later time.
+		kind, limit, returns := Failed, LimitReason(""), time.Time{}
 		var le *provider.LimitError
 		switch {
 		case errors.As(errs[i], &le):
-			kind, limit = LimitReached, le.Limit
+			kind, limit, returns = LimitReached, le.Limit, le.Returns
 		case errors.Is(errs[i], provider.ErrKeyRefused):
 			kind = KeyRefused
 		}
-		if out.Err == nil || rank(kind) > rank(out.Kind) {
-			out.Kind, out.Limit, out.Err = kind, limit, fmt.Errorf("tutor: %s of %s: %w", c.model.Name(), c.model.Provider, errs[i])
+		if out.Err == nil || rank(kind) > rank(out.Kind) || kind == LimitReached && out.Kind == LimitReached && longer(returns, out.AccessReturns) {
+			out.Kind, out.Limit, out.AccessReturns, out.Err = kind, limit, returns, fmt.Errorf("tutor: %s of %s: %w", c.model.Name(), c.model.Provider, errs[i])
 		}
 	}
 	return resps, out
+}
+
+// longer tells whether a limit whose access returns at a holds the call longer than one whose
+// access returns at b: zero is no time, longer than any.
+func longer(a, b time.Time) bool {
+	return !b.IsZero() && (a.IsZero() || a.After(b))
 }
 
 // rank orders the kinds of a failed call, the one an outcome takes last: a limit, then a refused

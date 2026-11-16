@@ -512,31 +512,33 @@ func TestRefusals(t *testing.T) {
 		if code != "" {
 			details = `,"details":{"error_code":"` + code + `"}`
 		}
-		return reply{status: status, header: http.Header{"Retry-After-Ms": {"0"}}, body: `{"type":"error","error":{"type":"` + typ + `","message":"` + message + `"` + details + `}}`}
+		return reply{status: status, header: http.Header{"Retry-After-Ms": {"0"}, "Date": {"Mon, 30 Nov 2026 23:59:59 GMT"}}, body: `{"type":"error","error":{"type":"` + typ + `","message":"` + message + `"` + details + `}}`}
 	}
+	december := time.Date(2026, 12, 1, 0, 0, 0, 0, time.UTC)
 	for name, tt := range map[string]struct {
-		reply reply
-		limit provider.Limit
-		key   bool
+		reply   reply
+		limit   provider.Limit
+		returns time.Time
+		key     bool
 	}{
-		"a spend limit of the organization":            {errorOf(400, "invalid_request_error", "You have reached your specified API usage limits. You will regain access on 2026-12-01 at 00:00 UTC.", ""), provider.LimitOwner, false},
-		"a spend limit of a workspace":                 {errorOf(400, "invalid_request_error", "You have reached your specified workspace API usage limits. You will regain access on 2026-12-01 at 00:00 UTC.", ""), provider.LimitOwner, false},
-		"the cap of the tier":                          {errorOf(429, "rate_limit_error", "You have reached your API usage limits: your organization has crossed its monthly API usage threshold.", "enforced_spend_limit_reached"), provider.LimitTier, false},
-		"a balance spent":                              {errorOf(400, "invalid_request_error", "Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.", ""), provider.LimitBalance, false},
-		"a balance spent, at a status the SDK retries": {errorOf(500, "api_error", "Your credit balance is too low to access the Anthropic API.", ""), provider.LimitBalance, false},
-		"billing":     {errorOf(402, "billing_error", "There is an issue with your billing.", ""), provider.LimitBilling, false},
-		"a wrong key": {errorOf(401, "authentication_error", "invalid x-api-key", ""), "", true},
+		"a spend limit of the organization":            {errorOf(400, "invalid_request_error", "You have reached your specified API usage limits. You will regain access on 2026-12-01 at 00:00 UTC.", ""), provider.LimitOwner, time.Time{}, false},
+		"a spend limit of a workspace":                 {errorOf(400, "invalid_request_error", "You have reached your specified workspace API usage limits. You will regain access on 2026-12-01 at 00:00 UTC.", ""), provider.LimitOwner, time.Time{}, false},
+		"the cap of the tier":                          {errorOf(429, "rate_limit_error", "You have reached your API usage limits: your organization has crossed its monthly API usage threshold.", "enforced_spend_limit_reached"), provider.LimitTier, december, false},
+		"a balance spent":                              {errorOf(400, "invalid_request_error", "Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.", ""), provider.LimitBalance, time.Time{}, false},
+		"a balance spent, at a status the SDK retries": {errorOf(500, "api_error", "Your credit balance is too low to access the Anthropic API.", ""), provider.LimitBalance, time.Time{}, false},
+		"billing":     {errorOf(402, "billing_error", "There is an issue with your billing.", ""), provider.LimitBilling, time.Time{}, false},
+		"a wrong key": {errorOf(401, "authentication_error", "invalid x-api-key", ""), "", time.Time{}, true},
 	} {
 		t.Run(name, func(t *testing.T) {
 			c, f := fakeAPI(t, catalog.Models[2], tt.reply, reply{body: goodStream})
 			_, err := c.Ask(context.Background(), request)
 			var le *provider.LimitError
-			gotLimit := provider.Limit("")
+			gotLimit, gotReturns := provider.Limit(""), time.Time{}
 			if errors.As(err, &le) {
-				gotLimit = le.Limit
+				gotLimit, gotReturns = le.Limit, le.Returns
 			}
-			if gotLimit != tt.limit || errors.Is(err, provider.ErrKeyRefused) != tt.key {
-				t.Errorf("error = %v; want the limit %q, the key refused %v", err, tt.limit, tt.key)
+			if gotLimit != tt.limit || !gotReturns.Equal(tt.returns) || errors.Is(err, provider.ErrKeyRefused) != tt.key {
+				t.Errorf("error = %v; want the limit %q returning %v, the key refused %v", err, tt.limit, tt.returns, tt.key)
 			}
 			if n := len(f.requests()); n != 1 {
 				t.Errorf("the refusal was sent %d times", n)
@@ -558,6 +560,23 @@ func TestRefusals(t *testing.T) {
 				t.Errorf("sent %d times, want %d", len(f.requests()), want)
 			}
 		})
+	}
+}
+
+// The cap of the tier lets the key go at 00:00 UTC on the first day of the next month, by the UTC
+// day of the time the refusal was read at: December's runs to January, and a time already in
+// December in another zone but still in November in UTC runs to December.
+func TestTierReturns(t *testing.T) {
+	body := []byte(`{"type":"error","error":{"type":"rate_limit_error","message":"monthly","details":{"error_code":"enforced_spend_limit_reached"}}}`)
+	east := time.FixedZone("UTC+3", 3*60*60)
+	for _, tt := range []struct{ at, want time.Time }{
+		{time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC), time.Date(2026, 12, 1, 0, 0, 0, 0, time.UTC)},
+		{time.Date(2026, 12, 31, 23, 59, 59, 0, time.UTC), time.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC)},
+		{time.Date(2026, 12, 1, 2, 0, 0, 0, east), time.Date(2026, 12, 1, 0, 0, 0, 0, time.UTC)},
+	} {
+		if got := Refusal(http.StatusTooManyRequests, body, tt.at); got.Limit != provider.LimitTier || !got.Returns.Equal(tt.want) || got.Returns.Location() != time.UTC {
+			t.Errorf("at %v: %+v, want access back at %v", tt.at, got, tt.want)
+		}
 	}
 }
 

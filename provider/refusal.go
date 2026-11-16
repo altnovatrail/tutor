@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"time"
 )
 
 // Limit is why a provider refused a call for a limit: one only the owner of the key can lift, each
@@ -24,15 +25,20 @@ const (
 	LimitBilling Limit = "billing"
 )
 
-// LimitError is a provider's refusal for a limit, with the provider's error that said it. Sending
-// the call again does not help until the owner of the key lifts the limit, so the adapter does not
-// let its SDK send it again.
+// LimitError is a provider's refusal for a limit, with when access returns, where the provider's
+// terms say it, and the provider's error that said it. Sending the call again does not help until
+// the owner of the key lifts the limit, or access returns, so the adapter does not let its SDK send
+// it again.
 type LimitError struct {
-	Limit Limit
-	Err   error
+	Limit   Limit
+	Returns time.Time
+	Err     error
 }
 
 func (e *LimitError) Error() string {
+	if !e.Returns.IsZero() {
+		return fmt.Sprintf("the provider refused for a limit (%s, access returns %s): %v", e.Limit, e.Returns.UTC().Format(time.RFC3339), e.Err)
+	}
 	return fmt.Sprintf("the provider refused for a limit (%s): %v", e.Limit, e.Err)
 }
 func (e *LimitError) Unwrap() error { return e.Err }
@@ -53,7 +59,7 @@ func Checked(err error, refused Refusal, status int) error {
 	switch {
 	case err == nil:
 		return nil
-	case refused != Refusal{}:
+	case refused.refused():
 		return refused.Of(err)
 	case status == http.StatusForbidden:
 		return fmt.Errorf("%w: %w", ErrNoRights, err)
@@ -61,19 +67,24 @@ func Checked(err error, refused Refusal, status int) error {
 	return err
 }
 
-// Refusal is what an adapter reads from a provider's error response: the limit it refused for, or
-// whether it refused the key, or neither.
+// Refusal is what an adapter reads from a provider's error response: the limit it refused for, with
+// when access returns, zero where the provider's terms do not say; or whether it refused the key;
+// or neither.
 type Refusal struct {
-	Limit Limit
-	Key   bool
+	Limit   Limit
+	Returns time.Time
+	Key     bool
 }
+
+// refused tells whether the response was a refusal: for a limit, or of the key.
+func (r Refusal) refused() bool { return r.Limit != "" || r.Key }
 
 // Of is the refusal as the error of a call that failed with err, or err itself when the response
 // was no refusal.
 func (r Refusal) Of(err error) error {
 	switch {
 	case r.Limit != "":
-		return &LimitError{Limit: r.Limit, Err: err}
+		return &LimitError{Limit: r.Limit, Returns: r.Returns, Err: err}
 	case r.Key:
 		return fmt.Errorf("%w: %w", ErrKeyRefused, err)
 	}
@@ -85,12 +96,13 @@ func (r Refusal) Of(err error) error {
 const errorBytes = 1 << 16
 
 // NoRetry is the middleware of an adapter's SDK that reads each error response of the provider by
-// classify, keeps the last refusal it found in *last, and marks a refusal with the header
+// classify, at the time the response's Date header names, or the clock's when it names none, keeps
+// the last refusal it found in *last, and marks a refusal with the header
 // x-should-retry: false, which both SDKs heed (internal/requestconfig of each): a refusal for a
 // limit or of the key is not sent again, while a plain 429, 408, 409 or 5xx still is. It reads the
 // start of the body of an error response alone, and gives the SDK the body as it came, the error
 // of a read that broke off too, so that the SDK handles it as its own.
-func NoRetry(classify func(status int, body []byte) Refusal, last *Refusal) func(*http.Request, func(*http.Request) (*http.Response, error)) (*http.Response, error) {
+func NoRetry(classify func(status int, body []byte, at time.Time) Refusal, last *Refusal) func(*http.Request, func(*http.Request) (*http.Response, error)) (*http.Response, error) {
 	return func(req *http.Request, next func(*http.Request) (*http.Response, error)) (*http.Response, error) {
 		resp, err := next(req)
 		if err != nil || resp == nil || resp.StatusCode < 400 || resp.Body == nil {
@@ -109,7 +121,7 @@ func NoRetry(classify func(status int, body []byte) Refusal, last *Refusal) func
 		if rerr != nil {
 			return resp, err
 		}
-		if r := classify(resp.StatusCode, body); r != (Refusal{}) {
+		if r := classify(resp.StatusCode, body, answered(resp.Header)); r.refused() {
 			*last = r
 			if resp.Header == nil {
 				resp.Header = http.Header{}
@@ -118,6 +130,16 @@ func NoRetry(classify func(status int, body []byte) Refusal, last *Refusal) func
 		}
 		return resp, err
 	}
+}
+
+// answered is when the provider answered: the time its Date header names, or the clock's when the
+// header is missing or not a date. The provider's clock, not the service's, tells which day of its
+// terms a refusal falls on.
+func answered(h http.Header) time.Time {
+	if at, err := http.ParseTime(h.Get("Date")); err == nil {
+		return at
+	}
+	return time.Now()
 }
 
 // failing is a reader that fails with its error.
