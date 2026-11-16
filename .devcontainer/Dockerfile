@@ -4,18 +4,22 @@
 # detected at RUN time via dpkg instead. A host that has Docker can build this, and that is the
 # whole requirement.
 #
-# Two stages. `toolchain` holds what it takes to check the repository — its documents, and its
-# code where it has any — and is the stage the automated checks run inside. `devcontainer` adds
-# what a person needs on top of that, and devcontainer.json names it as its target. spec's own
-# file ends with a third, `orchestrator`, the devcontainer with the Docker CLI (R156 spec), which
-# `just new-repo` leaves out of a copy: in a copy `devcontainer` is the last stage, the one a
-# build with no target gives, and in spec every build names its stage. A builder that builds every
-# stage before its target builds `orchestrator` for the ordinary configuration too, and the stage
-# builds there as well, without the file only its own configuration writes.
+# Three stages. `toolchain-core` holds Node, just, Go and buf, and in tutor golangci-lint too: what
+# a release needs — its version and its files — and every check that runs no browser, and a
+# release builds it alone (R31 spec).
+# `toolchain` is the core with what the repository's tests need on top — in a copy, what its kind
+# adds at the end of the stage, such as the browsers of the kind typescript —, and is the stage
+# the automated checks run inside. `devcontainer` adds what a person needs on top of that, and
+# devcontainer.json names it as its target. spec's own file ends with a fourth, `orchestrator`,
+# the devcontainer with the Docker CLI (R156 spec), which `just new-repo` leaves out of a copy: in a
+# copy `devcontainer` is the last stage, the one a build with no target gives, and in spec every
+# build names its stage. A builder that builds every stage before its target builds `orchestrator`
+# for the ordinary configuration too, and the stage builds there as well, without the file only
+# its own configuration writes.
 
-# -- toolchain: checks the repository ----------------------------------------
+# -- toolchain-core: releases the repository, checks it without a browser -----
 
-FROM mcr.microsoft.com/devcontainers/base:3.0.13-noble@sha256:48be4adec1c1ecbe030064700aef85382f5205786a8f82937fc44a7473717eae AS toolchain
+FROM mcr.microsoft.com/devcontainers/base:3.0.13-noble@sha256:48be4adec1c1ecbe030064700aef85382f5205786a8f82937fc44a7473717eae AS toolchain-core
 
 SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 
@@ -32,10 +36,12 @@ ARG JUST_VERSION=1.58.0
 # its kind, and stays unused in one without Go code (R64 spec).
 ARG GO_VERSION=1.27.4
 # golangci-lint runs tutor's linters and formatters, gofmt and goimports among them: the Go checks
-# of CI run with it, in this stage (R13 of docs/decisions.md). It is under GPL-3.0, which spec's
-# R12 allows of a development tool that ships nothing, as an exception named in the decision that
-# brings it in: here, R12 of docs/decisions.md. It is tutor's own difference from the devcontainer
-# of spec's repo-template, and a move to a tag of spec adds it again.
+# of CI run with it (R13 of docs/decisions.md). It is in this stage, not in toolchain, since
+# .github's go.yml runs ci-lint in the core wherever toolchain holds more than the core
+# (R47 .github). It is under GPL-3.0, which spec's R12 allows of a development tool that ships
+# nothing, as an exception named in the decision that brings it in: here, R12 of
+# docs/decisions.md. It is tutor's own difference from the devcontainer of spec's repo-template,
+# and a move to a tag of spec adds it again.
 ARG GOLANGCI_LINT_VERSION=2.15.0
 # buf: the API contracts are protobuf files that buf formats, lints, compares with the previous
 # release and generates code from, and spec's checks run it on its contracts/ (R83 spec). It comes
@@ -122,6 +128,17 @@ RUN arch="$(dpkg --print-architecture)"; \
 ENV PATH="/usr/local/node/bin:/usr/local/go/bin:/home/vscode/.local/bin:${PATH}" \
     GOTOOLCHAIN=local
 
+# -- toolchain: the core, plus what the repository's tests need ---------------
+#
+# tutor's tests need nothing the core lacks, so here the stage adds nothing, as the kind go adds
+# nothing (repo-template/kinds.json of spec), and .github's go.yml and documents.yml then run every
+# check in this stage, one image in the cache (R47 .github). What a later line here installs, a
+# release never builds.
+
+FROM toolchain-core AS toolchain
+
+SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
+
 # -- devcontainer: the toolchain, plus what a person works with --------------
 
 FROM toolchain AS devcontainer
@@ -137,8 +154,8 @@ ARG JUST_LSP_VERSION=0.10.0
 # Claude Code CLI. The VS Code extension in devcontainer.json must have the same version.
 ARG CLAUDE_CODE_VERSION=2.1.280
 # The sums, as above: gh_<version>_checksums.txt of the gh release, SHA256SUMS of just-lsp's.
-# The helper below is the toolchain stage's, written again rather than left in that image as a
-# script: the toolchain image is the one the checks run in, and nothing there needs it.
+# The helper below is the toolchain-core stage's, written again rather than left in that image as
+# a script: the toolchain images are the ones the checks run in, and nothing there needs it.
 ARG GH_SHA256_AMD64=9bca2d1c16825f109907a23307628a2f0698fbf99662b73a5cf0b020293072b8
 ARG GH_SHA256_ARM64=b57e8063f18862647c9d22727c32e9da1b963f8bf9db648fe123a6975695640f
 ARG JUST_LSP_SHA256_AMD64=3c35e10e76db6cc1931495bb3abdaef02576eaeb406c217420f4fd37e1ebe22c

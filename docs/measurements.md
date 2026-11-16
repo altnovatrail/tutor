@@ -1294,12 +1294,14 @@ What tutor's Claude Code sessions spend, by the measurement of measurements 1.1 
 | 2026-11-13T15:36 … 2026-11-13T18:46 | epic E7: its planning, T137–T140 and its archive | 5 | 406 / 61 | 147.6 / 64.4 | 0 | $26.58 |
 | 2026-11-13T18:46 … 2026-11-14T01:10 | epic E8: its planning, T141–T144 and its archive | 5 | 519 / 252 | 195.3 / 87.5 | 1 | $47.93 |
 | 2026-11-14T01:10 … 2026-11-16T05:01 | epic E9: T145–T147, run by spec's orchestrator, and its archive | 4 | 279 / 104 | 154.6 / 84.9 | 0 | $19.79 |
+| 2026-11-16T05:01 … 2026-11-16T16:20 | epic E10: T148–T151, run by spec's orchestrator, and its archive | 6 | 359 / 78 | 126.3 / 62.8 | 0 | $22.25 |
 
 - Read 2026-11-13. A task's window runs from the start of its session to the start of the next one. The row of T131 is its whole session; its «Сделано» gives the numbers before its review: 106 / 43 calls, 221.1 / 114.9 thousand, $10.76. Until T136, the row of T133 was its session before its review, 2026-11-13T03:46 … 2026-11-13T05:11: 131 / 176 calls, 216.1 / 88.1 thousand, $20.45; it is its whole session now, as the other rows. The row of T136 runs to its review, as does "after", and the rows of the six tasks add up to "after".
 - "After" is the six sessions of row 7.12, to the review of T136: the context of a main call is 202.4 thousand against 398.5 "before", −49%, and of a subagent's 92.0 against 119.5, −23%, with 1 compaction in 663 main calls against 53 in 11,509. The windows differ in work: a month of code and paid runs against six sessions on documents, a session for each task. The comparison over the same kind of work is T124 spec.
 - Epic E7, read 2026-11-13 at its archive (R108): five sessions from its planning — the session of R104, then one for each task, and the archive in the session of T140 —, the row to the measurement itself, before the archive's commit. The context of a main call is 147.6 thousand, 27% below the reference of tutor, the row "after" of 7.12, 202.4 thousand, over 406 main calls: the threshold of R145 spec, 25% above the reference over at least 300 calls, gives no analysis.
 - Epic E8, read 2026-11-14 at its archive (R114): five sessions from its planning, which began in the session of T140 right after the row of E7, then one for each task, and the archive in the session of T144; the row to the measurement itself, before the archive's commit. The context of a main call is 195.3 thousand, 3.5% below the reference of tutor, 202.4 thousand, over 519 main calls: the threshold of R145 spec gives no analysis. The one compaction is in the session of T143, whose main context reached 366 thousand.
 - Epic E9, read 2026-11-16 at its archive in the session of T147 (R117): four sessions from the archive of E8 to the measurement itself, before the archive's commit — the calls of the session of T144 after that archive, and those of T145, T146 and T147, which spec's orchestrator ran, with the planning of E9 in the session of T145 (R115). The context of a main call is 154.6 thousand, 24% below the reference of tutor, 202.4 thousand, over 279 main calls: the threshold of R145 spec gives no analysis.
+- Epic E10, read 2026-11-16 at its archive in the session of T150 (R121): six sessions from the archive of E9 to the measurement itself, before the archive's commit, among them those of T148–T151, which spec's orchestrator ran, with the planning of E10 in the session of T148 (R118). The context of a main call is 126.3 thousand, 38% below the reference of tutor, 202.4 thousand, over 359 main calls: the threshold of R145 spec gives no analysis.
 
 ## 5. The speed of CI
 
@@ -1316,3 +1318,22 @@ What was measured: the time of `ci-test` before and after R118 — `go test -rac
 - The profile `coverage/go.out` has the same 9,604 lines before and after, and each package the same coverage: a package's lines count by its own tests, whichever run they are in.
 - Most of what remains is compiling with the empty cache, twice: the packages of `RACE` and their dependencies, the SDKs of the providers among them, with the detector, and the module without it. The cache of Go in CI is row 7.13 of `spec`'s COORDINATION.md (T149).
 - In CI, «Go / test»: on `main` on 2026-11-16, 517 s at 143321f and 374 s at eddb825, of which the step `ci-test` 326 s (the runs 43805472220 and 43811335056); on pull request #178 of T148, 196 s at its first commit ef19739, of which `ci-test` 156 s — 75 s the run with the detector and 76 s the rest —, and 282 s at a6abc25, which changed only the guard and the documents, of which `ci-test` 250 s — 115 s and 132 s (the runs 43817071698 and 43818370756). The second runner was slower throughout: `cmd/tutor-eval` took 37.6 s against 21.3, `internal/board` 13.2 s against 7.8. The other jobs did not change, and their times vary from run to run: «Canvas» 87 s against 117 and 142 on `main`, «Go / lint» 125 s against 91 and 120.
+
+### 5.2. The move to the stage `toolchain-core`, T150, 2026-11-16
+
+What was measured: the time of the jobs of CI before and after R121 — `spec` `v0.18.4`, `.github` `v0.1.31` and the three stages of the Dockerfile. How: the GitHub API, the jobs of the run on `main` at 578a61b (CI 43861033121, CodeQL 43861033032) against those of pull request #181 (CI 43907651927, CodeQL 43907651855), from `started_at` to `completed_at`.
+
+| Job | `main` 578a61b, s | pull request #181, s |
+|---|---|---|
+| Samples | 61 | 38 |
+| Canvas | 104 | 109 |
+| Documents | 45 | 42 |
+| Go / toolchain | 5 | 69 |
+| Go / lint | 128 | 150 |
+| Go / test | 255 | 286 |
+| Go / vuln | 49 | 51 |
+| Go / licenses | 64 | 146 |
+| CodeQL / analyze (go) | 79 | 77 |
+
+- The pull request changes the sha256 of the Dockerfile, so every entry missed: "Go / toolchain" built the image from the network and handed it on, and the jobs that run Go started with empty caches. The stage brings `tutor` no gain by its design, since `toolchain` adds nothing to the core (R121); the times differ by the misses and by the runners.
+- The release before: 55 s, of which "Work out the version" 24 s (the run 43861894603); after — with the first release of the merge.
