@@ -1,52 +1,55 @@
-# RUN.md — план работ tutor
+# RUN.md — work plan of tutor
 
-> Что делает tutor и что о нём ещё предстоит решить — [docs/architecture.md](docs/architecture.md); почему он так устроен — [docs/decisions.md](docs/decisions.md). Платформа — в `spec/`, подмодуле на теге v0.18.3. Этот файл задаёт порядок работы: маленькие задачи, собранные в эпики, запускаются по одной, и после каждой я проверяю результат. Подробно расписан только текущий эпик — или два, когда второй идёт рядом (R04; R19 spec). Здесь только живое, а история — в архивах эпиков `docs/plan/` и в журнале решений (R103).
+What tutor does, does not do and has still to decide — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.18.3: the component's card — architecture 3.6 spec; the order of repositories — repositories 6 spec. Small tasks, one at a time, gathered in epics; only the current epic is in detail, or two when a second runs beside it (R04; R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). No `run/TASKS.md`: a task outside an epic stands in table 1 (R103, R116).
 
-## Как пользоваться
+Language (R154 spec): rules and tables in English, terse, for the session; the epic's description, table 1 and the bodies of tasks in Russian — the author writes and reviews them.
 
-Задача запускается фразой «Выполни задачу T01 из RUN.md» в новой сессии Claude Code внутри devcontainer. Одна задача — одна сессия (R143 spec): фразу, которая начинает другую задачу в той же сессии, хук `UserPromptSubmit` из [.claude/settings.json](.claude/settings.json) останавливает и называет `/clear`.
+## Rules
 
-**Правила для исполнителя (Claude):**
+A task starts with «Выполни задачу T01 из RUN.md» in a new session in the devcontainer. One task — one session (R143 spec): the hook `UserPromptSubmit` of [.claude/settings.json](.claude/settings.json) — `spec/tools/session/` — stops «Выполни задачу T…» or «планируй T…» of another task in the same session and names `/clear`; the same task passes.
 
-1. Делать только указанную задачу. Файлы других задач не трогать, кроме того, что задача прямо требует.
-2. **Сначала прочитать** [CLAUDE.md](CLAUDE.md) с RULES.md, саму задачу, разделы, на которые она ссылается, и [docs/decisions.md](docs/decisions.md).
-   - Если задача противоречит документам или чего-то не хватает — остановиться и спросить, а не додумывать.
-   - Дыра в самом компоненте — подраздел [docs/architecture.md](docs/architecture.md), раздел 2; дыра, которая касается нескольких репозиториев, — строка таблицы 3 с пометкой «В реестр spec» (R81 spec).
-   - Долг — в [DEBT.md](DEBT.md), его не читают целиком: задача берёт строки, которые называют она и её разделы, и те, что `grep -n` находит по путям и частям её правки (R143 spec).
-3. Только внутри devcontainer и с `spec/` на месте — RULES.md, Hard rules.
-4. **Действия вне этого репозитория — только после предупреждения и моего подтверждения:** правка `spec` и других репозиториев, их настроек и всё, что стоит денег. Предупреждение называет, что, где и сколько это стоит.
-   - **Исключение — проверки задачи по R146 spec:** их исполнитель проводит без меня. Вызовы ИИ — на заглушке: поддельные адаптеры тестов и `-stub` раннера `cmd/tutor-eval`, без ключа. Путь в браузере у `tutor` один — доска; Playwright в контейнере вида `go` нет, и доску исполнитель проверяет без браузера: её тестами и запуском `go run ./cmd/tutor-eval board` с `-dir` вне рабочего дерева и поддельным ключом в `TUTOR_ANTHROPIC_API_KEY`, запросами к её серверу. `just board` — мой: он берёт настоящий ключ и пишет в `samples/` (R110).
-   - Настоящий вызов ИИ — только там, где задача проверяет ответы модели — слова, чтение, оценку, — то есть прогоном eval (R28): на ключе eval, `~/.config/tutor/anthropic.key`, у которого есть свой лимит трат у поставщика, поставленный мной, и в пределах потолка, который называет текст задачи. Без потолка в задаче настоящий вызов ждёт подтверждения, как всё прочее, что стоит денег.
-   - «Сделано» такой задачи называет, что потрачено: поставщик, число вызовов и сумма.
-   - На устройствах исполнитель ничего не проверяет: экранов ученика у `tutor` нет, а доска — мой инструмент.
-5. Факты и замеры — как велит RULES.md, How we work.
-6. **Задача заканчивается проверками своих правок:** документы — `just -f spec/justfile docs-check-repo` (CLAUDE.md, Environment), код — правило его части. Затем `/code-review high`, один круг; небольшую правку исполнитель вправе сдать без ревью.
-7. Не коммитить: коммит делаю я после проверки, если моё слово не говорит иначе, как «доведи до мержа». Прогон оркестратора `spec`, «Сделай эпик E…», — такое слово на каждую свою задачу: его исполнитель работает по контракту `spec/tools/orchestrator/executor.md` — коммитит, пушит и открывает pull request, но не мержит (R156 spec; R115).
-8. В конце — короткий отчёт по-русски: что сделано, какие файлы, как проверить, что нашло ревью или почему его не было, что открыто и что уходит «в реестр spec».
-9. После выполнения — `[x]` в таблице 1, а в теле задачи — «Сделано (дата)» и «Открыто». Вопрос ко мне из «Открыто» встаёт ещё и строкой таблицы 3, а отложенное — в [DEBT.md](DEBT.md). Затем тело уходит в архив эпика, `docs/plan/<эпик>.md`, дословно, с поправленными относительными ссылками, а здесь остаётся фраза итога в начале части эпика: «T01 — сделана <дата>: <итог>. Тело — `docs/plan/E1.md`» (R143 spec; поправка 2026-11-12 к R23).
-10. Язык (R14 spec, R19 spec, R42 spec, R143 spec): этот план, [DEBT.md](DEBT.md), архивы эпиков `docs/plan/` и отчёты — на русском; документы в `docs/` — на английском; README, CLAUDE.md, AGENTS.md, код, комментарии, описания схем, промпты и нормативные тексты для авторов — на английском.
-11. Если задача больше одной проверки (≈ 30–60 минут чтения) — до начала предложить, как её разбить.
-12. **Перед новой задачей — закрыть находки по прошлой** (R30 spec), разрешённое отступление от правила 1: SonarCloud — [New Code](https://sonarcloud.io/summary/new_code?id=altnovatrail_tutor) по уже слитой задаче, CodeQL и Scorecard — `gh api 'repos/altnovatrail/tutor/code-scanning/alerts?state=open'`. Находку чинить кодом; «ложное» — крайняя мера, с причиной словами: общие причины — R33 spec, свои — в журнал. Молча не пропускать. Эти правки — отдельным абзацем отчёта: я коммичу их отдельно.
+1. Do only the named task; touch other tasks' files only where it requires.
+2. Read first: [CLAUDE.md](CLAUDE.md) with the rules it imports (RULES.md of `spec/`), the task, the sections it cites — its own and spec's —, [docs/decisions.md](docs/decisions.md).
+   - Conflict with the documents or something missing — stop and ask; never guess.
+   - A gap in the component itself — a subsection of [docs/architecture.md](docs/architecture.md), section 2. A gap across repositories — a row of [run/QUESTIONS.md](run/QUESTIONS.md) whose question opens with the mark «В реестр spec» (R81 spec).
+   - From [run/DEBT.md](run/DEBT.md) and [run/QUESTIONS.md](run/QUESTIONS.md) take only the rows the task and its sections name and those `grep -n` finds by the paths and parts it changes (R143 spec).
+3. Devcontainer only, with `spec/` in place — RULES.md, Hard rules; if `spec/` is empty — CLAUDE.md.
+4. Outside this repository — editing `spec` or other repositories, their settings, anything that costs money — only after a warning (what, where, cost) and the author's confirmation.
+   - Exception, no confirmation: the task's checks by R146 spec. AI calls on the stub: the tests' fake adapters and `-stub` of the runner `cmd/tutor-eval`, with no key. `tutor`'s one path in a browser is the board; a container of the kind `go` has no Playwright, so the executor checks the board without a browser: by its tests, and by `go run ./cmd/tutor-eval board` with `-dir` outside the work tree and a fake key in `TUTOR_ANTHROPIC_API_KEY`, by requests to its server. `just board` is the author's: it takes the real key and writes to `samples/` (R110).
+   - A real AI call only where the task checks the model's answers — the words, the reading, the assessment —, that is, by an eval run (R28): on the eval key, `~/.config/tutor/anthropic.key`, under its own spend limit at the provider, set by the author, and within the ceiling the task's text names. With no ceiling in the task, a real call waits for confirmation, like anything else that costs money. «Сделано» of such a task names what was spent: the provider, the number of calls and the sum.
+   - Nothing on devices: `tutor` has no learner's screens, and the board is the author's tool.
+5. External facts and measurements — as RULES.md, How we work, says.
+6. End with the checks of what the task changed: documents — `just -f spec/justfile docs-check-repo` (CLAUDE.md, Environment); code — the rule of its part. Then `/code-review high`, one round; a small change may skip the review.
+7. Do not commit: the author commits after review, unless the author's word says otherwise, as «доведи до мержа». A run of spec's orchestrator, «Сделай эпик E…», is such a word on each of its tasks: its executor works by the contract `spec/tools/orchestrator/executor.md` — commits, pushes and opens the pull request, never merges (R156 spec; R115).
+8. End with a short report in Russian: what was done, files, how to check, what the review found or why there was none, what is open and what goes «в реестр spec».
+9. When done: table 1 `[ ]` → `[x]`; append to the body «Сделано (дата)» — what was done, how checked — and «Открыто». A question for the author from «Открыто» is also a row of [run/QUESTIONS.md](run/QUESTIONS.md); what is put off, a row of [run/DEBT.md](run/DEBT.md).
+   - Then move the body verbatim, relative links fixed, to the epic archive `docs/plan/<epic>.md`, with a gist sentence — an unheaded list item at the start of the receiving section: «T01 — сделана <дата>: <итог одной фразой>». Neither stays here, and a search by heading finds one body, in the archive (R153 spec; the 2026-11-12 amendment to R23).
+10. Language (R14 spec, R42 spec, R143 spec, R154 spec): this plan and `run/` in English; the epic's description, table 1, the bodies of tasks, the epic archives `docs/plan/` and the reports in Russian; `docs/` in English; README, CLAUDE.md, AGENTS.md, code, comments, schema descriptions, prompts and normative texts for authors in English.
+11. A task larger than one review (≈ 30–60 minutes of reading): propose a split before starting.
+12. Before a new task, close the findings on the previous one (R30 spec); an allowed departure from rule 1.
+    - SonarCloud — [New Code](https://sonarcloud.io/summary/new_code?id=altnovatrail_tutor), on the task already merged; CodeQL and Scorecard — `gh api 'repos/altnovatrail/tutor/code-scanning/alerts?state=open'`.
+    - Fix in code first; "false positive" is the last resort, with the reason in words: shared reasons — R33 spec, own ones — in the log. Never skip silently.
+    - Report these fixes in a separate paragraph: the author commits them apart from the task.
 
-**Статусы:** `[ ]` — не начата; `[x]` — выполнена; `[-]` — не делаем, причина — в задаче; `[?]` — отложена, в задаче — причина и когда вернуться. Если при проверке что-то не так, возвращаю задачу в `[ ]`. **Кто:** «Claude» — делает исполнитель; «Claude, проверяю я» — тексты, которые я вычитываю построчно; «я + Claude» — часть шагов мои: решения, вход в сервисы, настройки GitHub, подтверждения по правилу 4. **План:** «да» — сначала режим планирования: нужны решения, которых нет в документах, или задача больше одной проверки; «—» — запускать сразу.
+**Statuses:** `[ ]` not started; `[x]` done; `[-]` not done, reason in the task; `[?]` deferred, reason and when to return in the task. A task that fails the author's review returns to `[ ]` with what to fix.
 
-**Тело задачи** — «Цель», «Сделать», «Как проверить», «Разделы», а где нужно — «Не делать», «Решить при планировании», «Мой шаг», «Стоимость», «Риски»; при планировании — ещё «Почему», «Решено автором (дата)» и «Выяснилось при планировании»; после выполнения — «Сделано (дата)» и «Открыто».
+**Who:** «Claude» — the executor does it, the author reviews; «Claude, проверяю я» — texts the author reads line by line; «я + Claude» — the author does some steps: decisions, sign-ins, GitHub settings, confirmations by rule 4.
 
-## Как устроен план: эпики
+**Plan:** «да» — plan mode first: decisions missing from the documents, or larger than one review (rule 11); «—» — run at once.
 
-- **Таблица 1 — текущий эпик** (или два, R04). Задача не из эпика — переход на тег `spec`, анализ по R145 spec, поручение автора — встаёт в таблицу 1 текущего эпика, а когда его нет — первой задачей следующего (R103).
-- **Таблица 2 — эпики на потом:** результат и основа; порядок строк — порядок, в котором они берутся. Эпик, отложенный с расписанными задачами, лежит в своём `docs/plan/<эпик>.md` с телами задач `[?]`; когда он возвращается, его таблица задач встаёт в таблицу 1, а тела открытых задач — сюда (R04; R23).
-- **Таблица 3 — вопросы автору без ответа**, из «Открыто» задач. Ответ записывается туда, куда относится, строка уходит, а куда лёг ответ — называет [docs/plan/questions.md](docs/plan/questions.md). Строка «В реестр spec» стоит здесь, пока `spec` её не записал, и уходит с переходом на тег, который её записал: дословно — в «Переданы в spec» questions.md, а ответ — в «Закрыты» там (R23; R81 spec).
-- **Таблица 4 — технический долг**, в своём файле [DEBT.md](DEBT.md) (R19 spec).
-- **Следующий эпик** я выбираю из таблицы 2, когда задачи текущего отмечены, и с Claude в режиме планирования дроблю его на задачи по одной проверке: они встают в таблицу 1 и в тело файла, а строка уходит из таблицы 2.
-- **Сделанный эпик уходит в архив**, `docs/plan/<эпик>.md` (R59 canvas-api): тела задач уже там (правило 9), а с эпиком — его описание и таблица задач; фразы итога уходят, здесь остаётся строка «Сделанные эпики». Замер токенов сессий эпика — `just -f spec/justfile tokens-report --since <первый день эпика> --row` — строкой measurements 4.1, а новый анализ — по порогу R145 spec. Вопросы и долги эпика остаются в таблицах 3 и 4.
-- **Архив целиком не читается.** Задачу, которой здесь нет, ищут по заголовку: `grep -n '^#### T03\.' RUN.md docs/plan/*.md`. Номера задач сквозные и не переиспользуются: новая получает номер, свободный в момент записи.
+**Task body** (Russian): «Цель», «Сделать», «Как проверить», «Разделы»; as needed «Не делать», «Решить при планировании», «Мой шаг», «Стоимость», «Риски»; from planning «Почему», «Решено автором (дата)», «Выяснилось при планировании»; when done «Сделано (дата)», «Открыто» (rule 9).
 
-**Сделанные эпики:** E2 — замер чтения ИИ, 2026-10-26: [docs/plan/E2.md](docs/plan/E2.md); E4 — следующие замеры чтения, 2026-10-29: [docs/plan/E4.md](docs/plan/E4.md); E1 — детализация, 2026-11-01: [docs/plan/E1.md](docs/plan/E1.md); E3 — протокол eval, релиз `tutor` и `canvas`, 2026-11-08: [docs/plan/E3.md](docs/plan/E3.md); E5 — код библиотеки для первого приложения, 2026-11-09: [docs/plan/E5.md](docs/plan/E5.md); E6 — допуск слов и код библиотеки вне первого приложения, 2026-11-11, а после него — задачи T131–T136, строка 7.12 сквозного плана `spec`: [docs/plan/E6.md](docs/plan/E6.md); E7 — релиз для `api` и долги без трат, 2026-11-13: [docs/plan/E7.md](docs/plan/E7.md); E8 — слова после верного ответа и `spec` `v0.16.7`, 2026-11-14: [docs/plan/E8.md](docs/plan/E8.md).
+## Epics
 
-## Таблица 1. Текущий эпик — E9. Переход на тег `spec` v0.18.3
+- **Table 1** is the current epic, or two (R04): its tasks in detail, run one at a time.
+- **No tasks outside an epic** (R103): a task that does not come from an epic — a move to a tag of `spec`, an analysis by R145 spec, an instruction of the author — stands in table 1 of the current epic; with none, it is the first task of the next, as T145 started E9 (R115).
+- **Next epic.** Once table 1 is all checked, the author picks the next epic from [run/EPICS.md](run/EPICS.md) and splits it with Claude in plan mode into tasks of one review each, into table 1 and this file.
+- **A done epic** goes to `docs/plan/<epic>.md` (R59 canvas-api): bodies and gist sentences are there already (rule 9); move its description and table of tasks verbatim; questions and debt stay in `run/`; until the next epic, table 1 reads «Current epic — none» and names the last done epic. Measure the epic's sessions — `just -f spec/justfile tokens-report --since <first day of the epic> --row` — as a row of measurements 4.1; a new analysis by the threshold of R145 spec.
+- Never read an archive whole: find a task by heading — `grep -n '^#### T03\.' RUN.md docs/plan/*.md`; from another repository — «T03 tutor». Task numbers are global, never reused, and taken free at the moment of writing.
 
-**2026-11-16: эпик открыт (R115).** Слово автора «Сделай эпик E14» в оркестраторе `spec`: его волна 0 первым переводит каждый репозиторий эпика на последний тег `spec` (R156 spec). Текущего эпика не было — E8 сделан 2026-11-14 (R114), таблица 2 пуста, — а переход по R103 — первая задача следующего эпика, поэтому у перехода свой эпик, как E11 `sim` (R60 sim). Тела задач — в разделе «Эпик E9» ниже.
+## Table 1. Current epic — E9. Переход на тег `spec` v0.18.3
+
+**2026-11-16: эпик открыт (R115).** Слово автора «Сделай эпик E14» в оркестраторе `spec`: его волна 0 первым переводит каждый репозиторий эпика на последний тег `spec` (R156 spec). Текущего эпика не было — E8 сделан 2026-11-14 (R114), таблица 2 пуста, — а переход по R103 — первая задача следующего эпика, поэтому у перехода свой эпик, как E11 `sim` (R60 sim). Тела задач — в разделе «Epic E9» ниже.
 
 **Результат:** `tutor` стоит на `spec` v0.18.3 — подмодуль, модули Go, контейнер и `.claude/` по заготовке тега, таблица 3 без строк, которые тег записал; план — в раскладке и на языке R153–R155 spec (Д250 spec); CI — на последнем релизе `.github` с кешем образа `toolchain` и группой Dependabot `shared-workflows` (Д146, Д88 spec).
 
@@ -62,11 +65,9 @@
 
 **Не входит:** строки 5.12, 5.13 и 7.16 COORDINATION.md `spec` — долги Д14–Д16: это работа `tutor`, а не переход; Д6 и Д11.
 
-## Эпик E9. Переход на тег `spec` v0.18.3
+## Epic E9. Переход на тег `spec` v0.18.3
 
 Открыт 2026-11-16 (R115); результат, основа и порядок — у таблицы 1. Поведение кода эпик не меняет: модули Go `spec` поднимаются с правкой комментариев и теста таблицы допуска 0.4, а CI меняет только ссылки на общие workflow.
-
-- T145 — сделана 2026-11-16: подмодуль и модули Go `spec` — на v0.18.3, `module-kit` — на v0.3.3, `.devcontainer/` и `.claude/settings.json` — по заготовке тега: плагин `gopls-lsp` через `CLAUDE_CODE_PLUGIN_DIRS`, `--network-alias=tutor`, образ `devcontainers/base` 3.0.13; правило 7 называет прогон оркестратора; В79–В81, В83 и В84 записаны в `spec` и ушли из таблицы 3; таблица допуска 0.4 и ступень «author» для взрослых на `novatrail` — поправка к R80 и заметки architecture 3.9; строки 5.12, 5.13 и 7.16 COORDINATION.md `spec` — Д14–Д16 (R115). Тело — `docs/plan/E9.md`.
 
 #### T146. План по R153–R155 spec: таблицы в `run/`, план на английском
 
@@ -92,19 +93,3 @@
 - **Как проверить:** `actionlint` по сумме `self-ci.yml` `.github`; рецепты `ci-` в чистом клоне; CI pull request — зелёный, имена проверок прежние; `/code-review high`, один круг.
 - **Разделы:** Д88, Д146 spec; R31 spec и её поправка 2026-11-09; R36 .github; R13, R30, R66.
 
-## Таблица 2. Эпики на потом
-
-Пока пусто.
-
-## Таблица 3. Вопросы автору без ответа
-
-Закрытые вопросы и строки «В реестр spec», которые записал `spec`, — в [docs/plan/questions.md](docs/plan/questions.md).
-
-Номера не переиспользуются: следующий — В85.
-
-| ID | Вопрос | Откуда | Варианты | Рекомендация |
-|---|---|---|---|---|
-
-## Таблица 4. Технический долг
-
-В своём файле, [DEBT.md](DEBT.md), с её началом и следующим свободным номером (R19 spec).

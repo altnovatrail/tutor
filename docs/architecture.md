@@ -125,7 +125,7 @@ Decided — R53, section 3.5. How it was decided is at the end of section 3.5, w
 
 ### 2.8. Words after a correct answer
 
-*Opened 2026-11-11 — beyond the card, from Д188 RUN.md `spec`; debt Д8 in [DEBT.md](../DEBT.md).*
+*Opened 2026-11-11 — beyond the card, from Д188 RUN.md `spec`; debt Д8 in [DEBT.md](../run/DEBT.md).*
 
 - **The point:** after a correct answer the tutor praises the step and asks which technique helped (concepts 7, 10 spec). By Д188 RUN.md `spec` this is a call of `tutor` of its own, not a rung "0" of `Words`: with the work, the key and the solution, the task's techniques and a form rule of its own beside R70 spec. `api` calls it on `GetCorrectAnswerWords` and gives the words only when they have passed the leak check and the form check (`attempt.proto` of the contracts of `spec`). Two items are not decided: by which capability of the admission table this call is admitted and what form these words have.
 - **What is known** (the submodule `spec` `v0.15.0`, read 2026-11-11):
