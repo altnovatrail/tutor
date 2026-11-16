@@ -47,37 +47,6 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 - **A done epic** goes to `docs/plan/<epic>.md` (R59 canvas-api): bodies and gist sentences are there already (rule 9); move its description and table of tasks verbatim; questions and debt stay in `run/`; until the next epic, table 1 reads «Current epic — none» and names the last done epic. Measure the epic's sessions — `just -f spec/justfile tokens-report --since <first day of the epic> --row` — as a row of measurements 4.1; a new analysis by the threshold of R145 spec.
 - Never read an archive whole: find a task by heading — `grep -n '^#### T03\.' RUN.md docs/plan/*.md`; from another repository — «T03 tutor». Task numbers are global, never reused, and taken free at the moment of writing.
 
-## Table 1. Current epic — E9. Переход на тег `spec` v0.18.3
+## Table 1. Current epic — none
 
-**2026-11-16: эпик открыт (R115).** Слово автора «Сделай эпик E14» в оркестраторе `spec`: его волна 0 первым переводит каждый репозиторий эпика на последний тег `spec` (R156 spec). Текущего эпика не было — E8 сделан 2026-11-14 (R114), таблица 2 пуста, — а переход по R103 — первая задача следующего эпика, поэтому у перехода свой эпик, как E11 `sim` (R60 sim). Тела задач — в разделе «Epic E9» ниже.
-
-**Результат:** `tutor` стоит на `spec` v0.18.3 — подмодуль, модули Go, контейнер и `.claude/` по заготовке тега, таблица 3 без строк, которые тег записал; план — в раскладке и на языке R153–R155 spec (Д250 spec); CI — на последнем релизе `.github` с кешем образа `toolchain` и группой Dependabot `shared-workflows` (Д146, Д88 spec).
-
-**Основа:** R156 spec, R76 spec; RULES.md spec; repositories 2.2 spec; Д88, Д146, Д195, Д248, Д250 spec; R102, R103, R110.
-
-| Статус | ID | Задача | Кто | План | Зависит от |
-|---|---|---|---|---|---|
-| [x] | T145 | Переход на тег `spec` v0.18.3 | Claude | — | — |
-| [x] | T146 | План по R153–R155 spec: таблицы в `run/`, план на английском | Claude | — | T145 |
-| [ ] | T147 | CI на релизе `.github` v0.1.24 | Claude | — | T145 |
-
-**Порядок:** T145 — первой, по тексту оркестратора. T146 и T147 друг от друга не зависят, но обе меняют план и `docs/decisions.md`, поэтому идут по одной: T146, затем T147.
-
-**Не входит:** строки 5.12, 5.13 и 7.16 COORDINATION.md `spec` — долги Д14–Д16: это работа `tutor`, а не переход; Д6 и Д11.
-
-## Epic E9. Переход на тег `spec` v0.18.3
-
-Открыт 2026-11-16 (R115); результат, основа и порядок — у таблицы 1. Поведение кода эпик не меняет: модули Go `spec` поднимаются с правкой комментариев и теста таблицы допуска 0.4, а CI меняет только ссылки на общие workflow.
-
-#### T147. CI на релизе `.github` v0.1.24
-
-- **Цель:** все `uses:` общих workflow `.github` в `.github/workflows/` — на последнем релизе `.github`, v0.1.24, по SHA с версией рядом; образ `toolchain` CI берёт из кеша GitHub Actions по sha256 `.devcontainer/Dockerfile` (Д146 spec); ссылки на общие workflow Dependabot поднимает одним pull request (Д88 spec).
-- **Почему:** шаг 6 текста T145 оркестратора, как T68 `sim`: `tutor` на v0.1.15, а `release.yml` — на v0.1.11 (Д146 spec), и каждый job строит образ из сети — сбой nodejs.org, GitHub или снимка Ubuntu роняет проверки.
-- **Сделать:**
-  1. `gh release view v0.1.24 -R altnovatrail/.github` и SHA тега; что изменилось в общих `ci`-, `go.yml`, `release.yml`, `codeql.yml`, `scorecard.yml`, `documents.yml`, `secrets.yml` и `dco.yml` с v0.1.11 и v0.1.15 — входы, права, имена проверок, на которые смотрит защита ветки.
-  2. `uses:` всех вызовов — на SHA v0.1.24 с `# v0.1.24`; свои job «Samples» и «Canvas» — образ `toolchain` тем же путём кеша, что и общие, если релиз даёт для этого вход.
-  3. `.github/dependabot.yml` — группа `shared-workflows`, `patterns: ["altnovatrail/.github/*"]`, под `github-actions` (Д88 spec).
-  4. Правило `ci` — что CI берёт образ из кеша; решение журнала — переход CI и что взято.
-- **Как проверить:** `actionlint` по сумме `self-ci.yml` `.github`; рецепты `ci-` в чистом клоне; CI pull request — зелёный, имена проверок прежние; `/code-review high`, один круг.
-- **Разделы:** Д88, Д146 spec; R31 spec и её поправка 2026-11-09; R36 .github; R13, R30, R66.
-
+Текущего эпика нет. E9 сделан 2026-11-16 (R117), и его описание, таблица задач и тела задач — в архиве, [docs/plan/E9.md](docs/plan/E9.md). Следующий эпик выбирает автор: таблица 2 пуста.
