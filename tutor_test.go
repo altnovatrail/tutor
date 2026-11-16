@@ -5,7 +5,13 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"go/ast"
+	"go/parser"
+	"go/token"
+	"os"
 	"os/exec"
+	"path/filepath"
+	"regexp"
 	"strings"
 	"sync"
 	"testing"
@@ -300,6 +306,99 @@ func TestRootImportsNoProvider(t *testing.T) {
 		if dep == "github.com/altnovatrail/tutor/provider/claude" || dep == "github.com/altnovatrail/tutor/provider/gpt" || strings.HasPrefix(dep, "github.com/anthropics/") || strings.HasPrefix(dep, "github.com/openai/") {
 			t.Errorf("the root package takes %s", dep)
 		}
+	}
+}
+
+// The packages ci-test runs with the race detector, RACE of the justfile, are those whose code or
+// tests start goroutines: a go statement; a method Go or TryGo, as sync.WaitGroup's or errgroup's;
+// AfterFunc, of time or context; a server of httptest, whose handlers run on goroutines of their
+// own, or Serve and ListenAndServe of net/http; and t.Parallel, which runs tests beside one
+// another. A package that comes to start one fails until it is in RACE, and one that no longer
+// does, until it leaves (R118). Files under build constraints count too.
+func TestRaceStartsGoroutines(t *testing.T) {
+	// What a package outside RACE may start, and why the detector need not watch it (R118): the
+	// runner's parallel tests share nothing they write (R92), and its board's server, ListenAndServe
+	// of serveHTTP, never runs in a test — they give runBoard a serve of their own.
+	allowed := map[string]map[string]bool{
+		filepath.Join("cmd", "tutor-eval"): {"Parallel": true, "ListenAndServe": true},
+	}
+	starters := map[string]bool{"Go": true, "TryGo": true, "AfterFunc": true, "Parallel": true, "Serve": true, "ServeTLS": true, "ListenAndServe": true, "ListenAndServeTLS": true}
+	justfile, err := os.ReadFile("justfile")
+	if err != nil {
+		t.Fatal(err)
+	}
+	m := regexp.MustCompile(`(?m)^RACE := "([^"]*)"$`).FindSubmatch(justfile)
+	if m == nil {
+		t.Fatal(`the justfile has no line RACE := "…"`)
+	}
+	race := map[string]bool{}
+	for _, dir := range strings.Fields(string(m[1])) {
+		race[filepath.Clean(dir)] = true
+	}
+	out, err := exec.Command("go", "list", "-f", `{{.Dir}}|{{join .GoFiles ","}},{{join .CgoFiles ","}},{{join .IgnoredGoFiles ","}},{{join .TestGoFiles ","}},{{join .XTestGoFiles ","}}`, "./...").Output()
+	if err != nil {
+		t.Fatalf("go list: %v", err)
+	}
+	root, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
+	}
+	for line := range strings.Lines(string(out)) {
+		abs, names, _ := strings.Cut(strings.TrimSpace(line), "|")
+		dir, err := filepath.Rel(root, abs)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var starts, others []string
+		fset := token.NewFileSet()
+		for name := range strings.SplitSeq(names, ",") {
+			if name == "" {
+				continue
+			}
+			f, err := parser.ParseFile(fset, filepath.Join(dir, name), nil, parser.SkipObjectResolution)
+			if err != nil {
+				t.Fatal(err)
+			}
+			// The name the file gives net/http/httptest, if it imports it.
+			httptest := ""
+			for _, imp := range f.Imports {
+				if imp.Path.Value == `"net/http/httptest"` {
+					httptest = "httptest"
+					if imp.Name != nil {
+						httptest = imp.Name.Name
+					}
+				}
+			}
+			ast.Inspect(f, func(n ast.Node) bool {
+				kind := ""
+				switch n := n.(type) {
+				case *ast.GoStmt:
+					kind = "go"
+				case *ast.SelectorExpr:
+					x, _ := n.X.(*ast.Ident)
+					if starters[n.Sel.Name] || x != nil && x.Name == httptest && strings.HasPrefix(n.Sel.Name, "New") && strings.HasSuffix(n.Sel.Name, "Server") {
+						kind = n.Sel.Name
+					}
+				}
+				if kind != "" {
+					starts = append(starts, kind)
+					if !allowed[dir][kind] {
+						others = append(others, fmt.Sprintf("%s: %s", fset.Position(n.Pos()), kind))
+					}
+				}
+				return true
+			})
+		}
+		switch {
+		case len(others) > 0 && !race[dir]:
+			t.Errorf("%s starts goroutines and is not in RACE of the justfile: %s", dir, strings.Join(others, "; "))
+		case len(starts) == 0 && race[dir]:
+			t.Errorf("%s is in RACE of the justfile and starts no goroutine", dir)
+		}
+		delete(race, dir)
+	}
+	for dir := range race {
+		t.Errorf("%s is in RACE of the justfile and is no package of the module", dir)
 	}
 }
 

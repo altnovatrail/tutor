@@ -47,6 +47,52 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 - **A done epic** goes to `docs/plan/<epic>.md` (R59 canvas-api): bodies and gist sentences are there already (rule 9); move its description and table of tasks verbatim; questions and debt stay in `run/`; until the next epic, table 1 reads «Current epic — none» and names the last done epic. Measure the epic's sessions — `just -f spec/justfile tokens-report --since <first day of the epic> --row` — as a row of measurements 4.1; a new analysis by the threshold of R145 spec.
 - Never read an archive whole: find a task by heading — `grep -n '^#### T03\.' RUN.md docs/plan/*.md`; from another repository — «T03 tutor». Task numbers are global, never reused, and taken free at the moment of writing.
 
-## Table 1. Current epic — none
+## Table 1. Current epic — E10. Скорость CI: строка 7.16
 
-Текущего эпика нет. E9 сделан 2026-11-16 (R117), и его описание, таблица задач и тела задач — в архиве, [docs/plan/E9.md](docs/plan/E9.md). Следующий эпик выбирает автор: таблица 2 пуста.
+**2026-11-16: эпик открыт (R118).** Задача T148 пришла от оркестратора `spec`, T171 spec, по строке 7.16 его COORDINATION.md; слово автора 2026-11-16 — ускорение CI сейчас. Текущего эпика не было — E9 сделан 2026-11-16 (R117), таблица 2 пуста, — а задача вне эпика по R103 — первая задача следующего, поэтому у строки 7.16 свой эпик, как у перехода — E9 (R115). Тела задач — в разделе «Epic E10» ниже.
+
+**Результат:** CI `tutor` быстрее по строке 7.16 COORDINATION.md `spec`, а что проверки доказывают, не меняется: «Go / test» — без `-race` на пакетах, что не запускают горутин; кеш Go в CI и в job «Canvas» — по релизу `.github` строки 7.13; `.devcontainer/` — по тегу `spec` строки 7.14, со стадией `toolchain-core`.
+
+**Основа:** R76 spec и его шестая поправка 2026-11-15, R156 spec; строки 7.13, 7.14 и 7.16 COORDINATION.md `spec`; measurements 3.1 spec; R92, R103, R117.
+
+| Статус | ID | Задача | Кто | План | Зависит от |
+|---|---|---|---|---|---|
+| [x] | T148 | Скорость CI: строка 7.16 | Claude | — | — |
+| [ ] | T149 | CI на релизе `.github` строки 7.13: кеш Go | Claude | — | T148; релиз `.github` строки 7.13 |
+| [ ] | T150 | Переход на тег `spec` строки 7.14: стадия `toolchain-core` | Claude | — | T149; тег `spec` строки 7.14 |
+
+**Порядок:** T148 — сразу: `-race` ничего не ждёт. T149 — когда выйдет релиз `.github` строки 7.13; оркестратор запустит её тогда. T150 — последней: переход на тег меняет `.devcontainer/`, а пересобирает контейнер автор.
+
+**Не входит:** Д6, Д11, Д14 и Д15; строки 5.12 и 5.13 COORDINATION.md `spec`.
+
+## Epic E10. Скорость CI: строка 7.16
+
+Открыт 2026-11-16 (R118); результат, основа и порядок — у таблицы 1. Тело T148 и её фраза итога — в архиве эпика, [docs/plan/E10.md](docs/plan/E10.md).
+
+#### T149. CI на релизе `.github` строки 7.13: кеш Go
+
+- **Цель:** CI `tutor` — на релизе `.github` строки 7.13 COORDINATION.md `spec`: кеш Go в job «Go» и тот же том `GOCACHE` в job «Canvas»; что проверки доказывают, не меняется.
+- **Почему:** строка 7.16 COORDINATION.md `spec`, «Зависит от: 7.13 — для кеша»; measurements 3.1 spec — время уходит в компиляцию с пустым `GOCACHE`. T148 сделала часть, что не ждёт (R118).
+- **Зависит от:** релиз `.github` строки 7.13 — `gh release list -R altnovatrail/.github`. Пока его нет, задача не начинается.
+- **Сделать:**
+  1. Что изменилось в общих workflow с v0.1.24: входы, права, имена проверок, на которые смотрит защита ветки, том кеша Go — `GOMODCACHE`, `GOCACHE`, `GOLANGCI_LINT_CACHE`, — файл и тег образа `toolchain`, CodeQL (go) без образа.
+  2. Все `uses:` общих workflow в `.github/workflows/` — на SHA релиза с версией рядом.
+  3. Свои job «Samples» и «Canvas» — образ `toolchain` тем же файлом и тегом, что общие; «Canvas» — тот же том `GOCACHE`, что job `go.yml`: входом релиза, если он есть, иначе копией его шагов, как в R117.
+  4. Если релиз требует стадию `toolchain-core` в `.devcontainer/Dockerfile`, она приходит с T150: эта задача `.devcontainer/` не меняет.
+  5. Правило `ci`, architecture 3.2, решение журнала, Д16 — что осталось.
+- **Как проверить:** `actionlint` по сумме `self-ci.yml` `.github`; рецепты `ci-` в чистом клоне; CI pull request зелёный, имена проверок прежние; время изменённых job до и после — по прогонам `main` и pull request; `/code-review high`, один круг.
+- **Разделы:** строки 7.13 и 7.16 COORDINATION.md `spec`; measurements 3.1 spec; R36 .github; R117, R118.
+
+#### T150. Переход на тег `spec` строки 7.14: стадия `toolchain-core`
+
+- **Цель:** `tutor` — на теге `spec` строки 7.14, со стадией `toolchain-core` в `.devcontainer/Dockerfile` по заготовке тега; проверки без браузера и Go-тестов, что релиз `.github` строки 7.13 гоняет в `toolchain-core`, идут в ней.
+- **Почему:** строки 7.13 и 7.14 COORDINATION.md `spec`: «с тегом `spec` строки 7.14 — релиз и проверки без браузера и Go-тестов (lint, vuln, licenses, документы) в стадии `toolchain-core`»; переход на тег — задача своя (RULES.md spec, Across repositories).
+- **Зависит от:** T149; тег `spec` строки 7.14 (T166 spec).
+- **Сделать:**
+  1. Переход на тег, как T145 (R115): подмодуль, модули Go `spec` и `spec/contracts`, `module-kit`, если он вышел на тот же тег; что тег принёс `tutor` — по `git -C spec log` и `grep -n` по `tutor` в `spec/run/DEBT.md`.
+  2. `.devcontainer/` — по `just new-repo-draft tutor go 3.6 <tag>` в клоне `spec` во временной папке, с отличиями `tutor` (R12, R13, R69); apt — только источники снимка.
+  3. CI — вход или версия `.github`, что берёт `toolchain-core`, если T149 её не взяла.
+  4. Решение журнала; Д16 закрыть.
+- **Мой шаг:** пересобрать контейнер после мержа.
+- **Как проверить:** `just -f spec/justfile docs-check-repo`; рецепты `ci-` в чистом клоне; CI pull request зелёный; время изменённых job до и после; `/code-review high`, один круг.
+- **Разделы:** строки 7.13, 7.14 и 7.16 COORDINATION.md `spec`; R31 spec; R115, R117, R118.

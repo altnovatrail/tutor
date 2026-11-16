@@ -1300,3 +1300,19 @@ What tutor's Claude Code sessions spend, by the measurement of measurements 1.1 
 - Epic E7, read 2026-11-13 at its archive (R108): five sessions from its planning — the session of R104, then one for each task, and the archive in the session of T140 —, the row to the measurement itself, before the archive's commit. The context of a main call is 147.6 thousand, 27% below the reference of tutor, the row "after" of 7.12, 202.4 thousand, over 406 main calls: the threshold of R145 spec, 25% above the reference over at least 300 calls, gives no analysis.
 - Epic E8, read 2026-11-14 at its archive (R114): five sessions from its planning, which began in the session of T140 right after the row of E7, then one for each task, and the archive in the session of T144; the row to the measurement itself, before the archive's commit. The context of a main call is 195.3 thousand, 3.5% below the reference of tutor, 202.4 thousand, over 519 main calls: the threshold of R145 spec gives no analysis. The one compaction is in the session of T143, whose main context reached 366 thousand.
 - Epic E9, read 2026-11-16 at its archive in the session of T147 (R117): four sessions from the archive of E8 to the measurement itself, before the archive's commit — the calls of the session of T144 after that archive, and those of T145, T146 and T147, which spec's orchestrator ran, with the planning of E9 in the session of T145 (R115). The context of a main call is 154.6 thousand, 24% below the reference of tutor, 202.4 thousand, over 279 main calls: the threshold of R145 spec gives no analysis.
+
+## 5. The speed of CI
+
+### 5.1. «Go / test» with the race detector on the packages that start goroutines, T148, 2026-11-16
+
+What was measured: the time of `ci-test` before and after R118 — `go test -race` over `./...`, against `-race` on the four packages of `RACE` and a second `go test` without it on the other 34. How: locally in the devcontainer, on four cores, `taskset -c 0-3`, as many as GitHub's runner has, each run with an empty `GOCACHE` of its own, as each job of CI starts (measurements 3.1 spec), from the commit of T148 on `main` eddb825; the times are the wall clock of the whole command, the compiling with it.
+
+| Run | Time, s | `cmd/tutor-eval`, s | `internal/evalsample`, s | Longest other package, s | Coverage |
+|---|---|---|---|---|---|
+| before: `-race` over `./...` | 716 | 483.7 | 261.8 | 63.0, `internal/workbook` | 95.5 % |
+| tried: without `-race` only on `cmd/tutor-eval` and `internal/evalsample` | 427 | 51.3 | 23.4 | 46.2, `internal/workbook` | 95.5 % |
+| after: `-race` on `RACE`, the rest without | 359 | 60.2 | 34.1 | 14.6, `internal/board` | 95.5 % |
+
+- The profile `coverage/go.out` has the same 9,604 lines before and after, and each package the same coverage: a package's lines count by its own tests, whichever run they are in.
+- Most of what remains is compiling with the empty cache, twice: the packages of `RACE` and their dependencies, the SDKs of the providers among them, with the detector, and the module without it. The cache of Go in CI is row 7.13 of `spec`'s COORDINATION.md (T149).
+- In CI, «Go / test»: on `main` on 2026-11-16, 517 s at 143321f and 374 s at eddb825, of which the step `ci-test` 326 s (the runs 43805472220 and 43811335056); on pull request #178 of T148, 196 s at its first commit ef19739, of which `ci-test` 156 s — 75 s the run with the detector and 76 s the rest —, and 282 s at a6abc25, which changed only the guard and the documents, of which `ci-test` 250 s — 115 s and 132 s (the runs 43817071698 and 43818370756). The second runner was slower throughout: `cmd/tutor-eval` took 37.6 s against 21.3, `internal/board` 13.2 s against 7.8. The other jobs did not change, and their times vary from run to run: «Canvas» 87 s against 117 and 142 on `main`, «Go / lint» 125 s against 91 and 120.
