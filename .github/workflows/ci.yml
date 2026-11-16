@@ -151,14 +151,16 @@ jobs:
       # The caches of Go — GOMODCACHE, GOCACHE and GOLANGCI_LINT_CACHE in one folder mounted at
       # /go-cache — by the steps of a job of the shared go.yml of the release above (R41 .github;
       # R120), with the check canvas in the key: go run ./cmd/tutor-eval builds the runner without
-      # the race detector and the coverage of Go / test, so the entry is the job's own. Only a push
-      # to main saves it, and a pull request reads main's.
+      # the race detector and the coverage of Go / test, so the entry is the job's own. Its go.sum
+      # files are the repository's alone, as in go.yml, whose checkout has no submodule: those of
+      # spec/ would change the key with every move of the tag. Only a push to main saves it, and a
+      # pull request reads main's.
       - name: Go caches from the cache
         id: go-cache
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         with:
           path: ${{ runner.temp }}/go-cache
-          key: go-${{ runner.os }}-${{ runner.arch }}-canvas-${{ hashFiles('.devcontainer/Dockerfile') }}-${{ hashFiles('**/go.sum') }}
+          key: go-${{ runner.os }}-${{ runner.arch }}-canvas-${{ hashFiles('.devcontainer/Dockerfile') }}-${{ hashFiles('**/go.sum', '!spec/**') }}
 
       # As in go.yml: what the cache gave is checked by go mod verify in every module of the
       # repository, and a check that fails costs the run its caches, not its verdict; verified

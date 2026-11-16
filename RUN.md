@@ -84,4 +84,4 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
   4. Решение журнала; Д16 закрыть.
 - **Мой шаг:** пересобрать контейнер после мержа.
 - **Как проверить:** `just -f spec/justfile docs-check-repo`; рецепты `ci-` в чистом клоне; CI pull request зелёный; время изменённых job до и после; `/code-review high`, один круг.
-- **Разделы:** строки 7.13, 7.14 и 7.16 COORDINATION.md `spec`; R31 spec; R115, R117, R118.
+- **Разделы:** строки 7.13, 7.14 и 7.16 COORDINATION.md `spec`; R31 spec; R115, R117, R118, R120.
