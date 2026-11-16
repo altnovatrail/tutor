@@ -104,7 +104,7 @@ func TestRefusalOf(t *testing.T) {
 		t.Errorf("a limit: %v", err)
 	}
 	returns := time.Date(2026, 12, 1, 0, 0, 0, 0, time.UTC)
-	if err := (provider.Refusal{Limit: provider.LimitTier, Returns: returns}).Of(cause); !errors.As(err, &le) || le.Limit != provider.LimitTier || !le.Returns.Equal(returns) {
+	if err := (provider.Refusal{Limit: provider.LimitTier, Returns: returns}).Of(cause); !errors.As(err, &le) || le.Limit != provider.LimitTier || !le.Returns.Equal(returns) || !strings.Contains(err.Error(), "access returns 2026-12-01T00:00:00Z") {
 		t.Errorf("a limit with when access returns: %v, %+v", err, le)
 	}
 	if err := (provider.Refusal{Key: true}).Of(cause); !errors.Is(err, provider.ErrKeyRefused) || !errors.Is(err, cause) {
@@ -130,6 +130,8 @@ func TestChecked(t *testing.T) {
 		t.Error("a refused key is not refused")
 	case !errors.As(provider.Checked(cause, provider.Refusal{Limit: provider.LimitTier}, 429), &le):
 		t.Error("a limit is lost")
+	case errors.As(provider.Checked(cause, provider.Refusal{Returns: time.Now()}, 429), &le):
+		t.Error("a time with no limit is a refusal")
 	case !errors.Is(provider.Checked(cause, provider.Refusal{}, 403), provider.ErrNoRights):
 		t.Error("a 403 is not no rights")
 	case !errors.Is(provider.Checked(cause, provider.Refusal{}, 404), cause), errors.Is(provider.Checked(cause, provider.Refusal{}, 404), provider.ErrNoRights):

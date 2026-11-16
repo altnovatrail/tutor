@@ -569,13 +569,13 @@ func TestRefusals(t *testing.T) {
 func TestTierReturns(t *testing.T) {
 	body := []byte(`{"type":"error","error":{"type":"rate_limit_error","message":"monthly","details":{"error_code":"enforced_spend_limit_reached"}}}`)
 	east := time.FixedZone("UTC+3", 3*60*60)
-	for at, want := range map[time.Time]time.Time{
-		time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC):     time.Date(2026, 12, 1, 0, 0, 0, 0, time.UTC),
-		time.Date(2026, 12, 31, 23, 59, 59, 0, time.UTC): time.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC),
-		time.Date(2026, 12, 1, 2, 0, 0, 0, east):         time.Date(2026, 12, 1, 0, 0, 0, 0, time.UTC),
+	for _, tt := range []struct{ at, want time.Time }{
+		{time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC), time.Date(2026, 12, 1, 0, 0, 0, 0, time.UTC)},
+		{time.Date(2026, 12, 31, 23, 59, 59, 0, time.UTC), time.Date(2027, 1, 1, 0, 0, 0, 0, time.UTC)},
+		{time.Date(2026, 12, 1, 2, 0, 0, 0, east), time.Date(2026, 12, 1, 0, 0, 0, 0, time.UTC)},
 	} {
-		if got := Refusal(http.StatusTooManyRequests, body, at); got.Limit != provider.LimitTier || !got.Returns.Equal(want) || got.Returns.Location() != time.UTC {
-			t.Errorf("at %v: %+v, want access back at %v", at, got, want)
+		if got := Refusal(http.StatusTooManyRequests, body, tt.at); got.Limit != provider.LimitTier || !got.Returns.Equal(tt.want) || got.Returns.Location() != time.UTC {
+			t.Errorf("at %v: %+v, want access back at %v", tt.at, got, tt.want)
 		}
 	}
 }

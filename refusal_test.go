@@ -38,4 +38,23 @@ func TestRefusalOutcomes(t *testing.T) {
 	if _, out = ask(context.Background(), a, calls, []provider.Request{{}, {}}, 0); out.Kind != LimitReached || out.Limit != LimitTier || !out.AccessReturns.Equal(returns) {
 		t.Errorf("the cap of the tier: %+v", out)
 	}
+	// Of two limits, the outcome takes the one that holds the call longer, in either order: one with
+	// no time, then the later time.
+	later := returns.AddDate(0, 1, 0)
+	for _, tt := range []struct {
+		first, second error
+		limit         LimitReason
+		returns       time.Time
+	}{
+		{&provider.LimitError{Limit: LimitTier, Returns: returns}, &provider.LimitError{Limit: LimitOwner}, LimitOwner, time.Time{}},
+		{&provider.LimitError{Limit: LimitOwner}, &provider.LimitError{Limit: LimitTier, Returns: returns}, LimitOwner, time.Time{}},
+		{&provider.LimitError{Limit: LimitTier, Returns: returns}, &provider.LimitError{Limit: LimitTier, Returns: later}, LimitTier, later},
+		{&provider.LimitError{Limit: LimitTier, Returns: later}, &provider.LimitError{Limit: LimitTier, Returns: returns}, LimitTier, later},
+		{&provider.LimitError{Limit: LimitBalance}, &provider.LimitError{Limit: LimitOwner}, LimitBalance, time.Time{}},
+	} {
+		opus.err, haiku.err = tt.first, tt.second
+		if _, out = ask(context.Background(), a, calls, []provider.Request{{}, {}}, 0); out.Kind != LimitReached || out.Limit != tt.limit || !out.AccessReturns.Equal(tt.returns) {
+			t.Errorf("%v and %v: %+v, want %s returning %v", tt.first, tt.second, out, tt.limit, tt.returns)
+		}
+	}
 }

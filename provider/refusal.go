@@ -36,6 +36,9 @@ type LimitError struct {
 }
 
 func (e *LimitError) Error() string {
+	if !e.Returns.IsZero() {
+		return fmt.Sprintf("the provider refused for a limit (%s, access returns %s): %v", e.Limit, e.Returns.UTC().Format(time.RFC3339), e.Err)
+	}
 	return fmt.Sprintf("the provider refused for a limit (%s): %v", e.Limit, e.Err)
 }
 func (e *LimitError) Unwrap() error { return e.Err }
@@ -56,7 +59,7 @@ func Checked(err error, refused Refusal, status int) error {
 	switch {
 	case err == nil:
 		return nil
-	case refused != Refusal{}:
+	case refused.refused():
 		return refused.Of(err)
 	case status == http.StatusForbidden:
 		return fmt.Errorf("%w: %w", ErrNoRights, err)
@@ -72,6 +75,9 @@ type Refusal struct {
 	Returns time.Time
 	Key     bool
 }
+
+// refused tells whether the response was a refusal: for a limit, or of the key.
+func (r Refusal) refused() bool { return r.Limit != "" || r.Key }
 
 // Of is the refusal as the error of a call that failed with err, or err itself when the response
 // was no refusal.
@@ -115,7 +121,7 @@ func NoRetry(classify func(status int, body []byte, at time.Time) Refusal, last 
 		if rerr != nil {
 			return resp, err
 		}
-		if r := classify(resp.StatusCode, body, answered(resp.Header)); r != (Refusal{}) {
+		if r := classify(resp.StatusCode, body, answered(resp.Header)); r.refused() {
 			*last = r
 			if resp.Header == nil {
 				resp.Header = http.Header{}
