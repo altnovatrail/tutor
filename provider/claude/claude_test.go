@@ -176,6 +176,65 @@ func TestCacheTokens(t *testing.T) {
 	}
 }
 
+// Instructions marked to cache end at a breakpoint of the cache, for five minutes, and nothing after
+// them is marked: the message of the work is never cached. The two answers, recorded as the API
+// gives them, are a write of the prefix and a read of it, and their tokens and price come back as
+// such (R131; docs/sources.md, 1.18).
+func TestCacheInstructions(t *testing.T) {
+	usage := func(write, read int) string {
+		return strings.Replace(evStart, `"usage":{"input_tokens":1300,"output_tokens":1}`,
+			fmt.Sprintf(`"usage":{"input_tokens":994,"output_tokens":1,"cache_creation_input_tokens":%d,"cache_read_input_tokens":%d,"cache_creation":{"ephemeral_5m_input_tokens":%d,"ephemeral_1h_input_tokens":0}}`, write, read, write), 1)
+	}
+	stream := func(start string) reply {
+		return reply{body: sse(start, evThinking, evSignature, evStop0, evText, evPing, evDelta1, evDelta2, evStop1, evEnd, evMsgStop)}
+	}
+	c, f := fakeAPI(t, catalog.Models[2], stream(usage(1362, 0)), stream(usage(0, 1362)))
+	r := request
+	r.CacheInstructions = true
+	wrote, err := c.Ask(context.Background(), r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	read, err := c.Ask(context.Background(), r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, sent := range f.requests() {
+		holds(t, sent, `"system":[{"text":"Read and judge.","cache_control":{"type":"ephemeral"},"type":"text"}]`)
+		if n := strings.Count(sent, `"cache_control"`); n != 1 || strings.Contains(sent, `"ttl"`) {
+			t.Errorf("the request has %d breakpoints of the cache, or a lifetime of its own:\n%s", n, sent)
+		}
+	}
+	if !slices.Equal(wrote.CacheWrites, []provider.CacheWrite{{TTL: catalog.TTL5m, Tokens: 1362}}) || wrote.CacheReadTokens != 0 ||
+		len(read.CacheWrites) != 0 || read.CacheReadTokens != 1362 || wrote.InputTokens != 994 || read.InputTokens != 994 {
+		t.Errorf("the write is %+v, the read %+v", wrote, read)
+	}
+	// 994 × $4 + 1362 × $5 or × $0.20 + 45 × $20, a million each.
+	w, _ := c.Prices().Cost(wrote)
+	h, _ := c.Prices().Cost(read)
+	if math.Abs(w-0.011686) > 1e-12 || math.Abs(h-0.0051484) > 1e-12 {
+		t.Errorf("costs = %v and %v", w, h)
+	}
+}
+
+// A request that marks no instructions to cache has no breakpoint of the cache, nor one that marks
+// blank instructions.
+func TestNoCache(t *testing.T) {
+	c, f := fakeAPI(t, catalog.Models[2], reply{body: goodStream})
+	blank := request
+	blank.Instructions, blank.CacheInstructions = " ", true
+	for _, r := range []provider.Request{request, blank} {
+		if _, err := c.Ask(context.Background(), r); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, sent := range f.requests() {
+		if strings.Contains(sent, "cache_control") {
+			t.Errorf("a request without instructions to cache has a breakpoint:\n%s", sent)
+		}
+	}
+}
+
 // Haiku 5.5 prices a prompt over 100 000 tokens, the cache counted in, higher.
 func TestLongPrices(t *testing.T) {
 	p := PricesOf(catalog.Models[0])

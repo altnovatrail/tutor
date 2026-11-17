@@ -113,6 +113,22 @@ func (c Config) Cost(in, out int64) float64 {
 	return (float64(in)*c.Model.Input + float64(out)*c.Model.Output) / 1e6
 }
 
+// CostOf is what a call that came back as resp costs, in US dollars: the input without the cache,
+// the writes to the cache at the price of their lifetime — an hour's for any but 5 minutes — and the
+// read from it, as the words' instructions are cached (R131), and the output.
+func (c Config) CostOf(resp provider.Response) float64 {
+	m := c.Model
+	usd := float64(resp.InputTokens)*m.Input + float64(resp.CacheReadTokens)*m.CacheRead + float64(resp.OutputTokens)*m.Output
+	for _, w := range resp.CacheWrites {
+		price := m.Write1h
+		if w.TTL == catalog.TTL5m {
+			price = m.Write5m
+		}
+		usd += float64(w.Tokens) * price
+	}
+	return usd / 1e6
+}
+
 // Step is a call of a run, in the order the run makes it: the configuration it asks, the input
 // and output tokens the estimate expects it to take, the most input tokens it can take, for its
 // worst case, and the call. How big a request can grow is the kind's to say: a request of the
@@ -128,8 +144,13 @@ type Step struct {
 }
 
 // Worst is the most the step's call can cost: its most input tokens, or the expected ones if the
-// kind gave fewer, and the most a call may write.
-func (st Step) Worst() float64 { return st.Config.Cost(max(st.WorstIn, st.In), MaxOutputTokens) }
+// kind gave fewer, each at the higher of the input's price and that of a write to the cache for 5
+// minutes, which a request that caches its instructions pays for them on a miss (R131), and the most
+// a call may write.
+func (st Step) Worst() float64 {
+	m := st.Config.Model
+	return (float64(max(st.WorstIn, st.In))*max(m.Input, m.Write5m) + float64(MaxOutputTokens)*m.Output) / 1e6
+}
 
 // Call is what a kind says of a call of its run.
 type Call interface {
@@ -156,14 +177,18 @@ type Outcome struct {
 // model that answered, the tokens and the thinking, the time to the first token, the retries of
 // the SDK, the time of the call and its cost.
 type Usage struct {
-	ModelID        string  `json:"model_id,omitempty"`
-	InputTokens    int64   `json:"input_tokens,omitempty"`
-	OutputTokens   int64   `json:"output_tokens,omitempty"`
-	ThinkingTokens int64   `json:"thinking_tokens,omitempty"`
-	FirstTokenMs   int64   `json:"first_token_ms,omitempty"`
-	Retries        int     `json:"retries,omitempty"`
-	LatencyMs      int64   `json:"latency_ms,omitempty"`
-	CostUSD        float64 `json:"cost_usd,omitempty"`
+	ModelID     string `json:"model_id,omitempty"`
+	InputTokens int64  `json:"input_tokens,omitempty"`
+	// CacheWriteTokens and CacheReadTokens are the input written to the cache, of every lifetime, and
+	// read from it, beside InputTokens, which holds the input without them (R131).
+	CacheWriteTokens int64   `json:"cache_write_tokens,omitempty"`
+	CacheReadTokens  int64   `json:"cache_read_tokens,omitempty"`
+	OutputTokens     int64   `json:"output_tokens,omitempty"`
+	ThinkingTokens   int64   `json:"thinking_tokens,omitempty"`
+	FirstTokenMs     int64   `json:"first_token_ms,omitempty"`
+	Retries          int     `json:"retries,omitempty"`
+	LatencyMs        int64   `json:"latency_ms,omitempty"`
+	CostUSD          float64 `json:"cost_usd,omitempty"`
 }
 
 // Estimate is what a run takes before it starts: the calls, what they are expected to cost, and
@@ -413,7 +438,11 @@ func call(ctx context.Context, ask Asker, st Step, now func() time.Time) Outcome
 	o.LatencyMs = now().Sub(start).Milliseconds()
 	o.ModelID, o.InputTokens, o.OutputTokens, o.ThinkingTokens = resp.Model, resp.InputTokens, resp.OutputTokens, resp.ThinkingTokens
 	o.FirstTokenMs, o.Retries = resp.FirstToken.Milliseconds(), resp.Retries
-	o.CostUSD = st.Config.Cost(resp.InputTokens, resp.OutputTokens)
+	o.CacheReadTokens = resp.CacheReadTokens
+	for _, w := range resp.CacheWrites {
+		o.CacheWriteTokens += w.Tokens
+	}
+	o.CostUSD = st.Config.CostOf(resp)
 	if err != nil {
 		o.Error = err.Error()
 		if !provider.Billed(resp, err) {

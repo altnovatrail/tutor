@@ -1326,7 +1326,7 @@ The rounded averages of input and output are the expected tokens of `price.go`. 
 | Sonnet without thinking | v1, T91 | 0.0049 | of 204: 17 / 75 / 178 |
 | Haiku 5.5 · `medium` | v1, T91 | 0.00062 | of 204: 15 / 34 / 186 |
 
-The v1 runs are the same 204 cases; `api`'s strict leak check turns a leak into the fallback text. Version 3 was measured on Opus alone. The instructions of the words are 4,445 bytes (`internal/hint/testdata/words/rung-w005.txt`) and the schema about 300 more — some 1,100–1,200 tokens of English, our estimate, not counted: no call ran. A hit of Anthropic's cache costs 5 % of Opus's input price and a 5-minute write 1.25 times it (sources 1.5, 1.14), so a cached prefix would save ≈ $0.0045 a call on a hit and add ≈ $0.0012 on a miss. The words of a hint and those after a right answer have instructions of their own, so only a call of the same kind hits; how often two come within 5 minutes, only `api`'s log can say.
+The v1 runs are the same 204 cases; `api`'s strict leak check turns a leak into the fallback text. Version 3 was measured on Opus alone. The instructions of the words are 4,445 bytes (`internal/hint/testdata/words/rung-w005.txt`) and the schema about 300 more — some 1,100–1,200 tokens of English, our estimate, not counted: no call ran. A hit of Anthropic's cache costs 5 % of Opus's input price and a 5-minute write 1.25 times it (sources 1.5, 1.14), so a cached prefix would save ≈ $0.0045 a call on a hit and add ≈ $0.0012 on a miss. The words of a hint and those after a right answer have instructions of their own, so only a call of the same kind hits; how often two come within 5 minutes, only `api`'s log can say. *2026-11-17 (T167): counted — the instructions of the hint are 1,362 tokens and those after a right answer 811, section 3.22; the Claude adapter caches them (R131).*
 
 **Open:** a run on Haiku at 24 px and on stacked fractions — Д18; *2026-11-17 (T166): the run at 24 px is section 3.21, stacked fractions stay in Д18*; the words' price and the height of a digit for `spec` — В92 and В93.
 
@@ -1353,6 +1353,19 @@ The v1 runs are the same 204 cases; `api`'s strict leak check turns a leak into 
 
 **Not measured:** a stacked fraction whose numerator runs into the bar — the sheets' synthesis draws fractions inline alone, and no recorded sheet has one (section 3.20) —; Opus 5.5 at 24 px, which the site does not call in the mode `single` (R125). Both stay in Д18.
 
+### 3.22. The prefix of the words' cache
+
+**What and why** (T167, 2026-11-17). The Claude adapter caches the system prompt of the words (R131): a prompt below the minimum of the model, 512 tokens on Opus 5.5, Sonnet 5.5 and Haiku 5.5, is not cached and no error says so (sources 1.18). Section 3.20 estimated the instructions of the hint at ≈ 1,100–1,200 tokens without counting them.
+
+**How.** Anthropic's token counting, which is free (sources 1.16), on `claude-opus-5-5`, with the eval key: one user message "ok" alone, and the same message after a system prompt of the instructions as the code gives them — `hint.Instructions()`, 4,444 bytes, and `correct.Instructions()`, 2,803 bytes; the instructions are the difference. No call of a model, no learner's or author's work.
+
+| Instructions | Bytes | Tokens | A hit saves | A miss costs more | Hits to break even |
+|---|---|---|---|---|---|
+| the hint (`CallWords`, `CallHint`) | 4,444 | 1,362 | $0.0052 | $0.0014 | 21 % |
+| the words after a correct answer (`CallCorrect`) | 2,803 | 811 | $0.0031 | $0.0008 | 21 % |
+
+The money is Opus 5.5's: input $4, a write for 5 minutes $5, a hit $0.20 a million (sources 1.18). A hit saves the prefix × $3.80 and a miss costs it × $1 more, so the cache pays from 1 / (1 + 3.8) ≈ 21 % of the calls of a kind that hit, whatever the prefix's length. Both prefixes are above 512 tokens; the prompt that structured outputs adds for the schema is not counted in them. How often a call of the words comes within 5 minutes of another of its kind, on the same key, only `api`'s log can say (В92, В96).
+
 ## 4. Claude Code sessions
 
 ### 4.1. The spending of tutor's sessions
@@ -1378,6 +1391,7 @@ What tutor's Claude Code sessions spend, by the measurement of measurements 1.1 
 | 2026-11-17T04:36 … 2026-11-17T05:26 | epic E13: T164, run by spec's orchestrator, and its archive | 2 | 47 / 17 | 81.2 / 58.0 | 0 | $2.85 |
 | 2026-11-17T05:26 … 2026-11-17T15:04 | epic E14: T165, run by spec's orchestrator, and its archive | 2 | 69 / 0 | 85.3 / — | 0 | $3.28 |
 | 2026-11-17T15:04 … 2026-11-17T18:38 | epic E15: T166, run by spec's orchestrator, and its archive | 2 | 113 / 21 | 120.4 / 73.0 | 0 | $6.94 |
+| 2026-11-17T18:38 … 2026-11-17T19:15 | epic E16: T167, run by spec's orchestrator, and its archive | 2 | 105 / 22 | 146.7 / 60.2 | 0 | $6.88 |
 
 - Read 2026-11-13. A task's window runs from the start of its session to the start of the next one. The row of T131 is its whole session; its «Сделано» gives the numbers before its review: 106 / 43 calls, 221.1 / 114.9 thousand, $10.76. Until T136, the row of T133 was its session before its review, 2026-11-13T03:46 … 2026-11-13T05:11: 131 / 176 calls, 216.1 / 88.1 thousand, $20.45; it is its whole session now, as the other rows. The row of T136 runs to its review, as does "after", and the rows of the six tasks add up to "after".
 - "After" is the six sessions of row 7.12, to the review of T136: the context of a main call is 202.4 thousand against 398.5 "before", −49%, and of a subagent's 92.0 against 119.5, −23%, with 1 compaction in 663 main calls against 53 in 11,509. The windows differ in work: a month of code and paid runs against six sessions on documents, a session for each task. The comparison over the same kind of work is T124 spec.
@@ -1390,6 +1404,7 @@ What tutor's Claude Code sessions spend, by the measurement of measurements 1.1 
 - Epic E13, read 2026-11-17 at its archive in the session of T164 (R128): two sessions from the archive of E12 to the measurement itself, before the archive's commit — the calls of the session of T160 after that archive, and those of T164, which spec's orchestrator ran, with the opening of E13 in the same session. The context of a main call is 81.2 thousand, 60% below the reference of tutor, 202.4 thousand, over 47 main calls, fewer than the 300 that the threshold of R145 spec asks: no analysis.
 - Epic E14, read 2026-11-17 at its archive in the session of T165 (R129): two sessions from the archive of E13 to the measurement itself, before the archive's commit — the calls of the session of T164 after that archive, and those of T165, which spec's orchestrator ran, with the opening of E14 in the same session. The context of a main call is 85.3 thousand, 58% below the reference of tutor, 202.4 thousand, over 69 main calls, fewer than the 300 that the threshold of R145 spec asks: no analysis.
 - Epic E15, read 2026-11-17 at its archive in the session of T166 (R130): two sessions from the archive of E14 to the measurement itself, before the archive's commit and the review — the calls of the session of T165 after that archive, and those of T166, which spec's orchestrator ran and resumed three times, with the opening of E15 in the same session. The context of a main call is 120.4 thousand, 41% below the reference of tutor, 202.4 thousand, over 113 main calls, fewer than the 300 that the threshold of R145 spec asks: no analysis.
+- Epic E16, read 2026-11-17 at its archive in the session of T167 (R131): two sessions from the archive of E15 to the measurement itself, before the archive's commit and the review — the calls of the session of T166 after that archive, and those of T167, which spec's orchestrator ran, with the opening of E16 in the same session. The context of a main call is 146.7 thousand, 28% below the reference of tutor, 202.4 thousand, over 105 main calls, fewer than the 300 that the threshold of R145 spec asks: no analysis.
 
 ## 5. The speed of CI
 

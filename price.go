@@ -85,7 +85,11 @@ type kind struct {
 // T127 measured the hint with the work, so the hint without it has no expected tokens (R106). The
 // words after a correct answer are one kind with the work and without it, and their worst is with
 // it; their expected tokens are those of the 110 calls of the run that admitted them, with the
-// work, without it and with a note, version 1 of their prompt (T144; R113).
+// work, without it and with a note, version 1 of their prompt (T144; R113). The input of each is the
+// whole input, measured before the words cached their instructions: a log with the cache splits it
+// into input_tokens, cache_write_tokens and cache_read_tokens, which a new measurement sums. Their
+// price takes it all at the input's price, between a call that reads the instructions from the cache
+// and one that writes them (R131; measurements 3.22).
 var kinds = map[Call]kind{
 	CallSheet: {
 		capability: admissionv0.CapabilityHandwritingReading,

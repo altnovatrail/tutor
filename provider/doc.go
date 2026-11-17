@@ -45,6 +45,12 @@ type Request struct {
 	// NoPicture marks a request of a text alone, such as the assessment of a text an earlier call
 	// read (T92): it has no picture, and its text is not blank. Any other request has a picture.
 	NoPicture bool
+	// CacheInstructions marks instructions that are the same text in every request of their kind and
+	// hold nothing of the learner's — the platform's words, as those of the tutor's words —, so that
+	// the Claude adapter caches the prompt up to the instructions and no further: never the pictures
+	// or the text after them (R131). The GPT adapter sends nothing for it, and OpenAI may cache by
+	// itself more of a request than its instructions (Д20).
+	CacheInstructions bool
 }
 
 // Response is a model's answer: JSON that follows the request's schema, the model the provider
