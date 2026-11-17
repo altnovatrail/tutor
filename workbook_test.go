@@ -41,8 +41,10 @@ func admitWorkbook(t *testing.T) {
 
 const cells = `{"cells": [{"item": 1, "slot": 1, "text": "8", "legible": true, "other_readings": [], "mirrored": false, "blank": false}, {"item": 2, "slot": 2, "text": "4", "legible": true, "other_readings": [], "mirrored": false, "blank": false}]}`
 
-// The reading of a sheet admits nothing of the workbook: another prompt is another reading.
+// The reading of a sheet admits nothing of the workbook: another prompt is another reading, and
+// without the entry of the author's word (R126) the workbook is "not admitted".
 func TestReadWorkbookNotAdmitted(t *testing.T) {
+	withoutWord(t)
 	lib, opus, _ := readers(t)
 	got := lib.ReadWorkbook(context.Background(), WorkbookReading{Route: platform, Task: pageOf(), Boxes: []BoxCrop{{Item: 1, Slot: 1, Crop: cropPNG(t, 40, 30)}}})
 	if got.Outcome.Kind != NotAdmitted || len(opus.asked) != 0 {
@@ -128,7 +130,7 @@ func TestCallsChooseByPrompt(t *testing.T) {
 	}
 	priced, _, _ := pricedPair(t)
 	p, _, err := priced.Price(CallWorkbook, platform)
-	if err != nil || !p.Worst || p.Expected || !near(p.WorstUSD, (float64(24000+20*19*19)*0.1+16000*0.5)/1e6) {
+	if err != nil || !p.Worst || !p.Expected || !near(p.WorstUSD, (float64(24000+20*19*19)*0.1+16000*0.5)/1e6) || !near(p.ExpectedUSD, (1849*0.1+1568*0.5)/1e6) {
 		t.Errorf("the price of the workbook is %+v, %v", p, err)
 	}
 }

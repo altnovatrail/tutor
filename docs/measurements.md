@@ -1275,6 +1275,22 @@ The estimate of "The set of words":
 
 **The spending of T144** — 424 calls at Anthropic, $4.8101, of a ceiling of $12. The console's spending for November grew by the same sum, with the trial of T143.
 
+### 3.19. The expected tokens of the workbook, the essay and the rubric
+
+**What and why** (T163, 2026-11-17; R126). The author's word admitted `CallWorkbook`, `CallEssay` and `CallRubric` without a run, so their expected tokens in `price.go` come from the runs that already tried the prompts `api` calls now: the fingerprints of their logs are those of the code — the workbook's `26925af5…`, version 3; the essay's reading `49cc9042…`, version 2; the assessment `a9bf5440…`, version 3. No new call, $0. The averages were counted by a script from the logs, outside git: `synthetic/t123/dev.jsonl`, sha256 `e3e2f57b…c863`, and `synthetic/t125/two.jsonl`, sha256 `4de54526…c195`. The output counts the thinking; the percentile is the nearest rank.
+- **The workbook** — T123, 2026-11-11: the 20 pages of the trial part of `eval/workbook-gen.json`, read bare, one call of each reader of the pair (architecture 3.10).
+- **The essay and the rubric** — T125, 2026-11-11: the 15 essays of E4's test part, 6–20, in two calls, one repeat; Haiku 5.5 · `medium` read each essay and assessed its own reading (R99).
+
+| Kind | Model | Calls | Input | Output | Of it thinking | $ a call | Time p50 |
+|---|---|---|---|---|---|---|---|
+| `CallWorkbook` | Opus 5.5 · `high` | 20 | 1,849 | 1,090 | 617 | 0.0292 | 10.9 s |
+| `CallWorkbook` | Haiku 5.5 · `medium` | 20 | 1,849 | 1,568 | 1,094 | 0.00097 | 7.1 s |
+| `CallEssay` | Haiku 5.5 · `medium` | 15 | 2,067 | 127 | 0 | 0.00027 | 1.4 s |
+| `CallRubric` | Haiku 5.5 · `medium` | 15 | 1,398 | 962 | 500 | 0.00062 | 4.6 s |
+
+The rounded averages of input and output are the expected tokens of `price.go`. At the prices of sources 1.3, an essay by Haiku in two calls is about $0.0009, near the $0.0008 of version 1 (section 3.11), and a workbook page by the pair about $0.030, by Haiku alone in the mode `single` about $0.001.
+- **What it does not say:** 20 pages and 15 essays are a small sample of synthetic work, one repeat, not the admission sets; the runs of Д17 on Haiku, by 2027-01-17, give the averages of admission.
+
 ## 4. Claude Code sessions
 
 ### 4.1. The spending of tutor's sessions

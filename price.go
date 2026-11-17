@@ -75,13 +75,17 @@ type kind struct {
 
 // kinds are the kinds of call of the library. The sheet's expected tokens are those of the run that
 // admitted its pair, 180 calls of each reader (T126); the words', those of the 300 hints of the run
-// that admitted them, version 3 of the hint's prompt (T127); the workbook, the essay and the rubric have no admitted model yet. A model without them has no expected
-// price, and api takes the value of its own config then (В13 api). The words serve the analysis of
-// the steps with the work, CallWords, and the hint without it, CallHint, by one prompt; T127
-// measured the hint with the work, so the hint without it has no expected tokens (R106). The words
-// after a correct answer are one kind with the work and without it, and their worst is with it;
-// their expected tokens are those of the 110 calls of the run that admitted them, with the work,
-// without it and with a note, version 1 of their prompt (T144; R113).
+// that admitted them, version 3 of the hint's prompt (T127). The workbook, the essay and the rubric
+// were admitted by the author's word, without a run (R126): theirs are the averages of the runs that
+// tried their prompts now — the workbook's, version 3, on the 20 pages of the trial part, one call of
+// each reader (T123), and the essay's reading, version 2, and the assessment, version 3, on the 15
+// essays of E4's test part, one repeat (T125) —, measurements 3.19. A model without them has no
+// expected price, and api takes the value of its own config then (В13 api). The words serve the
+// analysis of the steps with the work, CallWords, and the hint without it, CallHint, by one prompt;
+// T127 measured the hint with the work, so the hint without it has no expected tokens (R106). The
+// words after a correct answer are one kind with the work and without it, and their worst is with
+// it; their expected tokens are those of the 110 calls of the run that admitted them, with the
+// work, without it and with a note, version 1 of their prompt (T144; R113).
 var kinds = map[Call]kind{
 	CallSheet: {
 		capability: admissionv0.CapabilityHandwritingReading,
@@ -100,6 +104,10 @@ var kinds = map[Call]kind{
 		maxIn:      maxTextBytes + tokensOf(maxBoxSide, maxBoxes),
 		maxOut:     reading.MaxOutputTokens,
 		pair:       true,
+		expected: map[string]tokens{
+			"claude-opus-5-5":  {in: 1849, out: 1090},
+			"claude-haiku-5-5": {in: 1849, out: 1568},
+		},
 	},
 	CallEssay: {
 		capability: admissionv0.CapabilityHandwritingReading,
@@ -107,6 +115,7 @@ var kinds = map[Call]kind{
 		maxIn:      maxTextBytes + tokensOf(maxCropSide, 1),
 		maxOut:     reading.MaxOutputTokens,
 		models:     1,
+		expected:   map[string]tokens{"claude-haiku-5-5": {in: 2067, out: 127}},
 	},
 	CallRubric: {
 		capability: admissionv0.CapabilityRubricAssessment,
@@ -114,6 +123,7 @@ var kinds = map[Call]kind{
 		maxIn:      maxTextBytes,
 		maxOut:     rubricMaxOutput,
 		models:     1,
+		expected:   map[string]tokens{"claude-haiku-5-5": {in: 1398, out: 962}},
 	},
 	CallWords: {
 		capability: admissionv0.CapabilitySolutionAnalysis,

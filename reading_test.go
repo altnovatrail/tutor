@@ -138,8 +138,10 @@ func TestSingleReaderOfEntry(t *testing.T) {
 }
 
 // In the mode of one reader the key is checked for Haiku and for the models of the other kinds, and
-// a reading whose entry has no Haiku at medium is left out of the check, not its end.
+// a reading whose entry has no Haiku at medium is left out of the check, not its end. The entries
+// of the author's word, which ask Haiku too, are left out of the list here (R126).
 func TestCheckKeySingle(t *testing.T) {
+	withoutWord(t)
 	saved := admission.Admitted
 	t.Cleanup(func() { admission.Admitted = saved })
 	lib, opus, haiku := single(t)
