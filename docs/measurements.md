@@ -1291,6 +1291,45 @@ The estimate of "The set of words":
 The rounded averages of input and output are the expected tokens of `price.go`. At the prices of sources 1.3, an essay by Haiku in two calls is about $0.0009, near the $0.0008 of version 1 (section 3.11), and a workbook page by the pair about $0.030, by Haiku alone in the mode `single` about $0.001.
 - **What it does not say:** 20 pages and 15 essays are a small sample of synthetic work, one repeat, not the admission sets; the runs of Д17 on Haiku, by 2027-01-17, give the averages of admission.
 
+### 3.20. Reading a sheet on the site against eval, and the price of a check
+
+**What and why** (T162, 2026-11-17). On `novatrail`, at the rung "author", the pair read a wrong solution of «Реши уравнение 3x + 1 = 7» — «3x = 8», «x = 8/3» with the eight running into the fraction bar — as «Читается двояко», where eval had read the author's sheets surely (row В42 of `infra`, T69). The analysis ran no model: by the author's word of 2026-11-17, given through `spec`'s orchestrator, no paid run until 2027-01-17 (R126), so it rests on the code, the logs of runs already made and the journal `ai_usage` of `api` that the task quotes. Only numbers came here.
+
+**The two paths of one reading.** Both build the request by `reading.RequestOf`, so the instructions, the schema, the label of the picture and the frame of the text are the same bytes, the prompt `c693bfa8…` of version 2; both ask with at most 16,000 output tokens (`reading.MaxOutputTokens`, `runner.MaxOutputTokens`); the single reader is Haiku 5.5 · `medium` in both, by `tutor.ReadingSingle` and the runner's `haiku-medium`. What differs:
+
+| | eval, the admission of the pair (T115, T126) | the site, `api` |
+|---|---|---|
+| who draws the crop | `render.CropOf` of `tutor`, from the strokes | `canvas` (`exportWork`), by the same rule of the crop, that of the eval protocol |
+| height of a digit | 32 px, `render.Digit` | 24 px: format 0.2 reads a module without `canvas.digit_height` at 24 (R51 spec), and none of the four modules of `modules` sets it (`main`, 2026-11-17); `canvas`'s `CROP.digit` is 24 |
+| the line | 2.67 px, D / 12 | 2 px |
+| the task's text | the statement of the bank | `taskText`: the statement, the alt of its pictures and the text of the item; for `equation-1` of `check-board`, the statement alone |
+| readers | the pair, joined by `module-kit`, and each alone | the pair, or Haiku alone since R125 |
+
+- **The raster is not the difference.** `canvas` v0.1.6's 11 synthetic sheets, each crop drawn again by `render` from the same strokes and groups: every crop the same size; 1.8–3.4 % of pixels differ, by 0.18–0.38 of 255 on average, and 0.002–0.006 % by more than 64, at 16–48 px. A local script, no model.
+- **The size is.** On the 60 sheets of the admission (the four recorded sets of T115), the picture takes ⌈w / 28⌉ × ⌈h / 28⌉ tokens (`render.Tokens`): at 24 px 97 on average, median 80, at most 240; at 32 px 145, 121 and 390. Sheet 21 of `sheets-v1` — the author's «3x + 1 = 7» with the answer 8/3 — is 200 × 239 px at 24 against 248 × 311 at 32, 72 tokens against 108. At Haiku's input price the difference is under $0.00001 a reading.
+- **What eval measured at 24 px.** Haiku 5.5 · `medium` read 16, 24 and 48 px no worse than 32 px on the 68 synthetic sheets of E4's test parts (T91; section 3.11), and Haiku · `low` 16 and 24 px no worse, 48 px worse (T72, T91; sections 3.5, 3.11). On the author's handwriting no reader has a reading at 24 px but the author's three sheets of free writing, read at 16, 24 and 48 px by Haiku · `low` with thinking and without (section 3.6): the admission's 360 calls are all at 32 px. The admission ran `-reads plain`, at 32 px alone, and in the other reads Opus reads no other heights (R08): so the pair was never read at 24 px. The synthetic sheets draw a fraction inline alone; a stacked one is drawn only in the workbook (`internal/synth`).
+- **The same sheet in eval.** Sheet 21 at 32 px: both readers gave `8/3` with no other value and every part legible, in each of three repeats. Sheets 26 (`4/3`) and 39 (`13/2`) the same. The pair released 59 of the 60 sheets (`t115-admission-2`).
+
+**Why the pair split on the site.** `ai_usage` holds no content, so what each reader read there is not known. By the code, the joined slot is `UNREADABLE_AMBIGUOUS` when the two values differ under the check, when one is in the notation and the other not, or when the readers give two different reasons or a reason against a value; two same reasons join into that reason. A reader's `other_values`, or a value not seen in its part, is itself `UNREADABLE_AMBIGUOUS` (`reading.ObservationOf`; `observation.Join` of `module-kit`). The site's sheet had what no sheet of the admission had in its conditions: a digit 24 px high, and a numerator that runs into the bar. Each is a likely cause; that it was one of them is not shown. With the reason, no words came: two calls in the journal.
+
+**The price of a check.** `ai_usage` of `api` (the task's text): by the pair, Haiku $0.000400 and Opus $0.008276 — $0.0087, Opus 95 %; since the mode `single`, an hour of the author's lessons: Haiku $0.000373–0.000647 a reading, Opus $0.016536–0.021752 a call of the words (`GetRungWords`, `GetCorrectAnswerWords`, `GetHint`) — the words ≈ 97 % of the money. By the expected tokens of `price.go` at the prices of sources 1.14: a reading by Haiku ≈ $0.0004, the words after a wrong answer ≈ $0.0182 (2,356 in, 437 out), after a right one ≈ $0.0135 (1,371 and 402). So a «Проверить» with the words is ≈ $0.014–0.022, and without them ≈ $0.0004.
+
+**What the words would cost otherwise** — the logs already made, no new run:
+
+| Words by | Prompt, run | $ a call | By code: leaks / fallback text / box on the first error |
+|---|---|---|---|
+| Opus 5.5 · `high` | v3, T127 | 0.0173, on the 136 cases of section 3.18 | of 300: 0 leaks, 1 broken form |
+| Opus 5.5 · `medium` | v3, T144 | 0.0150 | of 136: 0 leaks, 1 broken form; not judged (Д11) |
+| Opus 5.5 · `high` | v1, E4 | — | of 204: 6 / 30 / 198 (section 3.6) |
+| Opus 5.5 · `medium` | v1, T91 | 0.0130 | of 204: 3 / 45 / 198 |
+| Sonnet 5.5 · `low` | v1, T91 | 0.0057 | of 204: 18 / 64 / 184 |
+| Sonnet without thinking | v1, T91 | 0.0049 | of 204: 17 / 75 / 178 |
+| Haiku 5.5 · `medium` | v1, T91 | 0.00062 | of 204: 15 / 34 / 186 |
+
+The v1 runs are the same 204 cases; `api`'s strict leak check turns a leak into the fallback text. Version 3 was measured on Opus alone. The instructions of the words are 4,445 bytes (`internal/hint/testdata/words/rung-w005.txt`) and the schema about 300 more — some 1,100–1,200 tokens of English, our estimate, not counted: no call ran. A hit of Anthropic's cache costs 5 % of Opus's input price and a 5-minute write 1.25 times it (sources 1.5, 1.14), so a cached prefix would save ≈ $0.0045 a call on a hit and add ≈ $0.0012 on a miss. The words of a hint and those after a right answer have instructions of their own, so only a call of the same kind hits; how often two come within 5 minutes, only `api`'s log can say.
+
+**Open:** a run on Haiku at 24 px and on stacked fractions — Д18; the words' price and the height of a digit for `spec` — В92 and В93.
+
 ## 4. Claude Code sessions
 
 ### 4.1. The spending of tutor's sessions
