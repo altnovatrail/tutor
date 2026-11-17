@@ -265,8 +265,8 @@ func TestAdmitWorkbookRun(t *testing.T) {
 	if code, out, _ := runIt("admit", pair); code != exitOK || strings.Contains(out, "mirrored") || !strings.Contains(out, "- stage: none: it is a run of the workbook, whose rule is AdmitWorkbook (R124)\n") || !strings.HasSuffix(out, "\n\n") {
 		t.Errorf("admit of a sheet ends %d:\n%s", code, out)
 	}
-	if code, _, errs := runIt("admit", "-kind", "essay", pair); code != exitUsage || !strings.Contains(errs, "give sheet or workbook") {
-		t.Errorf("admit -kind essay ends %d: %s", code, errs)
+	if code, _, errs := runIt("admit", "-kind", "page", pair); code != exitUsage || !strings.Contains(errs, "give sheet, workbook or essay") {
+		t.Errorf("admit -kind page ends %d: %s", code, errs)
 	}
 	if code, _, errs := runMeasure("yes\n", "-kind", "workbook", "-workbook", theWorkbook, "-dir", drawnOf(t, theWorkbook), "-part", "dev", "-stub", "-reads", "plain,bare", "-log", log+"2"); code != exitUsage || !strings.Contains(errs, "or plain alone") {
 		t.Errorf("plain with bare ends %d: %s", code, errs)

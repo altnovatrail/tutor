@@ -68,7 +68,7 @@ func TestEssaysReport(t *testing.T) {
 	if !title.KappaDef || math.Abs(title.Kappa+0.5) > 1e-9 {
 		t.Errorf("κ of the title = %v, %v", title.Kappa, title.KappaDef)
 	}
-	if spelling := rd.Criteria[1]; spelling.KappaDef || spelling.kappaText() != "—" {
+	if spelling := rd.Criteria[1]; spelling.KappaDef || spelling.KappaText() != "—" {
 		t.Errorf("κ of spelling, all met: %+v", spelling)
 	}
 	if rd.Calls != 4 || rd.Failed != 1 || rd.Paired != 2 || rd.Unstable != 1 || rd.Feedbacks != 3 || rd.Breaches[essay.BreachQuote] != 1 || rd.MostWords != 6 || math.Abs(rd.MeanWords-3) > 1e-9 {

@@ -504,6 +504,10 @@ func EssayReports(l *essay.Log) []Named {
 		m := modelOf(rd)
 		r := head(evalv1.Capability_CAPABILITY_RUBRIC_ASSESSMENT, l.Run.Runner, l.Run.ModuleKit, set, l.Run.Repeats, m)
 		r.Assessor = m
+		if a := l.Run.Assessor; a != nil {
+			// The text the reader read is assessed by the run's assessor (T156).
+			r.Assessor = modelOf(*a)
+		}
 		out = append(out, Named{Name: rd.Name, Report: withRefused(r, measured, l.Run.Refused)})
 	}
 	return out

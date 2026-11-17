@@ -69,9 +69,11 @@ var plans = map[string]struct {
 // options are what a run is asked besides its sets and part: how many times each call is repeated,
 // what a reading reads (T69), and for the workbook, the file of its pages, the directory of their
 // samples and what its reading reads (T79; R71); for the essays, their file and the directory of
-// their samples (T83).
+// their samples (T83), and in two calls the configuration that assesses the text read, or "" for
+// each reader its own (T156).
 type options struct {
 	two           bool
+	assessor      string
 	readers       []string
 	repeats       int
 	reads         reading.Reads
@@ -122,6 +124,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	maxUSD := flags.Float64("max-usd", 0, "start no call that could take the run past this many US dollars; $3 for dev, $6 for test ($8 for the essays), $2 for all and $8 for recorded by default")
 	logPath := flags.String("log", "", "the log of the run, a new file out of git: in samples or synthetic, and in samples alone for sheets there; by default in runs next to the directory of the sheets, and for the workbook and the essays in synthetic/runs")
 	two := flags.Bool("two", false, "for -kind essay, assess in two calls: read the essay, then assess the text read (T92)")
+	assessor := flags.String("assessor", "", "for -kind essay -two, the configuration that assesses the text every reader read, as the library asks a model of its own for it, such as haiku-medium on the reading of opus-high, the run of admission (R124); each reader assesses its own reading by default")
 	casesPath := flags.String("cases", "", "for -kind hint, the file of the cases of the set of the words, such as eval/words-cases.json, and for -kind correct, of the set of the words after a correct answer, eval/correct-cases.json, on the one set of its plan, asked case by case (T118; T143)")
 	kindsList := flags.String("case-kinds", "", "with -cases, the kinds of case to ask, joined by commas: of a hint rung, otherwise, note; of the words after a correct answer work, choice, note; all of them by default")
 	stub := flags.Bool("stub", false, "ask no model: a stub answers by the markup, and the run needs no key and no network")
@@ -143,6 +146,15 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -two is for -kind essay, and the %s asks one call\n", *kind)
 		return exitUsage
 	}
+	*assessor = strings.TrimSpace(*assessor)
+	switch {
+	case set["assessor"] && !*two:
+		_, _ = fmt.Fprintln(stderr, "tutor-eval run: -assessor is for -kind essay -two, where the text read is assessed in a call of its own")
+		return exitUsage
+	case set["assessor"] && *assessor == "":
+		_, _ = fmt.Fprintln(stderr, "tutor-eval run: -assessor is empty: name the configuration that assesses the text read, or leave the flag out")
+		return exitUsage
+	}
 	if *casesPath != "" && *kind != "hint" && *kind != "correct" {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: -cases is for -kind hint and correct, and the %s asks no case of the words\n", *kind)
 		return exitUsage
@@ -151,7 +163,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		_, _ = fmt.Fprintln(stderr, "tutor-eval run: -kind correct asks the cases of its set: give -cases, such as eval/correct-cases.json")
 		return exitUsage
 	}
-	o := options{two: *two, readers: names, repeats: *repeats, workbook: *pagesFile, essays: *essaysPath, cases: *casesPath}
+	o := options{two: *two, assessor: *assessor, readers: names, repeats: *repeats, workbook: *pagesFile, essays: *essaysPath, cases: *casesPath}
 	if *kindsList != "" {
 		if *casesPath == "" {
 			_, _ = fmt.Fprintln(stderr, "tutor-eval run: -case-kinds is for -cases, the cases of the set of the words")
@@ -835,7 +847,20 @@ func planEssays(_ []sheetFlags, part string, o options) (*runner.Run, string, er
 	newRun, calls := essay.New, "a call an essay"
 	version := essay.Version
 	if o.two {
-		newRun, calls, version = essay.NewTwo, "two calls an essay, the reading and the assessment of the text it read", essay.TwoVersion
+		var assessor *essay.Reader
+		calls = "two calls an essay, the reading and the assessment of the text it read"
+		if o.assessor != "" {
+			chosen, err := runner.Chosen(essay.Readers(), readerConfig, []string{o.assessor})
+			if err != nil {
+				return nil, "", fmt.Errorf("-assessor: %w", err)
+			}
+			assessor = &chosen[0]
+			calls += " by " + assessor.Name
+		}
+		newRun = func(part, file, dir string, seed uint64, es *sample.Essays, essays []*evalsample.Essay, readers []essay.Reader, repeats int) (*runner.Run, error) {
+			return essay.NewTwo(part, file, dir, seed, es, essays, readers, assessor, repeats)
+		}
+		version = essay.TwoVersion
 	}
 	r, err := newRun(part, o.essays, o.dir, seed, es, essays, readers, o.repeats)
 	if err != nil {

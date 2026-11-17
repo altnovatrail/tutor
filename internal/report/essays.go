@@ -266,8 +266,8 @@ func addReading(to *essay.Reading, r essay.Reading) {
 	to.LowerStartsKept += r.LowerStartsKept
 }
 
-// kappaText writes κ, or "—" where it is not defined.
-func (c EssaysCell) kappaText() string {
+// KappaText writes κ, or "—" where it is not defined.
+func (c EssaysCell) KappaText() string {
 	if !c.KappaDef {
 		return kappaText(nil)
 	}
@@ -293,12 +293,15 @@ func (r *Essays) Markdown(w io.Writer, logName string) error {
 	if l.Run.Path == essay.PathTwo {
 		b.WriteString("The run assesses in two calls: a reading of the essay, then the assessment of the text it read (T92); an assessment below is both, and so are its cost and its time.\n")
 	}
+	if a := l.Run.Assessor; a != nil {
+		fmt.Fprintf(&b, "The text every reader read is assessed by %s, a configuration of its own (T156): a row of a reader below is its reading and the assessment of what it read.\n", configName(a.Name, a.Model, a.Effort, a.NoThinking))
+	}
 	b.WriteString(endNote(l.End))
 
 	b.WriteString("\n## The criteria\n\n| Reader | Criterion | Judged | False alarms | Missed \"unmet\" | Agree | κ | Unchecked |\n|---|---|---|---|---|---|---|---|\n")
 	for _, rd := range r.Readers {
 		for _, c := range append([]EssaysCell{rd.All}, rd.Criteria...) {
-			fmt.Fprintf(&b, "| %s | %s | %d | %s | %s | %d | %s | %d |\n", rd.Name, c.Criterion, c.Judged, c.FalseAlarm, c.Missed, c.Agree, c.kappaText(), c.Unchecked)
+			fmt.Fprintf(&b, "| %s | %s | %d | %s | %s | %d | %s | %d |\n", rd.Name, c.Criterion, c.Judged, c.FalseAlarm, c.Missed, c.Agree, c.KappaText(), c.Unchecked)
 		}
 	}
 	b.WriteString("\nA false alarm is a criterion judged unmet that the essay meets, counted among the judgements of criteria the essay meets: the main measure of О-22. A missed \"unmet\" is a criterion judged met that the essay does not meet, counted among the judgements of criteria it does not meet. The truth is the plan's. κ is Cohen's, over every judgement of the criterion, in every repeat. A criterion is unchecked when its call failed, or the answer judges it not once or more than once. A share's bound is the one-sided upper bound of 95 % over the essays, Clopper–Pearson on n / Deff.\n")
@@ -379,7 +382,7 @@ func (r *Essays) Summary() string {
 			}
 		}
 		fmt.Fprintf(&b, "%s: false alarms %s, missed \"unmet\" %s, κ %s; word errors %d of %d; feedbacks breaking the rule %d of %d, that of R70 spec, with %d words, %d.\n",
-			rd.Name, rd.All.FalseAlarm, rd.All.Missed, rd.All.kappaText(), rd.Reading.WordErrors, rd.Reading.Words, broke, rd.Feedbacks, essay.PlatformWords, rd.PlatformBroken)
+			rd.Name, rd.All.FalseAlarm, rd.All.Missed, rd.All.KappaText(), rd.Reading.WordErrors, rd.Reading.Words, broke, rd.Feedbacks, essay.PlatformWords, rd.PlatformBroken)
 	}
 	return b.String()
 }
