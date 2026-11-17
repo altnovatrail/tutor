@@ -88,9 +88,8 @@ func TestSelect(t *testing.T) {
 			t.Errorf("%s chose %+v, %+v", c, e, a)
 		}
 	}
-	// A deployment for anyone but the author takes only the stage full, and none is here for the
-	// reading on platform AI: the full pair is Google's, which the table closes. Any other least stage
-	// is as strict.
+	// A deployment whose least stage is full has none here for the reading on platform AI: the full
+	// pair is Google's, which the table closes. Any other least stage but author is as strict.
 	for _, least := range []Stage{StageFull, "", "trial"} {
 		if e, a := table.selectFrom(testList, adultFacts, handwriting, admissionv0.AiRoutePlatformAi, adult, least, nil); a.Admitted || e.Models != nil {
 			t.Errorf("the least stage %q chose %+v, %+v", least, e, a)

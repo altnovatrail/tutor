@@ -35,10 +35,11 @@ type Config struct {
 }
 
 // Reading is how the library reads the handwriting of a sheet and of a workbook page, which api
-// chooses (the author's word of 2026-11-17): ReadingPair, both readers of the entry chosen, the
-// strong one first, whose readings module-kit joins (R68 spec; R86 spec), or ReadingSingle, one
-// reader, Haiku 5.5 at medium, the pair's second, whose observation is the reading. The reading of
-// an essay is one reader in both (the second 2026-11-01 amendment to R68 spec).
+// chooses (the 2026-11-17 amendments to R68 spec; R125): ReadingPair, both readers of the entry
+// chosen, the strong one first, whose readings module-kit joins (R68 spec; R86 spec), or
+// ReadingSingle, one reader, Haiku 5.5 at medium, the pair's second, whose observation is the
+// reading. The reading of an essay is one reader in both (the second 2026-11-01 amendment to R68
+// spec).
 type Reading string
 
 // The modes of reading.
