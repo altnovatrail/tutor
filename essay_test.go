@@ -35,8 +35,10 @@ func admitEssay(t *testing.T) {
 	admission.Admitted = append([]admission.Entry{e}, saved...)
 }
 
-// The reading of a sheet admits nothing of an essay.
+// The reading of a sheet admits nothing of an essay: without the entry of the author's word (R126),
+// the essay is "not admitted".
 func TestReadEssayNotAdmitted(t *testing.T) {
+	withoutWord(t)
 	lib, opus, _ := readers(t)
 	if got := lib.ReadEssay(context.Background(), EssayReading{Route: platform, Task: essayOf(), Crop: cropPNG(t, 60, 40)}); got.Outcome.Kind != NotAdmitted || len(opus.asked) != 0 {
 		t.Errorf("an essay without its entry: %+v", got.Outcome)

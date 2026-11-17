@@ -59,9 +59,19 @@ func (m Model) Name() string {
 // Evidence is the runner's report that admitted an entry: the name of its eval set, the name of its
 // file, the SHA-256 of the file's bytes and the day of the run. A report of samples of measurement
 // stays where they lie, out of git (privacy 9 spec, П-10 and П-18), and the entry names it so.
+// An entry the author admitted by their word, while R07 spec's eval before admission is suspended,
+// has no report: Word is that word, Date the day it was given and Until the last day it holds
+// (R126). Such an entry serves only the least stage author, whatever its own stage, and lapses
+// with Until: by then a run on Haiku admits it by the rule, or the entry leaves the list (Д17).
+// The package has no clock, so Select does not refuse it after Until: the entry chosen carries its
+// evidence, and whoever holds a clock, as api, can read Until there.
 type Evidence struct {
 	Set, File, SHA256, Date string
+	Word, Until             string
 }
+
+// ByWord is whether the entry was admitted by the author's word, without a report.
+func (e Evidence) ByWord() bool { return e.Word != "" }
 
 // Entry is a line of the list of admitted models: a capability, the models that serve it — a
 // reading of handwriting has its pair, the strong reader first (R68 spec) —, the stage they passed,
@@ -76,9 +86,10 @@ type Entry struct {
 }
 
 // Admitted is the list of admitted models, by capability in the order they are chosen (R07 spec):
-// a model is in it only once it passed the rule of admission. A model that needs its provider to
-// keep the work, such as one that needs 30-day retention at Anthropic, is not in it, since the
-// cells of platform AI rest on minimal retention (Д98 RUN.md spec).
+// a model is in it only once it passed the rule of admission, or by the author's word while eval
+// before admission is suspended, until the day its evidence names (R126). A model that needs its
+// provider to keep the work, such as one that needs 30-day retention at Anthropic, is not in it,
+// since the cells of platform AI rest on minimal retention (Д98 RUN.md spec).
 var Admitted = []Entry{
 	// The pair of the first app, on the author's own handwriting: 60 sheets, 3 repeats, no false
 	// alarm on 35 answer slots and no false "correct" on 25 (T126; R80 and its amendment of
@@ -135,6 +146,45 @@ var Admitted = []Entry{
 		},
 		Prompt: "ee01e82ada7c347c45f56828d86342897569ec7517fc52265963a76f31def1d9",
 	},
+	// The reading of a workbook page, by the sheet's pair on version 3 of the workbook's prompt, and
+	// in the mode of one reader by Haiku at medium alone, as a sheet (R125); the reading of an essay,
+	// one reader, Haiku at medium, on version 2 of its prompt; and the assessment of the text read by
+	// the rubric, Haiku at medium, on version 3 of its prompt. All three by the author's word of
+	// 2026-11-17, without a run, until 2027-01-17 (T163; R126). They follow the sheet's pair, so that
+	// the first entry of the reading of handwriting, Choose's, stays the sheet's.
+	{
+		Capability: admissionv0.CapabilityHandwritingReading,
+		Models: []Model{
+			{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "high"},
+			{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"},
+		},
+		Stage:  StageAuthor,
+		Report: authorsWord,
+		Prompt: "26925af5e000d1c9cb30571f1e4f1b845852dedbb4da056b3b360a9eae3a5789",
+	},
+	{
+		Capability: admissionv0.CapabilityHandwritingReading,
+		Models:     []Model{{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"}},
+		Stage:      StageAuthor,
+		Report:     authorsWord,
+		Prompt:     "49cc90421a42ef4d9b3e85e753288a871b0b23f7e94b6aa422928249f7222440",
+	},
+	{
+		Capability: admissionv0.CapabilityRubricAssessment,
+		Models:     []Model{{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"}},
+		Stage:      StageAuthor,
+		Report:     authorsWord,
+		Prompt:     "a9bf54404fbb8215ac2def2ec16b0a053846ffb9d88ced72ca7d2560b0246cba",
+	},
+}
+
+// authorsWord is the evidence of the entries the author admitted without eval: R07 spec's eval
+// before admission suspended for two months, "отменяю это правило на 2 месяца" (the author's word
+// of 2026-11-17; R126).
+var authorsWord = Evidence{
+	Word:  "author's word 2026-11-17, R07 spec suspended until 2027-01-17",
+	Date:  "2026-11-17",
+	Until: "2027-01-17",
 }
 
 // wordsEvidence is the output of the rule of admission of the words that admitted them (T127), and
@@ -155,7 +205,7 @@ var (
 // table for an entry of the capability, or, when the table refused none, ReasonModelNotAdmitted.
 // The least stage is the deployment's: StageAuthor where its operator names it, as novatrail does
 // for adults (the 2026-11-15 amendment to R76 spec; R149 spec), and StageFull otherwise; any other
-// value chooses only StageFull.
+// value chooses only StageFull. An entry admitted by the author's word serves StageAuthor alone.
 // Providers, when not nil, are the only providers whose models may serve: an own key is one
 // provider's, and on platform AI a provider without the platform's key cannot be called (T114).
 // When no entry of them is left, the answer is the table's for the first of them that it refuses,
@@ -186,7 +236,7 @@ func (t *Table) selectFrom(list []Entry, f Facts, c admissionv0.Capability, rout
 	}
 	var refused *Answer
 	for _, e := range list {
-		if e.Capability != c || len(e.Models) == 0 || e.Stage.rank() < floor {
+		if e.Capability != c || len(e.Models) == 0 || e.Stage.rank() < floor || e.Report.ByWord() && least != StageAuthor {
 			continue
 		}
 		if providers != nil && slices.ContainsFunc(e.Models, func(m Model) bool { return !slices.Contains(providers, m.Provider) }) {

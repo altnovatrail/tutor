@@ -6,12 +6,15 @@ import (
 	"slices"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/altnovatrail/spec/types/admissionv0"
 
 	"github.com/altnovatrail/tutor/internal/correct"
+	"github.com/altnovatrail/tutor/internal/essay"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/reading"
+	"github.com/altnovatrail/tutor/internal/workbook"
 	"github.com/altnovatrail/tutor/provider/claude/catalog"
 )
 
@@ -140,8 +143,10 @@ var (
 )
 
 // Every entry of the platform's list names a model an adapter calls, at an effort it takes, none
-// that needs 30-day retention, and the report that admitted it; a reading of handwriting is a pair
-// admitted with the prompt the reading has now, so that a new prompt fails here until it is measured.
+// that needs 30-day retention, and the report that admitted it or, at the stage author, the author's
+// word with its last day (R126); a reading of a sheet or of a workbook page is a pair, Opus first,
+// and of an essay one reader, each with the prompt the reading has now, so that a new prompt fails
+// here until it is measured.
 func TestAdmitted(t *testing.T) {
 	for _, f := range listFaults(Admitted) {
 		t.Error(f)
@@ -189,15 +194,109 @@ func TestAdmitted(t *testing.T) {
 			t.Errorf("the words after a correct answer, %s: no fault", name)
 		}
 	}
+	// An entry by the author's word has no report but the word, its day and its last day, holds the
+	// stage author alone, and is a fault once that day has passed (R126).
+	word := Evidence{Word: "the author's word", Date: "2026-11-17", Until: "2027-01-17"}
+	page := Entry{Capability: admissionv0.CapabilityHandwritingReading, Models: []Model{opus, haiku}, Stage: StageAuthor, Report: word, Prompt: workbook.Fingerprint()}
+	essayRead := Entry{Capability: admissionv0.CapabilityHandwritingReading, Models: []Model{haiku}, Stage: StageAuthor, Report: word, Prompt: essay.ReadFingerprint()}
+	rubric := Entry{Capability: admissionv0.CapabilityRubricAssessment, Models: []Model{haiku}, Stage: StageAuthor, Report: word, Prompt: essay.TextFingerprint()}
+	if f := listFaultsOn([]Entry{page, essayRead, rubric}, "2027-01-17"); len(f) != 0 {
+		t.Errorf("good entries by the author's word have faults on their last day: %v", f)
+	}
+	if f := listFaultsOn([]Entry{page}, "2027-01-18"); len(f) != 1 || !strings.Contains(f[0], "Д17") {
+		t.Errorf("a word past its last day: %v", f)
+	}
+	for name, change := range map[string]func(*Entry){
+		"the stage full":     func(e *Entry) { e.Stage = StageFull },
+		"a report too":       func(e *Entry) { e.Report.SHA256 = strings.Repeat("ab", 32) },
+		"no last day":        func(e *Entry) { e.Report.Until = "" },
+		"no day":             func(e *Entry) { e.Report.Date = "" },
+		"a page of one":      func(e *Entry) { e.Models = []Model{haiku} },
+		"an essay of a pair": func(e *Entry) { e.Prompt = essay.ReadFingerprint() },
+		"Haiku first":        func(e *Entry) { e.Models = []Model{haiku, opus} },
+	} {
+		e := page
+		change(&e)
+		if len(listFaultsOn([]Entry{e}, "2026-11-17")) == 0 {
+			t.Errorf("by the author's word, %s: no fault", name)
+		}
+	}
+	for name, e := range map[string]Entry{
+		"a rubric of two":            {Capability: rubric.Capability, Models: []Model{opus, haiku}, Stage: StageAuthor, Report: word, Prompt: rubric.Prompt},
+		"a rubric of another prompt": {Capability: rubric.Capability, Models: []Model{haiku}, Stage: StageAuthor, Report: word, Prompt: essay.ReadFingerprint()},
+		"a report with a last day":   {Capability: rubric.Capability, Models: []Model{haiku}, Stage: StageAuthor, Report: Evidence{Set: "s", File: "f", SHA256: strings.Repeat("ab", 32), Date: "2026-11-17", Until: "2027-01-17"}, Prompt: rubric.Prompt},
+	} {
+		if len(listFaultsOn([]Entry{e}, "2026-11-17")) == 0 {
+			t.Errorf("%s: no fault", name)
+		}
+	}
+}
+
+// An entry admitted by the author's word serves the least stage author alone, whatever stage it
+// names; the platform's list admits the workbook, the essay and the rubric so at the stage author
+// and none of them at full (R126).
+func TestSelectByWord(t *testing.T) {
+	table, err := Platform()
+	if err != nil {
+		t.Fatal(err)
+	}
+	f, err := ReadFacts(table, []byte("anthropic:\n  data_processing_agreement: [adult]\n  minimal_retention: [adult]\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	route, adult := admissionv0.AiRoutePlatformAi, admissionv0.AgeCategoryAdult
+	full := Entry{Capability: admissionv0.CapabilityHint, Models: []Model{opus}, Stage: StageFull, Report: Evidence{Word: "the author's word", Date: "2026-11-17", Until: "2027-01-17"}}
+	if e, a := table.selectFrom([]Entry{full}, f, admissionv0.CapabilityHint, route, adult, StageFull, nil); a.Admitted || *a.Reason != ReasonModelNotAdmitted || e.Models != nil {
+		t.Errorf("a word of the stage full at the least stage full: %+v, %+v", e, a)
+	}
+	if e, a := table.selectFrom([]Entry{full}, f, admissionv0.CapabilityHint, route, adult, StageAuthor, nil); !a.Admitted || len(e.Models) != 1 {
+		t.Errorf("a word at the least stage author: %+v, %+v", e, a)
+	}
+	for _, c := range []struct {
+		capability admissionv0.Capability
+		prompt     string
+		models     []Model
+	}{
+		{admissionv0.CapabilityHandwritingReading, workbook.Fingerprint(), []Model{opus, haiku}},
+		{admissionv0.CapabilityHandwritingReading, essay.ReadFingerprint(), []Model{haiku}},
+		{admissionv0.CapabilityRubricAssessment, essay.TextFingerprint(), []Model{haiku}},
+	} {
+		e, a := table.SelectPrompt(f, c.capability, route, adult, StageAuthor, nil, c.prompt)
+		if !a.Admitted || !slices.Equal(e.Models, c.models) || !e.Report.ByWord() || e.Report.Until != "2027-01-17" {
+			t.Errorf("%s at the stage author: %+v, %+v", c.prompt, e, a)
+		}
+		if e, a := table.SelectPrompt(f, c.capability, route, adult, StageFull, nil, c.prompt); a.Admitted || *a.Reason != ReasonModelNotAdmitted || e.Models != nil {
+			t.Errorf("%s at the stage full: %+v, %+v", c.prompt, e, a)
+		}
+	}
+	// The first entry of the reading of handwriting is still the sheet's pair, admitted by its run.
+	if e, a := table.Select(f, admissionv0.CapabilityHandwritingReading, route, adult, StageAuthor, nil); !a.Admitted || e.Prompt != reading.Fingerprint() || e.Report.ByWord() {
+		t.Errorf("the first reading: %+v, %+v", e, a)
+	}
 }
 
 // listFaults are what makes a list of admitted models wrong, entry by entry.
 func listFaults(list []Entry) []string {
+	return listFaultsOn(list, time.Now().UTC().Format(time.DateOnly))
+}
+
+// listFaultsOn is listFaults on the day named: an entry admitted by the author's word is a fault once
+// the last day of its word has passed, so that the list fails here until a run admits it by the rule
+// or it leaves the list (Д17).
+func listFaultsOn(list []Entry, today string) []string {
 	var out []string
 	for i, e := range list {
-		if len(e.Models) == 0 || (e.Stage != StageAuthor && e.Stage != StageFull) || e.Report.Set == "" || e.Report.File == "" ||
-			!sha256Form.MatchString(e.Report.SHA256) || !dateForm.MatchString(e.Report.Date) {
+		if len(e.Models) == 0 || (e.Stage != StageAuthor && e.Stage != StageFull) || !dateForm.MatchString(e.Report.Date) ||
+			!e.Report.ByWord() && (e.Report.Set == "" || e.Report.File == "" || !sha256Form.MatchString(e.Report.SHA256) || e.Report.Until != "") {
 			out = append(out, fmt.Sprintf("entry %d is %+v", i, e))
+		}
+		if e.Report.ByWord() {
+			switch {
+			case e.Stage != StageAuthor || e.Report.Set != "" || e.Report.File != "" || e.Report.SHA256 != "" || !dateForm.MatchString(e.Report.Until):
+				out = append(out, fmt.Sprintf("entry %d, by the author's word, is %+v", i, e))
+			case e.Report.Until < today:
+				out = append(out, fmt.Sprintf("entry %d: the author's word held until %s; admit it by a run on Haiku or take it off the list (Д17)", i, e.Report.Until))
+			}
 		}
 		for _, m := range e.Models {
 			if m.Provider != "anthropic" {
@@ -216,8 +315,18 @@ func listFaults(list []Entry) []string {
 		if e.Capability == admissionv0.CapabilityCorrectAnswerWords && (len(e.Models) != 1 || e.Prompt != correct.Fingerprint()) {
 			out = append(out, fmt.Sprintf("entry %d of the words after a correct answer: %d models, prompt %s, theirs now %s", i, len(e.Models), e.Prompt, correct.Fingerprint()))
 		}
-		if e.Capability == admissionv0.CapabilityHandwritingReading && (len(e.Models) != 2 || e.Prompt != reading.Fingerprint()) {
-			out = append(out, fmt.Sprintf("entry %d of reading: %d models, prompt %s, the reading's now %s", i, len(e.Models), e.Prompt, reading.Fingerprint()))
+		// A reading is of a sheet or of a workbook page, by a pair, or of an essay, by one reader, each
+		// with its prompt now; the assessment by a rubric is one model's.
+		if e.Capability == admissionv0.CapabilityHandwritingReading {
+			pair := e.Prompt == reading.Fingerprint() || e.Prompt == workbook.Fingerprint()
+			strongFirst := len(e.Models) == 2 && e.Models[0].ID == "claude-opus-5-5"
+			if pair && !strongFirst || e.Prompt == essay.ReadFingerprint() && len(e.Models) != 1 || !pair && e.Prompt != essay.ReadFingerprint() {
+				out = append(out, fmt.Sprintf("entry %d of reading: %d models, prompt %s, the readings' now %s, %s and %s", i, len(e.Models), e.Prompt,
+					reading.Fingerprint(), workbook.Fingerprint(), essay.ReadFingerprint()))
+			}
+		}
+		if e.Capability == admissionv0.CapabilityRubricAssessment && (len(e.Models) != 1 || e.Prompt != essay.TextFingerprint()) {
+			out = append(out, fmt.Sprintf("entry %d of the rubric: %d models, prompt %s, the assessment's now %s", i, len(e.Models), e.Prompt, essay.TextFingerprint()))
 		}
 	}
 	return out

@@ -24,9 +24,10 @@ func admitRubric(t *testing.T) {
 
 var rubricOf = RubricAssessment{Route: platform, Text: "My Cat\nmy cat is big.", Topic: "Write about your pet.", Criteria: []string{"The essay has a title.", "Each sentence begins with a capital letter."}, Style: "a child", Language: "ru"}
 
-// The table of the platform does not open the assessment by a rubric to the pair, nor does any
-// entry measure its prompt.
+// The table of the platform does not open the assessment by a rubric to the pair: without the entry
+// of the author's word (R126), no entry measures its prompt.
 func TestAssessEssayNotAdmitted(t *testing.T) {
+	withoutWord(t)
 	lib, opus, _ := readers(t)
 	got := lib.AssessEssay(context.Background(), rubricOf)
 	if got.Outcome.Kind != NotAdmitted || len(got.Criteria) != 2 || got.Criteria[0].Met != nil || len(opus.asked) != 0 {
