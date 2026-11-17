@@ -278,8 +278,10 @@ func ReadingReports(l *reading.Log) []Named {
 
 // WorkbookReports are the reports of a run of the reading of the workbook,
 // CAPABILITY_HANDWRITING_READING: each page's filled boxes, which a model reads, with their truths,
-// and a reading of each for each repeat of the page bare at 32 px.
+// and a reading of each for each repeat of the page bare at 32 px. In a run of admission, plain,
+// every reader reads in every repeat, the one that reads once too (workbook.Plain).
 func WorkbookReports(l *workbook.Log) []Named {
+	plain := slices.Contains(l.Run.Reads, workbook.Plain)
 	type key struct {
 		page, repeat int
 		reader       string
@@ -371,7 +373,7 @@ func WorkbookReports(l *workbook.Log) []Named {
 		if !asked[rd.Name] {
 			continue
 		}
-		out = append(out, report(rd.Name, repeatsOf(rd, l.Run.Repeats, false), func(pr *workbook.PageRecord, rep int) func(evalsample.Truth) *evalv1.Reading {
+		out = append(out, report(rd.Name, repeatsOf(rd, l.Run.Repeats, plain), func(pr *workbook.PageRecord, rep int) func(evalsample.Truth) *evalv1.Reading {
 			c := calls[key{pr.Page, rep, rd.Name}]
 			if c == nil {
 				return none(notReached(l.End))
@@ -383,7 +385,7 @@ func WorkbookReports(l *workbook.Log) []Named {
 		if !asked[p[0].Name] || !asked[p[1].Name] {
 			continue
 		}
-		repeats := min(repeatsOf(p[0], l.Run.Repeats, false), repeatsOf(p[1], l.Run.Repeats, false))
+		repeats := min(repeatsOf(p[0], l.Run.Repeats, plain), repeatsOf(p[1], l.Run.Repeats, plain))
 		out = append(out, report(p[0].Name+"+"+p[1].Name, repeats, func(pr *workbook.PageRecord, rep int) func(evalsample.Truth) *evalv1.Reading {
 			a, b := calls[key{pr.Page, rep, p[0].Name}], calls[key{pr.Page, rep, p[1].Name}]
 			for _, c := range []*workbook.CallRecord{a, b} {

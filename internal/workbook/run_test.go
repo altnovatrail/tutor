@@ -30,6 +30,8 @@ func TestNew(t *testing.T) {
 		{"dev", workbook.Reads{Captions: true}, 5, 5 * (2 + 2*2*3)},
 		{"test", workbook.Reads{Captions: true, Heights: true}, 15, 15 * (2 + 2*2*3 + 2*3)},
 		{"all", workbook.Reads{Heights: true}, 20, 20 * 2 * 3},
+		// The run of admission: bare at 32 px, every reader in every repeat, Opus too.
+		{"dev", workbook.Reads{Plain: true}, 5, 5 * 3 * 3},
 	} {
 		pages := workbook.Pages(wb, c.part)
 		r, err := workbook.New(c.part, "eval/workbook.json", "", 1, drawnPages(t, pages), readers, 3, c.reads)
@@ -54,6 +56,12 @@ func TestNew(t *testing.T) {
 	}
 	if r, err := workbook.ParseReads("heights,captions"); err != nil || !r.Captions || !r.Heights || len(r.Names()) != 2 {
 		t.Errorf("ParseReads = %+v, %v", r, err)
+	}
+	if r, err := workbook.ParseReads("plain"); err != nil || !r.Plain || strings.Join(r.Names(), ",") != workbook.Plain {
+		t.Errorf("ParseReads(plain) = %+v, %v", r, err)
+	}
+	if _, err := workbook.ParseReads("plain,bare"); err == nil || !strings.Contains(err.Error(), "plain is read alone") {
+		t.Errorf("plain with bare: %v", err)
 	}
 }
 
