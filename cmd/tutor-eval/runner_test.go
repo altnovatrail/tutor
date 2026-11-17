@@ -10,6 +10,8 @@ import (
 	"strings"
 	"testing"
 	"time"
+
+	"github.com/altnovatrail/tutor/internal/runner"
 )
 
 // runMeasure drives tutor-eval run with what the author types and no key, at a fixed moment.
@@ -190,5 +192,96 @@ func TestRunRefuses(t *testing.T) {
 		if code != c.code || !strings.Contains(errs, c.says) {
 			t.Errorf("%v: ends %d, %s; want %d and %q", c.args, code, errs, c.code, c.says)
 		}
+	}
+}
+
+// A run that broke off goes on in its own log with -rest (T166): the same flags plan the same run,
+// the run asks only the calls the log does not hold, says so before the author's yes, and appends
+// them and the end, so that the log is the whole run's. A log that ended, a log that is not there
+// and -rest beside -log are refused.
+func TestRunRest(t *testing.T) {
+	where := splitSheets(t)
+	dir := t.TempDir()
+	whole, broken := filepath.Join(dir, "whole.jsonl"), filepath.Join(dir, "broken.jsonl")
+	args := append([]string{"-part", "test", "-stub", "-repeats", "1"}, where...)
+	if code, out, errs := runMeasure("yes\n", append(args, "-log", whole)...); code != exitOK {
+		t.Fatalf("the whole run ends %d: %s%s", code, out, errs)
+	}
+	data, err := os.ReadFile(whole)
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.SplitAfter(string(data), "\n")
+	// The record of the run, the 5 sheets and 10 steps.
+	if err := os.WriteFile(broken, []byte(strings.Join(lines[:16], "")), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	code, out, errs := runMeasure("yes\n", append(args, "-rest", broken)...)
+	if code != exitOK {
+		t.Fatalf("the rest ends %d: %s%s", code, out, errs)
+	}
+	if !strings.Contains(out, "The log "+broken+" holds 10 of its steps, 7 calls made, ") || !strings.Contains(out, "; the rest: 35 calls, expected to cost ") || !strings.Contains(out, "Type yes to start the run: 42 calls made, ") {
+		t.Errorf("the rest says\n%s", out)
+	}
+	got, err := os.ReadFile(broken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	gotLines := strings.SplitAfter(string(got), "\n")
+	if len(gotLines) != len(lines) {
+		t.Fatalf("the log has %d lines, and the whole run's %d", len(gotLines), len(lines))
+	}
+	for i := 1; i < len(lines)-2; i++ {
+		if gotLines[i] != lines[i] {
+			t.Errorf("line %d of the log is\n%s\nwant\n%s", i+1, gotLines[i], lines[i])
+		}
+	}
+	// A run its cap stopped goes on as well: its end is cut off, and the rest writes the end of the
+	// whole run.
+	capped := filepath.Join(dir, "capped.jsonl")
+	if code, _, _ := runMeasure("yes\n", append(args, "-log", capped, "-max-usd", "0.4")...); code != exitFail {
+		t.Fatalf("the capped run ends %d", code)
+	}
+	if code, out, errs := runMeasure("yes\n", append(args, "-rest", capped)...); code != exitOK || !strings.Contains(out, "Type yes to start the run: 42 calls made, ") {
+		t.Fatalf("the rest of a capped run ends %d: %s%s", code, out, errs)
+	}
+	if got, err := os.ReadFile(capped); err != nil || strings.Count(string(got), "\n") != len(lines)-1 || strings.Count(string(got), `"kind":"end"`) != 1 {
+		t.Errorf("the log of the capped run with its rest is %d lines, %v", strings.Count(string(got), "\n"), err)
+	}
+	for _, c := range []struct {
+		args []string
+		code int
+		want string
+	}{
+		{[]string{"-rest", whole}, exitFail, "the log has its end"},
+		{[]string{"-rest", filepath.Join(dir, "none.jsonl")}, exitFail, "-rest: open "},
+		{[]string{"-rest", broken, "-log", whole}, exitUsage, "-log is not given with it"},
+	} {
+		if code, out, errs := runMeasure("yes\n", append(args, c.args...)...); code != c.code || out != "" || !strings.Contains(errs, c.want) {
+			t.Errorf("%v: the run ends %d: %s%s", c.args, code, out, errs)
+		}
+	}
+}
+
+// The rest refuses a log that has grown since it was read, a run still writing it, and cuts off the
+// end of one that stopped short.
+func TestRestOf(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "log.jsonl")
+	if err := os.WriteFile(path, []byte("12345\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	log, err := os.OpenFile(path, os.O_WRONLY|os.O_APPEND, 0o600)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() { _ = log.Close() }()
+	if err := restOf(log, runner.Done{Size: 4}, 4); err == nil || !strings.Contains(err.Error(), "is its run still going?") {
+		t.Errorf("a grown log: %v", err)
+	}
+	if err := restOf(log, runner.Done{Size: 3}, 6); err != nil {
+		t.Fatal(err)
+	}
+	if data, _ := os.ReadFile(path); string(data) != "123" {
+		t.Errorf("the log is cut to %q", data)
 	}
 }

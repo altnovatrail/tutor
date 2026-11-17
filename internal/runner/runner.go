@@ -7,8 +7,10 @@
 package runner
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"slices"
@@ -239,13 +241,25 @@ type End struct {
 // a run, whose monotonic reading times the calls, and a fixed clock in a test.
 func (r *Run) Do(ctx context.Context, ask Asker, maxUSD float64, log io.Writer, now func() time.Time) (Result, error) {
 	w := &writer{log: log}
-	tutor, moduleKit := Versions()
-	w.put(r.Record(Head{Time: now().UTC(), MaxUSD: maxUSD, Estimate: r.Estimate(), Runner: tutor, ModuleKit: moduleKit, Refused: r.Refused}))
+	w.put(r.Record(r.head(now().UTC(), maxUSD)))
 	for _, it := range r.Items {
 		w.put(it)
 	}
-	var res Result
-	for _, st := range r.Steps {
+	return r.steps(ctx, ask, maxUSD, w, Done{}, now)
+}
+
+// Rest runs the steps of the run that a log of it which stopped short has not come to, as Do runs
+// them, and appends their records and the end to log, the same log (T166): done is what the log
+// holds, as Done reads it, and log is the log cut to done.Size. What the log spent counts toward maxUSD, and the end tells the calls and
+// the money of the whole run.
+func (r *Run) Rest(ctx context.Context, ask Asker, maxUSD float64, done Done, log io.Writer, now func() time.Time) (Result, error) {
+	return r.steps(ctx, ask, maxUSD, &writer{log: log}, done, now)
+}
+
+// steps asks the steps from done on and writes their records and the end.
+func (r *Run) steps(ctx context.Context, ask Asker, maxUSD float64, w *writer, done Done, now func() time.Time) (Result, error) {
+	res := Result{Calls: done.Calls, SpentUSD: done.SpentUSD}
+	for _, st := range r.Steps[done.Steps:] {
 		if w.err != nil {
 			break
 		}
@@ -270,6 +284,118 @@ func (r *Run) Do(ctx context.Context, ask Asker, maxUSD float64, log io.Writer, 
 	}
 	w.put(End{Kind: "end", Time: now().UTC(), Result: res})
 	return res, w.err
+}
+
+// head is what the runner tells of the run as it starts it, at a moment, with its cap.
+func (r *Run) head(at time.Time, maxUSD float64) Head {
+	tutor, moduleKit := Versions()
+	return Head{Time: at, MaxUSD: maxUSD, Estimate: r.Estimate(), Runner: tutor, ModuleKit: moduleKit, Refused: r.Refused}
+}
+
+// Done is what a log of a run that stopped short holds of it: how many of its steps it came to,
+// the calls it made of them and what they cost, and how many of its bytes stay — all of them for a
+// log that broke off, and those before its end for one that its cap or an interruption stopped.
+type Done struct {
+	Steps    int
+	Calls    int
+	SpentUSD float64
+	Size     int64
+}
+
+// RestEstimate is what the steps that done has not come to are expected to take.
+func (r *Run) RestEstimate(done Done) Estimate {
+	return (&Run{Steps: r.Steps[done.Steps:]}).Estimate()
+}
+
+// Done reads what a log holds of this run, which stopped short, so that Rest asks the rest of it
+// into the same log (T166). The log must be this very run's: its record the one the run writes at
+// the moment and with the cap the log tells; its items, byte for byte, those of the run; and every
+// record after them that of the run's step in its place — the note itself for a note, and for a
+// call the record its call gives again for the outcome the record holds, so that a kind whose step
+// takes what an earlier one came to, as the assessment of an essay takes its reading, has it again.
+// An end that tells the run stopped short, by its cap or an interruption, is dropped from what
+// stays; a log that ended whole, one whose last line is cut off, one that broke off before its
+// items were written and one that holds more steps than the run has are refused.
+func (r *Run) Done(log []byte) (Done, error) {
+	if len(log) == 0 || log[len(log)-1] != '\n' {
+		return Done{}, errors.New("the log is empty, or its last line is cut off: a log the run broke off while writing it is trimmed to its last whole line first")
+	}
+	lines := bytes.Split(log[:len(log)-1], []byte("\n"))
+	d := Done{Size: int64(len(log))}
+	var told struct {
+		Time   time.Time `json:"time"`
+		MaxUSD float64   `json:"max_usd"`
+	}
+	_ = json.Unmarshal(lines[0], &told)
+	want, err := json.Marshal(r.Record(r.head(told.Time, told.MaxUSD)))
+	if err != nil {
+		return d, err
+	}
+	if !bytes.Equal(lines[0], want) {
+		return d, errors.New("the record of the run in the log is not this run's: it was planned with other flags, sheets or prompt")
+	}
+	if len(lines) < 1+len(r.Items) {
+		return d, fmt.Errorf("the log holds %d of the run's %d items and no call: start the run anew", len(lines)-1, len(r.Items))
+	}
+	for i, it := range r.Items {
+		if err := same(lines[1+i], it); err != nil {
+			return d, fmt.Errorf("line %d of the log is not the run's item %d: the sheets are not those of the log", 2+i, 1+i)
+		}
+	}
+	rest := lines[1+len(r.Items):]
+	for i, line := range rest {
+		n := 2 + len(r.Items) + i
+		var rec struct {
+			Kind     string `json:"kind"`
+			NotAsked bool   `json:"not_asked"`
+			Answer   string `json:"answer"`
+			Error    string `json:"error"`
+			Usage
+		}
+		if err := json.Unmarshal(line, &rec); err != nil {
+			return d, fmt.Errorf("line %d of the log is not a record: %w", n, err)
+		}
+		if rec.Kind == "end" {
+			var end End
+			if err := json.Unmarshal(line, &end); err != nil || end.Stopped == "" || i != len(rest)-1 {
+				return d, errors.New("the log has its end: the run did not stop short, and there is no rest to ask")
+			}
+			d.Size -= int64(len(line) + 1)
+			break
+		}
+		if i == len(r.Steps) {
+			return d, fmt.Errorf("the log holds more steps than the run has, %d", len(r.Steps))
+		}
+		st := r.Steps[i]
+		if st.Call == nil {
+			if err := same(line, st.Note); err != nil {
+				return d, fmt.Errorf("line %d of the log is not the note of the run's step %d", n, 1+i)
+			}
+		} else {
+			// The step's request is built again, as the run built it, for what its kind keeps of it;
+			// it is not asked.
+			_, _ = st.Call.Request()
+			o := Outcome{NotAsked: rec.NotAsked, Answer: rec.Answer, Error: rec.Error, Usage: rec.Usage}
+			if err := same(line, st.Call.Record(o)); err != nil {
+				return d, fmt.Errorf("line %d of the log is not the record of the run's step %d", n, 1+i)
+			}
+			if !o.NotAsked {
+				d.Calls++
+			}
+		}
+		d.SpentUSD += rec.CostUSD
+		d.Steps++
+	}
+	return d, nil
+}
+
+// same tells, by an error, whether a line of a log is the record v, byte for byte.
+func same(line []byte, v any) error {
+	data, err := json.Marshal(v)
+	if err == nil && !bytes.Equal(line, data) {
+		err = errors.New("another record")
+	}
+	return err
 }
 
 // call asks one step's call and tells what it came to.

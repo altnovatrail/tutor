@@ -123,6 +123,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	essaysPath := flags.String("essays", essaysFile, "for -kind essay, the file of the essays")
 	maxUSD := flags.Float64("max-usd", 0, "start no call that could take the run past this many US dollars; $3 for dev, $6 for test ($8 for the essays), $2 for all and $8 for recorded by default")
 	logPath := flags.String("log", "", "the log of the run, a new file out of git: in samples or synthetic, and in samples alone for sheets there; by default in runs next to the directory of the sheets, and for the workbook and the essays in synthetic/runs")
+	rest := flags.String("rest", "", "the log of this run that stopped short — broke off, or stopped by its cap or an interruption —, in place of -log: the run is planned with the same flags, asks only the calls the log does not hold, and appends them and the end to it; -max-usd counts what the log spent, and the log's record keeps the cap and the moment of its first start (T166)")
 	two := flags.Bool("two", false, "for -kind essay, assess in two calls: read the essay, then assess the text read (T92)")
 	assessor := flags.String("assessor", "", "for -kind essay -two, the configuration that assesses the text every reader read, as the library asks a model of its own for it, such as haiku-medium on the reading of opus-high, the run of admission (R124); each reader assesses its own reading by default")
 	casesPath := flags.String("cases", "", "for -kind hint, the file of the cases of the set of the words, such as eval/words-cases.json, and for -kind correct, of the set of the words after a correct answer, eval/correct-cases.json, on the one set of its plan, asked case by case (T118; T143)")
@@ -267,6 +268,13 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	// asked.
 	// The pages of the workbook and the essays are code's, and their runs log in synthetic alone.
 	path := *logPath
+	if *rest != "" {
+		if set["log"] {
+			_, _ = fmt.Fprintln(stderr, "tutor-eval run: -rest is the log the run goes on in, and -log is not given with it")
+			return exitUsage
+		}
+		path = *rest
+	}
 	if path == "" {
 		at := now().UTC()
 		dir, names := filepath.Join(syntheticFolder, "runs"), []string{strings.TrimSuffix(filepath.Base(own), filepath.Ext(own))}
@@ -291,7 +299,21 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: %v\n", err)
 		return exitFail
 	}
-	if _, err := os.Lstat(path); err == nil {
+	var done *runner.Done
+	var size int64
+	if *rest != "" {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			_, _ = fmt.Fprintf(stderr, "tutor-eval run: -rest: %v\n", err)
+			return exitFail
+		}
+		d, err := r.Done(data)
+		if err != nil {
+			_, _ = fmt.Fprintf(stderr, "tutor-eval run: -rest %s: %v\n", path, err)
+			return exitFail
+		}
+		done, size = &d, int64(len(data))
+	} else if _, err := os.Lstat(path); err == nil {
 		_, _ = fmt.Fprintf(stderr, "tutor-eval run: the log %s exists: a run writes a new one\n", path)
 		return exitFail
 	}
@@ -304,7 +326,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 		}
 		above = fmt.Sprintf("That is above the $%.2f that %s plan for -part %s.\n", planned, plan, *part)
 	}
-	return startRun(ctx, "tutor-eval run", r, what, above, path, *maxUSD, *stub, ask, stdin, stdout, stderr, now)
+	return startFrom(ctx, "tutor-eval run", r, done, size, what, above, path, *maxUSD, *stub, ask, stdin, stdout, stderr, now)
 }
 
 // claudeModels asks the models of a run's steps by the adapter of Claude, with the Anthropic key:
@@ -316,9 +338,21 @@ func claudeModels(key string) runner.Asker { return runner.Models(claude.Dial, k
 // command, and from then on it stops the run before the next call. It writes the log as a new file
 // at path, and says what the run made and spent. above says that the cap is above the plan's.
 func startRun(ctx context.Context, name string, r *runner.Run, what, above, path string, maxUSD float64, stub bool, ask runner.Asker, stdin io.Reader, stdout, stderr io.Writer, now func() time.Time) int {
-	e := r.Estimate()
+	return startFrom(ctx, name, r, nil, 0, what, above, path, maxUSD, stub, ask, stdin, stdout, stderr, now)
+}
+
+// startFrom is startRun, and with done the rest of a run whose log at path stopped short (T166):
+// it says what the log holds, estimates the calls the log does not, cuts the log to what stays of
+// it, and appends them and the end. A log that has grown since Done read it is another run's
+// still writing, and is left as it is.
+func startFrom(ctx context.Context, name string, r *runner.Run, done *runner.Done, size int64, what, above, path string, maxUSD float64, stub bool, ask runner.Asker, stdin io.Reader, stdout, stderr io.Writer, now func() time.Time) int {
+	e, spent := r.Estimate(), 0.0
+	if done != nil {
+		e, spent = r.RestEstimate(*done), done.SpentUSD
+		what += fmt.Sprintf("The log %s holds %d of its steps, %s made, $%.4f spent; the rest: ", path, done.Steps, count(done.Calls, "call"), done.SpentUSD)
+	}
 	say := what + fmt.Sprintf("%s, expected to cost $%.2f, and at most $%.2f if every call took its worst. The cap is $%.2f.\n", count(e.Calls, "call"), e.USD, e.WorstUSD, maxUSD) + above
-	if e.USD > maxUSD {
+	if spent+e.USD > maxUSD {
 		say += "The estimate is above the cap: the run will stop short of its calls unless -max-usd gives it more.\n"
 	}
 	if stub {
@@ -339,12 +373,28 @@ func startRun(ctx context.Context, name string, r *runner.Run, what, above, path
 		_, _ = fmt.Fprintf(stderr, "%s: %v\n", name, err)
 		return exitFail
 	}
-	log, err := os.OpenFile(path, os.O_WRONLY|os.O_CREATE|os.O_EXCL, 0o600)
+	flag := os.O_WRONLY | os.O_CREATE | os.O_EXCL
+	if done != nil {
+		flag = os.O_WRONLY | os.O_APPEND
+	}
+	log, err := os.OpenFile(path, flag, 0o600)
 	if err != nil {
 		_, _ = fmt.Fprintf(stderr, "%s: the log: %v\n", name, err)
 		return exitFail
 	}
-	res, err := r.Do(ctx, ask, maxUSD, log, now)
+	if done != nil {
+		if err := restOf(log, *done, size); err != nil {
+			_ = log.Close()
+			_, _ = fmt.Fprintf(stderr, "%s: the log: %v\n", name, err)
+			return exitFail
+		}
+	}
+	var res runner.Result
+	if done != nil {
+		res, err = r.Rest(ctx, ask, maxUSD, *done, log, now)
+	} else {
+		res, err = r.Do(ctx, ask, maxUSD, log, now)
+	}
 	if cerr := log.Close(); err == nil {
 		err = cerr
 	}
@@ -989,4 +1039,20 @@ func refusedLine(refused []refusal) string {
 		lines[i] = r.line
 	}
 	return fmt.Sprintf("Refused, and nothing of them goes to AI: %s.\n", strings.Join(lines, "; "))
+}
+
+// restOf makes the log of a run that stopped short ready for its rest: it refuses a log that is no
+// longer the size Done read, size, and cuts off its end, if done keeps less of it.
+func restOf(log *os.File, done runner.Done, size int64) error {
+	info, err := log.Stat()
+	if err != nil {
+		return err
+	}
+	if info.Size() != size {
+		return fmt.Errorf("it is %d bytes, not the %d it was read at: is its run still going?", info.Size(), size)
+	}
+	if done.Size < size {
+		return log.Truncate(done.Size)
+	}
+	return nil
 }

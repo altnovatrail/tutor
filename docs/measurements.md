@@ -1328,7 +1328,30 @@ The rounded averages of input and output are the expected tokens of `price.go`. 
 
 The v1 runs are the same 204 cases; `api`'s strict leak check turns a leak into the fallback text. Version 3 was measured on Opus alone. The instructions of the words are 4,445 bytes (`internal/hint/testdata/words/rung-w005.txt`) and the schema about 300 more — some 1,100–1,200 tokens of English, our estimate, not counted: no call ran. A hit of Anthropic's cache costs 5 % of Opus's input price and a 5-minute write 1.25 times it (sources 1.5, 1.14), so a cached prefix would save ≈ $0.0045 a call on a hit and add ≈ $0.0012 on a miss. The words of a hint and those after a right answer have instructions of their own, so only a call of the same kind hits; how often two come within 5 minutes, only `api`'s log can say.
 
-**Open:** a run on Haiku at 24 px and on stacked fractions — Д18; the words' price and the height of a digit for `spec` — В92 and В93.
+**Open:** a run on Haiku at 24 px and on stacked fractions — Д18; *2026-11-17 (T166): the run at 24 px is section 3.21, stacked fractions stay in Д18*; the words' price and the height of a digit for `spec` — В92 and В93.
+
+### 3.21. Reading the author's sheets at 24 px (Д18)
+
+**What and why** (T166, 2026-11-17). The site reads a module without `canvas.digit_height` at 24 px (R51 spec), and the admission of the sheet's reading was measured at 32 px (section 3.20). By the author's word of 2026-11-17, one paid run of Д18 with a ceiling of $1, outside the pause of paid runs (R126), measured the site's single reader, Haiku 5.5 · `medium`, on the author's handwriting at 24 px against 32 px. Only numbers came here.
+
+**How.** `tutor-eval run -kind reading -part recorded -readers haiku-medium -reads keys,heights -max-usd 1` over the four recorded sets of T115 — the 60 sheets of the admission (`sheets-v1` 40, `free-v1` 3, `free-messy-v1` 10, `author-v1` 7; 35 correct, 25 with an error) —, on the reading prompt `c693bfa8…` of version 2, that of the site. The reading without a key at 32 px three times, with the right and the false keys, and at 16, 24 and 48 px once, without a key: 645 calls. The run broke off after 279 calls when the session that ran it ended, and `-rest` asked the other 366 into the same log (R130). Prices checked on Anthropic's Pricing page the same day: Haiku 5.5 $0.10 in, $0.50 out (sources 1.14). Spent: Anthropic, 645 calls, $0.2610; none failed.
+
+**At 24 px against 32 px** — without a key, the first repeat at each height, the same sheets; the report's test of heights (R08; architecture 3.4):
+
+| Height | Errors | False alarms, of 35 | False "correct", of 25 | Extra "unreadable", of 60 | Σd against 32 px | p, worse | Not worse than 32 px |
+|---|---|---|---|---|---|---|---|
+| 32 px, repeat 1 | 0 | 0 | 0 | 0 | — | — | — |
+| 16 px | 2 | 0 | 0 | 2 | +2 | 0.25 | yes |
+| 24 px | 1 | 0 | 0 | 1 | +1 | 0.5 | yes |
+| 48 px | 5 | 0 | 0 | 5 | +5 | 0.031 | no |
+
+- **24 px is no worse than 32 px**: the one error is an extra "unreadable" ("ambiguous") on sheet 1 of `author-v1`, a correct sheet, which 32 px too read as unreadable in its third repeat; no false alarm and no false "correct". By the admission rule's rung "author" (R80) Haiku at 24 px alone has no false alarm on 35 answer slots and no false "correct" on 25, 60 in all, as the pair at 32 px (architecture 3.9).
+- At 32 px over the three repeats: 3 extra "unreadable" of 180 (sheets 5 and 8 of `free-messy-v1`, sheet 1 of `author-v1`), no false alarm of 105 and no false "correct" of 75 — as T115's Haiku, 2 of 180.
+- Sheet 21 of `sheets-v1`, the author's «3x + 1 = 7» with 8/3 (section 3.20), was read right at 16, 24 and 32 px, and "ambiguous" at 48 px.
+- A reading at 24 px takes 1,460 tokens of input on average against 1,508 at 32 px: $0.000387 against $0.000398, p50 of the time 2.4 s at both.
+- The key's threshold (R03) fails as in T115: what Haiku reads under the right key it reads without one too, 27 of 180, the baseline; the site's reading has no key.
+
+**Not measured:** a stacked fraction whose numerator runs into the bar — the sheets' synthesis draws fractions inline alone, and no recorded sheet has one (section 3.20) —; Opus 5.5 at 24 px, which the site does not call in the mode `single` (R125). Both stay in Д18.
 
 ## 4. Claude Code sessions
 
@@ -1354,6 +1377,7 @@ What tutor's Claude Code sessions spend, by the measurement of measurements 1.1 
 | 2026-11-16T22:20 … 2026-11-17T04:36 | epic E12: T153–T156 and T160–T163, run by spec's orchestrator, and its archive | 9 | 647 / 192 | 147.3 / 70.1 | 0 | $47.78 |
 | 2026-11-17T04:36 … 2026-11-17T05:26 | epic E13: T164, run by spec's orchestrator, and its archive | 2 | 47 / 17 | 81.2 / 58.0 | 0 | $2.85 |
 | 2026-11-17T05:26 … 2026-11-17T15:04 | epic E14: T165, run by spec's orchestrator, and its archive | 2 | 69 / 0 | 85.3 / — | 0 | $3.28 |
+| 2026-11-17T15:04 … 2026-11-17T18:38 | epic E15: T166, run by spec's orchestrator, and its archive | 2 | 113 / 21 | 120.4 / 73.0 | 0 | $6.94 |
 
 - Read 2026-11-13. A task's window runs from the start of its session to the start of the next one. The row of T131 is its whole session; its «Сделано» gives the numbers before its review: 106 / 43 calls, 221.1 / 114.9 thousand, $10.76. Until T136, the row of T133 was its session before its review, 2026-11-13T03:46 … 2026-11-13T05:11: 131 / 176 calls, 216.1 / 88.1 thousand, $20.45; it is its whole session now, as the other rows. The row of T136 runs to its review, as does "after", and the rows of the six tasks add up to "after".
 - "After" is the six sessions of row 7.12, to the review of T136: the context of a main call is 202.4 thousand against 398.5 "before", −49%, and of a subagent's 92.0 against 119.5, −23%, with 1 compaction in 663 main calls against 53 in 11,509. The windows differ in work: a month of code and paid runs against six sessions on documents, a session for each task. The comparison over the same kind of work is T124 spec.
@@ -1365,6 +1389,7 @@ What tutor's Claude Code sessions spend, by the measurement of measurements 1.1 
 - Epic E12, read 2026-11-17 at its archive in the session of T160 (R127): nine sessions from the archive of E11 to the measurement itself, before the archive's commit — those of the epic's tasks, which spec's orchestrator ran, with the opening of E12 in the session of T153 (R123). The context of a main call is 147.3 thousand, 27% below the reference of tutor, 202.4 thousand, over 647 main calls: the threshold of R145 spec gives no analysis.
 - Epic E13, read 2026-11-17 at its archive in the session of T164 (R128): two sessions from the archive of E12 to the measurement itself, before the archive's commit — the calls of the session of T160 after that archive, and those of T164, which spec's orchestrator ran, with the opening of E13 in the same session. The context of a main call is 81.2 thousand, 60% below the reference of tutor, 202.4 thousand, over 47 main calls, fewer than the 300 that the threshold of R145 spec asks: no analysis.
 - Epic E14, read 2026-11-17 at its archive in the session of T165 (R129): two sessions from the archive of E13 to the measurement itself, before the archive's commit — the calls of the session of T164 after that archive, and those of T165, which spec's orchestrator ran, with the opening of E14 in the same session. The context of a main call is 85.3 thousand, 58% below the reference of tutor, 202.4 thousand, over 69 main calls, fewer than the 300 that the threshold of R145 spec asks: no analysis.
+- Epic E15, read 2026-11-17 at its archive in the session of T166 (R130): two sessions from the archive of E14 to the measurement itself, before the archive's commit and the review — the calls of the session of T165 after that archive, and those of T166, which spec's orchestrator ran and resumed three times, with the opening of E15 in the same session. The context of a main call is 120.4 thousand, 41% below the reference of tutor, 202.4 thousand, over 113 main calls, fewer than the 300 that the threshold of R145 spec asks: no analysis.
 
 ## 5. The speed of CI
 

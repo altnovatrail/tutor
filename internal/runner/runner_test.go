@@ -460,3 +460,161 @@ func TestModels(t *testing.T) {
 		t.Errorf("dialed %v, want %v", dialed, want)
 	}
 }
+
+// A run whose log broke off goes on in the same log (T166): Done reads what the log holds, and
+// Rest asks the steps it has not come to and appends them and the end, so that the log is the one
+// the whole run would have written, the cap counting what the log spent.
+func TestRest(t *testing.T) {
+	steps := []runner.Step{asked(opus, 1), {Config: opus, Note: map[string]any{"kind": "call", "n": 2, "same_as": 1}}, asked(opus, 3), asked(noThought, 4)}
+	var whole bytes.Buffer
+	if _, err := plan(steps...).Do(context.Background(), runner.Stub, 10, &whole, clock()); err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.SplitAfter(whole.String(), "\n")
+	// The log broke off after the first call and the note.
+	broken := []byte(strings.Join(lines[:4], ""))
+	r := plan(steps...)
+	done, err := r.Done(broken)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if done.Steps != 2 || done.Calls != 1 || !near(done.SpentUSD, opus.Cost(1000, 50)) || done.Size != int64(len(broken)) {
+		t.Errorf("the log holds %+v", done)
+	}
+	if e := r.RestEstimate(done); e.Calls != 2 || !near(e.USD, opus.Cost(1000, 50)+noThought.Cost(1000, 50)) {
+		t.Errorf("the rest is expected %+v", e)
+	}
+	var asks []int
+	ask := func(ctx context.Context, st runner.Step, req provider.Request) (provider.Response, error) {
+		asks = append(asks, len(req.Text))
+		return runner.Stub(ctx, st, req)
+	}
+	log := bytes.NewBuffer(slices.Clone(broken))
+	res, err := r.Rest(context.Background(), ask, 10, done, log, clock())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(asks, []int{3, 4}) || res.Calls != 3 || !near(res.SpentUSD, r.Estimate().USD) || res.Stopped != "" {
+		t.Errorf("the rest asked %v and ended %+v", asks, res)
+	}
+	recs, want := records(t, log.Bytes()), records(t, whole.Bytes())
+	if len(recs) != len(want) {
+		t.Fatalf("the log has %d records, and the whole run's %d", len(recs), len(want))
+	}
+	for i := range want {
+		delete(recs[i], "time")
+		delete(want[i], "time")
+		if jsonNumber(recs[i]) != jsonNumber(want[i]) {
+			t.Errorf("record %d is %v, want %v", i+1, recs[i], want[i])
+		}
+	}
+
+	// The cap counts what the log spent: with room for one more call of the whole run's, the rest
+	// asks none.
+	short := bytes.NewBuffer(slices.Clone(broken))
+	if res, err := r.Rest(context.Background(), runner.Stub, done.SpentUSD+worst-0.001, done, short, clock()); err != nil || res.Calls != 1 || !strings.HasPrefix(res.Stopped, "the cap: ") {
+		t.Errorf("a capped rest ended %+v, %v", res, err)
+	}
+}
+
+// Done takes only a log of this very run that broke off between two records: not one that ended,
+// was cut off in a line, holds more steps than the run, or was planned otherwise.
+func TestDoneRefuses(t *testing.T) {
+	steps := []runner.Step{asked(opus, 1), {Config: opus, Note: map[string]any{"kind": "call", "n": 2, "same_as": 1}}, asked(opus, 3)}
+	var whole bytes.Buffer
+	if _, err := plan(steps...).Do(context.Background(), runner.Stub, 10, &whole, clock()); err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.SplitAfter(whole.String(), "\n")
+	other := plan(steps...)
+	other.Items = []any{map[string]any{"kind": "item", "n": 2}}
+	otherRecord := plan(steps...)
+	otherRecord.Record = func(h runner.Head) any { return map[string]any{"kind": "run", "call_kind": "other"} }
+	for _, c := range []struct {
+		name string
+		r    *runner.Run
+		log  string
+		want string
+	}{
+		{"ended", plan(steps...), whole.String(), "the log has its end"},
+		{"cut off", plan(steps...), strings.Join(lines[:3], "") + `{"kind":"ca`, "cut off"},
+		{"empty", plan(steps...), "", "the log is empty"},
+		{"more steps", plan(steps...), strings.Join(lines[:5], "") + lines[4], "more steps than the run has, 3"},
+		{"another call", plan(asked(opus, 5), steps[1], steps[2]), strings.Join(lines[:3], ""), "not the record of the run's step 1"},
+		{"an end amid the log", plan(steps...), strings.Join(lines[:3], "") + `{"kind":"end","stopped":"interrupted"}` + "\n" + lines[3], "the log has its end"},
+		{"other items", other, strings.Join(lines[:3], ""), "not the run's item 1"},
+		{"other record", otherRecord, strings.Join(lines[:3], ""), "not this run's"},
+		{"no record", plan(steps...), "x\n", "not this run's"},
+		{"fewer items", plan(steps...), lines[0], "holds 0 of the run's 1 items and no call"},
+		{"other note", plan(asked(opus, 1), runner.Step{Config: opus, Note: map[string]any{"kind": "call", "n": 2}}, asked(opus, 3)), strings.Join(lines[:4], ""), "not the note of the run's step 2"},
+		{"another record for a call", plan(steps...), strings.Join(lines[:2], "") + `{"kind":"item"}` + "\n", "not the record of the run's step 1"},
+		{"not a record", plan(steps...), strings.Join(lines[:2], "") + "x\n", "line 3 of the log is not a record"},
+	} {
+		if _, err := c.r.Done([]byte(c.log)); err == nil || !strings.Contains(err.Error(), c.want) {
+			t.Errorf("%s: Done says %v, want %q", c.name, err, c.want)
+		}
+	}
+}
+
+// A log that its cap or an interruption stopped goes on too: its end is dropped from what stays,
+// and a step that takes what an earlier one came to has it again from the log, as the assessment
+// of an essay takes its reading.
+func TestRestAfterAStop(t *testing.T) {
+	var got []string
+	steps := func() []runner.Step {
+		var c chain
+		return []runner.Step{{Config: opus, In: 1000, Out: 50, WorstIn: 8000, Call: &c}, {Config: opus, In: 1000, Out: 50, WorstIn: 8000, Call: &next{c: &c, got: &got}}}
+	}
+	var stopped bytes.Buffer
+	if res, err := plan(steps()...).Do(context.Background(), runner.Stub, worst+0.001, &stopped, clock()); err != nil || !strings.HasPrefix(res.Stopped, "the cap: ") || res.Calls != 1 {
+		t.Fatalf("the first run ended %+v, %v", res, err)
+	}
+	r := plan(steps()...)
+	done, err := r.Done(stopped.Bytes())
+	if err != nil {
+		t.Fatal(err)
+	}
+	lines := strings.SplitAfter(stopped.String(), "\n")
+	if done.Steps != 1 || done.Calls != 1 || done.Size != int64(len(strings.Join(lines[:3], ""))) {
+		t.Errorf("the log holds %+v", done)
+	}
+	log := bytes.NewBufferString(stopped.String()[:done.Size])
+	if res, err := r.Rest(context.Background(), runner.Stub, 10, done, log, clock()); err != nil || res.Calls != 2 || res.Stopped != "" {
+		t.Errorf("the rest ended %+v, %v", res, err)
+	}
+	if !slices.Equal(got, []string{`{"n":7}`}) {
+		t.Errorf("the second step asked with %q, want the answer of the first", got)
+	}
+	if recs := records(t, log.Bytes()); len(recs) != 5 || recs[4]["kind"] != "end" || recs[4]["calls"] != 2.0 {
+		t.Errorf("the log is %v", recs)
+	}
+}
+
+// chain is a call whose record keeps its answer, and next one whose request is that answer.
+type chain struct{ answer string }
+
+func (c *chain) Request() (provider.Request, error) { return provider.Request{Text: "x"}, nil }
+func (c *chain) Right() (string, error)             { return `{"n":7}`, nil }
+func (c *chain) Record(o runner.Outcome) any {
+	c.answer = o.Answer
+	return record{Kind: "call", N: 1, Answer: o.Answer, Error: o.Error, Usage: o.Usage}
+}
+
+type next struct {
+	c   *chain
+	got *[]string
+}
+
+func (n *next) Request() (provider.Request, error) {
+	if n.c.answer == "" {
+		return provider.Request{}, errors.New("no answer of the first step")
+	}
+	return provider.Request{Text: n.c.answer}, nil
+}
+func (n *next) Right() (string, error) {
+	*n.got = append(*n.got, n.c.answer)
+	return `{"n":8}`, nil
+}
+func (n *next) Record(o runner.Outcome) any {
+	return record{Kind: "call", N: 2, NotAsked: o.NotAsked, Answer: o.Answer, Error: o.Error, Usage: o.Usage}
+}
