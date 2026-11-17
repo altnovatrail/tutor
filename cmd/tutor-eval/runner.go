@@ -371,6 +371,15 @@ func fileFlags(kind, file string, set map[string]bool, stderr io.Writer) bool {
 	return true
 }
 
+// readerNames names the readers of a run of admission, each of which reads in every repeat.
+func readerNames(readers []runner.Reader) string {
+	var names []string
+	for _, rd := range readers {
+		names = append(names, rd.Name)
+	}
+	return strings.Join(names, " and ")
+}
+
 // workbookFlags is what a run of the reading of the workbook reads: captions by default.
 func workbookFlags(set map[string]bool, list string) (workbook.Reads, bool) {
 	if !set["reads"] {
@@ -501,11 +510,7 @@ func planReading(sets []sheetFlags, part string, o options) (*runner.Run, string
 		what = append(what, fmt.Sprintf("by %s, without a key and with the right key, and with the false keys on %s", by, count(keyed, "correct sheet")))
 	}
 	if o.reads.Plain {
-		var readerNames []string
-		for _, rd := range readers {
-			readerNames = append(readerNames, rd.Name)
-		}
-		what = append(what, fmt.Sprintf("the run of admission: by %s in %s each, without a key at 32 px", strings.Join(readerNames, " and "), count(repeats, "repeat")))
+		what = append(what, fmt.Sprintf("the run of admission: by %s in %s each, without a key at 32 px", readerNames(readers), count(repeats, "repeat")))
 	}
 	if (o.reads.Heights || o.reads.States) && repeated != "" {
 		what = append(what, fmt.Sprintf("once by %s without a key, %s at other heights of digits and %s of %s", repeated, count(planned.Heights, "call"), count(planned.StateCalls, "call"), count(planned.States, "state")))
@@ -794,11 +799,7 @@ func planWorkbook(_ []sheetFlags, part string, o options) (*runner.Run, string, 
 	case o.workbookReads.Bare:
 		what = append(what, fmt.Sprintf("bare at %d px, by %s", render.Digit, by))
 	case o.workbookReads.Plain:
-		var names []string
-		for _, rd := range readers {
-			names = append(names, rd.Name)
-		}
-		what = append(what, fmt.Sprintf("the run of admission: bare at %d px, by %s in %s each", render.Digit, strings.Join(names, " and "), count(o.repeats, "repeat")))
+		what = append(what, fmt.Sprintf("the run of admission: bare at %d px, by %s in %s each", render.Digit, readerNames(readers), count(o.repeats, "repeat")))
 	}
 	if o.workbookReads.Heights && repeated != "" {
 		what = append(what, fmt.Sprintf("bare at 16, 24 and 48 px, once by %s", repeated))

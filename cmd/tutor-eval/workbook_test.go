@@ -233,7 +233,8 @@ func TestRunWorkbookBare(t *testing.T) {
 // The run of admission of the workbook on the stub: the bare pages by the pair in every repeat, Opus
 // too, the pair's runner's report of every repeat, and admit -kind workbook rules on it by the rule
 // of the workbook, with the mirrored and the crossed-out boxes in rows of their own (R124). The dev
-// part holds too few boxes an adult writes for a stage, and admit says so.
+// part of eval/workbook.json is not the set of admission, and admit says so; the rule of a sheet
+// rules on no set of the workbook.
 func TestAdmitWorkbookRun(t *testing.T) {
 	log := filepath.Join(t.TempDir(), "workbook.jsonl")
 	code, out, errs := runMeasure("yes\n", "-kind", "workbook", "-workbook", theWorkbook, "-dir", drawnOf(t, theWorkbook), "-part", "dev", "-stub", "-repeats", "2", "-reads", "plain", "-readers", "opus-high,haiku-medium", "-log", log)
@@ -250,10 +251,10 @@ func TestAdmitWorkbookRun(t *testing.T) {
 	}
 	for _, want := range []string{
 		"## " + filepath.Base(pair),
-		"- stage: none: 10 slots a false correct could happen on, fewer than 20",
+		"- stage: none: its set is workbook-dev, not workbook-gen-test, the test part of eval/workbook-gen.json\n",
 		"- set: workbook-dev, 2 repeats",
 		"- false alarms: 0 of 30 answer slots",
-		"- the shares above are of the boxes an adult writes; the rule gives the stage author alone (R124)\n",
+		"- the false alarms and false correct above are of the boxes an adult writes, the readings of every box; the rule gives the stage author alone (R124)\n",
 		"- mirrored boxes, without a target: false alarms 0 of 5, false correct 0 of 5\n",
 		"- crossed-out boxes, without a target: false alarms 0 of 5, false correct 0 of 0\n\n",
 	} {
@@ -261,7 +262,7 @@ func TestAdmitWorkbookRun(t *testing.T) {
 			t.Errorf("admit -kind workbook says\n%s\nwithout %q", out, want)
 		}
 	}
-	if code, out, _ := runIt("admit", pair); code != exitOK || strings.Contains(out, "mirrored") {
+	if code, out, _ := runIt("admit", pair); code != exitOK || strings.Contains(out, "mirrored") || !strings.Contains(out, "- stage: none: it is a run of the workbook, whose rule is AdmitWorkbook (R124)\n") || !strings.HasSuffix(out, "\n\n") {
 		t.Errorf("admit of a sheet ends %d:\n%s", code, out)
 	}
 	if code, _, errs := runIt("admit", "-kind", "essay", pair); code != exitUsage || !strings.Contains(errs, "give sheet or workbook") {

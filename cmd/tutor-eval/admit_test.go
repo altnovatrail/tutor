@@ -74,7 +74,7 @@ func TestAdmitArgs(t *testing.T) {
 	if code, _, errs := runIt("admit"); code != exitUsage || !strings.Contains(errs, "usage") {
 		t.Errorf("admit with no report: %d %s", code, errs)
 	}
-	if code, _, _ := runIt("admit", "-h"); code != exitOK {
+	if code, _, errs := runIt("admit", "-h"); code != exitOK || !strings.Contains(errs, "usage: tutor-eval admit [-kind sheet|workbook] REPORT...") {
 		t.Errorf("admit -h: %d", code)
 	}
 	if code, _, errs := runIt("admit", filepath.Join(t.TempDir(), "none.json")); code != exitFail || errs == "" {

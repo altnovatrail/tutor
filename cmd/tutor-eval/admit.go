@@ -35,6 +35,10 @@ func runAdmit(args []string, stdout, stderr io.Writer) int {
 	flags := flag.NewFlagSet("tutor-eval admit", flag.ContinueOnError)
 	kind := flags.String("kind", admitSheet, "the kind of report: sheet, of the reading of sheets (R80), or workbook, of the reading of the pages of the workbook (R124)")
 	flags.SetOutput(stderr)
+	flags.Usage = func() {
+		_, _ = fmt.Fprintln(stderr, use)
+		flags.PrintDefaults()
+	}
 	if err := flags.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			return exitOK
@@ -72,8 +76,15 @@ func runAdmit(args []string, stdout, stderr io.Writer) int {
 	return exitOK
 }
 
-// writeDecision writes a decision of the rule as Markdown.
+// writeDecision writes a decision of the rule as Markdown, a block ended by a blank line.
 func writeDecision(w io.Writer, file, sum string, d report.Decision) {
+	writeRows(w, file, sum, d)
+	_, _ = fmt.Fprintln(w)
+}
+
+// writeRows writes the rows of a decision of the rule as Markdown: its head and, where it counted
+// any, its shares and the measures of its readings.
+func writeRows(w io.Writer, file, sum string, d report.Decision) {
 	stage := string(d.Stage)
 	if stage == "" {
 		stage = "none: " + d.Why
@@ -81,7 +92,6 @@ func writeDecision(w io.Writer, file, sum string, d report.Decision) {
 	_, _ = fmt.Fprintf(w, "## %s\n\n- stage: %s\n- readers: %s\n- set: %s, %d repeats\n- sha256: %s\n",
 		file, stage, strings.Join(d.Readers, " + "), d.Set, d.Repeats, sum)
 	if d.Measures == nil {
-		_, _ = fmt.Fprintln(w)
 		return
 	}
 	share := func(name string, s report.SlotShare) {
@@ -94,7 +104,7 @@ func writeDecision(w io.Writer, file, sum string, d report.Decision) {
 	for _, n := range m.Unchecked {
 		unchecked += n
 	}
-	_, _ = fmt.Fprintf(w, "- readings: %d; needless unreadable %d of %d; unchecked %d\n\n",
+	_, _ = fmt.Fprintf(w, "- readings: %d; needless unreadable %d of %d; unchecked %d\n",
 		m.Readings, m.Needless.Events, m.Needless.Of, unchecked)
 }
 
@@ -102,14 +112,12 @@ func writeDecision(w io.Writer, file, sum string, d report.Decision) {
 // the boxes an adult writes, as writeDecision writes it, and the mirrored and the crossed-out boxes,
 // which have no target.
 func writeWorkbookDecision(w io.Writer, file, sum string, d report.WorkbookDecision) {
-	var head bytes.Buffer
-	writeDecision(&head, file, sum, d.Decision)
+	writeRows(w, file, sum, d.Decision)
 	if d.Measures == nil {
-		_, _ = w.Write(head.Bytes())
+		_, _ = fmt.Fprintln(w)
 		return
 	}
-	_, _ = w.Write(bytes.TrimSuffix(head.Bytes(), []byte("\n")))
-	_, _ = fmt.Fprintln(w, "- the shares above are of the boxes an adult writes; the rule gives the stage author alone (R124)")
+	_, _ = fmt.Fprintln(w, "- the false alarms and false correct above are of the boxes an adult writes, the readings of every box; the rule gives the stage author alone (R124)")
 	for _, a := range []struct {
 		name string
 		of   report.Apart

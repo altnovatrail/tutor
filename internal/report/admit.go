@@ -2,6 +2,7 @@ package report
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/altnovatrail/module-kit/verdict"
 	evalv1 "github.com/altnovatrail/spec/contracts/novatrail/eval/v1"
@@ -25,6 +26,13 @@ const (
 	// "correct" could happen on them: without them the stage would pass that share on nothing. It was
 	// 25 until the same amendment.
 	AuthorWrongSlots = 20
+	// WorkbookSet is the set the rule of the workbook admits on: the test part of
+	// eval/workbook-gen.json, pages 21–300, as the runner's report names it, without the dev part,
+	// whose pages tuned the prompt (R124).
+	WorkbookSet = "workbook-gen-test"
+	// workbookSets is how the runner's reports name every set of the workbook, by its files,
+	// eval/workbook*.json: Admit rules on none of them.
+	workbookSets = "workbook"
 )
 
 // SlotShare is a share counted over answer slots rather than readings: a slot is an event when any
@@ -55,7 +63,8 @@ type Decision struct {
 // Admit applies the rule of admission to a report. It admits nothing on a report whose verdicts
 // module-kit did not give (amendment of 2026-11-03 to R07 spec), on one of another capability than
 // reading handwriting, on one that refused a sample — a run that refuses a sample does not pass
-// (spec's contracts text, section 13) — and on one that is not of a pair. Then the stage full is both
+// (spec's contracts text, section 13) — on one that is not of a pair, and on one of a set of the
+// workbook, which AdmitWorkbook rules on (R124). Then the stage full is both
 // bounds within FullTarget, and the stage author no false alarm and no false "correct" on
 // AuthorSlots and AuthorWrongSlots slots at least. The measures of the first error and the marks of an essay, which a
 // synthetic sample's code chose (amendment of 2026-11-08 to R95 spec), a run of reading does not
@@ -65,9 +74,14 @@ func Admit(r *evalv1.Report) Decision {
 	if !ok {
 		return d
 	}
-	var all slotPair
-	refused := admitSlots(r, func(*evalv1.AnswerSlotResult) []*slotPair { return []*slotPair{&all} })
-	d.Alarm, d.Correct = all.alarm.share(), all.correct.share()
+	if strings.HasPrefix(d.Set, workbookSets) {
+		d.Why = "it is a run of the workbook, whose rule is AdmitWorkbook (R124)"
+		return d
+	}
+	var p slotPair
+	all := []*slotPair{&p}
+	refused, _ := admitSlots(r, func(*evalv1.AnswerSlotResult) []*slotPair { return all })
+	d.Alarm, d.Correct = p.alarm.share(), p.correct.share()
 	d.Measures = MeasuresOf(r).Reading
 	d.Stage, d.Why = stageOf(refused, d.Alarm, d.Correct, true)
 	return d
@@ -94,7 +108,9 @@ type Apart struct {
 // crossed-out digit with one short stroke, so that part of its errors comes from the drawing
 // (measurements 3.7, 3.12). It counts in its own row and takes no stage away. The rule gives the stage
 // author alone: its set is synthetic, and the stage full waits for the samples of adult volunteers
-// (the 2026-11-16 amendment to R50; П-16).
+// (the 2026-11-16 amendment to R50; П-16). It admits nothing on a set other than WorkbookSet, nor on
+// a run its cap stopped short: an event is one of all the repeats of a box (R124), and a box the run
+// did not reach has fewer.
 func AdmitWorkbook(r *evalv1.Report) WorkbookDecision {
 	d, ok := admissible(r)
 	w := WorkbookDecision{Decision: d}
@@ -102,24 +118,24 @@ func AdmitWorkbook(r *evalv1.Report) WorkbookDecision {
 		return w
 	}
 	var adult, mirrored, crossed slotPair
-	refused := admitSlots(r, func(s *evalv1.AnswerSlotResult) []*slotPair {
-		var out []*slotPair
-		if s.GetMirrored() {
-			out = append(out, &mirrored)
-		}
-		if s.GetCrossedOut() {
-			out = append(out, &crossed)
-		}
-		if len(out) == 0 {
-			out = append(out, &adult)
-		}
-		return out
+	route := map[[2]bool][]*slotPair{
+		{false, false}: {&adult}, {true, false}: {&mirrored}, {false, true}: {&crossed}, {true, true}: {&mirrored, &crossed},
+	}
+	refused, limited := admitSlots(r, func(s *evalv1.AnswerSlotResult) []*slotPair {
+		return route[[2]bool{s.GetMirrored(), s.GetCrossedOut()}]
 	})
 	w.Alarm, w.Correct = adult.alarm.share(), adult.correct.share()
 	w.Mirrored = Apart{mirrored.alarm.share(), mirrored.correct.share()}
 	w.CrossedOut = Apart{crossed.alarm.share(), crossed.correct.share()}
 	w.Measures = MeasuresOf(r).Reading
 	w.Stage, w.Why = stageOf(refused, w.Alarm, w.Correct, false)
+	switch {
+	case refused > 0:
+	case limited > 0:
+		w.Stage, w.Why = "", fmt.Sprintf("its run stopped short by its cap: %d readings not reached", limited)
+	case w.Set != WorkbookSet:
+		w.Stage, w.Why = "", fmt.Sprintf("its set is %s, not %s, the test part of eval/workbook-gen.json", w.Set, WorkbookSet)
+	}
 	return w
 }
 
@@ -150,9 +166,9 @@ func admissible(r *evalv1.Report) (Decision, bool) {
 type slotPair struct{ alarm, correct slotCounts }
 
 // admitSlots counts each answer slot of the report's measured samples, once over its readings,
-// into the shares into gives it, and returns how many samples the report refused.
-func admitSlots(r *evalv1.Report, into func(*evalv1.AnswerSlotResult) []*slotPair) int {
-	refused := 0
+// into the shares into gives it, and returns how many samples the report refused and how many
+// readings its run did not reach, stopped by its cap.
+func admitSlots(r *evalv1.Report, into func(*evalv1.AnswerSlotResult) []*slotPair) (refused, limited int) {
 	for _, s := range r.GetSamples() {
 		if _, ok := s.GetResult().(*evalv1.SampleResult_Refused); ok {
 			refused++
@@ -164,6 +180,9 @@ func admitSlots(r *evalv1.Report, into func(*evalv1.AnswerSlotResult) []*slotPai
 			for _, rd := range slot.GetReadings() {
 				v := verdict.Verdict(rd.GetVerdict().GetVerdict())
 				if v == verdict.Unchecked {
+					if rd.GetUnchecked() == evalv1.UncheckedCause_UNCHECKED_CAUSE_LIMIT {
+						limited++
+					}
 					continue
 				}
 				read = true
@@ -183,7 +202,7 @@ func admitSlots(r *evalv1.Report, into func(*evalv1.AnswerSlotResult) []*slotPai
 			}
 		}
 	}
-	return refused
+	return refused, limited
 }
 
 // stageOf is the stage the shares of a report admit its readers to, with full the stage full

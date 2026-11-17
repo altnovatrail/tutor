@@ -150,7 +150,7 @@ func TestAdmitExamples(t *testing.T) {
 // or crossed out as their markup notes them.
 func pageReport(boxes ...pageBoxes) *evalv1.Report {
 	r := admissionReport()
-	r.EvalSet = &evalv1.Report_CapabilitySet{CapabilitySet: &evalv1.CapabilityEvalSet{Name: "workbook-gen-test"}}
+	r.EvalSet = &evalv1.Report_CapabilitySet{CapabilitySet: &evalv1.CapabilityEvalSet{Name: report.WorkbookSet}}
 	page := &evalv1.Measurement{}
 	for _, b := range boxes {
 		for range b.n {
@@ -197,9 +197,15 @@ func TestAdmitWorkbook(t *testing.T) {
 	if m := d.Measures.All; m.Readings != 3*57 {
 		t.Errorf("the measures of section 14 count %d readings, not every box's", m.Readings)
 	}
-	// Admit's rule over all the boxes takes the alarms on the mirrored and crossed-out boxes.
-	if s := report.Admit(pageReport(append(adult, apart...)...)); s.Stage != "" || !strings.Contains(s.Why, "7 false alarms and 4 false correct") {
+	// Admit's rule rules on no set of the workbook, and over all the boxes it would take the alarms on
+	// the mirrored and crossed-out boxes.
+	page := pageReport(append(adult, apart...)...)
+	if s := report.Admit(page); s.Stage != "" || s.Why != "it is a run of the workbook, whose rule is AdmitWorkbook (R124)" {
 		t.Errorf("Admit on the page is %q, %q", s.Stage, s.Why)
+	}
+	page.EvalSet = &evalv1.Report_CapabilitySet{CapabilitySet: &evalv1.CapabilityEvalSet{Name: "author-all"}}
+	if s := report.Admit(page); s.Stage != "" || !strings.Contains(s.Why, "7 false alarms and 4 false correct") {
+		t.Errorf("Admit on the page of another set is %q, %q", s.Stage, s.Why)
 	}
 	full := report.AdmitWorkbook(pageReport(pageBoxes{n: 300, truth: "correct", reads: right3}, pageBoxes{n: 300, truth: "not_yet", reads: wrong3}))
 	if full.Stage != admission.StageAuthor || full.Alarm.Upper > report.FullTarget || full.Correct.Upper > report.FullTarget {
@@ -222,7 +228,8 @@ func TestAdmitWorkbook(t *testing.T) {
 }
 
 // The rule of the workbook refuses as Admit refuses: verdicts not module-kit's, another capability,
-// no pair, a refused sample.
+// no pair, a refused sample; and a set other than the test part of eval/workbook-gen.json, and a run
+// its cap stopped short, whose boxes not reached would drop out of the count.
 func TestAdmitWorkbookRefuses(t *testing.T) {
 	cases := map[string]func(*evalv1.Report){
 		"verdicts":        func(r *evalv1.Report) { r.Verdicts.Code = evalv1.VerdictCode_VERDICT_CODE_RUNNER },
@@ -230,6 +237,15 @@ func TestAdmitWorkbookRefuses(t *testing.T) {
 		"names 1 readers": func(r *evalv1.Report) { r.Readers = r.Readers[:1] },
 		"refused 1": func(r *evalv1.Report) {
 			r.Samples = append(r.Samples, &evalv1.SampleResult{Sample: "page-022", Result: &evalv1.SampleResult_Refused{Refused: evalv1.Refusal_REFUSAL_CHILD}})
+		},
+		"its set is workbook-gen-all, not workbook-gen-test": func(r *evalv1.Report) {
+			r.EvalSet = &evalv1.Report_CapabilitySet{CapabilitySet: &evalv1.CapabilityEvalSet{Name: "workbook-gen-all"}}
+		},
+		"stopped short by its cap: 2 readings": func(r *evalv1.Report) {
+			slot := r.Samples[0].GetMeasured().AnswerSlots[0]
+			for _, rd := range slot.Readings[1:] {
+				rd.Verdict.Verdict, rd.Unchecked = "unchecked", evalv1.UncheckedCause_UNCHECKED_CAUSE_LIMIT
+			}
 		},
 	}
 	for want, change := range cases {
