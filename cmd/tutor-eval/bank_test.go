@@ -86,10 +86,10 @@ func TestFreeBank(t *testing.T) {
 }
 
 // TestBoardTasks checks that the board's tasks are, in this order, its first five, which are in
-// the measurement's bank, and then the bank of free-form writing, as README.md and
-// docs/architecture.md, section 3.3, number them: tasks 6 to 11 are the free-form ones. Each is
-// its copy in one of the two banks, under the same ID, so a model judging it is told the same
-// statement, key and solution on the board and in a measurement.
+// the measurement's bank, and then the bank of free-form writing, as docs/architecture.md,
+// section 3.3, numbers them: tasks 6 to 11 are the free-form ones. Each is its copy in one of the
+// two banks, under the same ID, so a model judging it is told the same statement, key and
+// solution on the board and in a measurement.
 func TestBoardTasks(t *testing.T) {
 	banks := []*sample.Bank{readBank(t, measurementBank), readBank(t, freeBank)}
 	want := []string{"equation-1", "equation-2", "chain-1", "chain-2", "posts"}
