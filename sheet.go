@@ -33,20 +33,22 @@ type SheetReading struct {
 	Crop  []byte
 }
 
-// SheetRead is what a reading of a sheet gives: the observation of each reader, in the order of the
-// pair, the strong reader first (R68 spec), when Outcome is Answered — module-kit joins them and
-// gives the verdict (R86 spec) —, and otherwise none: tutor gives both or the outcome, never one.
+// SheetRead is what a reading of a sheet gives when Outcome is Answered: by the pair, the observation
+// of each reader, in the order of the pair, the strong reader first (R68 spec) — module-kit joins
+// them and gives the verdict (R86 spec) —; in ReadingSingle, the one observation of the one reader.
+// Otherwise it gives none: by the pair, tutor gives both or the outcome, never one.
 type SheetRead struct {
 	Observations []*observationv1.Observation
 	Outcome      Outcome
 }
 
-// ReadSheet reads a handwriting sheet by the models admitted for reading handwriting, in parallel,
-// each into the observation of the task's one answer slot bound anywhere (R86 spec; § 10 of spec's
-// contracts text). The first version reads that slot alone: the sheets of the first modules have no
-// other that AI reads (T115). A slot bound choice is no reading of AI: api gives the option tapped
-// to module-kit. An answer that is no observation fails the reading, as a failure of AI does: there
-// is no observation of a pair then (R86 spec).
+// ReadSheet reads a handwriting sheet by the models admitted for reading handwriting — the pair, in
+// parallel, or its one reader in ReadingSingle —, each into the observation of the task's one
+// answer slot bound anywhere (R86 spec; § 10 of spec's contracts text). The first version reads that
+// slot alone: the sheets of the first modules have no other that AI reads (T115). A slot bound
+// choice is no reading of AI: api gives the option tapped to module-kit. An answer that is no
+// observation fails the reading, as a failure of AI does: there is no observation of a pair then
+// (R86 spec).
 func (t *Tutor) ReadSheet(ctx context.Context, r SheetReading) SheetRead {
 	place, statement, err := sheetTask(r.Task)
 	if err != nil {

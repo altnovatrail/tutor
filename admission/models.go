@@ -83,7 +83,8 @@ var Admitted = []Entry{
 	// The pair of the first app, on the author's own handwriting: 60 sheets, 3 repeats, no false
 	// alarm on 35 answer slots and no false "correct" on 25 (T126; R80 and its amendment of
 	// 2026-11-08), measured again with version 2 of the reading's prompt (T115; R82). The report
-	// lies in samples/, out of git.
+	// lies in samples/, out of git. In the library's mode of one reader, Haiku at medium reads alone
+	// (tutor.ReadingSingle; R125), found here by its provider, ID and effort.
 	{
 		Capability: admissionv0.CapabilityHandwritingReading,
 		Models: []Model{
