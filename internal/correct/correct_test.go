@@ -199,7 +199,12 @@ func TestRequestOf(t *testing.T) {
 			t.Errorf("the request lacks %q:\n%s", want, r.Text)
 		}
 	}
-	// The instructions, the same in every request, are cached (R131).
+	// The instructions, the same in every request, are cached (R131). Below 512 tokens the cache keeps
+	// nothing and no error says so; they came to 811 tokens of 2 803 bytes (measurements 3.22), and
+	// 2 048 bytes keep them above it with room.
+	if len(r.Instructions) < 2048 {
+		t.Errorf("the instructions are %d bytes, too short to be cached", len(r.Instructions))
+	}
 	if len(r.Images) != 0 || !r.NoPicture || r.SchemaName != "correct_answer_words" || r.Instructions != correct.Instructions() || !r.CacheInstructions {
 		t.Errorf("a request without the work is %+v", r)
 	}

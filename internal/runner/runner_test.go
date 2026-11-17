@@ -62,8 +62,13 @@ var (
 	noThought = runner.Configs()[2]
 )
 
-// worst is the most a call of Opus 5.5 can cost: 8 000 tokens in at $4 and 16 000 out at $20.
-const worst = (8000*4 + 16000*20) / 1e6
+// worst is the most a call of Opus 5.5 can cost: 8 000 tokens in at $5, the price of a write to
+// the cache for 5 minutes, above the input's $4, and 16 000 out at $20; haikuWorst, that of Haiku
+// 5.5, at $0.125 and $0.50.
+const (
+	worst      = (8000*5 + 16000*20) / 1e6
+	haikuWorst = (8000*0.125 + 16000*0.5) / 1e6
+)
 
 // plan is a run of the echo kind: its record, one item and the steps.
 func plan(steps ...runner.Step) *runner.Run {
@@ -109,7 +114,8 @@ func records(t *testing.T, log []byte) []map[string]any {
 // The configurations are the three of R24 and the four of R50, each with its model's effort and
 // able to answer as it is asked: without thinking only where the model can turn it off. The worst
 // case of a call is the most input tokens its kind gives and the output limit, at the model's
-// prices, and at least the expected input.
+// prices, each input token at the higher of the input's and a write's to the cache, and at least the
+// expected input.
 func TestConfigs(t *testing.T) {
 	var names []string
 	for _, c := range runner.Configs() {
@@ -128,7 +134,7 @@ func TestConfigs(t *testing.T) {
 	if w := asked(opus, 1).Worst(); !near(w, worst) || !near(opus.Cost(1000, 50), (1000*4+50*20)/1e6) {
 		t.Errorf("Opus costs %v at worst and %v for 1 000 tokens in and 50 out", w, opus.Cost(1000, 50))
 	}
-	if w := (runner.Step{Config: opus, In: 9000}).Worst(); !near(w, opus.Cost(9000, runner.MaxOutputTokens)) {
+	if w := (runner.Step{Config: opus, In: 9000}).Worst(); !near(w, (9000*5+16000*20)/1e6) {
 		t.Errorf("a step that gives no most input costs %v at worst, want its expected input", w)
 	}
 }
@@ -139,7 +145,7 @@ func TestConfigs(t *testing.T) {
 // and the time of a call is that of the run's clock.
 func TestDo(t *testing.T) {
 	r := plan(asked(opus, 1), runner.Step{Config: opus, Note: map[string]any{"kind": "call", "n": 2, "same_as": 1}}, asked(noThought, 3))
-	if e := r.Estimate(); e.Calls != 2 || !near(e.USD, opus.Cost(1000, 50)+noThought.Cost(1000, 50)) || !near(e.WorstUSD, worst+noThought.Cost(8000, runner.MaxOutputTokens)) {
+	if e := r.Estimate(); e.Calls != 2 || !near(e.USD, opus.Cost(1000, 50)+noThought.Cost(1000, 50)) || !near(e.WorstUSD, worst+haikuWorst) {
 		t.Errorf("the estimate is %+v", e)
 	}
 	var reqs []provider.Request
@@ -188,6 +194,34 @@ func TestDo(t *testing.T) {
 func jsonNumber(v any) string {
 	data, _ := json.Marshal(v)
 	return string(data)
+}
+
+// A call that writes to the cache or reads from it logs those tokens beside its input and costs
+// them at their prices: Opus 5.5's $5 a million for a write for 5 minutes, $8 for an hour and $0.20
+// for a read (R131).
+func TestCacheCost(t *testing.T) {
+	ask := func(ctx context.Context, st runner.Step, req provider.Request) (provider.Response, error) {
+		resp, err := runner.Stub(ctx, st, req)
+		resp.InputTokens, resp.CacheReadTokens, resp.CacheWrites = 994, 500, []provider.CacheWrite{{TTL: 5 * time.Minute, Tokens: 1362}, {TTL: time.Hour, Tokens: 100}}
+		return resp, err
+	}
+	var log bytes.Buffer
+	res, err := plan(asked(opus, 1)).Do(context.Background(), ask, 10, &log, clock())
+	if err != nil {
+		t.Fatal(err)
+	}
+	want := (994*4 + 1362*5 + 100*8 + 500*0.20 + 50*20) / 1e6
+	c := records(t, log.Bytes())[2]
+	if c["input_tokens"] != 994.0 || c["cache_write_tokens"] != 1462.0 || c["cache_read_tokens"] != 500.0 || !near(c["cost_usd"].(float64), want) || !near(res.SpentUSD, want) {
+		t.Errorf("the call is logged %v and the run spent %v, want $%v", c, res.SpentUSD, want)
+	}
+	var plain bytes.Buffer
+	if _, err := plan(asked(opus, 1)).Do(context.Background(), runner.Stub, 10, &plain, clock()); err != nil {
+		t.Fatal(err)
+	}
+	if c := records(t, plain.Bytes())[2]; c["cache_write_tokens"] != nil || c["cache_read_tokens"] != nil {
+		t.Errorf("a call without the cache logs its tokens: %v", c)
+	}
 }
 
 // The run reserves the worst case of every call: it starts no call that could take it past its

@@ -194,7 +194,8 @@ func (c *Client) check(r provider.Request) error {
 // message after it, the work, is never cached (R131; docs/sources.md, 1.18).
 func (c *Client) params(r provider.Request) anthropic.MessageNewParams {
 	system := anthropic.TextBlockParam{Text: r.Instructions}
-	if r.CacheInstructions {
+	// Blank instructions are no prefix to cache, and no breakpoint goes on them.
+	if r.CacheInstructions && strings.TrimSpace(r.Instructions) != "" {
 		system.CacheControl = anthropic.NewCacheControlEphemeralParam()
 	}
 	content := make([]anthropic.ContentBlockParamUnion, 0, 2*len(r.Images)+1)

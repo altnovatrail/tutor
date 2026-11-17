@@ -75,8 +75,8 @@ func TestEstimate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if e := r.Estimate(); e.Calls != 2 || !near(e.USD, 0.0084+0.0100) || !near(e.WorstUSD, 2*(8000*4+16000*20)/1e6) {
-		t.Errorf("the estimate of one sheet without frames by Opus is %+v, want 2 calls, $0.0184 and at most $0.704", e)
+	if e := r.Estimate(); e.Calls != 2 || !near(e.USD, 0.0084+0.0100) || !near(e.WorstUSD, 2*(8000*5+16000*20)/1e6) {
+		t.Errorf("the estimate of one sheet without frames by Opus is %+v, want 2 calls, $0.0184 and at most $0.72", e)
 	}
 	// All seven sheets by the three judges, twice: A and B of every sheet, C and D of the two with
 	// frames; the D of the other five is their B.
@@ -191,7 +191,7 @@ func TestFailures(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	worst := (8000*4 + 16000*20) / 1e6
+	worst := (8000*5 + 16000*20) / 1e6
 	if res.Calls != 2 || !near(res.SpentUSD, worst+(1000*4+10*20)/1e6) {
 		t.Errorf("the run ended %+v, want two calls, one at its worst", res)
 	}

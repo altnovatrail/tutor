@@ -47,9 +47,9 @@ type Request struct {
 	NoPicture bool
 	// CacheInstructions marks instructions that are the same text in every request of their kind and
 	// hold nothing of the learner's — the platform's words, as those of the tutor's words —, so that
-	// an adapter whose provider caches a prompt only where it is asked to caches its prefix up to the
-	// instructions and no further: never the pictures or the text after them (R131). The GPT adapter
-	// sends nothing for it yet (Д20).
+	// the Claude adapter caches the prompt up to the instructions and no further: never the pictures
+	// or the text after them (R131). The GPT adapter sends nothing for it, and OpenAI may cache by
+	// itself more of a request than its instructions (Д20).
 	CacheInstructions bool
 }
 

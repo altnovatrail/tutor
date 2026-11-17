@@ -217,14 +217,21 @@ func TestCacheInstructions(t *testing.T) {
 	}
 }
 
-// A request that marks no instructions to cache has no breakpoint of the cache.
+// A request that marks no instructions to cache has no breakpoint of the cache, nor one that marks
+// blank instructions.
 func TestNoCache(t *testing.T) {
 	c, f := fakeAPI(t, catalog.Models[2], reply{body: goodStream})
-	if _, err := c.Ask(context.Background(), request); err != nil {
-		t.Fatal(err)
+	blank := request
+	blank.Instructions, blank.CacheInstructions = " ", true
+	for _, r := range []provider.Request{request, blank} {
+		if _, err := c.Ask(context.Background(), r); err != nil {
+			t.Fatal(err)
+		}
 	}
-	if sent := f.requests()[0]; strings.Contains(sent, "cache_control") {
-		t.Errorf("a request without its instructions marked to cache has a breakpoint:\n%s", sent)
+	for _, sent := range f.requests() {
+		if strings.Contains(sent, "cache_control") {
+			t.Errorf("a request without instructions to cache has a breakpoint:\n%s", sent)
+		}
 	}
 }
 

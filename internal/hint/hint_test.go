@@ -226,8 +226,10 @@ func TestRequestOf(t *testing.T) {
 		t.Errorf("a request without the work has pictures %d, NoPicture %v", len(r.Images), r.NoPicture)
 	}
 	// The instructions, the same in every request, are cached, with the work or without it (R131).
-	if !r.CacheInstructions || r.Instructions != hint.Instructions() {
-		t.Errorf("the instructions are not those cached: %+v", r)
+	// Below 512 tokens the cache keeps nothing and no error says so; they came to 1 362 tokens of 4 444
+	// bytes (measurements 3.22), and 2 048 bytes keep them above it with room.
+	if !r.CacheInstructions || r.Instructions != hint.Instructions() || len(r.Instructions) < 2048 {
+		t.Errorf("the instructions are not those cached, or too short to be: %+v", r)
 	}
 	p.Asked, p.Language, p.PNG, p.Width, p.Height = nil, "de", []byte{1}, 10, 20
 	r, err = hint.RequestOf(p)
