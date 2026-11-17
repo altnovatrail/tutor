@@ -47,7 +47,8 @@ func (k KeyCheck) String() string {
 // CheckKey checks an own key when its owner connects it (R84 spec): api checks it through tutor and
 // never calls a provider round it. The route is the own key's, with the profile's age category. The
 // key is checked for every model the library would call with it — the models each kind of call
-// chooses (ChooseCall), the hint without the work among them, both readers of a pair —, each by
+// chooses (ChooseCall), the hint without the work among them, both readers of a pair or the one
+// reader of ReadingSingle —, each by
 // a request of the provider without any learner's content that costs nothing (provider.Model.Check).
 // When none is open, the provider is closed to an own key at the profile, and no call goes. One wrong key is the end, then one model
 // without rights, then a provider that did not answer. A refusal for a limit means the provider took
@@ -62,15 +63,18 @@ func (t *Tutor) CheckKey(ctx context.Context, r Route) (KeyCheck, error) {
 	}
 	var models []admission.Model
 	for _, c := range slices.Sorted(maps.Keys(kinds)) {
-		k := kinds[c]
 		e, a, err := t.chooseCall(c, r)
+		// A reading whose entry has no single reader calls no model, so its key is not checked for it.
+		if errors.Is(err, errNoSingleReader) {
+			continue
+		}
 		if err != nil {
 			return KeyUnanswered, err
 		}
 		if !a.Admitted {
 			continue
 		}
-		for _, m := range k.asked(e.Models) {
+		for _, m := range e.Models {
 			if !slices.Contains(models, m) {
 				models = append(models, m)
 			}

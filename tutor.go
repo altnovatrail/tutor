@@ -22,22 +22,48 @@ import (
 // 1), and the adapters of the providers whose models the service calls, such as claude.Dial of
 // package provider/claude. The library builds no adapter in, so that a service carries the SDKs of
 // the adapters it gives alone (Д185 RUN.md spec; R90). A provider with no adapter here is no route
-// at all, and one with no key no route of platform AI: Choose takes none of its models.
+// at all, and one with no key no route of platform AI: Choose takes none of its models. Reading is
+// how the library reads a sheet and a workbook page, by the pair or by one reader; an empty one is
+// the pair.
 type Config struct {
 	Table    *admission.Table
 	Facts    admission.Facts
 	Least    admission.Stage
+	Reading  Reading
 	Keys     map[admissionv0.Provider]string
 	Adapters map[admissionv0.Provider]provider.Dial
 }
 
+// Reading is how the library reads the handwriting of a sheet and of a workbook page, which api
+// chooses (the author's word of 2026-11-17): ReadingPair, both readers of the entry chosen, the
+// strong one first, whose readings module-kit joins (R68 spec; R86 spec), or ReadingSingle, one
+// reader, Haiku 5.5 at medium, the pair's second, whose observation is the reading. The reading of
+// an essay is one reader in both (the second 2026-11-01 amendment to R68 spec).
+type Reading string
+
+// The modes of reading.
+const (
+	ReadingPair   Reading = "pair"
+	ReadingSingle Reading = "single"
+)
+
+// singleReader is the one reader of ReadingSingle, as the list names it: its provider, ID and effort.
+// It is found in the entry chosen as it is, not by its place there, so that an entry whose pair is
+// ordered or made otherwise does not give another model.
+var singleReader = admission.Model{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"}
+
+// errNoSingleReader is the failure of a reading in ReadingSingle whose entry chosen has no single
+// reader.
+var errNoSingleReader = errors.New("tutor: the reading is single, and the entry chosen has no " + singleReader.Name())
+
 // Tutor is the library as api holds it: made once, at the start, and called by many requests at
 // once. It keeps nothing of a call (R09 spec).
 type Tutor struct {
-	table *admission.Table
-	facts admission.Facts
-	least admission.Stage
-	keys  map[admissionv0.Provider]string
+	table   *admission.Table
+	facts   admission.Facts
+	least   admission.Stage
+	reading Reading
+	keys    map[admissionv0.Provider]string
 	// adapters are the adapters of Config, by provider.
 	adapters map[admissionv0.Provider]provider.Dial
 	// clients are the clients of the platform's keys, made once for each model and kept, so that
@@ -47,9 +73,9 @@ type Tutor struct {
 }
 
 // New makes the library of a config. It refuses a config with no table, a least stage that is
-// neither of the two — an empty one is the stage full, the strict one —, and a key of a provider the
-// config gives no adapter of, which would leave every model of the provider unchosen with no word
-// of why.
+// neither of the two — an empty one is the stage full, the strict one —, a mode of reading that is
+// neither of the two — an empty one is the pair —, and a key of a provider the config gives no
+// adapter of, which would leave every model of the provider unchosen with no word of why.
 func New(c Config) (*Tutor, error) {
 	if c.Table == nil {
 		return nil, errors.New("tutor: the config has no admission table")
@@ -62,6 +88,14 @@ func New(c Config) (*Tutor, error) {
 	default:
 		return nil, fmt.Errorf("tutor: the least stage %q is neither author nor full", c.Least)
 	}
+	reading := c.Reading
+	switch reading {
+	case "":
+		reading = ReadingPair
+	case ReadingPair, ReadingSingle:
+	default:
+		return nil, fmt.Errorf("tutor: the mode of reading %q is neither pair nor single", c.Reading)
+	}
 	adapters := map[admissionv0.Provider]provider.Dial{}
 	for p, d := range c.Adapters {
 		if d != nil {
@@ -73,7 +107,7 @@ func New(c Config) (*Tutor, error) {
 			return nil, fmt.Errorf("tutor: the config gives a key of %s and no adapter of it", p)
 		}
 	}
-	return &Tutor{table: c.Table, facts: c.Facts, least: least, keys: maps.Clone(c.Keys), adapters: adapters, clients: map[admission.Model]provider.Model{}}, nil
+	return &Tutor{table: c.Table, facts: c.Facts, least: least, reading: reading, keys: maps.Clone(c.Keys), adapters: adapters, clients: map[admission.Model]provider.Model{}}, nil
 }
 
 // dial makes the client of a model of the list with a key, by the adapter of its provider that the
@@ -150,7 +184,8 @@ func (r Route) check() error {
 // names its prompt too (ChooseCall): that is the one api calls before an attempt, with the same
 // answer the call gets while the config is the same. It takes only the models of the providers the config gives an
 // adapter of: on the own key only those of the key's provider, and on platform AI only those of the
-// providers it holds a key of. It refuses a route whose key does not fit it.
+// providers it holds a key of. It refuses a route whose key does not fit it. The entry holds every
+// model it has: the mode of reading is of a kind of call, and ChooseCall applies it.
 func (t *Tutor) Choose(c admissionv0.Capability, r Route) (admission.Entry, admission.Answer, error) {
 	return t.choose(c, r, "")
 }
@@ -159,19 +194,16 @@ func (t *Tutor) Choose(c admissionv0.Capability, r Route) (admission.Entry, admi
 // the entries that measured its prompt (admission.Table.SelectPrompt; R70 spec), and for the words
 // with the work only with the hint on the same model (R84). api calls it before an attempt, and the
 // call before it calls a model. The entry holds only the models the call asks: the first alone for
-// a call of one model.
+// a call of one model, and the one reader of ReadingSingle for a reading of a sheet or a page.
 func (t *Tutor) ChooseCall(c Call, r Route) (admission.Entry, admission.Answer, error) {
-	k, ok := kinds[c]
-	if !ok {
+	if _, ok := kinds[c]; !ok {
 		return admission.Entry{}, admission.Answer{}, fmt.Errorf("tutor: no call %q of the library", c)
 	}
-	e, a, err := t.chooseCall(c, r)
-	e.Models = k.asked(e.Models)
-	return e, a, err
+	return t.chooseCall(c, r)
 }
 
-// chooseCall is ChooseCall with every model of the entry: the one choice of a kind of call that the
-// call, ChooseCall, Price and CheckKey make, so that what api's gateway admits and reserves a quota
+// chooseCall is ChooseCall: the one choice of a kind of call that the call, ChooseCall, Price and
+// CheckKey make, with the models the call asks (Tutor.asked), so that what api's gateway admits and reserves a quota
 // for, and the models a key is checked for, are those the call asks (Д13). The words with the work
 // word the hint in the same call, so they are admitted only when the hint is admitted on the model
 // of the analysis (R84): when the model the hint without the work chooses, by the same prompt, is
@@ -180,8 +212,14 @@ func (t *Tutor) ChooseCall(c Call, r Route) (admission.Entry, admission.Answer, 
 func (t *Tutor) chooseCall(c Call, r Route) (admission.Entry, admission.Answer, error) {
 	k := kinds[c]
 	e, a, err := t.choose(k.capability, r, k.prompt)
-	if err != nil || !a.Admitted || c != CallWords {
+	if err != nil || !a.Admitted {
 		return e, a, err
+	}
+	if e.Models, err = t.asked(c, e.Models); err != nil {
+		return admission.Entry{}, a, err
+	}
+	if c != CallWords {
+		return e, a, nil
 	}
 	he, ha, err := t.chooseCall(CallHint, r)
 	if err != nil || !ha.Admitted {
@@ -192,6 +230,20 @@ func (t *Tutor) chooseCall(c Call, r Route) (admission.Entry, admission.Answer, 
 		return admission.Entry{}, admission.Answer{Answer: admissionv0.Answer{Reason: &refusal}, Version: a.Version}, nil
 	}
 	return e, a, nil
+}
+
+// asked are the models of an entry a kind of call asks (kind.asked), and for a reading by the pair in
+// ReadingSingle the one reader alone, found as it is. An entry without it is errNoSingleReader: the
+// mode asks no other model in its place.
+func (t *Tutor) asked(c Call, models []admission.Model) ([]admission.Model, error) {
+	k := kinds[c]
+	if t.reading != ReadingSingle || !k.pair {
+		return k.asked(models), nil
+	}
+	if !slices.Contains(models, singleReader) {
+		return nil, fmt.Errorf("%w, for the call %s", errNoSingleReader, c)
+	}
+	return []admission.Model{singleReader}, nil
 }
 
 // choose is Choose, of the entries whose prompt is the one named, or of every entry when it is
@@ -318,8 +370,9 @@ type call struct {
 // prepare chooses the models of a kind of call for a route (chooseCall), those the kind asks, and
 // makes their clients — with the own key by the key, on platform AI by the platform's key of the provider —, and
 // gives the admission's answer, which an outcome of the call carries. A refusal of the admission is
-// the outcome NotAdmitted, before any model is asked and with no usage; a route that does not fit
-// and a client that cannot be made are Failed. A call that asks one model makes no client of another.
+// the outcome NotAdmitted, before any model is asked and with no usage; a route that does not fit,
+// an entry without the one reader of ReadingSingle and a client that cannot be made are Failed. A
+// call that asks one model makes no client of another.
 func (t *Tutor) prepare(c Call, r Route) ([]call, admission.Answer, *Outcome) {
 	e, a, err := t.chooseCall(c, r)
 	if err != nil {
@@ -328,9 +381,8 @@ func (t *Tutor) prepare(c Call, r Route) ([]call, admission.Answer, *Outcome) {
 	if !a.Admitted {
 		return nil, a, &Outcome{Kind: NotAdmitted, Admission: a}
 	}
-	models := kinds[c].asked(e.Models)
-	calls := make([]call, 0, len(models))
-	for _, m := range models {
+	calls := make([]call, 0, len(e.Models))
+	for _, m := range e.Models {
 		client, err := t.client(m, r.Own)
 		if err != nil {
 			return nil, a, &Outcome{Kind: Failed, Admission: a, Err: err}
@@ -406,7 +458,7 @@ func ask(ctx context.Context, a admission.Answer, calls []call, reqs []provider.
 			continue
 		}
 		// A refusal for a limit ends the call whatever the others did, and a refused key comes next:
-		// the pair gives both observations or the outcome, never one (architecture 3.7). Of two
+		// a reading by the pair gives both observations or the outcome, never one (architecture 3.7). Of two
 		// limits, the one that holds the call longer: one with no time to return, which only the
 		// owner lifts, then the later time.
 		kind, limit, returns := Failed, LimitReason(""), time.Time{}

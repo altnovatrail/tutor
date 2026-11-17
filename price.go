@@ -61,13 +61,15 @@ const (
 
 // kind is a kind of call of the library: the capability it serves and the fingerprint of its
 // prompt, the most input tokens it takes, the most it may write, how many models of the entry
-// chosen it asks, every one when 0, and the tokens a call of each model is expected to take, by the
+// chosen it asks, every one when 0, whether it reads by the pair of R68 spec, which ReadingSingle
+// makes one reader (Tutor.asked), and the tokens a call of each model is expected to take, by the
 // model's exact ID, the averages of the measurements of the model at the effort admitted.
 type kind struct {
 	capability    admissionv0.Capability
 	prompt        string
 	maxIn, maxOut int64
 	models        int
+	pair          bool
 	expected      map[string]tokens
 }
 
@@ -86,6 +88,7 @@ var kinds = map[Call]kind{
 		prompt:     reading.Fingerprint(),
 		maxIn:      maxTextBytes + tokensOf(maxCropSide, 1),
 		maxOut:     reading.MaxOutputTokens,
+		pair:       true,
 		expected: map[string]tokens{
 			"claude-opus-5-5":  {in: 1354, out: 177},
 			"claude-haiku-5-5": {in: 1354, out: 502},
@@ -96,6 +99,7 @@ var kinds = map[Call]kind{
 		prompt:     workbook.Fingerprint(),
 		maxIn:      maxTextBytes + tokensOf(maxBoxSide, maxBoxes),
 		maxOut:     reading.MaxOutputTokens,
+		pair:       true,
 	},
 	CallEssay: {
 		capability: admissionv0.CapabilityHandwritingReading,
@@ -153,7 +157,8 @@ const rubricMaxOutput = 16000
 func tokensOf(side, n int) int64 { return int64(n * render.Tokens(side, side)) }
 
 // CallPrice is what a call of a capability is expected to cost and can cost at most, in US dollars,
-// over every model of the entry the call asks — both readers of a pair — (architecture 3.7): api
+// over every model of the entry the call asks — both readers of a pair, or the one reader of
+// ReadingSingle — (architecture 3.7): api
 // reserves the quota of platform AI by them before the call. The worst is the most input of the
 // kind, each token at the higher of its price and that of a write to the cache, and its most
 // output. Expected is false when a model of the entry has no expected tokens; Worst is false when
@@ -176,7 +181,7 @@ func (t *Tutor) Price(c Call, r Route) (CallPrice, admission.Answer, error) {
 		return CallPrice{}, a, err
 	}
 	p := CallPrice{Expected: true, Worst: true}
-	for _, m := range k.asked(e.Models) {
+	for _, m := range e.Models {
 		client, err := t.dial(m, "")
 		if err != nil {
 			return CallPrice{}, a, err

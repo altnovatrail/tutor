@@ -46,15 +46,16 @@ type WorkbookReading struct {
 
 // WorkbookRead is what a reading of a workbook page gives: the observation of each reader, in the
 // order of the pair, over every box of the page — a blank one unreadable, blank —, when Outcome is
-// Answered — module-kit joins them and gives the verdict (R86 spec) —, and otherwise none.
+// Answered — module-kit joins them and gives the verdict (R86 spec) —, and otherwise none. In
+// ReadingSingle it is the one observation of the one reader.
 type WorkbookRead struct {
 	Observations []*observationv1.Observation
 	Outcome      Outcome
 }
 
 // ReadWorkbook reads the filled boxes of a workbook page by the models admitted for reading
-// handwriting with the prompt of the workbook, in parallel, each into the observation of the page
-// (R86 spec; § 10 of spec's contracts text). The pair admitted for the reading of a sheet measured
+// handwriting with the prompt of the workbook — the pair, in parallel, or its one reader in
+// ReadingSingle —, each into the observation of the page (R86 spec; § 10 of spec's contracts text). The pair admitted for the reading of a sheet measured
 // another prompt, and admits nothing of this one (R70 spec): until an entry of the list measured the
 // prompt of the workbook, the reading is NotAdmitted. A page with no filled box goes to no model.
 // An answer that is no observation fails the reading, as a failure of AI does.
@@ -91,7 +92,7 @@ func (t *Tutor) ReadWorkbook(ctx context.Context, r WorkbookReading) WorkbookRea
 			return WorkbookRead{Outcome: Outcome{Kind: NotAdmitted, Admission: a}}
 		}
 		obs, _ := workbook.ObservationOf(places, []workbook.Reading{})
-		out := make([]*observationv1.Observation, len(kinds[CallWorkbook].asked(e.Models)))
+		out := make([]*observationv1.Observation, len(e.Models))
 		for i := range out {
 			out[i] = proto.Clone(obs).(*observationv1.Observation)
 		}
