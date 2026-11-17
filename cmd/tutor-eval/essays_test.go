@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,6 +10,8 @@ import (
 
 	evalv1 "github.com/altnovatrail/spec/contracts/novatrail/eval/v1"
 
+	"github.com/altnovatrail/tutor/internal/protocol"
+	"github.com/altnovatrail/tutor/internal/report"
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
@@ -255,5 +258,104 @@ func TestRunEssaysTwo(t *testing.T) {
 	}
 	if code, _, errs := runMeasure("yes\n", "-kind", "reading", "-two", "-part", "dev", "-stub"); code != exitUsage || !strings.Contains(errs, "-two is for -kind essay") {
 		t.Errorf("-two for the reading ends %d: %s", code, errs)
+	}
+}
+
+// The run of admission of the essay reads by one configuration and assesses the text read by another,
+// -assessor, and its log and its runner's report name both; admit -kind essay rules on its log, with
+// the judge's logs of its feedback and of its control phrases, for the reading and for the rubric
+// apart. On the dev part of eval/essays.json both are refused by their set alone.
+func TestAdmitEssayRun(t *testing.T) {
+	dir := t.TempDir()
+	log := filepath.Join(dir, "admission.jsonl")
+	code, out, errs := runMeasure("yes\n", "-kind", "essay", "-two", "-essays", theEssays, "-dir", drawnOf(t, theEssays), "-part", "dev", "-stub", "-repeats", "2", "-readers", "opus-high", "-assessor", "haiku-medium", "-log", log)
+	if code != exitOK || !strings.Contains(out, "by opus-high in 2 repeats, two calls an essay, the reading and the assessment of the text it read by haiku-medium, in version 3") {
+		t.Fatalf("the run of admission ends %d:\n%s%s", code, out, errs)
+	}
+	data, err := os.ReadFile(log)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(data), `"assessor":{"name":"haiku-medium","model":"claude-haiku-5-5"`) {
+		t.Errorf("the log names no assessor:\n%.600s", data)
+	}
+	if code, out, errs := runIt("report", log); code != exitOK || !strings.Contains(out, "opus-high: false alarms 0 of") {
+		t.Fatalf("the report ends %d: %s%s", code, out, errs)
+	}
+	if md, err := os.ReadFile(strings.TrimSuffix(log, ".jsonl") + ".md"); err != nil || !strings.Contains(string(md), "The text every reader read is assessed by haiku-medium (claude-haiku-5-5, medium), a configuration of its own") {
+		t.Errorf("the report does not name the assessor (%v):\n%.600s", err, md)
+	}
+	reportsBeside(t, log, evalv1.Capability_CAPABILITY_RUBRIC_ASSESSMENT, "opus-high")
+	data, err = os.ReadFile(report.ReportFile(strings.TrimSuffix(log, ".jsonl"), "opus-high"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	rep, err := protocol.ReadReport(bytes.NewReader(data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rep.GetReaders()[0].GetModel() != "claude-opus-5-5 high" || rep.GetAssessor().GetModel() != "claude-haiku-5-5 medium" {
+		t.Errorf("the runner's report names the readers %v and the assessor %v", rep.GetReaders(), rep.GetAssessor())
+	}
+	controls := filepath.Join(dir, "controls.jsonl")
+	if code, _, errs := runJudge("yes\n", func(string) string { return "" }, "-controls", wordsJudge, "-out", controls, "-stub"); code != exitOK {
+		t.Fatalf("the judge of the control phrases ends %d: %s", code, errs)
+	}
+	if code, _, errs := runIt("admit", "-kind", "essay", "-controls", controls, log); code != exitFail || !strings.Contains(errs, "the judge's log of "+log) {
+		t.Errorf("admit without the judge's log of the feedback ends %d: %s", code, errs)
+	}
+	if code, _, errs := runJudge("yes\n", func(string) string { return "" }, "-log", log, "-stub"); code != exitOK {
+		t.Fatalf("the judge of the feedback ends %d: %s", code, errs)
+	}
+	code, out, errs = runIt("admit", "-kind", "essay", "-controls", controls, log)
+	if code != exitOK {
+		t.Fatalf("admit -kind essay ends %d: %s", code, errs)
+	}
+	for _, want := range []string{
+		"## admission.jsonl\n\n- reader: opus-high; assessor: haiku-medium\n- set: essays-dev, 2 repeats\n- admission.jsonl: sha256 ",
+		"- admission.judge.jsonl, the judge's of its feedback: sha256 ",
+		"- controls.jsonl, the judge's of its control phrases: sha256 ",
+		"### The reading of an essay, CallEssay\n\n- stage: none\n- not admitted: its set is essays-dev, not essays-gen-test, the test part of eval/essays-gen.json\n",
+		"- legible essays read illegible: 0 of 5\n",
+		"- words read wrong: 0 of ",
+		"### The assessment by the rubric, CallRubric\n\n- stage: none\n- not admitted: its set is essays-dev",
+		"- false alarms, met criteria judged unmet: 0 of ",
+		"- κ by criterion, without a target: title ",
+		"- the feedback in English alone (R124); the judge sonnet-low, right on ",
+		"judged 10 of the 10 feedbacks that came, 0 without a verdict\n",
+		"- the judge: the learner's sex told 0 of 10, off the task 0 of 10, not for a child 0 of 10\n",
+		"- feedback breaking the rule of R70 spec, without a target: 0 of 10\n\n",
+	} {
+		if !strings.Contains(out, want) {
+			t.Errorf("admit -kind essay says\n%s\nwithout %q", out, want)
+		}
+	}
+	for _, c := range []struct {
+		args []string
+		code int
+		says string
+	}{
+		{[]string{"-kind", "essay", log}, exitUsage, "-kind essay needs it"},
+		{[]string{"-controls", controls, log}, exitUsage, "-controls is for -kind essay"},
+		{[]string{"-kind", "essay", "-controls", filepath.Join(dir, "none.jsonl"), log}, exitFail, "none.jsonl"},
+		{[]string{"-kind", "essay", "-controls", controls, controls}, exitFail, "controls.jsonl"},
+	} {
+		if code, _, errs := runIt(append([]string{"admit"}, c.args...)...); code != c.code || !strings.Contains(errs, c.says) {
+			t.Errorf("admit %q ends %d: %s", c.args, code, errs)
+		}
+	}
+	for _, c := range []struct {
+		args []string
+		code int
+		says string
+	}{
+		{[]string{"-assessor", "haiku-medium"}, exitUsage, "-assessor is for -kind essay -two"},
+		{[]string{"-two", "-assessor", "gpt-x"}, exitFail, "-assessor: "},
+		{[]string{"-two", "-assessor", " "}, exitUsage, "-assessor is empty"},
+	} {
+		args := append([]string{"-kind", "essay", "-essays", theEssays, "-dir", drawnOf(t, theEssays), "-part", "dev", "-stub", "-log", filepath.Join(dir, "x.jsonl")}, c.args...)
+		if code, _, errs := runMeasure("yes\n", args...); code != c.code || !strings.Contains(errs, c.says) {
+			t.Errorf("run %q ends %d: %s", c.args, code, errs)
+		}
 	}
 }

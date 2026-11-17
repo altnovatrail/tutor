@@ -100,7 +100,7 @@ func TestReadTwo(t *testing.T) {
 func TestNewTwo(t *testing.T) {
 	es := readEssays(t)
 	essays := Essays(es, "dev")
-	r, err := NewTwo("dev", "eval/essays.json", "", 1, es, drawnEssays(t, essays), e4Readers(), 2)
+	r, err := NewTwo("dev", "eval/essays.json", "", 1, es, drawnEssays(t, essays), e4Readers(), nil, 2)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -140,10 +140,10 @@ func TestNewTwo(t *testing.T) {
 			t.Errorf("the assessment %d: %+v", i, c)
 		}
 	}
-	if _, err := NewTwo("dev", "", "", 1, es, nil, e4Readers(), 1); err == nil {
+	if _, err := NewTwo("dev", "", "", 1, es, nil, e4Readers(), nil, 1); err == nil {
 		t.Error("a run of no essay is planned")
 	}
-	if _, err := NewTwo("dev", "", "", 1, es, drawnEssays(t, essays), e4Readers(), 0); err == nil {
+	if _, err := NewTwo("dev", "", "", 1, es, drawnEssays(t, essays), e4Readers(), nil, 0); err == nil {
 		t.Error("a run of no repeat is planned")
 	}
 }
@@ -152,7 +152,7 @@ func TestNewTwo(t *testing.T) {
 // and every criterion of it is unchecked.
 func TestTwoAfterAFailedReading(t *testing.T) {
 	es := readEssays(t)
-	r, err := NewTwo("dev", "", "", 1, es, drawnEssays(t, Essays(es, "dev")[:1]), e4Readers()[:1], 1)
+	r, err := NewTwo("dev", "", "", 1, es, drawnEssays(t, Essays(es, "dev")[:1]), e4Readers()[:1], nil, 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -172,6 +172,35 @@ func TestTwoAfterAFailedReading(t *testing.T) {
 	}
 	if bad := assess.Record(runner.Outcome{Answer: `{"criteria": []}`}).(CallRecord); bad.Error == "" || bad.Marks[0].Met != nil {
 		t.Errorf("an assessment off the schema comes to %+v", bad)
+	}
+	// An essay read illegible is marked so, and is no answer off the schema (T156).
+	if rec := read.Record(runner.Outcome{Answer: `{"text": "", "legible": false}`}).(CallRecord); !rec.Illegible || rec.Invalid || rec.Error == "" {
+		t.Errorf("an essay read illegible comes to %+v", rec)
+	}
+	if rec := read.Record(runner.Outcome{Answer: `{"words": "x"}`}).(CallRecord); rec.Illegible || !rec.Invalid {
+		t.Errorf("a reading off the schema comes to %+v", rec)
+	}
+}
+
+// With an assessor, every reader's reading is assessed by it, in its configuration and with its
+// expected output, and the run's record names it; the calls still name the reader (T156).
+func TestNewTwoAssessor(t *testing.T) {
+	es := readEssays(t)
+	readers := e4Readers()
+	r, err := NewTwo("dev", "", "", 1, es, drawnEssays(t, Essays(es, "dev")[:1]), readers[:2], &readers[2], 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for i := 0; i < len(r.Steps); i += 2 {
+		read, assess := r.Steps[i], r.Steps[i+1]
+		if read.Config.Name != readers[i/2].Name || assess.Config.Name != readers[2].Name || assess.Out != int64(textOutputs[readers[2].Name]) ||
+			assess.Call.(*assessStep).Reader != readers[i/2].Name {
+			t.Errorf("calls %d and %d are of %s and %s", i, i+1, read.Config.Name, assess.Config.Name)
+		}
+	}
+	rec := r.Record(runner.Head{}).(RunRecord)
+	if rec.Assessor == nil || rec.Assessor.Name != readers[2].Name || len(rec.Readers) != 2 {
+		t.Errorf("the run's record names the assessor %+v and the readers %+v", rec.Assessor, rec.Readers)
 	}
 }
 

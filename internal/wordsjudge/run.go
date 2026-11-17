@@ -225,21 +225,16 @@ func OfFeedback(l *essay.Log, topics map[int]string, file, sum string, judge Jud
 	}
 	r := &runner.Run{}
 	for _, c := range l.Calls {
-		if c.Step != essay.StepAssess || c.NotAsked || c.Error != "" {
-			continue
-		}
-		var a struct {
-			Feedback string `json:"feedback"`
-		}
-		if err := json.Unmarshal([]byte(c.Answer), &a); err != nil || a.Feedback == "" {
+		feedback := FeedbackOf(&c)
+		if feedback == "" {
 			continue
 		}
 		topic, ok := topics[c.Essay]
 		if !ok {
 			return nil, fmt.Errorf("wordsjudge: essay %d of the log has no topic", c.Essay)
 		}
-		it := Item{Hint: a.Feedback, Lang: "en", Statement: topic}
-		rec := CallRecord{Tutor: c.Reader, Set: "essays", Sheet: c.Essay, Lang: "en", Repeat: c.Repeat, Hint: a.Feedback}
+		it := Item{Hint: feedback, Lang: "en", Statement: topic}
+		rec := CallRecord{Tutor: c.Reader, Set: "essays", Sheet: c.Essay, Lang: "en", Repeat: c.Repeat, Hint: feedback}
 		r.Steps = append(r.Steps, runner.Step{Config: judge, In: input, Out: output, WorstIn: inputBudget, Call: &step{item: it, rec: rec, right: Verdict{OnTask: true, ForAge: true}}})
 	}
 	if len(r.Steps) == 0 {
@@ -247,6 +242,22 @@ func OfFeedback(l *essay.Log, topics map[int]string, file, sum string, judge Jud
 	}
 	r.Record = record(OfLog, file, sum, judge)
 	return r, nil
+}
+
+// FeedbackOf is the feedback that came in a call of a log of the essays in two calls, which
+// OfFeedback judges, or "" for a call that is no assessment of a text, was not asked, failed or wrote
+// no feedback.
+func FeedbackOf(c *essay.CallRecord) string {
+	if c.Step != essay.StepAssess || c.NotAsked || c.Error != "" {
+		return ""
+	}
+	var a struct {
+		Feedback string `json:"feedback"`
+	}
+	if err := json.Unmarshal([]byte(c.Answer), &a); err != nil {
+		return ""
+	}
+	return a.Feedback
 }
 
 // Check plans the judging of the control phrases, each once: the judge that is always right gives

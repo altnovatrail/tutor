@@ -167,6 +167,11 @@ type (
 		Path       string `json:"path,omitempty"`
 		ReadPrompt string `json:"read_prompt,omitempty"`
 		TextPrompt string `json:"text_prompt,omitempty"`
+		// Assessor is the configuration that assesses the text every reader read, in a run in two calls
+		// that names one, as the library asks the model of the assessment apart from the reader's
+		// (T156; R124); with none, each reader assesses its own reading. The calls of the assessment
+		// still name the reader whose text they assess.
+		Assessor *ReaderRecord `json:"assessor,omitempty"`
 		// Runner and ModuleKit are the versions of the build that ran, and Refused the samples it
 		// refused: what the runner's report takes of the run (R74).
 		Runner    string           `json:"runner,omitempty"`
@@ -208,6 +213,9 @@ type (
 		Breaches      []string `json:"breaches,omitempty"`
 		FeedbackWords int      `json:"feedback_words,omitempty"`
 		Error         string   `json:"error,omitempty"`
+		// Illegible is set when a reading read the essay as a whole illegible (ErrIllegible), which the
+		// rule of the reading counts on the essays code drew legible (T156).
+		Illegible bool `json:"illegible,omitempty"`
 		// Invalid is set when the answer is off the schema, which the report of the protocol names
 		// unchecked, UNCHECKED_CAUSE_INVALID (R74).
 		Invalid bool `json:"invalid,omitempty"`
@@ -283,7 +291,8 @@ func (s *readStep) Record(o runner.Outcome) any {
 		if err != nil {
 			// An essay read illegible is a misreading of an essay that code drew legible, not an answer
 			// off the schema: its assessment is not asked all the same.
-			rec.Error, rec.Invalid = err.Error(), !errors.Is(err, ErrIllegible)
+			rec.Error, rec.Illegible = err.Error(), errors.Is(err, ErrIllegible)
+			rec.Invalid = !rec.Illegible
 			return rec
 		}
 		s.read.text, s.read.ok = text, true
@@ -333,18 +342,29 @@ func (s *assessStep) Record(o runner.Outcome) any {
 
 // NewTwo plans a run of the assessment in two calls over the essays of a part, as their samples in
 // the directory dir hold them, by the readers, repeated: for each essay, reader and repeat, the reading of its crop at 32 px and
-// right after it the assessment of the text the reading wrote down (T92). The calls go repeat by
-// repeat, as New puts them.
-func NewTwo(part, file, dir string, seed uint64, es *sample.Essays, essays []*evalsample.Essay, readers []Reader, repeats int) (*runner.Run, error) {
+// right after it the assessment of the text the reading wrote down (T92), by the assessor, or by the
+// reader itself when assessor is nil (T156). The calls go repeat by repeat, as New puts them.
+func NewTwo(part, file, dir string, seed uint64, es *sample.Essays, essays []*evalsample.Essay, readers []Reader, assessor *Reader, repeats int) (*runner.Run, error) {
+	assessors := readers
+	if assessor != nil {
+		assessors = []Reader{*assessor}
+	}
 	for _, rd := range readers {
 		if _, ok := readOutputs[rd.Name]; !ok {
 			panic("essay: no output of a reading for the configuration " + rd.Name)
 		}
+	}
+	for _, rd := range assessors {
 		if _, ok := textOutputs[rd.Name]; !ok {
 			panic("essay: no output of an assessment of the text for the configuration " + rd.Name)
 		}
 	}
-	r, pics, err := prepare(part, file, dir, seed, es, essays, readers, repeats, RunRecord{Prompt: TwoFingerprint(), PromptVersion: TwoVersion, Path: PathTwo, ReadPrompt: ReadFingerprint(), TextPrompt: TextFingerprint()})
+	prompt := RunRecord{Prompt: TwoFingerprint(), PromptVersion: TwoVersion, Path: PathTwo, ReadPrompt: ReadFingerprint(), TextPrompt: TextFingerprint()}
+	if assessor != nil {
+		rec := assessor.Record()
+		prompt.Assessor = &rec
+	}
+	r, pics, err := prepare(part, file, dir, seed, es, essays, readers, repeats, prompt)
 	if err != nil {
 		return nil, err
 	}
@@ -352,6 +372,10 @@ func NewTwo(part, file, dir string, seed uint64, es *sample.Essays, essays []*ev
 		for i, written := range essays {
 			e := written.Essay
 			for _, rd := range readers {
+				as := rd
+				if assessor != nil {
+					as = *assessor
+				}
 				read := &pairText{}
 				call := Call{Essay: e.Number, Reader: rd.Name, Repeat: rep}
 				reading, assessment := call, call
@@ -359,7 +383,7 @@ func NewTwo(part, file, dir string, seed uint64, es *sample.Essays, essays []*ev
 				in := int64(inputsOfReading + render.Tokens(pics[i].Crop.Width, pics[i].Crop.Height))
 				r.Steps = append(r.Steps,
 					runner.Step{Config: rd.Config, In: in, Out: int64(readOutputs[rd.Name]), WorstIn: inputBudget, Call: &readStep{Call: reading, essay: e, pic: pics[i], read: read}},
-					runner.Step{Config: rd.Config, In: inputsOfText2, Out: int64(textOutputs[rd.Name]), WorstIn: inputBudget, Call: &assessStep{Call: assessment, essay: e, rubric: es.Rubric, read: read}})
+					runner.Step{Config: as.Config, In: inputsOfText2, Out: int64(textOutputs[as.Name]), WorstIn: inputBudget, Call: &assessStep{Call: assessment, essay: e, rubric: es.Rubric, read: read}})
 			}
 		}
 	}
@@ -395,7 +419,7 @@ func prepare(part, file, dir string, seed uint64, es *sample.Essays, essays []*e
 	r.Record = func(h runner.Head) any {
 		return RunRecord{Kind: "run", CallKind: CallKind, Time: h.Time, Part: part, File: file, Dir: dir, Seed: seed, Rubric: es.Rubric, Readers: records, Repeats: repeats,
 			MaxUSD: h.MaxUSD, Estimate: h.Estimate, Prompt: prompt.Prompt, PromptVersion: prompt.PromptVersion, Path: prompt.Path, ReadPrompt: prompt.ReadPrompt, TextPrompt: prompt.TextPrompt,
-			Runner: h.Runner, ModuleKit: h.ModuleKit, Refused: h.Refused}
+			Assessor: prompt.Assessor, Runner: h.Runner, ModuleKit: h.ModuleKit, Refused: h.Refused}
 	}
 	return r, pics, nil
 }

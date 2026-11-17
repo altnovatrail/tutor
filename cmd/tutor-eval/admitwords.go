@@ -2,8 +2,6 @@ package main
 
 import (
 	"bytes"
-	"crypto/sha256"
-	"encoding/hex"
 	"errors"
 	"flag"
 	"fmt"
@@ -16,7 +14,6 @@ import (
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/report"
 	"github.com/altnovatrail/tutor/internal/runner"
-	"github.com/altnovatrail/tutor/internal/wordsjudge"
 )
 
 // runAdmitWords applies the rule of admission of the words (T119; R86) to the judge's log of its
@@ -47,8 +44,7 @@ func runAdmitWords(args []string, stdout, stderr io.Writer) int {
 	read := func(path string) ([]byte, error) {
 		data, err := os.ReadFile(path)
 		if err == nil {
-			sum := sha256.Sum256(data)
-			sums[path] = hex.EncodeToString(sum[:])
+			sums[path] = sha256Of(data)
 			files = append(files, fmt.Sprintf("- %s: sha256 %s", filepath.Base(path), sums[path]))
 		}
 		return data, err
@@ -58,11 +54,7 @@ func runAdmitWords(args []string, stdout, stderr io.Writer) int {
 		if err != nil {
 			return nil, err
 		}
-		l, err := wordsjudge.ReadLog(bytes.NewReader(data))
-		if err != nil {
-			return nil, fmt.Errorf("%s: %w", path, err)
-		}
-		return report.NewWordsJudge(l)
+		return wordsJudgeOf(path, data)
 	}
 	c, err := judgeOf(*controls)
 	if err != nil {
