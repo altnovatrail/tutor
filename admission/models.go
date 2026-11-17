@@ -180,7 +180,7 @@ var Admitted = []Entry{
 
 // authorsWord is the evidence of the entries the author admitted without eval: R07 spec's eval
 // before admission suspended for two months, "отменяю это правило на 2 месяца" (the author's word
-// of 2026-11-17; R126).
+// of 2026-11-17; the third 2026-11-17 amendment to R07 spec; R126).
 var authorsWord = Evidence{
 	Word:  "author's word 2026-11-17, R07 spec suspended until 2027-01-17",
 	Date:  "2026-11-17",
