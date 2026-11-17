@@ -46,7 +46,7 @@ func TestCorrectAnswerWords(t *testing.T) {
 		t.Fatalf("the words are %+v", got)
 	}
 	r := opus.asked[0]
-	if r.NoPicture || len(r.Images) != 1 || r.Effort != "high" || r.MaxOutputTokens != wordsMaxOutput || r.SchemaName != "correct_answer_words" ||
+	if r.NoPicture || len(r.Images) != 1 || r.Effort != "high" || r.MaxOutputTokens != wordsMaxOutput || r.SchemaName != "correct_answer_words" || !r.CacheInstructions ||
 		!strings.Contains(r.Text, "How old is Ann now? Write the answer.\nLanguage: English.\nWords: no more than 35.\nLearner: an adult.") ||
 		!strings.Contains(r.Text, "- a scheme of segments") {
 		t.Errorf("the request is %+v", r)

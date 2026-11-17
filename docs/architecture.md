@@ -1156,6 +1156,11 @@ Before T133 the section was called "Measurements of epic E4". The results of the
 - *the owner's own spend limit — 400 `invalid_request_error` — names when access resumes only in the words of its message, and words are no contract (the table above): the outcome has no time. A balance spent, a fault of billing and every refusal of OpenAI have none either: their terms name none;*
 - *for a pair whose two readers are both refused for a limit, the outcome takes the limit that holds the call longer, its reason with its time: one with no time, which only the owner lifts, then the later time — a date that one reader's limit names is no promise while the other's holds; `Tutor.CheckKey` answers "accepted" to a key refused for a limit, as before, and carries no time.*
 
+*2026-11-17 (T167; R131): the Claude adapter caches the instructions of the tutor's words — the hint's, `CallWords` and `CallHint`, and those after a correct answer, `CallCorrect`:*
+- *a request marks them by `provider.Request.CacheInstructions`, which `hint.RequestOf` and `correct.RequestOf` set: the same text in every call of their kind, the platform's. The adapter sends the system prompt with `cache_control` `ephemeral`, for 5 minutes, and marks nothing after it: the work is never cached;*
+- *the prefixes are 1,362 and 811 tokens, above the 512 of Opus 5.5, and the cache pays from ≈ 21 % of hits (measurements 3.22). The cache's tokens and their price already come in `Usage` (above); `api`'s `ai_usage` shows them by the cost of the words' lines (В92, В96);*
+- *the answer does not change with the cache, and the prompts, their fingerprints and the entries stay (sources 1.18). The GPT adapter sends nothing for the mark — Д20.*
+
 **How it was decided** — the former subsection 2.3, moved here word for word 2026-11-01 (T06; R59):
 
 - **The point:** how the owner of an own key limits how much the platform spends from their key: where the limit is set, who counts and checks it, and what `tutor` reports about each call for it. It is an item of the card (architecture 3.6 spec). The key lies on the device, and `api` counts the platform AI quotas, so what the limit requires of `app` and `api` goes «в реестр spec».

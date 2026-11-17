@@ -199,13 +199,14 @@ func TestRequestOf(t *testing.T) {
 			t.Errorf("the request lacks %q:\n%s", want, r.Text)
 		}
 	}
-	if len(r.Images) != 0 || !r.NoPicture || r.SchemaName != "correct_answer_words" || r.Instructions != correct.Instructions() {
+	// The instructions, the same in every request, are cached (R131).
+	if len(r.Images) != 0 || !r.NoPicture || r.SchemaName != "correct_answer_words" || r.Instructions != correct.Instructions() || !r.CacheInstructions {
 		t.Errorf("a request without the work is %+v", r)
 	}
 	p.Techniques, p.Language, p.PNG, p.Width, p.Height = nil, "de", []byte{1}, 10, 20
 	r, err = correct.RequestOf(p)
 	if err != nil || r.NoPicture || len(r.Images) != 1 || !strings.Contains(r.Text, "Image 1 is 10 pixels wide and 20 pixels high.\nTask:") ||
-		!strings.Contains(r.Text, "Language: German.\nWords: as few as the rules allow.") || !strings.Contains(r.Text, "Techniques:\nnone\n</task_data>") {
+		!strings.Contains(r.Text, "Language: German.\nWords: as few as the rules allow.") || !strings.Contains(r.Text, "Techniques:\nnone\n</task_data>") || !r.CacheInstructions {
 		t.Errorf("a request with the work in German: %v\n%s", err, r.Text)
 	}
 	for _, l := range []string{"", "!!", "und", "x"} {

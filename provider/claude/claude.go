@@ -188,8 +188,15 @@ func (c *Client) check(r provider.Request) error {
 
 // params is the request as the API takes it: one message of the pictures in their order, each a
 // block of its own after a block of its label, as Anthropic advises for several pictures ("Image
-// 1:", "Image 2:"; docs/sources.md, 1.4), and the text after them.
+// 1:", "Image 2:"; docs/sources.md, 1.4), and the text after them. Instructions the request marks
+// to cache end at a breakpoint of the cache, for the 5 minutes Anthropic keeps a write by default:
+// the prefix up to it — the system prompt — is the same in every request of their kind, and the
+// message after it, the work, is never cached (R131; docs/sources.md, 1.18).
 func (c *Client) params(r provider.Request) anthropic.MessageNewParams {
+	system := anthropic.TextBlockParam{Text: r.Instructions}
+	if r.CacheInstructions {
+		system.CacheControl = anthropic.NewCacheControlEphemeralParam()
+	}
 	content := make([]anthropic.ContentBlockParamUnion, 0, 2*len(r.Images)+1)
 	for _, im := range r.Images {
 		if im.Label != "" {
@@ -203,7 +210,7 @@ func (c *Client) params(r provider.Request) anthropic.MessageNewParams {
 	p := anthropic.MessageNewParams{
 		Model:     c.model.ID,
 		MaxTokens: r.MaxOutputTokens,
-		System:    []anthropic.TextBlockParam{{Text: r.Instructions}},
+		System:    []anthropic.TextBlockParam{system},
 		Messages:  []anthropic.MessageParam{anthropic.NewUserMessage(content...)},
 		OutputConfig: anthropic.OutputConfigParam{
 			Effort: anthropic.OutputConfigEffort(r.Effort),

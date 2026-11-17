@@ -196,6 +196,8 @@ func RequestOf(p Prompt) (provider.Request, error) {
 		SchemaName:   "hint",
 		Schema:       Schema,
 		NoPicture:    len(p.PNG) == 0,
+		// The instructions are the same in every request and hold nothing of the learner's (R131).
+		CacheInstructions: true,
 	}, nil
 }
 

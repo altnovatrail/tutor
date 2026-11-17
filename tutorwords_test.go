@@ -59,7 +59,7 @@ func TestWords(t *testing.T) {
 		t.Errorf("the box is %v", got.Box)
 	}
 	r := opus.asked[0]
-	if r.NoPicture || len(r.Images) != 1 || r.Effort != "high" || r.MaxOutputTokens != wordsMaxOutput ||
+	if r.NoPicture || len(r.Images) != 1 || r.Effort != "high" || r.MaxOutputTokens != wordsMaxOutput || !r.CacheInstructions ||
 		!strings.Contains(r.Text, "Rung: 2, a question on the rule or the trap.\nLanguage: English.\nWords: no more than 35.\nLearner: an adult.") ||
 		!strings.Contains(r.Text, "Trap the program found: stopped-early") || !strings.Contains(r.Text, "- What did you find first?") {
 		t.Errorf("the request is %+v", r)

@@ -225,10 +225,14 @@ func TestRequestOf(t *testing.T) {
 	if len(r.Images) != 0 || !r.NoPicture {
 		t.Errorf("a request without the work has pictures %d, NoPicture %v", len(r.Images), r.NoPicture)
 	}
+	// The instructions, the same in every request, are cached, with the work or without it (R131).
+	if !r.CacheInstructions || r.Instructions != hint.Instructions() {
+		t.Errorf("the instructions are not those cached: %+v", r)
+	}
 	p.Asked, p.Language, p.PNG, p.Width, p.Height = nil, "de", []byte{1}, 10, 20
 	r, err = hint.RequestOf(p)
 	if err != nil || strings.Contains(r.Text, "<asked>") || !strings.Contains(r.Text, "Image 1 is 10 pixels wide and 20 pixels high.\nTask:") ||
-		!strings.Contains(r.Text, "Language: German.\nWords: as few as the rules allow.") || r.NoPicture || len(r.Images) != 1 {
+		!strings.Contains(r.Text, "Language: German.\nWords: as few as the rules allow.") || r.NoPicture || len(r.Images) != 1 || !r.CacheInstructions {
 		t.Errorf("a request in German with the work: %v\n%s", err, r.Text)
 	}
 	for _, l := range []string{"!!", "", "i-klingon", "qaa", "und"} {
