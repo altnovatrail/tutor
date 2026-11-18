@@ -8,19 +8,19 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// The rule of stroke groups of the eval protocol, R24 canvas as it is (Д36 in spec's RUN.md; R30
-// in docs/decisions.md): two strokes are neighbours when no more than GroupPause milliseconds lie
-// between them, from the end of the earlier to the start of the later, and the boxes of their
-// points come within GroupAcross units of each other across the sheet and within GroupDown units
-// down it. Each bound is included. A group is the strokes a chain of neighbours joins.
+// The rule of stroke groups of the eval protocol, R24 canvas as it is (R30): two strokes are
+// neighbours when no more than GroupPause milliseconds lie between them, from the end of the
+// earlier to the start of the later, and the boxes of their points come within GroupAcross units of
+// each other across the sheet and within GroupDown units down it. Each bound is included. A group
+// is the strokes a chain of neighbours joins.
 const (
 	GroupPause  = 2000 // milliseconds
 	GroupAcross = 50   // sheet units
 	GroupDown   = 50   // sheet units
 )
 
-// StrokeGroup is one group of the strokes a sheet shows, as a device groups them (concepts 15 spec).
-// A part of a sheet's plan is one group or several: a drawing redrawn after a pause is two.
+// StrokeGroup is one group of the strokes a sheet shows, as a device groups them. A part of a
+// sheet's plan is one group or several: a drawing redrawn after a pause is two.
 type StrokeGroup struct {
 	// Label is the group's label by place, as a device gives it: A to Z, then AA, AB and on, by
 	// the top of its rectangle, then its left, its bottom and its right, then its earliest start.

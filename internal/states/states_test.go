@@ -178,7 +178,8 @@ func plans(t *testing.T) (out []*sample.Sample, parts []bool) {
 
 // On every sheet of both plans: no state is the finished sheet; a state before an erasure is the
 // frame render.Before draws; the policy of pauses of 6 s reads as often as the journal tells a long
-// pause; and the sheets of E2 and of free writing have the states the measurement expects of them.
+// pause; and the sheets of eval/sheets.json and of free writing have the states the measurement
+// expects of them.
 func TestOfPlans(t *testing.T) {
 	sheets, parts := plans(t)
 	count := 0

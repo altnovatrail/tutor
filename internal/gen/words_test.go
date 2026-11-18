@@ -27,7 +27,7 @@ func linesGen1(t *testing.T) (*sample.Plan, *sample.Bank) {
 }
 
 // The files of the set of the words are what the generator makes of lines-gen-1 and the seed 118,
-// byte for byte: tutor-eval gen words makes them again (T118).
+// byte for byte: tutor-eval gen words makes them again.
 func TestWordsFiles(t *testing.T) {
 	plan, bank := linesGen1(t)
 	pl, cs, err := gen.Words(plan, bank, "words-sheets.json", 118)
@@ -157,7 +157,7 @@ func TestWordsRefused(t *testing.T) {
 }
 
 // The cases of the author's plans are what the generator makes of them and the seed 119, byte for
-// byte (T119).
+// byte.
 func TestWordsCasesFiles(t *testing.T) {
 	for _, f := range []struct{ bank, plan, cases string }{
 		{"bank.json", "sheets.json", "words-cases-sheets.json"},

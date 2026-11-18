@@ -111,7 +111,8 @@ func TestRecordOfFailures(t *testing.T) {
 	}
 }
 
-// e4Readers are the readers of the three configurations of E4, which these tests were written for.
+// e4Readers are the readers of the configurations of runner.E4Configs, which these tests were
+// written for.
 func e4Readers() []Reader {
 	return runner.E4(Readers(), func(rd Reader) runner.Config { return rd.Config })
 }

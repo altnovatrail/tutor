@@ -17,9 +17,9 @@ import (
 )
 
 // timesVector is the vector of the observation of boxes checked by a time of day,
-// observation/v1/times.json of spec's contracts (Д135 RUN.md spec): its items, each a line of boxes
-// with their checks, and its cases, two readers' observations, the one they join into and the
-// verdict on each item of that one.
+// observation/v1/times.json of spec's contracts: its items, each a line of boxes with their checks,
+// and its cases, two readers' observations, the one they join into and the verdict on each item of
+// that one.
 type timesVector struct {
 	Items []struct {
 		Line []struct {

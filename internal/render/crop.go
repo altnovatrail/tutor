@@ -12,14 +12,13 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// The crop of a sheet for checking is cut by the rule of the eval protocol, R25 canvas as it is (Д36
-// in spec's RUN.md; R35 in docs/decisions.md). Its numbers are canvas's to the bit: the bundles of
-// the strokes, the median height h_med, the height D′ the digits are drawn at, the size, the
-// margins, where the crop lies on the sheet and the frames of the groups. They are whole numbers,
-// in tenths of a unit for places, and each one that is not whole is one division of two of them,
-// which IEEE 754 rounds alike in Go and in JavaScript. Its pixels are this renderer's, in whole
-// numbers as the board's are; canvas's raster may draw them a level of grey apart, as canvas's
-// vectors allow.
+// The crop of a sheet for checking is cut by the rule of the eval protocol, R25 canvas as it is
+// (R35). Its numbers are canvas's to the bit: the bundles of the strokes, the median height h_med,
+// the height D′ the digits are drawn at, the size, the margins, where the crop lies on the sheet
+// and the frames of the groups. They are whole numbers, in tenths of a unit for places, and each
+// one that is not whole is one division of two of them, which IEEE 754 rounds alike in Go and in
+// JavaScript. Its pixels are this renderer's, in whole numbers as the board's are; canvas's raster
+// may draw them a level of grey apart, as canvas's vectors allow.
 const (
 	// CropMargin is the margin around the work, px.
 	CropMargin = 12
@@ -369,10 +368,9 @@ func (c *Crop) Draw(strokes []sample.Stroke) (*image.Gray, error) {
 }
 
 // PNG draws strokes on the crop, as Draw does, and encodes the picture as the eval protocol writes
-// a crop's PNG (contracts/README.md of spec, section 11): grey of 8 bits, colour type 0, not
-// interlaced, and the chunks IHDR, IDAT and IEND alone — no ancillary chunk, which could hold a
-// text, metadata or a time. Go's encoder writes a grey picture so, its IDAT in pieces of one zlib
-// stream.
+// a crop's PNG: grey of 8 bits, colour type 0, not interlaced, and the chunks IHDR, IDAT and IEND
+// alone — no ancillary chunk, which could hold a text, metadata or a time. Go's encoder writes a
+// grey picture so, its IDAT in pieces of one zlib stream.
 func (c *Crop) PNG(strokes []sample.Stroke) ([]byte, error) {
 	img, err := c.Draw(strokes)
 	if err != nil {
@@ -382,8 +380,7 @@ func (c *Crop) PNG(strokes []sample.Stroke) ([]byte, error) {
 }
 
 // InkBox is the box of the points the crop was cut around, in whole tenths of a unit, [ymin, xmin,
-// ymax, xmax]: the ink_box of the eval protocol's set of crops (contracts/README.md of spec, section
-// 11).
+// ymax, xmax]: the ink_box of the eval protocol's set of crops.
 func (c *Crop) InkBox() [4]int64 { return [4]int64{c.box.minY, c.box.minX, c.box.maxY, c.box.maxX} }
 
 // MedianTenths is h_med in whole tenths of a unit, as it is: the bundle_median of the protocol's set

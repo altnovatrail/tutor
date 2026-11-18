@@ -1,10 +1,10 @@
-// Package gen builds the synthetic sets of the extended measurement (T94; R50 in docs/decisions.md):
-// pages of the workbook in the format tutor-workbook and essays in the format tutor-essays, as many
-// as a run needs, each with its truth by construction. A page's numbers are drawn at random, and
-// every box is written as its scenario says; an essay is put together from sentences written here,
-// and each criterion it does not meet comes from a change made to it on purpose. No model writes a
-// word of them, so that the program, and not a model's word, holds whether an essay keeps to its
-// topic and spells its words right. The same seed builds the same set again, on any machine.
+// Package gen builds the synthetic sets of the extended measurement (R50): pages of the workbook in
+// the format tutor-workbook and essays in the format tutor-essays, as many as a run needs, each
+// with its truth by construction. A page's numbers are drawn at random, and every box is written as
+// its scenario says; an essay is put together from sentences written here, and each criterion it
+// does not meet comes from a change made to it on purpose. No model writes a word of them, so that
+// the program, and not a model's word, holds whether an essay keeps to its topic and spells its
+// words right. The same seed builds the same set again, on any machine.
 package gen
 
 import (
@@ -24,8 +24,9 @@ const (
 func newRand(seed, stream uint64) *rand.Rand { return rand.New(rand.NewPCG(seed, stream)) }
 
 // devCount is how many of n pages or essays go to the development: one in fifteen, rounded up, and
-// the rest to the test. E4 gave a quarter to the development, but a run of hundreds needs few to
-// try a prompt on, and every one more in the test narrows the bound of its measures.
+// the rest to the test. eval/workbook.json and eval/essays.json give a quarter to the development,
+// but a run of hundreds needs few to try a prompt on, and every one more in the test narrows the
+// bound of its measures.
 func devCount(n int) int { return (n + 14) / 15 }
 
 // partOf is the part of the measurement of the i-th of n pages or essays, from 0.

@@ -75,18 +75,11 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T176 | Комментарии: `internal/report`, `internal/runner`, `internal/measure` | Claude | — | T170 |
 | [x] | T177 | Комментарии: `cmd/tutor-eval` и судьи, журнал, конвертер | Claude | — | T170 |
 | [x] | T178 | Комментарии: `internal/sample`, `internal/evalsample`, `internal/synth` | Claude | — | T170 |
-| [ ] | T179 | Комментарии: генераторы, рисование, листы и задачи | Claude | — | T170 |
+| [x] | T179 | Комментарии: генераторы, рисование, листы и задачи | Claude | — | T170 |
 | [ ] | T180 | Комментарии: корень, `admission`, провайдеры, `words`, протокол | Claude | — | T170 |
 | [ ] | T181 | Комментарии: доска, подсказка, чтение, `correct`, CI и контейнер | Claude | — | T170 |
 
 **Порядок:** T171–T181 независимы друг от друга и идут в любом порядке, по одной; T172–T175 правят один файл, разные разделы. Строка 7.32 COORDINATION.md spec ждёт всех.
-
-#### T179. Комментарии: генераторы, рисование, листы и задачи
-
-- **Цель:** комментарии кода `internal/gen`, `internal/render`, `internal/lines`, `internal/sheets`, `internal/workbook`, `internal/essay`, `internal/task`, `internal/states` и `internal/value`, тестов тоже, — по R160 spec, «Comments».
-- **Сделать:** по «Комментариям» описания эпика.
-- **Как проверить:** `just lint`, `just ci-test`; `just -f spec/justfile docs-check-repo`; `/code-review high`.
-- **Разделы:** R160 spec; R32 spec; описание эпика E19.
 
 #### T180. Комментарии: корень, `admission`, провайдеры, `words`, протокол
 

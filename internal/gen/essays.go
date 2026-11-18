@@ -12,7 +12,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// rubric is the rubric of E4's essays, its criteria and their texts as eval/essays.json gives them
+// rubric is the rubric of the essays, its criteria and their texts as eval/essays.json gives them
 // (R44), so that a run on the essays built here measures the same criteria.
 var rubric = []sample.Criterion{
 	{ID: sample.CriterionTitle, Text: "It has a title on its own first line."},
@@ -23,9 +23,9 @@ var rubric = []sample.Criterion{
 	{ID: sample.CriterionSpelling, Text: "Common words are spelled correctly."},
 }
 
-// The shares of the essays by how many criteria each leaves unmet, as in E4 (R44): a fifth meet
-// them all, a fifth leave three unmet, and the rest one or two, half and half. Each criterion is
-// then unmet in a quarter of the essays.
+// The shares of the essays by how many criteria each leaves unmet: a fifth meet them all, a fifth
+// leave three unmet, and the rest one or two, half and half. Each criterion is then unmet in a
+// quarter of the essays, as in eval/essays.json (R44).
 const (
 	shareAllMet = 0.2
 	shareThree  = 0.2
@@ -35,12 +35,12 @@ const (
 // gives up on it.
 const tries = 200
 
-// Essays builds essays on the rubric of E4, from the seed: the first devCount of them for the
-// development, and the rest for the test. In each part the essays leave unmet one criterion in a
-// quarter of the essays each, a fifth of them none and the rest one to three (unmetSets), and the
-// topics come by turns, each once before any comes again. An essay is put together from the
-// sentences of its topic, and changed for each criterion it does not meet (essayOf). The essays pass
-// their check, or Essays returns an error.
+// Essays builds essays on the rubric of eval/essays.json, from the seed: the first devCount of them
+// for the development, and the rest for the test. In each part the essays leave unmet one criterion
+// in a quarter of the essays each, a fifth of them none and the rest one to three (unmetSets), and
+// the topics come by turns, each once before any comes again. An essay is put together from the
+// sentences of its topic, and changed for each criterion it does not meet (essayOf). The essays
+// pass their check, or Essays returns an error.
 func Essays(essays int, seed uint64) (*sample.Essays, error) {
 	if essays < 1 {
 		return nil, fmt.Errorf("gen: there is at least one essay, not %d", essays)

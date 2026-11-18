@@ -50,12 +50,12 @@ const (
 )
 
 // Reads are what a run reads of its pages: the pages at 32 px, bare and captioned, captions; the
-// bare pages at 32 px alone, bare, as the platform reads them, with no line of the item (the
-// 2026-10-28 amendment to R53 spec; R50); and the bare pages at the other heights of digits,
-// heights, read once, by the readers that do not read once (R08; R28). Plain is the run of admission
-// (T155; R124): the bare pages at 32 px alone, by every reader in every repeat, Opus too, as the
-// admission run of a sheet reads (reading.Plain); it goes with nothing else. A reader that reads once
-// in a measurement keeps the mark in its record: it is the strong reader of the pair.
+// bare pages at 32 px alone, bare, as the platform reads them, with no line of the item (R53 spec;
+// R50); and the bare pages at the other heights of digits, heights, read once, by the readers that
+// do not read once (R08; R28). Plain is the run of admission (R124): the bare pages at 32 px alone,
+// by every reader in every repeat, Opus too, as the admission run of a sheet reads (reading.Plain);
+// it goes with nothing else. A reader that reads once in a measurement keeps the mark in its
+// record: it is the strong reader of the pair.
 type Reads struct {
 	Bare, Captions, Heights, Plain bool
 }

@@ -83,9 +83,9 @@ func ErasureLine(s *sample.Sample, e sample.Erasure) int {
 }
 
 // ErasurePart is the place of an erasure on the plane, for a sheet whose markup is made of parts,
-// as a plan of version 1 makes it (T56): the number of the part most of the erasure's strokes stood
-// on, the earlier in the markup of two that hold as many, or 0 when none of them stood on a part.
-// Where a stroke stood is PartsTaken's.
+// as a plan of version 1 makes it: the number of the part most of the erasure's strokes stood on,
+// the earlier in the markup of two that hold as many, or 0 when none of them stood on a part. Where
+// a stroke stood is PartsTaken's.
 func ErasurePart(s *sample.Sample, e sample.Erasure) int {
 	return PartsTaken(s, []sample.Erasure{e})[0].Line
 }

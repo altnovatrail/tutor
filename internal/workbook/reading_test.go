@@ -229,11 +229,8 @@ func TestGolden(t *testing.T) {
 	}
 }
 
-// Version 3 of the prompt is frozen before its run (T123): any change to a word a reader reads
-// changes the fingerprint, and this test fails. Version 2, frozen after the dev round of T99, had the
-// fingerprint 885515cb2ad2a4aa3e49c1322e0d108099d66b93746309b5654cf7bacca6cf4b, and version 1, frozen
-// after the dev round of T80, 40a9244ba646d1edef4c99c6dc5060b5b38ccab74ad56ddf76792545b6590e8d; their
-// logs keep them.
+// Version 3 of the prompt is frozen before its run: any change to a word a reader reads changes the
+// fingerprint, and this test fails. The logs of the earlier versions keep their own.
 func TestFrozenV3(t *testing.T) {
 	const frozen = "26925af5e000d1c9cb30571f1e4f1b845852dedbb4da056b3b360a9eae3a5789"
 	if got := workbook.Fingerprint(); got != frozen || workbook.Version != 3 {

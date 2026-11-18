@@ -14,16 +14,15 @@ import (
 	"github.com/altnovatrail/tutor/words"
 )
 
-// The assessment of an essay by the rubric (T83; docs/architecture.md, 3.4, "Assessment by the rubric"):
-// one call an essay, which shows the model the crop of the page and gives it the topic and the
-// criteria of the rubric as a marked block of data (R02 spec). The model writes down the essay as it
-// is written, judges whether it meets each criterion and on what in it, and writes the learner
-// feedback. A rubric gives no verdict (concepts 9.2 spec): the run compares the model's judgement of
-// each criterion with the planned truth, and the program checks that the feedback does not write the
-// essay for the learner (R05 spec).
+// The assessment of an essay by the rubric: one call an essay, which shows the model the crop of
+// the page and gives it the topic and the criteria of the rubric as a marked block of data (R02
+// spec). The model writes down the essay as it is written, judges whether it meets each criterion
+// and on what in it, and writes the learner feedback. A rubric gives no verdict: the run compares
+// the model's judgement of each criterion with the planned truth, and the program checks that the
+// feedback does not write the essay for the learner (R05 spec).
 
-// Version is the version of the prompt of the assessment by the rubric. It is frozen before the test
-// (T84), as the reading's was (T73).
+// Version is the version of the prompt of the assessment by the rubric. It is frozen before the
+// test.
 const Version = 1
 
 // Style is the presentation style every request of the measurement gives: the module of short essays
@@ -39,8 +38,8 @@ const (
 )
 
 // PlatformWords is the most words R70 spec lets the feedback have in English (words.FeedbackWords),
-// raised from MaxWords by the numbers of T84. The prompt and Feedback keep MaxWords, the limit of the
-// measurement, which its frozen prompt names (R45; R50).
+// above MaxWords. The prompt and Feedback keep MaxWords, the limit of the measurement, which its
+// frozen prompt names (R45; R50).
 var PlatformWords = words.FeedbackWords(string(sample.LangEnglish))
 
 // PlatformBroken is whether a feedback breaks the rule R70 spec sets, given what Feedback found it
@@ -131,7 +130,7 @@ type Answer struct {
 }
 
 // Judgement is a model's judgement of a criterion: its ID, on what in the essay it judges it, and
-// whether the essay meets it. The evidence comes first, so that the judgement follows from it (T84).
+// whether the essay meets it. The evidence comes first, so that the judgement follows from it.
 type Judgement struct {
 	ID       string `json:"id"`
 	Evidence string `json:"evidence"`
@@ -239,8 +238,9 @@ const (
 
 // Feedback is what feedback breaks of its rule, in the order of the constants above, nil when it
 // keeps it, and how many words it has: the rule of the measurement (words.FeedbackForm, with
-// MaxWords), against the essay as it is written, its title and its text, so that the logs of epic E4
-// read as they were judged. The platform holds feedback to words.Feedback, against the text read.
+// MaxWords), against the essay as it is written, its title and its text, so that the logs of the
+// measurement read as they were judged. The platform holds feedback to words.Feedback, against the
+// text read.
 func Feedback(feedback string, e *sample.Essay) (breaches []string, n int) {
 	found, n := words.FeedbackForm(feedback, essayText(e), string(sample.LangEnglish), MaxWords)
 	for _, b := range found {

@@ -173,7 +173,7 @@ func TestTwoAfterAFailedReading(t *testing.T) {
 	if bad := assess.Record(runner.Outcome{Answer: `{"criteria": []}`}).(CallRecord); bad.Error == "" || bad.Marks[0].Met != nil {
 		t.Errorf("an assessment off the schema comes to %+v", bad)
 	}
-	// An essay read illegible is marked so, and is no answer off the schema (T156).
+	// An essay read illegible is marked so, and is no answer off the schema.
 	if rec := read.Record(runner.Outcome{Answer: `{"text": "", "legible": false}`}).(CallRecord); !rec.Illegible || rec.Invalid || rec.Error == "" {
 		t.Errorf("an essay read illegible comes to %+v", rec)
 	}
@@ -183,7 +183,7 @@ func TestTwoAfterAFailedReading(t *testing.T) {
 }
 
 // With an assessor, every reader's reading is assessed by it, in its configuration and with its
-// expected output, and the run's record names it; the calls still name the reader (T156).
+// expected output, and the run's record names it; the calls still name the reader.
 func TestNewTwoAssessor(t *testing.T) {
 	es := readEssays(t)
 	readers := e4Readers()
@@ -204,11 +204,9 @@ func TestNewTwoAssessor(t *testing.T) {
 	}
 }
 
-// Version 3 of the prompts of two calls is frozen before the runs of T124 and T125: any change to a
-// word a model reads in either step changes the fingerprint, and this test fails. Version 1, frozen
-// after the first dev round of T92, had the fingerprint
-// eb30d0f3d3813b8e8e1413eb6b5c54d7a605ca507b611541566c538e5f90fbce; its logs keep it. Version 2 ran
-// nowhere.
+// Version 3 of the prompts of two calls is frozen before its runs: any change to a word a model
+// reads in either step changes the fingerprint, and this test fails. The logs of the earlier
+// versions keep their own.
 func TestFrozenTwoV3(t *testing.T) {
 	const frozen = "00cf587cb7fbddeee65c167a7d59561b1942c1eea7b7f8b2bcd42ae4fb4002f1"
 	if got := TwoFingerprint(); got != frozen || TwoVersion != 3 {

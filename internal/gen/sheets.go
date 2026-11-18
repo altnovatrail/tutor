@@ -12,8 +12,8 @@ import (
 	"github.com/altnovatrail/tutor/internal/synth"
 )
 
-// The traps of the generated tasks, worded as the bank of E2 words them (eval/bank.json), so that a
-// generated sheet's trap means what the same trap means there.
+// The traps of the generated tasks, worded as eval/bank.json words them, so that a generated
+// sheet's trap means what the same trap means there.
 var traps = map[string]string{
 	"order-of-operations": "выполнил действия слева направо, не соблюдая порядка действий",
 	"carry":               "ошибся при сложении с переходом через десяток",
@@ -53,17 +53,16 @@ type erasure struct {
 }
 
 // kinds are the kinds of task the generator writes, in turn: a chain of calculations and two forms
-// of a linear equation, as the bank of E2 has them (docs/architecture.md, section 3.1).
+// of a linear equation, as eval/bank.json has them.
 var kinds = []func(r *rand.Rand, id string) task{chain, equation, equationBothSides}
 
-// Sheets is a bank of generated tasks and a plan of their sheets, the truth of each by construction:
-// six sheets a task — correct, an error of each of two traps, a mistake erased and written right, a
-// right step erased and written wrong, and a second correct solution, shorter for a chain and with a
-// check after the answer for an equation (T93; R50). Of ten tasks, that is 14 correct sheets, 20 with
-// an error, 10 of each erasure and 6 with the answer not last, against 12, 12, 7 and 2 of 40 in the
-// plan of E2. The tasks are chains and equations, in turn, with
-// numbers drawn from the seed: the same seed gives the same bank and plan. Their IDs begin with
-// prefix.
+// Sheets is a bank of generated tasks and a plan of their sheets, the truth of each by
+// construction: six sheets a task — correct, an error of each of two traps, a mistake erased and
+// written right, a right step erased and written wrong, and a second correct solution, shorter for
+// a chain and with a check after the answer for an equation (R50). Of ten tasks, that is 14 correct
+// sheets, 20 with an error, 10 of each erasure and 6 with the answer not last, against 12, 12, 7
+// and 2 of 40 in eval/sheets.json. The tasks are chains and equations, in turn, with numbers drawn
+// from the seed: the same seed gives the same bank and plan. Their IDs begin with prefix.
 func Sheets(tasks int, seed uint64, prefix string) (*sample.Bank, *sample.Plan, error) {
 	if err := fits(tasks, 6); err != nil {
 		return nil, nil, err
@@ -96,9 +95,9 @@ func Sheets(tasks int, seed uint64, prefix string) (*sample.Bank, *sample.Plan, 
 
 // NearSheets is a bank of generated tasks whose keys end in a digit of a pair, each with its near
 // key — the key with that digit replaced by its pair's — as its false key, and a plan of two sheets
-// a task in the scenario similar-digits: the correct sheet, which a reading reads with the near key,
-// and the sheet whose answer is the near key, which it reads with the right one (T70; T93). The
-// answer's last digit of either leans toward its pair as far as draw is told.
+// a task in the scenario similar-digits: the correct sheet, which a reading reads with the near
+// key, and the sheet whose answer is the near key, which it reads with the right one. The answer's
+// last digit of either leans toward its pair as far as draw is told.
 func NearSheets(tasks int, seed uint64, prefix string) (*sample.Bank, *sample.Plan, error) {
 	if err := fits(tasks, 2); err != nil {
 		return nil, nil, err
@@ -199,9 +198,9 @@ func trapsOf(ids ...string) []sample.Trap {
 func n(v int) string { return strconv.Itoa(v) }
 
 // chain is "Вычисли a + b − c × d.": the product first, then the sum, then the difference, as task
-// chain-1 of E2. Its traps: the order of operations, left to right; the carry, a sum with the ten
-// lost; and a slip in the last step. The units of a and b make a carry, and every number on the way
-// is positive.
+// chain-1 of eval/bank.json. Its traps: the order of operations, left to right; the carry, a sum
+// with the ten lost; and a slip in the last step. The units of a and b make a carry, and every
+// number on the way is positive.
 func chain(r *rand.Rand, id string) task {
 	for {
 		a, b := between(r, 12, 69), between(r, 12, 49)
@@ -238,9 +237,10 @@ func chain(r *rand.Rand, id string) task {
 	}
 }
 
-// equation is "Реши уравнение ax + b = c.", as task equation-1 of E2. Its traps: the term carried
-// over without its sign changed, which ends in x + 2b/a, a fraction unless a divides 2b, and the
-// coefficient divided on one side alone; the two never end in the same answer. A second correct solution checks the root after the answer.
+// equation is "Реши уравнение ax + b = c.", as task equation-1 of eval/bank.json. Its traps: the
+// term carried over without its sign changed, which ends in x + 2b/a, a fraction unless a divides
+// 2b, and the coefficient divided on one side alone; the two never end in the same answer. A second
+// correct solution checks the root after the answer.
 func equation(r *rand.Rand, id string) task {
 	for {
 		a, x, b := between(r, 2, 9), between(r, 2, 12), between(r, 1, 20)
@@ -271,9 +271,9 @@ func equation(r *rand.Rand, id string) task {
 	}
 }
 
-// equationBothSides is "Реши уравнение ax − b = cx + d.", as task equation-4 of E2: the terms
-// carried over, collected, and divided. Its traps are those of equation, and the term carried over
-// with its sign unchanged leaves a positive number.
+// equationBothSides is "Реши уравнение ax − b = cx + d.", as task equation-4 of eval/bank.json: the
+// terms carried over, collected, and divided. Its traps are those of equation, and the term carried
+// over with its sign unchanged leaves a positive number.
 func equationBothSides(r *rand.Rand, id string) task {
 	for {
 		c, e, x, b := between(r, 2, 5), between(r, 2, 5), between(r, 2, 9), between(r, 1, 9)

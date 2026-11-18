@@ -10,10 +10,9 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// The set of the words after a correct answer (T143; docs/architecture.md, 3.4, "The set of the
-// words after a correct answer"): the sheets whose answer is right of a plan of lines, written again
-// as a plan of parts, ten of them once more with a note at the side, as in the set of the words of
-// the hint (Words), and the cases on them.
+// The set of the words after a correct answer: the sheets whose answer is right of a plan of lines,
+// written again as a plan of parts, ten of them once more with a note at the side, as in the set of
+// the words of the hint (Words), and the cases on them.
 
 // CorrectNotes is how many sheets of the set carry a note at the side: two of each kind of note, one
 // in Russian and one in English. CorrectNoTechniques is how many of the other sheets are of a task

@@ -21,7 +21,7 @@ import (
 
 var update = flag.Bool("update", false, "write the generated sets of eval anew")
 
-// The sets the extended measurement runs on (T94): 300 pages and 300 essays, from the seed 1.
+// The sets the extended measurement runs on: 300 pages and 300 essays, from the seed 1.
 const (
 	setSize      = 300
 	setSeed      = 1
@@ -52,7 +52,8 @@ func golden(t *testing.T, path string, set any) {
 	}
 }
 
-// readE4Workbook reads the workbook of E4, eval/workbook.json.
+// readE4Workbook reads eval/workbook.json, the workbook of 20 pages whose items the generator
+// follows.
 func readE4Workbook(t *testing.T) *sample.Workbook {
 	t.Helper()
 	f, err := os.Open("../../eval/workbook.json")
@@ -118,8 +119,8 @@ func TestWorkbookSeed(t *testing.T) {
 }
 
 // The workbook of 300 pages passes its check and its layout, draws page by page and gives every
-// filled box a crop; its first 20 pages are of the development, and its items are E4's, in E4's
-// order, each of the kind and the shape of line it has there.
+// filled box a crop; its first 20 pages are of the development, and its items are those of
+// eval/workbook.json, in their order, each of the kind and the shape of line it has there.
 func TestWorkbookPages(t *testing.T) {
 	wb, err := Workbook(setSize, setSeed)
 	if err != nil {
@@ -170,7 +171,8 @@ func TestWorkbookPages(t *testing.T) {
 }
 
 // Every page holds the scenarios of pageScenarios, and the mirrored and rewritten boxes are a share
-// of the boxes more than twice E4's. A fraction is written stacked and inline by turns.
+// of the boxes more than twice that of eval/workbook.json. A fraction is written stacked and inline
+// by turns.
 func TestWorkbookShares(t *testing.T) {
 	wb, err := Workbook(setSize, setSeed)
 	if err != nil {

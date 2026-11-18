@@ -1,11 +1,10 @@
-// Package task gives each task of tutor's measurements — a task of a bank, solved on a sheet; a page
-// of the workbook; an essay — the task of spec's module format 0.3 it is, with its checks:
-// formatv0.Task (T103; R68 in docs/decisions.md). module-kit takes a task of the format alone: its
-// open view and that view's digest, by which a sample of the eval protocol names its task, and the
-// verdicts on an observation, by which the runner gets the outcome and the trap of the truth of a
-// sample's markup (sections 10, 11 and 13 of spec's contracts text; R95 spec). tutor's banks are not
-// modules, and their files keep their own formats: the tasks are built here, by the kind of each
-// file's tasks.
+// Package task gives each task of tutor's measurements — a task of a bank, solved on a sheet; a
+// page of the workbook; an essay — the task of spec's module format 0.3 it is, with its checks:
+// formatv0.Task (R68). module-kit takes a task of the format alone: its open view and that view's
+// digest, by which a sample of the eval protocol names its task, and the verdicts on an
+// observation, by which the runner gets the outcome and the trap of the truth of a sample's markup
+// (R95 spec). tutor's banks are not modules, and their files keep their own formats: the tasks are
+// built here, by the kind of each file's tasks.
 package task
 
 import (

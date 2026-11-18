@@ -12,11 +12,11 @@ import (
 	"github.com/altnovatrail/tutor/internal/synth"
 )
 
-// The pictures of two sheets of the free-form plan, eval/free-sheets.json, drawn with seed 1, by the
-// SHA-256 of their pixels, and the frame before each one's erasure: sheet 7, a number line with a
-// jump erased and drawn again, and sheet 8, a scheme with a piece moved from one segment to the
-// other (T60). A change of the drawings, of the hand or of the renderer changes them, and the
-// pictures are then looked at again.
+// The pictures of two sheets of the free-form plan, eval/free-sheets.json, drawn with seed 1, by
+// the SHA-256 of their pixels, and the frame before each one's erasure: sheet 7, a number line with
+// a jump erased and drawn again, and sheet 8, a scheme with a piece moved from one segment to the
+// other. A change of the drawings, of the hand or of the renderer changes them, and the pictures
+// are then looked at again.
 var goldenFree = map[string]string{
 	"7":   "c5e0b4aa1d3735ac766dd5dd8d086b3bea41307524bddb5c726c0a6b09415695",
 	"7/0": "847162d14fb93e88a5f8942de76032c2de177b651858b27ef92aff5dcfbdff8e",
