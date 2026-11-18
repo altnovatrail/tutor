@@ -15,7 +15,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/sheets"
 )
 
-// The set of the words (T118): its plan, the bank of the plan of lines it is made of, and its cases.
+// The set of the words: its plan, the bank of the plan of lines it is made of, and its cases.
 const (
 	wordsPlan, wordsBank = "../../eval/words-sheets.json", "../../eval/lines-gen-1-bank.json"
 	wordsCases           = "../../eval/words-cases.json"

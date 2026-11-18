@@ -21,10 +21,10 @@ const (
 	inputTokensBudget = 4000
 )
 
-// The forms of an answer. Since T45 in RUN.md the board asks for the short one: a verdict and,
-// for a mistake, its place. Before, a model also wrote the lines it read, the final answer, the
-// number of the first wrong line and a comment; the log holds such answers without a form, and
-// the summary counts them apart, as the earlier form.
+// The forms of an answer. The board asks for the short one: a verdict and, for a mistake, its
+// place (R19). An answer of the earlier form also held the lines the model read, the final answer,
+// the number of the first wrong line and a comment; the log holds such answers without a form, and
+// the summary counts them apart.
 const (
 	formShort   = "short"
 	formEarlier = "earlier"

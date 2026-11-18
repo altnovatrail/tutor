@@ -27,9 +27,9 @@ const (
 	KindDrawing = "drawing"
 )
 
-// Observation is what a model read on a sheet (concepts 9.1 spec): the parts of the work in the
-// order the solution is read, and its final answers. It says nothing of whether the answer is
-// right: the verdict is the program's (R03 spec).
+// Observation is what a model read on a sheet: the parts of the work in the order the solution is
+// read, and its final answers. It says nothing of whether the answer is right: the verdict is the
+// program's (R03 spec).
 type Observation struct {
 	Parts   []Part   `json:"parts"`
 	Results []Result `json:"results"`
@@ -37,7 +37,7 @@ type Observation struct {
 
 // Part is a part of the work as it is written: writing, character for character, or a drawing, a
 // number line, a row of things or a scheme, told in a few words with every number and label on
-// it, as the markup tells a drawing (T56); whether it is legible, and how else it could be read.
+// it, as the markup tells a drawing; whether it is legible, and how else it could be read.
 type Part struct {
 	Kind          string   `json:"kind"`
 	Text          string   `json:"text"`
@@ -116,15 +116,15 @@ const (
 	NotWritten Reason = "not_written"
 )
 
-// ObservationOf is an observation as the eval protocol writes it (contracts/README.md of spec,
-// section 10): the one answer slot of a sheet, bound anywhere, with the value of the final answer,
-// or the reason the reading gives none, and that reason in tutor's own words, which the log keeps
-// (R73). A nil observation, a failed call, is none: nil, with no reason.
+// ObservationOf is an observation as the eval protocol writes it: the one answer slot of a sheet,
+// bound anywhere, with the value of the final answer, or the reason the reading gives none, and
+// that reason in tutor's own words, which the log keeps (R73). A nil observation, a failed call, is
+// none: nil, with no reason.
 //   - no final answer is UNREADABLE_NO_FINAL_ANSWER, no_result, and more than one
 //     UNREADABLE_SEVERAL_FINAL_ANSWERS, results;
 //   - the answer's part illegible is UNREADABLE_ILLEGIBLE, illegible;
 //   - an answer that could be read as another value is UNREADABLE_AMBIGUOUS, ambiguous, and so is a
-//     value not seen in the writing of its part, not_written: section 10 names a value that the
+//     value not seen in the writing of its part, not_written: the protocol names a value that the
 //     reader cannot point to in the writing ambiguous;
 //   - a value that nothing is left of once it is read, and an empty one, is UNREADABLE_BLANK, with
 //     no word of the reading's: module-kit's verdict names it blank;
@@ -159,8 +159,7 @@ func ObservationOf(o *Observation) (*observationv1.Observation, Reason) {
 	return observationOf(reason, ""), reason
 }
 
-// unreadable is the reason of the protocol that each reason of the reading, and blank, is (section
-// 10 of spec's contracts text).
+// unreadable is the reason of the protocol that each reason of the reading, and blank, is.
 var unreadable = map[Reason]observationv1.Unreadable{
 	NoResult:              observationv1.Unreadable_UNREADABLE_NO_FINAL_ANSWER,
 	Results:               observationv1.Unreadable_UNREADABLE_SEVERAL_FINAL_ANSWERS,
@@ -194,13 +193,13 @@ func RecordObservation(c *CallRecord) *observationv1.Observation {
 }
 
 // Verdict is the program's verdict on an observation, against the key of the task's check, the
-// value of the bank's key (KeyOf), whatever key the reading was given (docs/architecture.md, 3.4):
-// module-kit's, on the observation as the protocol writes it (ObservationOf; R73). No observation,
-// a failed call, is unchecked; a reason of the reading makes it unreadable, with the reading's own
-// word for it; and otherwise the check of the kind number judges the value: correct, not yet
-// right, or unreadable, blank or in none of its notations (R56 spec). A key that is no number is
-// no check module-kit takes, and it gives no verdict, whatever was read: the sheet is unchecked,
-// with no reason. The banks' keys are all numbers, and a test holds them so.
+// value of the bank's key (KeyOf), whatever key the reading was given: module-kit's, on the
+// observation as the protocol writes it (ObservationOf; R73). No observation, a failed call, is
+// unchecked; a reason of the reading makes it unreadable, with the reading's own word for it; and
+// otherwise the check of the kind number judges the value: correct, not yet right, or unreadable,
+// blank or in none of its notations (R56 spec). A key that is no number is no check module-kit
+// takes, and it gives no verdict, whatever was read: the sheet is unchecked, with no reason. The
+// banks' keys are all numbers, and a test holds them so.
 func Verdict(o *Observation, key string) (verdict.Verdict, Reason) {
 	obs, reason := ObservationOf(o)
 	slot, err := SlotVerdict(key, obs)
@@ -350,7 +349,7 @@ type Under struct {
 }
 
 // UnderKey is what of an observation was read as the given solution or key, though the sheet has
-// something else there (R03, amendment of 2026-10-20):
+// something else there (R03):
 //   - a part of writing whose text, compared as squash compares, is a line of the given solution
 //     or the given key, while no part of the markup that is not crossed out has that text;
 //   - a part that is a drawing, by its numbers in the order they stand, since a drawing told in
@@ -402,8 +401,8 @@ func UnderKey(o *Observation, m Marked, g Given) Under {
 // PartsRead is how many of the parts of writing of the markup that are neither crossed out nor
 // written illegibly on purpose an observation reads exactly as written, compared as squash compares,
 // and how many there are: each part of writing of the observation counts for one part of the markup
-// at most. An illegible part has no text to read, and a reader that guesses it is not right for it. The accuracy of the
-// reading of a sheet is the one over the other (T71; docs/measurements.md, 1.6).
+// at most. An illegible part has no text to read, and a reader that guesses it is not right for
+// it. The accuracy of the reading of a sheet is the one over the other.
 func PartsRead(o *Observation, m Marked) (read, of int) {
 	var seen []string
 	if o != nil {
@@ -427,8 +426,7 @@ func PartsRead(o *Observation, m Marked) (read, of int) {
 }
 
 // ReadsAs reports whether an observation has a part of writing that reads as the text, compared as
-// squash compares: so a part the writer had only begun is read as if it were written whole (О-21;
-// T72).
+// squash compares: so a part the writer had only begun is read as if it were written whole.
 func ReadsAs(o *Observation, text string) bool {
 	if o == nil {
 		return false

@@ -24,7 +24,7 @@ import (
 
 var update = flag.Bool("update", false, "write the golden requests anew")
 
-// The set of the words after a correct answer (T143): its plan, the bank of the plan of lines it is
+// The set of the words after a correct answer: its plan, the bank of the plan of lines it is
 // made of, and its cases.
 const (
 	plan, bank = "../../eval/correct-sheets.json", "../../eval/lines-gen-1-bank.json"
@@ -200,8 +200,7 @@ func TestRequestOf(t *testing.T) {
 		}
 	}
 	// The instructions, the same in every request, are cached (R131). Below 512 tokens the cache keeps
-	// nothing and no error says so; they came to 811 tokens of 2 803 bytes (measurements 3.22), and
-	// 2 048 bytes keep them above it with room.
+	// nothing and no error says so; 2 048 bytes keep them above it with room.
 	if len(r.Instructions) < 2048 {
 		t.Errorf("the instructions are %d bytes, too short to be cached", len(r.Instructions))
 	}
@@ -444,9 +443,8 @@ func TestRunOnTheStub(t *testing.T) {
 	}
 }
 
-// Version 1 of the prompt is frozen after the trial run of T143, on sheets of its own (lines-gen-2),
-// before the run of admission (T144): any change to a word a tutor reads changes the fingerprint, and
-// this test fails until the words are measured anew.
+// Version 1 of the prompt is frozen, the version admitted (R113): any change to a word a tutor reads
+// changes the fingerprint, and this test fails until the words are measured anew.
 func TestFrozenV1(t *testing.T) {
 	const frozen = "ee01e82ada7c347c45f56828d86342897569ec7517fc52265963a76f31def1d9"
 	if got := correct.Fingerprint(); got != frozen || correct.Version != 1 {

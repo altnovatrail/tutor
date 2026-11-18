@@ -1,13 +1,12 @@
-// Package hint is the call of the review and the hint (T74; docs/architecture.md, 3.4,
-// "Hint"): once the program has found the final answer not yet right, a model finds the first
-// mistake in the work and words the tutor's question for the rung of the hint ladder that the
-// program chose, in one call, as architecture 4.1 spec draws it (R28). The model sees the crop of
+// Package hint is the call of the review and the hint: once the program has found the final
+// answer not yet right, a model finds the first mistake in the work and words the tutor's question
+// for the rung of the hint ladder that the program chose, in one call. The model sees the crop of
 // the finished sheet, the task, its key and solution and the traps the task names, in a block of
 // data (R02 spec; R57 spec), the rung, the language and the presentation style; it sees neither the
 // writing process (R11; R52 spec), nor the reading's observation, nor the trap the sheet was planned
 // with, which is the report's reference (R38). The program checks the words for a leak and their
 // form before they reach the learner, and gives the fallback text of the rung in their place when
-// they fail (T75; R39): the hint only words them.
+// they fail (R39): the hint only words them.
 package hint
 
 import (
@@ -25,17 +24,16 @@ import (
 	"github.com/altnovatrail/tutor/words"
 )
 
-// Version is the version of the hint's prompt. Version 1 was frozen after the two dev rounds of
-// T76, before the test of the hints; version 2 (T117) gives the model the trap the program found,
-// the techniques of the task and the questions already asked, lets it word the rung again without
-// the work, holds it to the limits of words of R70 spec and adds the rules of safety for children
-// (R54; R82 spec). Version 3 (T127) keeps every number of the key out of the similar case of rung
-// 3 and has the model count the words of its hint, where version 2 leaked and broke the form (R86).
-// The library and the runner ask it alike (RequestOf). TestFrozenV3 holds it.
+// Version is the version of the hint's prompt, the one admitted (R100), so its words stay frozen
+// until they are measured anew; TestFrozenV3 holds it. It gives the model the trap the program
+// found, the techniques of the task and the questions already asked, lets it word the rung again
+// without the work, holds it to the limits of words of R70 spec, has the rules of safety for
+// children (R54; R82 spec), keeps every number of the key out of the similar case of rung 3 and has
+// the model count the words of its hint. The library and the runner ask it alike (RequestOf).
 const Version = 3
 
 // Rung is a rung of the hint ladder, from 1 to 3, which the program picks by the number of wrong
-// answers on the task (concepts 10 spec).
+// answers on the task.
 type Rung int
 
 // Rungs are the rungs of the ladder, in their order.
@@ -49,11 +47,11 @@ var rungWords = map[Rung]string{
 }
 
 // Langs are the languages a hint of the measurement is written in, in their order: Russian, the
-// language of the tasks, and English (T74). The library takes any language by its tag.
+// language of the tasks, and English. The library takes any language by its tag.
 func Langs() []sample.Lang { return []sample.Lang{sample.LangRussian, sample.LangEnglish} }
 
 // Style is the presentation style every request of the measurement gives: the module's passport v0
-// names none (О-23), and the tasks of the banks are olympiad maths of primary school (R38).
+// names none, and the tasks of the banks are olympiad maths of primary school (R38).
 const Style = "a child in primary school; use short, simple, everyday words"
 
 // The instructions of the hint, one text for every rung and language: the request names them.
@@ -101,10 +99,11 @@ const (
 func Instructions() string { return instructions }
 
 // Fingerprint names the prompt: the SHA-256 of every word a model reads besides those of the sheet
-// and its task — with the names of the languages measured, as golang.org/x/text gives them —: the instructions, the label of the picture, the text round the
-// task, its data and the questions asked, the words of the rungs and the style of the measurement,
-// and the schema, whose names the model reads too. The log of a run keeps it, and an entry of the
-// list of admitted models (admission.Entry).
+// and its task — with the names of the languages measured, as golang.org/x/text gives them —: the
+// instructions, the label of the picture, the text round the task, its data and the questions
+// asked, the words of the rungs and the style of the measurement, and the schema, whose names the
+// model reads too. The log of a run keeps it, and an entry of the list of admitted models
+// (admission.Entry).
 func Fingerprint() string {
 	parts := []string{instructions, finalLabel, workFormat, noWork, textFormat, wordsLimit, noLimit, dataFormat, trapFormat, itemFormat, none, askedFormat, Style, string(schemaProperties)}
 	for _, r := range Rungs() {
@@ -122,8 +121,8 @@ func Fingerprint() string {
 // work, as PNG with its size, or none, when the learner asks to have the rung put another way
 // (R82 spec); the key and the solution; the traps the model may name, with their descriptions; the
 // trap the program found at the cell of the rung, or none; the techniques of the task; the rung; the
-// language of the hint, by its tag; the presentation style, only what changes the words (Д74
-// RUN.md spec); and the questions the tutor has already asked on the task, in order.
+// language of the hint, by its tag; the presentation style, only what changes the words; and the
+// questions the tutor has already asked on the task, in order.
 type Prompt struct {
 	Statement     string
 	PNG           []byte

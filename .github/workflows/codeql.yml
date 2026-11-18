@@ -23,7 +23,7 @@ jobs:
     uses: altnovatrail/.github/.github/workflows/codeql.yml@f1c7e9e6f8245fdbdbc23c4091f3c26350e3a44e # v0.1.33
     # Go is read from a build, with the Go the Go checks run with: go.dev's archive that ARG
     # GO_VERSION and GO_SHA256_AMD64 of .devcontainer/Dockerfile pin in the stage toolchain-core,
-    # which toolchain is built from, checked by that sum, without building the stage (R09 .github,
-    # amended for Go; R16, R45 .github; R120, R121).
+    # which toolchain is built from, checked by that sum, without building the stage (R09, R16, R45
+    # .github; R120, R121).
     with:
       languages: go

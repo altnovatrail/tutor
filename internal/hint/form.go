@@ -5,11 +5,11 @@ import (
 	"github.com/altnovatrail/tutor/words"
 )
 
-// MaxWords is the most words a hint may have: two short sentences of about 15 words each (R39). The
-// prompt names it too.
+// MaxWords is the most words a hint of version 1 of the prompt may have: two short sentences of
+// about 15 words each (R39).
 const MaxWords = 30
 
-// The breaches of the form of a hint, as the log names them (concepts 10 spec; R39).
+// The breaches of the form of a hint, as the log names them (R39).
 const (
 	// BreachQuestions: not exactly one sentence is a question.
 	BreachQuestions = string(words.Questions)
@@ -21,11 +21,10 @@ const (
 	BreachScript = string(words.Script)
 )
 
-// Form is what a hint breaks of the form of the measurement of epic E4, in the order of the
-// constants above; nil when it keeps it (words.HintForm, with MaxWords), the one the prompt of
-// version 1 named. No run calls it any more: the logs of version 1 keep what it found, and a run of
-// version 2 holds hints to words.Hint, as api does. The tests of that form keep it. Its sentences, questions and words
-// are counted as words.Count counts them.
+// Form is what a hint breaks of the form of R39, in the order of the constants above; nil when it
+// keeps it (words.HintForm, with MaxWords). The logs of version 1 of the prompt keep what it found;
+// a run holds hints to words.Hint, as api does. Its sentences, questions and words are counted as
+// words.Count counts them.
 func Form(text string, lang sample.Lang, statement string) []string {
 	var out []string
 	for _, b := range words.HintForm(text, string(lang), statement, MaxWords) {

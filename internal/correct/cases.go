@@ -9,13 +9,12 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// The eval set of the words after a correct answer (T143; docs/architecture.md, 3.4, "The set of
-// the words after a correct answer"): an eval set of its own form, tutor's, as the set of the words
-// of the hint (§ 13 of spec's text of the contracts; R85). A case is a call of the words as api asks
-// it — a sheet whose answer is right, a language and the techniques of the task, none for a task that
-// names none —, with the work, or without it, as for a task whose answer slots are bound choice alone
-// (attempt.proto spec), and on some sheets a note at the side that is no part of the solution and is
-// not for a child, which the words must keep silent on (R54).
+// The eval set of the words after a correct answer: an eval set of tutor's own form, as the set of
+// the hint's words is (R85; R112). A case is a call of the words as api asks it — a sheet whose
+// answer is right, a language and the techniques of the task, none for a task that names none —,
+// with the work, or without it, as for a task whose answer slots are bound choice alone, and on some
+// sheets a note at the side that is no part of the solution and is not for a child, which the words
+// must keep silent on (R54).
 
 // CasesFormat names the file of the cases, and CasesVersion is its version.
 const (

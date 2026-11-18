@@ -59,8 +59,8 @@ const (
 	logName    = "board.jsonl"
 )
 
-// effortBefore is the effort of the answers logged before the page offered a choice of efforts:
-// the board asked every model at high (R19).
+// effortBefore is the effort of a logged answer that names none: such answers were all asked at
+// high (R19).
 const effortBefore = "high"
 
 // Choice is a model the board offers: the effort levels the page offers it at, least first, the
@@ -93,8 +93,8 @@ type Server struct {
 // answer is what the summary needs of a model's answer to a try: its line, its price and time,
 // whether it gave no verdict, and the tokens and the time of its first text, with whether they are
 // known. They are for an answer with a verdict alone, since the count of a failed call may be cut
-// short: the log has kept the tokens since the page offered a choice of efforts, those spent
-// thinking and the time of the first text since the short answer.
+// short. A log line without an effort holds no tokens, and one without a form neither the tokens
+// spent thinking nor the time of the first text.
 type answer struct {
 	pair           pair
 	costUSD        float64
@@ -193,10 +193,9 @@ func checkChoices(choices []Choice) error {
 	return nil
 }
 
-// remember keeps what the summary needs of an answer. An answer logged before the page offered a
-// choice of efforts has none, and it was asked at high; nor does it have its tokens. An answer
-// logged before the short one has no form: it is of the earlier form, and the tokens it spent
-// thinking are not known.
+// remember keeps what the summary needs of an answer. An answer logged without an effort was asked
+// at high, and its tokens are not known. An answer logged without a form is of the earlier form,
+// and the tokens it spent thinking are not known.
 func (s *Server) remember(attempt, model string, res Result) {
 	if s.answers[attempt] == nil {
 		s.answers[attempt] = map[string]answer{}
