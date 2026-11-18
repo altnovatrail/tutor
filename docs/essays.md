@@ -1,6 +1,6 @@
 # Essays
 
-> What the executor wrote in 20 synthetic essays in English, and what in them is correct by the plan (T82; R44). On them the measurement E4 measures how Claude assesses an essay by the author's criteria — assessment by the rubric — and writes feedback (R41 spec; О-22). How the call and the report are built — [architecture.md](architecture.md), section 3.4, "Essays".
+> What the executor wrote in 20 synthetic essays in English, and what in them is correct by the plan (R44). On them the measurement E4 measures how Claude assesses an essay by the author's criteria — assessment by the rubric — and writes feedback (R41 spec; О-22). How the call and the report are built — [architecture.md](architecture.md), section 3.4, "Essays".
 >
 > The essays are the file `eval/essays.json` in the format `tutor-essays` v0 (R44). This is synthetic content under Apache-2.0: the essays were written by the executor, not by learners, on made-up topics and without names (П-20). There are no files of pages: the code draws the strokes in memory, from the file and the seed. The rubric, the counts and the essays below are the same file: a test of `cmd/tutor-eval` builds them from the file and compares them with this document byte for byte, so an essay is edited in both places.
 >
@@ -20,14 +20,14 @@
   - **no names** — a capital letter inside a sentence stands only in "I", in the text and in the topic. So the check keeps the essays free of names (П-20). The title is written with capitals, and only the proofreading finds a name in it;
   - **characters** — Latin letters, an apostrophe inside a word, a space, a comma and the end marks. The text has 40–80 words, the title 1–6.
 - **Shares** — each criterion is not met in 5 essays of 20: in one of the dev part and in four of the test part. In all, 30 criteria of 120 are not met. All six are met by 4 essays — one in the dev part and three in the test part — and the others have one to three not met. Met criteria are the majority: the main measure of О-22 is a criterion that the model called not met although it is met.
-- **Split** — essays 1–5 are the dev part, 6–20 the test part (T84).
+- **Split** — essays 1–5 are the dev part, 6–20 the test part.
 
 ## How a page is built
 
 - **Sheet** — 1000 × 1400 units, a handwriting sheet of the `spec` format: for a task with a rubric the canvas is `handwriting_sheet` with ruled lines. The title is the first line, and the text below it is wrapped by words, 28–40 characters to a line. Each essay takes its line length from the seed, so their handwriting is of different sizes too.
 - **Handwriting** — `tutor`'s synthetic handwriting, where Latin letters are strokes of its own (R43). Between words there is a gap of two spaces: at half a space, the words of the lines with calculations ran together.
 - **Crop** — by the crop rule of the eval protocol at 32 px, as in all the measurements: only the ink. The scale is set by the median of the heights of the stroke bundles, and in a text that is the height of a small letter: it is drawn D′ high, and the capitals almost twice as high (В36). Where the picture at 32 px does not fit in 1568 tokens, the rule reduces D′. On the 20 essays D′ is 23–32 px, a crop 864–1216 × 671–1330 px, 936–1564 tokens.
-- **To view** the crops — what the model will see — run `go run ./cmd/tutor-eval essays -png synthetic/png/essays`. The directory is in `synthetic/`, outside git. *2026-11-07 (T107; R71): the essays are samples of the eval protocol, and `draw` saves the crops as it draws them: `go run ./cmd/tutor-eval draw -essays eval/essays.json -dir synthetic/png/drawn-essays -png synthetic/png/essays`, into a directory with no essays in it yet.*
+- **To view** the crops — what the model will see —, `draw` saves them as it draws the essays, samples of the eval protocol (R71): `go run ./cmd/tutor-eval draw -essays eval/essays.json -png synthetic/png/essays` draws into `synthetic/essays`, where `essays` and its runs find the essays, and wants it with no essays in it yet. The directories are in `synthetic/`, outside git.
 
 ## Rubric
 

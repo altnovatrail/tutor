@@ -1,8 +1,8 @@
 # The sheet plan with a near key
 
-> What code draws on the 12 sheets with a near key (T70; R36). On these sheets the result differs from the key by one similar digit: so it is seen whether the key shifts the reading (R03; Т-23). How the measurement of reading is built and how the threshold is counted — [architecture.md](architecture.md), section 3.4, "Reading into an observation".
+> What code draws on the 12 sheets with a near key (R36). On these sheets the result differs from the key by one similar digit: so it is seen whether the key shifts the reading (R03; Т-23). How the measurement of reading is built and how the threshold is counted — [architecture.md](architecture.md), section 3.4, "Reading into an observation".
 >
-> The tasks are the bank `eval/near-bank.json` in the format `tutor-bank` v0 (R15). These are copies of six tasks of the bank of E2, `eval/bank.json`, word for word, but for the false keys: each has a near-false key in place of its former false key. The bank of E2 does not change (R28). The bank and the plan are synthetic content under Apache-2.0: the executor wrote them, not learners.
+> The tasks are the bank `eval/near-bank.json` in the format `tutor-bank` v0 (R15). These are copies of six tasks of the bank of E2, `eval/bank.json`, word for word, but for the false keys: each has a near-false key in place of the false key it has there. The bank of E2 does not change (R28). The bank and the plan are synthetic content under Apache-2.0: the executor wrote them, not learners.
 >
 > The plan is the file `eval/near-sheets.json` in the format `tutor-sheet-plan` v0, as the plan of E2 is ([architecture.md](architecture.md), section 3.1, "Format of the sheet plan"). The tables below are the same bank and the same plan: a test of `cmd/tutor-eval` builds them from the files and checks them against this document byte for byte, so a sheet is edited in both places.
 
@@ -27,8 +27,8 @@ The six tasks of E2. Each has a near-false key — the key with its last digit r
   - **the correct one** — the lines of the correct solution. It is read also with the near-false key: so it is seen whether the model reads the key instead of what is written;
   - **the one with an error** — the same lines, but the answer is the near-false key. The first error is the answer line, there is no trap. It is read with the correct key: so it is seen whether the key gives a false "correct".
 - **Lines on the sheet** — what remains on the sheet, top to bottom. The answer line is the last. For `posts` the lines are the same as on the sheets of E2 of this task, and for the others they are the lines of the bank's solution.
-- **The answer's digit leans toward** — code draws the last digit of the answer line shifted toward the digit of its pair by the share `synth.SimilarShift`. Share 0 is the font's digit, 1 the pair's digit. The share is 0.1: the largest of 0.5, 0.4, 0.3, 0.2 and 0.1 at which Opus without a key read correctly no fewer than 11 sheets of the 12 of this plan, drawn with seed 2 (T73; the 2026-10-28 amendment to R36).
-- **Split** — one, `tutor-eval split -seed 70 -dev 4`: 4 dev sheets and 8 test sheets. The set `synthetic/near` is drawn with seed 1 and split on 2026-10-28, when the share was frozen, — before the first edit of the prompt of reading. In the dev part are sheets 7, 9, 11 and 12: three correct ones and one with an error.
+- **The answer's digit leans toward** — code draws the last digit of the answer line shifted toward the digit of its pair by the share `synth.SimilarShift`. Share 0 is the font's digit, 1 the pair's digit; how the share was chosen is the 2026-10-28 amendment to R36 and measurements 3.5.
+- **Split** — one, `tutor-eval split -seed 70 -dev 4`: 4 dev sheets and 8 test sheets. The set `synthetic/near` is drawn with seed 1 and split once, after the share is fixed and before the first edit of the prompt of reading. In the dev part are sheets 7, 9, 11 and 12: three correct ones and one with an error.
 
 ## Sheets
 

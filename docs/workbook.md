@@ -1,6 +1,6 @@
 # Pages of the workbook
 
-> What the code writes on 20 synthetic pages of the workbook (T78; R40). On them the measurement E4 measures how Claude reads handwritten answers in the boxes and how the code gives each item a verdict by what was read (R41 spec; the 2026-10-27 amendment to R53 spec). How the reading call and the report are built — [architecture.md](architecture.md), section 3.4, "Workbook".
+> What the code writes on 20 synthetic pages of the workbook (R40). On them the measurement E4 measures how Claude reads handwritten answers in the boxes and how the code gives each item a verdict by what was read (R41 spec; the 2026-10-27 amendment to R53 spec). How the reading call and the report are built — [architecture.md](architecture.md), section 3.4, "Workbook".
 >
 > The pages are the file `eval/workbook.json` in the format `tutor-workbook` v0 (R40). This is synthetic content under Apache-2.0: the items and the answers in the boxes were written by the executor's code, not by learners. There are no files of pages: the code draws the strokes in memory, from the file and the seed. The tables below are the same file: a test of `cmd/tutor-eval` builds them from the file and compares them with this document byte for byte, so a box is edited in both places.
 
@@ -17,7 +17,7 @@
   8. a fraction of an hour, a kilogram or a metre, «25 см — это [ ] метра»;
   9. reducing a fraction, «Сократи дробь: 8/14 = [ ]»;
   10. addition of fractions, the answer as a fraction in lowest terms.
-- **Item line** — as the learner sees it: `[ ]` is a box. A fraction in the line is written inline, as in the format of `spec` v0: an item line has no stacked fractions yet (R51 spec).
+- **Item line** — as the learner sees it: `[ ]` is a box. A fraction in the line is written inline: an item line of `spec`'s format has no stacked fractions (R51 spec).
 - **Box** — the place of the box among the item's boxes, from 1. Together with the item's number, it is the place of the answer slot in the reading's response, `{ item, slot }`.
 - **Check** — the check kind of the box by the format of `spec` (R56 spec):
   - **number** — the value is compared with the key as a rational number, exactly;
@@ -30,11 +30,11 @@
   - **error** — a typical error, the value of the first trap;
   - **near key** — a wrong value that differs from the key by one digit of a pair of similar ones: 1 and 7, 4 and 9, 8 and 3, 5 and 6. "8 → 3" means: 8 is written, and this digit leans slightly toward the 3 of the key. This shows whether the model reads the key that the item line suggests instead of what is written;
   - **similar digits** — the key, but its last digit, one of such a pair, leans slightly toward the other digit of its pair, "1 → 7". This shows whether there is a false alarm;
-  - **mirrored digit** — the key, but the first of its digits 2, 5, 7 and 9 is written mirrored, as children write it. The truth is the same digit, and a reading by the rule of `spec` `v0.3.3` does not return it as a digit: the box is "unreadable", and the learner rewrites it (the 2026-10-29 amendment to R56 spec; T99);
+  - **mirrored digit** — the key, but the first of its digits 2, 5, 7 and 9 is written mirrored, as children write it. The truth is the same digit, and a reading by the rule of `spec` does not return it as a digit: the box is "unreadable", and the learner rewrites it (the 2026-10-29 amendment to R56 spec);
   - **crossed out** — an error is crossed out and corrected; what must be read is what is not crossed out;
   - **blank** — nothing is written.
 
-  The lean is the same share as on the sheets with a near key, `synth.SimilarShift`, 0.1 (R36, the 2026-10-28 amendment).
+  The lean is the same share as on the sheets with a near key, `synth.SimilarShift` (R36, the 2026-10-28 amendment).
 - **Verdict** — what a correct reading of the box comes to: the check kind applied to what is written. "Not yet" names the trap if the value is that trap's. A blank box is "unreadable" with the cause `blank`: it has no crop, and it does not go to the model (the 2026-10-27 amendment to R53 spec). An item's verdict is made up of the verdicts of its boxes.
 
 ## How a page is built
@@ -42,8 +42,8 @@
 - **Page** — 1000 × 1400 units, a box 100 × 100: these are the layout numbers of `canvas`, R35 canvas. The layout here is simpler than in `canvas`: each item is a row of its own, 100 high, the rows 32 apart, the margins 40, and the box stands after the text before it, by the widths of the printed characters at size 30.
 - **Handwriting** — each page has its own, from the seed and the page number: the size, the slant and the speed of the pen. In a box the writing is fitted to the box and does not go out of it. So by the box rule of `canvas`, R37 canvas, each stroke belongs to a box of its own, and the page has no draft. A test checks this.
 - **Crop** — for each filled box, by its strokes, by the crop rule of the eval protocol, R25 canvas: only the ink, without the outline of the box and the text of the line. At 16, 24 and 32 px a crop is 200 × 200, 64 tokens, and a page 640 tokens. At 48 px ten crops come out wider, up to 265 px: these are inline fractions with two-digit parts and crossed-out ones.
-- **To view** the crops at 32 px — what the model will see — run `go run ./cmd/tutor-eval workbook -png synthetic/png/workbook`. The directory is in `synthetic/`, outside git. *2026-11-07 (T107; R71): the pages are samples of the eval protocol, and `draw` saves the crops as it draws them: `go run ./cmd/tutor-eval draw -workbook eval/workbook.json -dir synthetic/png/pages -png synthetic/png/workbook`, into a directory with no pages in it yet.*
-- **Split** — pages 1–5 are the dev part, 6–20 the test part (T80).
+- **To view** the crops at 32 px — what the model will see —, `draw` saves them as it draws the pages, samples of the eval protocol (R71): `go run ./cmd/tutor-eval draw -workbook eval/workbook.json -png synthetic/png/workbook` draws into `synthetic/workbook`, where `workbook` and its runs find the pages, and wants it with no pages in it yet. The directories are in `synthetic/`, outside git.
+- **Split** — pages 1–5 are the dev part, 6–20 the test part.
 
 ## How many boxes of each kind
 

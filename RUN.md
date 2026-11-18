@@ -67,7 +67,7 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | Статус | ID | Задача | Кто | План | Зависит от |
 |---|---|---|---|---|---|
 | [x] | T170 | Тексты без истории (R160 spec) и тег spec v0.18.34 | Claude | — | — |
-| [ ] | T171 | Без истории: CLAUDE.md, README, правила частей, документы листов | Claude | — | T170 |
+| [x] | T171 | Без истории: CLAUDE.md, README, правила частей, документы листов | Claude | — | T170 |
 | [ ] | T172 | Без истории: architecture 1, 2 и 3.1 | Claude | — | T170 |
 | [ ] | T173 | Без истории: architecture 3.2–3.4 | Claude | — | T170 |
 | [ ] | T174 | Без истории: architecture 3.5–3.9 | Claude | — | T170 |
@@ -80,13 +80,6 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [ ] | T181 | Комментарии: доска, подсказка, чтение, `correct`, CI и контейнер | Claude | — | T170 |
 
 **Порядок:** T171–T181 независимы друг от друга и идут в любом порядке, по одной; T172–T175 правят один файл, разные разделы. Строка 7.32 COORDINATION.md spec ждёт всех.
-
-#### T171. Без истории: CLAUDE.md, README, правила частей, документы листов
-
-- **Цель:** CLAUDE.md, README.md, [docs/README.md](docs/README.md), `.claude/rules/*.md` и документы листов — [docs/sheets.md](docs/sheets.md), [docs/near-sheets.md](docs/near-sheets.md), [docs/free-sheets.md](docs/free-sheets.md), [docs/essays.md](docs/essays.md), [docs/workbook.md](docs/workbook.md) — держат текущее состояние, а не историю (R160 spec).
-- **Сделать:** по «Документам» описания эпика. В CLAUDE.md — без того, какая задача какой документ написала или перевела; тег `spec` в строке `spec/` остаётся (R160 spec, «Decisions»). `.bestpractices.json` — не трогать: ответ, который поменялся бы, автор сохраняет на сайте (R60).
-- **Как проверить:** `just -f spec/justfile docs-check-repo`; `/code-review high`.
-- **Разделы:** R160 spec; RULES.md spec — The bar; описание эпика E19.
 
 #### T172. Без истории: architecture 1, 2 и 3.1
 
