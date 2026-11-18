@@ -1,8 +1,7 @@
 // Package protocoltest gives tests spec's examples of the eval protocol: the synthetic sample files
-// and reports of contracts/examples/eval/v1/ (contracts/README.md of spec, sections 11 and 14). The
-// module of spec's contracts carries them as files of its zip, not embedded, and CI checks tutor
-// out without the spec submodule, so they are read where Go keeps the module: in the module cache,
-// at the version the build takes.
+// and reports of contracts/examples/eval/v1/. The module of spec's contracts carries them as files
+// of its zip, not embedded, and CI checks tutor out without the spec submodule, so they are read
+// where Go keeps the module: in the module cache, at the version the build takes.
 package protocoltest
 
 import (

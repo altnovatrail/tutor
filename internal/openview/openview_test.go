@@ -344,9 +344,9 @@ func texts(v *open.Task) []string {
 }
 
 // found is what of the closed values of a task its open view shows beyond what the file of tasks
-// shows: the leak check of the format (section 20), with the shown texts as the statement, so that
-// a number the statement shows is not searched for, and the closed texts as leak phrases, but for
-// those the statement holds.
+// shows: the leak check of the format, with the shown texts as the statement, so that a number the
+// statement shows is not searched for, and the closed texts as leak phrases, but for those the
+// statement holds.
 func found(v *open.Task, s source) []string {
 	shown := strings.Join(s.shown, "\n")
 	var phrases []string
@@ -438,14 +438,13 @@ func TestBuildRefuses(t *testing.T) {
 	}
 }
 
-// The version of spec's Go module that the build takes is the tag of spec that CLAUDE.md names, and,
-// where the spec submodule is checked out, the submodule's tag: the module and the submodule move
-// together (Д46 in spec's RUN.md; R64 in docs/decisions.md). From spec's line 0.7 its release tags
-// the same commit contracts/<tag> too, so the submodule's tag is the one that starts with v (the
-// 2026-11-02 amendment to R83 spec). That release tags the module of spec's contracts with the same
-// number, and the build takes it at the same version as spec's module (Д92 in spec's RUN.md; R67 in
-// docs/decisions.md). CI checks the repository out without the submodule, and there CLAUDE.md alone
-// holds the modules to the tag.
+// The version of spec's Go module that the build takes is the tag of spec that CLAUDE.md names,
+// and, where the spec submodule is checked out, the submodule's tag: the module and the submodule
+// move together (R64). A release of spec tags the same commit contracts/<tag> too, so the
+// submodule's tag is the one that starts with v (R83 spec). That release tags the module of spec's
+// contracts with the same number, and the build takes it at the same version as spec's module
+// (R67). CI checks the repository out without the submodule, and there CLAUDE.md alone holds the
+// modules to the tag.
 func TestSpecVersion(t *testing.T) {
 	info, ok := debug.ReadBuildInfo()
 	if !ok {

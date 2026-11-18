@@ -45,8 +45,7 @@ func Dial(id, key string) (provider.Model, error) {
 // federation, headers — and not its OpenTelemetry tracing, which by default writes spans into the
 // process's TracerProvider, sends their trace context to Anthropic and, by a variable, puts the
 // requests and the answers in them. The call goes to the production address, with the key and the
-// adapter's client, provider.HTTPClient (R105; docs/sources.md, 1.17). The options are for tests:
-// a fake server's URL.
+// adapter's client, provider.HTTPClient (R105). The options are for tests: a fake server's URL.
 func New(apiKey string, m Model, opts ...option.RequestOption) *Client {
 	opts = append([]option.RequestOption{
 		option.WithoutEnvironmentDefaults(),
@@ -60,7 +59,7 @@ func New(apiKey string, m Model, opts ...option.RequestOption) *Client {
 // Name is how the board shows the model.
 func (c *Client) Name() string { return c.model.Name }
 
-// Prices are what the model's tokens cost, by the catalog (docs/architecture.md, 3.7).
+// Prices are what the model's tokens cost, by the catalog.
 func (c *Client) Prices() provider.Prices { return PricesOf(c.model) }
 
 // PricesOf are the prices of a model of the catalog, its long ones too where it has them.
@@ -83,7 +82,7 @@ func prices(m Model) provider.Prices {
 // in Models thinks adaptively when the request names no thinking, and on Opus 5.5 and Fable 5.1
 // thinking cannot be turned off, so the effort is what sets how much a model reasons. Without one,
 // a model takes its own default: medium on Opus 5.5 and Haiku 5.5, high on Sonnet 5.5 and Fable 5.1
-// (Models overview and Effort, read 2026-10-23). A request without thinking names its effort,
+// (Anthropic's guides Models overview and Effort). A request without thinking names its effort,
 // since thinking turns off only at some levels. A picture is never shrunk: a picture larger than
 // the model takes fails the call, rather than leave the model's pixels off the picture's.
 func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response, error) {
@@ -125,8 +124,8 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 	if err == nil {
 		err = stream.Err()
 	}
-	// Tokens are billed whatever the answer, so they go back with an error too. Anthropic counts the
-	// input without the cache: the writes and the read come beside it (docs/architecture.md, 3.7).
+	// Tokens are billed whatever the answer, so they go back with an error too. Anthropic counts
+	// the input without the cache: the writes and the read come beside it.
 	u := msg.Usage
 	resp := provider.Response{
 		Model:           msg.Model,
@@ -165,9 +164,9 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 }
 
 // MaxImages is the most pictures the adapter sends in one request. Above 20, a stricter limit of
-// size holds for every picture of the request (Vision, read 2026-10-26; docs/sources.md,
-// 1.4), and with oversized_image set to error a picture over it would fail the call. A
-// request of the measurement holds three at most.
+// size holds for every picture of the request (Anthropic's guide Vision), and with oversized_image
+// set to error a picture over it would fail the call. A request of the measurement holds three at
+// most.
 const MaxImages = 20
 
 // check refuses, before any call, what the adapter will not send: pictures provider.CheckImages
@@ -188,10 +187,10 @@ func (c *Client) check(r provider.Request) error {
 
 // params is the request as the API takes it: one message of the pictures in their order, each a
 // block of its own after a block of its label, as Anthropic advises for several pictures ("Image
-// 1:", "Image 2:"; docs/sources.md, 1.4), and the text after them. Instructions the request marks
-// to cache end at a breakpoint of the cache, for the 5 minutes Anthropic keeps a write by default:
-// the prefix up to it — the system prompt — is the same in every request of their kind, and the
-// message after it, the work, is never cached (R131; docs/sources.md, 1.18).
+// 1:", "Image 2:"), and the text after them. Instructions the request marks to cache end at a
+// breakpoint of the cache, for the 5 minutes Anthropic keeps a write by default: the prefix up to
+// it — the system prompt — is the same in every request of their kind, and the message after it,
+// the work, is never cached (R131).
 func (c *Client) params(r provider.Request) anthropic.MessageNewParams {
 	system := anthropic.TextBlockParam{Text: r.Instructions}
 	// Blank instructions are no prefix to cache, and no breakpoint goes on them.
@@ -249,10 +248,9 @@ func cacheWrites(u anthropic.Usage) []provider.CacheWrite {
 	return ws
 }
 
-// The messages that tell a refusal for a limit by their words (docs/architecture.md, 3.7;
-// docs/sources.md, 1.15). The words of a message are no contract: a refusal whose words change
-// is a failure of AI until the table and its tests follow, and the sources are read again before
-// each release.
+// The messages that tell a refusal for a limit by their words. The words of a message are no
+// contract: a refusal whose words change is a failure of AI until the table and its tests follow,
+// and the sources are read again before each release.
 const (
 	ownerLimit     = "You have reached your specified API usage limits"
 	workspaceLimit = "You have reached your specified workspace API usage limits"
@@ -265,9 +263,9 @@ const (
 // Refusal reads an error response of the Messages API, answered at the time at: a spend limit the
 // owner set, 400 invalid_request_error with its words; the cap of the tier, 429 with the error code
 // enforced_spend_limit_reached, which lets the key go at 00:00 UTC on the first day of the next
-// month (docs/architecture.md, 3.7; sources 2.8 spec); a balance spent, by its words at any
-// status; a fault of billing, 402; and the key refused, 401. The owner's limit names when access
-// returns only in the words of its message, which are no contract, so it returns with no time.
+// month; a balance spent, by its words at any status; a fault of billing, 402; and the key refused,
+// 401. The owner's limit names when access returns only in the words of its message, which are no
+// contract, so it returns with no time.
 func Refusal(status int, body []byte, at time.Time) provider.Refusal {
 	var e struct {
 		Error struct {
@@ -302,8 +300,8 @@ func nextMonth(at time.Time) time.Time {
 }
 
 // Check checks the key by counting the tokens of one word for the model: token counting is free
-// (Token counting, read 2026-11-11), and the word is no learner's. A 403 is a key without rights to
-// the model (provider.Checked).
+// (Anthropic's guide Token counting), and the word is no learner's. A 403 is a key without rights
+// to the model (provider.Checked).
 func (c *Client) Check(ctx context.Context) error {
 	var refused provider.Refusal
 	_, err := c.sdk.Messages.CountTokens(ctx, anthropic.MessageCountTokensParams{

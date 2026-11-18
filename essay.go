@@ -15,10 +15,9 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// EssayReading is an essay to read (architecture 3.10, "reading an essay"), the first of the two
-// calls of a task with a rubric (architecture 3.5; R75 spec): the PNG of the crop of the sheet, the
-// open view of its task and the route. The model sees the crop alone, without the topic and the
-// rubric.
+// EssayReading is an essay to read, the first of the two calls of a task with a rubric (R75 spec):
+// the PNG of the crop of the sheet, the open view of its task and the route. The model sees the
+// crop alone, without the topic and the rubric.
 type EssayReading struct {
 	Route Route
 	Task  *open.Task
@@ -34,10 +33,10 @@ type EssayRead struct {
 }
 
 // ReadEssay reads an essay by the one model admitted for reading handwriting with the prompt of the
-// reading of an essay (R68 spec, second amendment of 2026-11-01; R53). The pair of the reading of a
-// sheet measured another prompt and admits nothing of this one (R70 spec): until an entry of the list
-// measured it, the reading is NotAdmitted. A word that cannot be made out has no field of its own
-// until the measurement on the essays of volunteers (Т-37; П-16).
+// reading of an essay (R68 spec; R53). The pair of the reading of a sheet measured another prompt
+// and admits nothing of this one (R70 spec): until an entry of the list measured it, the reading is
+// NotAdmitted. A word that cannot be made out has no field of its own until the measurement on the
+// essays of volunteers (Т-37; П-16).
 func (t *Tutor) ReadEssay(ctx context.Context, r EssayReading) EssayRead {
 	fail := func(err error) EssayRead { return EssayRead{Outcome: Outcome{Kind: Failed, Err: err}} }
 	place, err := essayPlace(r.Task)

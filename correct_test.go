@@ -131,8 +131,8 @@ func TestCorrectAnswerWordsRefuses(t *testing.T) {
 }
 
 // The words after a correct answer are one model's: ChooseCall takes their entry, Price is one call
-// of it, expected by the tokens of the run that admitted them (T144) and at worst the bound of the
-// text and the largest crop, and the check of a key asks the model.
+// of it, expected by the tokens of the run that admitted them and at worst the bound of the text
+// and the largest crop, and the check of a key asks the model.
 func TestCorrectAnswerWordsCall(t *testing.T) {
 	withCorrect(t, correct.Fingerprint())
 	opus := &fake{resp: provider.Response{JSON: praised, Model: "claude-opus-5-5"}, prices: opusPrices}

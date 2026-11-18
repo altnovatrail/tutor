@@ -8,9 +8,9 @@ import (
 )
 
 // ResponseHeaderTimeout is how long an adapter waits for the headers of an answer once its request
-// is sent: the time both SDKs give their own client, which the adapters do not take, since it
-// comes with the defaults they take from the environment (docs/sources.md, 1.17). It does not
-// bound the answer's body, so a stream goes on for as long as it lasts.
+// is sent: the time both SDKs give their own client, which the adapters do not take, since it comes
+// with the defaults they take from the environment. It does not bound the answer's body, so a
+// stream goes on for as long as it lasts.
 const ResponseHeaderTimeout = 10 * time.Minute
 
 // transport is the adapters' one transport, so that their clients share its connections: the

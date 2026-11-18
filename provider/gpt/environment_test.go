@@ -11,9 +11,8 @@ import (
 	"github.com/altnovatrail/tutor/internal/providertest"
 )
 
-// TestNoEnvironment sets each variable the SDK reads (docs/sources.md, 1.17), and all of them
-// together, and holds that the call goes to OpenAI's address, with the key it was given and with
-// no header of the environment.
+// TestNoEnvironment sets each variable the SDK reads, and all of them together, and holds that the
+// call goes to OpenAI's address, with the key it was given and with no header of the environment.
 func TestNoEnvironment(t *testing.T) {
 	vars := map[string]string{
 		"OPENAI_BASE_URL":       "https://env.example/v1/",

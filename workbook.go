@@ -28,16 +28,15 @@ const (
 
 // BoxCrop is the crop of a filled box of a workbook page, as app sends it: the places of its item
 // and of the box among the item's boxes, from 1, and the PNG of its strokes alone, without the
-// box's frame and the print of its line (R53 spec, amendment of 2026-10-27).
+// box's frame and the print of its line (R53 spec).
 type BoxCrop struct {
 	Item, Slot int
 	Crop       []byte
 }
 
-// WorkbookReading is a workbook page to read (architecture 3.10, "reading the workbook"): the open view of
-// its task, the crops of its filled boxes, and the route. A box the learner left blank has no crop
-// and goes to no model (R86 spec). The model sees the crops and their places, never the line of an
-// item nor the key.
+// WorkbookReading is a workbook page to read: the open view of its task, the crops of its filled
+// boxes, and the route. A box the learner left blank has no crop and goes to no model (R86 spec).
+// The model sees the crops and their places, never the line of an item nor the key.
 type WorkbookReading struct {
 	Route Route
 	Task  *open.Task
@@ -55,10 +54,11 @@ type WorkbookRead struct {
 
 // ReadWorkbook reads the filled boxes of a workbook page by the models admitted for reading
 // handwriting with the prompt of the workbook — the pair, in parallel, or its one reader in
-// ReadingSingle —, each into the observation of the page (R86 spec; § 10 of spec's contracts text). The pair admitted for the reading of a sheet measured
-// another prompt, and admits nothing of this one (R70 spec): until an entry of the list measured the
-// prompt of the workbook, the reading is NotAdmitted. A page with no filled box goes to no model.
-// An answer that is no observation fails the reading, as a failure of AI does.
+// ReadingSingle —, each into the observation of the page (R86 spec). The pair admitted for the
+// reading of a sheet measured another prompt, and admits nothing of this one (R70 spec): until an
+// entry of the list measured the prompt of the workbook, the reading is NotAdmitted. A page with no
+// filled box goes to no model. An answer that is no observation fails the reading, as a failure of
+// AI does.
 func (t *Tutor) ReadWorkbook(ctx context.Context, r WorkbookReading) WorkbookRead {
 	fail := func(err error) WorkbookRead { return WorkbookRead{Outcome: Outcome{Kind: Failed, Err: err}} }
 	places, err := placesOf(r.Task, r.Boxes)

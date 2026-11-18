@@ -23,10 +23,9 @@ import (
 // picture that would cost both readers a large input for nothing.
 const maxCropSide = 4096
 
-// SheetReading is a handwriting sheet to read (architecture 3.10, "reading a sheet"): the PNG of the
-// crop of its visible strokes, as app sends it (the contract between app and api, SheetWork), the
-// open view of its task, and the route. The model sees the crop and the statement, never the key
-// (R67 spec).
+// SheetReading is a handwriting sheet to read: the PNG of the crop of its visible strokes, as app
+// sends it (the contract between app and api, SheetWork), the open view of its task, and the route.
+// The model sees the crop and the statement, never the key (R67 spec).
 type SheetReading struct {
 	Route Route
 	Task  *open.Task
@@ -44,11 +43,10 @@ type SheetRead struct {
 
 // ReadSheet reads a handwriting sheet by the models admitted for reading handwriting — the pair, in
 // parallel, or its one reader in ReadingSingle —, each into the observation of the task's one
-// answer slot bound anywhere (R86 spec; § 10 of spec's contracts text). The first version reads that
-// slot alone: the sheets of the first modules have no other that AI reads (T115). A slot bound
-// choice is no reading of AI: api gives the option tapped to module-kit. An answer that is no
-// observation fails the reading, as a failure of AI does: there is no observation of a pair then
-// (R86 spec).
+// answer slot bound anywhere (R86 spec). It reads that slot alone: the sheets of the first modules
+// have no other that AI reads. A slot bound choice is no reading of AI: api gives the option tapped
+// to module-kit. An answer that is no observation fails the reading, as a failure of AI does: there
+// is no observation of a pair then (R86 spec).
 func (t *Tutor) ReadSheet(ctx context.Context, r SheetReading) SheetRead {
 	place, statement, err := sheetTask(r.Task)
 	if err != nil {

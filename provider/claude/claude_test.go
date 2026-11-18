@@ -176,10 +176,10 @@ func TestCacheTokens(t *testing.T) {
 	}
 }
 
-// Instructions marked to cache end at a breakpoint of the cache, for five minutes, and nothing after
-// them is marked: the message of the work is never cached. The two answers, recorded as the API
-// gives them, are a write of the prefix and a read of it, and their tokens and price come back as
-// such (R131; docs/sources.md, 1.18).
+// Instructions marked to cache end at a breakpoint of the cache, for five minutes, and nothing
+// after them is marked: the message of the work is never cached. The two answers, recorded as the
+// API gives them, are a write of the prefix and a read of it, and their tokens and price come back
+// as such (R131).
 func TestCacheInstructions(t *testing.T) {
 	usage := func(write, read int) string {
 		return strings.Replace(evStart, `"usage":{"input_tokens":1300,"output_tokens":1}`,
@@ -533,7 +533,7 @@ func TestImagesRefused(t *testing.T) {
 	if _, err := c.Ask(context.Background(), request); err != nil {
 		t.Error(err)
 	}
-	// A text alone, as the assessment of a text an earlier call read, goes without a picture (T92).
+	// A text alone, as the assessment of a text an earlier call read, goes without a picture.
 	textOnly := request
 	textOnly.Images, textOnly.NoPicture = nil, true
 	if _, err := c.Ask(context.Background(), textOnly); err != nil {
@@ -562,9 +562,9 @@ func TestDial(t *testing.T) {
 	}
 }
 
-// Each refusal of the table of architecture 3.7 is its own error, sent once: the SDK sends it
-// again with a reply after it, so a second request would end in the good stream. A plain 429 and a
-// 401 that is no fault of the key are failures, and the 429 is sent again.
+// Each refusal of a limit or of the key is its own error, sent once: the SDK sends it again with a
+// reply after it, so a second request would end in the good stream. A plain 429 and a 401 that is
+// no fault of the key are failures, and the 429 is sent again.
 func TestRefusals(t *testing.T) {
 	errorOf := func(status int, typ, message, code string) reply {
 		details := ""

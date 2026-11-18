@@ -1,9 +1,8 @@
-// Package words holds the checks of the tutor's words that api makes before they reach the
-// learner, beside the leak check (R70 spec; architecture 1 and 3.5): the form of a hint, the form of
-// the words after a correct answer and the rule of feedback by a rubric. The eval of tutor measures
-// the models by the same code, so that what it admits is what the platform lets through. The checks
-// only count: they read no meaning, and what a word, a sentence and a quote are, this package
-// decides.
+// Package words holds the checks of the tutor's words that api makes before they reach the learner,
+// beside the leak check (R70 spec): the form of a hint, the form of the words after a correct
+// answer and the rule of feedback by a rubric. The eval of tutor measures the models by the same
+// code, so that what it admits is what the platform lets through. The checks only count: they read
+// no meaning, and what a word, a sentence and a quote are, this package decides.
 package words
 
 import (
@@ -49,9 +48,8 @@ const (
 )
 
 // HintWords is the most words R70 spec lets a hint have in a language, by the numbers of the
-// measurement (T76): 30 in Russian and 35 in English; 0, no limit, in a language the measurement
-// did not measure. A language is its tag, such as "en", "ru-RU" or "en_US", and its first subtag
-// counts.
+// measurement: 30 in Russian and 35 in English; 0, no limit, in a language the measurement did not
+// measure. A language is its tag, such as "en", "ru-RU" or "en_US", and its first subtag counts.
 func HintWords(language string) int {
 	switch base(language) {
 	case "ru":
@@ -79,8 +77,8 @@ func Hint(text, language, statement string) []Breach {
 	return HintForm(text, language, statement, HintWords(language))
 }
 
-// HintForm is Hint with a limit of words of its own, 0 for none: the measurement of epic E4 held its
-// hints to 30 words in either language, as its prompt said (R39).
+// HintForm is Hint with a limit of words of its own, 0 for none: the measurement of hints held them
+// to 30 words in either language, as its prompt said (R39).
 func HintForm(text, language, statement string, maxWords int) []Breach {
 	runes := []rune(norm.NFKC.String(text))
 	sentences, questions, n, _ := count(runes)
@@ -96,9 +94,9 @@ func HintForm(text, language, statement string, maxWords int) []Breach {
 
 // Correct is what the words after a correct answer break of their form, in the order of the
 // breaches; nil when they keep it: the praise of a step and one question on the technique that
-// helped (concepts 7, 10 spec), as option (2) of R109 sets it — exactly one question,
-// and it the last sentence, so that no more than one sentence of praise stands before it; 1 to
-// HintWords words of the language; and the letters of its script, as a hint's.
+// helped, as option (2) of R109 sets it — exactly one question, and it the last sentence, so that
+// no more than one sentence of praise stands before it; 1 to HintWords words of the language; and
+// the letters of its script, as a hint's.
 func Correct(text, language, statement string) []Breach {
 	return CorrectForm(text, language, statement, HintWords(language))
 }
@@ -150,7 +148,7 @@ func Feedback(text, read, language string) []Breach {
 }
 
 // FeedbackForm is Feedback with a limit of words of its own, 0 for none, against the learner's own
-// text, whatever it is, with the words the feedback has: the measurement of epic E4 held feedback to
+// text, whatever it is, with the words the feedback has: the measurement of essays held feedback to
 // 60 words, against the essay as it was written (R45). Its letters are read as written, not after
 // NFKC, as the measurement read them.
 func FeedbackForm(text, own, language string, maxWords int) (breaches []Breach, words int) {

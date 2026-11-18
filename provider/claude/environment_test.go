@@ -33,9 +33,9 @@ func (p *spans) Tracer(name string, opts ...trace.TracerOption) trace.Tracer {
 	return noop.NewTracerProvider().Tracer(name, opts...)
 }
 
-// TestNoEnvironment sets each variable the SDK reads (docs/sources.md, 1.17), and all of them
-// together, and holds that the call goes to Anthropic's address, with the key it was given, with
-// no header of the environment and no span.
+// TestNoEnvironment sets each variable the SDK reads, and all of them together, and holds that the
+// call goes to Anthropic's address, with the key it was given, with no header of the environment
+// and no span.
 func TestNoEnvironment(t *testing.T) {
 	dir := t.TempDir()
 	write := func(name, text string) string {

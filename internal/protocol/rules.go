@@ -9,20 +9,20 @@ import (
 	"github.com/altnovatrail/tutor/internal/lines"
 )
 
-// The numbers of the rules of boxes and of snapping (section 12), as the vectors repeat them. A
-// stroke's box is no wider and no taller than BoxLimit thousandths of a box of the page that holds
-// it, and its middle lies in the box widened by BoxMargin thousandths of the box's size. A box of a
-// model, widened by SnapMargin thousandths of the height of the digits drawn, takes a stroke when
-// it holds SnapAbove / SnapBelow of its points or more. The margin and the share are parameters of
-// eval, which eval may choose anew by its own data, and a new choice comes in a new package.
+// The numbers of the rules of boxes and of snapping, as the vectors repeat them. A stroke's box is
+// no wider and no taller than BoxLimit thousandths of a box of the page that holds it, and its
+// middle lies in the box widened by BoxMargin thousandths of the box's size. A box of a model,
+// widened by SnapMargin thousandths of the height of the digits drawn, takes a stroke when it holds
+// SnapAbove / SnapBelow of its points or more. The margin and the share are parameters of eval,
+// which eval may choose anew by its own data, and a new choice comes in a new package.
 const (
 	BoxMargin  = 120
 	BoxLimit   = 1600
 	SnapMargin = 250
 	SnapAbove  = 2
 	SnapBelow  = 3
-	// snapCeiling is the highest h_med the scale of a crop takes, in tenths: 100 units, the rule of
-	// the crop's (section 12), which internal/render follows too.
+	// snapCeiling is the highest h_med the scale of a crop takes, in tenths: 100 units, by the rule
+	// of the crop, which internal/render follows too.
 	snapCeiling = 1000
 )
 
@@ -39,11 +39,10 @@ func tenthsBox(points []*evalv1.FinalPoint) (b *evalv1.TenthsBox, ok bool) {
 	return b, b != nil
 }
 
-// BoxOf is the box of a workbook's page that a stroke of these points fills, by the rule of boxes
-// (section 12, "The boxes of a workbook"): its index in the page's boxes, in the task's order, or −1
-// when no box holds the stroke and it is the draft. A box holds the stroke when its size and its
-// middle do; of those, the stroke's is the one with the most of its points in the box widened, and
-// of those the earliest.
+// BoxOf is the box of a workbook's page that a stroke of these points fills, by the rule of boxes:
+// its index in the page's boxes, in the task's order, or −1 when no box holds the stroke and it is
+// the draft. A box holds the stroke when its size and its middle do; of those, the stroke's is the
+// one with the most of its points in the box widened, and of those the earliest.
 func BoxOf(points []*evalv1.FinalPoint, boxes []*evalv1.PageBox) int {
 	b, ok := tenthsBox(points)
 	if !ok {
@@ -94,13 +93,13 @@ func Table(strokes []*evalv1.FinalStroke, boxes []*evalv1.PageBox) []*evalv1.Fil
 	return out
 }
 
-// Snap is what a box of a model on a crop of the work takes (section 12, "Snapping"): the IDs of
-// the strokes it takes, ascending, and the box of their points in tenths; or none, nil and nil,
-// when it takes no stroke. The crop is one of the set, and the strokes are those its set was drawn
-// of. The box is widened first by SnapMargin thousandths of the crop's height drawn and takes a
-// stroke when it holds k of its n points, k ≥ 1 and SnapBelow × k ≥ SnapAbove × n. In eval, the
-// strokes are those a history of writing shows, never a sample's final geometry, whose points may
-// be other than those that came (the 2026-11-08 amendment to R94 of spec; R77).
+// Snap is what a box of a model on a crop of the work takes: the IDs of the strokes it takes,
+// ascending, and the box of their points in tenths; or none, nil and nil, when it takes no stroke.
+// The crop is one of the set, and the strokes are those its set was drawn of. The box is widened
+// first by SnapMargin thousandths of the crop's height drawn and takes a stroke when it holds k of
+// its n points, k ≥ 1 and SnapBelow × k ≥ SnapAbove × n. In eval, the strokes are those a history
+// of writing shows, never a sample's final geometry, whose points may be other than those that came
+// (R94 spec; R77).
 func Snap(set *evalv1.CropSet, crop *evalv1.Crop, box *observationv1.CropBox, strokes []*evalv1.FinalStroke) ([]int32, *evalv1.TenthsBox) {
 	B := set.GetInkBox()
 	H := min(int64(set.GetBundleMedian()), snapCeiling)

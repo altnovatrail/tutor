@@ -16,13 +16,12 @@ import (
 	"github.com/altnovatrail/tutor/words"
 )
 
-// RubricAssessment is an essay to assess by the criteria of its task's rubric (architecture 3.10,
-// "assessment by the rubric"), the second of the two calls of a task with a rubric (architecture 3.5; R75
-// spec): the text the reading of the essay wrote down, the statement of the task as its topic, the
-// criteria of the rubric in their order, in the module's explanation language, the presentation
-// style — only what of it changes the words (Д74 RUN.md spec) —, the language of the feedback by its
-// tag, and the route. The model sees the text in the block <essay> and the topic and the criteria in
-// the block of the task's data, and no picture.
+// RubricAssessment is an essay to assess by the criteria of its task's rubric, the second of the
+// two calls of a task with a rubric (R75 spec): the text the reading of the essay wrote down, the
+// statement of the task as its topic, the criteria of the rubric in their order, in the module's
+// explanation language, the presentation style — only what of it changes the words —, the language
+// of the feedback by its tag, and the route. The model sees the text in the block <essay> and the
+// topic and the criteria in the block of the task's data, and no picture.
 type RubricAssessment struct {
 	Route    Route
 	Text     string
@@ -34,7 +33,7 @@ type RubricAssessment struct {
 
 // CriterionMark is the assessment of a criterion: what in the essay the model judged it by, and
 // whether the essay meets it, nil when it has no assessment — a criterion the answer has no
-// judgement of, or two (architecture 3.5).
+// judgement of, or two.
 type CriterionMark struct {
 	Evidence string
 	Met      *bool

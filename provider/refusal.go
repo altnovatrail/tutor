@@ -10,7 +10,7 @@ import (
 )
 
 // Limit is why a provider refused a call for a limit: one only the owner of the key can lift, each
-// in its own way (docs/architecture.md, 3.7).
+// in its own way.
 type Limit string
 
 // The limits a provider refuses for.
