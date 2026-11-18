@@ -242,15 +242,15 @@ func TestPartsAgreement(t *testing.T) {
 	}
 }
 
-// tokensPerPiece is how many input tokens a piece of a journal's text took in the measurement of
-// E2: a word, a number, a sign or a line break. On the 30 sheets of its test, the input of form B
-// grew over that of form A by 111 tokens and 1.575 a piece of the journal, the same for each judge
-// (docs/measurements.md, 1.3). The input tokens of form B are counted again by T66.
+// tokensPerPiece is how many input tokens a piece of a journal's text took in the measurement on
+// sheets of lines (R24): a word, a number, a sign or a line break. On the 30 sheets of its test,
+// the input of form B grew over that of form A by 111 tokens and 1.575 a piece of the journal, the
+// same for each judge.
 const tokensPerPiece = 1.575
 
 var piece = regexp.MustCompile(`[A-Za-z]+|[0-9]+|\n|[^ A-Za-z0-9\n]`)
 
-// The journals of parts of the sheets of code (T59, T60): the golden texts of seed 1, and on seeds
+// The journals of parts of the sheets of code: the golden texts of seed 1, and on seeds
 // 1, 2 and 77, no coordinates and about 300 tokens at most.
 func TestPartsCodeSheets(t *testing.T) {
 	f, err := os.Open("../../eval/free-sheets.json")

@@ -16,13 +16,12 @@ import (
 	"github.com/altnovatrail/tutor/internal/runner"
 )
 
-// runAdmitWords applies the rule of admission of the words (T119; R86) to the judge's log of its
-// control phrases, -controls, and to logs of the hint on cases of the words, or of the words after a
-// correct answer on the cases of their set (T143), all of one kind by the call_kind of their records,
-// each with the judge's log beside it, .judge.jsonl, and prints in Markdown the stage it admits the
-// tutor to, or every reason why none, with the counts the targets read and the SHA-256 of every
-// file. It prints no words and nothing of any work, so that it may run on the logs of the author's
-// sheets.
+// runAdmitWords applies the rule of admission of the words (R86) to the judge's log of its control
+// phrases, -controls, and to logs of the hint on cases of the words, or of the words after a correct
+// answer on the cases of their set, all of one kind by the call_kind of their records, each with the
+// judge's log beside it, .judge.jsonl, and prints in Markdown the stage it admits the tutor to, or
+// every reason why none, with the counts the targets read and the SHA-256 of every file. It prints
+// no words and nothing of any work, so that it may run on the logs of the author's sheets.
 func runAdmitWords(args []string, stdout, stderr io.Writer) int {
 	const name = "tutor-eval admit-words"
 	flags := flag.NewFlagSet(name, flag.ContinueOnError)

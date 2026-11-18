@@ -183,10 +183,10 @@ func TestDrawOwnRefuses(t *testing.T) {
 	}
 }
 
-// The summaries and the runs read a directory of samples as the runner refuses them (section 13):
-// one with no markup, of another digest of its open view, or breaking a rule of sample-check is
-// named with its reason, and a run asks of the others; one off its file, or not drawn, stops a run;
-// samples of two seeds stop both; and other files are named and not read.
+// The summaries and the runs read a directory of samples as the runner refuses them: one with no
+// markup, of another digest of its open view, or breaking a rule of sample-check is named with its
+// reason, and a run asks of the others; one off its file, or not drawn, stops a run; samples of two
+// seeds stop both; and other files are named and not read.
 func TestDrawnRefusals(t *testing.T) {
 	dir := copied(t, drawnOf(t, theWorkbook))
 	edit(t, filepath.Join(dir, "page-01.json"), func(o map[string]any) { delete(o, "markup") })

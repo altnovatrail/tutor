@@ -12,14 +12,12 @@ import (
 )
 
 // The banks of tasks, as seen from this package's directory, where go test runs: the bank of the
-// reading measurement (docs/architecture.md, section 3.1) and the bank of epic E4's free-form
-// writing (section 3.4).
+// reading measurement and the bank of free-form writing.
 const (
 	measurementBank = "../../eval/bank.json"
 	freeBank        = "../../eval/free-bank.json"
 )
 
-// readBank reads a bank of this repository.
 func readBank(t *testing.T, path string) *sample.Bank {
 	t.Helper()
 	data, err := os.ReadFile(path)
@@ -56,8 +54,8 @@ func tasksOf(bank *sample.Bank) []string {
 	return tasks
 }
 
-// TestMeasurementBank checks that the measurement's bank holds what the sheet plan,
-// docs/sheets.md, names: these ten tasks of these kinds.
+// TestMeasurementBank checks that the measurement's bank holds what its sheet plan names: these ten
+// tasks of these kinds.
 func TestMeasurementBank(t *testing.T) {
 	bank := checkedBank(t, measurementBank, 10)
 	want := []string{
@@ -71,8 +69,7 @@ func TestMeasurementBank(t *testing.T) {
 }
 
 // TestFreeBank checks that the bank of free-form writing holds the six free solutions of the
-// board's pilot: two on a number line, two with a drawing and two with the working at the side
-// (RUN.md, T52).
+// board's pilot: two on a number line, two with a drawing and two with the working at the side.
 func TestFreeBank(t *testing.T) {
 	bank := checkedBank(t, freeBank, 6)
 	want := []string{
@@ -86,10 +83,9 @@ func TestFreeBank(t *testing.T) {
 }
 
 // TestBoardTasks checks that the board's tasks are, in this order, its first five, which are in
-// the measurement's bank, and then the bank of free-form writing, as docs/architecture.md,
-// section 3.3, numbers them: tasks 6 to 11 are the free-form ones. Each is its copy in one of the
-// two banks, under the same ID, so a model judging it is told the same statement, key and
-// solution on the board and in a measurement.
+// the measurement's bank, and then the bank of free-form writing: tasks 6 to 11 are the free-form
+// ones. Each is its copy in one of the two banks, under the same ID, so a model judging it is told
+// the same statement, key and solution on the board and in a measurement.
 func TestBoardTasks(t *testing.T) {
 	banks := []*sample.Bank{readBank(t, measurementBank), readBank(t, freeBank)}
 	want := []string{"equation-1", "equation-2", "chain-1", "chain-2", "posts"}
@@ -122,9 +118,9 @@ func TestBoardTasks(t *testing.T) {
 	}
 }
 
-// TestTraps checks the rule of docs/architecture.md, section 3.1, across both banks: one mistake
-// has one trap ID and one description, as a module's trap does (concepts 7 in spec). The same ID
-// with another description fails, and so does the same description under another ID.
+// TestTraps checks across both banks that one mistake has one trap ID and one description, as a
+// module's trap does. The same ID with another description fails, and so does the same description
+// under another ID.
 func TestTraps(t *testing.T) {
 	byID, byDescription := make(map[string]string), make(map[string]string)
 	for _, path := range []string{measurementBank, freeBank} {

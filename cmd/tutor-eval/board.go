@@ -28,8 +28,7 @@ const (
 	openAIKeyVar    = "TUTOR_OPENAI_API_KEY"
 )
 
-// The page starts as the board asked before it offered a choice: Claude Opus 5.5 at high effort
-// (R19).
+// The page starts with Claude Opus 5.5 at high effort ticked (R19).
 const (
 	startModel  = "claude-opus-5-5"
 	startEffort = "high"
@@ -59,8 +58,8 @@ func choices(getenv func(string) string, stderr io.Writer) []board.Choice {
 }
 
 // The folders at the root of tutor that its .gitignore ignores. samples holds the author's
-// handwriting, and no agent opens it (R05). synthetic holds what code draws and the runs on it,
-// with no handwriting, and agents work with it (R28).
+// handwriting: agents may read it, and nothing of it goes into git (R05; R32). synthetic holds what
+// code draws and the runs on it, with no handwriting, and agents work with it (R28).
 const (
 	samplesFolder   = "samples"
 	syntheticFolder = "synthetic"
@@ -115,8 +114,8 @@ func within(base, path string) bool {
 }
 
 // The directories each mode of the board writes to by default, in the samples folder at the root
-// of tutor, which git ignores (R05). The sheets are samples of the protocol since T105, beside the
-// files of tutor-sample v0 that the record mode saved before, in samples/sheets (R75).
+// of tutor, which git ignores (R05). The sheets are samples of the protocol, beside the files of
+// tutor-sample v0 in samples/sheets (R75).
 const (
 	boardDir  = samplesFolder + "/board"
 	sheetsDir = samplesFolder + "/sheets-v1"

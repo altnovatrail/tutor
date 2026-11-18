@@ -16,8 +16,8 @@ import (
 	"github.com/altnovatrail/tutor/internal/synth"
 )
 
-// v0File is a sheet as the record mode saved it until T105, a file of tutor-sample v0: every point
-// with the pressure given.
+// v0File is a sheet as a file of tutor-sample v0, which convert takes: every point with the
+// pressure given.
 func v0File(t *testing.T, s *sample.Sample, pressure float64) []byte {
 	t.Helper()
 	data, err := json.Marshal(s)
@@ -41,8 +41,8 @@ func v0File(t *testing.T, s *sample.Sample, pressure float64) []byte {
 }
 
 // v0Sheets writes, under root, the synthetic bank and the plan of the synthetic sheets, and a
-// directory of their sheets of tutor-sample v0 as the record mode saved them, written by the author
-// with a mouse, but for sheet 2, drawn by code from the seed 1, with the split and a file of notes.
+// directory of their sheets of tutor-sample v0, written by the author with a mouse, but for sheet
+// 2, drawn by code from the seed 1, with the split and a file of notes.
 // It returns the directory and the flags of the bank and the plan.
 func v0Sheets(t *testing.T, root string) (string, []string) {
 	t.Helper()

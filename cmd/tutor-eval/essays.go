@@ -14,11 +14,11 @@ import (
 	"github.com/altnovatrail/tutor/internal/synth"
 )
 
-// essaysFile is the file of the essays (T82).
+// essaysFile is the file of the essays.
 const essaysFile = "eval/essays.json"
 
 // runEssays checks the essays, reads the samples of them that tutor-eval draw drew, held to the rules
-// of sections 11 and 12 and refused as the runner refuses them (R71), and prints their summary: the
+// of the protocol and refused as the runner refuses them (R71), and prints their summary: the
 // essays and their parts, the criteria each part leaves unmet, the samples read, refused and off
 // their file, and of the essays read their words, sentences and lines and the crops of their pages
 // at 32 px, cut from their samples' strokes.

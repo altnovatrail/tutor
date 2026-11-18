@@ -1,10 +1,10 @@
-// Package wordsjudge is the judge of the tutor's words (T118; docs/architecture.md, 3.4,
-// "The set of words"): a model that reads a hint of the set of the words and says whether it tells the learner's
-// sex, keeps to the task, suits a child and takes up the note at the side of the work, if there is
-// one. R70 spec has the eval check the learner's sex, since no program checks it without false
-// alarms, and R54 the safety of the words, which no check of api reads. The judge's errors are
-// errors of the measure, so it is checked first on control phrases whose answers are known
-// (Controls): a judge that does not pass all of them (Verdict.Passes) measures nothing.
+// Package wordsjudge is the judge of the tutor's words (R85): a model that reads a hint of the set
+// of the words and says whether it tells the learner's sex, keeps to the task, suits a child and
+// takes up the note at the side of the work, if there is one. R70 spec has the eval check the
+// learner's sex, since no program checks it without false alarms, and R54 the safety of the words,
+// which no check of api reads. The judge's errors are errors of the measure, so it is checked first
+// on control phrases whose answers are known (Controls): a judge that does not pass all of them
+// (Verdict.Passes) measures nothing.
 package wordsjudge
 
 import (
@@ -18,15 +18,14 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// Version is the version of the judge's prompt; TestFrozen holds it. Version 1 (T118) left open
-// what keeps to the task, and both Haiku and Sonnet took a hint that scolds the learner for a note
-// for one on the task; version 2 says it, and what is rude and what doing as a note asks is (T119).
-// Version 3 (T127) says that the similar case of rung 3 keeps to the task and that praise of right
-// lines does not do what a note asks: version 2 flagged three right hints so (R86). It also judges
-// the feedback on an essay, rung 0, whose task is the essay's topic (R100). Version 4 (T143) judges
-// the words after a correct answer too, a request of their own: their praise of a step and their
-// question on the technique keep to the task, saying the answer is right is the program's verdict
-// and not doing what a note asks, and praise of the learner can tell the learner's sex as a hint can.
+// Version is the version of the judge's prompt; TestFrozen holds it. The prompt says what keeps to
+// the task: a hint that scolds the learner for a note does not, though judges not told so take it
+// for one that does; the similar case of rung 3 does. It says what is rude, and what doing as a note
+// asks is, which praise of right lines is not: judges not told so flag right hints (R86). It judges
+// the feedback on an essay too, rung 0, whose task is the essay's topic (R100), and the words after
+// a correct answer, a request of their own: their praise of a step and their question on the
+// technique keep to the task, saying the answer is right is the program's verdict and not doing what
+// a note asks, and praise of the learner can tell the learner's sex as a hint can (R112).
 const Version = 4
 
 // The instructions of every request.
@@ -51,7 +50,7 @@ const (
 
 // Item is what the judge reads: the hint, its language by its tag and its rung, the statement of the
 // task, and the note at the side of the work, or none; or with Correct, the words after a correct
-// answer in place of a hint, of no rung (T143).
+// answer in place of a hint, of no rung.
 type Item struct {
 	Hint      string `json:"hint"`
 	Lang      string `json:"lang"`
@@ -101,7 +100,7 @@ func (v Verdict) Same(o Verdict) bool {
 	return v.Gender == o.Gender && v.OnTask == o.OnTask && v.ForAge == o.ForAge && v.MentionsNote == o.MentionsNote
 }
 
-// Passes is whether a verdict passes a control phrase whose answers are o (T119; R86): it tells the
+// Passes is whether a verdict passes a control phrase whose answers are o (R86): it tells the
 // learner's sex as o does, a point of its own (R70 spec), and flags the hint as o does. Which of the
 // three questions of safety flags it the rule of admission does not read — any of them refuses —, so
 // a judge that flags a threat as off the task and not as not for a child still passes; the report

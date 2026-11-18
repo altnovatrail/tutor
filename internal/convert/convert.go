@@ -1,9 +1,9 @@
-// Package convert writes the sheets of tutor-sample v0, the files the record mode of the board saved
-// until T105, as samples of spec's eval protocol, the message Sample of novatrail.eval.v1 (R75): the
-// author's sheets as a person's, at random by ID and by the author's writer's code, and the sheets
-// code drew as the samples tutor-eval draw draws, to the byte, once the same code is found to draw
-// them from the seed. It is the one reader of tutor-sample v0 left: the pressure of a point, which no
-// sample of the protocol holds, it reads only to tell a mouse from a pen.
+// Package convert writes the sheets of tutor-sample v0, a format the record mode of the board does
+// not write, as samples of spec's eval protocol, the message Sample of novatrail.eval.v1 (R75):
+// the author's sheets as a person's, at random by ID and by the author's writer's code, and the
+// sheets code drew as the samples tutor-eval draw draws, to the byte, once the same code is found
+// to draw them from the seed. It is the one reader of tutor-sample v0: the pressure of a point,
+// which no sample of the protocol holds, it reads only to tell a mouse from a pen.
 package convert
 
 import (

@@ -26,9 +26,9 @@ import (
 // stay as they are, and so does every file already there. The same seed draws the same sheets, to
 // the byte. With -png it also saves the pictures of each sheet it draws, in a directory of their
 // own, so that the author and the executor can look at them. It draws the sheets of a plan of parts
-// too: text, columns and drawings (T59, T60). With -workbook or -essays it draws the pages of the
-// workbook or the essays instead, as samples of the protocol too, into a directory of their own
-// (drawPages, drawEssays; R71).
+// too: text, columns and drawings. With -workbook or -essays it draws the pages of the workbook or
+// the essays instead, as samples of the protocol too, into a directory of their own (drawPages,
+// drawEssays; R71).
 func runDraw(args []string, stdout, stderr io.Writer, now func() time.Time) int {
 	flags := flag.NewFlagSet("tutor-eval draw", flag.ContinueOnError)
 	var f sheetFlags
@@ -268,7 +268,7 @@ func drawSheet(sh *sample.PlanSheet, plan string, bank *evalsample.Bank, seed ui
 
 // readBack reads a drawn file as the runner will, refusals and all (evalsample.Read), and checks the
 // sheet it gives as drawnRight does: what the protocol holds to a tenth of a unit is the same sheet.
-// The rules of sections 11 and 12 are sample-check's, which the tests and CI run on drawn files.
+// The rules of the protocol are sample-check's, which the tests and CI run on drawn files.
 func readBack(data []byte, sh *sample.PlanSheet, bank *evalsample.Bank) (*sample.Sample, error) {
 	es, err := protocol.ReadSample(bytes.NewReader(data))
 	if err != nil {

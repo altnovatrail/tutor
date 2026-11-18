@@ -23,10 +23,10 @@ import (
 
 // judgeCap is the cap of a run of the judge of the words by default, in US dollars: the hints of a
 // run of the set on one configuration, 330, at less than a cent each by Sonnet at low, the judge
-// that passed its control phrases (T119; R86).
+// that passed its control phrases (R86).
 const judgeCap = 3.0
 
-// runJudgeWords runs the judge of the tutor's words (T118): on the hints of a log of the set of the
+// runJudgeWords runs the judge of the tutor's words: on the hints of a log of the set of the
 // words, -log, into a log beside it under its name and .judge.jsonl, or on the control phrases of
 // -controls, into a log in synthetic/runs, each by the judge -judge, Sonnet at low by default. As run
 // does, it first says what it asks and what it is expected to cost, and starts once the author types

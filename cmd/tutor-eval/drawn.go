@@ -42,8 +42,7 @@ func drawnDir(file string) string {
 // (drawnDir); it refuses an empty one, and one in the work tree outside synthetic: the samples are of
 // code's writing, and the samples folder is for the author's. draw may write one out of the work
 // tree, but the summaries and the runs read one in synthetic alone, since sample-check, which they
-// hold the samples to, takes the repository's paths alone (section 11 of spec's text of the
-// contracts), and says so.
+// hold the samples to, takes the repository's paths alone, and says so.
 func drawnDirOf(dir, file string, set bool) (string, error) {
 	if !set {
 		dir = drawnDir(file)
@@ -68,7 +67,7 @@ func seedOf(seeds []string, dir string) (uint64, error) {
 }
 
 // readPages reads the file of the workbook and the directory of its pages' samples, held to the
-// rules of sections 11 and 12 by check, and the seed they were drawn from.
+// rules of the protocol by check, and the seed they were drawn from.
 func readPages(file, dir string, check samplecheck.Check) (*evalsample.Workbook, *evalsample.Dir[evalsample.Page], uint64, error) {
 	w, err := evalsample.ReadWorkbook(file)
 	if err != nil {
@@ -231,7 +230,7 @@ func drawPage(pg *sample.WorkbookPage, w *evalsample.Workbook, f drawFlags) ([]b
 
 // drawnBack writes a drawn sample and reads its bytes back as the runner will, refusals and all,
 // and holds what it reads to its file: a sample the runner would refuse, or that is off its file, is a
-// fault of the drawing, never saved. The rules of sections 11 and 12 are sample-check's, which the
+// fault of the drawing, never saved. The rules of the protocol are sample-check's, which the
 // tests and CI run on drawn files.
 func drawnBack[T any](es *evalv1.Sample, read func(*evalv1.Sample) (*T, *evalsample.Refusal, error), off func(*evalv1.Sample) []string) ([]byte, *T, error) {
 	data, err := protocol.MarshalSample(es)

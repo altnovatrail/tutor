@@ -4,10 +4,10 @@
 // alone, as a device would, without the markup.
 //
 // A journal comes in two versions, each with its own words. A journal of lines (Of), version 1,
-// is that of the measurement of E2: its lines are those lines.Group finds among all the strokes,
-// the erased ones too, numbered from the top of the sheet down. A journal of parts (OfParts),
-// version 2, is that of free writing (T63): its parts are the stroke groups lines.Groups finds,
-// numbered in the order they were first written, each named by where it stands on the sheet.
+// is for sheets of lines: its lines are those lines.Group finds among all the strokes, the erased
+// ones too, numbered from the top of the sheet down. A journal of parts (OfParts), version 2, is
+// that of free writing: its parts are the stroke groups lines.Groups finds, numbered in the order
+// they were first written, each named by where it stands on the sheet.
 //
 // The journal tells in which order the lines or the parts were written, the long pauses, how many
 // strokes each erasure took and from which, and the returns to those written before. It holds no
@@ -401,9 +401,9 @@ func list(items []string) string {
 // markup's lines hold, which are all on the sheet: an erased stroke, an inscription or a stray mark
 // the journal puts on a line does not count against it. The markup of a sheet starts from the lines
 // the board proposes with lines.Group (R25), so the agreement is higher than it would be with a
-// markup made apart, the more so on sheets saved before the board could edit the lines (T51).
-// Of a journal of parts, it compares the parts with the parts of the markup, which the board
-// proposes from lines.Groups (T61).
+// markup made apart, the more so on a sheet whose markup is the proposal unedited. Of a journal of
+// parts, it compares the parts with the parts of the markup, which the board proposes from
+// lines.Groups.
 type Agreement struct {
 	Marked int `json:"marked"`
 	Same   int `json:"same"`

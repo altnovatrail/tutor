@@ -13,7 +13,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/sheets"
 )
 
-// The files of the set of the words (T118).
+// The files of the set of the words.
 const (
 	wordsBank  = "../../eval/lines-gen-1-bank.json"
 	wordsFrom  = "../../eval/lines-gen-1.json"

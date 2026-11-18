@@ -75,9 +75,8 @@ func TestHintOverSets(t *testing.T) {
 }
 
 // The author's three sheets are all correct, so a hint has nothing to ask of them: the run is
-// refused before the question. They stand in as the board saves the author's, in tutor-sample v0
-// until T105: their plan marks each whole solution as the answer, which the author's hand writes and
-// no code draws.
+// refused before the question. They stand in as the board saves the author's: their plan marks
+// each whole solution as the answer, which the author's hand writes and no code draws.
 func TestHintWithoutMistakes(t *testing.T) {
 	dir := filepath.Join(t.TempDir(), "free")
 	args := []string{"-dir", dir, "-bank", freeBank, "-plan", authorPlan}

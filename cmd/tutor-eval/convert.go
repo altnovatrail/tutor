@@ -32,7 +32,7 @@ const pending = ".converting-"
 // draws them from the seed. A sheet the new directory holds already is kept as it is, so a second
 // run writes nothing; the split is copied once, and it names the same files. The old files are not
 // touched. Nothing of the author's goes from samples to synthetic or anywhere else (R05, R28). Each
-// sample is held to the rules of sections 11 and 12 by sample-check before it gets its name, when
+// sample is held to the rules of the protocol by sample-check before it gets its name, when
 // the new directory is in the work tree. The summary names each sheet by its number, its writer, its
 // pointer and its outcome, and nothing of the handwriting.
 func runConvert(args []string, stdout, stderr io.Writer) int {
