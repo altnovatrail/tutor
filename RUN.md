@@ -72,7 +72,7 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T173 | Без истории: architecture 3.2–3.4 | Claude | — | T170 |
 | [x] | T174 | Без истории: architecture 3.5–3.9 | Claude | — | T170 |
 | [x] | T175 | Без истории: architecture 3.10–3.12 и 4 | Claude | — | T170 |
-| [ ] | T176 | Комментарии: `internal/report`, `internal/runner`, `internal/measure` | Claude | — | T170 |
+| [x] | T176 | Комментарии: `internal/report`, `internal/runner`, `internal/measure` | Claude | — | T170 |
 | [ ] | T177 | Комментарии: `cmd/tutor-eval` и судьи, журнал, конвертер | Claude | — | T170 |
 | [ ] | T178 | Комментарии: `internal/sample`, `internal/evalsample`, `internal/synth` | Claude | — | T170 |
 | [ ] | T179 | Комментарии: генераторы, рисование, листы и задачи | Claude | — | T170 |
@@ -80,13 +80,6 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [ ] | T181 | Комментарии: доска, подсказка, чтение, `correct`, CI и контейнер | Claude | — | T170 |
 
 **Порядок:** T171–T181 независимы друг от друга и идут в любом порядке, по одной; T172–T175 правят один файл, разные разделы. Строка 7.32 COORDINATION.md spec ждёт всех.
-
-#### T176. Комментарии: `internal/report`, `internal/runner`, `internal/measure`
-
-- **Цель:** комментарии кода этих пакетов, тестов тоже, — по R160 spec, «Comments».
-- **Сделать:** по «Комментариям» описания эпика.
-- **Как проверить:** `just lint`, `just ci-test`; `just -f spec/justfile docs-check-repo`; `/code-review high`.
-- **Разделы:** R160 spec; R32 spec; описание эпика E19.
 
 #### T177. Комментарии: `cmd/tutor-eval` и судьи, журнал, конвертер
 
