@@ -30,7 +30,7 @@ func TestEssayLines(t *testing.T) {
 	}
 }
 
-// Every essay of the measurement, drawn with seed 1, is what it was: the hash of all their strokes
+// Every essay of the measurement, drawn with seed 1, is fixed: the hash of all their strokes
 // holds them on every machine. The same seed draws the same essay, and another seed another one.
 // Each essay is written in lines of 28 to 40 characters, which give back its title and its text, and
 // every point lies inside the page of 1000 × 1400.

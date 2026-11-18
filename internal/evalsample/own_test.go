@@ -252,8 +252,8 @@ func TestOfPageRefuses(t *testing.T) {
 	}
 }
 
-// ReadPage refuses a page as section 13 has the runner refuse one, and gives ErrNotPage for a sample
-// that is no page with its history.
+// ReadPage refuses a page as the protocol has the runner refuse one, and gives ErrNotPage for a
+// sample that is no page with its history.
 func TestReadPageRefuses(t *testing.T) {
 	w := readWorkbook(t)
 	pg := &w.Workbook.Pages[0]
@@ -323,8 +323,8 @@ func TestPageDifferences(t *testing.T) {
 	}
 }
 
-// ReadEssay refuses an essay as section 13 has the runner refuse one, and gives ErrNotEssay for a
-// sample that is no essay on a sheet with its history.
+// ReadEssay refuses an essay as the protocol has the runner refuse one, and gives ErrNotEssay for
+// a sample that is no essay on a sheet with its history.
 func TestReadEssayRefuses(t *testing.T) {
 	f := readEssays(t)
 	e := &f.Essays.Essays[15]

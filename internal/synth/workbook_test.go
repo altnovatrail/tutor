@@ -102,8 +102,8 @@ func TestPageAgain(t *testing.T) {
 	}
 }
 
-// The pages of the workbook with seed 1 are what the measurement reads (T80): their hash holds them,
-// on every machine (see the package's comment), their points without pressure since T105 (R75).
+// The pages of the workbook with seed 1 are what the measurement reads: their hash holds them, on
+// every machine (see the package's comment), their points without pressure (R75).
 func TestPagesAsBefore(t *testing.T) {
 	wb := theWorkbook(t)
 	h := sha256.New()

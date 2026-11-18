@@ -8,15 +8,15 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// A sheet of a plan of parts (T56) is written so that a device groups its strokes into its parts
-// (R30 in docs/decisions.md): each part goes on without a pause to think — at most about 0.6 s
-// between characters and 1.1 s between the rows of a column — and the next one comes after one,
-// so that no group holds two parts and a part without its planned erasure is one group. A fix
-// written after a pause may be a group of its own, as on a device.
+// A sheet of a plan of parts is written so that a device groups its strokes into its parts (R30):
+// each part goes on without a pause to think — at most about 0.6 s between characters and 1.1 s
+// between the rows of a column — and the next one comes after one, so that no group holds two
+// parts and a part without its planned erasure is one group. A fix written after a pause may be a
+// group of its own, as on a device.
 const (
 	// maxAdvance is the widest step from one character to the next, in sheet units: a colon before
 	// a space then stays within a group's 50 units of the next character, which a larger hand of
-	// E2's sheets does not keep (R30).
+	// the sheets of the plan of lines does not keep (R30).
 	maxAdvance = 32
 	// partPause is the least pause before a part, in milliseconds: longer than a group's 2 s.
 	partPause = 2100

@@ -8,7 +8,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// Every character of the text of the free-form plans and of the set of the words (T118), and of the
+// Every character of the text of the free-form plans and of the set of the words, and of the
 // text their planned erasures take away, has its strokes in the font, and so has every small Russian
 // letter: none of them comes out a squiggle.
 func TestPlansHaveTheirLetters(t *testing.T) {

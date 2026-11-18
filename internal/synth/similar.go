@@ -8,15 +8,14 @@ import (
 )
 
 // SimilarShift is how far toward the digit of its pair the digit of a sheet of the scenario
-// "similar-digits" is drawn: 0 is the digit as the font has it, 1 the digit of its pair. The
-// development of the reading set it on 2026-10-28: the largest of 0.5, 0.4, 0.3, 0.2 and 0.1 at
-// which Opus without a key read 11 of the 12 sheets of the plan, drawn with the seed 2, right (T73;
-// R36, amendment of 2026-10-28). The near set is drawn and split with it, and is not drawn again.
+// "similar-digits" is drawn: 0 is the digit as the font has it, 1 the digit of its pair. It is
+// the largest share of those tried, 0.5 down to 0.1, at which Opus without the key read 11 of the
+// 12 sheets of the plan right, drawn with the seed 2 (R36). The near set is drawn and split with it, and is not drawn again.
 const SimilarShift = 0.1
 
 // Similar is the digit of a digit's pair, and false for a digit of no pair or no digit at all: the
 // pairs of digits a hand writes alike, each the other's (sample.PairOf), so the digit of a key
-// and the digit of its near key, which a sheet of the near set mixes (T70).
+// and the digit of its near key, which a sheet of the near set mixes.
 func Similar(r rune) (rune, bool) { return sample.PairOf(r) }
 
 // SimilarDigit is the digit a sheet of the scenario "similar-digits" draws shifted in its answer

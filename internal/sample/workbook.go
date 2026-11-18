@@ -14,11 +14,10 @@ import (
 // WorkbookFormat is the name a file of the workbook's pages declares in its "format" field.
 const WorkbookFormat = "tutor-workbook"
 
-// Workbook is the synthetic pages of the workbook (T78; docs/architecture.md, 3.4,
-// "Workbook"): each a page of items, an item a line of text with boxes, as the module format writes
-// an item of a workbook (spec's format, section 14), and for each box its check and what code writes
-// in it by hand, and why. Code draws the pages in memory from a seed (synth.PageOf): no file of a page
-// is written.
+// Workbook is the synthetic pages of the workbook: each a page of items, an item a line of text
+// with boxes, as the module format writes an item of a workbook, and for each box its check and
+// what code writes in it by hand, and why. Code draws the pages in memory from a seed
+// (synth.PageOf): no file of a page is written.
 type Workbook struct {
 	Format  string         `json:"format"`
 	Version *int           `json:"version"`
@@ -29,7 +28,7 @@ type Workbook struct {
 type WorkbookPage struct {
 	// Number is the page's place in the workbook, from 1.
 	Number int `json:"number"`
-	// Part is the part of the measurement the page belongs to: PartDev or PartTest (T80).
+	// Part is the part of the measurement the page belongs to: PartDev or PartTest.
 	Part  string         `json:"part"`
 	Items []WorkbookItem `json:"items"`
 }
@@ -71,7 +70,7 @@ type WorkbookBox struct {
 	Fraction *FractionWriting `json:"fraction"`
 }
 
-// BoxCheck is the check of a box, as the module format gives it (spec's format, section 15): the
+// BoxCheck is the check of a box, as the module format gives it: the
 // kind, number, fraction or time; the key; the form of a fraction, nil for a number and a time; and
 // the trap values.
 type BoxCheck struct {
@@ -84,7 +83,7 @@ type BoxCheck struct {
 // CheckKind is the kind of a box's check.
 type CheckKind string
 
-// The check kinds of the workbook (R41 spec), and from format 0.4 a time of day (R111 spec).
+// The check kinds of the workbook (R41 spec), and a time of day (R111 spec).
 const (
 	KindNumber   CheckKind = "number"
 	KindFraction CheckKind = "fraction"
@@ -100,7 +99,7 @@ type TrapValue struct {
 // BoxScenario is what a box is written to test.
 type BoxScenario string
 
-// The scenarios of a box (docs/architecture.md, 3.4, "Workbook").
+// The scenarios of a box.
 const (
 	// BoxCorrect: the key's value, written plainly.
 	BoxCorrect BoxScenario = "correct"
@@ -134,7 +133,7 @@ const (
 	Inline FractionWriting = "inline"
 )
 
-// similarDigits are the pairs of digits a hand writes alike, each the other's (T70; R36).
+// similarDigits are the pairs of digits a hand writes alike, each the other's (R36).
 var similarDigits = map[rune]rune{'1': '7', '7': '1', '4': '9', '9': '4', '3': '8', '8': '3', '5': '6', '6': '5'}
 
 // PairOf is the digit of a digit's pair, and false for a digit of no pair or no digit at all.
@@ -143,12 +142,12 @@ func PairOf(r rune) (rune, bool) {
 	return s, ok
 }
 
-// Mirrorable are the digits a child writes mirrored (docs/measurements.md, 1.4).
+// Mirrorable are the digits a child writes mirrored.
 const Mirrorable = "2579"
 
 // writtenValue is how a value of a number or a fraction is written in a box: digits, or a simple
 // fraction of them; and writtenTime how a time is, hours, ":" and minutes, in the notation of a time
-// of the format (spec's format, section 15; R111 spec), so that a trap value can hold 5:60.
+// of the format (R111 spec), so that a trap value can hold 5:60.
 var (
 	writtenValue = regexp.MustCompile(`^(0|[1-9][0-9]*)(/[1-9][0-9]*)?$`)
 	writtenTime  = regexp.MustCompile(`^[0-9]{1,2}:([0-9]{2}|[1-9][0-9]{2})$`)

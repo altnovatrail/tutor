@@ -5,7 +5,7 @@ import (
 	"slices"
 )
 
-// Bank is the bank of tasks the sheets solve, as a module's tasks are (concepts 6 and 7 in spec).
+// Bank is the bank of tasks the sheets solve, as a module's tasks are.
 type Bank struct {
 	Format  string `json:"format"`
 	Version *int   `json:"version"`
@@ -33,9 +33,8 @@ type Task struct {
 	FalseKeys []FalseKey `json:"false_keys"`
 }
 
-// TaskKind is the kind of a task, one of the measurement's three (docs/architecture.md, section
-// 3.1). No code checks the lines of any kind: the line check went with R19, and the markup says
-// where the first error is, whatever the kind (R24).
+// TaskKind is the kind of a task, one of the measurement's three. No code checks the lines of any
+// kind (R19): the markup says where the first error is, whatever the kind (R24).
 type TaskKind string
 
 // The kinds of task.
@@ -51,7 +50,7 @@ const (
 // TaskKinds lists every kind of task.
 var TaskKinds = []TaskKind{KindLinearEquation, KindCalculation, KindFreeSolution}
 
-// Trap is a typical mistake the task catches (concepts 7 in spec).
+// Trap is a typical mistake the task catches.
 type Trap struct {
 	ID          string `json:"id"`
 	Description string `json:"description"`

@@ -10,11 +10,11 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// A drawing of a plan of parts (T56) — a number line, a row of objects or a scheme of segments —
+// A drawing of a plan of parts — a number line, a row of objects or a scheme of segments —
 // is made of things with keys: the axis, a division, a label and the arc of a jump; a house, its
 // flag and its number; the label of a segment, a piece of it, the piece's label, the brace and the
 // brace's label. Each thing is drawn next to one drawn just before it, within a group's 2 s and 50
-// units, so that a drawing is one group of strokes (R30 in docs/decisions.md).
+// units, so that a drawing is one group of strokes (R30).
 //
 // An erasure in a drawing draws the figure as it was before the erasure — what stays first, and the
 // things to go last, so that what stays holds together without them — takes them away in one move

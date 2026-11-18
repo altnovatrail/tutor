@@ -8,7 +8,7 @@ import (
 )
 
 // latin are the letters of English text and the signs it takes besides those of the font, for the
-// essays of epic E4 (T81; T82), in the box of the font as the Cyrillic letters are: a capital takes
+// essays, in the box of the font as the Cyrillic letters are: a capital takes
 // the height of a digit, from 0 to 1; a small letter its lower part, from 0.45 down; a stem of b, d,
 // f, h, k and l rises to the top, that of t to 0.2, and a tail of g, j, p, q and y goes below the
 // line, down to 1.35. They are tutor's own strokes, drawn for these tests: no font of another's is
@@ -113,7 +113,7 @@ func spaced(h hand) hand {
 // when the lines are many, made smaller so that a line is at least 1.6 of its height below the one
 // before it and the tails of one line clear the capitals of the next. The lines are laid out and
 // paused between as on a sheet of the plan (nextLine). It returns the strokes in the order they
-// were written. The essays of epic E4 are drawn with it (T81; T82). It panics on no lines, and on a
+// were written. The essays are drawn with it. It panics on no lines, and on a
 // sheet the strokes of a sample cannot lie on.
 func Text(lines []string, sheet sample.Sheet, seed uint64) []sample.Stroke {
 	return textOf(lines, sheet, seed, 1)

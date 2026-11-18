@@ -16,7 +16,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/synth"
 )
 
-// A person's ID is 26 lowercase letters and digits at random, which section 11 takes, and never
+// A person's ID is 26 lowercase letters and digits at random, which the protocol takes, and never
 // the same twice.
 func TestNewID(t *testing.T) {
 	seen := map[string]bool{}

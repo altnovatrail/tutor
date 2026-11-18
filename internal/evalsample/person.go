@@ -15,21 +15,21 @@ import (
 	"github.com/altnovatrail/tutor/internal/newfile"
 )
 
-// What a person's sample takes at random (section 11): its ID, and the writer's code that links a
+// What a person's sample takes at random: its ID, and the writer's code that links a
 // person's samples with each other. The samples page of canvas makes both; the record mode of the
 // board and the converter of the author's sheets make them as it would (R75).
 const (
-	// codeLength is the length of a writer's code made here, within section 11's 6 to 16.
+	// codeLength is the length of a writer's code made here, within the protocol's 6 to 16.
 	codeLength = 12
 	// codeAlphabet is what a writer's code is made of: digits and capital Latin letters.
 	codeAlphabet = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 )
 
-// codePattern is a writer's code as section 11 has it.
+// codePattern is a writer's code as the protocol has it.
 var codePattern = regexp.MustCompile(`^[0-9A-Z]{6,16}$`)
 
-// lowBase32 writes 16 random bytes as 26 lowercase letters and digits, which an ID of section 11
-// takes.
+// lowBase32 writes 16 random bytes as 26 lowercase letters and digits, which an ID of the
+// protocol takes.
 var lowBase32 = base32.StdEncoding.WithPadding(base32.NoPadding)
 
 // NewID is a person's sample's ID, at random: 128 bits in 26 lowercase Latin letters and digits.
@@ -43,8 +43,8 @@ func NewID() (string, error) {
 
 // WriterCodeAt is the writer's code kept in the file at path: the author's, which every sample of
 // theirs names, the record mode's and the converter's alike. A file that is not there yet is made,
-// with a code at random, readable by its owner alone; a file that holds no code of section 11 is an
-// error, never written over, since the samples already saved name the code it held.
+// with a code at random, readable by its owner alone; a file that holds no code of the protocol is
+// an error, never written over, since the samples already saved name the code it held.
 func WriterCodeAt(path string) (string, error) {
 	data, err := os.ReadFile(path)
 	if errors.Is(err, fs.ErrNotExist) {

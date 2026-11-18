@@ -51,7 +51,7 @@ func TestReadEssays(t *testing.T) {
 
 // The essays of the measurement, eval/essays.json, read and pass the check: 20 essays, the first
 // five of the development. Each criterion is unmet in one essay of the development and in four of the
-// test, and one essay of the development and three of the test meet them all (T82).
+// test, and one essay of the development and three of the test meet them all.
 func TestTheEssays(t *testing.T) {
 	f, err := os.Open("../../eval/essays.json")
 	if err != nil {

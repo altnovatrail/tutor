@@ -3,7 +3,7 @@ package sample
 import "encoding/json"
 
 // A sheet of a plan of version PlanParts is made of parts: lines of text, drawings and notes at the
-// side, as a free-form solution is written (T56). In memory such a sheet keeps its parts in Parts
+// side, as a free-form solution is written. In memory such a sheet keeps its parts in Parts
 // and their texts in Lines, so that whatever reads the lines of a plan sheet — the check of its
 // markup, sheets.Differences, the record mode's proposal — reads the parts in their order.
 
@@ -77,7 +77,7 @@ type Row struct {
 	Numbers bool   `json:"numbers"`
 }
 
-// ObjectHouse is the one object a row holds so far: a house, as in the task of the row of houses.
+// ObjectHouse is the one object a row holds: a house, as in the task of the row of houses.
 const ObjectHouse = "house"
 
 // Scheme is a scheme of segments, one under another from the top, and the label of the brace that
@@ -129,7 +129,7 @@ func (pl *Plan) HasParts() bool {
 	return pl != nil && pl.Version != nil && *pl.Version == PlanParts
 }
 
-// Layout is the layout of a sheet of free writing (docs/measurements.md, 3.3): the task sets it,
+// Layout is the layout of a sheet of free writing: the task sets it,
 // and a drawing or a column on the sheet shows it.
 type Layout string
 
@@ -162,7 +162,7 @@ func (sh *PlanSheet) Layout() Layout {
 }
 
 // Region is where a part of a sheet stands, as the measurement of free writing tells the place of
-// the first error and of the planned erasure (T54): in a drawing, in the text of the main column,
+// the first error and of the planned erasure: in a drawing, in the text of the main column,
 // or at the side.
 type Region string
 

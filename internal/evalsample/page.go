@@ -68,13 +68,13 @@ func PageTask(pg *sample.WorkbookPage) string { return string(task.Page(pg).ID) 
 var ErrNotPage = errors.New("evalsample: the sample is no page of a workbook with its history, and the runner of the workbook reads only those")
 
 // OfPage is a page of the workbook that internal/synth drew from the seed, as a sample of
-// measurement of the protocol, from an adult, with its history of writing (section 11): its strokes
+// measurement of the protocol, from an adult, with its history of writing: its strokes
 // numbered from 1 in the order they were written, box by box, their points to a tenth of a unit;
 // the page, synth.PageWidth × synth.PageHeight, with every box of the page in the task's order and
-// the filled ones, by the rule of boxes, each with its crops at each height of section 11; the task
-// of the page by its open view's digest (task.Page); and the markup the page was drawn with
-// (pageMarkup). A page whose boxes the rule of boxes does not give the strokes code wrote in them is
-// drawn wrong, and OfPage refuses it.
+// the filled ones, by the rule of boxes, each with its crops at each height the protocol names;
+// the task of the page by its open view's digest (task.Page); and the markup the page was drawn
+// with (pageMarkup). A page whose boxes the rule of boxes does not give the strokes code wrote in
+// them is drawn wrong, and OfPage refuses it.
 func OfPage(drawn *synth.Page, pg *sample.WorkbookPage, w *Workbook, seed uint64, id string) (*evalv1.Sample, error) {
 	ft := task.Page(pg)
 	digest, err := mkview.TaskDigest(ft)
@@ -147,7 +147,7 @@ func place(item, slot int) *observationv1.AnswerSlotPlace {
 	return &observationv1.AnswerSlotPlace{Item: int32(item), Slot: int32(slot)}
 }
 
-// pageMarkup is the markup of a page as its file writes it (section 11): the truth of every box, in
+// pageMarkup is the markup of a page as its file writes it: the truth of every box, in
 // the task's order, and the notes of the boxes measured apart. A blank box is blank; a digit written
 // mirrored gives no value a reader that reads right can give, and is ambiguous, with the note
 // mirrored; a value crossed out and written again beside it is the value left, with the note
@@ -190,7 +190,7 @@ type Page struct {
 }
 
 // ReadPage reads a sample of the protocol, which sample-check has found valid, as the page of the
-// workbook its task names. It refuses the sample, as section 13 has it, when:
+// workbook its task names. It refuses the sample, as the protocol has it, when:
 //   - it has no markup;
 //   - its task is not of the workbook: another source, a file of another digest, no such page, or an
 //     open view of another digest;
@@ -204,11 +204,10 @@ func ReadPage(es *evalv1.Sample, w *Workbook) (*Page, *Refusal, error) {
 }
 
 // ReadMarkedPage reads a sample of a page of a set of a capability, as canvas's synthetic samples
-// are (section 13 of spec's text of the contracts): a page whose values are its own, not those the
-// workbook's file writes in its boxes. It refuses the sample as ReadPage does, and reads a final
-// geometry as well as a history. Its Page is the file's page with each box written as the sample's
-// markup has it (markedPage), the checks and keys the file's: markup that the run of the workbook
-// cannot stand for is an error, not a refusal.
+// are: a page whose values are its own, not those the workbook's file writes in its boxes. It
+// refuses the sample as ReadPage does, and reads a final geometry as well as a history. Its Page is
+// the file's page with each box written as the sample's markup has it (markedPage), the checks and
+// keys the file's: markup that the run of the workbook cannot stand for is an error, not a refusal.
 func ReadMarkedPage(es *evalv1.Sample, w *Workbook) (*Page, *Refusal, error) {
 	return readPage(es, w, true)
 }

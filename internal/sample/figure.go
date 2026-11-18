@@ -180,7 +180,7 @@ func checkScheme(p *problems, path string, s Scheme) {
 }
 
 // checkLabel checks a label of a scheme: a number, □ or △ for an unknown, as the author wrote in
-// the pilot (T54), or nothing.
+// the pilot, or nothing.
 func checkLabel(p *problems, path, label string) {
 	if label != "" && label != "□" && label != "△" && !digits(label) {
 		p.add(path, "%q is not a number, □ or △: a label of a scheme is one of them, or empty", label)

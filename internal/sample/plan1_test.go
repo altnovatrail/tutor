@@ -133,8 +133,8 @@ func TestPartsPlanFile(t *testing.T) {
 	}
 }
 
-// A plan of version 0 is written as it was before plans of parts: the plan of the measurement of
-// the writing process reads and is written back byte for byte.
+// A plan of version 0 is written with lines alone: the plan of the measurement of the writing
+// process reads and is written back byte for byte.
 func TestLinesPlanFileUnchanged(t *testing.T) {
 	file, err := os.ReadFile(linesPlanFile)
 	if err != nil {

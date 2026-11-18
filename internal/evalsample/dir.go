@@ -29,9 +29,9 @@ var drawnFile = regexp.MustCompile(`^(page|essay)-([0-9]{2,})\.json$`)
 
 // Drawn is a page or an essay of the file as a directory of samples holds it: its number, and the
 // name of its sample's file, or "" when the directory holds none. Read is the sample read, once it
-// is refused for nothing and fits the file; Refused is why the runner refuses it, as section 13 has
-// it; Problems are where it is off its file, by paths alone, nothing of the handwriting; and Seed is
-// the seed it was drawn from, or "" for a person's.
+// is refused for nothing and fits the file; Refused is why the runner refuses it, as the protocol
+// has it; Problems are where it is off its file, by paths alone, nothing of the handwriting; and
+// Seed is the seed it was drawn from, or "" for a person's.
 type Drawn[T any] struct {
 	Number   int
 	File     string
@@ -68,7 +68,7 @@ func (d *Dir[T]) Seeds() []string {
 
 // ReadPagesDir reads a directory of samples of the pages of a workbook: the sample of each page is
 // page-NN.json, its number's (PageFile), read as ReadPage reads it and held to its file
-// (PageDifferences). A sample of the protocol is held to the rules of sections 11 and 12 by check,
+// (PageDifferences). A sample of the protocol is held to its rules by check,
 // spec's code (samplecheck.Run), and refused when it breaks one; with no check, as tutor-eval draw
 // reads the directory only to see which pages it holds, it is not. The error is a directory that
 // cannot be read, or a check that cannot run.
@@ -185,7 +185,7 @@ func readDir[T any](dir, kind string, numbers []int, check samplecheck.Check, re
 }
 
 // ReadChecked reads the bytes of a sample's file once spec's sample-check has held them to the rules
-// of sections 11 and 12: a file it finds breaking a rule, at the lines broken, and one that cannot
+// of the protocol: a file it finds breaking a rule, at the lines broken, and one that cannot
 // be read strictly as a sample of the protocol are refused as invalid, by the ID the file names, if
 // it names one that can be read.
 func ReadChecked(data []byte, broken []int) (*evalv1.Sample, *Refusal) {

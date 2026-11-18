@@ -1,7 +1,6 @@
-// Package synth draws synthetic samples and a synthetic bank of tasks for tests, and for the
-// recording page until the measurement's own bank exists. No handwriting is in the repository
-// (RULES.md, Hard rules): the strokes here are drawn by code, from a simple vector font, with
-// time, pressure and a little jitter, so that they look like what a pen gives without being
+// Package synth draws synthetic samples, for eval and for tests, and a synthetic bank of tasks for
+// tests. No handwriting is in the repository: the strokes here are drawn by code, from a simple
+// vector font, with time and a little jitter, so that they look like what a pen gives without being
 // anyone's hand. Every sample is the same each time it is drawn, on any machine.
 //
 // A product that goes into a sum is rounded on its own, float64(…). Go may otherwise fuse a
@@ -205,7 +204,7 @@ type writer struct {
 	// sheet of the scenario "similar-digits", or nil.
 	lean *lean
 	// flip is the place, among the characters of the next string written, of the digit it draws
-	// mirrored, in a box of the workbook (T78), or nil.
+	// mirrored, in a box of the workbook, or nil.
 	flip *int
 	// pointMs is the time between two points of a stroke.
 	pointMs int64
@@ -357,8 +356,8 @@ func (w *writer) scribble(s string, x, y float64) []string {
 }
 
 // stroke draws a polyline as the pen would: points every few units and the clock running. It
-// returns the stroke's ID. The pen's pressure is drawn and not kept: no sample holds it since T105,
-// and the draws stay so that a seed draws the same sheets as before, to the byte (R75).
+// returns the stroke's ID. The pen's pressure is drawn and not kept, since no sample holds it:
+// the draws stay so that a seed draws the same sheets, to the byte (R75).
 func (w *writer) stroke(poly []pt) string {
 	id := fmt.Sprintf("s-%04d", len(w.s.Strokes)+1)
 	_ = w.rng.Float64() // the pressure the stroke starts at

@@ -61,7 +61,7 @@ func (s Source) reference(task, digest string) *evalv1.TaskReference {
 	}
 }
 
-// refuse refuses a sample whose task is not of the source, as section 13 has it: another source
+// refuse refuses a sample whose task is not of the source, as the protocol has it: another source
 // than a file of tasks, a file of another path, or of another digest; or, for a file of a release of
 // tutor, another source than that release (refuseTutor).
 func (s Source) refuse(ref *evalv1.TaskReference) *Refusal {
