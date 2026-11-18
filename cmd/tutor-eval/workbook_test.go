@@ -15,8 +15,8 @@ import (
 	"github.com/altnovatrail/tutor/internal/workbook"
 )
 
-// The pages of the workbook (T78; docs/architecture.md, 3.4) and the document that shows them as
-// tables, as seen from this package's directory.
+// The pages of the workbook and the document that shows them as tables, as seen from this
+// package's directory.
 const (
 	theWorkbook = "../../eval/workbook.json"
 	workbookDoc = "../../docs/workbook.md"

@@ -38,7 +38,7 @@ func sheet(t *testing.T, sc sample.Scenario) (*sample.Task, *judge.Sheet) {
 
 // goldenFree is the sheet of the plan of free writing whose requests are the golden prompts of
 // version 2: stamps, erasure-fixed, with a scheme of segments marked □ and △, an erasure in it and
-// erased writing (docs/free-sheets.md).
+// erased writing.
 const goldenFree = 14
 
 // freeSample is sheet n of the plan of free writing, drawn with seed 1, and its task.
@@ -443,7 +443,7 @@ func TestAround(t *testing.T) {
 	}
 }
 
-// The prompt is frozen after the dev rounds of T27, before the test part runs (R24): any change to
+// The prompt is frozen after its dev rounds, before the test part runs (R24): any change to
 // a word a judge reads changes the fingerprint, and this test fails.
 func TestFrozen(t *testing.T) {
 	const frozen = "6a98139b3dbd6748f2552db5ec4ee91c72136724b0ffb7aebd461f6108e76b41"
@@ -452,8 +452,8 @@ func TestFrozen(t *testing.T) {
 	}
 }
 
-// Version 2 of the prompt is frozen after the three dev rounds of T66, before its test part runs:
-// any change to a word a judge of free writing reads, the words of the journal of parts among them,
+// Version 2 of the prompt is frozen after its dev rounds, before its test part runs (R24): any
+// change to a word a judge of free writing reads, the words of the journal of parts among them,
 // changes the fingerprint, and this test fails.
 func TestFrozenV2(t *testing.T) {
 	const frozen = "505a799f4bfb663e289a168cfc764dcdc4f6b85658aef73f3c194a0fe6d8b293"

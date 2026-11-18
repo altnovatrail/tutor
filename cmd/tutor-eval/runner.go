@@ -33,26 +33,24 @@ import (
 	"github.com/altnovatrail/tutor/provider/claude"
 )
 
-// The caps of the parts, in US dollars: $3 for the development and $6 for the test
-// (docs/measurements.md, 1.1 and 3.1), and $2 for all the sheets of a plan, without the
-// split, which is how the author's three sheets of free writing run (3.1; T77); and $8 for the
-// sheets recorded so far, without the split, which is how the run of admission takes the author's
-// sheets, of a plan not written whole (T126; R80).
+// The caps of the parts, in US dollars: $3 for the development and $6 for the test, and $2 for
+// all the sheets of a plan, without the split, which is how the author's sheets of free writing
+// run; and $8 for the sheets recorded so far, without the split, which is how the run of admission
+// takes the author's sheets, of a plan not written whole (R80).
 var partCaps = map[string]float64{"dev": 3, "test": 6, "all": 2, "recorded": 8}
 
 // plans are the kinds of call that run asks, by -kind, each with how it plans a run over a part of
-// its sets of sheets and says what the run asks (T67): the judge, the reading (T68), the hint (T74),
-// the reading of the workbook (T79), which reads the pages of the workbook and no sheets, the
-// assessment by the rubric (T83), which reads the essays, and the words after a correct answer
-// (T143), which ask the cases of their set.
+// its sets of sheets and says what the run asks: the judge, the reading, the hint, the reading of
+// the workbook, which reads the pages of the workbook and no sheets, the assessment by the rubric,
+// which reads the essays, and the words after a correct answer, which ask the cases of their set.
 var plans = map[string]struct {
 	plan func(sets []sheetFlags, part string, o options) (*runner.Run, string, error)
 	// several is whether the kind runs over several sets: the judge runs on one, since its
 	// criterion counts the test part of one set (R28).
 	several bool
 	// file names the flag of the file a kind reads in place of sets of sheets, with the samples of its
-	// pages or essays in -dir: workbook, the pages of the workbook (T79), or essays (T83; R71). Its
-	// run logs in synthetic.
+	// pages or essays in -dir: workbook, the pages of the workbook, or essays (R71). Its run logs in
+	// synthetic.
 	file string
 	// caps are the kind's own caps of the parts, where it plans other than partCaps: the essays,
 	// $8 for the test (R45).
@@ -67,10 +65,9 @@ var plans = map[string]struct {
 }
 
 // options are what a run is asked besides its sets and part: how many times each call is repeated,
-// what a reading reads (T69), and for the workbook, the file of its pages, the directory of their
-// samples and what its reading reads (T79; R71); for the essays, their file and the directory of
-// their samples (T83), and in two calls the configuration that assesses the text read, or "" for
-// each reader its own (T156).
+// what a reading reads, and for the workbook, the file of its pages, the directory of their samples
+// and what its reading reads (R71); for the essays, their file and the directory of their samples,
+// and in two calls the configuration that assesses the text read, or "" for each reader its own.
 type options struct {
 	two           bool
 	assessor      string
@@ -81,9 +78,9 @@ type options struct {
 	essays        string
 	dir           string
 	workbookReads workbook.Reads
-	// cases is the file of the cases of the set of the words, for a hint (T118), or of the set of
-	// the words after a correct answer (T143), or "", and kinds the kinds of case it asks, all of
-	// them when none is named (T119).
+	// cases is the file of the cases of the set of the words, for a hint, or of the set of the words
+	// after a correct answer, or "", and kinds the kinds of case it asks, all of them when none is
+	// named.
 	cases string
 	kinds []string
 }
@@ -101,10 +98,10 @@ func (s *setsFlag) Set(v string) error {
 // runRun runs the calls of a kind over a part of the split, or over all the sheets of the plan. Of
 // the judge, the measurement of the writing process: every sheet in every form it has, by the three
 // judges, repeated (R24), in the prompt of the plan: version 1 on a plan of lines, version 2 on a
-// plan of parts, of free writing (T65). It first says how many calls the run makes and what they
-// are expected to cost, and starts only once the author types yes (rule 4 of RUN.md); till then
-// Ctrl-C ends it as any command, and from then on it stops the run before the next call. The log
-// goes next to the sheets, out of git, named by the time, the kind, the sets of sheets and the part.
+// plan of parts, of free writing. It first says how many calls the run makes and what they are
+// expected to cost, and starts only once the author types yes (R28); till then Ctrl-C ends it as
+// any command, and from then on it stops the run before the next call. The log goes next to the
+// sheets, out of git, named by the time, the kind, the sets of sheets and the part.
 // A run of the reading or the hint may go over several sets, each given by -set; they lie in one
 // folder, the samples or the synthetic, beside which the run logs. A run on sheets drawn by code, in
 // synthetic, the executor starts within the task's ceiling (R28); one on the author's sheets, in
@@ -232,7 +229,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	}
 	planned, ok := caps[*part]
 	if *part == "recorded" && *kind != "reading" && (*kind != "hint" || *casesPath == "") {
-		// The sheets recorded so far are the run of admission's, of the reading alone (T126).
+		// The sheets recorded so far are the run of admission's: of the reading, or of a hint's cases.
 		ok = false
 	}
 	if !ok {
@@ -334,16 +331,16 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 func claudeModels(key string) runner.Asker { return runner.Models(claude.Dial, key) }
 
 // startRun says what a planned run asks, how many calls and what they are expected to cost, and
-// starts it only once the author types yes (rule 4 of RUN.md): till then Ctrl-C ends it as any
-// command, and from then on it stops the run before the next call. It writes the log as a new file
-// at path, and says what the run made and spent. above says that the cap is above the plan's.
+// starts it only once the author types yes (R28): till then Ctrl-C ends it as any command, and
+// from then on it stops the run before the next call. It writes the log as a new file at path, and
+// says what the run made and spent. above says that the cap is above the plan's.
 func startRun(ctx context.Context, name string, r *runner.Run, what, above, path string, maxUSD float64, stub bool, ask runner.Asker, stdin io.Reader, stdout, stderr io.Writer, now func() time.Time) int {
 	return startFrom(ctx, name, r, nil, 0, what, above, path, maxUSD, stub, ask, stdin, stdout, stderr, now)
 }
 
-// startFrom is startRun, and with done the rest of a run whose log at path stopped short (T166):
-// it says what the log holds, estimates the calls the log does not, cuts the log to what stays of
-// it, and appends them and the end. A log that has grown since Done read it is another run's
+// startFrom is startRun, and with done the rest of a run whose log at path stopped short: it says
+// what the log holds, estimates the calls the log does not, cuts the log to what stays of it, and
+// appends them and the end. A log that has grown since Done read it is another run's
 // still writing, and is left as it is.
 func startFrom(ctx context.Context, name string, r *runner.Run, done *runner.Done, size int64, what, above, path string, maxUSD float64, stub bool, ask runner.Asker, stdin io.Reader, stdout, stderr io.Writer, now func() time.Time) int {
 	e, spent := r.Estimate(), 0.0
@@ -534,8 +531,8 @@ func planJudge(sets []sheetFlags, part string, o options) (*runner.Run, string, 
 
 // planReading plans a run of the reading over a part of its sets, and says what it asks: the sheets
 // of each set, the readers and their repeats, and what it reads: the conditions, the false keys
-// only on correct sheets (R03; T68), and the other heights and the states, by the readers that do
-// not read once (T69).
+// only on correct sheets (R03), and the other heights and the states, by the readers that do not
+// read once.
 func planReading(sets []sheetFlags, part string, o options) (*runner.Run, string, error) {
 	repeats := o.repeats
 	var names, counts []string
@@ -583,7 +580,7 @@ func planReading(sets []sheetFlags, part string, o options) (*runner.Run, string
 
 // planHint plans a run of the hint over the sheets with a mistake of a part of its sets, and says
 // what it asks: the sheets with a mistake of each set, of how many, each at every rung of the
-// ladder in both languages, by the three tutors in their repeats (T74). A part with no sheet with a
+// ladder in both languages, by the three tutors in their repeats. A part with no sheet with a
 // mistake has no hint to ask, and the run is refused before the question.
 func planHint(sets []sheetFlags, part string, o options) (*runner.Run, string, error) {
 	var names, counts []string
@@ -653,8 +650,8 @@ func planHint(sets []sheetFlags, part string, o options) (*runner.Run, string, e
 
 // keepCases keeps of the cases of a set those a run asks: of the kinds named, all when none is, and
 // of the sheets with a mistake the part holds — not those left out of the split, refused by their
-// check or, of the sheets recorded so far, not recorded yet (T119); and says what it left out, which
-// the run's record counts. A run with no case left is refused.
+// check or, of the sheets recorded so far, not recorded yet; and says what it left out, which the
+// run's record counts. A run with no case left is refused.
 func keepCases(set *hint.Set, wrong []sheets.Chosen, kinds []string) (string, error) {
 	all := *set.Cases
 	var other, unheld int
@@ -719,7 +716,7 @@ func caseKindsOf(kind string) ([]string, string) {
 
 // casesOf reads the file of the cases of the set of the words and checks them against the one set of
 // sheets they are of: the plan the file names, by its file's name, with its bank, which it gives
-// for the run to take its sheets of (T118).
+// for the run to take its sheets of.
 func casesOf(path string, sets []sheetFlags) (*evalsample.Bank, *sample.Plan, *hint.Set, error) {
 	var cs *hint.Cases
 	bank, plan, sum, err := casesFile(path, sets, func(data []byte) (string, func(*sample.Plan, *sample.Bank) error, error) {
@@ -766,8 +763,8 @@ func casesFile(path string, sets []sheetFlags, read func([]byte) (string, func(*
 
 // planCorrect plans a run of the words after a correct answer over the cases of their set, on the
 // sheets whose answer is right of a part of its one set, and says what it asks: the cases, the sheets
-// they are of, the tutors and repeats, and the version of the prompt (T143). A part with no such
-// sheet, or with no case left to ask, is refused before the question.
+// they are of, the tutors and repeats, and the version of the prompt. A part with no such sheet, or
+// with no case left to ask, is refused before the question.
 func planCorrect(sets []sheetFlags, part string, o options) (*runner.Run, string, error) {
 	var cs *correct.Cases
 	bank, plan, sum, err := casesFile(o.cases, sets, func(data []byte) (string, func(*sample.Plan, *sample.Bank) error, error) {
@@ -825,9 +822,9 @@ func planCorrect(sets []sheetFlags, part string, o options) (*runner.Run, string
 }
 
 // planWorkbook plans a run of the reading of the workbook over the pages of a part, as the samples
-// of the directory hold them, held to the rules of sections 11 and 12 by spec's check, and says what
-// it asks: the pages, the readers and repeats, what is read, and the version of the prompt (T79;
-// R71). A page whose sample the runner refuses is named and not asked of. It reads no sheets.
+// of the directory hold them, held to the rules of the protocol by spec's sample-check, and says
+// what it asks: the pages, the readers and repeats, what is read, and the version of the prompt
+// (R71). A page whose sample the runner refuses is named and not asked of. It reads no sheets.
 func planWorkbook(_ []sheetFlags, part string, o options) (*runner.Run, string, error) {
 	w, d, seed, err := readPages(o.workbook, o.dir, checkSamples)
 	if err != nil {
@@ -871,7 +868,7 @@ func planWorkbook(_ []sheetFlags, part string, o options) (*runner.Run, string, 
 }
 
 // planEssays plans a run of the assessment by the rubric over the essays of a part, as the samples
-// of the directory hold them, by every reader in every repeat (T83; R71). An essay whose sample the
+// of the directory hold them, by every reader in every repeat (R71). An essay whose sample the
 // runner refuses is named and not asked of.
 func planEssays(_ []sheetFlags, part string, o options) (*runner.Run, string, error) {
 	f, d, seed, err := readEssays(o.essays, o.dir, checkSamples)
@@ -967,10 +964,10 @@ func partName(part string) string {
 
 // partSheets reads the plan of a set and the sheets of a part of its split, each recorded, passing
 // its check, and the very file the split took; or, for the part all, every sheet of the plan,
-// recorded and passing, with no split; or, for the part recorded, every sheet of the plan recorded so
-// far, the rest left out. Each sheet is of the set by its name. A sheet whose sample of
-// the protocol the runner refuses (section 13 of spec's text of the contracts) is not asked of, and
-// nothing of it goes to AI: refused names each, with its reason.
+// recorded and passing, with no split; or, for the part recorded, every sheet of the plan recorded
+// so far, the rest left out. Each sheet is of the set by its name. A sheet whose sample of the
+// protocol the runner refuses is not asked of, and nothing of it goes to AI: refused names each,
+// with its reason.
 func partSheets(f sheetFlags, set, part string) (plan *sample.Plan, chosen []sheets.Chosen, refused []refusal, err error) {
 	bank, plan, err := readPlan(f.bank, f.plan)
 	if err != nil {

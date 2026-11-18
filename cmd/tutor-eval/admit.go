@@ -33,7 +33,7 @@ const (
 // it admits its readers to, or why it admits them to nothing, with the numbers the rule reads and the
 // SHA-256 of the file, which an entry of the list of admitted models names. -kind workbook applies
 // the rule of the workbook (R124) and prints the mirrored and the crossed-out boxes in rows of their
-// own. -kind essay applies the rules of the essay (T156) to logs of runs of the essays in two calls,
+// own. -kind essay applies the rules of the essay (R124) to logs of runs of the essays in two calls,
 // each with the judge's log of its feedback beside it, .judge.jsonl, and the judge's log of its
 // control phrases, -controls, and prints a stage or a refusal for the reading, CallEssay, and for the
 // assessment by the rubric, CallRubric, each apart. It prints the IDs of no sample and nothing of any

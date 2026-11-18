@@ -15,8 +15,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// The essays (T82; docs/architecture.md, 3.4) and the document that shows them, as seen from this
-// package's directory.
+// The essays and the document that shows them, as seen from this package's directory.
 const (
 	theEssays = "../../eval/essays.json"
 	essaysDoc = "../../docs/essays.md"

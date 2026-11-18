@@ -14,7 +14,7 @@ import (
 )
 
 // The plans of the free-form measurement and the document that shows them, as seen from this
-// package's directory. The measurement itself is docs/measurements.md, 3.3.
+// package's directory.
 const (
 	freePlan      = "../../eval/free-sheets.json"
 	authorPlan    = "../../eval/free-author.json"
@@ -23,8 +23,8 @@ const (
 
 // TestFreeSheetPlans checks the plans of the free-form measurement the way the author does, with
 // their bank; that each file is the plan as it is written; that the author's sheets are three free
-// solutions, one to a layout (the 2026-10-27 amendment to R28); and that the tables of
-// docs/free-sheets.md are the bank and the plans, byte for byte.
+// solutions, one to a layout (R28); and that the tables of docs/free-sheets.md are the bank and the
+// plans, byte for byte.
 func TestFreeSheetPlans(t *testing.T) {
 	code, out, errs := runIt("check", freeBank, freePlan, authorPlan)
 	want := freeBank + ": ok, bank of 6 tasks\n" +
@@ -98,8 +98,8 @@ func partsPlanFile(t *testing.T, path string) *sample.Plan {
 	return plan
 }
 
-// The layouts of a sheet of free-form writing, as section 3.4 names them: the task sets the
-// layout, and a drawing or a column on the sheet shows it.
+// The layouts of a sheet of free-form writing: the task sets the layout, and a drawing or a column
+// on the sheet shows it.
 const (
 	layoutNumberLine = "number line"
 	layoutRow        = "drawing: a row of objects"
@@ -143,9 +143,9 @@ func layoutsOf(t *testing.T, plan *sample.Plan) map[string]string {
 // author writes it, without parts to mark.
 var authorFree = sample.PlanPart{Kind: sample.PartText, Place: sample.PlaceWide, Text: "свободное решение целиком"}
 
-// authorsFree checks the author's three sheets (the 2026-10-27 amendment to R28): one to a layout,
-// in the order of section 3.4 — the number line, the drawing and the working at the side — each a
-// correct free solution of its task, the whole sheet one part, with no planned erasure.
+// authorsFree checks the author's three sheets (R28): one to a layout, in the order of the layouts
+// — the number line, the drawing and the working at the side — each a correct free solution of its
+// task, the whole sheet one part, with no planned erasure.
 func authorsFree(t *testing.T, author *sample.Plan, layouts map[string]string) {
 	t.Helper()
 	want := []string{layoutNumberLine, "drawing", layoutSide}
@@ -175,9 +175,8 @@ func authorTable(t *testing.T, author *sample.Plan, layouts map[string]string) s
 	return strings.TrimSuffix(b.String(), "\n")
 }
 
-// partPlace says where part n of a sheet stands (sample.PlanSheet.Region), in the words of
-// section 3.4 and of the tables. The part is one of the sheet's: tutor-eval check has passed the
-// plan before.
+// partPlace says where part n of a sheet stands (sample.PlanSheet.Region), in the words of the
+// tables. The part is one of the sheet's: tutor-eval check has passed the plan before.
 func partPlace(sh sample.PlanSheet, n int) string {
 	return map[sample.Region]string{sample.RegionDrawing: "in the drawing", sample.RegionSide: "at the side", sample.RegionText: "in the text"}[sh.Region(n)]
 }

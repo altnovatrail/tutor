@@ -1,13 +1,13 @@
 // Command tutor-eval is tutor's eval runner: it runs the AI capabilities on eval samples, on the
 // same code that api calls, and reports how they did. Its run command runs the calls of a kind on
 // the runner: the judge of the measurement of the writing process (R24), the reading of a sheet
-// into an observation (T68), the hint (T74), which the run checks for leaks and its form (T75), the
-// reading of the boxes of a page of the workbook (T79), or the assessment of an essay by its rubric
-// (T83), and its report command reports on a run by the kind of its log; its other commands serve the
-// board, check the files of banks, sheet plans, the workbook and the essays, convert the sheets of
-// tutor-sample v0 to samples of spec's eval protocol (T105), write the open views of the
-// measurement's tasks for canvas's sample page (T37), and make and judge the set of the tutor's
-// words (T118): run it without arguments for its commands.
+// into an observation, the hint, which the run checks for leaks and its form, the reading of the
+// boxes of a page of the workbook, or the assessment of an essay by its rubric, and its report
+// command reports on a run by the kind of its log; its other commands serve the board, check the
+// files of banks, sheet plans, the workbook and the essays, convert the sheets of tutor-sample v0
+// to samples of spec's eval protocol, write the open views of the measurement's tasks for canvas's
+// sample page, and make and judge the set of the tutor's words: run it without arguments for its
+// commands.
 package main
 
 import (

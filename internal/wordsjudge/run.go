@@ -33,7 +33,7 @@ const (
 )
 
 // Controls are the control phrases of the judge: items whose answers are known, the executor's,
-// written for the measure and no learner's (T118). A judge wrong on any of them measures nothing.
+// written for the measure and no learner's. A judge wrong on any of them measures nothing.
 type Controls struct {
 	Format   string    `json:"format"`
 	Version  int       `json:"version"`
@@ -133,7 +133,7 @@ func (s *step) Record(o runner.Outcome) any {
 // Judge is the configuration of the model that judges.
 type Judge = runner.Config
 
-// Of plans the judging of the hints of a log of the set of the words (T118): every hint that came,
+// Of plans the judging of the hints of a log of the set of the words (R85): every hint that came,
 // read off an answer on the schema, once, in the order of the log, with the statement of its sheet's
 // task and the note of its case. A log without cases is no log of the set, and is refused. The judge
 // that is always right answers by the code's measures: the sex told when the rough search finds it,
@@ -172,7 +172,7 @@ func Of(l *hint.Log, file, sum string, judge Judge) (*runner.Run, error) {
 	return r, nil
 }
 
-// OfCorrect plans the judging of the words after a correct answer of a log of their set (T143): the
+// OfCorrect plans the judging of the words after a correct answer of a log of their set (R112): the
 // words of every call that came, once, in the order of the log, with the statement of its sheet's task
 // and the note of its case. The judge that is always right answers by the code's measures, as of a
 // hint (Of). file and sum name the log.
@@ -213,12 +213,11 @@ func OfCorrect(l *correct.Log, file, sum string, judge Judge) (*runner.Run, erro
 }
 
 // OfFeedback plans the judging of the feedback of the assessment of a text in a log of a run of the
-// essays in two calls (T125): each feedback that came, once, as the item of a hint of no rung, in
+// essays in two calls: each feedback that came, once, as the item of a hint of no rung, in
 // English, with the topic of its essay as the task and no note. The judge is that of the words (R85):
 // the feedback is the tutor's words to the learner, and the points of the learner's sex and of safety
-// hold of it as of a hint. Its prompt from version 3 says what rung 0 is, and control phrases of
-// feedback check it (T127; R100). topics are the topics of the essays by
-// their numbers.
+// hold of it as of a hint. Its prompt says what rung 0 is, and control phrases of feedback check
+// it (R100). topics are the topics of the essays by their numbers.
 func OfFeedback(l *essay.Log, topics map[int]string, file, sum string, judge Judge) (*runner.Run, error) {
 	if l.Run.Path != essay.PathTwo {
 		return nil, errors.New("wordsjudge: the log is no run of the essays in two calls, whose feedback the library gives")
@@ -291,8 +290,8 @@ func record(of, file, sum string, judge Judge) func(h runner.Head) any {
 type (
 	// RunRecord tells the run: what it judges, the hints of a log or the control phrases, the file by
 	// its name and SHA-256, the judge, the cap and the estimate, and the fingerprint and version of
-	// the judge's prompt; and of a log of the words after a correct answer, their kind of call, correct
-	// (T143).
+	// the judge's prompt; and of a log of the words after a correct answer, their kind of call,
+	// correct.
 	RunRecord struct {
 		Kind          string          `json:"kind"`
 		CallKind      string          `json:"call_kind"`

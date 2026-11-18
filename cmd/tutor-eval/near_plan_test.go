@@ -12,8 +12,8 @@ import (
 	"github.com/altnovatrail/tutor/internal/synth"
 )
 
-// The bank and the plan of the near set (T70; docs/measurements.md, 3.1), and the document that
-// shows them as tables, as seen from this package's directory.
+// The bank and the plan of the near set, and the document that shows them as tables, as seen from
+// this package's directory.
 const (
 	nearBank      = "../../eval/near-bank.json"
 	nearPlan      = "../../eval/near-sheets.json"
@@ -33,13 +33,13 @@ func swapLast(s string) (string, bool) {
 }
 
 // The near set as the author checks it: tutor-eval check takes its bank and plan. Its tasks are
-// copies of tasks of E2's bank, word for word but for the false keys, so that the bank of E2 stays
-// as it is (R28). Each task has one false key, its near key: the key with its last digit turned into
-// the digit of its pair, and a solution that is the task's with the same digit turned in its last
-// line, so that the key and the sheet differ in that digit alone. The plan has two sheets of each
-// task, of the scenario similar-digits: a correct one, whose answer is the key, and one with the same
-// lines but for a mistake in the answer, which is the near key, its first error. The tables of docs/near-sheets.md
-// are the bank and the plan, byte for byte.
+// copies of tasks of the measurement's bank, word for word but for the false keys, so that that
+// bank stays as it is (R28). Each task has one false key, its near key: the key with its last digit
+// turned into the digit of its pair, and a solution that is the task's with the same digit turned
+// in its last line, so that the key and the sheet differ in that digit alone. The plan has two
+// sheets of each task, of the scenario similar-digits: a correct one, whose answer is the key, and
+// one with the same lines but for a mistake in the answer, which is the near key, its first error.
+// The tables of docs/near-sheets.md are the bank and the plan, byte for byte.
 func TestNearSet(t *testing.T) {
 	code, out, errs := runIt("check", nearBank, nearPlan)
 	if want := nearBank + ": ok, bank of 6 tasks\n" + nearPlan + ": ok, plan of 12 sheets, its tasks and traps are in the bank\n"; code != exitOK || out != want {
@@ -108,7 +108,6 @@ func TestNearSet(t *testing.T) {
 	sameTable(t, nearSheetsDoc, doc, nearPlan, nearSheetTable(t, plan))
 }
 
-// readPlanFile reads a sheet plan.
 func readPlanFile(t *testing.T, path string) *sample.Plan {
 	t.Helper()
 	pl, err := sample.ReadPlan(strings.NewReader(readDoc(t, path)))

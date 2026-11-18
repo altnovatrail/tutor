@@ -18,9 +18,9 @@ import (
 type drawnSet struct{ name, bank, plan string }
 
 // drawnSets draws by code the sheets of the plan of each set, each in a directory of its own beside
-// the others, and splits each, as a run over several sets takes them: by default the plan of E2 and
-// the plan of free writing, as a reading over two sets takes them. It gives the value of -set of
-// each.
+// the others, and splits each, as a run over several sets takes them: by default the plan of the
+// reading measurement and the plan of free writing, as a reading over two sets takes them. It gives
+// the value of -set of each.
 func drawnSets(t *testing.T, of ...drawnSet) (string, []string) {
 	t.Helper()
 	if len(of) == 0 {

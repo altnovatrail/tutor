@@ -7,9 +7,9 @@
 // journal of the writing (B), the frames before erasures (C), or both (D). Their instructions are
 // one text, and B, C and D add only the block that tells their inputs.
 //
-// The prompt comes in two versions, each with its own words and fingerprint (T64). Version 1 is
-// that of E2, for sheets of lines, frozen after T27; version 2 is that of free writing, where a
-// solution may have drawings and writing at the side, and its journal tells parts of the sheet.
+// The prompt comes in two versions, each with its own words and fingerprint, each frozen (R24).
+// Version 1 is for sheets of lines; version 2 is that of free writing, where a solution may have
+// drawings and writing at the side, and its journal tells parts of the sheet.
 package judge
 
 import (
@@ -58,8 +58,8 @@ var Verdicts = []string{Correct, Error, Unreadable}
 type Version int
 
 const (
-	V1 Version = 1 // E2: sheets of lines, and the journal of lines (journal.Of)
-	V2 Version = 2 // free writing (T64): drawings and writing at the side, and the journal of parts (journal.OfParts)
+	V1 Version = 1 // sheets of lines, and the journal of lines (journal.Of)
+	V2 Version = 2 // free writing: drawings and writing at the side, and the journal of parts (journal.OfParts)
 )
 
 // Versions are the versions of the prompt in their order.
@@ -87,7 +87,7 @@ func (v Version) prompt() (p prompt, ok bool) {
 
 // base is the text of the instructions every form has: the board's (internal/board), for a sheet
 // the writer has finished. Erased writing is not part of the solution in any form. It does not
-// share the board's text: the measurement's prompt is frozen with its run (T27), and a change to
+// share the board's text: the measurement's prompt is frozen with its run (R24), and a change to
 // the board's must not change it.
 const base = `You check a handwritten solution to a maths task. The writer has finished it: Image 1 shows the sheet as they left it.
 
@@ -109,11 +109,11 @@ var (
 	bothEnd      = "The journal says which step each frame stands just before."
 )
 
-// freeBase is the text every form of version 2 has, for free writing (T54): that of version 1,
+// freeBase is the text every form of version 2 has, for free writing: that of version 1,
 // with what a free solution may hold and that all of it is part of the solution, and with the
 // first mistake told in the order of the solution's steps, not of their place on the sheet, and
 // boxed round the writing or the drawing. The places of the free sheets of a plan follow the order
-// in which a solution is written and read (docs/free-sheets.md).
+// in which a solution is written and read.
 const freeBase = `You check a handwritten solution to a maths task. The writer has finished it: Image 1 shows the sheet as they left it.
 
 1. Read the handwriting exactly as it is written. Do not correct anything: a wrong digit or sign stays wrong.
@@ -143,7 +143,7 @@ const (
 // Fingerprint names a version of the prompt: the SHA-256 of every word a judge reads besides those
 // of the sheet and its task — the instructions of the four forms, the labels of the pictures, the
 // text round the task and the words of the journal. The log of a run keeps it, so that runs of one
-// prompt can be told from runs of another: the prompt is frozen before the test (T27, T66). A
+// prompt can be told from runs of another: the prompt is frozen before the test (R24). A
 // version not in Versions has none: its fingerprint is empty.
 func Fingerprint(v Version) string {
 	p, ok := v.prompt()
@@ -221,7 +221,7 @@ func Prepare(s *sample.Sample, v Version) (*Sheet, error) {
 // the task, its correct answer and reference solution, and for forms B and D the journal, which in
 // D marks the frames. The model, its effort, whether it thinks and how many tokens it may write the
 // caller sets. Forms C and D need frames: on a sheet without them the measurement does not ask C,
-// and D is B (architecture 3.1). The sheet's journal must be of its version's kind.
+// and D is B. The sheet's journal must be of its version's kind.
 func (f Form) Request(t *sample.Task, sh *Sheet) (provider.Request, error) {
 	switch {
 	case !slices.Contains(Forms, f):
@@ -323,7 +323,7 @@ func Read(answer string) (*Answer, error) {
 }
 
 // ReadBox reads a box of a model's answer as strictly as the schema: its four corners, x1, y1, x2
-// and y2, all of them and nothing else, put in order. The hint reads its box by it too (T74).
+// and y2, all of them and nothing else, put in order. The hint reads its box by it too.
 func ReadBox(raw json.RawMessage) (*Box, error) {
 	var b struct {
 		X1 *int `json:"x1"`
@@ -340,7 +340,7 @@ func ReadBox(raw json.RawMessage) (*Box, error) {
 	return &Box{X1: min(*b.X1, *b.X2), Y1: min(*b.Y1, *b.Y2), X2: max(*b.X1, *b.X2), Y2: max(*b.Y1, *b.Y2)}, nil
 }
 
-// Margin is how far round a box the points of a line still count, in pixels (architecture 3.1).
+// Margin is how far round a box the points of a line still count, in pixels.
 const Margin = 8
 
 // Hit is the line of a sample's markup a box hits: the line with the most points inside the box

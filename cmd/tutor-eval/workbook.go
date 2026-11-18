@@ -13,11 +13,11 @@ import (
 	"github.com/altnovatrail/tutor/internal/workbook"
 )
 
-// workbookFile is the file of the pages of the workbook (T78).
+// workbookFile is the file of the pages of the workbook.
 const workbookFile = "eval/workbook.json"
 
 // runWorkbook checks the pages of the workbook, reads the samples of its pages that tutor-eval draw
-// drew, held to the rules of sections 11 and 12 and refused as the runner refuses them (R71), and
+// drew, held to the rules of the protocol and refused as the runner refuses them (R71), and
 // prints their summary: the pages, the items and the boxes by scenario, kind and writing of a
 // fraction, the samples read, refused and off their file, and the crops of the filled boxes of the
 // pages read at each height of eval, cut from their samples' strokes.

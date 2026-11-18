@@ -15,7 +15,7 @@ import (
 )
 
 // generators are what gen makes, by its first operand, each with what it says it made: the sheets
-// of lines, six a task, and the near sheets, two a task (T93; R50).
+// of lines, six a task, and the near sheets, two a task (R50).
 var generators = map[string]struct {
 	make func(tasks int, seed uint64, prefix string) (*sample.Bank, *sample.Plan, error)
 	what string
@@ -26,7 +26,7 @@ var generators = map[string]struct {
 
 // runGen makes, with their truth by construction, from the seed, a bank of generated tasks and a
 // plan of their sheets, or with workbook and essays one file of a set (runGenFile), and writes them
-// as new files: it never writes over a file, so the sets of E2 and E4 stay as they are. The same
+// as new files: it never writes over a file, so the sets made before stay as they are. The same
 // seed makes the same files again. draw then draws a plan, as it draws one written by hand. A plan
 // holds sample.MaxSheets sheets at most, so more sheets go into several plans, each made with its
 // own seed and prefix. Of a bank and a plan it writes both files or neither.
@@ -107,7 +107,7 @@ type fileGenerator struct {
 }
 
 // fileGenerators are what gen makes as one file, by its first operand: the pages of the workbook and
-// the essays, each with what it counts (T94; R50).
+// the essays, each with what it counts (R50).
 var fileGenerators = map[string]fileGenerator{
 	"workbook": {func(n int, seed uint64) (any, int, error) {
 		wb, err := gen.Workbook(n, seed)
@@ -161,11 +161,11 @@ func runGenFile(kind string, g fileGenerator, args []string, stdout, stderr io.W
 }
 
 // runGenSet makes a set of the tutor's words of a plan of lines and its bank, from the seed, as new
-// files, both or neither: of the words of the hint, words (T118), a plan of parts of its sheets with
-// a mistake, ten of them again with a note at the side, and the file of the cases on it (gen.Words),
-// which run -kind hint -cases asks; of the words after a correct answer, correct (T143), the same of
-// its sheets whose answer is right (gen.Correct), which run -kind correct -cases asks. draw draws the
-// plan, with the same bank.
+// files, both or neither: gen words, of the words of the hint, makes a plan of parts of its sheets
+// with a mistake, ten of them again with a note at the side, and the file of the cases on it
+// (gen.Words), which run -kind hint -cases asks; gen correct, of the words after a correct answer,
+// the same of its sheets whose answer is right (gen.Correct), which run -kind correct -cases asks.
+// draw draws the plan, with the same bank.
 func runGenSet(name string, args []string, stdout, stderr io.Writer, build func(from *sample.Plan, bank *sample.Bank, planFile string, seed uint64) (*sample.Plan, any, int, error)) int {
 	flags := flag.NewFlagSet("tutor-eval gen "+name, flag.ContinueOnError)
 	seed := flags.Uint64("seed", 1, "the number the notes, the traps found, the techniques and the questions asked come from")
@@ -225,7 +225,7 @@ func writeBoth(firstPath string, first any, secondPath string, second any) error
 }
 
 // runGenWordsCases makes the cases of the words on the sheets with a mistake of a plan whose sheets
-// are written already, such as the author's (T119; gen.WordsCases), as a new file: run -kind hint
+// are written already, such as the author's (gen.WordsCases), as a new file: run -kind hint
 // -cases asks them on the set of that plan.
 func runGenWordsCases(args []string, stdout, stderr io.Writer) int {
 	flags := flag.NewFlagSet("tutor-eval gen words-cases", flag.ContinueOnError)

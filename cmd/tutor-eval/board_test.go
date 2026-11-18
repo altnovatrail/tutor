@@ -64,8 +64,8 @@ func TestBoardCommand(t *testing.T) {
 }
 
 // The board offers every current Claude model at every effort level, ticking Claude Opus 5.5 at
-// high as the board asked before, and GPT-6 Astra at high alone, unticked. Haiku 5.5 and Sonnet
-// 5.5 may also be asked without thinking, at high and below; the others always think.
+// high, and GPT-6 Astra at high alone, unticked. Haiku 5.5 and Sonnet 5.5 may also be asked without
+// thinking, at high and below; the others always think.
 func TestBoardOffers(t *testing.T) {
 	var handler http.Handler
 	serve := func(s *http.Server) error { handler = s.Handler; return nil }

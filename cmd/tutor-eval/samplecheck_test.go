@@ -12,8 +12,8 @@ import (
 )
 
 // The tests run in the folder of this package, without spec's submodule at its root, and in CI
-// without the submodule at all: sample-check, which holds the samples of the protocol to the rules
-// of sections 11 and 12, is spec's to run, and the recipe sample-check runs it on the drawn files of
+// without the submodule at all: sample-check, which holds the samples of the protocol to their
+// rules, is spec's to run, and the recipe sample-check runs it on the drawn files of
 // internal/evalsample's testdata. Here every file keeps the rules unless a test says otherwise.
 func init() {
 	checkSamples = func([]string) (map[string][]int, error) { return map[string][]int{}, nil }
@@ -22,7 +22,7 @@ func init() {
 // checking runs the test with a check of its own in place of the one that passes every file. A test
 // that calls it stays sequential: Go starts the top-level tests that call t.Parallel only once every
 // sequential one has ended, so the heaviest tests of the package, which swap nothing, run in
-// parallel beside each other and never beside a swap (R92 in docs/decisions.md).
+// parallel beside each other and never beside a swap (R92).
 func checking(t *testing.T, check samplecheck.Check) {
 	t.Helper()
 	was := checkSamples

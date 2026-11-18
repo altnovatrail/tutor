@@ -78,8 +78,8 @@ func parse(flags *flag.FlagSet, args []string, stderr io.Writer) (int, bool) {
 	return exitOK, true
 }
 
-// checkSamples holds the samples of the protocol among the sheets to the rules of sections 11 and
-// 12 of spec's text of the contracts, by spec's recipe sample-check (R69); a test replaces it.
+// checkSamples holds the samples of the protocol among the sheets to the protocol's rules, by
+// spec's recipe sample-check (R69); a test replaces it.
 var checkSamples samplecheck.Check = samplecheck.Run
 
 // readPlan reads the bank and the sheet plan and checks the plan against the bank. Its error says

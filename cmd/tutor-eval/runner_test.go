@@ -195,7 +195,7 @@ func TestRunRefuses(t *testing.T) {
 	}
 }
 
-// A run that broke off goes on in its own log with -rest (T166): the same flags plan the same run,
+// A run that broke off goes on in its own log with -rest: the same flags plan the same run,
 // the run asks only the calls the log does not hold, says so before the author's yes, and appends
 // them and the end, so that the log is the whole run's. A log that ended, a log that is not there
 // and -rest beside -log are refused.

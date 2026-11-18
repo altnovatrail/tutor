@@ -1,7 +1,6 @@
-// Package samplecheck holds sample files of the eval protocol to the rules of sections 11 and 12 of
-// spec's text of the contracts by spec's own code, its recipe sample-check, as section 13 has the
-// runner refuse a sample "which the runner holds by the same code as sample-check": a repository
-// other than spec MUST NOT write a check of its own (R93 spec; R69). The recipe runs from the
+// Package samplecheck holds sample files of the eval protocol to the protocol's rules by spec's own
+// code, its recipe sample-check: the runner refuses a sample by the same code as sample-check, and
+// a repository other than spec writes no check of its own (R93 spec; R69). The recipe runs from the
 // repository's root, with the spec submodule there, in the toolchain of the devcontainer: Node and
 // buf.
 package samplecheck
@@ -20,10 +19,11 @@ import (
 	"strings"
 )
 
-// Check holds the files, by their paths from the working directory or absolute within it, to the rules, and gives the
-// lines of each file that breaks one, ascending: the places sample-check names, and no message, which
-// could quote a part of a sheet. A file it gives none of keeps every rule. The error is a check that
-// could not run: no spec submodule, no just, a path it refuses, or buf failing.
+// Check holds the files, by their paths from the working directory or absolute within it, to the
+// rules, and gives the lines of each file that breaks one, ascending: the places sample-check names,
+// and no message, which could quote a part of a sheet. A file it gives none of keeps every rule.
+// The error is a check that could not run: no spec submodule, no just, a path it refuses, or buf
+// failing.
 type Check func(files []string) (map[string][]int, error)
 
 // Justfile is spec's justfile from the repository's root, where its recipe sample-check is.

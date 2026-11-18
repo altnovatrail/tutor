@@ -29,7 +29,7 @@ type Part struct {
 }
 
 // OfParts builds the journal of parts of a sample that passes its check (sample.Check), for free
-// writing (T63). Each stroke stands on one part:
+// writing. Each stroke stands on one part:
 //   - a stroke the sheet shows, on its group;
 //   - an erased stroke, on the group it would be a neighbour of; of two, on the one written on
 //     last if it is one of them, or else on the earlier in the order of lines.Groups;

@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-// The files of the set of the words after a correct answer (T143).
+// The files of the set of the words after a correct answer.
 const (
 	correctPlanF = "../../eval/correct-sheets.json"
 	correctCases = "../../eval/correct-cases.json"

@@ -14,9 +14,8 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// The sheet plan of the reading measurement and the document that shows it as a table
-// (docs/architecture.md, section 3.1), and the golden plan of parts of internal/sample, as seen from
-// this package's directory.
+// The sheet plan of the reading measurement and the document that shows it as a table, and the
+// golden plan of parts of internal/sample, as seen from this package's directory.
 const (
 	measurementPlan = "../../eval/sheets.json"
 	sheetsDoc       = "../../docs/sheets.md"

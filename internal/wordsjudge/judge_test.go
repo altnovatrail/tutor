@@ -23,9 +23,7 @@ func opus() wordsjudge.Judge {
 }
 
 // The judge's prompt is frozen: a change of a word is a new version, whose control phrases run
-// again. Version 2 came after the control phrases of T119, with the fingerprint
-// 2d705550adf916cf9b731fa7b0a06715af0b46d2cacd195dc026e7560f08a2af; version 3 is T127's,
-// 052552a7e77c9381fee0e575af190d07fd7b2f51f8713269e05d2d6743906272; version 4 is T143's.
+// again (R86).
 func TestFrozen(t *testing.T) {
 	const frozen = "58fe6a07d5d97ef6c477825f44f844e1edd3bb705c5823b4328bb75788ca22db"
 	if got := wordsjudge.Fingerprint(); got != frozen || wordsjudge.Version != 4 {
@@ -101,7 +99,7 @@ func TestControls(t *testing.T) {
 		flag bool
 		lang string
 	}
-	// The words after a correct answer try every question both ways in both languages too (T143).
+	// The words after a correct answer try every question both ways in both languages too.
 	seen, correct := map[side]bool{}, map[side]bool{}
 	for _, k := range c.Controls {
 		e := k.Expect
