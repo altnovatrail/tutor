@@ -17,8 +17,8 @@ import (
 	"github.com/altnovatrail/tutor/words"
 )
 
-// correctStub is a stub run of the set of the words after a correct answer (T143) on four of its
-// sheets, two with a note, by Opus, read back: every case of those sheets.
+// correctStub is a stub run of the set of the words after a correct answer on four of its sheets,
+// two with a note, by Opus, read back: every case of those sheets.
 func correctStub(t *testing.T) (*correct.Log, []byte) {
 	t.Helper()
 	numbers := []int{1, 2, 31, 32}

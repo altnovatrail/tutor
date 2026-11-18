@@ -55,7 +55,7 @@ func judgeNamed(name string) measure.Judge {
 func near(a, b float64) bool { return math.Abs(a-b) < 1e-9 }
 
 // Every judge has the output tokens a call is expected to take: about 50, and Haiku with thinking
-// about 300 (docs/measurements.md, 1.1); and so have the four the extended measurement adds (R50).
+// about 300; and so have the four the extended measurement adds (R50).
 func TestJudges(t *testing.T) {
 	var got []string
 	for _, j := range measure.Judges() {
@@ -67,8 +67,7 @@ func TestJudges(t *testing.T) {
 }
 
 // The estimate counts the calls and what they cost by the prices of provider/claude and the
-// expected tokens of docs/measurements.md, 1.1: Opus 5.5 at high costs $0.0084 for form A and
-// $0.0100 for form B, as the table of the estimate there says.
+// expected tokens: Opus 5.5 at high costs $0.0084 for form A and $0.0100 for form B.
 func TestEstimate(t *testing.T) {
 	all := sheets(t)
 	r, err := measure.New("test", all[:1], []measure.Judge{judgeNamed("opus-high")}, 1, judge.V1)
@@ -92,7 +91,6 @@ func TestEstimate(t *testing.T) {
 	}
 }
 
-// records reads the log back.
 func records(t *testing.T, log []byte) []map[string]any {
 	t.Helper()
 	var out []map[string]any
@@ -314,7 +312,7 @@ func freeSheets(t *testing.T, numbers ...int) []measure.Sheet {
 // The stub's box on a sheet with a mistake hits the part of the first error.
 func TestFreeWritingRun(t *testing.T) {
 	// Sheet 1, grasshopper, correct; sheet 2, album, its first error in part 2, at the side;
-	// sheet 3, houses, erasure-fixed, with a frame (docs/free-sheets.md).
+	// sheet 3, houses, erasure-fixed, with a frame.
 	free := freeSheets(t, 1, 2, 3)
 	opus := judgeNamed("opus-high")
 	r, err := measure.New("all", free[:1], []measure.Judge{opus}, 1, judge.V2)
@@ -379,10 +377,8 @@ func TestFreeWritingRun(t *testing.T) {
 }
 
 // The log a run on the stub writes is the same, byte for byte, as its golden: of the sheets of
-// lines in version 1 of the prompt, and of three sheets of free writing in version 2. The goldens
-// were written by the runner before it was split into the runner of every kind and the judge's
-// kind (T67), so they hold the judge's log as E2 and T66 wrote it. With -update the test writes
-// them anew.
+// lines in version 1 of the prompt, and of three sheets of free writing in version 2, so that the
+// judge's log does not change its form unnoticed. With -update the test writes them anew.
 func TestLogGolden(t *testing.T) {
 	for _, c := range []struct {
 		name   string
@@ -418,7 +414,8 @@ func TestLogGolden(t *testing.T) {
 	}
 }
 
-// e4Judges are the judges of the three configurations of E4, which these tests were written for.
+// e4Judges are the judges of the configurations a run asks by default (runner.E4Configs), which
+// these tests were written for.
 func e4Judges() []measure.Judge {
 	return runner.E4(measure.Judges(), func(j measure.Judge) runner.Config { return j.Config })
 }

@@ -14,12 +14,12 @@ import (
 	"github.com/altnovatrail/tutor/words"
 )
 
-// Correct is what a run of the words after a correct answer comes to (T143; docs/architecture.md,
-// 3.4, "The set of the words after a correct answer"): by tutor, kind of case and language, the words
-// the leak check found the key or a leak phrase in, the words that break their form (words.Correct),
-// the words the learner does not read and why, the notes taken up and the learner's sex told by the
-// rough search, and the time and cost of a call. It holds no handwriting: numbers, the sets and
-// numbers of sheets and the words the models wrote are in the log, and only numbers here.
+// Correct is what a run of the words after a correct answer comes to: by tutor, kind of case and
+// language, the words the leak check found the key or a leak phrase in, the words that break their
+// form (words.Correct), the words the learner does not read and why, the notes taken up and the
+// learner's sex told by the rough search, and the time and cost of a call. It holds no handwriting:
+// numbers, the sets and numbers of sheets and the words the models wrote are in the log, and only
+// numbers here.
 type Correct struct {
 	log    *correct.Log
 	order  []sheetID

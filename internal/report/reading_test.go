@@ -58,7 +58,6 @@ func (b *readingLog) report(t *testing.T) *report.Reading {
 	return r
 }
 
-// thresholdOf is the threshold of a reader.
 func thresholdOf(t *testing.T, r *report.Reading, reader string) report.Threshold {
 	t.Helper()
 	for _, th := range r.Thresholds {
@@ -246,8 +245,8 @@ func TestReadingRefuses(t *testing.T) {
 	}
 }
 
-// A stub run of the reading over sheets of E2 and of free writing goes to a report, the Markdown and
-// the CSV both, byte for byte the golden ones (testdata/reading-stub.*); the log itself is golden
+// A stub run of the reading over sheets of lines and of free writing goes to a report, the Markdown
+// and the CSV both, byte for byte the golden ones (testdata/reading-stub.*); the log itself is golden
 // too. On the stub every reader holds the threshold, which the dev part does not decide, and two
 // readers release every sheet.
 func TestReadingLogOfTheStub(t *testing.T) {

@@ -358,9 +358,9 @@ func TestFewAndUnasked(t *testing.T) {
 	}
 }
 
-// The log of a stub run in the format of E2, written before the runner knew free writing: a log of
-// E2 tells no version of the prompt, no writer, layout or place of the first error. The report
-// reads it as it did, byte for byte, the Markdown and the CSV both (testdata/e2-stub.*).
+// A log of a stub run of the lines that tells no version of the prompt, no writer, layout or place
+// of the first error makes the report byte for byte the golden one, the Markdown and the CSV both
+// (testdata/e2-stub.*).
 func TestLogOfE2(t *testing.T) {
 	data, err := os.ReadFile("testdata/e2-stub.jsonl")
 	if err != nil {

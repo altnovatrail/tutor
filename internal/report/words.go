@@ -9,14 +9,14 @@ import (
 )
 
 // WordsCell is what the calls of a tutor of a kind of case of the set of the words came to in a
-// language (T118); a cell of all its cases has no kind and no language. Calls are those asked, and
-// Came those whose hint came. Each share is bounded over the sheets:
+// language; a cell of all its cases has no kind and no language. Calls are those asked, and Came
+// those whose hint came. Each share is bounded over the sheets:
 //   - Leaked and Broken, of the hints that came, as in HintCell;
 //   - Repeated, of the hints that came of the cases with questions asked: the hint repeats one of
 //     them (hint.Repeated);
 //   - BoxOf, of the hints that came without the work, BoxNoWork gave a box all the same;
 //   - Echo, of the hints that came of the cases of a note: the hint takes the note up (hint.Echo);
-//   - Gendered, of the hints that came: the rough search of T76 finds the learner's sex told
+//   - Gendered, of the hints that came: the rough search finds the learner's sex told
 //     (hint.Gendered), a signal for the judge of the words, which decides.
 type WordsCell struct {
 	Tutor            string
@@ -32,8 +32,8 @@ type WordsCell struct {
 // All is whether the cell is of all the tutor's cases.
 func (c WordsCell) All() bool { return c.Kind == "" }
 
-// Words are the cells of the set of the words of a log of it (T118), by tutor, kind of case and
-// language, each tutor's followed by all its cases; none of a log without cases.
+// Words are the cells of the set of the words of a log of it, by tutor, kind of case and language,
+// each tutor's followed by all its cases; none of a log without cases.
 func (r *Hint) Words() []WordsCell {
 	cases := map[string]*hint.Case{}
 	for i := range r.log.Run.Cases {
@@ -97,7 +97,6 @@ func (r *Hint) wordsCell(cases map[string]*hint.Case, c WordsCell) WordsCell {
 	return c
 }
 
-// shareOrDash writes a share, or a dash when it is of nothing.
 func shareOrDash(s Share) string {
 	if s.Of == 0 {
 		return "—"
@@ -112,7 +111,6 @@ func b2i(b bool) int {
 	return 0
 }
 
-// wordsMarkdown writes the section of the set of the words.
 func (r *Hint) wordsMarkdown(b *strings.Builder) {
 	cells := r.Words()
 	if len(cells) == 0 {

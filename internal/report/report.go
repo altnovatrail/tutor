@@ -1,11 +1,10 @@
-// Package report turns the log of a run into the measurement's numbers and its criterion (R24;
-// docs/measurements.md, 1.1), asking no model, and writes them as Markdown and CSV. A report holds
-// no handwriting: numbers, the numbers and scenarios of sheets, and the names of judges and forms.
+// Package report turns the log of a run into the measurement's numbers and its criterion (R24),
+// asking no model, and writes them as Markdown and CSV. A report holds no handwriting: numbers, the
+// numbers and scenarios of sheets, and the names of judges and forms.
 //
-// The report of a run of free writing, in version 2 of the judge's prompt, tells more (T65;
-// docs/measurements.md, 3.3): the boxes on the sheets with a mistake and form D against form A on
-// them, the data for R52 spec; the answers by layout and by where the first error stands; and the
-// answers sheet by sheet. The report of a log of E2 is as it was.
+// The report of a run of free writing, in version 2 of the judge's prompt, tells more: the boxes
+// on the sheets with a mistake and form D against form A on them, the data for R52 spec; the
+// answers by layout and by where the first error stands; and the answers sheet by sheet.
 package report
 
 import (
@@ -23,11 +22,11 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// Alpha is the threshold of the criterion's test (docs/measurements.md, 1.1).
+// Alpha is the threshold of the criterion's test.
 const Alpha = 0.05
 
 // MinSheets is how many sheets with a difference the test needs to be passed at all: with fewer,
-// the smallest p it can give is 1/16 (docs/measurements.md, 1.1).
+// the smallest p it can give is 1/16.
 const MinSheets = 5
 
 // key is an answer's place: a sheet, a form, a judge and a repeat.
@@ -94,10 +93,9 @@ type SheetRow struct {
 	Right, Answers [4]int // by the forms in their order
 }
 
-// Test is the exact one-sided sign-permutation test of a sum of differences over sheets (R03,
-// amendment 2026-10-21): of all the ways to give each nonzero difference a sign, as likely as each
-// other if the form does nothing, the share whose sum reaches the one observed, upwards for Helps
-// and downwards for Harms.
+// Test is the exact one-sided sign-permutation test of a sum of differences over sheets (R03): of
+// all the ways to give each nonzero difference a sign, as likely as each other if the form does
+// nothing, the share whose sum reaches the one observed, upwards for Helps and downwards for Harms.
 type Test struct {
 	Sum          float64
 	Nonzero      int
@@ -111,9 +109,9 @@ type Comparison struct {
 	Test
 }
 
-// Criterion is the main check of a judge (docs/measurements.md, 1.1): D against A over all the
-// sheets, with the false "correct" on sheets with a mistake and the false alarms on correct sheets
-// of each form, what it comes to, and whether it passes with Holm's correction for the judges.
+// Criterion is the main check of a judge: D against A over all the sheets, with the false
+// "correct" on sheets with a mistake and the false alarms on correct sheets of each form, what it
+// comes to, and whether it passes with Holm's correction for the judges.
 type Criterion struct {
 	Comparison
 	FalseCorrectA, FalseCorrectD int
@@ -311,7 +309,6 @@ func (r *Report) rights(n int, j string) (ok, of [4]int) {
 	return ok, of
 }
 
-// add adds the counts of a sheet to those of a group.
 func add(ok, of, sheetOK, sheetOf [4]int) ([4]int, [4]int) {
 	for i := range ok {
 		ok[i] += sheetOK[i]
@@ -462,9 +459,9 @@ func abs(x int64) int64 {
 	return x
 }
 
-// holm marks the judges that pass Holm's correction for all the judges as docs/measurements.md, 1.1,
-// has it from before the first run (R05): the judge's own p below Alpha over the number of judges,
-// the threshold of Holm's first step. The writing process helps Claude if a judge that helps passes.
+// holm marks the judges that pass Holm's correction for all the judges, as the criterion was fixed
+// before the first run (R05): the judge's own p below Alpha over the number of judges, the
+// threshold of Holm's first step. The writing process helps Claude if a judge that helps passes.
 func (r *Report) holm() {
 	for i := range r.Main {
 		if r.Main[i].Helps < Alpha/float64(len(r.Main)) {

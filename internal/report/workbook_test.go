@@ -45,7 +45,6 @@ func workbookLog() *workbook.Log {
 	return l
 }
 
-// call is the call of a page in a condition at a height.
 func call(l *workbook.Log, page int, cond workbook.Condition, digit int) *workbook.CallRecord {
 	for i := range l.Calls {
 		c := &l.Calls[i]
@@ -236,9 +235,9 @@ func mirroredLog(version int) *workbook.Log {
 	return l
 }
 
-// The mirrored digits are counted by the rule of spec v0.3.3 in a log of every version: asked to
-// write again, read as the digit, false alarms, and other boxes marked mirrored. In a log of version
-// 2 "unreadable" on a box with one is right and not an extra "unreadable"; in one of version 1, which
+// The mirrored digits are counted by one rule in a log of every version: asked to write again,
+// read as the digit, false alarms, and other boxes marked mirrored. In a log of version 2
+// "unreadable" on a box with one is right and not an extra "unreadable"; in one of version 1, which
 // read a mirrored digit as that digit, it is an extra one, and the digit read as the digit is right.
 func TestWorkbookMirrored(t *testing.T) {
 	for _, version := range []int{1, workbook.MirroredVersion} {

@@ -15,8 +15,8 @@ import (
 	"github.com/altnovatrail/tutor/internal/wordsjudge"
 )
 
-// wordsStub is a stub run of the set of the words (T118) on four of its sheets, two with a note, by
-// Opus, read back: every case of those sheets.
+// wordsStub is a stub run of the set of the words on four of its sheets, two with a note, by Opus,
+// read back: every case of those sheets.
 func wordsStub(t *testing.T) (*hint.Log, []byte) {
 	t.Helper()
 	numbers := []int{1, 2, 31, 32}

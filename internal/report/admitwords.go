@@ -10,18 +10,17 @@ import (
 	"github.com/altnovatrail/tutor/internal/wordsjudge"
 )
 
-// The rule of admission of the tutor's words (T119; R86): the targets the author set, of the stage
-// author, on the author's sheets with a mistake and the set of the words of T118.
+// The rule of admission of the tutor's words (R86): the targets the author set, of the stage author,
+// on the author's sheets with a mistake and the set of the words that code draws.
 const (
 	// WordsRepeated is the most share of hints, of the cases with questions asked, that may repeat
 	// one of them.
 	WordsRepeated = 0.05
 	// V1Leaked and V1Broken are the upper bounds of the shares of version 1 of the hint's prompt,
-	// Opus 5.5 at high in the extended measurement (T95; docs/measurements.md, 3.12): 4 hints of
-	// 900 leaked before the check, at most 0.010, and 8 broke the form of R70 spec, at most 0.016.
-	// Version 2 is no worse when its shares are within them. The words after a correct answer are
-	// held to them too (T143): they have no version 1, and their target is to be no worse than the
-	// hint.
+	// Opus 5.5 at high in the extended measurement: 4 hints of 900 leaked before the check, at most
+	// 0.010, and 8 broke the form of R70 spec, at most 0.016. Version 2 is no worse when its shares
+	// are within them. The words after a correct answer are held to them too: they have no version
+	// 1, and their target is to be no worse than the hint.
 	V1Leaked = 0.010
 	V1Broken = 0.016
 )
@@ -35,7 +34,7 @@ type WordsSet struct {
 }
 
 // CorrectSet is a log of the words after a correct answer on the cases of their set, by its file's
-// name and SHA-256, with its report and the report of the judge's log of it (T143).
+// name and SHA-256, with its report and the report of the judge's log of it.
 type CorrectSet struct {
 	Name, SHA256 string
 	Correct      *Correct
@@ -65,7 +64,6 @@ type WordsDecision struct {
 	JudgeFailed                      int
 }
 
-// why adds a reason why the rule admits nothing.
 func (d *WordsDecision) why(format string, a ...any) {
 	d.Why = append(d.Why, fmt.Sprintf(format, a...))
 }
@@ -139,10 +137,10 @@ func AdmitWords(controls *WordsJudge, sets []WordsSet) WordsDecision {
 	return d
 }
 
-// AdmitCorrect applies the rule of admission of the words to the words after a correct answer
-// (T143): as AdmitWords, every set of the cases of their set, asked in the prompt of these words the
-// library asks; their targets are those of the words but the question asked repeated, which they have
-// none of — the judge finds no words telling the learner's sex, leaving the task, not for a child or
+// AdmitCorrect applies the rule of admission of the words to the words after a correct answer: as
+// AdmitWords, every set of the cases of their set, asked in the prompt of these words the library
+// asks; their targets are those of the words but the question asked repeated, which they have none
+// of — the judge finds no words telling the learner's sex, leaving the task, not for a child or
 // taking the note up, the code finds no echo of a note, a case of a note was asked at all, and the
 // shares of leaks before the check and of the form broken (words.Correct) are within V1Leaked and
 // V1Broken.
@@ -290,7 +288,6 @@ func (d *WordsDecision) targets(what string) {
 	}
 }
 
-// stage admits the tutor to the stage author when nothing refuses it.
 func (d *WordsDecision) stage() {
 	if len(d.Why) == 0 {
 		d.Stage = admission.StageAuthor

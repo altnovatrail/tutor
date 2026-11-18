@@ -17,11 +17,10 @@ import (
 	"github.com/altnovatrail/tutor/internal/workbook"
 )
 
-// Workbook is the report of a run of the reading of the workbook (T80; docs/architecture.md, 3.4,
-// "Workbook"; docs/measurements.md, 3.7): how each reader read the filled boxes at 32 px,
-// bare and captioned, by scenario, by kind of check and by how a fraction is written; the items;
-// whether the line of an item helps or harms the reading; and the other heights of digits against
-// 32 px.
+// Workbook is the report of a run of the reading of the workbook: how each reader read the filled
+// boxes at 32 px, bare and captioned, by scenario, by kind of check and by how a fraction is
+// written; the items; whether the line of an item helps or harms the reading; and the other heights
+// of digits against 32 px.
 type Workbook struct {
 	// protocol are the runner's reports of the protocol that the log tells (R74).
 	protocol []Named
@@ -83,10 +82,9 @@ func workbookGroups(b *workbook.BoxRecord) []string {
 }
 
 // WorkbookMirrored is the readings of the boxes with a digit written mirrored by a reader in a
-// condition at 32 px, in every repeat. By the rule of spec v0.3.3 such a digit is not read as a
-// digit: the box is ambiguous, unreadable, and the learner writes it again, while a false alarm on it
-// counts against the target of 1 % (R56 spec, amendment of 2026-10-29; product 10 spec). Each share
-// is over the pages:
+// condition at 32 px, in every repeat. Such a digit is not read as a digit: the box is ambiguous,
+// unreadable, and the learner writes it again, while a false alarm on it counts against the target
+// of 1 % (R56 spec). Each share is over the pages:
 //   - Rewrite is "unreadable" on such a box, among its readings, and Marked those of them the reader
 //     marked mirrored;
 //   - AsDigit is "correct": the digit read as the digit, against the rule and with no harm;
@@ -154,11 +152,11 @@ type WorkbookItems struct {
 }
 
 // Caption is the line of the item against none for a reader, at 32 px, paired by pages over the
-// repeats read in both conditions: d of a page is its errors captioned less those bare, the errors being false "correct",
-// false alarms, extra "unreadable" and "unchecked". The rule written before the run (T80): a false
-// "correct" captioned on a box that has none bare means the line does not go into the reading of a
-// box. The line helps when the test finds the reading captioned better at p < Alpha, with no such
-// box.
+// repeats read in both conditions: d of a page is its errors captioned less those bare, the errors
+// being false "correct", false alarms, extra "unreadable" and "unchecked". The rule, written before
+// the run: a false "correct" captioned on a box that has none bare means the line does not go into
+// the reading of a box. The line helps when the test finds the reading captioned better at
+// p < Alpha, with no such box.
 type Caption struct {
 	Reader string
 	Pages  int
@@ -302,7 +300,7 @@ func NewWorkbook(l *workbook.Log) (*Workbook, error) {
 // samples are not of the protocol.
 func (r *Workbook) Reports() []Named { return r.protocol }
 
-// ProtocolCSV writes the measures of section 14 of the runner's reports as CSV.
+// ProtocolCSV writes the measures of the runner's reports as CSV (R74).
 func (r *Workbook) ProtocolCSV(w io.Writer) error { return protocolCSV(w, r.protocol) }
 
 // calls are a reader's calls in a condition at a height, in the order they were made.
@@ -559,7 +557,7 @@ func (r *Workbook) caption(reader string) (Caption, bool) {
 }
 
 // height pairs a reader's readings bare at a height with those at 32 px, in the first repeat, by
-// pages, as the reading's heights are (T72): d of a page is its errors at the height less those at
+// pages, as the reading's heights are: d of a page is its errors at the height less those at
 // 32 px, and the height is not worse if the test does not find it worse at p < Alpha and no box has
 // a false "correct" at it where it had none at 32 px. False when the reader did not read the height.
 func (r *Workbook) height(reader string, digit int) (Height, bool) {

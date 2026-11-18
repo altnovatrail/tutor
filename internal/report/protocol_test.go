@@ -24,11 +24,11 @@ import (
 	"github.com/altnovatrail/tutor/internal/workbook"
 )
 
-// tag is a tag of a release, as section 14 writes the runner and the code of the verdicts.
+// tag is a tag of a release, as the eval protocol writes the runner and the code of the verdicts.
 var tag = regexp.MustCompile(`^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$`)
 
-// holds holds a report to the rules of section 14 of spec's contracts text that tutor writes it by,
-// and to its file: it reads back, strictly, as it was written (R74).
+// holds holds a report to the rules of the eval protocol that tutor writes it by, and to its file:
+// it reads back, strictly, as it was written (R74).
 func holds(t *testing.T, name string, r *evalv1.Report) {
 	t.Helper()
 	fail := func(format string, args ...any) { t.Errorf("%s: "+format, append([]any{name}, args...)...) }
@@ -78,7 +78,7 @@ func holds(t *testing.T, name string, r *evalv1.Report) {
 	}
 }
 
-// verdictHolds holds a verdict to the form of section 14: a reason beside unreadable alone, and a
+// verdictHolds holds a verdict to the eval protocol's form: a reason beside unreadable alone, and a
 // trap beside not_yet alone; unchecked only of a reading.
 func verdictHolds(t *testing.T, name string, v *evalv1.Verdict, ofReading bool) {
 	t.Helper()
@@ -305,7 +305,6 @@ func TestWorkbookReports(t *testing.T) {
 	}
 }
 
-// verdictOf is a verdict by its name.
 func verdictOf(v string) verdict.Verdict { return verdict.Verdict(v) }
 
 // A log of the essays tells a report for each reader, which reads and assesses: each essay with the

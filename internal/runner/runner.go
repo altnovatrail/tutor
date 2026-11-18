@@ -1,9 +1,7 @@
-// Package runner runs the calls of a measurement, whatever their kind (T67): the judge of the
-// writing process, and in epic E4 also reading, the hint, the cells of the workbook and the rubric
-// (docs/architecture.md, 3.4). A kind plans the calls of its run and says how each is asked and
-// logged. The runner estimates the run before it starts, starts no call whose worst case could
-// take the run past its cap, asks the calls in order, bills them, and logs every answer, a JSON
-// object a line, outside git (R05).
+// Package runner runs the calls of a measurement, whatever their kind. A kind plans the calls of
+// its run and says how each is asked and logged. The runner estimates the run before it starts,
+// starts no call whose worst case could take the run past its cap, asks the calls in order, bills
+// them, and logs every answer, a JSON object a line, outside git (R05).
 package runner
 
 import (
@@ -38,11 +36,8 @@ type Config struct {
 	NoThinking bool
 }
 
-// Configs are the configurations of the measurements: the three of E4 first — Opus 5.5 at high,
-// Haiku 5.5 at low, and Haiku 5.5 at low without thinking (R24; docs/measurements.md, 3.1) —, then
-// the four the extended measurement adds: Opus 5.5 at medium, Sonnet 5.5 at low with thinking and
-// without, and Haiku 5.5 at medium (R50). A run asks those it names, the three of E4 by default
-// (E4Configs).
+// Configs are the configurations of the measurements, in their order: the three a run asks by
+// default first (E4Configs, R24), then the four the extended measurement adds (R50).
 func Configs() []Config {
 	model := func(id string) catalog.Model {
 		i := slices.IndexFunc(catalog.Models, func(m catalog.Model) bool { return m.ID == id })
@@ -59,7 +54,7 @@ func Configs() []Config {
 	}
 }
 
-// E4Configs are the names of the three configurations of E4, which a run asks unless it names others.
+// E4Configs are the names of the configurations a run asks unless it names others (R24).
 var E4Configs = []string{"opus-high", "haiku-low", "haiku-low-no-thinking"}
 
 // ConfigNames are the names of the configurations, in their order.
@@ -71,8 +66,8 @@ func ConfigNames() []string {
 	return names
 }
 
-// E4 are the members of all of the three configurations of E4: the readers, judges or tutors of a
-// kind that a run asks by default, and those the tests of the kinds were written for.
+// E4 are the members of all whose configurations E4Configs names: the readers, judges or tutors of
+// a kind that a run asks by default, and those the tests of the kinds were written for.
 func E4[T any](all []T, config func(T) Config) []T {
 	out, err := Chosen(all, config, E4Configs)
 	if err != nil {
@@ -216,8 +211,7 @@ type Head struct {
 // from what the runner knows as it starts; the records of its items, its sheets, which follow it;
 // and its steps, in the order it makes them. The kind plans them repeat by repeat, so that a run
 // cut short has the same repeats of every item. The record of a run of any kind but the judge
-// tells its kind in a field call_kind; a log without one is the judge's, as those of E2 and T66
-// are (CallKind).
+// tells its kind in a field call_kind; a log without one is the judge's (CallKind).
 type Run struct {
 	Record func(h Head) any
 	Items  []any
@@ -274,14 +268,13 @@ func (r *Run) Do(ctx context.Context, ask Asker, maxUSD float64, log io.Writer, 
 }
 
 // Rest runs the steps of the run that a log of it which stopped short has not come to, as Do runs
-// them, and appends their records and the end to log, the same log (T166): done is what the log
-// holds, as Done reads it, and log is the log cut to done.Size. What the log spent counts toward maxUSD, and the end tells the calls and
-// the money of the whole run.
+// them, and appends their records and the end to log, the same log: done is what the log holds, as
+// Done reads it, and log is the log cut to done.Size. What the log spent counts toward maxUSD, and
+// the end tells the calls and the money of the whole run.
 func (r *Run) Rest(ctx context.Context, ask Asker, maxUSD float64, done Done, log io.Writer, now func() time.Time) (Result, error) {
 	return r.steps(ctx, ask, maxUSD, &writer{log: log}, done, now)
 }
 
-// steps asks the steps from done on and writes their records and the end.
 func (r *Run) steps(ctx context.Context, ask Asker, maxUSD float64, w *writer, done Done, now func() time.Time) (Result, error) {
 	res := Result{Calls: done.Calls, SpentUSD: done.SpentUSD}
 	for _, st := range r.Steps[done.Steps:] {
@@ -311,7 +304,6 @@ func (r *Run) steps(ctx context.Context, ask Asker, maxUSD float64, w *writer, d
 	return res, w.err
 }
 
-// head is what the runner tells of the run as it starts it, at a moment, with its cap.
 func (r *Run) head(at time.Time, maxUSD float64) Head {
 	tutor, moduleKit := Versions()
 	return Head{Time: at, MaxUSD: maxUSD, Estimate: r.Estimate(), Runner: tutor, ModuleKit: moduleKit, Refused: r.Refused}
@@ -333,7 +325,7 @@ func (r *Run) RestEstimate(done Done) Estimate {
 }
 
 // Done reads what a log holds of this run, which stopped short, so that Rest asks the rest of it
-// into the same log (T166). The log must be this very run's: its record the one the run writes at
+// into the same log. The log must be this very run's: its record the one the run writes at
 // the moment and with the cap the log tells; its items, byte for byte, those of the run; and every
 // record after them that of the run's step in its place — the note itself for a note, and for a
 // call the record its call gives again for the outcome the record holds, so that a kind whose step
@@ -423,7 +415,6 @@ func same(line []byte, v any) error {
 	return err
 }
 
-// call asks one step's call and tells what it came to.
 func call(ctx context.Context, ask Asker, st Step, now func() time.Time) Outcome {
 	req, err := st.Call.Request()
 	if err != nil {

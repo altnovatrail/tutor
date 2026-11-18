@@ -14,12 +14,12 @@ import (
 	"github.com/altnovatrail/tutor/internal/wordsjudge"
 )
 
-// WordsJudge is what a run of the judge of the words comes to (T118; docs/architecture.md, 3.4,
-// "The set of words"): of the control phrases, whether the judge gave every answer they expect, and where
-// it did not; of the hints of a log of the set of the words, by tutor, kind of case and language,
-// the hints it flags for each question, against the rough search of the learner's sex; and the
-// file of every hint flagged, by the judge or by the code, for the executor to read. It holds no
-// handwriting: the hints the models wrote, the notes of the set and the control phrases.
+// WordsJudge is what a run of the judge of the words comes to: of the control phrases, whether the
+// judge gave every answer they expect, and where it did not; of the hints of a log of the set of
+// the words, by tutor, kind of case and language, the hints it flags for each question, against the
+// rough search of the learner's sex; and the file of every hint flagged, by the judge or by the
+// code, for the executor to read. It holds no handwriting: the hints the models wrote, the notes of
+// the set and the control phrases.
 type WordsJudge struct {
 	log *wordsjudge.Log
 	// Cells are the hints judged of each tutor by kind of case and language, each tutor's followed
@@ -87,7 +87,7 @@ func NewWordsJudge(l *wordsjudge.Log) (*WordsJudge, error) {
 			}
 		}
 		// The feedback of the essays has no kinds of case: its cells are by the tutor alone. The words
-		// after a correct answer have kinds of their own (T143).
+		// after a correct answer have kinds of their own.
 		feedback := !slices.ContainsFunc(l.Calls, func(c wordsjudge.CallRecord) bool { return c.CaseKind != "" })
 		kinds := hint.CaseKinds()
 		if l.Run.Words == correct.CallKind {

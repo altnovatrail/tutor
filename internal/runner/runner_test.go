@@ -96,7 +96,6 @@ func clock() func() time.Time {
 
 func near(a, b float64) bool { return math.Abs(a-b) < 1e-9 }
 
-// records reads the log back.
 func records(t *testing.T, log []byte) []map[string]any {
 	t.Helper()
 	var out []map[string]any
@@ -495,7 +494,7 @@ func TestModels(t *testing.T) {
 	}
 }
 
-// A run whose log broke off goes on in the same log (T166): Done reads what the log holds, and
+// A run whose log broke off goes on in the same log: Done reads what the log holds, and
 // Rest asks the steps it has not come to and appends them and the end, so that the log is the one
 // the whole run would have written, the cap counting what the log spent.
 func TestRest(t *testing.T) {
