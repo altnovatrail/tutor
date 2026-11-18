@@ -1,12 +1,12 @@
 # The sheet plan of the measurement of free writing
 
-> What code draws on each of the 40 sheets of the measurement of free writing, and what the author writes with a mouse on their three (T57, T62; R28). How the measurement is built and which answer of the judge is correct in it — [measurements.md](measurements.md), section 3.3.
+> What code draws on each of the 40 sheets of the measurement of free writing, and what the author writes with a mouse on their three (R28). How the measurement is built and which answer of the judge is correct in it — [measurements.md](measurements.md), section 3.3.
 >
-> The tasks are the bank of free writing, the file `eval/free-bank.json` in the format `tutor-bank` v0 (R15; T52). The bank and the plans are synthetic content under Apache-2.0: the executor wrote them, not learners.
+> The tasks are the bank of free writing, the file `eval/free-bank.json` in the format `tutor-bank` v0 (R15). The bank and the plans are synthetic content under Apache-2.0: the executor wrote them, not learners.
 >
 > The plans are data files in the format `tutor-sheet-plan` v1 ([architecture.md](architecture.md), section 3.1, "Format of the sheet plan", version 1):
-> - `eval/free-sheets.json` — 40 sheets, drawn by code (T59, T60);
-> - `eval/free-author.json` — the three sheets of the author, free solutions of three tasks, one sheet per layout (T62).
+> - `eval/free-sheets.json` — 40 sheets, drawn by code;
+> - `eval/free-author.json` — the three sheets of the author, free solutions of three tasks, one sheet per layout.
 >
 > The tables below are the same bank and plans: a test of `cmd/tutor-eval` builds them from the files and checks them against this document byte for byte, so a sheet is edited in both places.
 
@@ -50,7 +50,7 @@ The six tasks of the board with free writing, tasks 6–11, word for word and un
 
 ## How many sheets of each kind
 
-The composition is the one T54 recorded ([measurements.md](measurements.md), section 3.3):
+The composition is that of [measurements.md](measurements.md), section 3.3:
 
 | Task | Layout | `correct` | `error` | `erasure-fixed` | `erasure-broken` | Total |
 |---|---|---|---|---|---|---|
@@ -73,13 +73,13 @@ Where the first error and the planned erasure stand, by layout. "In the drawing"
 
 The planned erasure, and with it the frames, is on 16 sheets. The first error stands in different parts of the sheet: in the first on 9 sheets, in the second on 10 and in the third on 1, and in the answer on none.
 
-The order of the sheets is mixed. Neighbouring sheets are different tasks and different scenarios, and each ten has three sheets `correct`, three `error`, two `erasure-fixed` and two `erasure-broken`. Not the plan but `tutor-eval split -seed 20261027` divides the sheets into the dev part and the test part — once, before the first edit of the prompt (T66).
+The order of the sheets is mixed. Neighbouring sheets are different tasks and different scenarios, and each ten has three sheets `correct`, three `error`, two `erasure-fixed` and two `erasure-broken`. Not the plan but `tutor-eval split -seed 20261027` divides the sheets into the dev part and the test part — once, before the first edit of the prompt.
 
 ## The author's sheets
 
 Three sheets — free solutions of three tasks, one per layout of their sheets of code: the grasshopper on the number line, the stamps on the scheme, the album with the counting at the side (the 2026-10-27 amendment to R28). The author solves the task the way they would solve it themselves: these sheets have no scenario, no planned erasure and no deliberate error, and the whole sheet is one part. That the author's sheets are such is checked by a test of `cmd/tutor-eval`.
 
-The author's sheets have no split and no threshold: their run is after the prompt is frozen, and the report is next to the synthetic sheets, by sheet (T77).
+The author's sheets have no split and no threshold: their run is after the prompt is frozen, and the report is next to the synthetic sheets, by sheet.
 
 | No. | Task | Layout of the sheets of code | Scenario | Part on the sheet |
 |---|---|---|---|---|
@@ -89,16 +89,16 @@ The author's sheets have no split and no threshold: their run is after the promp
 
 ## How to write the author's sheets
 
-This is the author's step in T62: the recipe `just free-record`, the directory `samples/free`.
+The author's step: the recipe `just free-record`, the directory `samples/free-v1`.
 1. Choose a sheet with the arrows, solve the task with the mouse — in any way you like, — and press Done.
 2. The board will outline the whole sheet with one box: this is one part, and the markup needs no editing. Press Save.
 3. Made a mistake by accident — press Clear and solve it anew: the author's sheet is a correct solution. Erase stray marks as is convenient — with the eraser or Undo.
 
-After Save — the summary `go run ./cmd/tutor-eval sheets -dir samples/free -bank eval/free-bank.json -plan eval/free-author.json`. There is no handwriting in it, and its output goes to the executor. `git status` must show no file from `samples/`: the sheets are outside git (R05).
+After Save — the summary `go run ./cmd/tutor-eval sheets -dir samples/free-v1 -bank eval/free-bank.json -plan eval/free-author.json`. There is no handwriting in it, and its output goes to the executor. `git status` must show no file from `samples/`: the sheets are outside git (R05).
 
 ## The sheets of code
 
-The sheets are drawn by `tutor-eval draw -seed 1` into the directory `synthetic/free`, with `writer` `synthetic` (T59, T60).
+The sheets are drawn by `tutor-eval draw -seed 1 -dir synthetic/free-v1 -bank eval/free-bank.json -plan eval/free-sheets.json`, with `writer` `synthetic`.
 
 | No. | Task | Scenario | Parts on the sheet | Answer | First error | Planned erasure |
 |---|---|---|---|---|---|---|

@@ -1,10 +1,10 @@
 # The sheet plan of the measurement of the course of writing
 
-> What the author writes on each of the 40 sheets of the measurement of the course of writing (T15; R24). The sheets are written in the board's record mode and marked up there too (R25; T49, T50, T13, T47, T51). How the measurement is built and which answer of the model is correct in it — [measurements.md](measurements.md), section 1.1.
+> What the author writes on each of the 40 sheets of the measurement of the course of writing (R24). The sheets are written in the board's record mode and marked up there too (R25). How the measurement is built and which answer of the model is correct in it — [measurements.md](measurements.md), section 1.1.
 >
 > The tasks are the bank of the measurement, the file `eval/bank.json` in the format `tutor-bank` v0 (R15). In it each task has a key, a reference solution by lines, traps, leak phrases and false keys. This measurement does not use the leaks and the false keys, but the format requires them. The bank and the plan are synthetic content under Apache-2.0: the executor wrote them, not learners.
 >
-> The plan is also the data file `eval/sheets.json` in the format `tutor-sheet-plan` v0 ([architecture.md](architecture.md), section 3.1, "Format of the sheet plan"; T49). From it the board in record mode fills in the sheet's markup (R25). The table "Sheets" below is the same plan: a test of `cmd/tutor-eval` builds it from the file and checks it against this document byte for byte, so a sheet is edited in both places.
+> The plan is also the data file `eval/sheets.json` in the format `tutor-sheet-plan` v0 ([architecture.md](architecture.md), section 3.1, "Format of the sheet plan"). From it the board in record mode fills in the sheet's markup (R25). The table "Sheets" below is the same plan: a test of `cmd/tutor-eval` builds it from the file and checks it against this document byte for byte, so a sheet is edited in both places.
 
 ## Tasks
 
@@ -33,7 +33,7 @@ Ten tasks: four equations, three chains of calculations and three short tasks wi
 - **Answer** — the number of the line with the result. On the `answer-not-last` sheets a check follows it.
 - **First error** — the number of the first wrong line and the task's trap that the error falls into.
   - This markup sets the first error of a task of any kind (R24). The wrong line is the one from which the solution went wrong, even if the calculation in it is right. So, in `chain-1` the line `66 − 14 = 52` is subtracted right, but it is a step out of the order of operations.
-  - The rules of the task kinds, by which the program checked the lines, went away together with the check by lines (R19). A task's kind in the bank remained its name.
+  - A task's kind in the bank is only its name: no rules of task kinds check the lines (R19).
   - The lines after the first error follow from what is written: there is no second error on the sheet.
 - **Planned erasure** — the number of the line that is written in the place of what was erased, what was erased — a mistake or a correct step — and its text, and after the arrow, what is written instead.
   - The order of writing: the lines up to this place; what is erased; its erasure; in its place, the new one; then the remaining lines.
@@ -59,11 +59,11 @@ Ten tasks: four equations, three chains of calculations and three short tasks wi
 
 Sheets with a planned erasure — 14. The first error stands in different lines: in the first on 5 sheets, in the second on 9, in the third on 2 and in the fourth on 3.
 
-The order of the sheets is mixed. Neighbouring sheets are different tasks and different scenarios, and each ten has all ten tasks: three sheets `correct`, three `error` and four of the other scenarios. So fatigue and getting used to the board do not fall on one scenario. Not the plan but `tutor-eval split` after the recording divides the sheets into the dev part and the test part (T48).
+The order of the sheets is mixed. Neighbouring sheets are different tasks and different scenarios, and each ten has all ten tasks: three sheets `correct`, three `error` and four of the other scenarios. So fatigue and getting used to the board do not fall on one scenario. Not the plan but `tutor-eval split` after the recording divides the sheets into the dev part and the test part.
 
 ## How to write the sheets
 
-These are the author's steps in T26. How the record page is built, in detail — [architecture.md](architecture.md), section 3.3.
+These are the author's steps. How the record page is built, in detail — [architecture.md](architecture.md), section 3.3.
 
 The plan has 40 sheets, and all are needed: the split (step 8) starts only when all the sheets of the plan are recorded and pass the check. A sheet takes 3–5 minutes. The sheets can be written in several sittings: the board remembers which sheets are already saved. The sheets the author chose not to write are drawn by code — step 6 (R26).
 
@@ -96,11 +96,11 @@ The plan has 40 sheets, and all are needed: the split (step 8) starts only when 
    What is wrong, the board writes next to the fields. Back returns to writing, and the time of the markup does not go into the record.
 5. **Save.** The sheet is saved in `samples/sheets-v1`, outside git, as a sample of the eval protocol of `spec` with the history of writing (R75). A stroke that fell into no line the board names, and the sheet is not saved until the stroke is moved into a line or erased. The writer's code is the file `samples/writer-code`: the first save makes it. Before the split a rewritten sheet is saved once more, and the last file counts.
 6. **The other sheets.** `go run ./cmd/tutor-eval draw` draws each sheet of the plan that has no file yet and saves it alongside, with `writer` `synthetic`. The author's sheets stay as they were. There is no handwriting of the author in the drawn sheets.
-7. **Summary.** Then — `go run ./cmd/tutor-eval sheets`. The sheets saved before T105 as files `tutor-sample` v0 in `samples/sheets` were converted into `samples/sheets-v1` by the command `go run ./cmd/tutor-eval convert -from samples/sheets`: the summary reads only samples of the protocol. It says how many sheets are recorded and how many pass the check, by task, scenario and outcome. There is no handwriting in it, and it can be shown to an agent.
-8. **Split.** Once, before the first edit of the prompt, — `go run ./cmd/tutor-eval split -seed N` with any number N of your own. The split is not overwritten (T48). After the split do not rewrite the sheets: the run takes the files the split took, and a sheet saved anew will stop it before the start. If a sheet is rewritten all the same, delete its new file from `samples/sheets`.
+7. **Summary.** Then — `go run ./cmd/tutor-eval sheets`. The summary reads only samples of the protocol: if sheets in files `tutor-sample` v0 lie in `samples/sheets`, `go run ./cmd/tutor-eval convert -from samples/sheets` first writes them into `samples/sheets-v1` (R75). It says how many sheets are recorded and how many pass the check, by task, scenario and outcome. There is no handwriting in it, and it can be shown to an agent.
+8. **Split.** Once, before the first edit of the prompt, — `go run ./cmd/tutor-eval split -seed N` with any number N of your own. The split is not overwritten. After the split do not rewrite the sheets: the run takes the files the split took, and a sheet saved anew will stop it before the start. If a sheet is rewritten all the same, delete its new file from `samples/sheets-v1`.
 9. **Check.** `git status` must show no file from `samples/`: the sheets are outside git (R05).
 
-Next — the dev run, `just measure -part dev` (T27). It is paid, and the author starts it: first the run names the estimate and waits for "yes".
+Next — the dev run, `just measure -part dev`. It is paid, and the author starts it: first the run names the estimate and waits for "yes".
 
 ## Sheets
 
