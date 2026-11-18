@@ -388,7 +388,7 @@ The keys live in the devcontainer's environment variables, not in the repository
 
 ### 2.1. Series T40 and T45 on the board
 
-From architecture 3.12, "What is known — the board" (R102; T133). The research that reads them stayed in architecture 3.12.
+From architecture 3.12, "What is known — the board" (R102; T133). The research that reads them is in the archive of epic E2, after T44 ([plan/E2.md](plan/E2.md)).
 
 Before T45 the model answered with an analysis, and from T45 with only an assessment and the place of the error. Since T45 the board gets Claude's answer as a stream and records the time to the first token, the thinking tokens and the SDK's retries (architecture 3.3):
 
@@ -1380,6 +1380,13 @@ The money is Opus 5.5's: input $4, a write for 5 minutes $5, a hit $0.20 a milli
 By answer slots, as the rule counts: the pair has 0 false alarms on 35 answer slots, bound 0.082, and 0 false "correct" on 25 answer slots, bound 0.113. `tutor-eval admit` gave the pair the rung "author", and the reports of one reader nothing: a sheet is read by a pair. The report's SHA-256 was `f2455454…`. The averages of its 180 calls of each reader — Opus 1,354 of input and 177 of output, Haiku 1,354 and 502 — are the expected tokens of `CallSheet` in `price.go`. The runner of this run is a build from the working copy, and its report names the runner `v0.0.0`.
 
 **Version 2 of the prompt** (T115, 2026-11-08; R82). The reading prompt became version 2, with the safety rules for children, and the admission was repeated by the same run on the same 60 sheets, twice: the review refined the rule about what is unsuitable, and the final prompt was measured anew. The final run cost $1.78, with no failures; the pair again has 0 false alarms on 35 answer slots and 0 false "correct" on 25 — the rung "author" —, and extra "unreadable" are 6 of 180 instead of 9 for version 1. Its report, `t115-admission-2`, with the SHA-256 `284d8eac…` and the fingerprint of version 2, `c693bfa8…`, is the evidence of the pair's entry in `admission.Admitted`.
+
+### 3.24. The library's prompts of the workbook, the essay and the rubric
+
+From architecture 3.10, the calls of the workbook, the essay and the rubric (T175). Each run checked that the prompt the library asks reads no worse than the eval prompt before it; the conditions are R97, R98 and R99.
+- **The workbook, version 3** (T123, 2026-11-11; R97) — the trial part of T99, 20 pages, Opus 5.5 · `high` and Haiku 5.5 · `medium`, one repeat, $0.60: "correct" on 188 and 190 boxes of 220 against 185 and 186 of version 2, false "correct" 0 of 40 for both, false alarms 26 and 16 of 160 against 29 and 18, extra "unreadable" 6 and 9 of 200 against 6 and 11.
+- **The reading of an essay, version 2 of the two calls** (T124, 2026-11-11; R98) — the test part of the essays in two calls, Sonnet 5.5 · `low` without thinking and Haiku 5.5 · `medium`: 0 errors in words of 993 for both, all the learner's errors kept, not one essay read as illegible.
+- **The assessment of the text, version 3 of the two calls** (T125, 2026-11-11; R99) — the test part of the essays, the same two models: 0 false alarms of 66, 0 missed "not met" of 24, κ 1.00; the feedback rule broken in 2 of 15 for Sonnet — for version 1 in 11 of 45 — and in 0 for Haiku; the judge of words flagged none of the 30 feedbacks.
 
 ## 4. Claude Code sessions
 
