@@ -15,16 +15,15 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// Config is what api gives tutor when it starts (architecture 3.10): spec's admission table, the
-// deployment's facts, the least stage of admission its learners take — admission.StageAuthor where
-// the operator names it, as novatrail does for adults (the 2026-11-15 amendment to R76 spec; R80)
-// —, the platform's keys at the AI providers, which api reads from Secret Manager (architecture
-// 1), and the adapters of the providers whose models the service calls, such as claude.Dial of
-// package provider/claude. The library builds no adapter in, so that a service carries the SDKs of
-// the adapters it gives alone (Д185 RUN.md spec; R90). A provider with no adapter here is no route
-// at all, and one with no key no route of platform AI: Choose takes none of its models. Reading is
-// how the library reads a sheet and a workbook page, by the pair or by one reader; an empty one is
-// the pair.
+// Config is what api gives tutor when it starts: spec's admission table, the deployment's facts,
+// the least stage of admission its learners take — admission.StageAuthor where the operator names
+// it, as novatrail does for adults (R149 spec; R80) —, the platform's keys at the AI providers,
+// which api reads from Secret Manager, and the adapters of the providers whose models the service
+// calls, such as claude.Dial of package provider/claude. The library builds no adapter in, so that
+// a service carries the SDKs of the adapters it gives alone (R90). A provider with no adapter here
+// is no route at all, and one with no key no route of platform AI: Choose takes none of its models.
+// Reading is how the library reads a sheet and a workbook page, by the pair or by one reader; an
+// empty one is the pair.
 type Config struct {
 	Table    *admission.Table
 	Facts    admission.Facts
@@ -35,11 +34,10 @@ type Config struct {
 }
 
 // Reading is how the library reads the handwriting of a sheet and of a workbook page, which api
-// chooses (the 2026-11-17 amendments to R68 spec; R125): ReadingPair, both readers of the entry
-// chosen, the strong one first, whose readings module-kit joins (R68 spec; R86 spec), or
-// ReadingSingle, one reader, Haiku 5.5 at medium, the pair's second, whose observation is the
-// reading. The reading of an essay is one reader in both (the second 2026-11-01 amendment to R68
-// spec).
+// chooses (R68 spec; R125): ReadingPair, both readers of the entry chosen, the strong one first,
+// whose readings module-kit joins (R68 spec; R86 spec), or ReadingSingle, one reader, Haiku 5.5 at
+// medium, the pair's second, whose observation is the reading. The reading of an essay is one
+// reader in both (R68 spec).
 type Reading string
 
 // The modes of reading.
@@ -121,9 +119,9 @@ func (t *Tutor) dial(m admission.Model, key string) (provider.Model, error) {
 	return d(m.ID, key)
 }
 
-// Route is what every call of the library carries besides its work (architecture 3.10): the AI
-// route, the learner's age category, and on the own key the key with its provider. It names no
-// learner, no account and no adult (R15 spec; privacy 5.1 spec).
+// Route is what every call of the library carries besides its work: the AI route, the learner's age
+// category, and on the own key the key with its provider. It names no learner, no account and no
+// adult (R15 spec).
 type Route struct {
 	AI       admissionv0.AiRoute
 	Category admissionv0.AgeCategory
@@ -131,10 +129,10 @@ type Route struct {
 }
 
 // OwnKey is the key of an account owner who learns, with its provider (R84 spec). It lives only in
-// the memory of the request (privacy 5.2 spec): its fields are unexported, it prints as its provider
-// alone with any verb, and as JSON it is nothing. The key itself stands behind a pointer, so that
-// even an OwnKey printed field by field, as fmt prints an unexported field of another struct, shows
-// an address rather than the key.
+// the memory of the request: its fields are unexported, it prints as its provider alone with any
+// verb, and as JSON it is nothing. The key itself stands behind a pointer, so that even an OwnKey
+// printed field by field, as fmt prints an unexported field of another struct, shows an address
+// rather than the key.
 type OwnKey struct {
 	provider admissionv0.Provider
 	key      *secret
@@ -183,10 +181,11 @@ func (r Route) check() error {
 // Choose chooses the models of a capability for a route (admission.Table.Select), the first entry
 // of the capability whatever prompt it measured. A call of the library chooses by its kind, which
 // names its prompt too (ChooseCall): that is the one api calls before an attempt, with the same
-// answer the call gets while the config is the same. It takes only the models of the providers the config gives an
-// adapter of: on the own key only those of the key's provider, and on platform AI only those of the
-// providers it holds a key of. It refuses a route whose key does not fit it. The entry holds every
-// model it has: the mode of reading is of a kind of call, and ChooseCall applies it.
+// answer the call gets while the config is the same. It takes only the models of the providers the
+// config gives an adapter of: on the own key only those of the key's provider, and on platform AI
+// only those of the providers it holds a key of. It refuses a route whose key does not fit it. The
+// entry holds every model it has: the mode of reading is of a kind of call, and ChooseCall applies
+// it.
 func (t *Tutor) Choose(c admissionv0.Capability, r Route) (admission.Entry, admission.Answer, error) {
 	return t.choose(c, r, "")
 }
@@ -204,12 +203,12 @@ func (t *Tutor) ChooseCall(c Call, r Route) (admission.Entry, admission.Answer, 
 }
 
 // chooseCall is ChooseCall: the one choice of a kind of call that the call, ChooseCall, Price and
-// CheckKey make, with the models the call asks (Tutor.asked), so that what api's gateway admits and reserves a quota
-// for, and the models a key is checked for, are those the call asks (Д13). The words with the work
-// word the hint in the same call, so they are admitted only when the hint is admitted on the model
-// of the analysis (R84): when the model the hint without the work chooses, by the same prompt, is
-// the analysis's first. Otherwise the answer is the hint's refusal, or model_not_admitted when the
-// hint is another model's — another ID or another effort.
+// CheckKey make, with the models the call asks (Tutor.asked), so that what api's gateway admits and
+// reserves a quota for, and the models a key is checked for, are those the call asks (R111). The
+// words with the work word the hint in the same call, so they are admitted only when the hint is
+// admitted on the model of the analysis (R84): when the model the hint without the work chooses, by
+// the same prompt, is the analysis's first. Otherwise the answer is the hint's refusal, or
+// model_not_admitted when the hint is another model's — another ID or another effort.
 func (t *Tutor) chooseCall(c Call, r Route) (admission.Entry, admission.Answer, error) {
 	k := kinds[c]
 	e, a, err := t.choose(k.capability, r, k.prompt)
@@ -273,11 +272,10 @@ func (t *Tutor) choose(c admissionv0.Capability, r Route, prompt string) (admiss
 	return e, a, nil
 }
 
-// Kind is how a call of the library ended (architecture 3.10): the models answered; AI failed; a
-// provider refused for a limit, a balance or billing, whose reason Outcome.Limit names
-// (architecture 3.7); the admission refused the call, before any model was asked (architecture
-// 3.9); or the provider refused the own key, wrong or revoked (R84 spec). None but the first is
-// the learner's mistake (R04 spec).
+// Kind is how a call of the library ended: the models answered; AI failed; a provider refused for a
+// limit, a balance or billing, whose reason Outcome.Limit names; the admission refused the call,
+// before any model was asked; or the provider refused the own key, wrong or revoked (R84 spec).
+// None but the first is the learner's mistake (R04 spec).
 type Kind int
 
 // The kinds of outcome.
@@ -305,9 +303,9 @@ func (k Kind) String() string {
 	return fmt.Sprintf("kind %d", int(k))
 }
 
-// LimitReason is why a provider refused for a limit: one only the owner of the key can lift, each in
-// its own way (architecture 3.7). It is the adapters' own, provider.Limit, so that a reason they
-// tell is one the library gives.
+// LimitReason is why a provider refused for a limit: one only the owner of the key can lift, each
+// in its own way. It is the adapters' own, provider.Limit, so that a reason they tell is one the
+// library gives.
 type LimitReason = provider.Limit
 
 // The reasons of a limit reached.
@@ -318,18 +316,18 @@ const (
 	LimitBilling = provider.LimitBilling
 )
 
-// Usage is a record of what one call of a model took (architecture 3.7): the provider and the model
-// the provider says answered; the input tokens without the cache, those written to the cache by how
-// long it keeps them and those read from it, which add up to the input with no token counted twice;
-// the output tokens, and of them those spent thinking; whether those tokens are the call's whole
-// bill (provider.Billed); its cost in US dollars by the table of prices (Tutor.Prices) — at its
-// worst when the tokens are not its whole bill —, which Priced says the prices hold, and it is an
+// Usage is a record of what one call of a model took: the provider and the model the provider says
+// answered; the input tokens without the cache, those written to the cache by how long it keeps
+// them and those read from it, which add up to the input with no token counted twice; the output
+// tokens, and of them those spent thinking; whether those tokens are the call's whole bill
+// (provider.Billed); its cost in US dollars by the table of prices (Tutor.Prices) — at its worst
+// when the tokens are not its whole bill —, which Priced says the prices hold, and it is an
 // estimate: the provider bills; how long the call took, from when the library asked the adapter to
 // when the answer or the failure came back, the SDK's retries counted in — the span the eval runner
-// times as latency_ms (R107) —, and how many times the SDK sent it again; and when the first text of
-// the answer came, counted from the attempt that answered, or zero where none came or the adapter
-// does not measure it, as GPT's does not. It holds no content and no identifier, and may be written
-// to logs (R09 spec).
+// times as latency_ms (R107) —, and how many times the SDK sent it again; and when the first text
+// of the answer came, counted from the attempt that answered, or zero where none came or the
+// adapter does not measure it, as GPT's does not. It holds no content and no identifier, and may be
+// written to logs (R09 spec).
 type Usage struct {
 	Provider        admissionv0.Provider
 	Model           string
@@ -348,11 +346,10 @@ type Usage struct {
 
 // Outcome is how a call of the library ended: its kind; the reason of a limit, and when access
 // returns, where the provider's terms say it — at Anthropic, the cap of the tier, at 00:00 UTC on
-// the first day of the next month by the provider's clock —, zero where they do not (architecture
-// 3.7), which api gives the key's owner as access_returns; the admission's answer, which on
-// NotAdmitted refuses; and a record of usage for each call of a model that came back, in the order
-// of the models, none on NotAdmitted. Err says what failed, for the logs: it carries no content
-// and no key.
+// the first day of the next month by the provider's clock —, zero where they do not, which api
+// gives the key's owner as access_returns; the admission's answer, which on NotAdmitted refuses;
+// and a record of usage for each call of a model that came back, in the order of the models, none
+// on NotAdmitted. Err says what failed, for the logs: it carries no content and no key.
 type Outcome struct {
 	Kind          Kind
 	Limit         LimitReason
@@ -369,11 +366,11 @@ type call struct {
 }
 
 // prepare chooses the models of a kind of call for a route (chooseCall), those the kind asks, and
-// makes their clients — with the own key by the key, on platform AI by the platform's key of the provider —, and
-// gives the admission's answer, which an outcome of the call carries. A refusal of the admission is
-// the outcome NotAdmitted, before any model is asked and with no usage; a route that does not fit,
-// an entry without the one reader of ReadingSingle and a client that cannot be made are Failed. A
-// call that asks one model makes no client of another.
+// makes their clients — with the own key by the key, on platform AI by the platform's key of the
+// provider —, and gives the admission's answer, which an outcome of the call carries. A refusal of
+// the admission is the outcome NotAdmitted, before any model is asked and with no usage; a route
+// that does not fit, an entry without the one reader of ReadingSingle and a client that cannot be
+// made are Failed. A call that asks one model makes no client of another.
 func (t *Tutor) prepare(c Call, r Route) ([]call, admission.Answer, *Outcome) {
 	e, a, err := t.chooseCall(c, r)
 	if err != nil {
@@ -413,16 +410,16 @@ func (t *Tutor) client(m admission.Model, own *OwnKey) (provider.Model, error) {
 	return c, nil
 }
 
-// ask asks every model of the calls at once — the readers of a pair go in parallel (Д89 RUN.md
-// spec) — each its request with the model's effort and thinking as the list admitted them, and times
-// each, so that its record of usage says which model held the call. It returns the answers in the
-// order of the calls and the outcome: Answered when every model
-// answered, else Failed, with the usage of each call that came back with tokens, a refused or a
-// broken answer too, since it is billed; Billed says whether its tokens are its whole bill, and
-// a call that is not is priced at its worst: maxIn, the most input of the kind, and the request's
-// most output. A provider's refusal for a limit of any model is the outcome LimitReached with its
-// reason, and a refusal of the key KeyRefused (provider.LimitError, provider.ErrKeyRefused); the
-// usage of a model that answered stays, since it is billed.
+// ask asks every model of the calls at once — the readers of a pair go in parallel — each its
+// request with the model's effort and thinking as the list admitted them, and times each, so that
+// its record of usage says which model held the call. It returns the answers in the order of the
+// calls and the outcome: Answered when every model answered, else Failed, with the usage of each
+// call that came back with tokens, a refused or a broken answer too, since it is billed; Billed
+// says whether its tokens are its whole bill, and a call that is not is priced at its worst: maxIn,
+// the most input of the kind, and the request's most output. A provider's refusal for a limit of
+// any model is the outcome LimitReached with its reason, and a refusal of the key KeyRefused
+// (provider.LimitError, provider.ErrKeyRefused); the usage of a model that answered stays, since it
+// is billed.
 func ask(ctx context.Context, a admission.Answer, calls []call, reqs []provider.Request, maxIn int64) ([]provider.Response, Outcome) {
 	if len(reqs) != len(calls) {
 		return nil, Outcome{Kind: Failed, Admission: a, Err: fmt.Errorf("tutor: %d requests for %d models", len(reqs), len(calls))}
@@ -458,8 +455,8 @@ func ask(ctx context.Context, a admission.Answer, calls []call, reqs []provider.
 		if errs[i] == nil {
 			continue
 		}
-		// A refusal for a limit ends the call whatever the others did, and a refused key comes next:
-		// a reading by the pair gives both observations or the outcome, never one (architecture 3.7). Of two
+		// A refusal for a limit ends the call whatever the others did, and a refused key comes
+		// next: a reading by the pair gives both observations or the outcome, never one. Of two
 		// limits, the one that holds the call longer: one with no time to return, which only the
 		// owner lifts, then the later time.
 		kind, limit, returns := Failed, LimitReason(""), time.Time{}

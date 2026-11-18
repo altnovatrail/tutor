@@ -185,7 +185,7 @@ func TestImages(t *testing.T) {
 		t.Errorf("the request holds the label at %d, the picture at %d and the text at %d; want them in that order:\n%s", label, image, text, body)
 	}
 	// The picture goes in the body of the request, never by /v1/files, which zero data retention
-	// does not cover (R121 spec; Д150 RUN.md spec); fakeAPI takes /responses alone.
+	// does not cover (R121 spec); fakeAPI takes /responses alone.
 	if !strings.Contains(body, `"image_url":"data:image/png;base64,`) {
 		t.Errorf("the request sends the picture otherwise than in its body:\n%s", body)
 	}

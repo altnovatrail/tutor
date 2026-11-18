@@ -1,14 +1,14 @@
 // Package protocol is spec's eval protocol in tutor's code: the package novatrail.eval.v1, whose
-// messages Sample and Report are the sample file and the runner's report (contracts/README.md of
-// spec, sections 11 and 14; R93, R95 spec). It reads and writes their files, folds a history of
-// writing into the strokes a sheet shows, and holds the rules of a workbook's boxes and of snapping
-// that the device and the runner share (section 12; R94 spec). The groups of strokes and the crop
-// are internal/lines' and internal/render's, and their tests pass spec's vectors too.
+// messages Sample and Report are the sample file and the runner's report (R93, R95 spec). It reads
+// and writes their files, folds a history of writing into the strokes a sheet shows, and holds the
+// rules of a workbook's boxes and of snapping that the device and the runner share (R94 spec). The
+// groups of strokes and the crop are internal/lines' and internal/render's, and their tests pass
+// spec's vectors too.
 //
 // The messages are the generated code of the module github.com/altnovatrail/spec/contracts, at the
-// tag of the spec submodule: code on Go takes a contract from it and generates none of its own
-// (section 8). Whether a file keeps the rules of sections 11 and 12 is spec's check sample-check to
-// say, and tutor writes no check of its own (R93 spec): this package reads a file strictly, as the
+// tag of the spec submodule: code on Go takes a contract from it and generates none of its own.
+// Whether a file keeps the rules of the protocol is spec's check sample-check to say, and tutor
+// writes no check of its own (R93 spec): this package reads a file strictly, as spec's contracts
 // text asks, and no more.
 package protocol
 
@@ -27,12 +27,12 @@ import (
 )
 
 // Protocol is what a file of the protocol names in its field "protocol": the package, whose last
-// component is the version of the contract (section 2).
+// component is the version of the contract.
 const Protocol = "novatrail.eval.v1"
 
 // ReadSample reads a sample file: its protocol first, and a file of any other refused, and then the
-// message strictly, a field the message does not have refused (section 11, "Writing and reading").
-// An error of the protocol is a *sample.FormatError at the path "protocol".
+// message strictly, a field the message does not have refused. An error of the protocol is a
+// *sample.FormatError at the path "protocol".
 func ReadSample(r io.Reader) (*evalv1.Sample, error) {
 	var s evalv1.Sample
 	if err := read(r, "sample file", &s); err != nil {
@@ -41,7 +41,7 @@ func ReadSample(r io.Reader) (*evalv1.Sample, error) {
 	return &s, nil
 }
 
-// ReadReport reads a runner's report as ReadSample reads a sample file (section 14).
+// ReadReport reads a runner's report as ReadSample reads a sample file.
 func ReadReport(r io.Reader) (*evalv1.Report, error) {
 	var rep evalv1.Report
 	if err := read(r, "report", &rep); err != nil {
@@ -109,10 +109,10 @@ func protocolError(what, format string, args ...any) error {
 	return &sample.FormatError{What: what, Problems: []sample.Problem{{Path: "protocol", Message: fmt.Sprintf(format, args...)}}}
 }
 
-// MarshalSample writes a sample file as section 6 has it: the protobuf names, and every field, its
-// zero too. It is indented by two spaces and ends with a newline, as spec's examples are, and the
-// same message gives the same bytes on every build. spec's check compares the values a file holds,
-// not its bytes.
+// MarshalSample writes a sample file as spec's contracts text has it: the protobuf names, and every
+// field, its zero too. It is indented by two spaces and ends with a newline, as spec's examples
+// are, and the same message gives the same bytes on every build. spec's check compares the values a
+// file holds, not its bytes.
 func MarshalSample(s *evalv1.Sample) ([]byte, error) {
 	if s.GetProtocol() != Protocol {
 		return nil, protocolError("sample file", "is %q, and a file of the protocol names %q", s.GetProtocol(), Protocol)

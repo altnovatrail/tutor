@@ -13,7 +13,7 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// CorrectRequest is a call of the words after a correct answer (architecture 3.10; R112): the praise
+// CorrectRequest is a call of the words after a correct answer (R112): the praise
 // of a step of the solution and one question on the technique that helped, after the program's
 // verdict is correct, as GetCorrectAnswerWords of spec's contract asks them.
 //   - Crop is the PNG of the crop of the work; nil when the task's answer slots are only choices,

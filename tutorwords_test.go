@@ -16,7 +16,7 @@ import (
 )
 
 // withWords admits Opus 5.5 at high for the capabilities named alone, for a test: the entries of
-// the words of the platform's list (T127) are left out, so that a test says which it admits.
+// the words of the platform's list are left out, so that a test says which it admits.
 func withWords(t *testing.T, capabilities ...admissionv0.Capability) {
 	t.Helper()
 	old := admission.Admitted
@@ -191,10 +191,10 @@ func TestChooseCallHint(t *testing.T) {
 }
 
 // The words with the work are admitted only with the hint on the analysis's model (R84), and every
-// place that decides on them holds it by one choice (Д13): with the hint of another model, of
+// place that decides on them holds it by one choice (R111): with the hint of another model, of
 // another effort or on another prompt, neither ChooseCall nor Price nor the call admits the words,
 // and the check of a key asks only the models the calls would ask — the hint's own, not the
-// analysis's. With the hint on the same model, all of them admit it, as before.
+// analysis's. With the hint on the same model, all of them admit it.
 func TestWordsHintSameModel(t *testing.T) {
 	opus := admission.Model{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "high"}
 	for _, tt := range []struct {

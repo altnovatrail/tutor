@@ -13,10 +13,10 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// KeyCheck is how the check of an own key ended (R84 spec; architecture 3.7), as spec's contract
-// names it (OwnKeyCheck): the provider took it; the key is wrong, revoked or expired; it is right and
-// has no rights to a model it is needed for; the provider is closed to an own key at the profile, and
-// no call went; or the provider did not answer, and the check says nothing of the key.
+// KeyCheck is how the check of an own key ended (R84 spec), as spec's contract names it
+// (OwnKeyCheck): the provider took it; the key is wrong, revoked or expired; it is right and has no
+// rights to a model it is needed for; the provider is closed to an own key at the profile, and no
+// call went; or the provider did not answer, and the check says nothing of the key.
 type KeyCheck int
 
 // The ends of a check of a key.
@@ -48,12 +48,11 @@ func (k KeyCheck) String() string {
 // never calls a provider round it. The route is the own key's, with the profile's age category. The
 // key is checked for every model the library would call with it — the models each kind of call
 // chooses (ChooseCall), the hint without the work among them, both readers of a pair or the one
-// reader of ReadingSingle —, each by
-// a request of the provider without any learner's content that costs nothing (provider.Model.Check).
-// When none is open, the provider is closed to an own key at the profile, and no call goes. One wrong key is the end, then one model
-// without rights, then a provider that did not answer. A refusal for a limit means the provider took
-// the key, and the limit shows on the calls. The error says what failed, for the logs, and never
-// holds the key.
+// reader of ReadingSingle —, each by a request of the provider without any learner's content that
+// costs nothing (provider.Model.Check). When none is open, the provider is closed to an own key at
+// the profile, and no call goes. One wrong key is the end, then one model without rights, then a
+// provider that did not answer. A refusal for a limit means the provider took the key, and the
+// limit shows on the calls. The error says what failed, for the logs, and never holds the key.
 func (t *Tutor) CheckKey(ctx context.Context, r Route) (KeyCheck, error) {
 	if r.AI != admissionv0.AiRouteOwnKey {
 		return KeyUnanswered, fmt.Errorf("tutor: the check of a key goes on the route own_key, not %q", r.AI)

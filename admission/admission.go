@@ -1,16 +1,16 @@
-// Package admission is tutor's admission function (R57; architecture 3.9): one pure function that
-// says whether the work of a learner of an age category may go to an AI provider on an AI route,
-// for a capability of AI, by spec's admission table and the deployment facts an operator declares.
-// api calls it before an attempt, and tutor before each call of a model that carries a learner's
-// work. It does no input or output, reads no clock and keeps nothing, so that the same table, facts
-// and request give the same answer anywhere.
+// Package admission is tutor's admission function (R57): one pure function that says whether the
+// work of a learner of an age category may go to an AI provider on an AI route, for a capability of
+// AI, by spec's admission table and the deployment facts an operator declares. api calls it before
+// an attempt, and tutor before each call of a model that carries a learner's work. It does no input
+// or output, reads no clock and keeps nothing, so that the same table, facts and request give the
+// same answer anywhere.
 //
 // The table is spec's (R96 spec): Platform reads it from the Go module of spec at the tag go.mod
 // requires, as spec.Admission, and ReadTable reads any other of the same version, such as one of
-// the test vectors. Its rules are the admission text of spec, sections 4 to 7, and the function
-// passes every test vector of spec, of answers and of the rules of a table (TestAnswerVectors,
-// TestRuleVectors). Whether the model of a call is admitted is no part of the table: tutor checks
-// it after the table admits the request.
+// the test vectors. Its rules are those of spec's admission text, and the function passes every
+// test vector of spec, of answers and of the rules of a table (TestAnswerVectors, TestRuleVectors).
+// Whether the model of a call is admitted is no part of the table: tutor checks it after the table
+// admits the request.
 package admission
 
 import (
@@ -61,7 +61,7 @@ type Table struct {
 func (t *Table) Version() string { return t.version }
 
 // RuleError is a table that follows its schema but breaks a rule of a table, which Rule names by
-// its ID, such as admission-table.unique-cells (the admission text, section 7).
+// its ID, such as admission-table.unique-cells.
 type RuleError struct {
 	Rule   string
 	Detail string
@@ -71,7 +71,7 @@ func (e *RuleError) Error() string {
 	return "admission: the table breaks the rule " + e.Rule + ": " + e.Detail
 }
 
-// The IDs of the rules of a table, in the order of the admission text, section 7.
+// The IDs of the rules of a table, in the order of spec's admission text.
 const (
 	RuleUniqueCells        = "admission-table.unique-cells"
 	RuleUniqueCapabilities = "admission-table.unique-capabilities"
@@ -93,7 +93,7 @@ func Platform() (*Table, error) {
 // VERSION of spec.Admission, since a table of another version has other schemas and the package
 // knows only these. It refuses a table that does not follow admission-table.schema.json, and a
 // table that breaks a rule of a table with a *RuleError that names the first such rule, in the
-// order of section 7.
+// order of spec's admission text.
 func ReadTable(data []byte) (*Table, error) {
 	s, err := schemas()
 	if err != nil {
@@ -142,10 +142,9 @@ func ReadTable(data []byte) (*Table, error) {
 }
 
 // Facts are the deployment facts an operator declares: for each provider, each fact with the age
-// categories for which it holds (the admission text, section 5). The zero value declares none, as
-// a deployment with no file of facts does: every cell open with facts is then closed, and the own
-// key of an adult stays open. Admit reads only the facts its cells name, so a fact no cell names
-// can never open anything.
+// categories for which it holds. The zero value declares none, as a deployment with no file of
+// facts does: every cell open with facts is then closed, and the own key of an adult stays open.
+// Admit reads only the facts its cells name, so a fact no cell names can never open anything.
 type Facts struct {
 	declared admissionv0.DeclaredFacts
 }
@@ -185,11 +184,11 @@ func (f Facts) holds(p admissionv0.Provider, fact admissionv0.Fact, c admissionv
 	return slices.Contains(f.declared[p][fact], c)
 }
 
-// Admit answers the request by the table and the facts, as the admission text, section 6, says:
-// the rule of the capability for the age category first, then the cell of the provider, the AI
-// route and the age category, then the facts of a cell open with facts, in its order. What the
-// table does not name is closed: a capability, a route, a provider or a category it does not know
-// is refused, whatever its spelling.
+// Admit answers the request by the table and the facts, as spec's admission text says: the rule of
+// the capability for the age category first, then the cell of the provider, the AI route and the
+// age category, then the facts of a cell open with facts, in its order. What the table does not
+// name is closed: a capability, a route, a provider or a category it does not know is refused,
+// whatever its spelling.
 func (t *Table) Admit(r Request, f Facts) Answer {
 	a := Answer{Version: t.version}
 	rule := admissionv0.CapabilityRuleKey{Capability: r.Capability, AgeCategory: r.AgeCategory}

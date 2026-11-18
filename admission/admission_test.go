@@ -113,7 +113,7 @@ func TestRuleVectors(t *testing.T) {
 			t.Errorf("%s: breaks %s, want %s", name, rule.Rule, want)
 		}
 	}
-	// Every rule of section 7 has its vectors: a rule with none would go untested.
+	// Every rule of a table has its vectors: a rule with none would go untested.
 	for _, rule := range []string{RuleUniqueCells, RuleUniqueCapabilities, RuleKnownProviders, RuleKnownFacts} {
 		if !seen[rule] {
 			t.Errorf("no vector of %s", rule)
@@ -184,10 +184,9 @@ func TestPlatform(t *testing.T) {
 	if a := table.Admit(adult("anthropic", admissionv0.AiRoutePlatformAi), facts); !a.Admitted {
 		t.Errorf("anthropic, platform AI, adult, with its facts: %s", asJSON(t, a))
 	}
-	// From table 0.4 platform AI of an adult needs the processor agreement alone, under the
-	// provider's usual retention, which version 4 of the privacy policy names (the second
-	// 2026-11-15 amendment to R96 spec; R149 spec): the operator of novatrail withdraws
-	// minimal_retention, and adults keep their platform AI.
+	// Platform AI of an adult needs the processor agreement alone, under the provider's usual
+	// retention, which the privacy policy names: the operator of novatrail withdraws
+	// minimal_retention, and adults keep their platform AI (R96 spec; R149 spec).
 	agreement, err := ReadFacts(table, []byte("anthropic:\n  data_processing_agreement: [adult]\n"))
 	if err != nil {
 		t.Fatal(err)

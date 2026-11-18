@@ -73,23 +73,18 @@ type kind struct {
 	expected      map[string]tokens
 }
 
-// kinds are the kinds of call of the library. The sheet's expected tokens are those of the run that
-// admitted its pair, 180 calls of each reader (T126); the words', those of the 300 hints of the run
-// that admitted them, version 3 of the hint's prompt (T127). The workbook, the essay and the rubric
-// were admitted by the author's word, without a run (R126): theirs are the averages of the runs that
-// tried their prompts now — the workbook's, version 3, on the 20 pages of the trial part, one call of
-// each reader (T123), and the essay's reading, version 2, and the assessment, version 3, on the 15
-// essays of E4's test part, one repeat (T125) —, measurements 3.19. A model without them has no
-// expected price, and api takes the value of its own config then (В13 api). The words serve the
-// analysis of the steps with the work, CallWords, and the hint without it, CallHint, by one prompt;
-// T127 measured the hint with the work, so the hint without it has no expected tokens (R106). The
-// words after a correct answer are one kind with the work and without it, and their worst is with
-// it; their expected tokens are those of the 110 calls of the run that admitted them, with the
-// work, without it and with a note, version 1 of their prompt (T144; R113). The input of each is the
-// whole input, measured before the words cached their instructions: a log with the cache splits it
-// into input_tokens, cache_write_tokens and cache_read_tokens, which a new measurement sums. Their
-// price takes it all at the input's price, between a call that reads the instructions from the cache
-// and one that writes them (R131; measurements 3.22).
+// kinds are the kinds of call of the library. The expected tokens of the sheet, the words and the
+// words after a correct answer are those of the runs that admitted them, on the prompts they have
+// now (R82; R86; R113). The workbook, the essay and the rubric were admitted by the author's word,
+// without a run (R126): theirs are the averages of the runs that tried their prompts now. A model
+// without them has no expected price, and api takes the value of its own config then. The words
+// serve the analysis of the steps with the work, CallWords, and the hint without it, CallHint, by
+// one prompt; the hint was measured with the work, so the hint without it has no expected tokens
+// (R106). The words after a correct answer are one kind with the work and without it, and their
+// worst is with it. The input of each is the whole input, measured before the words cached their
+// instructions: a log with the cache splits it into input_tokens, cache_write_tokens and
+// cache_read_tokens, which a new measurement sums. Their price takes it all at the input's price,
+// between a call that reads the instructions from the cache and one that writes them (R131).
 var kinds = map[Call]kind{
 	CallSheet: {
 		capability: admissionv0.CapabilityHandwritingReading,
@@ -172,11 +167,11 @@ func tokensOf(side, n int) int64 { return int64(n * render.Tokens(side, side)) }
 
 // CallPrice is what a call of a capability is expected to cost and can cost at most, in US dollars,
 // over every model of the entry the call asks — both readers of a pair, or the one reader of
-// ReadingSingle — (architecture 3.7): api
-// reserves the quota of platform AI by them before the call. The worst is the most input of the
-// kind, each token at the higher of its price and that of a write to the cache, and its most
-// output. Expected is false when a model of the entry has no expected tokens; Worst is false when
-// the prices do not hold the worst, and api takes the value of its own config then.
+// ReadingSingle —, and api reserves the quota of platform AI by them before the call. The worst is
+// the most input of the kind, each token at the higher of its price and that of a write to the
+// cache, and its most output. Expected is false when a model of the entry has no expected tokens;
+// Worst is false when the prices do not hold the worst, and api takes the value of its own config
+// then.
 type CallPrice struct {
 	ExpectedUSD, WorstUSD float64
 	Expected, Worst       bool
@@ -218,9 +213,9 @@ type ModelPrice struct {
 	Prices   provider.Prices
 }
 
-// Prices are the table of prices (architecture 3.7): each model of the list of admitted models
-// whose provider the config gives an adapter of, once, in the order of the list. It grows from the
-// prices of the adapters rather than standing beside them as a second copy.
+// Prices are the table of prices: each model of the list of admitted models whose provider the
+// config gives an adapter of, once, in the order of the list. It grows from the prices of the
+// adapters rather than standing beside them as a second copy.
 func (t *Tutor) Prices() ([]ModelPrice, error) {
 	var out []ModelPrice
 	var errs []error

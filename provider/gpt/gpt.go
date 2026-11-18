@@ -44,10 +44,10 @@ func Dial(id, key string) (provider.Model, error) {
 
 // New returns a client with the given API key. The client takes nothing from the process's
 // environment: openai.NewClient always puts first the SDK's defaults — the address, keys, the
-// organization, the project and headers of the variables OPENAI_… — and its switch without them
-// is internal, so the services are built without it, with the options the SDK's own defaults
-// without the environment have: the adapter's client, provider.HTTPClient, and the production
-// address (R105; docs/sources.md, 1.17). The options are for tests: a fake server's URL.
+// organization, the project and headers of the variables OPENAI_… — and its switch without them is
+// internal, so the services are built without it, with the options the SDK's own defaults without
+// the environment have: the adapter's client, provider.HTTPClient, and the production address
+// (R105). The options are for tests: a fake server's URL.
 func New(apiKey string, opts ...option.RequestOption) *Client {
 	opts = append([]option.RequestOption{
 		option.WithHTTPClient(provider.HTTPClient()),
@@ -60,8 +60,7 @@ func New(apiKey string, opts ...option.RequestOption) *Client {
 // Name is how the board shows the model.
 func (c *Client) Name() string { return "GPT-6 Astra" }
 
-// PricesRead is the day GPT-6 Astra's prices were read on OpenAI's Pricing page, its standard
-// tier (docs/sources.md, 1.14).
+// PricesRead is the day GPT-6 Astra's prices were read on OpenAI's Pricing page, its standard tier.
 const PricesRead = "2026-11-11"
 
 // The times the cache keeps a write for, each at its own price.
@@ -84,11 +83,10 @@ func (c *Client) Prices() provider.Prices {
 // Ask sends a picture and the text and asks for JSON that follows the schema. It sends one picture,
 // after its label, and refuses more before any call. That is the adapter's limit, not the model's:
 // GPT is not used on the board (R20), and the measurement of the writing process asks Claude alone
-// (R21). The picture goes
-// with the detail "high", so that the model does not shrink it; the answer is not stored at
-// OpenAI; the reasoning effort is high, the request's or by default. GPT-6 Astra always reasons,
-// so a request without thinking is refused before any call. The answer is not streamed: GPT is not
-// used on the board (R20), so when its first text comes is not measured.
+// (R21). The picture goes with the detail "high", so that the model does not shrink it; the answer
+// is not stored at OpenAI; the reasoning effort is high, the request's or by default. GPT-6 Astra
+// always reasons, so a request without thinking is refused before any call. The answer is not
+// streamed: GPT is not used on the board (R20), so when its first text comes is not measured.
 func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response, error) {
 	if r.Effort != "" && !slices.Contains(Efforts, r.Effort) {
 		return provider.Response{}, fmt.Errorf("gpt: no effort level %q", r.Effort)
@@ -140,8 +138,7 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 		return provider.Response{Retries: max(attempts-1, 0)}, refused.Of(err)
 	}
 	// Tokens are billed whatever the answer, so they go back with an error too. OpenAI counts the
-	// tokens read from the cache and written to it in the input, and they come off it here
-	// (docs/architecture.md, 3.7; docs/sources.md, 1.14).
+	// tokens read from the cache and written to it in the input, and they come off it here.
 	d := resp.Usage.InputTokensDetails
 	// A write the usage does not divide by its time counts at 30 minutes, the shortest it keeps.
 	m30, h12 := d.CacheWriteTokensDetails.Ttl30mTokens, d.CacheWriteTokensDetails.Ttl12hTokens
@@ -174,13 +171,14 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 	return out, nil
 }
 
-// Refusal reads an error response of the Responses API by its code (docs/architecture.md, 3.7;
-// docs/sources.md, 1.15): a balance spent, credit_balance_exhausted; a spend limit of the project or the
-// organization, project_spend_limit_exceeded or organization_spend_limit_exceeded; the usage limit
-// OpenAI assigns, organization_usage_limit_exceeded, each a 429; a 429 of the type insufficient_quota
-// with any other code, a refusal of billing whose cause the code does not name; and the key refused,
-// 401. OpenAI tells the cause of a refusal of billing by error.code, «The broader error.type can still
-// be insufficient_quota». No refusal of OpenAI says when access returns, so none carries a time.
+// Refusal reads an error response of the Responses API by its code: a balance spent,
+// credit_balance_exhausted; a spend limit of the project or the organization,
+// project_spend_limit_exceeded or organization_spend_limit_exceeded; the usage limit OpenAI
+// assigns, organization_usage_limit_exceeded, each a 429; a 429 of the type insufficient_quota with
+// any other code, a refusal of billing whose cause the code does not name; and the key refused, a
+// 401. OpenAI tells the cause of a refusal of billing by error.code, «The broader error.type can
+// still be insufficient_quota». No refusal of OpenAI says when access returns, so none carries a
+// time.
 func Refusal(status int, body []byte, _ time.Time) provider.Refusal {
 	var e struct {
 		Error struct {
@@ -205,8 +203,8 @@ func Refusal(status int, body []byte, _ time.Time) provider.Refusal {
 }
 
 // Check checks the key by asking for the model's description, which writes no token and so is
-// billed nothing: OpenAI bills tokens (Pricing), and the list of models names no price — our
-// reading of the pages, read 2026-11-11. A 403 is a key without rights to the model
+// billed nothing: OpenAI bills tokens (OpenAI's Pricing page), and the list of models names no
+// price, by our reading of the pages. A 403 is a key without rights to the model
 // (provider.Checked).
 func (c *Client) Check(ctx context.Context) error {
 	var refused provider.Refusal

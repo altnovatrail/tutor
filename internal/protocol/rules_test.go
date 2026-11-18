@@ -17,8 +17,9 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// vectorFile is a file of spec's test vectors of section 12, contracts.Vectors eval/v1/<rule>.json:
-// the rule's numbers, and its cases, each a JSON object whose messages are read by protojson.
+// vectorFile is a file of spec's test vectors of the eval protocol, contracts.Vectors
+// eval/v1/<rule>.json: the rule's numbers, and its cases, each a JSON object whose messages are
+// read by protojson.
 type vectorFile struct {
 	Rule  map[string]json.RawMessage   `json:"rule"`
 	Cases []map[string]json.RawMessage `json:"cases"`
@@ -84,7 +85,7 @@ func ruleIs(t *testing.T, v vectorFile, want map[string]any) {
 }
 
 // On every case of spec's vectors of boxes, each stroke fills the box the vectors name, or none,
-// and the table "box → stroke IDs" is theirs (section 12, "The boxes of a workbook").
+// and the table "box → stroke IDs" is theirs.
 func TestBoxesVectors(t *testing.T) {
 	v := readVectors(t, "boxes.json")
 	ruleIs(t, v, map[string]any{"margin": protocol.BoxMargin, "limit": protocol.BoxLimit})
@@ -129,7 +130,7 @@ func TestBoxesVectors(t *testing.T) {
 }
 
 // On every case of spec's vectors of snapping, each box of a model on the crop at its height takes
-// the strokes the vectors name, and their box, or none (section 12, "Snapping").
+// the strokes the vectors name, and their box, or none.
 func TestSnapsVectors(t *testing.T) {
 	v := readVectors(t, "snaps.json")
 	ruleIs(t, v, map[string]any{"margin": protocol.SnapMargin, "share": []int{protocol.SnapAbove, protocol.SnapBelow}})
@@ -175,7 +176,7 @@ func TestSnapsVectors(t *testing.T) {
 }
 
 // On every case of spec's vectors of groups, the history folds into the strokes the vectors name
-// visible, and the others written are hidden (section 12, "The history of writing").
+// visible, and the others written are hidden.
 func TestFoldVectors(t *testing.T) {
 	v := readVectors(t, "groups.json")
 	for _, c := range v.Cases {

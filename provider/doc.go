@@ -1,8 +1,8 @@
-// Package provider is the port through which tutor reaches the AI providers. Each provider has
-// an adapter that implements it, and a provider's SDK is imported by its adapter alone: that is
-// how the SDKs reach api's build only through tutor. The library does not build the adapters in:
-// a service gives it the Dial of each adapter it takes, so that a service of one provider's models
-// carries no other provider's SDK (Д185 RUN.md spec; R90).
+// Package provider is the port through which tutor reaches the AI providers. Each provider has an
+// adapter that implements it, and a provider's SDK is imported by its adapter alone: that is how
+// the SDKs reach api's build only through tutor. The library does not build the adapters in: a
+// service gives it the Dial of each adapter it takes, so that a service of one provider's models
+// carries no other provider's SDK (R90).
 package provider
 
 import (
@@ -43,13 +43,13 @@ type Request struct {
 	Effort          string
 	NoThinking      bool
 	// NoPicture marks a request of a text alone, such as the assessment of a text an earlier call
-	// read (T92): it has no picture, and its text is not blank. Any other request has a picture.
+	// read: it has no picture, and its text is not blank. Any other request has a picture.
 	NoPicture bool
 	// CacheInstructions marks instructions that are the same text in every request of their kind and
 	// hold nothing of the learner's — the platform's words, as those of the tutor's words —, so that
 	// the Claude adapter caches the prompt up to the instructions and no further: never the pictures
 	// or the text after them (R131). The GPT adapter sends nothing for it, and OpenAI may cache by
-	// itself more of a request than its instructions (Д20).
+	// itself more of a request than its instructions.
 	CacheInstructions bool
 }
 
@@ -80,15 +80,15 @@ type Response struct {
 type Model interface {
 	// Name is how a person sees the model named, such as "Claude Opus 5.5".
 	Name() string
-	// Prices are what its tokens cost (docs/architecture.md, 3.7).
+	// Prices are what its tokens cost.
 	Prices() Prices
 	// Ask sends the request and returns the answer.
 	Ask(ctx context.Context, r Request) (Response, error)
-	// Check checks the client's key by a request of the provider without any learner's content, which
-	// costs nothing (R84 spec; docs/architecture.md, 3.7): nil when the provider took the key, else
-	// ErrKeyRefused for a wrong, revoked or expired key, ErrNoRights for a key without rights to the
-	// model, or the error of a provider that did not answer (Checked). An adapter does not let its
-	// SDK send it again after a refusal (NoRetry).
+	// Check checks the client's key by a request of the provider without any learner's content,
+	// which costs nothing (R84 spec): nil when the provider took the key, else ErrKeyRefused for a
+	// wrong, revoked or expired key, ErrNoRights for a key without rights to the model, or the
+	// error of a provider that did not answer (Checked). An adapter does not let its SDK send it
+	// again after a refusal (NoRetry).
 	Check(ctx context.Context) error
 }
 
@@ -103,8 +103,8 @@ var ErrNoAnswer = errors.New("no answer")
 // CheckImages refuses the pictures of a request that an adapter sending at most pictures will not
 // send: none, more than most, one without its PNG, or, of two or more, one without its label. A
 // request marked NoPicture is the one that has none, and it is refused with a picture or with a
-// blank text, which asks nothing (T92). Of several pictures each has a label, as Anthropic advises,
-// so that the text can name them (docs/sources.md, 1.4).
+// blank text, which asks nothing. Of several pictures each has a label, as Anthropic advises, so
+// that the text can name them.
 func CheckImages(r Request, most int) error {
 	switch {
 	case r.NoPicture && len(r.Images) > 0:
@@ -174,10 +174,10 @@ func (p Prices) WorstInput() float64 {
 }
 
 // Prices are what a model's tokens cost, in US dollars a million, as its provider's pricing page
-// gives them on the day Read names, as YYYY-MM-DD (docs/architecture.md, 3.7; docs/sources.md, 1.14):
-// input, output, a read from the cache and a write to it by how long the cache keeps it. Where a
-// prompt longer than LongAbove tokens, the cache counted in, pays other prices, Long holds them,
-// or nil when they were not read; LongAbove is 0 where the model has no such prices.
+// gives them on the day Read names, as YYYY-MM-DD: input, output, a read from the cache and a write
+// to it by how long the cache keeps it. Where a prompt longer than LongAbove tokens, the cache
+// counted in, pays other prices, Long holds them, or nil when they were not read; LongAbove is 0
+// where the model has no such prices.
 type Prices struct {
 	Input, Output, CacheRead float64
 	CacheWrite               map[time.Duration]float64

@@ -296,7 +296,7 @@ func TestPlatformKeyAndAdapters(t *testing.T) {
 }
 
 // The root package builds no adapter in: a service that takes the library carries the SDK of a
-// provider only when it takes the provider's adapter itself (Д185 RUN.md spec; R90).
+// provider only when it takes the provider's adapter itself (R90).
 func TestRootImportsNoProvider(t *testing.T) {
 	out, err := exec.Command("go", "list", "-deps", ".").Output()
 	if err != nil {

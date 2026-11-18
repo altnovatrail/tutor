@@ -87,9 +87,9 @@ func TestByWord(t *testing.T) {
 	}
 }
 
-// The price of each kind admitted by the word is by the tokens of the runs that tried its prompt
-// (measurements 3.19): the workbook over both readers of the pair, or Haiku's alone in the mode of
-// one reader, and the essay and the rubric Haiku's.
+// The price of each kind admitted by the word is by the tokens of the runs that tried its prompt:
+// the workbook over both readers of the pair, or Haiku's alone in the mode of one reader, and the
+// essay and the rubric Haiku's.
 func TestByWordPrice(t *testing.T) {
 	lib, _, _ := pricedPair(t)
 	page := float64(24000 + 20*19*19)

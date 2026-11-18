@@ -6,16 +6,16 @@ import (
 	"github.com/altnovatrail/spec/types/admissionv0"
 )
 
-// ReasonModelNotAdmitted is the refusal that comes after the table's (R96 spec; Д98 RUN.md spec):
-// the table admits the request, but no model of the capability is admitted for it — none passed
-// tutor's rule of admission on the capability's eval set (R07 spec; R80).
+// ReasonModelNotAdmitted is the refusal that comes after the table's (R96 spec): the table admits
+// the request, but no model of the capability is admitted for it — none passed tutor's rule of
+// admission on the capability's eval set (R07 spec; R80).
 const ReasonModelNotAdmitted admissionv0.AnswerReason = "model_not_admitted"
 
 // Stage is how far a model passed the rule of admission (R80): StageFull, the target of the first
-// slice — the upper bound of the share of false alarms no more than 1 % (product 10 spec) —, or
-// StageAuthor, no false alarm and no false "correct" on the author's own handwriting, the rung a
-// deployment names for adults: on novatrail "author", and "full" the target measured on the samples
-// of adult volunteers (the 2026-11-15 amendment to R76 spec; R149 spec).
+// slice — the upper bound of the share of false alarms no more than 1 % —, or StageAuthor, no false
+// alarm and no false "correct" on the author's own handwriting, the rung a deployment names for
+// adults: on novatrail "author", and "full" the target measured on the samples of adult volunteers
+// (R149 spec).
 type Stage string
 
 // The stages of admission.
@@ -58,13 +58,13 @@ func (m Model) Name() string {
 
 // Evidence is the runner's report that admitted an entry: the name of its eval set, the name of its
 // file, the SHA-256 of the file's bytes and the day of the run. A report of samples of measurement
-// stays where they lie, out of git (privacy 9 spec, П-10 and П-18), and the entry names it so.
-// An entry the author admitted by their word, while R07 spec's eval before admission is suspended,
-// has no report: Word is that word, Date the day it was given and Until the last day it holds
-// (R126). Such an entry serves only the least stage author, whatever its own stage, and lapses
-// with Until: by then a run on Haiku admits it by the rule, or the entry leaves the list (Д17).
-// The package has no clock, so Select does not refuse it after Until: the entry chosen carries its
-// evidence, and whoever holds a clock, as api, can read Until there.
+// stays where they lie, out of git (R05), and the entry names it so. An entry the author admitted
+// by their word, while R07 spec's eval before admission is suspended, has no report: Word is that
+// word, Date the day it was given and Until the last day it holds. Such an entry serves only the
+// least stage author, whatever its own stage, and lapses with Until: by then a run on Haiku admits
+// it by the rule, or the entry leaves the list (R126). The package has no clock, so Select does not
+// refuse it after Until: the entry chosen carries its evidence, and whoever holds a clock, as api,
+// can read Until there.
 type Evidence struct {
 	Set, File, SHA256, Date string
 	Word, Until             string
@@ -85,17 +85,16 @@ type Entry struct {
 	Prompt     string
 }
 
-// Admitted is the list of admitted models, by capability in the order they are chosen (R07 spec):
-// a model is in it only once it passed the rule of admission, or by the author's word while eval
+// Admitted is the list of admitted models, by capability in the order they are chosen (R07 spec): a
+// model is in it only once it passed the rule of admission, or by the author's word while eval
 // before admission is suspended, until the day its evidence names (R126). A model that needs its
-// provider to keep the work, such as one that needs 30-day retention at Anthropic, is not in it,
-// since the cells of platform AI rest on minimal retention (Д98 RUN.md spec).
+// provider to keep the work, such as one that needs 30-day retention at Anthropic, is not in it
+// (R121 spec).
 var Admitted = []Entry{
-	// The pair of the first app, on the author's own handwriting: 60 sheets, 3 repeats, no false
-	// alarm on 35 answer slots and no false "correct" on 25 (T126; R80 and its amendment of
-	// 2026-11-08), measured again with version 2 of the reading's prompt (T115; R82). The report
-	// lies in samples/, out of git. In the library's mode of one reader, Haiku at medium reads alone
-	// (tutor.ReadingSingle; R125), found here by its provider, ID and effort.
+	// The pair of the first app, on the author's own handwriting, with no false alarm and no false
+	// "correct", on version 2 of the reading's prompt (R80; R82). In the library's mode of one
+	// reader, Haiku at medium reads alone (tutor.ReadingSingle; R125), found here by its provider,
+	// ID and effort.
 	{
 		Capability: admissionv0.CapabilityHandwritingReading,
 		Models: []Model{
@@ -111,10 +110,10 @@ var Admitted = []Entry{
 		},
 		Prompt: "c693bfa87760abec24fcf04073f8c786c682ba13d02569c9ec480da1f7e64d9d",
 	},
-	// The words of the tutor — the analysis of the steps and the hint, one call of one model —, on the
-	// author's sheets with a mistake and the set of the words of T118: 300 hints of version 3 of the
-	// hint's prompt, judged by Opus 5.5 at high on version 3 of the judge's prompt, which passed all its
-	// control phrases (T127; R86, R100). The output of the rule lies in samples/, out of git.
+	// The words of the tutor — the analysis of the steps and the hint, one call of one model —, on
+	// the author's sheets with a mistake and the set of the words: version 3 of the hint's prompt,
+	// judged by Opus 5.5 at high on version 3 of the judge's prompt, which passed all its control
+	// phrases (R86, R100).
 	{
 		Capability: admissionv0.CapabilitySolutionAnalysis,
 		Models:     []Model{{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "high"}},
@@ -130,10 +129,9 @@ var Admitted = []Entry{
 		Prompt:     wordsPrompt,
 	},
 	// The words after a correct answer — the praise of a step and a question on the technique —, on
-	// their synthetic set: 110 cases on 40 sheets whose answer is right, with the work, without it and
-	// with a note, of version 1 of their prompt, judged by Opus 5.5 at high on version 4 of the judge's
-	// prompt, which passed all its 68 control phrases (T144; R112, R113). The output of the rule lies
-	// in synthetic/, out of git.
+	// their synthetic set, with the work, without it and with a note, of version 1 of their prompt,
+	// judged by Opus 5.5 at high on version 4 of the judge's prompt, which passed all its control
+	// phrases (R112, R113).
 	{
 		Capability: admissionv0.CapabilityCorrectAnswerWords,
 		Models:     []Model{{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "high"}},
@@ -146,12 +144,12 @@ var Admitted = []Entry{
 		},
 		Prompt: "ee01e82ada7c347c45f56828d86342897569ec7517fc52265963a76f31def1d9",
 	},
-	// The reading of a workbook page, by the sheet's pair on version 3 of the workbook's prompt, and
-	// in the mode of one reader by Haiku at medium alone, as a sheet (R125); the reading of an essay,
-	// one reader, Haiku at medium, on version 2 of its prompt; and the assessment of the text read by
-	// the rubric, Haiku at medium, on version 3 of its prompt. All three by the author's word of
-	// 2026-11-17, without a run, until 2027-01-17 (T163; R126). They follow the sheet's pair, so that
-	// the first entry of the reading of handwriting, Choose's, stays the sheet's.
+	// The reading of a workbook page, by the sheet's pair on version 3 of the workbook's prompt,
+	// and in the mode of one reader by Haiku at medium alone, as a sheet (R125); the reading of an
+	// essay, one reader, Haiku at medium, on version 2 of its prompt; and the assessment of the
+	// text read by the rubric, Haiku at medium, on version 3 of its prompt. All three by the
+	// author's word, without a run, until the day authorsWord names (R126). They follow the sheet's
+	// pair, so that the first entry of the reading of handwriting, Choose's, stays the sheet's.
 	{
 		Capability: admissionv0.CapabilityHandwritingReading,
 		Models: []Model{
@@ -178,18 +176,16 @@ var Admitted = []Entry{
 	},
 }
 
-// authorsWord is the evidence of the entries the author admitted without eval: R07 spec's eval
-// before admission suspended for two months, "отменяю это правило на 2 месяца" (the author's word
-// of 2026-11-17; the third 2026-11-17 amendment to R07 spec; R126). The suspension ends sooner,
-// with the first code of api invite to another adult or the first child, which no clock here sees:
-// Д17 holds that bound.
+// authorsWord is the evidence of the entries the author admitted without eval, while R07 spec's
+// eval before admission is suspended. The suspension ends sooner, with the first code of api invite
+// to another adult or the first child, which no clock here sees (R126).
 var authorsWord = Evidence{
 	Word:  "author's word 2026-11-17, R07 spec suspended until 2027-01-17",
 	Date:  "2026-11-17",
 	Until: "2027-01-17",
 }
 
-// wordsEvidence is the output of the rule of admission of the words that admitted them (T127), and
+// wordsEvidence is the output of the rule of admission of the words that admitted them, and
 // wordsPrompt the fingerprint of the hint's prompt it measured, version 3.
 var (
 	wordsEvidence = Evidence{
@@ -206,13 +202,13 @@ var (
 // table's answer for its first model. Without such an entry it answers the first refusal of the
 // table for an entry of the capability, or, when the table refused none, ReasonModelNotAdmitted.
 // The least stage is the deployment's: StageAuthor where its operator names it, as novatrail does
-// for adults (the 2026-11-15 amendment to R76 spec; R149 spec), and StageFull otherwise; any other
-// value chooses only StageFull. An entry admitted by the author's word serves StageAuthor alone.
-// Providers, when not nil, are the only providers whose models may serve: an own key is one
-// provider's, and on platform AI a provider without the platform's key cannot be called (T114).
-// When no entry of them is left, the answer is the table's for the first of them that it refuses,
-// as the table's reasons come before the model's. api calls it before an attempt, and tutor before
-// the call: with the same table, facts, request, least stage and providers it chooses the same.
+// for adults (R149 spec), and StageFull otherwise; any other value chooses only StageFull. An entry
+// admitted by the author's word serves StageAuthor alone. Providers, when not nil, are the only
+// providers whose models may serve: an own key is one provider's, and on platform AI a provider
+// without the platform's key cannot be called. When no entry of them is left, the answer is the
+// table's for the first of them that it refuses, as the table's reasons come before the model's.
+// api calls it before an attempt, and tutor before the call: with the same table, facts, request,
+// least stage and providers it chooses the same.
 func (t *Table) Select(f Facts, c admissionv0.Capability, route admissionv0.AiRoute, category admissionv0.AgeCategory, least Stage, providers []admissionv0.Provider) (Entry, Answer) {
 	return t.selectFrom(Admitted, f, c, route, category, least, providers)
 }

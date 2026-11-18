@@ -17,9 +17,9 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// Every example of spec — five sample files and two reports — is read, written again and read
-// back: what is written holds the same value as the example, as spec's check compares them, and
-// reads back into the same message (contracts/README.md, sections 11 and 14).
+// Every example of spec — five sample files and two reports — is read, written again and read back:
+// what is written holds the same value as the example, as spec's check compares them, and reads
+// back into the same message.
 func TestExamplesReadBack(t *testing.T) {
 	examples := protocoltest.Examples(t)
 	names, err := fs.Glob(examples, "*.json")

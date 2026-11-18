@@ -18,12 +18,12 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// spec's examples keep the rules of section 12 by the code of tutor too, the code that writes the
-// samples tutor-eval draw draws (internal/evalsample): the groups of a sheet with a history are those
-// lines.Groups finds among the strokes it shows, the table of a workbook's boxes is Table's, and
-// every set of crops is what evalsample.CropSet gives — the box of the points, h_med, and each crop's
-// height drawn, size, margins, scale, line, place on the sheet and frames. The pixels are not
-// compared: two implementations may draw a crop a level of grey apart.
+// spec's examples keep the rules of the eval protocol by the code of tutor too, the code that
+// writes the samples tutor-eval draw draws (internal/evalsample): the groups of a sheet with a
+// history are those lines.Groups finds among the strokes it shows, the table of a workbook's boxes
+// is Table's, and every set of crops is what evalsample.CropSet gives — the box of the points,
+// h_med, and each crop's height drawn, size, margins, scale, line, place on the sheet and frames.
+// The pixels are not compared: two implementations may draw a crop a level of grey apart.
 func TestExamplesFollowTheRules(t *testing.T) {
 	examples := protocoltest.Examples(t)
 	names, err := fs.Glob(examples, "*.json")

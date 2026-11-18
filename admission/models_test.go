@@ -115,8 +115,9 @@ func TestSelect(t *testing.T) {
 	if e, a := table.selectFrom(testList, Facts{}, admissionv0.CapabilityHint, admissionv0.AiRouteOwnKey, adult, StageAuthor, []admissionv0.Provider{"anthropic"}); a.Admitted || *a.Reason != ReasonModelNotAdmitted || e.Models != nil {
 		t.Errorf("the hint with Anthropic alone: %+v, %+v", e, a)
 	}
-	// The platform's list: the first app, where the author alone learns, reads by the author's pair;
-	// a deployment for anyone else has no reader yet, as the pair passed the stage author alone (T126).
+	// The platform's list: the first app, where the author alone learns, reads by the author's
+	// pair; a deployment for anyone else has no reader yet, as the pair passed the stage author
+	// alone (R80).
 	e, a = table.Select(adultFacts, handwriting, admissionv0.AiRoutePlatformAi, adult, StageAuthor, nil)
 	if !a.Admitted || e.Stage != StageAuthor || len(e.Models) != 2 || e.Models[0].Name() != "claude-opus-5-5 high" || e.Models[1].Name() != "claude-haiku-5-5 medium" {
 		t.Errorf("the first app chose %+v, %+v", e, a)
@@ -130,10 +131,10 @@ func TestSelect(t *testing.T) {
 }
 
 // requiresRetention are the models of the adapters that need Anthropic to keep the work 30 days,
-// which the cells of platform AI cannot take (Д98 RUN.md spec): "Claude Fable 5.1, Claude Mythos
-// 5.1, Claude Fable 5, and Claude Mythos 5: These models require 30-day data retention and are not
-// available under ZDR unless expressly authorized by Anthropic" (platform.claude.com, «API and data
-// retention», read 2026-11-08). Of them, the adapter of Claude calls Fable 5.1 alone.
+// which the list of admitted models leaves out (R121 spec): "Claude Fable 5.1, Claude Mythos 5.1,
+// Claude Fable 5, and Claude Mythos 5: These models require 30-day data retention and are not
+// available under ZDR unless expressly authorized by Anthropic" (Anthropic's «API and data
+// retention»). Of them, the adapter of Claude calls Fable 5.1 alone.
 var requiresRetention = []string{"claude-fable-5-1"}
 
 var (
@@ -279,9 +280,9 @@ func listFaults(list []Entry) []string {
 	return listFaultsOn(list, time.Now().UTC().Format(time.DateOnly))
 }
 
-// listFaultsOn is listFaults on the day named: an entry admitted by the author's word is a fault once
-// the last day of its word has passed, so that the list fails here until a run admits it by the rule
-// or it leaves the list (Д17).
+// listFaultsOn is listFaults on the day named: an entry admitted by the author's word is a fault
+// once the last day of its word has passed, so that the list fails here until a run admits it by
+// the rule or it leaves the list (R126).
 func listFaultsOn(list []Entry, today string) []string {
 	var out []string
 	for i, e := range list {

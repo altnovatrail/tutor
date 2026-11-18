@@ -10,9 +10,9 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// Folded is a history of writing folded into the strokes the sheet shows at the end (section 12,
-// "The history of writing"): every stroke written, in the order of its event, and the IDs of those
-// shown at the end and of those written and not shown, each ascending.
+// Folded is a history of writing folded into the strokes the sheet shows at the end: every stroke
+// written, in the order of its event, and the IDs of those shown at the end and of those written
+// and not shown, each ascending.
 type Folded struct {
 	Written []*evalv1.Stroke
 	Visible []int32
@@ -20,8 +20,8 @@ type Folded struct {
 }
 
 // Fold folds a history by adding and taking off IDs alone, with no rule of the stack of undo: write
-// adds its stroke, erase and clear take off the strokes they name, and undo takes off the strokes it
-// removed and adds back those it restored. Whether a history keeps the rules of section 11 —
+// adds its stroke, erase and clear take off the strokes they name, and undo takes off the strokes
+// it removed and adds back those it restored. Whether a history keeps the rules of a sample file —
 // strokes written once, taken off only while shown — is sample-check's to say; Fold folds any.
 func Fold(h *evalv1.History) Folded {
 	var f Folded
@@ -92,7 +92,7 @@ func StrokeNumber(id string) (int32, error) {
 // It gives the fold too, whose IDs say which strokes the sheet shows at the end.
 //
 // What Ink gives is no sample of tutor-sample v0, and its check does not hold it: a stroke of a
-// history may end while another action lands (section 12).
+// history may end while another action lands.
 func Ink(h *evalv1.History) ([]sample.Stroke, []sample.Erasure, Folded) {
 	f := Fold(h)
 	strokes := make([]sample.Stroke, len(f.Written))

@@ -28,8 +28,8 @@ type Trap struct {
 	ID, Description string
 }
 
-// WordsRequest is a call of the tutor's words (architecture 3.10, "analysis and hint"): the analysis
-// of the steps and the hint of a rung, in one call, as architecture 4.1 of spec draws it.
+// WordsRequest is a call of the tutor's words: the analysis of the steps and the hint of a rung, in
+// one call.
 //   - Crop is the PNG of the crop of the work, sent again, as the server keeps none (R09 spec); nil
 //     when the learner asks to have the rung put another way, which sends no work (R82 spec);
 //   - Key and Solution are the task's, which the model sees here alone (R67 spec);
@@ -37,8 +37,8 @@ type Trap struct {
 //     the cell of the rung, which the program found by its value, or empty (R82 spec);
 //   - Techniques are the task's ways to solve it;
 //   - Rung is the rung api picked, 1 to 3; Language the module's language of explanations, by its
-//     tag; Style only what of the presentation style changes the words (Д74 RUN.md spec);
-//   - Asked are the questions the tutor has already asked on the task, in order (privacy 4 spec).
+//     tag; Style only what of the presentation style changes the words;
+//   - Asked are the questions the tutor has already asked on the task, in order.
 //
 // The words are checked by api for leaks and by words.Hint for their form, before they reach the
 // learner; api gives the fallback text in their place when they fail (R70 spec).
@@ -82,9 +82,10 @@ type WordsAnswer struct {
 
 // Words asks the admitted model of the words for the analysis and the hint of a rung. With the work
 // it serves the analysis of the steps and the hint, so both must be admitted, and the model is the
-// analysis's (CallWords); without it, the hint alone (CallHint). A task without words, a crop that is no PNG of a sheet, a
-// rung the ladder has not, a language with no tag and no style of presentation fail before any
-// call; an answer off the schema, or naming a trap the request does not hold, fails the call.
+// analysis's (CallWords); without it, the hint alone (CallHint). A task without words, a crop that
+// is no PNG of a sheet, a rung the ladder has not, a language with no tag and no style of
+// presentation fail before any call; an answer off the schema, or naming a trap the request does
+// not hold, fails the call.
 func (t *Tutor) Words(ctx context.Context, w WordsRequest) WordsAnswer {
 	fail := func(err error) WordsAnswer { return WordsAnswer{Outcome: Outcome{Kind: Failed, Err: err}} }
 	if w.Task == nil {
