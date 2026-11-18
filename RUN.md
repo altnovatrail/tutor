@@ -1,6 +1,6 @@
 # RUN.md — work plan of tutor
 
-What tutor does, does not do and has still to decide — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.18.27: the component's card — architecture 3.6 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, gathered in epics; only the current epic is in detail, or two when a second runs beside it (R04; R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). No `run/TASKS.md`: a task outside an epic stands in table 1 (R103, R116).
+What tutor does, does not do and has still to decide — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.18.34: the component's card — architecture 3.6 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, gathered in epics; only the current epic is in detail, or two when a second runs beside it (R04; R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). No `run/TASKS.md`: a task outside an epic stands in table 1 (R103, R116).
 
 Language (R154 spec): rules and tables in English, terse, for the session; the epic's description, table 1 and the bodies of tasks in Russian — the author writes and reviews them.
 
@@ -22,8 +22,8 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 6. End with the checks of what the task changed: documents — `just -f spec/justfile docs-check-repo` (CLAUDE.md, Environment); code — the rule of its part. Then `/code-review high`, one round; a small change may skip the review.
 7. Do not commit: the author commits after review, unless the author's word says otherwise, as «доведи до мержа». A run of spec's orchestrator, «Сделай эпик E…», is such a word on each of its tasks: its executor works by the contract `spec/tools/orchestrator/executor.md` — commits, pushes and opens the pull request, never merges (R156 spec; R115).
 8. End with a short report in Russian: what was done, files, how to check, what the review found or why there was none, what is open and what goes «в реестр spec».
-9. When done: table 1 `[ ]` → `[x]`; append to the body «Сделано (дата)» — what was done, how checked — and «Открыто». A question for the author from «Открыто» is also a row of [run/QUESTIONS.md](run/QUESTIONS.md); what is put off, a row of [run/DEBT.md](run/DEBT.md).
-   - Then move the body verbatim, relative links fixed, to the epic archive `docs/plan/<epic>.md`, with a gist sentence — an unheaded list item at the start of the receiving section: «T01 — сделана <дата>: <итог одной фразой>». Neither stays here, and a search by heading finds one body, in the archive (R153 spec; the 2026-11-12 amendment to R23).
+9. When done: table 1 `[ ]` → `[x]`; append to the body «Сделано (дата)» — one line, what was done and its pull request, which says how it was checked; where the author commits after review, the report says it. What stays open is rows, not text: a question for the author, of [run/QUESTIONS.md](run/QUESTIONS.md); what is put off, of [run/DEBT.md](run/DEBT.md) (R160 spec).
+   - Then move the body verbatim, relative links fixed, to the epic archive `docs/plan/<epic>.md`, with a gist sentence — an unheaded list item at the start of the receiving section: «T01 — сделана <дата>: <итог одной фразой>». Neither stays here, and a search by heading finds one body, in the archive (R153 spec; R23).
 10. Language (R14 spec, R42 spec, R143 spec, R154 spec): this plan and `run/` in English; the epic's description, table 1, the bodies of tasks, the epic archives `docs/plan/` and the reports in Russian; `docs/` in English; README, CLAUDE.md, AGENTS.md, code, comments, schema descriptions, prompts and normative texts for authors in English; commit messages and a pull request's title and description in English and terse, for the session, never a copy of the report.
 11. A task larger than one review (≈ 30–60 minutes of reading): propose a split before starting.
 12. Before a new task, close the findings on the previous one (R30 spec); an allowed departure from rule 1.
@@ -37,7 +37,7 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 
 **Plan:** «да» — plan mode first: decisions missing from the documents, or larger than one review (rule 11); «—» — run at once.
 
-**Task body** (Russian): «Цель», «Сделать», «Как проверить», «Разделы»; as needed «Не делать», «Решить при планировании», «Мой шаг», «Стоимость», «Риски»; from planning «Почему», «Решено автором (дата)», «Выяснилось при планировании»; when done «Сделано (дата)», «Открыто» (rule 9).
+**Task body** (Russian): «Цель», «Сделать», «Как проверить», «Разделы»; as needed «Не делать», «Решить при планировании», «Мой шаг», «Стоимость», «Риски»; from planning «Почему», «Решено автором (дата)», «Выяснилось при планировании»; when done «Сделано (дата)» (rule 9).
 
 ## Epics
 
@@ -47,6 +47,113 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 - **A done epic** goes to `docs/plan/<epic>.md` (R59 canvas-api): bodies and gist sentences are there already (rule 9); move its description and table of tasks verbatim; questions and debt stay in `run/`; until the next epic, table 1 reads «Current epic — none» and names the last done epic. Measure the epic's sessions — `just -f spec/justfile tokens-report --since <first day of the epic> --row` — as a row of measurements 4.1; a new analysis by the threshold of R145 spec.
 - Never read an archive whole: find a task by heading — `grep -n '^#### T03\.' RUN.md docs/plan/*.md`; from another repository — «T03 tutor». Task numbers are global, never reused, and taken free at the moment of writing.
 
-## Table 1. Current epic — none
+## Table 1. Current epic — E19. Тексты без истории (R160 spec)
 
-Текущего эпика нет. E18 сделан 2026-11-18 (R133), и его описание, таблица задач и тело задачи — в архиве, [docs/plan/E18.md](docs/plan/E18.md). Следующий эпик выбирает автор: таблица 2 пуста.
+**Результат:** `tutor` пишет по R160 spec: его документы, план и комментарии кода держат текущее состояние, а не историю; `docs-check-repo` проверяет предел записи журнала 12 КБ и номера решений в комментариях.
+
+**Основа:** R160 spec, R32 spec, R145 spec, R159 spec; RULES.md spec — The bar, How we work, Across repositories; строка 7.32 COORDINATION.md spec — правило эпика E16 `spec` по тексту T206 `spec`; R76 spec, R156 spec; R103. Задачу T170 дал оркестратор `spec`; текущего эпика не было, и по R103 она — первая задача следующего. Она больше одного ревью, и по правилу 11 разделена: T170 — переход на тег, `docs-budgets.json` и план; T171–T181 — документы и комментарии, каждая — одно ревью. Тела сделанных задач и их фразы итога — в архиве [docs/plan/E19.md](docs/plan/E19.md).
+
+**Документы (T171–T175)** — по R160 spec, «One home» и «A done task»:
+- без хроник версий, статусов и повышений, дат «с такого-то дня», номеров задач, которые что-то сделали, и пересказа того, как было раньше: история — в git, релизах и архивах `docs/plan/`; пример — абзац «Status» `docs/architecture.md` `infra`;
+- значение, заданное в файле, — версия, тег, цена в коде, модель, — документ не повторяет, а называет файл: `go.mod`, подмодуль `spec`, `ARG` `.devcontainer/Dockerfile`, `admission.Admitted`;
+- архитектура описывает текущее устройство и ссылается на решение номером, не пересказывая его — почему и что отвергнуто, есть в записи;
+- ссылка на поправку записи `spec`, которую тег переписал на месте (R143, R145, R154, R155 spec и те, что перепишут задачи E16 `spec`), — на саму запись: `R143 spec`, а не «the 2026-11-15 amendment to R143 spec»; ссылки на поправки своих записей остаются, пока запись не переписана;
+- вне правила — `docs/sources.md`, `docs/measurements.md` и `docs/plan/`; что из раздела уходит, если это замер или внешний факт, — в них, а не в никуда;
+- раздел стал меньше — его предел в `sections` `docs-budgets.json` понизить до размера с округлением вверх до КБ или убрать, если раздел в пределе 24 КБ `spec`;
+- журнал, [docs/decisions.md](docs/decisions.md), — не задача эпика: запись переписывает на месте, со свёрнутыми поправками, задача, которая меняет то, что она говорит (R160 spec); правка документа по записи запись не меняет, а правка одной ссылки в записи — ссылки на поправку, которой больше нет, — не касание записи, и её поправки остаются. Ссылки журнала на поправки R143 и R145 `spec` T170 уже свела к записям.
+
+**Комментарии (T176–T181)** — по R160 spec, «Comments»: комментарий говорит то, чего не скажут код и имена, — почему, ограничение, ловушка, контракт экспортируемого API; без пересказа кода, истории, номеров задач (`T143`) и разделов документов (`architecture 3.1`); где причина — решение, комментарий даёт ограничение одной фразой и кончается его номером, `(R25)`; номер `spec` — `(R25 spec)`. Комментарий doc экспортируемого имени остаётся и начинается с имени (golangci-lint). Строки, литералы, промпты и тексты в `testdata/` — не комментарии: их не трогать, иначе поменяются запросы, хеши замороженных версий (`TestFrozenV1` `internal/correct` и такие же) и золотые логи. Комментарий, что держит тест, и комментарий `//nolint`, `//go:` — по их правилам. Проверка — правило [go](.claude/rules/go.md): `just lint`, `just ci-test`; для `#`-комментариев — правило [ci](.claude/rules/ci.md).
+
+| Статус | ID | Задача | Кто | План | Зависит от |
+|---|---|---|---|---|---|
+| [x] | T170 | Тексты без истории (R160 spec) и тег spec v0.18.34 | Claude | — | — |
+| [ ] | T171 | Без истории: CLAUDE.md, README, правила частей, документы листов | Claude | — | T170 |
+| [ ] | T172 | Без истории: architecture 1, 2 и 3.1 | Claude | — | T170 |
+| [ ] | T173 | Без истории: architecture 3.2–3.4 | Claude | — | T170 |
+| [ ] | T174 | Без истории: architecture 3.5–3.9 | Claude | — | T170 |
+| [ ] | T175 | Без истории: architecture 3.10–3.12 и 4 | Claude | — | T170 |
+| [ ] | T176 | Комментарии: `internal/report`, `internal/runner`, `internal/measure` | Claude | — | T170 |
+| [ ] | T177 | Комментарии: `cmd/tutor-eval` и судьи, журнал, конвертер | Claude | — | T170 |
+| [ ] | T178 | Комментарии: `internal/sample`, `internal/evalsample`, `internal/synth` | Claude | — | T170 |
+| [ ] | T179 | Комментарии: генераторы, рисование, листы и задачи | Claude | — | T170 |
+| [ ] | T180 | Комментарии: корень, `admission`, провайдеры, `words`, протокол | Claude | — | T170 |
+| [ ] | T181 | Комментарии: доска, подсказка, чтение, `correct`, CI и контейнер | Claude | — | T170 |
+
+**Порядок:** T171–T181 независимы друг от друга и идут в любом порядке, по одной; T172–T175 правят один файл, разные разделы. Строка 7.32 COORDINATION.md spec ждёт всех.
+
+#### T171. Без истории: CLAUDE.md, README, правила частей, документы листов
+
+- **Цель:** CLAUDE.md, README.md, [docs/README.md](docs/README.md), `.claude/rules/*.md` и документы листов — [docs/sheets.md](docs/sheets.md), [docs/near-sheets.md](docs/near-sheets.md), [docs/free-sheets.md](docs/free-sheets.md), [docs/essays.md](docs/essays.md), [docs/workbook.md](docs/workbook.md) — держат текущее состояние, а не историю (R160 spec).
+- **Сделать:** по «Документам» описания эпика. В CLAUDE.md — без того, какая задача какой документ написала или перевела; тег `spec` в строке `spec/` остаётся (R160 spec, «Decisions»). `.bestpractices.json` — не трогать: ответ, который поменялся бы, автор сохраняет на сайте (R60).
+- **Как проверить:** `just -f spec/justfile docs-check-repo`; `/code-review high`.
+- **Разделы:** R160 spec; RULES.md spec — The bar; описание эпика E19.
+
+#### T172. Без истории: architecture 1, 2 и 3.1
+
+- **Цель:** разделы 1, 2 и 3.1 [docs/architecture.md](docs/architecture.md) описывают текущее устройство, без истории (R160 spec).
+- **Сделать:** по «Документам» описания эпика. Пункт раздела 2, который уже решён, уходит: решение — в записи журнала и в разделе 3.
+- **Как проверить:** `just -f spec/justfile docs-check-repo`; `/code-review high`.
+- **Разделы:** R160 spec; описание эпика E19.
+
+#### T173. Без истории: architecture 3.2–3.4
+
+- **Цель:** разделы 3.2–3.4 [docs/architecture.md](docs/architecture.md) описывают текущее устройство, без истории (R160 spec).
+- **Сделать:** по «Документам» описания эпика; таблица, что повторяет данные кода, называет их файл.
+- **Как проверить:** `just -f spec/justfile docs-check-repo`; `/code-review high`.
+- **Разделы:** R160 spec; описание эпика E19.
+
+#### T174. Без истории: architecture 3.5–3.9
+
+- **Цель:** разделы 3.5–3.9 [docs/architecture.md](docs/architecture.md) описывают текущее устройство, без истории (R160 spec).
+- **Сделать:** по «Документам» описания эпика; что допущено и на каком уровне, задаёт `admission.Admitted` — раздел 3.9 называет его, а не перечисляет значения.
+- **Как проверить:** `just -f spec/justfile docs-check-repo`; `/code-review high`.
+- **Разделы:** R160 spec; описание эпика E19.
+
+#### T175. Без истории: architecture 3.10–3.12 и 4
+
+- **Цель:** разделы 3.10–3.12 и 4 [docs/architecture.md](docs/architecture.md) описывают текущее устройство, без истории (R160 spec).
+- **Сделать:** по «Документам» описания эпика; цены и замеры — в [docs/sources.md](docs/sources.md) и [docs/measurements.md](docs/measurements.md), раздел 3.12 ссылается на них.
+- **Как проверить:** `just -f spec/justfile docs-check-repo`; `/code-review high`.
+- **Разделы:** R160 spec; описание эпика E19.
+
+#### T176. Комментарии: `internal/report`, `internal/runner`, `internal/measure`
+
+- **Цель:** комментарии кода этих пакетов, тестов тоже, — по R160 spec, «Comments».
+- **Сделать:** по «Комментариям» описания эпика.
+- **Как проверить:** `just lint`, `just ci-test`; `just -f spec/justfile docs-check-repo`; `/code-review high`.
+- **Разделы:** R160 spec; R32 spec; описание эпика E19.
+
+#### T177. Комментарии: `cmd/tutor-eval` и судьи, журнал, конвертер
+
+- **Цель:** комментарии кода `cmd/tutor-eval`, `internal/judge`, `internal/wordsjudge`, `internal/journal`, `internal/convert`, `internal/samplecheck` и `internal/newfile`, тестов тоже, — по R160 spec, «Comments».
+- **Сделать:** по «Комментариям» описания эпика; текст `-help` команд — строки, не комментарии.
+- **Как проверить:** `just lint`, `just ci-test`; `just -f spec/justfile docs-check-repo`; `/code-review high`.
+- **Разделы:** R160 spec; R32 spec; описание эпика E19.
+
+#### T178. Комментарии: `internal/sample`, `internal/evalsample`, `internal/synth`
+
+- **Цель:** комментарии кода этих пакетов, тестов тоже, — по R160 spec, «Comments».
+- **Сделать:** по «Комментариям» описания эпика; то, что тянет `samples/`, — по CLAUDE.md, samples/.
+- **Как проверить:** `just lint`, `just ci-test`; `just -f spec/justfile docs-check-repo`; `/code-review high`.
+- **Разделы:** R160 spec; R32 spec; описание эпика E19.
+
+#### T179. Комментарии: генераторы, рисование, листы и задачи
+
+- **Цель:** комментарии кода `internal/gen`, `internal/render`, `internal/lines`, `internal/sheets`, `internal/workbook`, `internal/essay`, `internal/task`, `internal/states` и `internal/value`, тестов тоже, — по R160 spec, «Comments».
+- **Сделать:** по «Комментариям» описания эпика.
+- **Как проверить:** `just lint`, `just ci-test`; `just -f spec/justfile docs-check-repo`; `/code-review high`.
+- **Разделы:** R160 spec; R32 spec; описание эпика E19.
+
+#### T180. Комментарии: корень, `admission`, провайдеры, `words`, протокол
+
+- **Цель:** комментарии кода корневого пакета, `admission`, `provider/…`, `words`, `internal/protocol/…`, `internal/providertest`, `internal/openview` и `internal/leak`, тестов тоже, — по R160 spec, «Comments». Это экспортируемый API библиотеки для `api`: doc-комментарии держат его контракт.
+- **Сделать:** по «Комментариям» описания эпика.
+- **Как проверить:** `just lint`, `just ci-test`; `just -f spec/justfile docs-check-repo`; `/code-review high`.
+- **Разделы:** R160 spec; R32 spec; описание эпика E19.
+
+#### T181. Комментарии: доска, подсказка, чтение, `correct`, CI и контейнер
+
+- **Цель:** комментарии кода `internal/board` (с его страницей), `internal/hint`, `internal/reading` и `internal/correct`, тестов тоже, и `#`-комментарии `justfile`, `.github/`, `.devcontainer/` и `.golangci.yml` — по R160 spec, «Comments».
+- **Сделать:** по «Комментариям» описания эпика; в `.devcontainer/` — только свои отличия от заготовки `spec`: строки заготовки приходят с переходом на тег.
+- **Как проверить:** `just lint`, `just ci-test`; проверки правила [ci](.claude/rules/ci.md) для изменённых файлов CI; `just -f spec/justfile docs-check-repo`; `/code-review high`.
+- **Разделы:** R160 spec; R32 spec; описание эпика E19.
