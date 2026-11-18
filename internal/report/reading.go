@@ -162,7 +162,7 @@ func (s Share) String() string { return fmt.Sprintf("%d of %d, ≤ %.3f", s.Even
 // 10; R73). A sheet is released when the two read one value — the check compares them equal and
 // gives them one verdict —, and its verdict is the joined one; otherwise it is "unreadable". Coverage is the share released, and the errors among the
 // released are counted against those of each reader alone. The fast reader's "correct" and the
-// strong one's with it give p of the hybrid: the share the fast reader sends on (architecture 2.6).
+// strong one's with it give p of the hybrid: the share the fast reader sends on (architecture 3.12).
 type Pair struct {
 	Strong, Fast                          string
 	Sheets, Released                      int
@@ -496,7 +496,7 @@ func joinedSlot(key string, a, b *reading.CallRecord) (verdict.SlotVerdict, bool
 }
 
 // P is p of the hybrid: the share of sheets the fast reader does not confirm "correct" on, which
-// go on to the strong one (architecture 2.6).
+// go on to the strong one (architecture 3.12).
 func (p Pair) P() float64 {
 	if p.Sheets == 0 {
 		return 0
@@ -549,7 +549,7 @@ func (r *Reading) Markdown(w io.Writer, logName string) error {
 			fmt.Fprintf(&b, "| %s and %s | %d | %d | %d | %d | %d | %s | %s | %d | %d | %.3f |\n", pr.Strong, pr.Fast, pr.Sheets, pr.Released, pr.FalseCorrect, pr.FalseAlarm, pr.Extra,
 				pr.StrongAlone, pr.FastAlone, pr.FastCorrect, pr.BothCorrect, pr.P())
 		}
-		b.WriteString("\nA sheet is released when both readers give one result and its values, read as the check of the kind number reads them, and their verdicts are one; otherwise it is \"unreadable\". A reader alone is counted as false \"correct\" / false alarms / extra \"unreadable\" on the same sheets. p of the hybrid is the share of sheets the fast reader does not confirm \"correct\" on, which go on to the strong one (architecture 2.6).\n")
+		b.WriteString("\nA sheet is released when both readers give one result and its values, read as the check of the kind number reads them, and their verdicts are one; otherwise it is \"unreadable\". A reader alone is counted as false \"correct\" / false alarms / extra \"unreadable\" on the same sheets. p of the hybrid is the share of sheets the fast reader does not confirm \"correct\" on, which go on to the strong one (architecture 3.12).\n")
 	}
 
 	r.markdownUnfinished(&b)

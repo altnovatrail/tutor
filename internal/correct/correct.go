@@ -1,7 +1,7 @@
 // Package correct is the call of the words after a correct answer (T143; docs/architecture.md, 3.10,
 // "The words after a correct answer"): once the program has found the final answer right, a model
 // praises a step of the solution and asks which technique helped (concepts 7, 10 spec), in words of
-// a form of their own, option (2) of architecture 2.8 (words.Correct). It is a call of its own and an
+// a form of their own, option (2) of R109 (words.Correct). It is a call of its own and an
 // AI capability of its own, correct_answer_words (the 2026-11-11 amendments to R96 spec), not a rung
 // of the hint ladder (Д188 RUN.md spec). The model sees the crop of the work, or none when the task's
 // answer slots are bound choice alone and no work goes with the request (attempt.proto spec), the

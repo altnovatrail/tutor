@@ -16,7 +16,7 @@
 - **the platform's key at the AI provider for eval** — question В2 of table 3 of RUN.md: with which key to run the eval sets in the CI of `modules` and the measurement samples, and who pays for it. The answer: the eval sets of modules in the CI of `modules` and the samples of adult volunteers in the measurement of stage 2 are run with a separate key of the platform — only for eval —, and the platform pays (R24 spec). Children's samples do not go to AI until П-3 has given a contract that admits children;
 - **eval in CI** — the 2026-10-20 amendment to R24 spec. The job with the secret does its work only on a push to `main` and on a pull request from a branch of the repository itself. On a pull request from a fork it is not skipped but fails and names the reason, and `pull_request_target` is used nowhere. Where the key for eval lives is Т-28. Its recommendation: Secret Manager of `infra` through Workload Identity Federation, and while `infra` has no code, eval runs from the devcontainer, with the key in an environment variable, not in CI;
 - **the samples page** — without hosting: a build from a release of `canvas` opens on the volunteer's device. Children's samples are made with the same page, but without a pull request (R25 spec);
-- **an item beyond the card** — question В1 of table 3 of RUN.md: whether to add the admission to AI, [architecture.md](architecture.md), section 2.5, to the "To decide when detailed" of the card architecture 3.6 spec. The answer: the card is changed for such an item by the outcome of the detailing, T06, — by a row of table 3 «в реестр spec» once the decision is taken, not in advance (architecture 3 spec);
+- **an item beyond the card** — question В1 of table 3 of RUN.md: whether to add the admission to AI, [architecture.md](architecture.md), section 3.9, to the "To decide when detailed" of the card architecture 3.6 spec. The answer: the card is changed for such an item by the outcome of the detailing, T06, — by a row of table 3 «в реестр spec» once the decision is taken, not in advance (architecture 3 spec);
 - **RULES.md:**
   - an example of a citation is written in inline code (R32 spec). Five such examples from the old template — in CLAUDE.md, RUN.md and the opening of this log — were rewritten;
   - a development or CI tool that ships nowhere and puts none of its own code into what ships — a checker, an analyser — may carry another license approved by OSI too, or free terms for open source. But only as a named exception: in the license check or in the decision that brings it in (R12 spec);
@@ -30,7 +30,7 @@
 - move without the devcontainer: the container of `tutor` is the container of `spec` (CLAUDE.md, Environment), and it would lag behind it without a record;
 - `v0.2.5`, which the author's instruction named: `v0.2.6` came out while the task was running, and a move is to the latest release at the time of the task (Д6 in table 4 of `spec`'s RUN.md). `v0.2.5` has neither the amendment to R24 spec nor Т-28, that is, how the measurement gets access to AI. The template, RULES.md and the devcontainer are the same at the two tags.
 
-— *Consequence:* В1 and В2 leave table 3 of RUN.md, and T01, T06 and [architecture.md](architecture.md), sections 1, 2 and 2.1, name the decisions of the new tag. How the measurement, started in parallel with E1, gets along with it is question В3 of table 3 of RUN.md: the planning of the measurement decides it. Rebuilding the container is the author's step. — RUN.md, T07; CLAUDE.md; README.md; `.devcontainer/`.
+— *Consequence:* В1 and В2 leave table 3 of RUN.md, and T01, T06 and [architecture.md](architecture.md), sections 1, 2 and 3.11, name the decisions of the new tag. How the measurement, started in parallel with E1, gets along with it is question В3 of table 3 of RUN.md: the planning of the measurement decides it. Rebuilding the container is the author's step. — RUN.md, T07; CLAUDE.md; README.md; `.devcontainer/`.
 
 **R02. `spec` is at the tag `v0.2.9`, and rule 12 of RUN.md closes the findings of the shared checks before a new task.** The submodule moves from `v0.2.6` to `v0.2.9`: this is the latest release of `spec` as of 2026-10-20, commit 5eafb1a. The release is immutable, and `gh release verify v0.2.9 -R altnovatrail/spec` confirmed it by its attestation. What the new tag brings to `tutor` (`git -C spec diff v0.2.6 v0.2.9`, read 2026-10-20):
 - **rule 12 of RUN.md** — from the template, where it has been since `v0.2.7`: before a new task, close the findings of SonarCloud, CodeQL and Scorecard on the previous one. These checks have been working here since T16 of `spec` — pull request #2, commit 6e04f80;
@@ -90,7 +90,7 @@ The tolerance for reading under the key is zero. The learner will not notice a r
 - the answer to Т-23 will come from the conclusions of E2. What T01 decided is В6 in table 3 of RUN.md;
 - if one call wins, the change to privacy 5.1 spec will go «в реестр spec» then.
 
-— architecture 2.1, 3.1; RUN.md, T01.
+— architecture 3.11, 3.1; RUN.md, T01.
 
 — *Amendment 2026-10-20* (review, the executor's proposal within the author's decision: "the key makes nothing worse"):
 - **The conditions with the key.** One call sees the key and the solution (R62 canvas-api), so they are what is measured: the correct ones — on all sheets, the false ones — on correct sheets. The false ones are the same steps with another number.
@@ -216,7 +216,7 @@ The last two go only in the main condition. The working goes only into the analy
 
 — *Amendment 2026-10-25* (the author's decision; T45): **a one-off exception — the executor read the board's log and three of its pictures.** The author allowed them to look at `samples/board` to check the series T45, and themself removed the `deny` rules in `.claude/settings.json`.
 - The executor read the log `board.jsonl` with a script that prints only numbers and assessments. They compared the pictures by hashes and by pixels: where the lines are on them and what changed between attempts. They opened three pictures — two with an equation and one with the task about posts: without them it is impossible to tell whether the mark fell on the right line. These pictures and excerpts of the log went into the context of the Claude Code session.
-- The executor wrote nothing to `samples/`, nothing from there got into the repository, and the bans came back the same day: `git checkout .claude/settings.json`. The numbers of the series are in architecture 2.6.
+- The executor wrote nothing to `samples/`, nothing from there got into the repository, and the bans came back the same day: `git checkout .claude/settings.json`. The numbers of the series are in architecture 3.12.
 - The rule above does not change: agents do not look into `samples/`. The exception is one-off, by the author's words, and concerns only their own handwriting on the board, not eval samples from volunteers (П-12, П-16).
 
 — *Why:* the author's words of 2026-10-25: «разрешаю посмотреть samples/board». They could have sent a summary themself, in words, but the place of the mark on the picture and the answer of each attempt are visible only in the log and on the pictures.
@@ -392,7 +392,7 @@ The price of the checks is about $22 of the estimate of architecture 3.1: the pl
 — *Amendment 2026-10-28* (the author's decision on approving the plan of T70–T73; T71): **two readers on the observation.** The readings taken are those of the finished sheet without the key, at 32 px, for Haiku the first repeat, and the pairs are Opus with each configuration of Haiku.
 - A sheet is released if the calls of both readers did not fail, each has one result, their values after the normalization of the kind `number` matched, and so did the verdicts. Otherwise the sheet is "unreadable".
 - Among the released ones the false "correct", the false alarms and the extra "unreadable" are counted — beside the errors of each reader on the same sheets.
-- The hybrid's p is the share of sheets where Haiku did not confirm "correct" (architecture 2.6), and beside it, Opus's agreement with it on "correct".
+- The hybrid's p is the share of sheets where Haiku did not confirm "correct" (architecture 3.12), and beside it, Opus's agreement with it on "correct".
 
 — *Amendment 2026-10-27* (T86; R29): **the crop's scale is by stroke bundles, not by groups.** "The median height of a stroke group" above is history. The eval protocol sets the scale by the lower median of the heights of the stroke bundles, no more than 100 units. A bundle is strokes whose boxes touch or overlap, by a chain and without time, and a mark below 15 units does not enter a bundle (R25 canvas; concepts 15 spec; Д36 RUN.md `spec`). The heights of 16, 24, 32 and 48 px the crop of T69 sets by this rule.
 
@@ -864,7 +864,7 @@ Entry R11 was made 2026-10-21 by the author's decisions in the planning of T08. 
   - The board draws the model's box as it is, with the corners in any order. A box that goes beyond the edge of the picture it clamps to the edge, as Anthropic advises. A box wholly beyond the edge, without width or without height — except an underline — it does not draw, and the card says that the model gave no place.
   - Clear, moving to another task and a new check remove the marks. Undo, as before, keeps the answers, and with them the marks: they belong to the picture that the models checked.
   - "AI was right" — when both the assessment and the place of the mark, if there is one, are correct.
-- **From the recommendation of T42** (architecture 2.6) — three items:
+- **From the recommendation of T42** (architecture 3.12) — three items:
   - thinking tokens — on the card and as means in the summary;
   - the thinking switch for Haiku 5.5 and Sonnet 5.5, at efforts `low`, `medium` and `high`. For Haiku the board sends `disabled`, for Sonnet — `between_tools`, and for Opus 5.5 and Fable 5.1 thinking is not switched off. An impossible combination the board and the adapter reject before the call;
   - a streaming call for Claude: the time to the first text of the answer — from the sending of the attempt that answered — and the SDK's retries on the card, in the summary and in the log. GPT stays without streaming: it is not used on the board (R20).
@@ -878,7 +878,7 @@ Entry R11 was made 2026-10-21 by the author's decisions in the planning of T08. 
 - **two assessments or three.** Then on a finished correct solution too the board would say "keep going", and without "cannot read it" the model would guess when in doubt. A false alarm is worse than no check (R04 spec);
 - **a mark snapped to the strokes, and group labels on a copy of the picture,** as in R08. How to mark, at the author's request, the model decides, and "AI was right" must judge its place, not the board's. Besides, the labels would lie on the picture by which the model judges;
 - **`gpt-6-luna` with effort `none`** (T44): GPT was not connected to the board (R20);
-- **a summary only over the new answers:** it would not show how much the short answer saved. — architecture 2.6, 3.3, 4; README.md; RUN.md, T45.
+- **a summary only over the new answers:** it would not show how much the short answer saved. — architecture 3.12, 3.3, 4; README.md; RUN.md, T45.
 
 — *Amendment 2026-10-25* (R24): "the board needs neither the sample format nor the samples page" above is history. The board's record mode writes the measurement's samples in the format of R15 (T13).
 
@@ -940,7 +940,7 @@ Entry R11 was made 2026-10-21 by the author's decisions in the planning of T08. 
 
 **R22. `spec` is at the tag `v0.2.32`. The tag closed nine of our rows «в реестр spec» — В5, В6, В8–В11, В13, В15 and В17. The card of `tutor` has a new item "To decide when detailed" — assessment by the rubric, and the README carries status badges.** The submodule moves from `v0.2.18` to `v0.2.32`: this is the latest release of `spec` on 2026-10-25, commit 15026e2. The release is immutable, and `gh release verify v0.2.32 -R altnovatrail/spec` confirmed it by its attestation. What the tag brings `tutor` (`git -C spec diff v0.2.18 v0.2.32`, read 2026-10-25):
 - **the answers to the rows «в реестр spec».** The author recorded them in `spec` on 2026-10-22, and Д19 and Д26 of RUN.md of `spec` say to close them by the move to the tag:
-  - В5 — R47 spec: Google's generative AI is closed on the platform — both the Gemini API and Vertex AI, for all learners on both paths to AI and for the other parts of the platform — until a lawyer answers otherwise. Architecture, sections 1, 2.2, and 2.5, and the tasks T02 and T05 speak of Google by it. The measurement is not concerned: Google was removed from it already on 2026-10-21 (R06);
+  - В5 — R47 spec: Google's generative AI is closed on the platform — both the Gemini API and Vertex AI, for all learners on both paths to AI and for the other parts of the platform — until a lawyer answers otherwise. Architecture, sections 1, 3.6, and 2.5, and the tasks T02 and T05 speak of Google by it. The measurement is not concerned: Google was removed from it already on 2026-10-21 (R06);
   - В6 — by an addition to Т-23: the answer plan is the threshold of R03;
   - В8 — by the open question П-21, and В11 — by the open question Т-33;
   - В9 — by an addition to П-16: the volunteers' consent is extended to use in the measurement;
@@ -970,7 +970,7 @@ Entry R11 was made 2026-10-21 by the author's decisions in the planning of T08. 
 - closing В20 too, as Д19 of RUN.md of `spec` says, — the return of the measurement, which `spec` does not know yet, would be lost;
 - correcting along the way the phrase about the first code in CLAUDE.md: it is a file of rules, and an edit in it is a decision of the author (В22).
 
-— *Consequence:* the tag `v0.2.32` — in CLAUDE.md, at the start of RUN.md and in README.md; in the README — the badges. RUN.md — table 3 with the new row В25, the description of E2 with a new item of the planning of the measurement, E1 with T46, and the tasks T02, T05, T29, T44 and T45. architecture 1, 2, 2.1, 2.2, 2.4, 2.5, 2.6, 2.7, 3.1, 3.3 and 4. — RUN.md, T43; CLAUDE.md; README.md.
+— *Consequence:* the tag `v0.2.32` — in CLAUDE.md, at the start of RUN.md and in README.md; in the README — the badges. RUN.md — table 3 with the new row В25, the description of E2 with a new item of the planning of the measurement, E1 with T46, and the tasks T02, T05, T29, T44 and T45. architecture 1, 2, 3.11, 3.6, 2.4, 3.9, 3.12, 3.5, 3.1, 3.3 and 4. — RUN.md, T43; CLAUDE.md; README.md.
 
 — *Amendment 2026-10-25* (R24): **the workbook and essays — by a measurement of their own later, not by this one.** T46 waits for it.
 
@@ -1010,7 +1010,7 @@ Entry R11 was made 2026-10-21 by the author's decisions in the planning of T08. 
 
 — *Why:* the author's choice of 2026-10-25 in the planning of the measurement — the main question, recording on the board, Opus 5.5 · `high` and Haiku 5.5 · `low` with thinking and without, the markup while writing, the log and the frames 2×2, about 40 sheets, and the links with `spec` and `canvas` — as an epic of their own for later.
 - The plan of 2026-10-21 — about 110 sheets, about 14 code tasks and about $140 — was written for three providers, and the main question of R21 was one of many in it.
-- The series T45 showed the judge's price and time on the board: Opus 5.5 · `high` — about $0.008 and 2.5 s, Haiku 5.5 — $0.0002–0.0003 (architecture 2.6).
+- The series T45 showed the judge's price and time on the board: Opus 5.5 · `high` — about $0.008 and 2.5 s, Haiku 5.5 — $0.0002–0.0003 (architecture 3.12).
 - The input, storage outside git and the keys for eval the board already has (T25, T39–T45), and `canvas` has no release — checked 2026-10-25.
 
 — *Rejected:*
@@ -1022,7 +1022,7 @@ Entry R11 was made 2026-10-21 by the author's decisions in the planning of T08. 
 - **Sonnet 5.5 and Fable 5.1** — the author did not choose them, and R06 did not take Fable also because of storage without ZDR;
 - **only the log, without the frames** — then it cannot be checked whether seeing what was erased helps the model;
 - **labels in the margins and snapping the box to the strokes** (R08, R11) — a hit is counted by the line, and the box is enough for the model;
-- **Batch** — half the price, but it keeps requests up to 29 days, and the measurement holds to ZDR (R06; architecture 2.6).
+- **Batch** — half the price, but it keeps requests up to 29 days, and the measurement holds to ZDR (R06; architecture 3.12).
 
 — *Consequence:* amendments to R03, R05, R06, R08, R10, R11, R15, R16, R19, R21 and R22. architecture 3.1 — the block "The measurement of the working", and the plan of 2026-10-21 is history. RUN.md — the measurement's tasks rewritten, T17, T18 and T20 — `[-]`, T30–T32, T35 and T37 — in epic E3, and in table 3 — В16, В20 and В24.
 
@@ -1282,7 +1282,7 @@ Entry R11 was made 2026-10-21 by the author's decisions in the planning of T08. 
 - **The sheets with a near-key** — the model reads an even synthetic digit confidently, and the key has nothing to shift: the threshold of Т-23 would pass by construction.
 - **The synthetic sheets outside `samples/`** — so the executor starts the runs itself, without one-off exceptions to the rule about `samples/`, such as were needed in T27–T29.
 - **The analysis without a task of its own** — the judge of the measurement of the working already sees the key and looks for the first error (R24), and `spec` puts the hint in one call with the analysis (architecture 4.1 spec).
-- **The reduced matrix for Opus** — heights and states are needed by the cheap reader that the product puts on reading (architecture 2.6), and the full matrix would cost about $6 more.
+- **The reduced matrix for Opus** — heights and states are needed by the cheap reader that the product puts on reading (architecture 3.12), and the full matrix would cost about $6 more.
 
 — *Rejected:*
 - **one question** — free writing, and the rest in later epics: this is what the executor recommended, and the author took everything;
@@ -1294,7 +1294,7 @@ Entry R11 was made 2026-10-21 by the author's decisions in the planning of T08. 
 - **the sheets of E4 beside the sheets of E2** — the split and the logs of E2 name their files;
 - **the full matrix for Opus in reading** and **a separate analysis call** — the arguments are above.
 
-— *Consequence:* amendments to R04, R05, R08, R10, R11, R22 and R24; RUN.md — table 1, table 2 and the section «Эпик E4»; architecture 1, 2, 2.1, 2.7, 3 and the new section 3.4; `docs/plan/E1.md`; README.md.
+— *Consequence:* amendments to R04, R05, R08, R10, R11, R22 and R24; RUN.md — table 1, table 2 and the section «Эпик E4»; architecture 1, 2, 3.11, 3.5, 3 and the new section 3.4; `docs/plan/E1.md`; README.md.
 
 — *Amendment 2026-10-27* (T54; the pilot T53): **the pilot does not change the plan in the main, but adds to the sheets the way the author writes.** The plan and the criterion are in architecture 3.4, "Measurement of free writing".
 - **The measurement of free writing goes by the plan:** 40 sheets of code, the three judges of R24, the first error in a drawing — on about half of the sheets with an error that have a drawing.
@@ -1383,7 +1383,7 @@ Entry R11 was made 2026-10-21 by the author's decisions in the planning of T08. 
 
   The rows are closed in [plan/questions.md](plan/questions.md), and the live documents name the numbers of `spec`;
 - **the vocabulary by R55 spec.** Д33 RUN.md `spec` tells `tutor` to say "the course of writing" where it is about the order of writing, the pauses and the erasures, and to call the measurement of E2 the measurement of the course of writing. So it now is in the live places:
-  - [architecture.md](architecture.md) — sections 1, 2.6, 3, 3.1 outside the plan of 2026-10-21, 3.2, 3.3, 3.4 and 4;
+  - [architecture.md](architecture.md) — sections 1, 3.12, 3, 3.1 outside the plan of 2026-10-21, 3.2, 3.3, 3.4 and 4;
   - [sheets.md](sheets.md);
   - the description of E4 and the open tasks of RUN.md.
 
@@ -1411,7 +1411,7 @@ Entry R11 was made 2026-10-21 by the author's decisions in the planning of T08. 
 - the description of E4, table 2 (E3), table 3 (В24, В32) and table 4 (Д2);
 - the tasks T58, T65, T68, T69, T74, T79, T83 and T85.
 
-[plan/questions.md](plan/questions.md) — В20, В23, В25 and В29–В31 closed; [plan/E3.md](plan/E3.md) — a note on В20 and the task schema. architecture 1, 2.6, 3, 3.1, 3.2, 3.3, 3.4 and 4; [sheets.md](sheets.md). Amendments to R08 and R27. — RUN.md, T86.
+[plan/questions.md](plan/questions.md) — В20, В23, В25 and В29–В31 closed; [plan/E3.md](plan/E3.md) — a note on В20 and the task schema. architecture 1, 3.12, 3, 3.1, 3.2, 3.3, 3.4 and 4; [sheets.md](sheets.md). Amendments to R08 and R27. — RUN.md, T86.
 
 ## The stroke groups of a sheet
 
@@ -1882,7 +1882,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 - **essays about the learner's life** — П-20 recommends made-up and general topics for those under 18;
 - **files of pages** in `synthetic/` — the essays are drawn in memory, like the pages of the workbook (R40).
 
-— *Consequence:* `internal/sample/essays.go`, `internal/synth/essay.go`, `internal/essay`, `tutor-eval essays` and the tests; `eval/essays.json`; [essays.md](essays.md); architecture 2.7, 3.2 and 3.4; CLAUDE.md and README; RUN.md — T82.
+— *Consequence:* `internal/sample/essays.go`, `internal/synth/essay.go`, `internal/essay`, `tutor-eval essays` and the tests; `eval/essays.json`; [essays.md](essays.md); architecture 3.5, 3.2 and 3.4; CLAUDE.md and README; RUN.md — T82.
 
 *2026-11-07 (T107; R71): the strokes of the essays are no longer drawn in the runner's memory — `tutor-eval draw -essays` writes them as samples of the eval protocol, `essay-NN.json`, with the truth of the text and the marks of all the criteria, and the summary and the run read the directory of samples.*
 
@@ -1922,7 +1922,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 - **one call for all three** — the threshold was passed on even synthetic sheets, without a single divergence, and with an edit of privacy 5.1 spec;
 - **one call only for Opus** — Opus read 66 sheets of 68 correctly without the key anyway.
 
-— *Consequence:* R03 stays in force; architecture 2.1 and 3.4; В37 in table 3 of RUN.md.
+— *Consequence:* R03 stays in force; architecture 3.11 and 3.4; В37 in table 3 of RUN.md.
 
 **R47. `tutor`'s position on Т-33: the rule of two readers of one provider is a pair of Claude models. The observation is released when Opus 5.5 · `high` and Haiku 5.5 · `low` read the same thing, and otherwise it is "unreadable".** The author's decision of 2026-10-28 in the planning of T82, against the recommendation of the row В38. The executor took the pair that was best of those measured. In detail — architecture 3.4, "Result of the measurement of reading".
 - On the test part without the key, the pair of Opus with Haiku · `low` released 61 sheets of 68, and the pair with Haiku without thinking 51. There are no errors among those released.
@@ -1964,7 +1964,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
   - **reading unfinished work** — О-8 is closed by R69 spec: the work is read only on "Check" and "Step done", and on a pause the button only blinks. О-21 is supplemented: a reading request does not send unsubmitted work, and what it gives after a wrong answer is still open (В40);
   - **the tutor's words** — R70 spec: `api` checks the hint's form and the feedback rule with the code of `tutor`. The word limit of a hint is 30 in Russian and 35 in English, of feedback 80 words in English. None of the tutor's words give away the learner's gender, and a clause on gender in the eval sets checks this (В43, В45, В49). The leak check stays strict — the 2026-10-28 amendment to R57 spec (В44);
   - **the workbook** — the 2026-10-28 amendments to R53 and R56 spec: the item's text does not go into reading a slot; the reader returns a stacked fraction as `3/4`; a mirrored digit is the digit itself, and a false alarm on it counts toward the target of 1 % (В46–В48);
-  - **assessment by the rubric** — О-22 is closed by R71 spec: the main measure is the false alarms on met criteria, the second agreement with people and κ by criterion, and the target is by the essays of adult volunteers (В49). One point of the card is left: whether it is one call with the reading of the essay or two (architecture 2.7);
+  - **assessment by the rubric** — О-22 is closed by R71 spec: the main measure is the false alarms on met criteria, the second agreement with people and κ by criterion, and the target is by the essays of adult volunteers (В49). One point of the card is left: whether it is one call with the reading of the essay or two (architecture 3.5);
   - **the course of writing** — the 2026-10-28 amendment to R52 spec: R52 spec stays, and so does R27 (В50);
   - **Д18 of `spec`'s RUN.md** — `tutor`'s part is done, and the eval sets of the slice are on samples of adult volunteers (В51);
   - **the other rows** — from E2 (T42, T44) and from E4 (T52, T56, T69):
@@ -2003,7 +2003,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 
 **R50. E4 goes on with an extended measurement — the tasks T90–T97, with a budget of $150 for runs. The new configurations of Claude are measured on the test parts of E4, and the chosen ones on sets of hundreds of sheets, pages and essays that code composes. Essays are measured with two calls as well, and ten of the author's sheets, written illegibly on purpose, give numbers on live handwriting. The prompts are the frozen versions 1. The synthetic sheets give no admission: these are data for choosing the reader pair and for T46, not decisions.** The author's decision of 2026-10-28, after T89.
 - **New configurations** (T90, T91): Opus 5.5 · `medium`, Sonnet 5.5 · `low` with thinking and without, and Haiku 5.5 · `medium` — beside the three configurations of E4, on the same test parts. The models in the reader pair are chosen by admission by eval (R68 spec; R07 spec), and E4 measured only Opus 5.5 · `high` and two Haiku 5.5. The runner asks the configurations named by a flag.
-- **Essays with two calls** (T92): reading, then the assessment by the text — beside the one call of R45. The point of the card now is "whether it is one call with the reading of the essay or two" (architecture 2.7), and E4 measured only one.
+- **Essays with two calls** (T92): reading, then the assessment by the text — beside the one call of R45. The point of the card now is "whether it is one call with the reading of the essay or two" (architecture 3.5), and E4 measured only one.
 - **Scale and hard synthetic sheets** (T93–T95). Generators with the truth by construction compose:
   - 300 sheets of lines;
   - 160 near-key sheets, with a digit shift of 0.1–0.4;
@@ -2029,7 +2029,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 - **essays written by a model** — for such a text the program cannot check the truth by the criteria "on topic" and "spelling";
 - **new versions of prompts and rounds of development** for the kinds of E4 — the model is measured, not the prompt; only the two essay calls have a new prompt (T92);
 - **photos of other people's solutions from the internet** — these are learners' works without consent to eval and to passing them to an AI provider (П-10, П-16), with an unknown license and without truth. And a photo has no strokes by which the crop is cut, so it is not an input of the platform;
-- **open sets of handwritten formulas** — MathWriting and CROHME — now: the license is CC BY-NC-SA, category X (architecture 2.6). This is only a local measurement, outside the work tree, by the author's decision, and the sets have only expressions, without solutions. Not a job of a few days;
+- **open sets of handwritten formulas** — MathWriting and CROHME — now: the license is CC BY-NC-SA, category X (architecture 3.12). This is only a local measurement, outside the work tree, by the author's decision, and the sets have only expressions, without solutions. Not a job of a few days;
 - **a target or admission by the synthetic sheets** — thresholds and targets are repeated on the handwriting of adult volunteers (R67, R68, R71 spec; П-16).
 
 — *Consequence:* RUN.md — the tasks T90–T97 in the table of E4, «Почему такой порядок» and the start of the file. README — E4 goes on. The archive of E4 — after T96. — RUN.md, T90–T97.
@@ -2108,7 +2108,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 - **two readers by R68 spec** — a divergence in even one word would send the whole essay to be rewritten: on the synthetic sheets this is 5–16 essays of 300 — 5 for the pair with Sonnet, 13–16 for the pairs with Haiku —, and on live handwriting there will be more;
 - **two readers with the divergences marked for the assessment** — a new design that no one has measured.
 
-— *Consequence:* architecture 1, 2, 2.7, 3 and 3.5; RUN.md — T46, rows В58 and В59 of table 3. The card architecture 3.6 spec is edited by `spec` — by row В58.
+— *Consequence:* architecture 1, 2, 3 and 3.5; RUN.md — T46, rows В58 and В59 of table 3. The card architecture 3.6 spec is edited by `spec` — by row В58.
 
 — *Amendment 2026-11-01 (T100; R58):* `spec` recorded this path in R75 spec, and one reader for a sheet under a rubric in the second 2026-11-01 amendment to R68 spec, by rows В58 and В59. The card architecture 3.6 spec no longer names the item about the rubric. The branch of "The return" about two readers for an essay fell away: `spec` kept one.
 
@@ -2135,7 +2135,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 - **storing flagged works** for review by a human — it needs an amendment to R09 spec and privacy 4 spec: the platform would start storing children's works. Here too belongs OpenAI's check without storage on its side, but with storage at the customer;
 - **the provider's moderation** of the tutor's words. At Anthropic it is an extra call of a model. At OpenAI the separate moderation endpoint is free, and the scores can also be got in the generation request itself, though the page does not name the price of this. The check showed this only after the author's decision; it can be returned to when the platform needs OpenAI.
 
-— *Consequence:* architecture 1, 2, 2.2, 3, 3.6 and 4; RUN.md — T02, rows В60 and В61 of table 3. The card architecture 3.6 spec and privacy 5.3 spec are edited by `spec` — by rows В60 and В61.
+— *Consequence:* architecture 1, 2, 3, 3.6 and 4; RUN.md — T02, rows В60 and В61 of table 3. The card architecture 3.6 spec and privacy 5.3 spec are edited by `spec` — by rows В60 and В61.
 
 ## The spending limit of an own key
 
@@ -2159,7 +2159,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 - **only the model and the tokens** in the usage message — then `api` would have to know the models' prices;
 - **a limit in calls or tokens** — a reading call and an analysis call cost differently, and so do the tokens of different models.
 
-— *Consequence:* architecture 1, 2, 2.3, 3, 3.7 and 4; RUN.md — T03, row В62 of table 3. What the limit requires of `api`, `app`, the concepts and the card is edited by `spec` — by row В62.
+— *Consequence:* architecture 1, 2, 3, 3.7 and 4; RUN.md — T03, row В62 of table 3. What the limit requires of `api`, `app`, the concepts and the card is edited by `spec` — by row В62.
 
 — *Amendment 2026-11-16* (R119): **the outcome "limit reached" says when access returns, where the provider's terms say it: `Outcome.AccessReturns`, today the cap of Anthropic's tier alone.**
 
@@ -2190,7 +2190,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 - **leaving Т-13 open whole** — speech to speech for the tutor's words would wait for stage 3, though R54 spec and R70 spec, already adopted, contradict it;
 - **a separate text for speech from the model** — where a number is written in words, the leak would be held only by the author's leak phrases.
 
-— *Consequence:* architecture 1, 2, 2.4, 2.5, 3 and 3.8; RUN.md — T04, row В63 of table 3. `tutor`'s position on Т-13 and Т-25, the edit of the cards architecture 3.1 and 3.6 spec and the question about the capability "voice" for concepts 15 spec are carried by row В63 «в реестр spec».
+— *Consequence:* architecture 1, 2, 2.4, 3.9, 3 and 3.8; RUN.md — T04, row В63 of table 3. `tutor`'s position on Т-13 and Т-25, the edit of the cards architecture 3.1 and 3.6 spec and the question about the capability "voice" for concepts 15 spec are carried by row В63 «в реестр spec».
 
 ## Admission to AI
 
@@ -2216,7 +2216,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 - **only a neutral phrase at a refusal**, with the function called by `tutor` alone — simpler for `api`, but a child to whom AI is closed would write work in vain;
 - **the facts in environment variables of `api`**, set outside git — simpler, but a change of a fact would not pass review and would not stay in the history.
 
-— *Consequence:* architecture 1, 2, 2.5, 3, 3.6, 3.8 and 3.9; RUN.md — T05, row В64 of table 3. What the function requires of `spec`'s table and of `api` is carried by row В64 «в реестр spec». The edit of the card architecture 3.6 spec for subsection 2.5 is made by T06.
+— *Consequence:* architecture 1, 2, 3, 3.6, 3.8 and 3.9; RUN.md — T05, row В64 of table 3. What the function requires of `spec`'s table and of `api` is carried by row В64 «в реестр spec». The edit of the card architecture 3.6 spec for subsection 2.5 is made by T06.
 
 ## Move to `spec` `v0.5.4`
 
@@ -2233,7 +2233,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
   - row 5.4 — the epic of `tutor`'s code: reading handwriting by two readers, analysis and hint, the checks of words (R70 spec) — as a library in the process of `api`, and the first release is a tag of the Go module. It waits for 5.1, 5.3 and 1.6 — epic E3 of `spec` with the eval protocol and the admission table;
   - the first app — the author solves tasks themselves, locally, in the devcontainer: Claude models read the handwriting, and the key lies in an environment variable, as for the check board. There are no children and no deployments. The admission table stays in E3 of `spec`: «без неё `tutor` не зовёт ИИ и для взрослого».
 - **What else is in the tag:** the types of the module format for Go — the packages `types/formatv0` and `types/formatv0/open` of the Go module `spec` (R72 spec), for TypeScript — the npm package `@altnovatrail/spec` (R73 spec), and with it the types of the element of `canvas` (R74 spec); the shared Go checks and the Go coverage of `spec` itself (the 2026-11-01 amendments to R30 spec and R48 spec); the paths of the shared release of `.github` (the 2026-11-01 amendment to R31 spec). RULES.md added one thing: COORDINATION.md is in Russian. The documents check, the repository template and `.devcontainer` are as before.
-- **What `tutor` takes with the tag:** the live places, for the answers: architecture 1, 2, 2.6, 2.7, 3.4, 3.5 and 3.9, the amendment to R53 and the input of T06. `tutor` does not import the Go module `spec` yet, so its part of Д46 of `spec`'s RUN.md — moving the module's version together with the submodule and excluding the module from Dependabot `gomod` — comes with the first import, in the epic of code. The rows В60–В64 the tag does not touch: they still wait to be passed on.
+- **What `tutor` takes with the tag:** the live places, for the answers: architecture 1, 2, 3.12, 3.4, 3.5 and 3.9, the amendment to R53 and the input of T06. `tutor` does not import the Go module `spec` yet, so its part of Д46 of `spec`'s RUN.md — moving the module's version together with the submodule and excluding the module from Dependabot `gomod` — comes with the first import, in the epic of code. The rows В60–В64 the tag does not touch: they still wait to be passed on.
 
 — *Why:* the author's decisions while doing T06 — «Сначала переход, потом T06» and, when `v0.5.4` came out, «Перейти на v0.5.4». T06 checks the outcome of detailing against the card architecture 3.6 spec and proposes the next epic. At `v0.3.3` the card still waited for the answer to В58 and В59, and there was no cross-repository plan that names the epic of `tutor`'s code: T06 cites them by their numbers. The move is a task of its own, T100 (RULES.md, Across repositories), and it closes the debt Д3. `v0.5.3` was the latest when T100 began; `v0.5.4` came out the same day, and `gh release verify v0.5.4 -R altnovatrail/spec` confirmed the release.
 
@@ -2242,35 +2242,24 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 - **staying at `v0.5.3`** — not the latest tag, and not by the plan of R76 spec;
 - **splitting T06** into the summary of section 3 with the request types and the check against the card with the next epic — the checks would be shorter, but there would be three tasks with T100.
 
-— *Consequence:* the submodule; README, CLAUDE.md and the start of RUN.md — the tag; table 1 — T100, and T06 depends on it; table 4 — without Д3; T06 — the input from `v0.5.4`; [plan/questions.md](plan/questions.md) — В55–В59 closed; architecture 1, 2, 2.6, 2.7, 3.4, 3.5 and 3.9; the amendment to R53. The move to the line 0.6 — row 5.3 of `spec`'s COORDINATION.md — stays a task for later.
+— *Consequence:* the submodule; README, CLAUDE.md and the start of RUN.md — the tag; table 1 — T100, and T06 depends on it; table 4 — without Д3; T06 — the input from `v0.5.4`; [plan/questions.md](plan/questions.md) — В55–В59 closed; architecture 1, 2, 3.12, 3.4, 3.5 and 3.9; the amendment to R53. The move to the line 0.6 — row 5.3 of `spec`'s COORDINATION.md — stays a task for later.
 
 ## The outcome of detailing
 
-**R59. The detailing of E1 is finished: the items of architecture's section 2 are decided — R53–R57, and earlier R03, R46 and R49 —, except the route of voice, which waits for stage 3. Section 3 describes `tutor`: the request types by AI capabilities — architecture 3.10 —, and with them the decisions and dossiers of the items of section 2, moved word for word. What of this concerns the card of `spec` is carried by row В65, and the next epic is the library's code, E5 in table 2 of RUN.md: it is named by row 5.4 of `spec`'s cross-repository plan (R76 spec).** Task T06 of epic E1, 2026-11-01.
-- **The request types** (architecture 3.10) — reading a sheet, reading the workbook, reading an essay, analysis and hint, assessment by the rubric; text reading comes with the text canvas, which the first slice does not have, and voice at stage 3. This is brought together from R53–R57; R67, R68, R70 and R75 spec and the measurement of E4, not a new design. The observation type is written by epic E3 of `spec`. Open in the fields stay:
-  - the matched trap and the techniques for the hint — a new version of the prompt will add them (R38);
-  - the observations of reading for the hint — the measurement of E4 did not give them either, and whether they are needed, the eval set of the hint will show;
-  - the past questions of the same task — by О-21;
-  - "unreadable" for reading an essay — the measurement's prompt did not measure it;
-  - one prompt for two capabilities, analysis and hint, — row В65.
-- **Section 2** — the outcome at its start. The subsections of the decided items stand under their former numbers with a link to the new place, and their text is in section 3: 2.1 — in 3.11, 2.6 — in 3.12, and 2.2, 2.3, 2.5 and 2.7 — at the end of 3.6, 3.7, 3.9 and 3.5. Subsection 2.4 — the route of voice — stays, until stage 3 (R56). The card needs no edit for 2.6: `spec` already recorded its answers (R49).
-- **The rows «в реестр spec»** are checked:
-  - of T07 — В4, of T01 — В5–В10: all closed, and where each went is named by «Закрыты» of [plan/questions.md](plan/questions.md). The plan of the answer to Т-23 went in as a supplement to Т-23 (В6), and `tutor`'s temporary format of samples as the basis of the eval protocol in epic E3 of `spec`'s RUN.md, together with R38 spec (В7);
-  - of T46 — В58 and В59 — recorded in `v0.5.0` and closed by the move to `v0.5.4` (R58; [plan/questions.md](plan/questions.md));
-  - of T02 — В60 and В61, of T03 — В62, of T04 — В63, of T05 — В64, of T06 — В65: in table 3 of RUN.md, waiting to be passed on.
-- **The next epic** — E5, the code of the library `tutor` by section 3.10, as a library in the process of `api` (R15 spec). Its first task is the move to a tag of the line 0.6 with format 0.2 (row 5.3 of `spec`'s COORDINATION.md). The observation and the contract `app` ↔ `api`, the eval protocol and the admission table are given by epic E3 of `spec` (row 1.6), and E5 waits for it (row 5.4). The first release — a tag of the Go module — is in the deferred E3 of `tutor`.
+**R59. Section 2 of the architecture holds only what is still to decide about `tutor`: a decided item leaves it, its decision is its entry of this log, and how it is built is section 3 (R160 spec). The detailing of E1 decided every item but the route of voice, which waits for stage 3 (architecture 2.4): R53–R57, and earlier R03, R46 and R49. Section 3 describes `tutor`, and the request types by AI capabilities, architecture 3.10, are brought together from R53–R57, R67, R68, R70 and R75 spec and the measurement of E4, not a new design.** Task T06 of epic E1; the decided items left section 2 by R160 spec.
+- **The request types** (architecture 3.10) — reading a sheet, reading the workbook, reading an essay, analysis and hint, assessment by the rubric and the words after a correct answer. Text reading comes with the text canvas, which the first slice does not have, and voice at stage 3. One prompt serves analysis and the hint (concepts 3 and 10 spec).
+- **Section 2** names the items still to decide, each with when to come back to it. The dossier of a decided item — what was known and what the options were — stands at the end of its section of section 3: 3.5, 3.6, 3.7, 3.9, 3.11 and 3.12. A citation of a decided item `2.x` in this log, [sources.md](sources.md) or the archives of `docs/plan/` leads to its section of section 3: 2.1 to 3.11, 2.2 to 3.6, 2.3 to 3.7, 2.5 to 3.9, 2.6 to 3.12, 2.7 to 3.5, and 2.8 to 3.10, its form to R109.
 
-— *Why:* so T06 says: section 2 is empty or names what is deliberately deferred, and section 3 describes `tutor`. The dossiers of the decided items moved, and were not deleted: they hold what was known and what the options were, and the entries of the log and the archives of tasks, which are not rewritten, refer to the numbers of their subsections. Epic E5 is the one that `spec`'s cross-repository plan names: reading handwriting by two readers, analysis and hint, the checks of words, as a library in the process of `api`.
+— *Why:* section 2 is what the tasks still have to decide (CLAUDE.md, The component), and a text holds the current state (R160 spec): a stub of a decided item under its former number is history that every session reads. The dossiers stay: they hold what was known and what was chosen from.
 
 — *Rejected:*
+- **stubs of the decided items under their former numbers**, with a link to the new place — history in the section a session reads first; the citations of the log, the sources and the archives are led to section 3 instead;
 - **deleting the dossiers** of the decided items — what was known and what was chosen from would be lost;
-- **renumbering section 2** — the links of the log and the archives to 2.x would point to the wrong place;
+- **renumbering section 2** — the citations of 2.4, the open item, in the log and the archives would point to the wrong place;
 - **analysis and hint as two calls**, a prompt per capability, — the measurement of E4 measured one call (R38), and the diagram of architecture 4.1 spec draws one;
-- **next — the deferred E3 of `tutor`**, the eval protocol and the release: a return to it is called for by the release of eval protocol v0, a release of `canvas` with synthetic sheets or the first consumer of `tutor` (table 2 of RUN.md), and the product's code first needs the move to the line 0.6. Both wait for the eval protocol from E3 of `spec`.
+- **the deferred E3 of `tutor` as the next epic**, rejected here for E5, the library's code — the author took E3 first (R61).
 
-— *Consequence:* architecture 1, 2, 3, 3.5–3.7 and 3.9–3.12; RUN.md — T06, row В65 of table 3 and row E5 of table 2; README — that E1 is done.
-
-— *Amendment 2026-11-01* (R61): **as the current epic the author took not E5 but the deferred E3** — the release of `tutor` and the eval protocol —, though not one of its conditions of return is met. E5 waits in table 2 of RUN.md, and the first release is T35 of epic E3.
+— *Consequence:* architecture 1, 2, 3 and 3.5–3.12; the citations of section 2 in this log, in [sources.md](sources.md) and in the archives of `docs/plan/`; RUN.md — T06.
 
 ## OpenSSF Best Practices
 
@@ -3138,9 +3127,9 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 
 — *Rejected:* **all the package's tests in parallel** — the tests with `checking`, `t.Setenv` and `t.Chdir` substitute what is shared, and the rest together take less than a third of the time; **speeding up drawing in `internal/gen`** — an edit of the code that draws the eval sets would change their bytes, and that means new fingerprints of the sets and a new run; **a timeout without parallel tests** — the package would still run for almost eight minutes; **the call of the words after a correct answer at once** — without a capability of admission the admission function (R57) will not let it through, and it cannot be decided silently.
 
-— *Consequence:* `cmd/tutor-eval` — `t.Parallel()` in fourteen tests and a comment at `checking`; `justfile` — `ci-test`; architecture 2 and 2.8; RUN.md — В76, Д7 closed, Д8.
+— *Consequence:* `cmd/tutor-eval` — `t.Parallel()` in fourteen tests and a comment at `checking`; `justfile` — `ci-test`; architecture 2 and 3.10; RUN.md — В76, Д7 closed, Д8.
 
-— *Amendment 2026-11-12* (R102): **one of the two decisions of Д8 is made: `spec` answered В76 with option (a) — the capability `correct_answer_words` of admission table 0.3 (the 2026-11-11 amendments to R96 spec), and the submodule at `v0.16.3` carries it.** Only the form of the words is open, architecture 2.8; Д8 is in [DEBT.md](../run/DEBT.md).
+— *Amendment 2026-11-12* (R102): **one of the two decisions of Д8 is made: `spec` answered В76 with option (a) — the capability `correct_answer_words` of admission table 0.3 (the 2026-11-11 amendments to R96 spec), and the submodule at `v0.16.3` carries it.** Only the form of the words is open, architecture 3.10; Д8 is in [DEBT.md](../run/DEBT.md).
 
 — *Amendment 2026-11-16* (R118): **`ci-test` runs the race detector only on the packages that start goroutines, `RACE` of the justfile, and `cmd/tutor-eval` runs without it.** Its parallel tests stay; `-timeout 15m` stays on both runs of `go test`.
 
@@ -3326,7 +3315,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
   - the devcontainer follows the template: the comment on the build of gopls and the line `go` of `.devcontainer/gopls/go.mod` — 1.27.4 (the 2026-11-12 amendment to R12).
 - **Table 3:** the tag recorded В76, В77 and В78 (table 5 of RUN.md `spec`; the fingerprints are the same as those of the rows on `main` of `tutor` 890c0bd): В76 — with option (a), the capability `correct_answer_words`; В77 — with option (a), Go 1.27.4 in the template; В78 — with option (a) in the wording of R101, rows 5.6 and 5.7 are closed. The rows went to [docs/plan/questions.md](plan/questions.md), into «Переданы в spec», word for word, and the answers into «Закрыты». A new row is В79 «В реестр spec»: the task numbers of row 7.12 and two findings in the common text and the template.
 - **What `tutor` takes** — by the rows of `spec`'s `DEBT.md` that name `tutor`:
-  - **Д214** — admission table 0.3: the tests of `admission` run its answer vector, 23 cases instead of 16, green; architecture 2.8 and 3.9 — entries of 2026-11-12. The call of the words after a correct answer is debt Д8;
+  - **Д214** — admission table 0.3: the tests of `admission` run its answer vector, 23 cases instead of 16, green; architecture 3.10 and 3.9 — entries of 2026-11-12. The call of the words after a correct answer is debt Д8;
   - **Д225** — the adapters take no address, headers or credentials from the environment — debt Д9: row 5.9 of `spec`'s COORDINATION.md, and `tutor`'s session writes the task when the author gives it;
   - **Д223** — the call kind `CallHint` — debt Д10; **Д222** — the time of each model in the usage record — debt Д11;
   - **Д86** — done by the move to `v0.14.0` (R90); **Д80** — the amendment to R80 (R90).
@@ -3336,7 +3325,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 
 — *Rejected:* **only the move, and the restructuring and the translation after the pilot of `module-kit`** — the executor's recommendation; the author chose the whole row now. **Waiting for the pilot** — row 7.12 would not move, and `spec` is already on the 0.16 line. **All in one task** — `docs/` are about 1.8 MB, and `spec` translated its 2.7 MB in four tasks (T136–T139 `spec`). **A rule of a part for `samples/` with `paths` by the folder** — `docs-check` would count a pattern without a file as an error, and Claude Code would not load the rule when a command touches the folder without reading a file. **`docs-budgets.json` now** — sections 3.1, 3.4 and 4 in architecture, above 24 KB, go to T132 and T133, and raising the limits before them would mean legitimizing what will leave.
 
-— *Consequence:* the submodule, `go.mod` and `go.sum`; `internal/report/testdata/reading-stub.jsonl`; `.devcontainer/Dockerfile` and `.devcontainer/gopls/go.mod`; `.claude/settings.json` and `.claude/rules/`; CLAUDE.md, AGENTS.md, README, `.bestpractices.json`; RUN.md — the rules, the start, tables 3 and 4, «Задачи вне эпика»; [DEBT.md](../run/DEBT.md); architecture 2.8 and 3.9; [docs/plan/questions.md](plan/questions.md) — В76–В78; [docs/plan/E6.md](plan/E6.md) — T131; R23 and the 2026-11-12 amendments to R12, R92 and R101.
+— *Consequence:* the submodule, `go.mod` and `go.sum`; `internal/report/testdata/reading-stub.jsonl`; `.devcontainer/Dockerfile` and `.devcontainer/gopls/go.mod`; `.claude/settings.json` and `.claude/rules/`; CLAUDE.md, AGENTS.md, README, `.bestpractices.json`; RUN.md — the rules, the start, tables 3 and 4, «Задачи вне эпика»; [DEBT.md](../run/DEBT.md); architecture 3.10 and 3.9; [docs/plan/questions.md](plan/questions.md) — В76–В78; [docs/plan/E6.md](plan/E6.md) — T131; R23 and the 2026-11-12 amendments to R12, R92 and R101.
 
 — *Amendment 2026-11-13* (T136): **row 7.12 is done. The decision log is in English whole, and so is every document of `docs/` but for the epic archives `docs/plan/`; [docs-budgets.json](../docs-budgets.json) raises the limit of six sections of architecture over the block `repository` of `spec/tools/docs-check/budgets.json`, and `docs-check-repo` measures 208 things by the budgets; the measurement "after" is measurements 4.1.**
 - **The translation** — the entries R51–R102 and their sections, about 375 KB of Russian text, 285 KB of English, by `spec/tools/translation/README.md`, as T135: five subagents of Opus, batches of 70–80 KB, each piece clean by `pair`; `translation-check` of the whole log against the Russian original — the commit 7b42786, from which T135 started, where the whole log is still Russian — is clean; a blind reading of six stretches found one difference of meaning — «запись сбоку» is a note at the side, not working — and it is fixed. The names of the blocks of architecture that went to `docs/sources.md` and `docs/measurements.md` stay Russian in «…», as the pointers of architecture 3.1, 3.4 and 4 list them.
@@ -3386,7 +3375,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 
 — *Why:* the debts that the next release of `api` waits for need no money and no decision of the author, and Д12 is the one debt left of the token savings (R102). By R103, a task that does not come from an epic is the first of the next one, so they make an epic.
 
-— *Rejected:* **Д8 in the epic** — it needs the form of the words (section 2.8) and a paid admission run; **Д6** — it waits for the keys `eval-key-…` in `infra`'s Secret Manager, the author's step; **the effort `medium` for the words** of Д11 — it is measured at the next admission of the words, a paid run; **Д12 outside the epic** — R103 knows no tasks outside an epic; **one task for Д10 and Д11** — two kinds of change, one check each, and `api` takes them by different rows.
+— *Rejected:* **Д8 in the epic** — it needs the form of the words (section 3.10) and a paid admission run; **Д6** — it waits for the keys `eval-key-…` in `infra`'s Secret Manager, the author's step; **the effort `medium` for the words** of Д11 — it is measured at the next admission of the words, a paid run; **Д12 outside the epic** — R103 knows no tasks outside an epic; **one task for Д10 and Д11** — two kinds of change, one check each, and `api` takes them by different rows.
 
 — *Consequence:* RUN.md — table 1, the row В81 of table 3 and the section «Эпик E7»; [DEBT.md](../run/DEBT.md) — the 2026-11-13 notes on Д9–Д12; README.
 
@@ -3440,18 +3429,18 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 - **What the epic did** — all four tasks, T137–T140 (R105–R107; Д9–Д12 closed but for the effort `medium` of Д11): the adapters take nothing from the environment, the hint without the work is a call kind of its own, each usage record carries its model's time, and the outside facts of section 3.12 have their records in sources 1.6, 2.2 and 2.3. The three tasks with code each gave `api` a release.
 - **The archive** — as for E6 (R101): the bodies of the tasks went in one by one by rule 9 of RUN.md; now table 1 with the description of E7 and the opening of the section «Эпик E7» go to the end of the file, and the summary phrases of the tasks are dropped. Only the address of the link to `release.yml` was corrected.
 - **The measurement** — measurements 4.1, the row of E7: its five sessions from its planning, 2026-11-13T15:36, to this archive. The context of a main call is below the reference of `tutor`, the row "after" of 7.12, 202.4 thousand, so the threshold of R145 spec gives no analysis; `docs-budgets.json` has been raised once, by T136, and the quarterly check of Claude Code's changelog is `spec`'s.
-- **В82** (architecture 2.6) — option (a): the conclusions of section 3.12 do not rest on the facts no source holds now, and the marks point to the records. The row leaves table 3 for [docs/plan/questions.md](plan/questions.md), «Закрыты».
+- **В82** (architecture 3.12) — option (a): the conclusions of section 3.12 do not rest on the facts no source holds now, and the marks point to the records. The row leaves table 3 for [docs/plan/questions.md](plan/questions.md), «Закрыты».
 - **What stays in table 4** — Д6 (the eval keys in `infra`), Д8 (the form of the words after a correct answer and a paid admission), Д11 (the effort `medium` of the words, at the next admission) and Д13 (R59 outside `Words`).
 
 — *Why:* the author's instruction; the rules of RUN.md keep only what is live there.
 
 — *Rejected:* **options (b) and (c) of В82** — sources of other dates in one table, or rows lost, for numbers the conclusions do not use; **writing out the next epic at once** — the author chooses it, and table 2 is empty; **an analysis of the sessions' tokens** — the threshold of R145 spec is not reached.
 
-— *Consequence:* RUN.md — «Сделанные эпики», table 1, the row В82 and the section «Эпик E7»; [docs/plan/E7.md](plan/E7.md); [docs/plan/questions.md](plan/questions.md); architecture 2 and 2.6; measurements 4.1; README.
+— *Consequence:* RUN.md — «Сделанные эпики», table 1, the row В82 and the section «Эпик E7»; [docs/plan/E7.md](plan/E7.md); [docs/plan/questions.md](plan/questions.md); architecture 2 and 3.12; measurements 4.1; README.
 
 ## Epic E8: the words after a correct answer
 
-**R109. Epic E8 — the words after a correct answer and `spec` `v0.16.7` — is current from 2026-11-13. Its four tasks: the move to the latest tag of `spec` first (T141); one function of the choice of the words with the work by R59 (T142, Д13); the call of the words after a correct answer — its kind, its form rule, its prompt and judge and its eval set (T143, Д8); and the paid admission of that call with the measure of the effort `medium` for the hint (T144, Д8 and Д11). The form of these words is option (2) of section 2.8.** The author's decisions of 2026-11-13 — «согласен» to the composition of the epic and to option (2), which the executor recommended, and «ещё добавь переход на spec последней версии в самом начале этого эпика».
+**R109. Epic E8 — the words after a correct answer and `spec` `v0.16.7` — is current from 2026-11-13. Its four tasks: the move to the latest tag of `spec` first (T141); one function of the choice of the words with the work by R59 (T142, Д13); the call of the words after a correct answer — its kind, its form rule, its prompt and judge and its eval set (T143, Д8); and the paid admission of that call with the measure of the effort `medium` for the hint (T144, Д8 and Д11). The form of these words is option (2) of R109.** The author's decisions of 2026-11-13 — «согласен» to the composition of the epic and to option (2), which the executor recommended, and «ещё добавь переход на spec последней версии в самом начале этого эпика».
 - **Why now.** The money is there: the author's console of Anthropic shows $214.83 spent in November of a limit of $300 (the author's screenshot, 2026-11-13), and the last admission of the words, T127, cost $11.08 (R100). `spec` decided the capability of these words in admission table 0.3, `correct_answer_words` (the 2026-11-11 amendments to R96 spec), and the submodule carries it since `v0.16.3` (R102).
 - **The form** — option (2): exactly one question, the last sentence, and before it no more than one sentence of praise of the step; the word limit of the language as the hint's, `words.HintWords`; the letters those of the answer's language. It holds by code what Д188 RUN.md `spec` and concepts 10 spec name; option (1) expects a question about the place of an error that does not exist, and (3) does not hold the question.
 - **What `api` waits for.** The tag `v0.16.7` of `spec` puts its task T148, version 3 of the privacy policy — the key, the solution and the techniques that go to the AI for these words —, in force before `api` takes the call in `GetCorrectAnswerWords` (row 1.21 of COORDINATION.md `spec`, read 2026-11-13 from the submodule's fetched tags). `tutor` builds and admits the call on synthetic sets meanwhile: no learner's data goes anywhere.
@@ -3461,7 +3450,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 
 — *Rejected:* **the admission inside T143** — a paid run on code not yet reviewed, and two kinds of check in one task; **the effort `medium` as a task of its own** — one paid session of runs for both, as the report of T140 proposed; **Д6 in the epic** — it waits for the keys in `infra`, the author's step.
 
-— *Consequence:* RUN.md — table 1 and the section «Эпик E8»; architecture 2.8 — the form decided; [DEBT.md](../run/DEBT.md) — the 2026-11-13 notes on Д8, Д11 and Д13; README.
+— *Consequence:* RUN.md — table 1 and the section «Эпик E8»; architecture 3.10 — the form decided; [DEBT.md](../run/DEBT.md) — the 2026-11-13 notes on Д8, Д11 and Д13; README.
 
 — *Amendment 2026-11-14* (T144, R113): **"The money is there" read the spending limit as money**: «$214.83 of $300» is November's spending against the organization's limit, and the money is the credit balance, which ran out during T144 at −$0.17. T144 admitted the words after a correct answer (Д8 closed); the effort `medium` is measured in part, and by the author's decision the rest waits — Д11 stays open.
 
@@ -3503,7 +3492,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 
 ## The words after a correct answer
 
-**R112. The words after a correct answer are a call of the library of their own, `Tutor.CorrectAnswerWords`, of the call kind `CallCorrect`: the capability `correct_answer_words`, the fingerprint of the prompt of `internal/correct`, one model, with the work or without it. Their form is option (2) of architecture 2.8, `words.Correct`: exactly one question, and it the last sentence, at most two sentences, the words of `words.HintWords`, the letters of the language. The prompt is version 1, frozen after a trial on sheets of its own; the eval set is synthetic, 110 cases on 40 sheets whose answer is right; the judge of the words is version 4, which knows these words; the admission rule is `report.AdmitCorrect`, the rung "author". The list has no entry of them until T144.** T143 (R109), on Д8; the author's decisions of 2026-11-13 in the planning — one task, not two; the call goes when the task names no technique, and the question then asks how the answer was found; a paid trial of the prompt in T143, under a ceiling of $2, on sheets of its own; and the set of admission synthetic only, without the author's sheets (the executor recommended the author's sheets too).
+**R112. The words after a correct answer are a call of the library of their own, `Tutor.CorrectAnswerWords`, of the call kind `CallCorrect`: the capability `correct_answer_words`, the fingerprint of the prompt of `internal/correct`, one model, with the work or without it. Their form is option (2) of R109, `words.Correct`: exactly one question, and it the last sentence, at most two sentences, the words of `words.HintWords`, the letters of the language. The prompt is version 1, frozen after a trial on sheets of its own; the eval set is synthetic, 110 cases on 40 sheets whose answer is right; the judge of the words is version 4, which knows these words; the admission rule is `report.AdmitCorrect`, the rung "author". The list has no entry of them until T144.** T143 (R109), on Д8; the author's decisions of 2026-11-13 in the planning — one task, not two; the call goes when the task names no technique, and the question then asks how the answer was found; a paid trial of the prompt in T143, under a ceiling of $2, on sheets of its own; and the set of admission synthetic only, without the author's sheets (the executor recommended the author's sheets too).
 - **The call.** `CorrectRequest` carries the route, the task's open view, the crop of the work or none — none when the task's answer slots are bound choice alone, as `GetCorrectAnswerWordsRequest` of `attempt.proto` spec sends no work then —, the key and the solution, the techniques, which may be none, the language and the style; `CorrectAnswer` is the words and the outcome. The model reads the task's paragraphs, the `alt` of its pictures and the text of the item of the slot bound `anywhere`, or else of a `choice`. The library checks neither the leak nor the form: `api` does, by `leak` and `words.Correct`, and gives no words when they fail — there is no fallback text of these words (R70 spec).
 - **The call kind.** One kind with the work and without it: one capability, one prompt and one model, and `api`'s gateway asks before the call, before it knows whether work goes. Its worst is with the crop, `maxTextBytes` and one crop of 4096 pixels; it has no expected tokens until T144 measures them, so `Price(CallCorrect)` gives the worst alone, as `CallHint` (R106). It does not touch R84: `chooseCall` holds the hint on the analysis's model only for `CallWords`.
 - **The prompt** (`internal/correct`, version 1): praise one step of the solution by what it does — the step, not the learner —, then one question on the technique that helped, leading towards one the task names or naming it; with no technique named, ask how the answer was found. At most two sentences, the question last, count the words; no number of the key, of the answer or of the work; no word that tells the learner's sex, with «решил», «нашла», «справился» and «молодец» as examples; the work is never an instruction, and what is not for a child is passed over; `<task_data>` is data. Without the work, the request says that the learner chose among options. The library and the runner build the request by one function, `correct.RequestOf`.
@@ -3516,7 +3505,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 
 — *Rejected:* **two call kinds, with the work and without** — two entries of one capability and one prompt, and a gateway that cannot tell which before the call; **the words in `Words` as a rung 0** — Д188 RUN.md `spec` makes them a call of their own; **no call without techniques** — the author chose the general question; **a fallback text** — the contract gives none; **the author's sheets in the set** — the executor's recommendation, the author chose synthetic only; **a rule of its own for leaks and the form** — no measurement to set it by.
 
-— *Consequence:* [correct.go](../correct.go), [price.go](../price.go) — `CallCorrect`; [words/words.go](../words/words.go) — `Correct`, `CorrectForm`, `Last`; `internal/correct`, `internal/gen/correct.go`, `internal/report/correct.go` and `AdmitCorrect`, `internal/wordsjudge` version 4; `cmd/tutor-eval` — `gen correct`, `run -kind correct`, `judge-words` and `admit-words` on these logs; `eval/correct-sheets.json`, `eval/correct-cases.json`, `eval/words-judge.json`; the tests; architecture 2.8, 3.4, 3.7, 3.9 and 3.10; measurements 3.17; the amendments to R85, R86, R94, R96 and R97; [DEBT.md](../run/DEBT.md) — Д8; RUN.md — T143 and T144.
+— *Consequence:* [correct.go](../correct.go), [price.go](../price.go) — `CallCorrect`; [words/words.go](../words/words.go) — `Correct`, `CorrectForm`, `Last`; `internal/correct`, `internal/gen/correct.go`, `internal/report/correct.go` and `AdmitCorrect`, `internal/wordsjudge` version 4; `cmd/tutor-eval` — `gen correct`, `run -kind correct`, `judge-words` and `admit-words` on these logs; `eval/correct-sheets.json`, `eval/correct-cases.json`, `eval/words-judge.json`; the tests; architecture 3.4, 3.7, 3.9 and 3.10; measurements 3.17; the amendments to R85, R86, R94, R96 and R97; [DEBT.md](../run/DEBT.md) — Д8; RUN.md — T143 and T144.
 
 — *Amendment 2026-11-14* (T144, R113): **the list has the entry** — `correct_answer_words`, Opus 5.5 · `high`, the rung "author", the evidence `synthetic/t144/correct.admit.md` —, and `CallCorrect` has expected tokens, 1,371 of input and 402 of output, so `Price(CallCorrect)` gives the expected beside the worst.
 
@@ -3533,7 +3522,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 
 — *Rejected:* **finishing `medium` after a top-up** — the author's decision: the words at `high` are admitted and the first app does not wait for the effort; **catching up the 14 refused cases into the same rule** — a failed call is a failure for the rule, and without the judge and the author's sheets the rule cannot pass anyway; **switching the words to `medium` on these numbers** — no judge and no author's sheets, and R84 would need the analysis's entry to switch with the hint's; **the author's sheets in the set of admission** — R112.
 
-— *Consequence:* [admission/models.go](../admission/models.go) — the entry; [price.go](../price.go) and [correct_test.go](../correct_test.go) — the expected tokens of `CallCorrect`; [cmd/tutor-eval/main.go](../cmd/tutor-eval/main.go) — `correct` in the usage of `run`; architecture 2.8, 3.4, 3.7, 3.9 and 3.10; measurements 3.17 and 3.18; sources 1.14; README; the amendments to R86, R94, R96, R107, R109 and R112; [DEBT.md](../run/DEBT.md) — Д8 closed, Д11 noted; RUN.md — T144 and the row В84.
+— *Consequence:* [admission/models.go](../admission/models.go) — the entry; [price.go](../price.go) and [correct_test.go](../correct_test.go) — the expected tokens of `CallCorrect`; [cmd/tutor-eval/main.go](../cmd/tutor-eval/main.go) — `correct` in the usage of `run`; architecture 3.4, 3.7, 3.9 and 3.10; measurements 3.17 and 3.18; sources 1.14; README; the amendments to R86, R94, R96, R107, R109 and R112; [DEBT.md](../run/DEBT.md) — Д8 closed, Д11 noted; RUN.md — T144 and the row В84.
 
 ## The archive of epic E8
 
@@ -3593,7 +3582,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
   - table 1 may hold two epics (R04); the template's paragraph Citations stays out, as R103 cut «Ссылки», and Epics keeps only the search by heading;
   - `run/QUESTIONS.md` keeps [plan/questions.md](plan/questions.md): an answered question's row leaves, and a row «В реестр spec» that `spec` recorded leaves verbatim to «Переданы в spec» there, its answer to «Закрыты» (R23), where the template only deletes the row; `run/EPICS.md` keeps the rule of an epic put off with its tasks in its archive (R23).
 - **The history** the openings held — the list «Сделанные эпики» of RUN.md, the opening of table 3, the opening of `DEBT.md` with its paragraphs of the closed Д1–Д5, Д7–Д10, Д12 and Д13, and the rows Д6 and Д11 with their dated notes — went verbatim to [plan/E9.md](plan/E9.md), section «Из RUN.md и DEBT.md, при переходе на `run/`», and the gist sentence of T145 to the start of «Задачи эпика» there. An archive is found by its file, `docs/plan/<epic>.md`.
-- **Links:** the links to `DEBT.md` in this log, in architecture 2.8 and in the archives [plan/E6.md](plan/E6.md), [plan/E7.md](plan/E7.md), [plan/E8.md](plan/E8.md) and [plan/questions.md](plan/questions.md) lead to `run/DEBT.md`, their text otherwise untouched, as R153 spec did with `spec`'s archives; the rule `ci` names `run/DEBT.md`. A link to a row closed before 2026-11-16 — Д8, Д9, Д10, Д13 and the rest — leads to `run/DEBT.md`, which holds it no more: its closing paragraph is in [plan/E9.md](plan/E9.md), «Начало таблицы 4, из DEBT.md», which the opening of `run/DEBT.md` names. "Table 3 of RUN.md", "table 4" and `DEBT.md` in older entries and archives read through RUN.md's opening, which names each table's file.
+- **Links:** the links to `DEBT.md` in this log, in architecture 3.10 and in the archives [plan/E6.md](plan/E6.md), [plan/E7.md](plan/E7.md), [plan/E8.md](plan/E8.md) and [plan/questions.md](plan/questions.md) lead to `run/DEBT.md`, their text otherwise untouched, as R153 spec did with `spec`'s archives; the rule `ci` names `run/DEBT.md`. A link to a row closed before 2026-11-16 — Д8, Д9, Д10, Д13 and the rest — leads to `run/DEBT.md`, which holds it no more: its closing paragraph is in [plan/E9.md](plan/E9.md), «Начало таблицы 4, из DEBT.md», which the opening of `run/DEBT.md` names. "Table 3 of RUN.md", "table 4" and `DEBT.md` in older entries and archives read through RUN.md's opening, which names each table's file.
 
 — *Why:* R153–R155 spec came with `v0.18.3`, and `docs-check` and `just inbox` read the old layout and the Russian headings only until the last repository has moved (Д250 spec). Every task reads RUN.md, and a task that cites a row reads its file of `run/`: RUN.md went from 23,402 bytes to 13,322, and table 4 from 12,661 bytes in `DEBT.md` to 4,312 in `run/DEBT.md`. English is cheaper in tokens than Russian for the same text, and the plan's reader is the session (R154 spec).
 
@@ -3603,7 +3592,7 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 - **deleting the history of the openings** — older entries and archives cite the closed rows;
 - **dropping [plan/questions.md](plan/questions.md) from the rules of table 3** — R23 makes it the place where an answer is found.
 
-— *Consequence:* `run/EPICS.md`, `run/QUESTIONS.md`, `run/DEBT.md`; `DEBT.md` removed; RUN.md; CLAUDE.md; README.md; `.bestpractices.json` — `english_justification`, which the author saves on bestpractices.dev; `.claude/rules/ci.md`; architecture 2.8 — a link; [plan/E6.md](plan/E6.md), [plan/E7.md](plan/E7.md), [plan/E8.md](plan/E8.md), [plan/questions.md](plan/questions.md) — links; [plan/E9.md](plan/E9.md); R23 and the 2026-11-16 amendments to R101, R102, R103 and R115.
+— *Consequence:* `run/EPICS.md`, `run/QUESTIONS.md`, `run/DEBT.md`; `DEBT.md` removed; RUN.md; CLAUDE.md; README.md; `.bestpractices.json` — `english_justification`, which the author saves on bestpractices.dev; `.claude/rules/ci.md`; architecture 3.10 — a link; [plan/E6.md](plan/E6.md), [plan/E7.md](plan/E7.md), [plan/E8.md](plan/E8.md), [plan/questions.md](plan/questions.md) — links; [plan/E9.md](plan/E9.md); R23 and the 2026-11-16 amendments to R101, R102, R103 and R115.
 
 ## CI on the release `v0.1.24` of `.github`
 

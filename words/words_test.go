@@ -49,7 +49,7 @@ func TestHint(t *testing.T) {
 	}
 }
 
-// The form of the words after a correct answer, part by part: option (2) of architecture 2.8.
+// The form of the words after a correct answer, part by part: option (2) of R109.
 func TestCorrect(t *testing.T) {
 	ru30 := strings.Repeat("слово ", 29) + "что?"
 	ru31 := strings.Repeat("слово ", 30) + "что?"
