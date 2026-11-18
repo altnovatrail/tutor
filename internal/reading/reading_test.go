@@ -66,7 +66,7 @@ func plan(t *testing.T, planPath, bankPath string) []planned {
 	return out
 }
 
-// every is every sheet the measurement has, with its task: the 40 sheets of lines of E2 and the 40
+// every is every sheet the measurement has, with its task: the 40 sheets of lines and the 40
 // of free writing, drawn by code, and the synthetic sample of every scenario, with the synthetic
 // bank.
 func every(t *testing.T) []planned {
@@ -222,8 +222,8 @@ func TestVerdict(t *testing.T) {
 			t.Errorf("%s: %v", c.name, err)
 		}
 	}
-	// The protocol names each reason of the reading by the table of section 10: a value not seen in
-	// its part is ambiguous, as one the reader cannot point to in the writing.
+	// The protocol names each reason of the reading: a value not seen in its part is ambiguous, as
+	// one the reader cannot point to in the writing.
 	for o, want := range map[*reading.Observation]observationv1.Unreadable{
 		observation(two): observationv1.Unreadable_UNREADABLE_NO_FINAL_ANSWER,
 		observation(two, reading.Result{Part: 1, Value: "66"}, reading.Result{Part: 2, Value: "11"}):  observationv1.Unreadable_UNREADABLE_SEVERAL_FINAL_ANSWERS,
@@ -312,7 +312,7 @@ func written(r provider.Request) string {
 }
 
 // The golden requests of the three conditions are the files testdata/lines/*.txt, on sheet 11 of
-// the plan of E2, chain-1, correct, and testdata/free/*.txt, on sheet 14 of the plan of free
+// the plan of lines, chain-1, correct, and testdata/free/*.txt, on sheet 14 of the plan of free
 // writing, stamps, erasure-fixed, with the scheme of segments marked □ and △; the author reads
 // them there. The conditions differ only by the block of the key.
 func TestGolden(t *testing.T) {

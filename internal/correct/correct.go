@@ -1,13 +1,12 @@
-// Package correct is the call of the words after a correct answer (T143; docs/architecture.md, 3.10,
-// "The words after a correct answer"): once the program has found the final answer right, a model
-// praises a step of the solution and asks which technique helped (concepts 7, 10 spec), in words of
-// a form of their own, option (2) of R109 (words.Correct). It is a call of its own and an
-// AI capability of its own, correct_answer_words (the 2026-11-11 amendments to R96 spec), not a rung
-// of the hint ladder (Д188 RUN.md spec). The model sees the crop of the work, or none when the task's
-// answer slots are bound choice alone and no work goes with the request (attempt.proto spec), the
-// task, its key, its solution and its techniques, in a block of data (R02 spec), the language and the
-// presentation style. The program checks the words for a leak and their form before they reach the
-// learner, and gives no words when they fail (R70 spec): the call only words them.
+// Package correct is the call of the words after a correct answer: once the program has found the
+// final answer right, a model praises a step of the solution and asks which technique helped, in
+// words of a form of their own (words.Correct; R112). It is a call of its own and an AI capability
+// of its own, correct_answer_words (R96 spec), not a rung of the hint ladder. The model sees the
+// crop of the work, or none when the task's answer slots are bound choice alone and no work goes
+// with the request, the task, its key, its solution and its techniques, in a block of data
+// (R02 spec), the language and the presentation style. The program checks the words for a leak and
+// their form before they reach the learner, and gives no words when they fail (R70 spec): the call
+// only words them.
 package correct
 
 import (
@@ -27,9 +26,10 @@ import (
 	"github.com/altnovatrail/tutor/words"
 )
 
-// Version is the version of the prompt of the words after a correct answer. Version 1 (T143) was
-// frozen after its trial run on sheets of its own, before the run of admission (T144). The library
-// and the runner ask it alike (RequestOf). TestFrozenV1 holds it.
+// Version is the version of the prompt of the words after a correct answer, which the library and
+// the runner ask alike (RequestOf). A version is frozen once measured, and the admitted one is
+// version 1: a change to a word a model reads is a new version, measured anew (R112; R113).
+// TestFrozenV1 holds it.
 const Version = 1
 
 // The instructions of the words, one text for every language: the request names it.
@@ -81,7 +81,7 @@ func Fingerprint() string {
 // Prompt is what a request of the words holds: the task as the learner reads it; the crop of the
 // work, as PNG with its size, or none, when the task's answer slots are bound choice alone; the key
 // and the solution; the techniques of the task, none when it names none; the language of the words,
-// by its tag; and the presentation style, only what changes the words (Д74 RUN.md spec).
+// by its tag; and the presentation style, only what changes the words.
 type Prompt struct {
 	Statement     string
 	PNG           []byte

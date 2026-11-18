@@ -28,7 +28,9 @@ type Reader = runner.Reader
 
 // Readers are the readers, the configurations of the runner by their names. An observation of a
 // sheet comes to about 200 tokens, and Haiku with thinking writes about 300 more; Opus reads each
-// condition once, and neither the other heights nor the states (docs/measurements.md, 3.5). The four the extended measurement adds (R50) are estimated so: Opus at medium as at high, Sonnet with thinking between Haiku and Opus, without thinking as Haiku without it, and Haiku at medium above Haiku at low. A
+// condition once, and neither the other heights nor the states. The four the extended measurement
+// adds (R50) are estimated so: Opus at medium as at high, Sonnet with thinking between Haiku and
+// Opus, without thinking as Haiku without it, and Haiku at medium above Haiku at low. A
 // configuration without its reader here is a mistake of the code, and Readers panics on it rather
 // than estimate its calls at nothing or repeat it unasked.
 func Readers() []Reader {
@@ -53,13 +55,13 @@ const (
 	inputBudget  = 8000
 )
 
-// Reads are what a run reads of its sheets: the conditions of the key on the finished sheet with its
-// digits 32 px high, keys; the finished sheet without a key at the other heights of digits, heights;
-// and its states without a key, states (T69). The heights and the states are read once, by the
-// readers that do not read once (R08; R28). Plain is the run of admission (T113): the finished sheet
-// without a key at 32 px alone, by every reader in every repeat, Opus too, as the platform reads it;
-// it goes with nothing else. A reader that reads once in a measurement keeps the mark in its record:
-// it is the strong reader of the pair, which the report pairs with each other.
+// Reads are what a run reads of its sheets: the conditions of the key on the finished sheet with
+// its digits 32 px high, keys; the finished sheet without a key at the other heights of digits,
+// heights; and its states without a key, states. The heights and the states are read once, by the
+// readers that do not read once (R08; R28). Plain is the run of admission: the finished sheet
+// without a key at 32 px alone, by every reader in every repeat, Opus too, as the platform reads
+// it; it goes with nothing else. A reader that reads once in a measurement keeps the mark in its
+// record: it is the strong reader of the pair, which the report pairs with each other.
 type Reads struct {
 	Keys, Heights, States, Plain bool
 }
@@ -157,7 +159,7 @@ func (s *step) Right() (string, error) {
 // Without a key, what was read under the right key is told too: how often the reader writes the
 // right solution where the sheet has something else, without being given it. It is told against
 // the markup of the finished sheet, on a state too: what of a state was read as written though not
-// yet written the report tells by how far each part was written (T72). An answer off the schema is
+// yet written the report tells by how far each part was written. An answer off the schema is
 // a failure of the reading, and its verdict is unchecked.
 func (s *step) Record(o runner.Outcome) any {
 	rec := CallRecord{Kind: "call", Call: s.Call, NotAsked: o.NotAsked, Answer: o.Answer, Error: o.Error, Usage: o.Usage}
@@ -191,7 +193,7 @@ func (s *step) Record(o runner.Outcome) any {
 //     the height of one before it, 32 px first, left out;
 //   - states: each state of the sheet, without a key, at 32 px;
 //   - plain: the finished sheet without a key at 32 px alone, by every reader in every repeat: the
-//     run of admission (T113).
+//     run of admission.
 //
 // The heights and the states are asked in the first repeat, by the readers that do not read once.
 func New(part string, sets []string, chosen []sheets.Chosen, readers []Reader, repeats int, reads Reads) (*runner.Run, error) {
@@ -442,7 +444,7 @@ type (
 	// are the texts of the plan, not the handwriting. It tells, too, h_med of the finished sheet in
 	// units, by which its crops are scaled; its states, each with how far the writer had written
 	// each part of the markup, whether the run reads them or not; and how many readings each policy
-	// of reading on its own would take of it (О-8; T69).
+	// of reading on its own would take of it.
 	SheetRecord struct {
 		Kind      string          `json:"kind"`
 		Set       string          `json:"set"`

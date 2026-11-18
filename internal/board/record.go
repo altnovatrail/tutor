@@ -41,9 +41,10 @@ var plainName = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
 // and each sheet is saved as a sample of measurement of spec's eval protocol, a person's, with its
 // history of writing (evalsample.PersonOf), in a directory outside git, once it passes the check
 // against its plan sheet and the bank, the runner reads it back without refusing it, and spec's
-// sample-check holds it to the rules of sections 11 and 12 (R25; R75). The page sends the history as
-// its events — write, erase, undo and clear — and the markup, and the board folds the history into
-// the strokes and erasures its checks take (protocol.Ink).
+// sample-check holds it to the protocol's rules of the sample file and of what the device and the
+// runner share (R25; R75). The page sends the history as its events — write, erase, undo and
+// clear — and the markup, and the board folds the history into the strokes and erasures its checks
+// take (protocol.Ink).
 type Recorder struct {
 	bank  *evalsample.Bank
 	plan  *sample.Plan
@@ -234,12 +235,11 @@ func inkOf(raw json.RawMessage) (*ink, []Note) {
 //
 // On a sheet whose plan sheet plans an erasure, Planned is the index of the erasure the board
 // takes for it. On a sheet of lines it is the one the runner takes and the save holds the pick to
-// (R75; the 2026-11-08 amendment): the last move of the eraser that stood on the plan's line
-// (evalsample.PlannedErasure), a move standing on the line most of its strokes stood on. On a sheet
-// of parts it is the move that took the most strokes from any of its parts,
-// by their place on the plane (lines.PartsTaken): until the author joins the groups of a part, the
-// number of a group is not yet the number of the plan's part, and slips on such a sheet are Undo's
-// alone. Planned is null when none took any.
+// (R75): the last move of the eraser that stood on the plan's line (evalsample.PlannedErasure), a
+// move standing on the line most of its strokes stood on. On a sheet of parts it is the move that
+// took the most strokes from any of its parts, by their place on the plane (lines.PartsTaken):
+// until the author joins the groups of a part, the number of a group is not yet the number of the
+// plan's part, and slips on such a sheet are Undo's alone. Planned is null when none took any.
 type Proposal struct {
 	Lines       []sample.Line   `json:"lines"`
 	Expected    sample.Expected `json:"expected"`
@@ -319,7 +319,7 @@ func (rc *Recorder) propose(w http.ResponseWriter, r *http.Request) {
 // proposeParts proposes the parts of a sheet of a plan of parts: a part to each group of strokes,
 // in the order their first strokes were written, with the texts and the answer of the plan sheet's
 // parts in their order. A plan sheet of one part takes the whole sheet as that part, as the author
-// writes a free solution (R28, the 2026-10-27 amendment).
+// writes a free solution (R28).
 func proposeParts(sh *sample.PlanSheet, in *ink) Proposal {
 	found := lines.Groups(in.strokes, in.erasures)
 	if len(sh.Parts) == 1 && len(found) > 1 {

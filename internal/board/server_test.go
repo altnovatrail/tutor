@@ -421,11 +421,10 @@ func TestSpendingCap(t *testing.T) {
 }
 
 // The summary has a line for each model at each effort, with its thinking and without, and for
-// each form of answer, with the means of its answers. An answer logged before the page offered
-// efforts counts as high and has no tokens; one logged before the short answer is of the earlier
-// form, and the tokens it spent thinking are not known. The means of tokens and of the first token
-// leave out the answers without a verdict, whose count may be cut short. A model this run does not
-// offer comes last.
+// each form of answer, with the means of its answers. An answer logged without an effort counts as
+// high and has no tokens; one logged without a form is of the earlier form, and the tokens it spent
+// thinking are not known. The means of tokens and of the first token leave out the answers without
+// a verdict, whose count may be cut short. A model this run does not offer comes last.
 func TestSummaryByPairs(t *testing.T) {
 	dir := t.TempDir()
 	log := strings.Join([]string{

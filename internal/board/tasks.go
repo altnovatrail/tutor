@@ -8,12 +8,11 @@ type Task struct {
 	Solution  []string `json:"-"`
 }
 
-// Tasks are the eleven tasks of the board. The first five are two linear equations, two chains of
-// calculations and an olympiad task, as in the measurement's plan (docs/architecture.md, section
-// 3.1). The other six are olympiad tasks solved in free form, for epic E4: two on a number line,
-// two with a drawing, a row of objects or a scheme of segments, and two with the working at the
-// side (section 3.4). They are fixed, so that every try of a task is a try of the same thing, and
-// each is a copy of its task in eval/bank.json or eval/free-bank.json, which a test of
+// Tasks are the eleven tasks of the board (R19; R28). The first five are two linear equations, two
+// chains of calculations and an olympiad task. The other six are olympiad tasks solved in free
+// form: two on a number line, two with a drawing, a row of objects or a scheme of segments, and two
+// with the working at the side. They are fixed, so that every try of a task is a try of the same
+// thing, and each is a copy of its task in eval/bank.json or eval/free-bank.json, which a test of
 // cmd/tutor-eval keeps equal.
 var Tasks = []Task{
 	{

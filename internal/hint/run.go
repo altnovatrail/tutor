@@ -29,14 +29,13 @@ type Tutor struct {
 	Output int
 }
 
-// Tutors are the configurations of the runner, each with the output it is expected to take:
-// the box, the trap and a hint of two short sentences come to about 200 tokens. Finding the first
+// Tutors are the configurations of the runner, each with the output it is expected to take: the
+// box, the trap and a hint of two short sentences come to about 200 tokens. Finding the first
 // mistake, the judge of free writing thought about 100 more on Opus and about 240 on Haiku with
-// thinking (docs/architecture.md, 3.4, "Hint"). The four configurations the extended measurement
-// adds (R50) are estimated so: Opus at medium as at high, Sonnet with thinking between Haiku and
-// Opus, without thinking as Haiku without it, and Haiku at medium above Haiku at low. A
-// configuration without its output here is a mistake of the code, and Tutors panics on it rather
-// than estimate its calls at nothing.
+// thinking. The four configurations the extended measurement adds (R50) are estimated so: Opus at
+// medium as at high, Sonnet with thinking between Haiku and Opus, without thinking as Haiku without
+// it, and Haiku at medium above Haiku at low. A configuration without its output here is a mistake
+// of the code, and Tutors panics on it rather than estimate its calls at nothing.
 func Tutors() []Tutor {
 	outputs := map[string]int{
 		"opus-high": 300, "haiku-low": 500, "haiku-low-no-thinking": 200,
@@ -65,12 +64,12 @@ const (
 )
 
 // Wrong reports whether a sheet is one a hint is asked of: one whose answer is not yet right. A
-// hint comes only after a wrong answer (concepts 10 spec).
+// hint comes only after a wrong answer.
 func Wrong(sh sheets.Chosen) bool { return sh.Sample.Expected.Outcome == sample.OutcomeError }
 
 // Call is one call of a run: a sheet by its set and number, the rung and the language of the hint,
 // a tutor by its name, and the repeat, from 1; and in a run of the set of the words, its case by
-// its ID (T118).
+// its ID.
 type Call struct {
 	Set    string      `json:"set"`
 	Sheet  int         `json:"sheet"`
@@ -190,11 +189,11 @@ func (s *step) Right() (string, error) {
 
 // Record is the call's record: the answer as the model gave it, its box, the box's place on the
 // crop in thousandths and the part of the markup it hits, its trap and its hint; and the hint
-// checked as api checks it before the tutor's words reach the device (architecture 3.5 spec; R39):
+// checked as api checks it before the tutor's words reach the device (R39):
 // what the leak check finds in it, what it breaks of its form, and what the learner reads — the
 // hint, or the fallback text of the rung and why. An answer off the schema is a failure of the
 // call, logged with the reader's error, and so is the learner's fallback. A call not asked has
-// none. The measures that code counts of the set of the words go with it (T118): the questions
+// none. The measures that code counts of the set of the words go with it: the questions
 // asked before that the hint repeats, what it takes up of a note at the side, and the words by
 // which the rough search finds the learner's sex told; a box given without the work hits nothing.
 func (s *step) Record(o runner.Outcome) any {
@@ -224,7 +223,7 @@ func (s *step) Record(o runner.Outcome) any {
 		rec.Repeated = Repeated(a.Hint, k.Asked)
 		rec.NoteEcho = Echo(a.Hint, k.Note, s.known(k.Note)...)
 	}
-	// Version 2 is held to the form api holds hints to, the limits of R70 spec (words.Hint).
+	// The hint is held to the form api holds hints to, the limits of R70 spec (words.Hint).
 	for _, b := range words.Hint(a.Hint, string(s.Lang), s.sheet.Task.Statement) {
 		rec.Form = append(rec.Form, string(b))
 	}
@@ -250,9 +249,9 @@ func (s *step) shown(rec CallRecord, cause string) CallRecord {
 	return rec
 }
 
-// Set is the set of the words a run asks (T118): the file of its cases, by its name and SHA-256,
-// and the cases it asks, checked against the plan of the sheets they are of (Cases.Check), and how
-// many of the file's it left out (T119).
+// Set is the set of the words a run asks: the file of its cases, by its name and SHA-256, and the
+// cases it asks, checked against the plan of the sheets they are of (Cases.Check), and how many of
+// the file's it left out.
 type Set struct {
 	File, SHA256 string
 	Cases        *Cases
@@ -387,10 +386,10 @@ func sheetRecord(sh *prepared) SheetRecord {
 type (
 	// RunRecord tells the run: its part and sets, its tutors and repeats, the rungs, languages and
 	// style of its hints, its cap and estimate, the fingerprint and the version of its prompt, and
-	// that it checks every hint for leaks and its form (T75): a log of T74 does not, and its calls
-	// tell nothing of what the checks would find. A run of the set of the words tells the file of
-	// its cases, by its name and SHA-256, the cases it asks and how many of the file's it left out
-	// (T118; T119).
+	// that it checks every hint for leaks and its form: the calls of a log without the mark tell
+	// nothing of what the checks would find, and the report refuses it. A run of the set of the
+	// words tells the file of its cases, by its name and SHA-256, the cases it asks and how many of
+	// the file's it left out.
 	RunRecord struct {
 		Kind          string          `json:"kind"`
 		CallKind      string          `json:"call_kind"`
@@ -426,8 +425,8 @@ type (
 	// text the plan gives it and, on a sheet of parts, where it stands, the trap the sheet was
 	// planned with, which the report holds the model's trap against, the key, the statement, what
 	// the leak check searches every hint for — the key, unless the statement shows it, and apart
-	// from it the leak phrases —, and its crop: the height of digits asked for and drawn at, and the size. The texts
-	// are the plan's and the bank's, not handwriting.
+	// from it the leak phrases —, and its crop: the height of digits asked for and drawn at, and the
+	// size. The texts are the plan's and the bank's, not handwriting.
 	SheetRecord struct {
 		Kind           string          `json:"kind"`
 		Set            string          `json:"set"`
@@ -456,7 +455,7 @@ type (
 	// the failure if it failed, and what it took; and its hint checked: the keys and, apart, the leak
 	// phrases the leak check found in it, what it breaks of its form, why the learner reads the
 	// fallback text instead, if they do, what the learner reads, and what the leak check finds in a
-	// fallback text; and the measures code counts (T118): the words by which the rough search finds
+	// fallback text; and the measures code counts: the words by which the rough search finds
 	// the learner's sex told, and of a case, the questions asked before that the hint repeats and
 	// what it takes up of the note at the side. A call whose request could not be built was not
 	// asked, and says so: it has no fallback either.

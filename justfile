@@ -1,8 +1,8 @@
 # tutor's own recipes: build, test and lint its Go code in the devcontainer, and start the board,
 # the check board or its record mode. The ci- ones are what .github's shared go.yml runs, one job
 # each, in the toolchain stage of .devcontainer/Dockerfile, from a checkout without the spec
-# submodule (R16 .github; R13 in docs/decisions.md): their names are the same in every Go
-# repository of NovaTrail, and what they run is this repository's own.
+# submodule (R16 .github; R13): their names are the same in every Go repository of NovaTrail, and
+# what they run is this repository's own.
 # The documents are checked by spec's recipe: just -f spec/justfile docs-check-repo
 
 set shell := ["bash", "-euo", "pipefail", "-c"]
@@ -32,7 +32,7 @@ fmt:
 
 # This recipe asks for each eval key that is not set yet, without showing it, so that no key lands
 # in the shell's history; Enter skips that model. Its arguments go to tutor-eval board.
-# Start the check board on http://127.0.0.1:8080 (R19 in docs/decisions.md).
+# Start the check board on http://127.0.0.1:8080 (R19).
 board *args:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -49,34 +49,34 @@ board *args:
 
 # This recipe asks for no key: the record mode asks no model. The sheets go to samples/sheets-v1,
 # out of git. Its arguments go to tutor-eval board.
-# Start the record mode of the board on http://127.0.0.1:8080 (R25 in docs/decisions.md).
+# Start the record mode of the board on http://127.0.0.1:8080 (R25).
 record *args:
     go run ./cmd/tutor-eval board -record {{ args }}
 
 # This recipe asks for no key either. The sheets of the author's free-form plan, three sheets of
 # parts, go to samples/free-v1, out of git. Its arguments go to tutor-eval board.
-# Start the record mode on the free-form sheets of epic E4 (T61 in RUN.md).
+# Start the record mode on the author's free-form sheets.
 free-record *args:
     go run ./cmd/tutor-eval board -record -dir samples/free-v1 -bank eval/free-bank.json -plan eval/free-author.json {{ args }}
 
 # This recipe asks for no key either. The author's ten sheets of the extended measurement, solved in
 # free form and written messily on purpose, go to samples/free-messy-v1, out of git. Its arguments go
 # to tutor-eval board.
-# Start the record mode on the ten messy sheets of the extended measurement (T97 in RUN.md).
+# Start the record mode on the author's messy free-form sheets.
 messy-record *args:
     go run ./cmd/tutor-eval board -record -dir samples/free-messy-v1 -bank eval/free-bank.json -plan eval/free-messy.json {{ args }}
 
 # This recipe asks for no key either. The author's 54 sheets of lines for the set of admission, of
 # nine tasks that gen sheets made, go to samples/author-v1, out of git. Its arguments go to
 # tutor-eval board.
-# Start the record mode on the sheets of the set of admission (T113 and T126 in RUN.md).
+# Start the record mode on the author's sheets of the set of admission.
 admit-record *args:
     go run ./cmd/tutor-eval board -record -dir samples/author-v1 -bank eval/author-bank.json -plan eval/author-sheets.json {{ args }}
 
 # This recipe asks for the Anthropic key for eval if it is not set yet, without showing it, so that
 # no key lands in the shell's history; with -stub the run needs none, and Enter skips it. Its
 # arguments go to tutor-eval run: -part dev or -part test, and the rest.
-# Run the measurement on a part of the split, after its estimate and your yes (T23 in RUN.md).
+# Run the measurement on a part of the split of the author's sheets, after its estimate and your yes.
 measure *args:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -90,19 +90,19 @@ measure *args:
 # This recipe is measure on the 40 sheets that code draws for free writing, in synthetic/free-v1, out
 # of git, and it asks for the key as measure does; the run logs in synthetic/runs. Its arguments go
 # to tutor-eval run: -part dev, -part test or -part all, and the rest.
-# Run the measurement of free writing on the sheets of code, after its estimate and your yes (T65 in RUN.md).
+# Run the measurement of free writing on the 40 sheets code draws, after its estimate and your yes.
 free *args:
     just measure -dir synthetic/free-v1 -bank eval/free-bank.json -plan eval/free-sheets.json {{ args }}
 
 # This recipe asks for the Anthropic key for eval if it is not set yet, as measure does; with -stub
-# the runs need none. It runs the judge, version 2, and the reading — without a key, with the
-# right and the false keys, at the other heights of digits and on the states — over all the
-# author's three sheets of free writing in samples/free-v1, each after its estimate and your yes, and
-# prints each report on the terminal. The logs and the reports go to samples/runs, out of git, and
-# the reports hold no handwriting. Each run is capped at $1, so that both stay within the $2 of
-# T77. Its arguments go to both runs, such as -stub or another -max-usd. A run you say no to, or one
-# that stops short, does not keep the other from running, and the report is of the logs there are.
-# Run the judge and the reading on the author's three sheets (T77 in RUN.md).
+# the runs need none. It runs the judge and the reading — without a key, with the right and the
+# false keys, at the other heights of digits and on the states — over all the author's three sheets
+# of free writing in samples/free-v1, each after its estimate and your yes, and prints each report
+# on the terminal. The logs and the reports go to samples/runs, out of git, and the reports hold no
+# handwriting. Each run is capped at $1, so that both stay within $2. Its arguments go to both runs,
+# such as -stub or another -max-usd. A run you say no to, or one that stops short, does not keep the
+# other from running, and the report is of the logs there are.
+# Run the judge and the reading on the author's three free-form sheets.
 live *args:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -127,9 +127,9 @@ live *args:
 
 # The file of the open views of the measurement's tasks, which tutor's release carries for canvas's
 # sample page: what the learner sees of each task of the banks, the workbook and the essays, and
-# none of its key, solution, traps or checks (T37; R64 in docs/decisions.md). A change to one of
-# those files fails the tests until this recipe writes the file anew. The new file takes the old
-# one's place only once it is written whole.
+# none of its key, solution, traps or checks (R64). A change to one of those files fails the tests
+# until this recipe writes the file anew. The new file takes the old one's place only once it is
+# written whole.
 # Write eval/open-tasks.json anew from the files of the measurement's tasks.
 open-tasks:
     #!/usr/bin/env bash
@@ -141,11 +141,11 @@ open-tasks:
 
 # What .github's shared release.yml runs to build a release, in the toolchain-core stage of the
 # commit it releases, from that commit's tree as git archive writes it, and then signs every file
-# (R62 in docs/decisions.md; R18 .github). The release is the Go module's tag, which api builds from, and
-# its files are the source of that commit, tutor_<version>_source.tar.gz; the open views of the
-# measurement's tasks, tutor_<version>_open-tasks.json, a copy of eval/open-tasks.json, which
-# canvas's CI puts into its sample page (R64); and SHA256SUMS over both. dist/ is made afresh and
-# holds plain files alone.
+# (R62; R18 .github). The release is the Go module's tag, which api builds from, and its files are
+# the source of that commit, tutor_<version>_source.tar.gz; the open views of the measurement's
+# tasks, tutor_<version>_open-tasks.json, a copy of eval/open-tasks.json, which canvas's CI puts
+# into its sample page (R64); and SHA256SUMS over both. dist/ is made afresh and holds plain files
+# alone.
 # Build a release's files into dist/, for a version such as v0.1.0.
 release-files version:
     #!/usr/bin/env bash
@@ -157,7 +157,7 @@ release-files version:
     fi
     # Only a tree that git archive wrote holds a commit's files and nothing else. A working copy
     # also holds what git does not track, samples/ among it, the author's handwriting, which never
-    # leaves it (CLAUDE.md). So the recipe refuses a folder with .git, and one that holds a folder
+    # leaves it (R32). So the recipe refuses a folder with .git, and one that holds a folder
     # .gitignore names at the top, dist/ aside: no commit's tree has one.
     if [ -e .git ]; then
         echo "release-files: this folder has .git; run it in a tree that git archive wrote, as release.yml does: git archive HEAD | tar -x -C <folder>" >&2
@@ -264,8 +264,7 @@ ci-lint: lint
 # The packages whose code or tests start goroutines, which ci-test runs with the race detector: the
 # library's calls to the models, the board's checks, and the adapters' tests on servers of
 # httptest. The rest start none, but for the runner's parallel tests, which share nothing they
-# write (R92); under the detector cmd/tutor-eval and internal/evalsample alone took 273 s and
-# 166 s of the job's 413 (measurements 3.1 spec), so the rest run without it.
+# write (R92), and run without the detector, which would take most of the job's time on them.
 # TestRaceStartsGoroutines, in tutor_test.go, holds this list to the code both ways (R118).
 RACE := ". ./internal/board ./provider/claude ./provider/gpt"
 
@@ -273,9 +272,9 @@ RACE := ". ./internal/board ./provider/claude ./provider/gpt"
 # not Go: the packages of RACE with the race detector, then the rest without it. The coverage of
 # both runs goes to coverage/go.out, one Go profile in one mode, which the coverage job of .github's
 # shared go.yml sends to Codecov (R48 spec; R66). A package's lines count by its own tests:
-# -coverpkg=./... would make the profile 25 times larger and the run twice as long for 1.4 points
-# more (R66). -timeout 15m is the margin R92 gave the race detector, and the job's own timeout of
-# 20 still stops a test that hangs. Both runs go to the end, so that a failure of the first does
+# -coverpkg=./... would make the profile far larger and the run twice as long for little more
+# coverage (R66). -timeout 15m leaves the race detector its margin (R92), and the job's own timeout
+# of 20 still stops a test that hangs. Both runs go to the end, so that a failure of the first does
 # not hide one of the second.
 ci-test: release-files-test
     #!/usr/bin/env bash
@@ -300,9 +299,9 @@ ci-test: release-files-test
     rm -f coverage/race.out coverage/rest.out
 
 # The drawn samples of spec's eval protocol that the tests hold to what tutor-eval draw writes,
-# one of each kind it draws (internal/evalsample's testdata), checked against the rules of sections
-# 11 and 12 of spec's text of the contracts by spec's own recipe, with the buf of the toolchain stage
-# (R69). go test -update in internal/evalsample writes them anew.
+# one of each kind it draws (internal/evalsample's testdata), checked against spec's rules of a
+# sample by spec's own recipe, with the buf of the toolchain stage (R69). go test -update in
+# internal/evalsample writes them anew.
 # Check the drawn samples of testdata with spec's sample-check.
 sample-check:
     just -f spec/justfile sample-check internal/evalsample/testdata/*.json
@@ -311,12 +310,12 @@ sample-check:
 # spec submodule, which go.yml does not check out.
 ci-sample-check: sample-check
 
-# canvas's synthetic samples, which tutor's runner must read (R38 spec; R76 in docs/decisions.md):
-# the release of canvas by its exact tag, and the SHA-256 of its archive of the samples. The
-# archive's signature was verified once, when the tag was pinned, by
-# just -f spec/justfile release-verify canvas <tag> synthetic-samples_<tag>.tar.gz; from then on
-# this sum holds the file (RULES.md of spec, "Release files are verified"). A new tag of canvas is
-# pinned so again: both lines, the signature of its archive verified, and just canvas-check green.
+# canvas's synthetic samples, which tutor's runner must read (R38 spec; R76): the release of canvas
+# by its exact tag, and the SHA-256 of its archive of the samples. The archive's signature was
+# verified once, when the tag was pinned, by just -f spec/justfile release-verify canvas <tag>
+# synthetic-samples_<tag>.tar.gz; from then on this sum holds the file (R77 spec). A new tag of
+# canvas is pinned so again: both lines, the signature of its archive verified, and just
+# canvas-check green.
 CANVAS_TAG := "v0.1.6"
 CANVAS_SYNTHETIC_SHA256 := "c538462f4a25274de49da6412b10ffaf163ce8a851222697e3aa954073c0166a"
 
@@ -360,11 +359,11 @@ canvas-fetch:
     done <<< "$tags"
 
 # Check that the runner reads canvas's synthetic samples: each held to spec's rules, read by the
-# task it names at its tag of tutor, and run on the stub, with no key and no cost (tutor-eval canvas).
-# Then the runner's reports it wrote are held to section 14 of spec's contracts by spec's recipe
-# report-check, without a check of tutor's own (R87 in docs/decisions.md): the reports of the whole
-# set to all its samples, after --samples, and the reports of the sheets and of the pages, each of a
-# part of the set, alone. The runs log in a folder of their own, written anew.
+# task it names at its tag of tutor, and run on the stub, with no key and no cost (tutor-eval
+# canvas). Then the runner's reports it wrote are held to spec's rules of a report by spec's recipe
+# report-check, without a check of tutor's own (R74; R87): the reports of the whole set to all its
+# samples, after --samples, and the reports of the sheets and of the pages, each of a part of the
+# set, alone. The runs log in a folder of their own, written anew.
 # Check that the runner reads the samples of the pinned release of canvas, and spec's check of its reports.
 canvas-check: canvas-fetch
     #!/usr/bin/env bash

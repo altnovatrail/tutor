@@ -9,10 +9,10 @@ import (
 	"github.com/altnovatrail/tutor/words"
 )
 
-// The measures of the set of the words that code counts (T118): they count words and read no
+// The measures of the set of the words that code counts (R85): they count words and read no
 // meaning, so they are the eval's, not checks of api. Whether words tell the learner's sex no
-// program checks without false alarms (R70 spec): Gendered is the rough search of T76, a signal
-// beside the judge of the words, not a measure of admission.
+// program checks without false alarms (R70 spec): Gendered is a rough search, a signal beside the
+// judge of the words, not a measure of admission.
 
 // RepeatShare is how much of a question asked before a hint holds, its words as a set, to repeat it.
 const RepeatShare = 0.8
@@ -87,13 +87,12 @@ func number(w string) bool {
 	return w != "" && strings.IndexFunc(w, func(r rune) bool { return !unicode.IsDigit(r) }) < 0
 }
 
-// Gendered are the words of a hint by which the rough search of T76 finds the learner's sex told
-// (docs/measurements.md, 3.6). In Russian: the hint speaks to the learner,
-// «ты» or «вы», and has a word that ends in a vowel and «л», «ла», «лся» or «лась», such as «нашёл»
-// or «решила», or it has «прав», «права», «молодец» or «умница». In English: a pronoun of the third
-// person that tells a sex, he, she, him, her, his, hers, himself or herself. It finds the sex of
-// whoever the words speak of, the learner or a person of the task, and misses what it does not
-// list: the judge of the words decides.
+// Gendered are the words of a hint by which a rough search finds the learner's sex told. In
+// Russian: the hint speaks to the learner, «ты» or «вы», and has a word that ends in a vowel and
+// «л», «ла», «лся» or «лась», such as «нашёл» or «решила», or it has «прав», «права», «молодец»
+// or «умница». In English: a pronoun of the third person that tells a sex, he, she, him, her, his,
+// hers, himself or herself. It finds the sex of whoever the words speak of, the learner or a
+// person of the task, and misses what it does not list: the judge of the words decides.
 func Gendered(hint string, lang sample.Lang) []string {
 	ws := words.Plain(hint)
 	var out []string

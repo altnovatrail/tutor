@@ -1,12 +1,10 @@
 # The eval of tutor in CI, with the platform's keys for eval from Secret Manager of infra (R120
-# spec; Д149 in spec's RUN.md; R90 in docs/decisions.md). Only a job of the GitHub environment eval
-# gets them: the pool github-eval admits the token of that environment of this repository alone, and
-# no token of Dependabot. For now the job checks the way in and spends nothing: it reads the key of
-# Anthropic and has the key count the tokens of one word, which Anthropic does not bill ("Token
-# counting is free to use", platform.claude.com, Token counting, read 2026-11-10). The runs of eval
-# sets come here with epic E6, and with them the trigger on pull requests, once the keys are in
-# Secret Manager (Д6 in RUN.md). The environment eval admits main and refs/pull/*/merge alone, and
-# has no reviewers (R120 spec).
+# spec; R90). Only a job of the GitHub environment eval gets them: the pool github-eval admits the
+# token of that environment of this repository alone, and no token of Dependabot. The job checks the
+# way in and spends nothing: it reads the key of Anthropic and has the key count the tokens of one
+# word, which Anthropic's page Token counting says is free. It runs no eval set and has no trigger
+# on pull requests. The environment eval admits main and refs/pull/*/merge alone, and has no
+# reviewers (R120 spec).
 name: Eval
 
 on:
@@ -29,7 +27,7 @@ jobs:
       # on either, by the author of the pull request rather than by github.actor, who only started
       # the run, and says why (R120 spec). Dependabot's change goes to a branch of the repository
       # and is opened from there. On workflow_dispatch alone it lets every run through; it stands
-      # first now so that the trigger on pull requests (Д6 in RUN.md) comes with it in place.
+      # first so that a trigger on pull requests finds it in place.
       - name: Who asks
         env:
           HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}

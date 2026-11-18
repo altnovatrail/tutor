@@ -36,19 +36,18 @@ ARG JUST_VERSION=1.58.0
 # its kind, and stays unused in one without Go code (R64 spec).
 ARG GO_VERSION=1.27.4
 # golangci-lint runs tutor's linters and formatters, gofmt and goimports among them: the Go checks
-# of CI run with it (R13 of docs/decisions.md). It is in this stage, not in toolchain, since
-# .github's go.yml runs ci-lint in the core wherever toolchain holds more than the core
-# (R47 .github). It is under GPL-3.0, which spec's R12 allows of a development tool that ships
-# nothing, as an exception named in the decision that brings it in: here, R12 of
-# docs/decisions.md. It is tutor's own difference from the devcontainer of spec's repo-template,
-# and a move to a tag of spec adds it again.
+# of CI run with it (R13). It is in this stage, not in toolchain, since .github's go.yml runs
+# ci-lint in the core wherever toolchain holds more than the core (R47 .github). It is under
+# GPL-3.0, which R12 spec allows of a development tool that ships nothing, as an exception named in
+# the decision that brings it in: here, R12. It is tutor's own difference from the devcontainer of
+# spec's repo-template, and a move to a tag of spec adds it again.
 ARG GOLANGCI_LINT_VERSION=2.15.0
 # buf: the API contracts are protobuf files that buf formats, lints, compares with the previous
 # release and generates code from, and spec's checks run it on its contracts/ (R83 spec). It comes
 # with this file into the copy of every NovaTrail repository, as Go does, and stays unused in one
 # without contracts: the other repositories take the generated code from a release of spec. In
 # tutor it builds the image of the submodule's contracts, which spec's recipes sample-check and
-# report-check hold the eval protocol's files to, here and in CI (R69 of docs/decisions.md).
+# report-check hold the eval protocol's files to, here and in CI (R69).
 ARG BUF_VERSION=1.75.0
 # The sha256 of every archive, per architecture, as its publisher lists it: SHASUMS256.txt of
 # the Node release, SHA256SUMS of the just release, the sha256 go.dev/dl lists for Go,

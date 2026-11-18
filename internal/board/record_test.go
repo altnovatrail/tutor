@@ -961,17 +961,15 @@ func TestNewRecorderRefuses(t *testing.T) {
 	}
 }
 
-// The names the board gives its files are the ones it counts: the number of the plan sheet first,
-// in two digits.
-// saved reports whether a name is that of a saved sheet's file.
+// saved reports whether a name is that of a saved sheet's file: the names the board gives its files
+// are the ones it counts, the number of the plan sheet first, in two digits.
 func saved(name string) bool {
 	_, ok := sample.ParseSheetFile(name)
 	return ok
 }
 
 // The plans of the free-form measurement and their bank, as seen from this package's directory: the
-// 40 sheets of parts code draws (T57), and the author's three free solutions, each one part (R28,
-// the 2026-10-27 amendment).
+// 40 sheets of parts code draws, and the author's three free solutions, each one part (R28).
 const (
 	freePlan   = "../../eval/free-sheets.json"
 	authorPlan = "../../eval/free-author.json"

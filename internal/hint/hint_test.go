@@ -21,8 +21,8 @@ import (
 
 var update = flag.Bool("update", false, "write the golden requests anew")
 
-// The plans and banks of the three sets a hint is asked on: free writing, the lines of E2 and the
-// near key.
+// The plans and banks of the three sets a hint is asked on: free writing, the lines and the near
+// key.
 const (
 	freePlan, freeBank   = "../../eval/free-sheets.json", "../../eval/free-bank.json"
 	linesPlan, linesBank = "../../eval/sheets.json", "../../eval/bank.json"
@@ -96,9 +96,9 @@ func written(r provider.Request) string {
 // The golden requests are the files under testdata, which the author reads there: on sheet 12 of
 // the plan of free writing, grasshopper, whose first error is a jump of the wrong length on the
 // number line, every rung in both languages, testdata/free/<rung>-<lang>.txt; on sheet 3 of the
-// plan of E2, chain-1, with its mistake in the order of operations, rung 2 in Russian; and on sheet
-// 12 of the plan of the near key, posts, whose answer is the near false key, rung 1 in English.
-// The requests of a sheet differ only by the rung and the language in their text.
+// plan of lines, chain-1, with its mistake in the order of operations, rung 2 in Russian; and on
+// sheet 12 of the plan of the near key, posts, whose answer is the near false key, rung 1 in
+// English. The requests of a sheet differ only by the rung and the language in their text.
 func TestGolden(t *testing.T) {
 	for _, c := range []struct {
 		dir              string
@@ -191,10 +191,8 @@ func TestFingerprint(t *testing.T) {
 	}
 }
 
-// Version 3 of the prompt is frozen after the dev round of T127, before its run: any change to a word
-// a tutor reads changes the fingerprint, and this test fails until the words are measured anew.
-// Version 2, frozen before T119, had the fingerprint
-// b23adf4fc6f966c83df1f0365121bee987495dfc08803b12bd71bb3b9aac7730; its logs keep it.
+// Version 3 of the prompt is frozen, the version admitted (R100): any change to a word a tutor
+// reads changes the fingerprint, and this test fails until the words are measured anew.
 func TestFrozenV3(t *testing.T) {
 	const frozen = "7d598021bf716157a54b4e60ac2c5583e0ea8429c43e9e0a30805ef99afdeeeb"
 	if got := hint.Fingerprint(); got != frozen || hint.Version != 3 {
@@ -226,8 +224,8 @@ func TestRequestOf(t *testing.T) {
 		t.Errorf("a request without the work has pictures %d, NoPicture %v", len(r.Images), r.NoPicture)
 	}
 	// The instructions, the same in every request, are cached, with the work or without it (R131).
-	// Below 512 tokens the cache keeps nothing and no error says so; they came to 1 362 tokens of 4 444
-	// bytes (measurements 3.22), and 2 048 bytes keep them above it with room.
+	// Below 512 tokens the cache keeps nothing and no error says so; 2 048 bytes keep them above it
+	// with room.
 	if !r.CacheInstructions || r.Instructions != hint.Instructions() || len(r.Instructions) < 2048 {
 		t.Errorf("the instructions are not those cached, or too short to be: %+v", r)
 	}

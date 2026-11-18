@@ -42,7 +42,7 @@ var (
 // key of its task too; Opus reads once and Haiku in every repeat, repeat by repeat, on the crop at
 // 32 px. The estimate takes the tokens of the text of a reading and those of its crop.
 func TestNew(t *testing.T) {
-	// Sheet 1 of the plan of free writing is correct, sheet 2 has a mistake (docs/free-sheets.md).
+	// Sheet 1 of the plan of free writing is correct, sheet 2 has a mistake.
 	free := chosen(t, "free", "../../eval/free-sheets.json", "../../eval/free-bank.json", 1, 2)
 	r, err := reading.New("dev", []string{"free"}, free, e4Readers(), 2, keys)
 	if err != nil {
@@ -289,7 +289,8 @@ func TestOffTheSchema(t *testing.T) {
 	}
 }
 
-// e4Readers are the readers of the three configurations of E4, which these tests were written for.
+// e4Readers are the readers of the three configurations of runner.E4Configs, which the counts of
+// these tests are built on.
 func e4Readers() []reading.Reader {
 	return runner.E4(reading.Readers(), func(rd reading.Reader) runner.Config { return rd.Config })
 }
