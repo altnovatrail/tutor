@@ -12,11 +12,10 @@ import (
 )
 
 // TwoVersion is the version of the prompts of the assessment in two calls: the reading of an essay,
-// then the assessment of the text read (T92; R50). Its first version takes the words of the frozen
-// prompt of one call (Version 1) wherever they fit; version 2 (T124) has the reading say whether the
-// essay as a whole can be read, and adds the rules of safety for children to it (R54; R86 spec);
-// version 3 (T125) has the assessment of the text write its feedback in the language the request
-// names, tell nothing of the learner's sex (R70 spec) and keep the rules of safety for children.
+// then the assessment of the text read (R50). They take the words of the frozen prompt of one call
+// (Version 1) wherever they fit; the reading says whether the essay as a whole can be read, both
+// keep the rules of safety for children (R54; R86 spec), and the assessment of the text writes its
+// feedback in the language the request names and tells nothing of the learner's sex (R70 spec).
 const TwoVersion = 3
 
 // The steps of the assessment in two calls, as the log names them: the reading of the essay, and the

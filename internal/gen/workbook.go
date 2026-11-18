@@ -13,10 +13,11 @@ import (
 )
 
 // pageScenarios are the scenarios of the eleven boxes of a page, the most constrained first, as
-// they are given out. E4 gave one box of a page to each scenario but correct and five to that one
-// (R40). Here three boxes are mirrored and two rewritten: the digits written mirrored and the
-// values crossed out are where E4 found its false alarms, and the 2026-10-28 amendment to R56
-// spec measures them on a line of their own, so they take five boxes of eleven, not two.
+// they are given out. eval/workbook.json gives one box of a page to each scenario but correct and
+// five to that one (R40); here three boxes are mirrored and two rewritten: the digits written
+// mirrored and the values crossed out are where readings of eval/workbook.json gave their false
+// alarms, and each is measured on a line of its own, so they take five boxes of eleven, not two
+// (R56 spec).
 var pageScenarios = []sample.BoxScenario{
 	sample.BoxMirrored, sample.BoxMirrored, sample.BoxMirrored,
 	sample.BoxNearKey, sample.BoxSimilarDigits, sample.BoxError,
@@ -24,18 +25,18 @@ var pageScenarios = []sample.BoxScenario{
 	sample.BoxCorrect, sample.BoxCorrect,
 }
 
-// items are the ten items of a page, in the order of E4's pages (R40): five of the kind number,
-// three fractions in any form and two in lowest terms, each with its own numbers.
+// items are the ten items of a page, in the order of the pages of eval/workbook.json (R40): five of
+// the kind number, three fractions in any form and two in lowest terms, each with its own numbers.
 var items = []func(*rand.Rand) sample.WorkbookItem{
 	multiplication, division, addend, subtraction, remainder,
 	fractionSum, fractionDifference, share, reduce, reducedSum,
 }
 
-// Workbook builds the pages of a workbook, each of the ten items of E4's pages with numbers of its
-// own and its eleven boxes written as pageScenarios says, from the seed. The first pages go to the
-// development, devCount of them, and the rest to the test. A fraction is written stacked or inline
-// by turns, box after box across the workbook, as in E4. The workbook passes its check and its
-// layout, or Workbook returns an error.
+// Workbook builds the pages of a workbook, each of the ten items of eval/workbook.json with numbers
+// of its own and its eleven boxes written as pageScenarios says, from the seed. The first pages go
+// to the development, devCount of them, and the rest to the test. A fraction is written stacked or
+// inline by turns, box after box across the workbook, as in eval/workbook.json. The workbook passes
+// its check and its layout, or Workbook returns an error.
 func Workbook(pages int, seed uint64) (*sample.Workbook, error) {
 	if pages < 1 {
 		return nil, fmt.Errorf("gen: a workbook has at least one page, not %d", pages)
@@ -182,7 +183,7 @@ func write(rng *rand.Rand, b *sample.WorkbookBox) {
 // nearKeys are the near keys of a box: its key with one of its digits of a pair swapped for the
 // digit of its pair, each place in turn, but for a value that is one of the box's trap values. A
 // near key that a trap value catches would give the box the verdict of an error, with its trap, and
-// a near key of E4 is never one (docs/workbook.md).
+// a near key of eval/workbook.json is never one.
 func nearKeys(c sample.BoxCheck) []string {
 	var out []string
 	for _, i := range pairedDigits(c.Key) {

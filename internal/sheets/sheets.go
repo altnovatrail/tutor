@@ -1,10 +1,10 @@
 // Package sheets reads the directory where the record mode of the board saves the measurement's
-// sheets (R25), and tutor-eval draw the sheets it draws (R26), against the sheet plan: for each plan
-// sheet its last file, read and checked as a sample. A file is a sample of spec's eval protocol, which
-// its first key tells (R69); one of tutor-sample v0, which the record mode wrote until T105, is a
-// problem of its sheet, and tutor-eval convert writes it as a sample of the protocol (R75). From
-// it come the summary of what is recorded, without the handwriting, and the split of the sheets into
-// a development and a test part (R24).
+// sheets (R25), and tutor-eval draw the sheets it draws (R26), against the sheet plan: for each
+// plan sheet its last file, read and checked as a sample. A file is a sample of spec's eval
+// protocol, which its first key tells (R69); one of tutor-sample v0 is a problem of its sheet, and
+// tutor-eval convert writes it as a sample of the protocol (R75). From it come the summary of what
+// is recorded, without the handwriting, and the split of the sheets into a development and a test
+// part (R24).
 package sheets
 
 import (
@@ -38,8 +38,8 @@ type Sheet struct {
 	// the handwriting.
 	Sample   *sample.Sample
 	Problems []string
-	// Refused is why the runner refuses the sample of the protocol in File, as section 13 has it, or
-	// nil: a refused sample has no Sample and no Problems, and nothing of it goes to AI.
+	// Refused is why the runner refuses the sample of the protocol in File, as the protocol has it,
+	// or nil: a refused sample has no Sample and no Problems, and nothing of it goes to AI.
 	Refused *evalsample.Refusal
 	// Mouse is set when a mouse wrote a stroke of the sample of the protocol, as its pointer says.
 	Mouse bool
@@ -49,9 +49,8 @@ type Sheet struct {
 	Truth []evalsample.Truth
 }
 
-// Chosen is a sheet that a run asks of (T67, T68): its set, the name of its directory of sheets,
-// its number in the plan and its file, its sample, which passes its check, its task, and its sheet
-// of the plan.
+// Chosen is a sheet that a run asks of: its set, the name of its directory of sheets, its number in
+// the plan and its file, its sample, which passes its check, its task, and its sheet of the plan.
 type Chosen struct {
 	Set    string
 	Number int
@@ -72,11 +71,11 @@ type Recorded struct {
 	Other []string
 }
 
-// Read reads the directory against the plan and the bank. A file that does not pass is a problem
-// of its sheet, not an error; the error is a directory that cannot be read, or a check that cannot
-// run. A sample of the protocol is held to the rules of sections 11 and 12 by check, spec's code
-// (samplecheck.Run), and refused when it breaks one; with no check, as tutor-eval draw reads the
-// directory only to see which sheets it holds, it is not.
+// Read reads the directory against the plan and the bank. A file that does not pass is a problem of
+// its sheet, not an error; the error is a directory that cannot be read, or a check that cannot
+// run. A sample of the protocol is held to its rules by check, spec's code (samplecheck.Run), and
+// refused when it breaks one; with no check, as tutor-eval draw reads the directory only to see
+// which sheets it holds, it is not.
 func Read(dir string, plan *sample.Plan, bank *evalsample.Bank, check samplecheck.Check) (*Recorded, error) {
 	if len(plan.Sheets) > sample.MaxSheets {
 		return nil, fmt.Errorf("the plan has %d sheets, and a file's name holds a sheet's number in two digits", len(plan.Sheets))
@@ -193,7 +192,7 @@ func readProtocol(sh *Sheet, data []byte, broken []int, bank *evalsample.Bank) {
 }
 
 // V0Problem is the problem of a sheet whose file is of tutor-sample v0, which no reader but
-// tutor-eval convert takes since T105 (R75).
+// tutor-eval convert takes (R75).
 const V0Problem = "(a file of tutor-sample v0: tutor-eval convert writes it as a sample of the protocol)"
 
 // problemPaths are the paths of the problems of a check, nothing of the handwriting.

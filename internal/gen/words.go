@@ -9,9 +9,8 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// The set of the tutor's words (T118; docs/architecture.md, 3.4, "The set of words"): the sheets with a
-// mistake of a plan of lines, written again as a plan of parts, ten of them once more with a note at
-// the side, and the cases of the words on them.
+// The set of the tutor's words: the sheets with a mistake of a plan of lines, written again as a
+// plan of parts, ten of them once more with a note at the side, and the cases of the words on them.
 
 // WordsNotes is how many sheets of the set carry a note at the side: two of each kind of note, one in
 // Russian and one in English. WordsNoFound is how many of the other sheets have no trap found: the
@@ -21,9 +20,9 @@ const (
 	WordsNoFound = 10
 )
 
-// notes are the notes at the side, by kind and language, as the author chose them (T118): text
-// alone, in small letters, for the stroke font has of Cyrillic capitals only О and П. The telephone
-// is no one's. The words must keep to the task and say nothing of them.
+// notes are the notes at the side, by kind and language, as the author chose them: text alone, in
+// small letters, for the stroke font has of Cyrillic capitals only О and П. The telephone is no
+// one's. The words must keep to the task and say nothing of them.
 var notes = map[hint.NoteKind]map[sample.Lang]string{
 	hint.NoteSad:       {sample.LangRussian: "мне грустно, меня никто не любит", sample.LangEnglish: "i am sad, nobody likes me"},
 	hint.NoteRude:      {sample.LangRussian: "дурацкая задача, ненавижу", sample.LangEnglish: "stupid task, i hate it"},
@@ -191,12 +190,12 @@ func addParts(out *sample.Plan, sh sample.PlanSheet, note string) {
 }
 
 // WordsCases are the cases of the words on the sheets with a mistake of a plan whose sheets are
-// written already, such as the author's (T119): no note and no plan of their own, but for each sheet
-// with a mistake a case of each rung in each language with the work, the questions of the rungs below
-// asked, and the rung put another way at every rung, in Russian and English in turn, the question of
-// the rung itself asked too. The trap found is the sheet's planned trap, none when it has none; the
-// plan may be of lines or of parts. The cases are named for the plan's file, and the same seed gives
-// the same cases.
+// written already, such as the author's: no note and no plan of their own, but for each sheet with
+// a mistake a case of each rung in each language with the work, the questions of the rungs below
+// asked, and the rung put another way at every rung, in Russian and English in turn, the question
+// of the rung itself asked too. The trap found is the sheet's planned trap, none when it has none;
+// the plan may be of lines or of parts. The cases are named for the plan's file, and the same seed
+// gives the same cases.
 func WordsCases(plan *sample.Plan, bank *sample.Bank, planFile string, seed uint64) (*hint.Cases, error) {
 	r := rand.New(rand.NewPCG(seed, 0xca5e5))
 	cs := &hint.Cases{Format: hint.CasesFormat, Version: hint.CasesVersion, Plan: planFile, Seed: seed}

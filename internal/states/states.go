@@ -1,4 +1,4 @@
-// Package states chooses the states of a sheet for the reading of unfinished work (О-8, О-21; T69):
+// Package states chooses the states of a sheet for the reading of unfinished work (О-8, О-21):
 // the moments of the writing at which a device that read on its own, without the learner asking,
 // would read, and what the sheet shows at each. It finds them from the strokes and the erasures, as
 // a device would, in the order of the writing the journal takes (journal.Writing):
@@ -12,9 +12,9 @@
 //
 // Each state stands after an event of the writing, so no stroke is half drawn on it, and none is
 // the finished sheet: an event follows each. What the writer had written of each part of the markup
-// by then is the truth the report measures the reading of a state against (T72). It counts, too,
-// how many readings a sheet would take beyond its sending by each policy of reading on its own
-// (R10): after each line, and at each pause of 0.4, 2 and 6 s or more.
+// by then is the truth the report measures the reading of a state against. It counts, too, how many
+// readings a sheet would take beyond its sending by each policy of reading on its own (R10): after
+// each line, and at each pause of 0.4, 2 and 6 s or more.
 package states
 
 import (
@@ -26,7 +26,7 @@ import (
 )
 
 // MinPause is the shortest pause within a line that a state is read at, in milliseconds: the mean
-// pause of a child's writing (docs/measurements.md, 1.6).
+// pause of a child's writing.
 const MinPause = 400
 
 // Progress is how far a part of the markup was written by a moment.

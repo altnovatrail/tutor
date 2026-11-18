@@ -16,7 +16,7 @@ import (
 )
 
 // The files of the set of the words after a correct answer are what the generator makes of
-// lines-gen-1 and the seed 143, byte for byte: tutor-eval gen correct makes them again (T143).
+// lines-gen-1 and the seed 143, byte for byte: tutor-eval gen correct makes them again.
 func TestCorrectFiles(t *testing.T) {
 	plan, bank := linesGen1(t)
 	pl, cs, err := gen.Correct(plan, bank, "correct-sheets.json", 143)

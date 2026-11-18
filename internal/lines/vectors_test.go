@@ -16,10 +16,9 @@ import (
 	"github.com/altnovatrail/tutor/internal/protocol"
 )
 
-// groupVectors is spec's test vectors of the rule of groups, contracts.Vectors
-// eval/v1/groups.json (contracts/README.md of spec, section 12; Д96 in spec's RUN.md): canvas's
-// cases (R24 canvas) in the form of the protocol, with the groups of the strokes taken off. Their
-// messages are read by protojson.
+// groupVectors is spec's test vectors of the rule of groups, contracts.Vectors eval/v1/groups.json:
+// canvas's cases (R24 canvas) in the form of the protocol, with the groups of the strokes taken
+// off. Their messages are read by protojson.
 type groupVectors struct {
 	Rule struct {
 		Pause  int64 `json:"pause"`
@@ -42,8 +41,7 @@ type groupVectors struct {
 // On every case of spec's vectors, the history folds into its strokes, and the strokes the sheet
 // shows have the vectors' pairs of neighbours and their groups: the labels, the IDs and the boxes
 // in tenths, exactly. Each stroke taken off is in the groups of the strokes shown that would be its
-// neighbours, in the order of their labels, as the vectors have it (R30, R67 in
-// docs/decisions.md).
+// neighbours, in the order of their labels, as the vectors have it (R30, R67).
 func TestGroupsMatchSpecVectors(t *testing.T) {
 	data, err := fs.ReadFile(contracts.Vectors, "eval/v1/groups.json")
 	if err != nil {

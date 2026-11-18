@@ -1,5 +1,5 @@
-// Package essay is the assessment of an essay by the module author's rubric in the measurement of
-// epic E4 (T82; docs/architecture.md, 3.4, "Essays"): what a model sees of a synthetic essay.
+// Package essay is the assessment of an essay by the module author's rubric in the measurement:
+// what a model sees of a synthetic essay.
 package essay
 
 import (

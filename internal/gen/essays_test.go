@@ -43,7 +43,7 @@ func TestEssaysSeed(t *testing.T) {
 	}
 }
 
-// The rubric is E4's, eval/essays.json's, criterion by criterion.
+// The rubric is eval/essays.json's, criterion by criterion.
 func TestRubric(t *testing.T) {
 	f, err := os.Open("../../eval/essays.json")
 	if err != nil {

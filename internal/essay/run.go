@@ -44,7 +44,7 @@ const (
 )
 
 // Call is one call of a run: an essay by its number, a reader by its name, and the repeat, from 1;
-// in a run of two calls, also its step, StepRead or StepAssess (T92).
+// in a run of two calls, also its step, StepRead or StepAssess.
 type Call struct {
 	Essay  int    `json:"essay"`
 	Reader string `json:"reader"`
@@ -158,19 +158,19 @@ type (
 		Estimate      runner.Estimate    `json:"estimate"`
 		Prompt        string             `json:"prompt"`
 		PromptVersion int                `json:"prompt_version"`
-		// Path is "two" for a run in two calls, the reading and the assessment of the text (T92), and
+		// Path is "two" for a run in two calls, the reading and the assessment of the text, and
 		// empty for one call; the prompt and its version are then those of the two calls, and
-		// ReadPrompt the fingerprint of the reading alone, which an entry of the list of the reading of an
-		// essay names (ReadFingerprint; Tutor.ReadEssay), and TextPrompt that of the assessment of the
-		// text alone, which an entry of the list of the assessment by a rubric names (TextFingerprint;
-		// Tutor.AssessEssay).
+		// ReadPrompt the fingerprint of the reading alone, which an entry of the list of the
+		// reading of an essay names (ReadFingerprint; Tutor.ReadEssay), and TextPrompt that of the
+		// assessment of the text alone, which an entry of the list of the assessment by a rubric
+		// names (TextFingerprint; Tutor.AssessEssay).
 		Path       string `json:"path,omitempty"`
 		ReadPrompt string `json:"read_prompt,omitempty"`
 		TextPrompt string `json:"text_prompt,omitempty"`
-		// Assessor is the configuration that assesses the text every reader read, in a run in two calls
-		// that names one, as the library asks the model of the assessment apart from the reader's
-		// (T156; R124); with none, each reader assesses its own reading. The calls of the assessment
-		// still name the reader whose text they assess.
+		// Assessor is the configuration that assesses the text every reader read, in a run in two
+		// calls that names one, as the library asks the model of the assessment apart from the
+		// reader's (R124); with none, each reader assesses its own reading. The calls of the
+		// assessment still name the reader whose text they assess.
 		Assessor *ReaderRecord `json:"assessor,omitempty"`
 		// Runner and ModuleKit are the versions of the build that ran, and Refused the samples it
 		// refused: what the runner's report takes of the run (R74).
@@ -213,8 +213,8 @@ type (
 		Breaches      []string `json:"breaches,omitempty"`
 		FeedbackWords int      `json:"feedback_words,omitempty"`
 		Error         string   `json:"error,omitempty"`
-		// Illegible is set when a reading read the essay as a whole illegible (ErrIllegible), which the
-		// rule of the reading counts on the essays code drew legible (T156).
+		// Illegible is set when a reading read the essay as a whole illegible (ErrIllegible), which
+		// the rule of the reading counts on the essays code drew legible.
 		Illegible bool `json:"illegible,omitempty"`
 		// Invalid is set when the answer is off the schema, which the report of the protocol names
 		// unchecked, UNCHECKED_CAUSE_INVALID (R74).
@@ -241,7 +241,7 @@ const PathTwo = "two"
 // reading writes the essay down, about 150 tokens, besides what it thinks; an assessment of the text
 // writes six judgements and the feedback, about 450, besides what it thinks. Opus at high effort
 // thinks about 500 more in a reading and 1 100 in an assessment, Haiku with thinking about 400 and
-// 450 (T92). A configuration without its output here is a mistake of the code.
+// 450. A configuration without its output here is a mistake of the code.
 var (
 	readOutputs = map[string]int{"opus-high": 700, "haiku-low": 600, "haiku-low-no-thinking": 200,
 		"opus-medium": 700, "sonnet-low": 500, "sonnet-low-no-thinking": 200, "haiku-medium": 800}
@@ -341,9 +341,10 @@ func (s *assessStep) Record(o runner.Outcome) any {
 }
 
 // NewTwo plans a run of the assessment in two calls over the essays of a part, as their samples in
-// the directory dir hold them, by the readers, repeated: for each essay, reader and repeat, the reading of its crop at 32 px and
-// right after it the assessment of the text the reading wrote down (T92), by the assessor, or by the
-// reader itself when assessor is nil (T156). The calls go repeat by repeat, as New puts them.
+// the directory dir hold them, by the readers, repeated: for each essay, reader and repeat, the
+// reading of its crop at 32 px and right after it the assessment of the text the reading wrote
+// down, by the assessor, or by the reader itself when assessor is nil. The calls go repeat by
+// repeat, as New puts them.
 func NewTwo(part, file, dir string, seed uint64, es *sample.Essays, essays []*evalsample.Essay, readers []Reader, assessor *Reader, repeats int) (*runner.Run, error) {
 	assessors := readers
 	if assessor != nil {

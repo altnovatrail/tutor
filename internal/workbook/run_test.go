@@ -164,7 +164,8 @@ func TestNewAsksNothingIdle(t *testing.T) {
 	}
 }
 
-// e4Readers are the readers of the three configurations of E4, which these tests were written for.
+// e4Readers are the readers of the configurations of runner.E4Configs, which these tests were
+// written for.
 func e4Readers() []workbook.Reader {
 	return runner.E4(workbook.Readers(), func(rd workbook.Reader) runner.Config { return rd.Config })
 }

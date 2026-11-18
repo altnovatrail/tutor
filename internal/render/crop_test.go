@@ -30,10 +30,10 @@ import (
 	"github.com/altnovatrail/tutor/internal/synth"
 )
 
-// cropVectors is spec's test vectors of the crop, contracts.Vectors eval/v1/crops.json
-// (contracts/README.md of spec, section 12; Д96 in spec's RUN.md): canvas's cases (R25 canvas) in
-// the form of the protocol, their strokes a final geometry and their crops a CropSet without PNG.
-// They hold the crop's numbers, not its pixels. Their messages are read by protojson.
+// cropVectors is spec's test vectors of the crop, contracts.Vectors eval/v1/crops.json: canvas's
+// cases (R25 canvas) in the form of the protocol, their strokes a final geometry and their crops a
+// CropSet without PNG. They hold the crop's numbers, not its pixels. Their messages are read by
+// protojson.
 type cropVectors struct {
 	Rule struct {
 		Margin  int   `json:"margin"`
@@ -392,10 +392,9 @@ func TestCropDrawsOtherStrokes(t *testing.T) {
 	}
 }
 
-// A crop's PNG is as the eval protocol writes one (contracts/README.md of spec, section 11): grey
-// of 8 bits, colour type 0, not interlaced, of the crop's size, the chunks IHDR, IDAT and IEND
-// alone, its IDAT one zlib stream with nothing after it, each row with a filter from 0 to 4. The
-// case is the largest crop of the vectors.
+// A crop's PNG is as the eval protocol writes one: grey of 8 bits, colour type 0, not interlaced,
+// of the crop's size, the chunks IHDR, IDAT and IEND alone, its IDAT one zlib stream with nothing
+// after it, each row with a filter from 0 to 4. The case is the largest crop of the vectors.
 func TestCropPNGChunks(t *testing.T) {
 	v, cases := readCropVectors(t)
 	n := slices.IndexFunc(v.Cases, func(c cropCase) bool { return c.Name == "limit" })
