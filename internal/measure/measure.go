@@ -1,9 +1,8 @@
-// Package measure is the judge's kind of call on the runner (T67): the measurement of the writing
-// process (R24). Its run asks every sheet of a part in every form it has, by every judge,
-// repeated, in one version of the judge's prompt: version 1 on the sheets of lines of E2, version
-// 2 on free writing (T65). The package plans the run, says how each call is asked and logged, and
-// reads the run's log back; the runner estimates the run, holds its cap, asks the calls and writes
-// the log (internal/runner). The log is as E2 and T66 wrote it.
+// Package measure is the judge's kind of call on the runner: the measurement of the writing process
+// (R24). Its run asks every sheet of a part in every form it has, by every judge, repeated, in one
+// version of the judge's prompt: version 1 on the sheets of lines, version 2 on free writing. The
+// package plans the run, says how each call is asked and logged, and reads the run's log back; the
+// runner estimates the run, holds its cap, asks the calls and writes the log.
 package measure
 
 import (
@@ -24,31 +23,25 @@ import (
 // three pictures of the sheet, the instructions and the journal comes to about 4 000.
 const inputBudget = 8000
 
-// The input tokens a call is expected to take, for the estimate, by the version of the prompt. Of
-// version 1: about 1 850 for form A, about 400 more with the journal and about 820 more for each
-// frame (docs/measurements.md, 1.1). Of version 2, by the measure of T63 from the test of
-// E2 — 1.3 tokens a word, number or sign of the instructions and 1.575 of the journal: its
-// instructions are about 150 of them longer, and its journal block and journal of parts about 130
-// and 120 of them, so about 2 050 for form A and 360 more with the journal (architecture 3.1,
-// "The runner"). A frame is the same picture in both.
+// The input tokens a call is expected to take, for the estimate, by the version of the prompt:
+// version 1's as measured, version 2's counted by its words, at 1.3 tokens a word, number or sign of
+// the instructions and 1.575 of the journal. A frame is the same picture in both.
 var inputs = map[judge.Version]struct{ a, journal, frame int }{
 	judge.V1: {a: 1850, journal: 400, frame: 820},
 	judge.V2: {a: 2050, journal: 360, frame: 820},
 }
 
 // Judge is a configuration of the judge (R24): a configuration of the runner, and the output tokens
-// a call is expected to take, for the estimate (docs/measurements.md, 1.1).
+// a call is expected to take, for the estimate.
 type Judge struct {
 	runner.Config
 	Output int
 }
 
-// Judges are the judges of the measurement, the configurations of the runner: Opus 5.5 at high,
-// Haiku 5.5 at low, and Haiku 5.5 at low without thinking (R24), and the four the extended
-// measurement adds (R50). A call is expected to write about 50 tokens, Haiku with thinking about
-// 300 (docs/measurements.md, 1.1), Sonnet with thinking about 200 and Haiku at medium about 400. A
-// configuration without its output here is a mistake of the code, and Judges panics on it rather
-// than estimate its calls at nothing.
+// Judges are the judges of the measurement, one for each configuration of the runner, with the
+// output tokens a call of each is expected to write, as measured. A configuration without its
+// output here is a mistake of the code, and Judges panics on it rather than estimate its calls at
+// nothing.
 func Judges() []Judge {
 	outputs := map[string]int{
 		"opus-high": 50, "haiku-low": 300, "haiku-low-no-thinking": 50,
@@ -163,8 +156,8 @@ type Run struct {
 // New plans a run of the part's sheets by the judges in a version of the prompt, repeated: it
 // draws what the forms show of every sheet and puts the calls in order, repeat by repeat, so that
 // a run cut short has the same repeats of every sheet. Of each sheet, by each judge, it asks forms
-// A and B and, with frames, C and D. A sheet without frames has no C, and its D is its B
-// (architecture 3.1): the run does not ask it again, and the log says so.
+// A and B and, with frames, C and D. A sheet without frames has no C, and its D is its B: the run
+// does not ask it again, and the log says so.
 func New(part string, sheets []Sheet, judges []Judge, repeats int, v judge.Version) (*Run, error) {
 	if repeats < 1 {
 		return nil, fmt.Errorf("measure: %d repeats", repeats)
@@ -215,7 +208,6 @@ func New(part string, sheets []Sheet, judges []Judge, repeats int, v judge.Versi
 // Framed counts the sheets of the run that have frames.
 func (r *Run) Framed() int { return r.framed }
 
-// sheetRecord is the record that tells a sheet of the run.
 func sheetRecord(sh *prepared) SheetRecord {
 	rec := SheetRecord{Kind: "sheet", Sheet: sh.Number, File: sh.File, Writer: sh.Sample.Writer, Task: sh.Sample.Task, Scenario: sh.Sample.Scenario,
 		Outcome: sh.Sample.Expected.Outcome, Frames: len(sh.shown.Frames), Lines: journal.Agree(sh.Sample, sh.shown.Journal)}
@@ -238,8 +230,8 @@ func sheetRecord(sh *prepared) SheetRecord {
 // run tells no kind of call: a log without one is the judge's (runner.CallKind).
 type (
 	// RunRecord tells the run: its part, judges and repeats, its cap and estimate, and the
-	// fingerprint and the version of its prompt (judge.Fingerprint). The logs of E2 tell no
-	// version: their prompt is version 1 (PromptOf).
+	// fingerprint and the version of its prompt (judge.Fingerprint). A log that tells no version
+	// was asked in version 1 (PromptOf).
 	RunRecord struct {
 		Kind          string          `json:"kind"`
 		Time          time.Time       `json:"time"`
@@ -263,9 +255,8 @@ type (
 	// SheetRecord tells a sheet: its number and file, who wrote it, its task and scenario, the
 	// outcome and the first error its markup says, its frames and the agreement of the journal's
 	// lines with its markup. Of free writing, lines tells the parts of the journal against those of
-	// the markup, under the name the logs of E2 have, and the record tells the layout of the sheet
-	// and where its first error stands, unless the sheet is marked off its plan. The logs of E2 tell
-	// none of the three.
+	// the markup, under the name it has for the sheets of lines, and the record tells the layout of
+	// the sheet and where its first error stands, unless the sheet is marked off its plan.
 	SheetRecord struct {
 		Kind         string            `json:"kind"`
 		Sheet        int               `json:"sheet"`
@@ -308,7 +299,7 @@ func byPlan(s *sample.Sample, sh *sample.PlanSheet) bool {
 }
 
 // PromptOf is the version of the prompt a run asked in: that its record tells, or version 1 for a
-// log of E2, which tells none.
+// log that tells none.
 func PromptOf(r RunRecord) judge.Version {
 	if r.PromptVersion == 0 {
 		return judge.V1

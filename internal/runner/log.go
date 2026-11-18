@@ -56,9 +56,8 @@ func ReadLog(r io.Reader, read func(kind string, line []byte) error) (*End, erro
 }
 
 // CallKind is the kind of call a run's log is of, as the record of the run, its first line, tells
-// it: "" for a log that tells none, which is the judge's, as the logs of E2 and T66 are. A first
-// line that is no record tells none either, and the reader of the judge's log says what is wrong
-// with it.
+// it: "" for a log that tells none, which is the judge's. A first line that is no record tells
+// none either, and the reader of the judge's log says what is wrong with it.
 func CallKind(log []byte) string {
 	first, _, _ := bytes.Cut(log, []byte("\n"))
 	var run struct {
@@ -90,7 +89,7 @@ func ReadRecords[R, S, C any](r io.Reader, callKind, name string) (*Records[R, S
 }
 
 // ReadItems is ReadRecords for a kind whose items are records of another kind than "sheet", as the
-// pages of the workbook are, "page" (T79): a record of the kind of item goes to the Sheets of the
+// pages of the workbook are, "page": a record of the kind of item goes to the Sheets of the
 // log, and one of the other kind has no place in it.
 func ReadItems[R, S, C any](r io.Reader, callKind, name, item string) (*Records[R, S, C], error) {
 	var l Records[R, S, C]

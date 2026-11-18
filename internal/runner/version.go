@@ -6,9 +6,9 @@ import (
 )
 
 // Refused is a sample the runner refuses, as the record of a run names it, for the runner's report
-// (contracts/README.md of spec, sections 13 and 14; R74): its set, for a run of several, its ID,
-// when its file names one that can be read, its file, the reason as the protocol names it, such as
-// REFUSAL_CHILD, and what of the sample it is, in words.
+// (R74): its set, for a run of several, its ID, when its file names one that can be read, its file,
+// the reason as the protocol names it, such as REFUSAL_CHILD, and what of the sample it is, in
+// words.
 type Refused struct {
 	Set    string `json:"set,omitempty"`
 	Sample string `json:"sample,omitempty"`

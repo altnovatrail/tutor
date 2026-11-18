@@ -12,11 +12,10 @@ import (
 	"github.com/altnovatrail/tutor/internal/essay"
 )
 
-// Essays is the report of a run of the assessment by the rubric (T83; docs/measurements.md, 3.8):
-// the measure of О-22 for every reader — the criteria judged unmet that the essay meets, the main
-// one, and the agreement with the planned truth, criterion by criterion, with Cohen's κ — and how
-// the reader read the essays and kept the rule of the feedback. It has no threshold: the measure
-// has no target yet (О-22).
+// Essays is the report of a run of the assessment by the rubric: the measure of О-22 for every
+// reader — the criteria judged unmet that the essay meets, the main one, and the agreement with the
+// planned truth, criterion by criterion, with Cohen's κ — and how the reader read the essays and
+// kept the rule of the feedback. It has no threshold: the measure has no target yet (О-22).
 type Essays struct {
 	// protocol are the runner's reports of the protocol that the log tells (R74).
 	protocol []Named
@@ -31,7 +30,7 @@ type Essays struct {
 }
 
 // EssaysReader is a reader's measures over every assessment of the run: a call, or in a run of two
-// calls a reading and the assessment of its text (T92). Calls and Failed count the assessments, and
+// calls a reading and the assessment of its text. Calls and Failed count the assessments, and
 // MeanUSD and the times are those of an assessment, both its calls together.
 type EssaysReader struct {
 	Name             string
@@ -103,7 +102,7 @@ func NewEssays(l *essay.Log) (*Essays, error) {
 // samples are not of the protocol.
 func (r *Essays) Reports() []Named { return r.protocol }
 
-// ProtocolCSV writes the measures of section 14 of the runner's reports as CSV.
+// ProtocolCSV writes the measures of the runner's reports as CSV (R74).
 func (r *Essays) ProtocolCSV(w io.Writer) error { return protocolCSV(w, r.protocol) }
 
 // calls are a reader's calls, in the order of the run.
@@ -456,7 +455,7 @@ func feedbackOf(answer string) string {
 }
 
 // pairs are the calls of a run in two calls, each reading and the assessment of its text as one
-// assessment, as a call of one step tells it (T92): the reading's reading, the assessment's
+// assessment, as a call of one step tells it: the reading's reading, the assessment's
 // judgements and feedback, an answer of the schema of one call with the text the reading wrote down,
 // and the cost and the time of both calls together. A reading that failed fails the assessment, and
 // so does an assessment the run never came to, its criteria unchecked.

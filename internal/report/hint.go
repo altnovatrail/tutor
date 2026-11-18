@@ -14,12 +14,12 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// Hint is what a run of the hint comes to (T75; R39; docs/architecture.md, 3.4, "Hint"): by
-// tutor, language and rung, the hints the leak check found the answer in, before the check and after
-// it, the hints that break their form, the fallback texts by cause, the box on the part of the first
-// error and the model's trap against the sheet's, and the time and cost of a call; the leaks by
-// task; and about 30 hints for the author to read. It holds no handwriting: numbers, the sets and
-// numbers of sheets, the tasks' statements and the plan's texts, and the hints the models wrote.
+// Hint is what a run of the hint comes to (R39): by tutor, language and rung, the hints the leak
+// check found the answer in, before the check and after it, the hints that break their form, the
+// fallback texts by cause, the box on the part of the first error and the model's trap against the
+// sheet's, and the time and cost of a call; the leaks by task; and about 30 hints for the author to
+// read. It holds no handwriting: numbers, the sets and numbers of sheets, the tasks' statements and
+// the plan's texts, and the hints the models wrote.
 type Hint struct {
 	log    *hint.Log
 	sheets map[sheetID]*hint.SheetRecord
@@ -27,7 +27,7 @@ type Hint struct {
 	tutors []string
 	// byTutor are the calls that were asked, by tutor and by sheet.
 	byTutor map[string]map[sheetID][]*hint.CallRecord
-	// cases are the cases of a log of the set of the words, by their IDs (T118).
+	// cases are the cases of a log of the set of the words, by their IDs.
 	cases map[string]*hint.Case
 
 	// Cells are the calls of each tutor by language and rung, each tutor's followed by all its calls.
@@ -51,9 +51,9 @@ type Hint struct {
 //   - TrapRight of TrapOf: the model names the sheet's trap, on the sheets planned with one;
 //     NoTrapRight of NoTrapOf: it names none, on the sheets without.
 //
-// In a log of the set of the words (T118), a call without the work counts in neither OnError nor
-// NoBox, since it has nothing to box, and a call given the trap found counts in no trap's column,
-// since the model was told it.
+// In a log of the set of the words, a call without the work counts in neither OnError nor NoBox,
+// since it has nothing to box, and a call given the trap found counts in no trap's column, since
+// the model was told it.
 type HintCell struct {
 	Tutor                                    string
 	Lang                                     sample.Lang
@@ -95,8 +95,8 @@ type Found struct {
 }
 
 // NewHint builds the report of a log of the hint. A log without tutors or without sheets has
-// nothing to report; a log of a run that did not check its hints, as T74's did not, would read as
-// though nothing leaked; and a call of a sheet or a tutor the log does not tell is a broken log.
+// nothing to report; a log of a run that did not check its hints would read as though nothing
+// leaked; and a call of a sheet or a tutor the log does not tell is a broken log.
 func NewHint(l *hint.Log) (*Hint, error) {
 	switch {
 	case len(l.Run.Tutors) == 0 || len(l.Sheets) == 0:

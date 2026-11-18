@@ -23,14 +23,13 @@ import (
 	"github.com/altnovatrail/tutor/internal/workbook"
 )
 
-// The runner's report of the eval protocol (contracts/README.md of spec, section 14; R95 spec;
-// R74): the message Report of novatrail.eval.v1, made of a run's log. A log tells a report for each
-// reader alone, with all its repeats, and for each pair of the readers — the one that reads once,
-// Opus, with each that reads in repeats —, joined by module-kit (observation.Join), repeat by
-// repeat. Of the calls, it takes what the platform asks: a sheet without a key, a page of the
-// workbook bare, the work as it is finished, with its digits at 32 px. A log whose samples are not
-// of the protocol, a log of a run before T106 or of the author's sheets of tutor-sample v0, tells
-// none.
+// The runner's report of the eval protocol (R95 spec; R74): the message Report of
+// novatrail.eval.v1, made of a run's log. A log tells a report for each reader alone, with all its
+// repeats, and for each pair of the readers — the one that reads once, Opus, with each that reads
+// in repeats —, joined by module-kit (observation.Join), repeat by repeat. Of the calls, it takes
+// what the platform asks: a sheet without a key, a page of the workbook bare, the work as it is
+// finished, with its digits at 32 px. A log whose records name no sample, or whose samples are not
+// of the protocol, as one of the author's sheets of tutor-sample v0, tells none.
 
 // Named is a runner's report with the name its file takes beside the log: the reader's, or the
 // pair's, strong+fast.
@@ -124,10 +123,10 @@ func failure(notAsked bool, err string, invalid bool) evalv1.UncheckedCause {
 
 // checked is the reading of module-kit's verdict on a valid observation: unchecked there is the
 // check's — its predicate gave an error or no bool, or ran to its bound —, the task's and not the
-// model's (UNCHECKED_CAUSE_CHECK, contracts/README.md of spec, section 14; R87). No observation, a
-// join that fails and a check that module-kit refuses give no such verdict, and their callers count
-// them failures. tutor's own checks, a number or a fraction against a key, run no predicate, so it
-// is the tasks of modules that give it.
+// model's (UNCHECKED_CAUSE_CHECK; R87). No observation, a join that fails and a check that
+// module-kit refuses give no such verdict, and their callers count them failures. tutor's own
+// checks, a number or a fraction against a key, run no predicate, so it is the tasks of modules
+// that give it.
 func checked(v verdict.SlotVerdict) *evalv1.Reading {
 	if v.Verdict == verdict.Unchecked {
 		return unchecked(evalv1.UncheckedCause_UNCHECKED_CAUSE_CHECK)
@@ -174,7 +173,6 @@ func repeatsOf(rd runner.ReaderRecord, repeats int, plain bool) int {
 // (R74): lines+free+near-dev, workbook-test, essays-all.
 func setName(names []string, part string) string { return strings.Join(names, "+") + "-" + part }
 
-// fileName is a file's name without its folder and its .json.
 func fileName(file string) string { return strings.TrimSuffix(filepath.Base(file), ".json") }
 
 // ctx is the context of a verdict: a check of number or fraction runs no predicate that it could
@@ -505,7 +503,7 @@ func EssayReports(l *essay.Log) []Named {
 		r := head(evalv1.Capability_CAPABILITY_RUBRIC_ASSESSMENT, l.Run.Runner, l.Run.ModuleKit, set, l.Run.Repeats, m)
 		r.Assessor = m
 		if a := l.Run.Assessor; a != nil {
-			// The text the reader read is assessed by the run's assessor (T156).
+			// The text the reader read is assessed by the run's assessor.
 			r.Assessor = modelOf(*a)
 		}
 		out = append(out, Named{Name: rd.Name, Report: withRefused(r, measured, l.Run.Refused)})

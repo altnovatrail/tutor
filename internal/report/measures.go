@@ -8,11 +8,11 @@ import (
 )
 
 // The measures of a runner's report, counted from its records, all repeats together, by the rules
-// of section 14 of spec's contracts text (R74): a report holds no totals, and any reader can count
-// them again. T is the verdict on the truth, and R the verdict on a reading.
+// of the eval protocol (R74): a report holds no totals, and any reader can count them again. T is
+// the verdict on the truth, and R the verdict on a reading.
 
-// Count is a share as section 14 counts it: the events among the readings or marks it is counted
-// among.
+// Count is a share as the eval protocol counts it: the events among the readings or marks it is
+// counted among.
 type Count struct {
 	Events, Of int
 }
@@ -121,7 +121,6 @@ func MeasuresOf(r *evalv1.Report) Measures {
 	return Measures{Reading: m}
 }
 
-// essayMeasures are the measures of a run of assessment.
 func essayMeasures(r *evalv1.Report) *EssayMeasures {
 	m := &EssayMeasures{}
 	at := map[int32]int{}
@@ -201,7 +200,6 @@ func kappaOf(marks [2][2]int) *float64 {
 	return &k
 }
 
-// boolIndex is 1 for true and 0 for false.
 func boolIndex(b bool) int {
 	if b {
 		return 1

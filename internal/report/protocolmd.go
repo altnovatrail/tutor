@@ -13,9 +13,9 @@ import (
 )
 
 // The section of the runner's reports in the Markdown of a report for people, and their CSV: the
-// measures of section 14, counted from the records of each report (R74).
+// measures of the eval protocol, counted from the records of each report (R74).
 
-// causes are the causes of an unchecked reading, in the order the section names them.
+// causes are the causes of an unchecked reading, in the order the eval protocol names them.
 var causes = []evalv1.UncheckedCause{evalv1.UncheckedCause_UNCHECKED_CAUSE_FAILURE, evalv1.UncheckedCause_UNCHECKED_CAUSE_LIMIT,
 	evalv1.UncheckedCause_UNCHECKED_CAUSE_INVALID, evalv1.UncheckedCause_UNCHECKED_CAUSE_CHECK, evalv1.UncheckedCause_UNCHECKED_CAUSE_NO_MARK}
 
@@ -50,7 +50,6 @@ func samplesOf(r *evalv1.Report) (measured, refused int) {
 	return measured, refused
 }
 
-// readersOf names a report's models.
 func readersOf(r *evalv1.Report) string {
 	var out []string
 	for _, m := range r.GetReaders() {

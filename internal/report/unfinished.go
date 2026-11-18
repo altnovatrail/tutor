@@ -15,12 +15,11 @@ import (
 )
 
 // The heights of digits, the states and the readings of a sheet by each policy of reading on its
-// own, in the report of a run of the reading (T72; docs/architecture.md, 3.4,
-// "Reading into an observation"; R08; О-8; О-21).
+// own, in the report of a run of the reading (R08; О-8; О-21).
 
 // The groups of sheets the heights are told by: every sheet, and the sheets whose writing has small
 // letters apart from those without them. On the first the crop's estimate may fall to the height of
-// a small letter, and the digits come out larger than asked (В36 in RUN.md).
+// a small letter, and the digits come out larger than asked.
 const (
 	AllSheets    = "all"
 	NoSmall      = "without small letters"
@@ -334,7 +333,7 @@ func (r *Reading) costs() []Cost {
 		if len(calls) == 0 {
 			c.From = "its readings without a key"
 			// In the order of the sheets: a sum in the order of a map is another in its last bits, and
-			// a price at the edge of its rounding was printed one way or the other.
+			// a price at the edge of its rounding prints one way or the other.
 			by := r.calls(rd.Name, reading.NoKey)
 			for _, id := range r.order {
 				calls = append(calls, by[id]...)

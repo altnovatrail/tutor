@@ -9,9 +9,9 @@ import (
 	"github.com/altnovatrail/tutor/internal/wordsjudge"
 )
 
-// The rules of admission of the essay (T156; R124): its reading, CallEssay, and the assessment of the
-// text read by the rubric, CallRubric, each with a stage of its own, on a log of a run of the essays
-// in two calls. Both give the stage author alone: their set is synthetic, and the stage full waits for
+// The rules of admission of the essay (R124): its reading, CallEssay, and the assessment of the text
+// read by the rubric, CallRubric, each with a stage of its own, on a log of a run of the essays in
+// two calls. Both give the stage author alone: their set is synthetic, and the stage full waits for
 // the essays of adult volunteers (R71 spec; П-16).
 const (
 	// EssaySet is the set the rules of the essay admit on: the test part of eval/essays-gen.json,
@@ -68,8 +68,8 @@ type RubricDecision struct {
 
 // essayHead reads the head of a log for the rules of the essay, and every reason it refuses both: a
 // run in one call, of more readers than one (R98), of another set than EssaySet, one that refused a
-// sample (spec's contracts text, section 13), and one that did not run to its end, since an event is
-// one of all the repeats of an essay (R124).
+// sample, and one that did not run to its end, since an event is one of all the repeats of an essay
+// (R124).
 func essayHead(r *Essays) (EssayHead, []string) {
 	run := r.log.Run
 	h := EssayHead{Set: setName([]string{fileName(run.File)}, run.Part), Repeats: run.Repeats}
@@ -107,9 +107,9 @@ func essayHead(r *Essays) (EssayHead, []string) {
 // that every essay is measured in every repeat (R124), no essay with an error of the learner's — a
 // word spelled wrong, a sentence that begins with a small letter, the last without its mark — read
 // corrected, and the upper bound of the words read wrong within EssayWordsTarget. An event is an
-// essay's when any of its repeats gave it, counted once. An essay's words read wrong are the sum of the edit distances of its repeats, as many
-// as its words at most: the log does not tell which word a repeat read wrong, and the sum is no
-// fewer than the words read wrong in any repeat.
+// essay's when any of its repeats gave it, counted once. An essay's words read wrong are the sum of
+// the edit distances of its repeats, as many as its words at most: the log does not tell which word
+// a repeat read wrong, and the sum is no fewer than the words read wrong in any repeat.
 func AdmitEssay(r *Essays) EssayDecision {
 	h, why := essayHead(r)
 	d := EssayDecision{EssayHead: h, Why: why}
@@ -130,7 +130,7 @@ func AdmitEssay(r *Essays) EssayDecision {
 		}
 		switch {
 		case c.Illegible || c.Error == essay.ErrIllegible.Error():
-			// A log of before T156 tells an essay read illegible by its error alone.
+			// An older log tells an essay read illegible by its error alone.
 			n.came++
 			n.illegible++
 		case c.Reading != nil:
@@ -191,10 +191,9 @@ func corrected(rd essay.Reading) bool {
 // failed — its reading failed, it was not asked, or it came off the schema —, so that every essay is
 // assessed in every repeat (R124), the upper bound of the false alarms on met criteria within
 // RubricTarget, and the judge flags no feedback for telling the learner's sex, leaving the task or not
-// suiting a child. The
-// unit is the criterion of an essay: a false alarm when any repeat judged a met criterion unmet,
-// counted once, of the met criteria judged at least once, the bound by essay. The feedback is in
-// English alone, the language the run asks: another waits for its own measurement.
+// suiting a child. The unit is the criterion of an essay: a false alarm when any repeat judged a met
+// criterion unmet, counted once, of the met criteria judged at least once, the bound by essay. The
+// feedback is in English alone, the language the run asks: another waits for its own measurement.
 func AdmitRubric(r *Essays, name, sum string, controls, judge *WordsJudge) RubricDecision {
 	h, why := essayHead(r)
 	d := RubricDecision{EssayHead: h, Why: why}

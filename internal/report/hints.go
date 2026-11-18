@@ -10,17 +10,16 @@ import (
 )
 
 // The hints to read: how many the file holds, and how many of them at most are hints the leak check
-// caught (T75; R39).
+// caught (R39).
 const (
 	HintsToRead  = 30
 	CaughtToRead = 10
 )
 
-// ToRead are the hints of the first repeat the author reads (T76, «Мой шаг»): every hint the leak
-// check caught, up to CaughtToRead, so that a false leak shows; then hints that passed both checks,
-// taking each tutor, language and rung in turn, in the order of the run, and from each the hint of
-// the sheet taken least so far, the first in the log on a tie, until there are HintsToRead or none
-// is left.
+// ToRead are the hints of the first repeat the author reads: every hint the leak check caught, up
+// to CaughtToRead, so that a false leak shows; then hints that passed both checks, taking each
+// tutor, language and rung in turn, in the order of the run, and from each the hint of the sheet
+// taken least so far, the first in the log on a tie, until there are HintsToRead or none is left.
 func (r *Hint) ToRead() []*hint.CallRecord {
 	var caught []*hint.CallRecord
 	type cell struct {
@@ -127,7 +126,6 @@ func quoted(texts []string) string {
 	return strings.Join(q, ", ")
 }
 
-// orNone is a text, or "none" for an empty one.
 func orNone(s string) string {
 	if s == "" {
 		return "none"

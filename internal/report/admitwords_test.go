@@ -15,7 +15,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/wordsjudge"
 )
 
-// judgeConfig is the judge of the tests: Sonnet at low, as T119 chose.
+// judgeConfig is the judge of the tests: Sonnet at low.
 func judgeConfig() runner.Config {
 	return runner.Configs()[slices.IndexFunc(runner.Configs(), func(c runner.Config) bool { return c.Name == "sonnet-low" })]
 }
