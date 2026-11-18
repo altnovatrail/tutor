@@ -1199,6 +1199,7 @@ The estimate of "The set of words":
   | repeat of a past question | 0 of 230 | 0 of 230 | ≤ 5% |
 
 - **The rule admitted Opus** at the rung "author" to solution analysis and the hint — two entries of the list with the rule's output, `samples/runs/t127-words.admit.md`, its sha256 1e49fa51…d68a and the prompt fingerprint of the hint (architecture 3.9). With Sonnet as the judge the rule would not have admitted it: the 2 "off task" are its false alarms.
+- **Tokens** — the averages of the 300 hints, 2,356 of input and 437 of output, are the expected tokens of `CallWords` in `price.go`.
 - **Spent $11.08**, against a ceiling of $7, then $8, which the author lifted with the words «не экономь»: hints $5.45, the judge Sonnet $0.84 and Opus $1.81, control phrases $0.84, the trial run $0.46. Another $1.68 went on two attempts that the spending limit of the workspace `api-dev`, then of the organization, cut short — the adapter recognized the refusals as "limit reached", the cause — the owner's limit (T121).
 
 **The time of the hint on prompt version 3** (T139, 2026-11-13; R107; Д222, DEBT.md of `spec`). No new run: the logs of T127 above, the hint prompt version 3, Opus 5.5 · `high`, the request with the sheet's crop that `Tutor.Words` sends as the call `CallWords` (`hint.RequestOf`). Every call that came back with a hint counts: the admission run's 300, the 102 answered calls of the two attempts the limit cut short — a case asked in two attempts counts twice, they are two calls —, and the 23 of the trial run; the 145 refusals for the limit do not. The time of a call is from sending to reply, as the runner writes it (`latency_ms`), and the first token is when the first text of the answer came (`first_token_ms`). The percentile is the nearest rank, as in `tutor-eval report`; a script over the logs gave the same numbers twice. Only numbers came here.
@@ -1365,6 +1366,20 @@ The v1 runs are the same 204 cases; `api`'s strict leak check turns a leak into 
 | the words after a correct answer (`CallCorrect`) | 2,803 | 811 | $0.0031 | $0.0008 | 21 % |
 
 The money is Opus 5.5's: input $4, a write for 5 minutes $5, a hit $0.20 a million (sources 1.18). A hit saves the prefix × $3.80 and a miss costs it × $1 more, so the cache pays from 1 / (1 + 3.8) ≈ 21 % of the calls of a kind that hit, whatever the prefix's length. Both prefixes are above 512 tokens; the prompt that structured outputs adds for the schema is not counted in them. How often a call of the words comes within 5 minutes of another of its kind, on the same key, only `api`'s log can say (В92, В96).
+
+### 3.23. The first admission of the reading pair
+
+**What and how** (T126, 2026-11-08; R80). The admission run of the pair Opus 5.5 · `high` and Haiku 5.5 · `medium` on 60 of the author's sheets — `sheets-v1` 40, `free-v1` 3, `free-messy-v1` 10 and `author-v1` 7 —, 3 repeats each, the final sheet without the key at 32 px, the reading prompt of version 1 with the fingerprint `94452c62…`. 360 calls, $1.68 against a ceiling of $8; no failures and no "unchecked". The log and the reports are `samples/runs/t126-admission.*`, outside git, and here only the numbers:
+
+| Report | False alarms by readings | False "correct" by readings | Extra "unreadable" |
+|---|---|---|---|
+| Opus · `high` | 0 of 105 | 0 of 75 | 3 of 180 |
+| Haiku · `medium` | 0 of 105 | 0 of 75 | 6 of 180 |
+| pair | 0 of 105 | 0 of 75 | 9 of 180 |
+
+By answer slots, as the rule counts: the pair has 0 false alarms on 35 answer slots, bound 0.082, and 0 false "correct" on 25 answer slots, bound 0.113. `tutor-eval admit` gave the pair the rung "author", and the reports of one reader nothing: a sheet is read by a pair. The report's SHA-256 was `f2455454…`. The averages of its 180 calls of each reader — Opus 1,354 of input and 177 of output, Haiku 1,354 and 502 — are the expected tokens of `CallSheet` in `price.go`. The runner of this run is a build from the working copy, and its report names the runner `v0.0.0`.
+
+**Version 2 of the prompt** (T115, 2026-11-08; R82). The reading prompt became version 2, with the safety rules for children, and the admission was repeated by the same run on the same 60 sheets, twice: the review refined the rule about what is unsuitable, and the final prompt was measured anew. The final run cost $1.78, with no failures; the pair again has 0 false alarms on 35 answer slots and 0 false "correct" on 25 — the rung "author" —, and extra "unreadable" are 6 of 180 instead of 9 for version 1. Its report, `t115-admission-2`, with the SHA-256 `284d8eac…` and the fingerprint of version 2, `c693bfa8…`, is the evidence of the pair's entry in `admission.Admitted`.
 
 ## 4. Claude Code sessions
 
