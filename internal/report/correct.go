@@ -209,7 +209,7 @@ func (r *Correct) Markdown(w io.Writer, logName string) error {
 		kind, lang := c.where()
 		fmt.Fprintf(&b, "| %s | %s | %s | %d | %d | %d | %d | %d | %d |\n", c.Tutor, kind, lang, c.Came, c.Questions, c.Sentences, c.Last, c.Words, c.Script)
 	}
-	fmt.Fprintf(&b, "\nThe words are exactly one question, their last sentence, with no more than one sentence before it, of 1 to %d words in Russian and %d in English, in the letters of their language: option (2) of architecture 2.8, as api holds them (words.Correct).\n", words.HintWords("ru"), words.HintWords("en"))
+	fmt.Fprintf(&b, "\nThe words are exactly one question, their last sentence, with no more than one sentence before it, of 1 to %d words in Russian and %d in English, in the letters of their language: option (2) of R109, as api holds them (words.Correct).\n", words.HintWords("ru"), words.HintWords("en"))
 
 	b.WriteString("\n## The note and the learner's sex\n\n")
 	b.WriteString("| Tutor | Case | Language | Takes up the note | The sex told, rough search |\n|---|---|---|---|---|\n")

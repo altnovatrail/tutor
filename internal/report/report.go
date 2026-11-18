@@ -136,7 +136,7 @@ type Cell struct {
 	MeanUSD                              float64
 }
 
-// Agreement is how a judge agrees with the first judge of the run in "correct" (architecture 2.6):
+// Agreement is how a judge agrees with the first judge of the run in "correct":
 // of its answers "correct" with the first judge's answer at the same place, how many of the first
 // judge's say "correct" too, and how many of all its answers say "unreadable".
 type Agreement struct {

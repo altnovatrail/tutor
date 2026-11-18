@@ -28,7 +28,7 @@ The leak check is the program's, as api runs it before the tutor's words reach t
 | opus-high | note | en | 2 | 0 | 0 | 0 | 0 | 0 |
 | opus-high | all | all | 10 | 0 | 0 | 0 | 0 | 0 |
 
-The words are exactly one question, their last sentence, with no more than one sentence before it, of 1 to 30 words in Russian and 35 in English, in the letters of their language: option (2) of architecture 2.8, as api holds them (words.Correct).
+The words are exactly one question, their last sentence, with no more than one sentence before it, of 1 to 30 words in Russian and 35 in English, in the letters of their language: option (2) of R109, as api holds them (words.Correct).
 
 ## The note and the learner's sex
 
