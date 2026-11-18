@@ -76,17 +76,10 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T177 | Комментарии: `cmd/tutor-eval` и судьи, журнал, конвертер | Claude | — | T170 |
 | [x] | T178 | Комментарии: `internal/sample`, `internal/evalsample`, `internal/synth` | Claude | — | T170 |
 | [x] | T179 | Комментарии: генераторы, рисование, листы и задачи | Claude | — | T170 |
-| [ ] | T180 | Комментарии: корень, `admission`, провайдеры, `words`, протокол | Claude | — | T170 |
+| [x] | T180 | Комментарии: корень, `admission`, провайдеры, `words`, протокол | Claude | — | T170 |
 | [ ] | T181 | Комментарии: доска, подсказка, чтение, `correct`, CI и контейнер | Claude | — | T170 |
 
 **Порядок:** T171–T181 независимы друг от друга и идут в любом порядке, по одной; T172–T175 правят один файл, разные разделы. Строка 7.32 COORDINATION.md spec ждёт всех.
-
-#### T180. Комментарии: корень, `admission`, провайдеры, `words`, протокол
-
-- **Цель:** комментарии кода корневого пакета, `admission`, `provider/…`, `words`, `internal/protocol/…`, `internal/providertest`, `internal/openview` и `internal/leak`, тестов тоже, — по R160 spec, «Comments». Это экспортируемый API библиотеки для `api`: doc-комментарии держат его контракт.
-- **Сделать:** по «Комментариям» описания эпика.
-- **Как проверить:** `just lint`, `just ci-test`; `just -f spec/justfile docs-check-repo`; `/code-review high`.
-- **Разделы:** R160 spec; R32 spec; описание эпика E19.
 
 #### T181. Комментарии: доска, подсказка, чтение, `correct`, CI и контейнер
 
