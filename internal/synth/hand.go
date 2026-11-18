@@ -29,7 +29,7 @@ var letters = map[rune]glyph{
 	'т': {{{0.08, 0.45}, {0.92, 0.45}}, {{0.5, 0.45}, {0.5, 1}}},
 	'у': {{{0.12, 0.45}, {0.5, 0.95}}, {{0.88, 0.45}, {0.35, 1.35}, {0.15, 1.3}}},
 	// The rest of the small letters, so that no word of a plan comes out a squiggle, and the signs
-	// the author wrote for the unknowns in the pilot, a square and a triangle (T54).
+	// the author wrote for the unknowns in the pilot, a square and a triangle.
 	'г': {{{0.2, 1}, {0.2, 0.45}, {0.85, 0.45}}},
 	'д': {{{0.05, 1.2}, {0.05, 0.95}, {0.95, 0.95}, {0.95, 1.2}}, {{0.15, 0.95}, {0.32, 0.45}, {0.8, 0.45}, {0.8, 0.95}}},
 	'ё': {{{0.15, 0.72}, {0.85, 0.72}, {0.75, 0.5}, {0.45, 0.45}, {0.15, 0.6}, {0.15, 0.85}, {0.45, 1}, {0.85, 0.92}}, {{0.33, 0.3}}, {{0.67, 0.3}}},
@@ -78,14 +78,14 @@ type hand struct {
 // digit of its pair (SimilarShift); a digit of no pair, an answer line with the planned erasure and
 // a sheet of parts do not lean.
 // It panics on a plan sheet the plan's check refuses, such as one without lines, and on one code
-// cannot draw yet (Drawable).
+// cannot draw (Drawable).
 func Sheet(sh *sample.PlanSheet, seed uint64) *sample.Sample {
 	return SheetLeaning(sh, seed, SimilarShift)
 }
 
 // SheetLeaning is Sheet with the digit of the answer of a sheet of the scenario "similar-digits"
 // leaning the share shift toward the digit of its pair: draw takes it with -shift, to draw the near
-// sheets of the extended measurement at shares 0.1 to 0.4 (T93; R50).
+// sheets of the extended measurement at shares 0.1 to 0.4 (R50).
 func SheetLeaning(sh *sample.PlanSheet, seed uint64, shift float64) *sample.Sample {
 	if len(sh.Parts) > 0 {
 		return sheetOfParts(sh, seed)

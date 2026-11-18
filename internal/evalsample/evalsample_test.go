@@ -121,9 +121,9 @@ func TestReadBank(t *testing.T) {
 	}
 }
 
-// What a drawn sample names of itself: an ID and a writer's code from its seed, in the forms of
-// section 11, and canvas 0.0.0 and the set of texts "none" where only canvas's samples page has one
-// (the 2026-11-07 amendment to R93 spec).
+// What a drawn sample names of itself: an ID and a writer's code from its seed, in the protocol's
+// forms, and canvas 0.0.0 and the set of texts "none" where only canvas's samples page has one
+// (R93 spec).
 func TestHeader(t *testing.T) {
 	for _, c := range []struct {
 		plan  string
@@ -303,7 +303,7 @@ func TestHeights(t *testing.T) {
 	}
 }
 
-// A sample is refused as section 13 has it, for each of its reasons, and a sample that is no sheet
+// A sample is refused as the protocol has it, for each of its reasons, and a sample that is no sheet
 // of measurement with its history is no sheet the runner reads.
 func TestRefusals(t *testing.T) {
 	b, p := read(t, lines)
@@ -322,7 +322,7 @@ func TestRefusals(t *testing.T) {
 			es.Task.Source = &evalv1.TaskReference_Tutor{Tutor: &evalv1.TutorSource{Tag: "v0.1.4", Bank: b.Path}}
 		}, b, sh, evalv1.Refusal_REFUSAL_OTHER_TASK},
 		// A sample counts to the task of its own source, and one of a package of modules is never
-		// measured with a file of tutor's (Д164 RUN.md spec; R90).
+		// measured with a file of tutor's (R90).
 		{"a task of a package of modules", func(es *evalv1.Sample) {
 			es.Task.Source = &evalv1.TaskReference_Modules{Modules: &evalv1.ModuleSource{Tag: "v0.1.0", Module: "grade-3-math", Version: "1.0.0"}}
 		}, b, sh, evalv1.Refusal_REFUSAL_OTHER_TASK},
@@ -486,9 +486,9 @@ func drawn(t *testing.T) []struct {
 
 // testdata holds a drawn sample of each kind that tutor-eval draw draws, with the seed 1 — of the
 // sheets, a page of the workbook with every scenario of a box and both writings of a fraction, and an
-// essay (R71) —, and they are what draw writes, to the byte: CI holds them to the rules of sections 11 and 12 with spec's
-// sample-check (just ci-sample-check), so that a drawn file that breaks a rule fails a pull request.
-// go test -update writes them anew.
+// essay (R71) —, and they are what draw writes, to the byte: CI holds them to the protocol's rules
+// with spec's sample-check (just ci-sample-check), so that a drawn file that breaks a rule fails a
+// pull request. go test -update writes them anew.
 func TestDrawn(t *testing.T) {
 	want := map[string]bool{}
 	for _, d := range drawn(t) {

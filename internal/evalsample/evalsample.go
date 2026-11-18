@@ -1,14 +1,14 @@
 // Package evalsample is a sheet of the measurement as a sample file of spec's eval protocol, the
-// message Sample of novatrail.eval.v1 (contracts/README.md of spec, sections 11 to 13; R93, R95
-// spec): Of writes a sheet that internal/synth drew as one, and Read reads one back into the sample
-// that tutor's runner takes, internal/sample's, with what its plan sheet says and the protocol does
-// not — the scenario, the planned erasure and the trap. Read refuses a sample as section 13 has the
-// runner refuse one: one that spec's check sample-check finds invalid, one without its markup, one of
-// another task, one whose markup does not fit its task, and a child's (R69).
+// message Sample of novatrail.eval.v1 (R93, R95 spec): Of writes a sheet that internal/synth drew
+// as one, and Read reads one back into the sample that tutor's runner takes, internal/sample's,
+// with what its plan sheet says and the protocol does not — the scenario, the planned erasure and
+// the trap. Read refuses a sample as the protocol has the runner refuse one: one that spec's check
+// sample-check finds invalid, one without its markup, one of another task, one whose markup does
+// not fit its task, and a child's (R69).
 //
 // A sample that the samples page of canvas did not write, a drawn one, names canvas 0.0.0 and the
 // set of texts "none", the values of no release, which sample-check asks of a synthetic sample
-// (section 11; the 2026-11-07 amendment to R93 spec, spec's answer to В68 of RUN.md).
+// (R93 spec).
 package evalsample
 
 import (
@@ -38,9 +38,8 @@ import (
 	"github.com/altnovatrail/tutor/internal/task"
 )
 
-// What a drawn sample names that only the samples page of canvas has (section 11; the 2026-11-07
-// amendment to R93 spec): no version of canvas and no set of texts, since neither wrote or showed
-// anything.
+// What a drawn sample names that only the samples page of canvas has (R93 spec): no version of
+// canvas and no set of texts, since neither wrote or showed anything.
 const (
 	CanvasVersion  = "0.0.0"
 	TextSetVersion = "none"
@@ -89,14 +88,14 @@ func (b *Bank) task(id string) *sample.Task {
 	return nil
 }
 
-// idPattern is the form of a sample's ID (section 11).
+// idPattern is the form of a sample's ID, as the protocol gives it.
 var idPattern = regexp.MustCompile("^[a-z0-9-]{1,64}$")
 
 // ID is the ID of a sample drawn from the seed for the sheet of the number of a plan, by the name of
 // the plan's file: synthetic-<seed>-<plan>-<NN>, and -shift-<thousandths> before the number when the
-// share of the shift of a near sheet is not synth.SimilarShift. It comes from the seed, as section
-// 11 has a synthetic sample's, and the plan, the shift and the sheet tell apart the samples one seed
-// draws: two sets drawn with one seed, and two shares of the shift, share no ID.
+// share of the shift of a near sheet is not synth.SimilarShift. It comes from the seed, as the
+// protocol has a synthetic sample's, and the plan, the shift and the sheet tell apart the samples
+// one seed draws: two sets drawn with one seed, and two shares of the shift, share no ID.
 func ID(plan string, seed uint64, shift float64, sheet int) (string, error) {
 	name := strings.Map(func(r rune) rune {
 		switch {
@@ -120,18 +119,18 @@ func ID(plan string, seed uint64, shift float64, sheet int) (string, error) {
 
 // WriterCode is the writer's code of the sheets drawn from the seed: one hand, one code, as the
 // samples page gives a person one at random. It is the first 8 hexadecimal digits of the SHA-256 of
-// "tutor-synthetic:" and the seed, in capitals, which section 11's 6 to 16 digits and capital Latin
-// letters take.
+// "tutor-synthetic:" and the seed, in capitals, which the protocol's 6 to 16 digits and capital
+// Latin letters take.
 func WriterCode(seed uint64) string {
 	sum := sha256.Sum256([]byte("tutor-synthetic:" + strconv.FormatUint(seed, 10)))
 	return strings.ToUpper(hex.EncodeToString(sum[:4]))
 }
 
 // Of is a sheet that internal/synth drew from the seed for its plan sheet, as a sample of
-// measurement of the protocol, from an adult, with its history of writing (section 11): the strokes
+// measurement of the protocol, from an adult, with its history of writing: the strokes
 // numbered from 1 in the order they were written, their points to a tenth of a unit, each stroke
 // written at its last point and each erasure at its time; the sheet's groups and crops, which the
-// rules of section 12 give the strokes the history shows; the task of the bank by its open view's
+// protocol's rules give the strokes the history shows; the task of the bank by its open view's
 // digest; and the markup that the plan sheet drew: the truth of its one answer slot, the parts in
 // the order they read and the first error.
 //
@@ -156,7 +155,7 @@ func Of(s *sample.Sample, sh *sample.PlanSheet, b *Bank, seed uint64, id string)
 
 // PersonOf is a sheet that a person wrote for its plan sheet, as a sample of measurement of the
 // protocol, from an adult in their own hand or imitating a child's, with the history of writing h,
-// whose strokes ids numbers (section 11): a person's origin, the sample's ID id, which they give at
+// whose strokes ids numbers: a person's origin, the sample's ID id, which they give at
 // random (NewID), and their writer's code, code; and the sheet's groups and crops, its task and its
 // markup as Of has them. A sheet the record mode of the board wrote, or one converted from a file of
 // tutor-sample v0, names canvas 0.0.0 and the set of texts "none", as the samples page of canvas
@@ -191,7 +190,7 @@ func PersonOf(s *sample.Sample, sh *sample.PlanSheet, b *Bank, h *evalv1.History
 }
 
 // sheetParts are what a sample of a sheet holds whoever wrote it: the reference of its task, by the
-// digest of its open view; its surface, which the rules of section 12 give the strokes of its
+// digest of its open view; its surface, which the protocol's rules give the strokes of its
 // history h; and its markup, whose strokes ids numbers. A sheet with an inscription to steer the
 // model, which the markup has no part for, is no sheet of a plan of the measurement.
 func sheetParts(s *sample.Sample, sh *sample.PlanSheet, b *Bank, h *evalv1.History, ids map[string]int32) (*evalv1.TaskReference, *evalv1.Sheet, *evalv1.Markup, error) {
@@ -218,8 +217,7 @@ func sheetParts(s *sample.Sample, sh *sample.PlanSheet, b *Bank, h *evalv1.Histo
 }
 
 // drawnSample is a sample of measurement that code drew from the seed, by an adult, with its history
-// of writing, its task and its markup, and no surface yet: what every drawn sample holds alike
-// (section 11).
+// of writing, its task and its markup, and no surface yet: what every drawn sample holds alike.
 func drawnSample(seed uint64, id string, task *evalv1.TaskReference, h *evalv1.History, markup *evalv1.Markup) *evalv1.Sample {
 	return &evalv1.Sample{
 		Protocol:       protocol.Protocol,
@@ -309,14 +307,14 @@ func boolInt(b bool) int {
 	return 0
 }
 
-// tenth is a place to a tenth of a unit, rounded half up as the rules of section 12 count it.
+// tenth is a place to a tenth of a unit, rounded half up as the protocol counts it.
 func tenth(v float64) float64 { return float64(lines.Tenths(v)) / 10 }
 
 // sheetOf is the surface of a history on a sheet of the size: its height of a digit, render.Digit,
 // the one the reading reads at; the groups of the strokes it shows, by the rule of groups; and their
-// crops at each height of section 11, by the rule of the crop. The strokes are those of the history
-// as a reader folds it (protocol.Ink), to the tenth they are written at, so that sample-check, which
-// computes them again, finds the same.
+// crops at each height the protocol names, by the rule of the crop. The strokes are those of the
+// history as a reader folds it (protocol.Ink), to the tenth they are written at, so that
+// sample-check, which computes them again, finds the same.
 func sheetOf(h *evalv1.History, size sample.Sheet) (*evalv1.Sheet, error) {
 	if size.Width != math.Trunc(size.Width) || size.Height != math.Trunc(size.Height) || size.Width < 1 || size.Height < 1 || size.Width > math.MaxInt32 || size.Height > math.MaxInt32 {
 		return nil, fmt.Errorf("evalsample: a sheet of %g × %g units, and the protocol's is whole units", size.Width, size.Height)
@@ -373,7 +371,7 @@ func Shown(strokes []sample.Stroke, f protocol.Folded) []sample.Stroke {
 }
 
 // Heights are the heights of a digit a set of crops is drawn at: those of eval, render.Heights, and
-// the module's, ascending and each once (section 11).
+// the module's, ascending and each once, as the protocol has them.
 func Heights(module int) []int {
 	hs := render.Heights()
 	if !slices.Contains(hs, module) {
@@ -385,7 +383,7 @@ func Heights(module int) []int {
 
 // CropSet is the set of crops of strokes, with the frames of their groups (none on a workbook), at
 // each of the heights: the box of their points and h_med in whole tenths, and each crop's numbers
-// and PNG, as the rule of the crop gives them (section 12).
+// and PNG, as the rule of the crop gives them.
 func CropSet(strokes []sample.Stroke, groups []lines.StrokeGroup, heights []int) (*evalv1.CropSet, error) {
 	set := &evalv1.CropSet{}
 	for _, h := range heights {
@@ -449,7 +447,7 @@ func slot() *observationv1.AnswerSlotPlace { return &observationv1.AnswerSlotPla
 
 // markupOf is the markup a sheet was drawn with, as the protocol writes it: its lines as parts, each
 // a text, or a drawing where its part of the plan is one, with its strokes ascending; the first
-// error; and the truth of its answer slot, which a reader that reads right gives (section 11):
+// error; and the truth of its answer slot, which a reader that reads right gives:
 //   - a sheet that shows no stroke is blank;
 //   - with no part holding the final answer, no part crossed out among them, it has no final answer,
 //     and with two or more, several;
@@ -463,7 +461,7 @@ func slot() *observationv1.AnswerSlotPlace { return &observationv1.AnswerSlotPla
 // Code draws no such sheet: its truth is for the author's hand to write.
 //
 // A sheet with a part crossed out has the note crossed_out on its slot: something there is crossed
-// out and written again. Every stroke a sheet shows is in a part (section 11), and a sheet with one
+// out and written again. Every stroke a sheet shows is in a part, and a sheet with one
 // in none has no markup the protocol takes.
 func markupOf(s *sample.Sample, sh *sample.PlanSheet, t *sample.Task, ids map[string]int32) (*evalv1.Markup, error) {
 	if id := Loose(s); id != "" {

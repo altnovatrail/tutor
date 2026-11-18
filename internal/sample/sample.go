@@ -9,10 +9,9 @@
 //
 // A sample is the sheet as tutor's code takes it in memory: its files are samples of spec's eval
 // protocol, which internal/evalsample reads into one (R69), and the files of tutor-sample v0, which
-// the record mode wrote until T105, only internal/convert still reads (R75). The bank, the plan and
-// the split are files of their own, explained in docs/architecture.md, section 3.1. A reader takes
-// only the version it knows and refuses unknown fields, so a file written for another version
-// fails loudly rather than losing what it holds.
+// only internal/convert reads (R75). The bank, the plan and the split are files of their own. A
+// reader takes only the version it knows and refuses unknown fields, so a file written for another
+// version fails loudly rather than losing what it holds.
 package sample
 
 import (
@@ -33,7 +32,7 @@ const (
 	PlanFormat   = "tutor-sheet-plan"
 	Version      = 0
 	// PlanParts is the version of the sheet plan whose sheets are made of parts — text, drawings
-	// and notes at the side — rather than of lines alone (T56).
+	// and notes at the side — rather than of lines alone.
 	PlanParts = 1
 )
 
@@ -145,10 +144,10 @@ const (
 	WriterSynthetic     Writer = "synthetic"
 )
 
-// Scenario is what a sheet was written to test (docs/architecture.md, section 3.1).
+// Scenario is what a sheet was written to test.
 type Scenario string
 
-// The scenarios of section 3.1.
+// The scenarios of a sheet.
 const (
 	ScenarioCorrect        Scenario = "correct"
 	ScenarioError          Scenario = "error"
@@ -162,7 +161,7 @@ const (
 	ScenarioInjection      Scenario = "injection"
 )
 
-// Scenarios lists every scenario, in the order of section 3.1.
+// Scenarios lists every scenario.
 var Scenarios = []Scenario{
 	ScenarioCorrect, ScenarioError, ScenarioSimilarDigits, ScenarioIllegible, ScenarioAnswerNotLast,
 	ScenarioNearlyEmpty, ScenarioMirroredDigits, ScenarioErasureFixed, ScenarioErasureBroken,
@@ -207,8 +206,8 @@ const (
 
 // ReadStrict reads exactly one JSON value into v as strictly as every file of the format is read:
 // every field present and spelt as its JSON name, once, and no other. what names the file's kind,
-// for its errors; a file of the wrong shape gives a *FormatError. The reader of tutor-sample v0,
-// internal/convert, reads with it what it alone still reads (T105).
+// for its errors; a file of the wrong shape gives a *FormatError. internal/convert reads the files
+// of tutor-sample v0 with it.
 func ReadStrict(r io.Reader, what string, v any) error {
 	if err := readStrict(r, what, v); err != nil {
 		return readError(what, err)

@@ -16,7 +16,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// Refusal is why the runner refuses a sample, by the reasons of section 13 that its report names
+// Refusal is why the runner refuses a sample, by the protocol's reasons that its report names
 // (evalv1.Refusal), and what of the sample it is, in words: nothing of the handwriting, neither a
 // point nor the text of a part.
 type Refusal struct {
@@ -64,7 +64,7 @@ type Sheet struct {
 }
 
 // Read reads a sample of the protocol, which sample-check has found valid, as the plan sheet its
-// file's name saves, of the bank of its set. It refuses the sample, as section 13 has it, when:
+// file's name saves, of the bank of its set. It refuses the sample, as the protocol has it, when:
 //   - it has no markup;
 //   - its task is not the plan sheet's: another source than its set's bank, a bank of another digest,
 //     no such task, or an open view of another digest;
@@ -82,12 +82,11 @@ func Read(es *evalv1.Sample, sh *sample.PlanSheet, b *Bank) (*Sheet, *Refusal, e
 	return s, r, err
 }
 
-// ReadSheet reads a sample of a sheet of a set of a capability, as canvas's synthetic samples are
-// (section 13 of spec's text of the contracts): a sample of any purpose, which no plan sheet of
-// tutor's names. It refuses the sample as Read does, but for the plan sheet, and reads a final
-// geometry as the strokes it shows, with no erasure and no time, as well as a history. Its plan sheet
-// is the sample's own (planOf), which it gives with the sheet; a sheet that shows no stroke has no
-// answer slot a model reads.
+// ReadSheet reads a sample of a sheet of a set of a capability, as canvas's synthetic samples are:
+// a sample of any purpose, which no plan sheet of tutor's names. It refuses the sample as Read
+// does, but for the plan sheet, and reads a final geometry as the strokes it shows, with no erasure
+// and no time, as well as a history. Its plan sheet is the sample's own (planOf), which it gives
+// with the sheet; a sheet that shows no stroke has no answer slot a model reads.
 func ReadSheet(es *evalv1.Sample, b *Bank) (*Sheet, *sample.PlanSheet, *Refusal, error) {
 	return readSheet(es, b, nil)
 }
@@ -219,7 +218,7 @@ func planOf(t *sample.Task, m *evalv1.Markup, o sample.Outcome, truth []Truth) *
 // task's key, with the verdicts it gave: correct is correct, not yet right is an error, an answer illegible or ambiguous is
 // unreadable, and no answer, several, or a blank sheet is no answer. A truth that is no valid
 // observation of the task, or gets no verdict, is a markup that does not fit its task, and so is a
-// mark of criteria on a sheet whose task has no rubric (section 13).
+// mark of criteria on a sheet whose task has no rubric.
 func outcomeOf(ft formatv0.Task, m *evalv1.Markup) (sample.Outcome, []verdict.ItemVerdict, *Refusal) {
 	if m.GetMarks() != nil {
 		return "", nil, refuse(evalv1.Refusal_REFUSAL_INVALID, "its markup marks criteria, and its task %s has no rubric", ft.ID)

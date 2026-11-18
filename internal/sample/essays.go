@@ -12,11 +12,10 @@ import (
 // EssaysFormat is the name a file of the essays declares in its "format" field.
 const EssaysFormat = "tutor-essays"
 
-// Essays is the synthetic essays of the measurement of the assessment by a rubric (T82;
-// docs/architecture.md, 3.4, "Essays"): one rubric, the criteria a module's task with a rubric
-// would give (spec's format, section 15), and short essays in English, each with its topic, its
-// title and its text, and which criteria of the rubric it does not meet, as planned. Code draws each
-// essay in memory from a seed (synth.Essay): no file of a page is written.
+// Essays is the synthetic essays of the measurement of the assessment by a rubric: one rubric, the
+// criteria a module's task with a rubric would give, and short essays in English, each with its
+// topic, its title and its text, and which criteria of the rubric it does not meet, as planned.
+// Code draws each essay in memory from a seed (synth.Essay): no file of a page is written.
 type Essays struct {
 	Format  string      `json:"format"`
 	Version *int        `json:"version"`
@@ -316,7 +315,7 @@ func wordsMatch(text string, word *regexp.Regexp) bool {
 }
 
 // checkNames refuses a capital letter inside a sentence but that of I, so that no text holds a name
-// (privacy П-20): a capital starts a sentence, or is I. A title is written with capitals, and a name
+// (П-20): a capital starts a sentence, or is I. A title is written with capitals, and a name
 // in it only the author's reading finds.
 func checkNames(p *problems, path, text string) {
 	for i, s := range Sentences(text) {

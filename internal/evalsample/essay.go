@@ -64,7 +64,7 @@ func EssayTask(es *sample.Essays, e *sample.Essay) string {
 var ErrNotEssay = errors.New("evalsample: the sample is no essay on a sheet with its history, and the runner of the essays reads only those")
 
 // OfEssay is an essay that internal/synth drew from the seed, as a sample of measurement of the
-// protocol, from an adult, with its history of writing (section 11): its strokes numbered from 1 in
+// protocol, from an adult, with its history of writing: its strokes numbered from 1 in
 // the order they were written; the sheet, synth.EssayWidth × synth.EssayHeight, with the groups of
 // its strokes and their crops; the essay's task by its open view's digest (task.Essay); and the
 // markup it was drawn with (essayMarkup).
@@ -93,7 +93,7 @@ func OfEssay(e *sample.Essay, f *Essays, seed uint64, id string) (*evalv1.Sample
 	return es, nil
 }
 
-// essayMarkup is the markup of an essay as its file writes it (section 11): the truth of its one
+// essayMarkup is the markup of an essay as its file writes it: the truth of its one
 // answer slot, the essay as it is written (sample.Essay.Written), and a mark of every criterion of
 // the rubric, by its place from 1: met unless the file names it among those the essay does not meet.
 // Code marks a synthetic essay, so no criterion lacks a mark.
@@ -127,7 +127,7 @@ type Essay struct {
 }
 
 // ReadEssay reads a sample of the protocol, which sample-check has found valid, as the essay of the
-// file its task names. It refuses the sample, as section 13 has it, when:
+// file its task names. It refuses the sample, as the protocol has it, when:
 //   - it has no markup;
 //   - its task is not of the essays: another source, a file of another digest, no such essay, or an
 //     open view of another digest;

@@ -165,7 +165,7 @@ func TestLatinChangesNoPlan(t *testing.T) {
 	}
 }
 
-// The English text, drawn with seed 1, is what it was: the hash of its strokes and of its picture
+// The English text, drawn with seed 1, is fixed: the hash of its strokes and of its picture
 // hold it on every machine (see the package's comment). The same seed draws the same strokes, and
 // another seed other ones. With -picture the test writes the picture for the author to look at.
 func TestText(t *testing.T) {

@@ -8,11 +8,10 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// The page of an essay (T82; docs/architecture.md, 3.4, "Essays") is a handwriting sheet of the
-// module format, 1000 × 1400 units (spec's format, section 14). The title stands on its first line,
-// and the text below it, broken between words into lines of at most essayMinLine to essayMaxLine
-// characters, a number each essay draws from the seed: so the size of the hand varies from essay to
-// essay, since the hand is fitted to the longest line (Text).
+// The page of an essay is a handwriting sheet of the module format, 1000 × 1400 units. The title
+// stands on its first line, and the text below it, broken between words into lines of at most
+// essayMinLine to essayMaxLine characters, a number each essay draws from the seed: so the size of
+// the hand varies from essay to essay, since the hand is fitted to the longest line (Text).
 const (
 	EssayWidth   = 1000
 	EssayHeight  = 1400

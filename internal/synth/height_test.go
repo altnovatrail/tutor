@@ -36,14 +36,14 @@ func written(sh *sample.PlanSheet) string {
 
 // The crop's estimate of the height of a digit, h_med of the bundles of the strokes (R25 canvas),
 // against the height of the synthetic hand, on every sheet of the plans the measurement draws, with
-// the seed its sets were drawn with (T69):
+// the seed its sets are drawn with:
 //   - on a sheet whose writing has no small letters, it is within a tenth of the hand, on nine
-//     sheets in ten: on all 10 of E2's;
+//     sheets in ten;
 //   - on a sheet with small letters — «Ответ: 5 столбов», «в точке 10», 3x — it may fall to the
 //     height of a small letter, about half the hand's: the code writes them apart, each a bundle of
-//     its own, and when they are half the bundles, the lower median is one of them. That was so on
-//     10 of E2's 30 such sheets and on 19 of the free plan's 40, and the digits of such a crop come
-//     out up to twice D. The rule is the protocol's, and tutor does not change it (R35).
+//     its own, and when they are half the bundles, the lower median is one of them, and the digits
+//     of such a crop come out up to twice D. The rule is the protocol's, and tutor does not change
+//     it (R35).
 func TestTheCropFindsTheHeightOfTheHand(t *testing.T) {
 	for _, path := range []string{"../../eval/sheets.json", "../../eval/free-sheets.json"} {
 		f, err := os.Open(path)
