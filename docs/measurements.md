@@ -1370,29 +1370,29 @@ The money is Opus 5.5's: input $4, a write for 5 minutes $5, a hit $0.20 a milli
 
 ### 4.1. The spending of tutor's sessions
 
-What tutor's Claude Code sessions spend, by the measurement of measurements 1.1 spec: `just -f spec/justfile tokens-report --since … --until … --row` prints one row of the table below from this machine's transcripts of the folder `-workspaces-tutor`. A row comes at the archive of each epic, for the epic's window (RUN.md, «Как устроен план: эпики»), and from each task of row 7.12 of spec's cross-repository plan, T131–T136, for its own session (R102). The figures are only sums: no text of transcripts is here.
+What tutor's Claude Code sessions spend, by the measurement of measurements 1.1 spec: `just -f spec/justfile tokens-report --since … --until … --row` prints one row of the table below from this machine's transcripts of the folder `-workspaces-tutor`. A row comes at the archive of each epic, for the epic's window (RUN.md, «Как устроен план: эпики»), and from each task of row 7.12 of spec's cross-repository plan, T131–T136, for its own session (R102). The figures are only sums: no text of transcripts is here. The last column, the context of a main call among the first 80 of its session, the row has printed since `spec` `v0.18.27` (T199 spec; measurements 1.9 spec), and the rows before it have "—" there (R133).
 
-| Window, UTC | What | Sessions | Calls, main / subagents | Context of a call, k, main / subagents | Compactions | Cost at API prices |
-|---|---|---|---|---|---|---|
-| 2026-10-13T00:00 … 2026-11-12T14:27 | "before": tutor's row of measurements 1.9 spec | 28 | 11,509 / 6,806 | 398.5 / 119.5 | 53 | $1,896.62 |
-| 2026-11-12T20:32 … 2026-11-12T21:49 | T131: spec `v0.16.3` and the ways of working of line 0.16 | 1 | 132 / 43 | 244.2 / 114.9 | 0 | $13.00 |
-| 2026-11-12T21:49 … 2026-11-13T03:46 | T132: the sources | 1 | 98 / 52 | 244.8 / 93.7 | 0 | $14.22 |
-| 2026-11-13T03:46 … 2026-11-13T05:57 | T133: the measurements | 1 | 163 / 217 | 227.7 / 88.6 | 1 | $24.63 |
-| 2026-11-13T05:57 … 2026-11-13T14:08 | T134: architecture and the sheet documents in English | 1 | 125 / 256 | 180.1 / 88.2 | 0 | $22.90 |
-| 2026-11-13T14:08 … 2026-11-13T14:42 | T135: the decision log to R50 in English | 1 | 64 / 195 | 98.3 / 85.0 | 0 | $12.09 |
-| 2026-11-13T14:42 … 2026-11-13T15:05 | T136: the log from R51 in English, the budgets, until its review | 1 | 81 / 155 | 148.7 / 104.7 | 0 | $13.82 |
-| 2026-11-12T20:32 … 2026-11-13T15:05 | "after": row 7.12, T131–T136 | 6 | 663 / 918 | 202.4 / 92.0 | 1 | $100.66 |
-| 2026-11-13T15:36 … 2026-11-13T18:46 | epic E7: its planning, T137–T140 and its archive | 5 | 406 / 61 | 147.6 / 64.4 | 0 | $26.58 |
-| 2026-11-13T18:46 … 2026-11-14T01:10 | epic E8: its planning, T141–T144 and its archive | 5 | 519 / 252 | 195.3 / 87.5 | 1 | $47.93 |
-| 2026-11-14T01:10 … 2026-11-16T05:01 | epic E9: T145–T147, run by spec's orchestrator, and its archive | 4 | 279 / 104 | 154.6 / 84.9 | 0 | $19.79 |
-| 2026-11-16T05:01 … 2026-11-16T16:20 | epic E10: T148–T151, run by spec's orchestrator, and its archive | 6 | 359 / 78 | 126.3 / 62.8 | 0 | $22.25 |
-| 2026-11-16T16:20 … 2026-11-16T22:20 | epic E11: T152, run by spec's orchestrator, and its archive | 2 | 127 / 34 | 163.7 / 73.9 | 0 | $8.46 |
-| 2026-11-16T22:20 … 2026-11-17T04:36 | epic E12: T153–T156 and T160–T163, run by spec's orchestrator, and its archive | 9 | 647 / 192 | 147.3 / 70.1 | 0 | $47.78 |
-| 2026-11-17T04:36 … 2026-11-17T05:26 | epic E13: T164, run by spec's orchestrator, and its archive | 2 | 47 / 17 | 81.2 / 58.0 | 0 | $2.85 |
-| 2026-11-17T05:26 … 2026-11-17T15:04 | epic E14: T165, run by spec's orchestrator, and its archive | 2 | 69 / 0 | 85.3 / — | 0 | $3.28 |
-| 2026-11-17T15:04 … 2026-11-17T18:38 | epic E15: T166, run by spec's orchestrator, and its archive | 2 | 113 / 21 | 120.4 / 73.0 | 0 | $6.94 |
-| 2026-11-17T18:38 … 2026-11-17T19:15 | epic E16: T167, run by spec's orchestrator, and its archive | 2 | 105 / 22 | 146.7 / 60.2 | 0 | $6.88 |
-| 2026-11-17T19:15 … 2026-11-17T19:37 | epic E17: T168, run by spec's orchestrator, and its archive | 2 | 84 / 24 | 168.7 / 53.9 | 0 | $5.82 |
+| Window, UTC | What | Sessions | Calls, main / subagents | Context of a call, k, main / subagents | Compactions | Cost at API prices | Context of a main call among its session's first 80, k |
+|---|---|---|---|---|---|---|---|
+| 2026-10-13T00:00 … 2026-11-12T14:27 | "before": tutor's row of measurements 1.9 spec | 28 | 11,509 / 6,806 | 398.5 / 119.5 | 53 | $1,896.62 | — |
+| 2026-11-12T20:32 … 2026-11-12T21:49 | T131: spec `v0.16.3` and the ways of working of line 0.16 | 1 | 132 / 43 | 244.2 / 114.9 | 0 | $13.00 | — |
+| 2026-11-12T21:49 … 2026-11-13T03:46 | T132: the sources | 1 | 98 / 52 | 244.8 / 93.7 | 0 | $14.22 | — |
+| 2026-11-13T03:46 … 2026-11-13T05:57 | T133: the measurements | 1 | 163 / 217 | 227.7 / 88.6 | 1 | $24.63 | — |
+| 2026-11-13T05:57 … 2026-11-13T14:08 | T134: architecture and the sheet documents in English | 1 | 125 / 256 | 180.1 / 88.2 | 0 | $22.90 | — |
+| 2026-11-13T14:08 … 2026-11-13T14:42 | T135: the decision log to R50 in English | 1 | 64 / 195 | 98.3 / 85.0 | 0 | $12.09 | — |
+| 2026-11-13T14:42 … 2026-11-13T15:05 | T136: the log from R51 in English, the budgets, until its review | 1 | 81 / 155 | 148.7 / 104.7 | 0 | $13.82 | — |
+| 2026-11-12T20:32 … 2026-11-13T15:05 | "after": row 7.12, T131–T136 | 6 | 663 / 918 | 202.4 / 92.0 | 1 | $100.66 | — |
+| 2026-11-13T15:36 … 2026-11-13T18:46 | epic E7: its planning, T137–T140 and its archive | 5 | 406 / 61 | 147.6 / 64.4 | 0 | $26.58 | — |
+| 2026-11-13T18:46 … 2026-11-14T01:10 | epic E8: its planning, T141–T144 and its archive | 5 | 519 / 252 | 195.3 / 87.5 | 1 | $47.93 | — |
+| 2026-11-14T01:10 … 2026-11-16T05:01 | epic E9: T145–T147, run by spec's orchestrator, and its archive | 4 | 279 / 104 | 154.6 / 84.9 | 0 | $19.79 | — |
+| 2026-11-16T05:01 … 2026-11-16T16:20 | epic E10: T148–T151, run by spec's orchestrator, and its archive | 6 | 359 / 78 | 126.3 / 62.8 | 0 | $22.25 | — |
+| 2026-11-16T16:20 … 2026-11-16T22:20 | epic E11: T152, run by spec's orchestrator, and its archive | 2 | 127 / 34 | 163.7 / 73.9 | 0 | $8.46 | — |
+| 2026-11-16T22:20 … 2026-11-17T04:36 | epic E12: T153–T156 and T160–T163, run by spec's orchestrator, and its archive | 9 | 647 / 192 | 147.3 / 70.1 | 0 | $47.78 | — |
+| 2026-11-17T04:36 … 2026-11-17T05:26 | epic E13: T164, run by spec's orchestrator, and its archive | 2 | 47 / 17 | 81.2 / 58.0 | 0 | $2.85 | — |
+| 2026-11-17T05:26 … 2026-11-17T15:04 | epic E14: T165, run by spec's orchestrator, and its archive | 2 | 69 / 0 | 85.3 / — | 0 | $3.28 | — |
+| 2026-11-17T15:04 … 2026-11-17T18:38 | epic E15: T166, run by spec's orchestrator, and its archive | 2 | 113 / 21 | 120.4 / 73.0 | 0 | $6.94 | — |
+| 2026-11-17T18:38 … 2026-11-17T19:15 | epic E16: T167, run by spec's orchestrator, and its archive | 2 | 105 / 22 | 146.7 / 60.2 | 0 | $6.88 | — |
+| 2026-11-17T19:15 … 2026-11-17T19:37 | epic E17: T168, run by spec's orchestrator, and its archive | 2 | 84 / 24 | 168.7 / 53.9 | 0 | $5.82 | — |
 
 - Read 2026-11-13. A task's window runs from the start of its session to the start of the next one. The row of T131 is its whole session; its «Сделано» gives the numbers before its review: 106 / 43 calls, 221.1 / 114.9 thousand, $10.76. Until T136, the row of T133 was its session before its review, 2026-11-13T03:46 … 2026-11-13T05:11: 131 / 176 calls, 216.1 / 88.1 thousand, $20.45; it is its whole session now, as the other rows. The row of T136 runs to its review, as does "after", and the rows of the six tasks add up to "after".
 - "After" is the six sessions of row 7.12, to the review of T136: the context of a main call is 202.4 thousand against 398.5 "before", −49%, and of a subagent's 92.0 against 119.5, −23%, with 1 compaction in 663 main calls against 53 in 11,509. The windows differ in work: a month of code and paid runs against six sessions on documents, a session for each task. The comparison over the same kind of work is T124 spec.

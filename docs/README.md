@@ -20,7 +20,7 @@ The releases are immutable. Inside NovaTrail a file of a release enters code or 
 
 ## Contributing
 
-The working rules, for people and coding agents alike, are in [CLAUDE.md](../CLAUDE.md), with the rules every NovaTrail repository shares, spec's RULES.md, which it imports, and [AGENTS.md](../AGENTS.md) for an agent other than Claude Code. How a change comes in — an issue first, then a pull request whose commits are signed off under the DCO — is in the organization's [CONTRIBUTING.md](https://github.com/altnovatrail/.github/blob/main/CONTRIBUTING.md); a vulnerability is reported privately, as the [security policy](https://github.com/altnovatrail/tutor/security/policy) says. Issues and pull requests are accepted in English or Russian.
+The working rules, for people and coding agents alike, are in [CLAUDE.md](../CLAUDE.md), with the rules every NovaTrail repository shares, spec's RULES.md, which it imports, and [AGENTS.md](../AGENTS.md) for an agent other than Claude Code. How a change comes in — an issue first, then a pull request whose commits are signed off under the DCO — is in the organization's [CONTRIBUTING.md](https://github.com/altnovatrail/.github/blob/main/CONTRIBUTING.md); a vulnerability is reported privately, as the [security policy](https://github.com/altnovatrail/tutor/security/policy) says. Issues and pull requests are in English, a person's too (spec's RULES.md, Language).
 
 ## Build and run
 
