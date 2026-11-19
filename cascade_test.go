@@ -13,14 +13,14 @@ import (
 const (
 	noTasks  = `{"tasks": []}`
 	twoTasks = `{"tasks": [{"x1": 2, "y1": 2, "x2": 18, "y2": 10}, {"x1": 2, "y1": 15, "x2": 18, "y2": 25}]}`
-	noAnswer = `{"kind": "none", "value": "", "units": [], "unknown": "", "options": [], "key": ""}`
+	noAnswer = `{"answers": [{"task": 1, "kind": "none", "value": "", "units": [], "unknown": "", "options": [], "key": ""}]}`
 	// broken is an answer of the schema that breaks a rule of a key: no number's notation.
-	broken    = `{"kind": "number", "value": "twelve", "units": [], "unknown": "", "options": [], "key": ""}`
-	twelve    = `{"kind": "number", "value": "12", "units": [], "unknown": "", "options": [], "key": ""}`
-	illegible = `{"parts": [{"kind": "text", "text": "?", "legible": false, "other_readings": []}], "results": [{"part": 1, "value": "35", "other_values": []}]}`
-	several   = `{"parts": [{"kind": "text", "text": "85 86", "legible": true, "other_readings": []}], "results": [{"part": 1, "value": "85", "other_values": []}, {"part": 1, "value": "86", "other_values": []}]}`
+	broken    = `{"answers": [{"task": 1, "kind": "number", "value": "twelve", "units": [], "unknown": "", "options": [], "key": ""}]}`
+	twelve    = `{"answers": [{"task": 1, "kind": "number", "value": "12", "units": [], "unknown": "", "options": [], "key": ""}]}`
+	illegible = `{"parts": [{"kind": "text", "text": "?", "legible": false, "other_readings": []}], "results": [{"task": 1, "part": 1, "box": [], "value": "35", "other_values": []}]}`
+	several   = `{"parts": [{"kind": "text", "text": "85 86", "legible": true, "other_readings": []}], "results": [{"task": 1, "part": 1, "box": [], "value": "85", "other_values": []}, {"task": 1, "part": 1, "box": [], "value": "86", "other_values": []}]}`
 	none      = `{"parts": [], "results": []}`
-	read85    = `{"parts": [{"kind": "text", "text": "85", "legible": true, "other_readings": []}], "results": [{"part": 1, "value": "85", "other_values": []}]}`
+	read85    = `{"parts": [{"kind": "text", "text": "85", "legible": true, "other_readings": []}], "results": [{"task": 1, "part": 1, "box": [], "value": "85", "other_values": []}]}`
 )
 
 // timesAsked are how many times each model of the cascade was asked, Haiku, Sonnet and Opus.
@@ -53,27 +53,29 @@ func TestCascadeOfTheFinding(t *testing.T) {
 
 // The statement asks a later model only on a failure: one that is no formula is the answer.
 func TestCascadeOfTheStatement(t *testing.T) {
-	lib, m := cascadeOf(t, `{"formula": 1}`, `{"formula": "37+48"}`, `{"formula": "37+48"}`)
+	const sum = `{"tasks": [{"statement": "37 + 48 =", "formula": "37+48"}]}`
+	lib, m := cascadeOf(t, `{"tasks": [{"statement": "37 + 48 =", "formula": 1}]}`, sum, sum)
 	p := PaperTask{Route: platform, Statement: photoJPEG(t, 30, 30)}
-	if got := lib.ReadStatement(context.Background(), p); got.Outcome.Kind != Answered || got.Formula != "37+48" || len(got.Outcome.Usage) != 2 || timesAsked(m) != [3]int{1, 1, 0} {
+	if got := lib.ReadStatement(context.Background(), p); got.Outcome.Kind != Answered || len(got.Tasks) != 1 || got.Tasks[0].Formula != "37+48" || len(got.Outcome.Usage) != 2 || timesAsked(m) != [3]int{1, 1, 0} {
 		t.Errorf("off the schema first: %+v, asked %v", got, timesAsked(m))
 	}
-	lib, m = cascadeOf(t, `{"formula": ""}`, `{"formula": "37+48"}`, `{"formula": "37+48"}`)
-	if got := lib.ReadStatement(context.Background(), p); got.Formula != "" || timesAsked(m) != [3]int{1, 0, 0} {
+	lib, m = cascadeOf(t, `{"tasks": [{"statement": "Ann has 3 apples.", "formula": ""}]}`, sum, sum)
+	if got := lib.ReadStatement(context.Background(), p); len(got.Tasks) != 1 || got.Tasks[0].Formula != "" || timesAsked(m) != [3]int{1, 0, 0} {
 		t.Errorf("no formula: %+v, asked %v", got, timesAsked(m))
 	}
 }
 
 // The solution asks a later model when the one before gave no answer, or one a key may not hold.
 func TestCascadeOfTheSolution(t *testing.T) {
+	one := []TaskToSolve{{Number: 1, Statement: "Ann has 3 apples."}}
 	lib, m := cascadeOf(t, noAnswer, broken, twelve)
-	got := lib.SolveTask(context.Background(), PaperTask{Route: platform, Statement: cropPNG(t, 20, 20)})
-	if got.Outcome.Kind != Answered || got.Answer.GetNumber().GetValue() != "12" || timesAsked(m) != [3]int{1, 1, 1} {
+	got := lib.SolveTask(context.Background(), PaperTask{Route: platform, Statement: cropPNG(t, 20, 20)}, one)
+	if got.Outcome.Kind != Answered || got.Answers[1].GetNumber().GetValue() != "12" || timesAsked(m) != [3]int{1, 1, 1} {
 		t.Errorf("solved %+v, asked %v", got, timesAsked(m))
 	}
 	// When none gives one, the answer is the last that answered, whatever it is.
 	lib, _ = cascadeOf(t, noAnswer, noAnswer, broken)
-	if got := lib.SolveTask(context.Background(), PaperTask{Route: platform, Statement: cropPNG(t, 20, 20)}); got.Outcome.Kind != Answered || got.Answer.GetNumber().GetValue() != "twelve" {
+	if got := lib.SolveTask(context.Background(), PaperTask{Route: platform, Statement: cropPNG(t, 20, 20)}, one); got.Outcome.Kind != Answered || got.Answers[1].GetNumber().GetValue() != "twelve" {
 		t.Errorf("none gave one: %+v", got)
 	}
 }
@@ -82,20 +84,20 @@ func TestCascadeOfTheSolution(t *testing.T) {
 // it holds no answer or several.
 func TestCascadeOfTheWork(t *testing.T) {
 	lib, m := cascadeOf(t, illegible, read85, read85)
-	got := lib.ReadPaper(context.Background(), PaperReading{Route: platform, Crop: cropPNG(t, 40, 30)})
+	got := lib.ReadPaper(context.Background(), PaperReading{Route: platform, Crop: cropPNG(t, 40, 30), Tasks: []string{"37 + 48 ="}})
 	if got.Outcome.Kind != Answered || len(got.Observations) != 1 || got.Observations[0].GetAnswerSlots()[0].GetValue() != "85" || timesAsked(m) != [3]int{1, 1, 0} {
 		t.Errorf("read %+v, asked %v", got, timesAsked(m))
 	}
 	for _, held := range []string{several, none} {
 		lib, m = cascadeOf(t, held, read85, read85)
-		got = lib.ReadPaper(context.Background(), PaperReading{Route: platform, Crop: cropPNG(t, 40, 30)})
+		got = lib.ReadPaper(context.Background(), PaperReading{Route: platform, Crop: cropPNG(t, 40, 30), Tasks: []string{"37 + 48 ="}})
 		if got.Outcome.Kind != Answered || got.Observations[0].GetAnswerSlots()[0].GetUnreadable() == 0 || timesAsked(m) != [3]int{1, 0, 0} {
 			t.Errorf("%s: read %+v, asked %v", held, got, timesAsked(m))
 		}
 	}
 	// Unreadable by all three is the reading: unreadable.
 	lib, _ = cascadeOf(t, illegible, illegible, illegible)
-	got = lib.ReadPaper(context.Background(), PaperReading{Route: platform, Crop: cropPNG(t, 40, 30)})
+	got = lib.ReadPaper(context.Background(), PaperReading{Route: platform, Crop: cropPNG(t, 40, 30), Tasks: []string{"37 + 48 ="}})
 	if got.Outcome.Kind != Answered || got.Observations[0].GetAnswerSlots()[0].GetUnreadable() == 0 || len(got.Outcome.Usage) != 3 {
 		t.Errorf("unreadable: %+v", got)
 	}

@@ -7,10 +7,10 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// Version 1 is frozen: the entry of the list admits this fingerprint (R134).
-func TestFrozenV1(t *testing.T) {
-	const frozen = "311d729683e8bf38e169990d123005f5ce93ea6571294ee11a85a1461edf023f"
-	if got := Fingerprint(); got != frozen || Version != 1 {
+// Version 2 is frozen: the entry of the list admits this fingerprint (R134).
+func TestFrozenV2(t *testing.T) {
+	const frozen = "34ec69d1df0f2cc8e211bf56b83d3533c146cd0092ad523fdc382c1f1c87a256"
+	if got := Fingerprint(); got != frozen || Version != 2 {
 		t.Errorf("the fingerprint of version %d is %s, not the one the list admits, %s", Version, got, frozen)
 	}
 }

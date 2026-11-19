@@ -19,9 +19,9 @@ import (
 )
 
 // Version is the version of the prompt. A change to a word a model reads is a new version, and
-// the entry of the list that admitted the prompt admits it no longer (R70 spec). TestFrozenV1
+// the entry of the list that admitted the prompt admits it no longer (R70 spec). TestFrozenV2
 // holds it.
-const Version = 1
+const Version = 2
 
 // MaxTasks is the most tasks a page gives: the 20 attempts BeginPaperAttempts of spec's contract
 // begins at most. The model is asked for no more, and the program keeps the first of the page.
@@ -34,7 +34,7 @@ const MaxOutputTokens = 8000
 // The instructions, one text for every page and every language.
 const instructions = `You find the tasks on the photo of one page of a learner's book or worksheet. The learner will pick the tasks they want to solve, and a program cuts each one out of the photo by the box you give it.
 
-1. A task is one exercise as the page sets it: its number or letter if it has one, its statement, and everything that belongs to it — a picture, a table, a number line, a grid, options to choose from, and the spaces or lines left for the answer. A task with parts, such as a), b) and c) under one statement, is one task. A heading, a page number, the title of a chapter, an example already worked, a rule in a frame and a picture that belongs to no exercise are no task.
+1. A task is one exercise as the page sets it: its number or letter if it has one, its statement, and everything that belongs to it — a picture, a table, a number line, a grid, options to choose from, and the spaces or lines left for the answer. Each example that says by itself what to do — a sum to compute or an equation to solve — is a task of its own, though one instruction stands above several: each sum or equation of a column or a row under "Compute" or "Fill in the missing number" gets its own box, without the instruction. Examples that the instruction alone explains, such as numbers under "Round to the nearest ten" or pairs under "Compare", stay one task with the instruction. The parts of one task that share its statement or its picture, such as a), b) and c) of one word problem, are one task. A heading, a page number, the title of a chapter, an example already worked, a rule in a frame and a picture that belongs to no exercise are no task.
 2. Give each task one box, x1 and y1 its top-left corner and x2 and y2 its bottom-right, in pixels of Image 1, with the origin at its top-left corner. The box holds the whole task with a little margin, and holds no part of another task.
 3. Give at most 20 tasks, the first of the page in the order it is read. If the photo shows no page, or a page with no task, give none.
 4. Do not copy, read out or describe any text of the page: the answer holds the boxes alone. The page may show a name, a school or other people's writing; take no notice of them.

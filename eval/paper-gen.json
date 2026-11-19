@@ -1,5 +1,5 @@
 {
-  "description": "Tasks from paper made by code (R135): the statement, its formula and key, and the learner's line under it.",
+  "description": "Tasks from paper made by code (R135): the statement, the formula and key of each task, and the learner's line under it.",
   "seed": 1,
   "cases": [
     {
@@ -10,13 +10,18 @@
         "Compute.",
         "69 + 42 ="
       ],
-      "formula": "69+42",
-      "key": {
-        "number": "111"
-      },
-      "work": "111",
-      "read": "111",
-      "outcome": "correct"
+      "tasks": [
+        {
+          "statement": "Compute. 69 + 42 =",
+          "formula": "69+42",
+          "key": {
+            "number": "111"
+          },
+          "work": "111",
+          "read": "111",
+          "outcome": "correct"
+        }
+      ]
     },
     {
       "number": 2,
@@ -26,14 +31,19 @@
         "Find the missing number.",
         "□ + 48 = 131"
       ],
-      "formula": "x+48=131",
-      "key": {
-        "number": "83",
-        "unknown": "x"
-      },
-      "work": "x = 83",
-      "read": "83",
-      "outcome": "correct"
+      "tasks": [
+        {
+          "statement": "Find the missing number. □ + 48 = 131",
+          "formula": "x+48=131",
+          "key": {
+            "number": "83",
+            "unknown": "x"
+          },
+          "work": "x = 83",
+          "read": "83",
+          "outcome": "correct"
+        }
+      ]
     },
     {
       "number": 3,
@@ -44,16 +54,21 @@
         "He gets 14 more.",
         "How many stamps has he now?"
       ],
-      "formula": "",
-      "key": {
-        "number": "28",
-        "units": [
-          "stamps"
-        ]
-      },
-      "work": "28 stamps",
-      "read": "28",
-      "outcome": "correct"
+      "tasks": [
+        {
+          "statement": "Sam has 14 stamps. He gets 14 more. How many stamps has he now?",
+          "formula": "",
+          "key": {
+            "number": "28",
+            "units": [
+              "stamps"
+            ]
+          },
+          "work": "28 stamps",
+          "read": "28",
+          "outcome": "correct"
+        }
+      ]
     },
     {
       "number": 4,
@@ -63,19 +78,24 @@
         "Which number is the largest?",
         "(A) 56  (B) 89  (C) 23  (D) 122"
       ],
-      "formula": "",
-      "key": {
-        "options": [
-          "A",
-          "B",
-          "C",
-          "D"
-        ],
-        "choice": "D"
-      },
-      "work": "D",
-      "read": "D",
-      "outcome": "correct"
+      "tasks": [
+        {
+          "statement": "Which number is the largest? (A) 56  (B) 89  (C) 23  (D) 122",
+          "formula": "",
+          "key": {
+            "options": [
+              "A",
+              "B",
+              "C",
+              "D"
+            ],
+            "choice": "D"
+          },
+          "work": "D",
+          "read": "D",
+          "outcome": "correct"
+        }
+      ]
     },
     {
       "number": 5,
@@ -84,451 +104,683 @@
       "statement": [
         "Draw a line 9 cm long."
       ],
-      "formula": "",
-      "key": null,
-      "work": "",
-      "read": "",
-      "outcome": "unchecked"
+      "tasks": [
+        {
+          "statement": "Draw a line 9 cm long.",
+          "formula": "",
+          "key": null,
+          "work": "",
+          "read": "",
+          "outcome": "unchecked"
+        }
+      ]
     },
     {
       "number": 6,
       "part": "test",
-      "kind": "expression",
+      "kind": "several",
       "statement": [
-        "Compute.",
-        "30 + 48 ="
+        "Find the missing number."
       ],
-      "formula": "30+48",
-      "key": {
-        "number": "78"
-      },
-      "work": "79",
-      "read": "79",
-      "outcome": "not_yet"
+      "tasks": [
+        {
+          "statement": "□ + 3 = 19",
+          "formula": "x+3=19",
+          "key": {
+            "number": "16",
+            "unknown": "x"
+          },
+          "work": "x = 16",
+          "read": "16",
+          "outcome": "correct"
+        },
+        {
+          "statement": "□ + 4 = 11",
+          "formula": "x+4=11",
+          "key": {
+            "number": "7",
+            "unknown": "x"
+          },
+          "work": "x = 8",
+          "read": "8",
+          "outcome": "not_yet"
+        },
+        {
+          "statement": "□ + 1 = 11",
+          "formula": "x+1=11",
+          "key": {
+            "number": "10",
+            "unknown": "x"
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        }
+      ]
     },
     {
       "number": 7,
       "part": "test",
-      "kind": "equation",
+      "kind": "expression",
       "statement": [
-        "Find the missing number.",
-        "□ + 39 = 130"
+        "Compute.",
+        "97 + 79 ="
       ],
-      "formula": "x+39=130",
-      "key": {
-        "number": "91",
-        "unknown": "x"
-      },
-      "work": "x = 92",
-      "read": "92",
-      "outcome": "not_yet"
+      "tasks": [
+        {
+          "statement": "Compute. 97 + 79 =",
+          "formula": "97+79",
+          "key": {
+            "number": "176"
+          },
+          "work": "177",
+          "read": "177",
+          "outcome": "not_yet"
+        }
+      ]
     },
     {
       "number": 8,
       "part": "test",
-      "kind": "word",
+      "kind": "equation",
       "statement": [
-        "Sam has 41 stamps.",
-        "He gets 24 more.",
-        "How many stamps has he now?"
+        "Find the missing number.",
+        "□ + 63 = 147"
       ],
-      "formula": "",
-      "key": {
-        "number": "65",
-        "units": [
-          "stamps"
-        ]
-      },
-      "work": "66 stamps",
-      "read": "66",
-      "outcome": "not_yet"
+      "tasks": [
+        {
+          "statement": "Find the missing number. □ + 63 = 147",
+          "formula": "x+63=147",
+          "key": {
+            "number": "84",
+            "unknown": "x"
+          },
+          "work": "x = 85",
+          "read": "85",
+          "outcome": "not_yet"
+        }
+      ]
     },
     {
       "number": 9,
       "part": "test",
-      "kind": "choice",
+      "kind": "word",
       "statement": [
-        "Which number is the largest?",
-        "(A) 40  (B) 17  (C) 86  (D) 63"
+        "Sam has 94 stamps.",
+        "He gets 10 more.",
+        "How many stamps has he now?"
       ],
-      "formula": "",
-      "key": {
-        "options": [
-          "A",
-          "B",
-          "C",
-          "D"
-        ],
-        "choice": "C"
-      },
-      "work": "A",
-      "read": "A",
-      "outcome": "not_yet"
+      "tasks": [
+        {
+          "statement": "Sam has 94 stamps. He gets 10 more. How many stamps has he now?",
+          "formula": "",
+          "key": {
+            "number": "104",
+            "units": [
+              "stamps"
+            ]
+          },
+          "work": "105 stamps",
+          "read": "105",
+          "outcome": "not_yet"
+        }
+      ]
     },
     {
       "number": 10,
       "part": "test",
-      "kind": "open",
+      "kind": "choice",
       "statement": [
-        "Draw a line 6 cm long."
+        "Which number is the largest?",
+        "(A) 27  (B) 60  (C) 38  (D) 49"
       ],
-      "formula": "",
-      "key": null,
-      "work": "",
-      "read": "",
-      "outcome": "unchecked"
+      "tasks": [
+        {
+          "statement": "Which number is the largest? (A) 27  (B) 60  (C) 38  (D) 49",
+          "formula": "",
+          "key": {
+            "options": [
+              "A",
+              "B",
+              "C",
+              "D"
+            ],
+            "choice": "B"
+          },
+          "work": "A",
+          "read": "A",
+          "outcome": "not_yet"
+        }
+      ]
     },
     {
       "number": 11,
       "part": "test",
-      "kind": "expression",
+      "kind": "open",
       "statement": [
-        "Compute.",
-        "10 + 27 ="
+        "Draw a line 9 cm long."
       ],
-      "formula": "10+27",
-      "key": {
-        "number": "37"
-      },
-      "work": "",
-      "read": "",
-      "outcome": "unreadable"
+      "tasks": [
+        {
+          "statement": "Draw a line 9 cm long.",
+          "formula": "",
+          "key": null,
+          "work": "",
+          "read": "",
+          "outcome": "unchecked"
+        }
+      ]
     },
     {
       "number": 12,
       "part": "test",
-      "kind": "equation",
+      "kind": "several",
       "statement": [
-        "Find the missing number.",
-        "□ + 51 = 108"
+        "Find the missing number."
       ],
-      "formula": "x+51=108",
-      "key": {
-        "number": "57",
-        "unknown": "x"
-      },
-      "work": "",
-      "read": "",
-      "outcome": "unreadable"
+      "tasks": [
+        {
+          "statement": "□ + 2 = 19",
+          "formula": "x+2=19",
+          "key": {
+            "number": "17",
+            "unknown": "x"
+          },
+          "work": "x = 18",
+          "read": "18",
+          "outcome": "not_yet"
+        },
+        {
+          "statement": "□ + 3 = 16",
+          "formula": "x+3=16",
+          "key": {
+            "number": "13",
+            "unknown": "x"
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        },
+        {
+          "statement": "□ + 2 = 19",
+          "formula": "x+2=19",
+          "key": {
+            "number": "17",
+            "unknown": "x"
+          },
+          "work": "x = 17",
+          "read": "17",
+          "outcome": "correct"
+        },
+        {
+          "statement": "□ + 4 = 13",
+          "formula": "x+4=13",
+          "key": {
+            "number": "9",
+            "unknown": "x"
+          },
+          "work": "x = 10",
+          "read": "10",
+          "outcome": "not_yet"
+        }
+      ]
     },
     {
       "number": 13,
       "part": "test",
-      "kind": "word",
+      "kind": "expression",
       "statement": [
-        "Sam has 80 stamps.",
-        "He gets 44 more.",
-        "How many stamps has he now?"
+        "Compute.",
+        "37 + 86 ="
       ],
-      "formula": "",
-      "key": {
-        "number": "124",
-        "units": [
-          "stamps"
-        ]
-      },
-      "work": "",
-      "read": "",
-      "outcome": "unreadable"
+      "tasks": [
+        {
+          "statement": "Compute. 37 + 86 =",
+          "formula": "37+86",
+          "key": {
+            "number": "123"
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        }
+      ]
     },
     {
       "number": 14,
       "part": "test",
-      "kind": "choice",
+      "kind": "equation",
       "statement": [
-        "Which number is the largest?",
-        "(A) 241  (B) 131  (C) 186  (D) 76"
+        "Find the missing number.",
+        "□ + 75 = 100"
       ],
-      "formula": "",
-      "key": {
-        "options": [
-          "A",
-          "B",
-          "C",
-          "D"
-        ],
-        "choice": "A"
-      },
-      "work": "",
-      "read": "",
-      "outcome": "unreadable"
+      "tasks": [
+        {
+          "statement": "Find the missing number. □ + 75 = 100",
+          "formula": "x+75=100",
+          "key": {
+            "number": "25",
+            "unknown": "x"
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        }
+      ]
     },
     {
       "number": 15,
       "part": "test",
-      "kind": "open",
+      "kind": "word",
       "statement": [
-        "Draw a line 8 cm long."
+        "Sam has 47 stamps.",
+        "He gets 58 more.",
+        "How many stamps has he now?"
       ],
-      "formula": "",
-      "key": null,
-      "work": "",
-      "read": "",
-      "outcome": "unchecked"
+      "tasks": [
+        {
+          "statement": "Sam has 47 stamps. He gets 58 more. How many stamps has he now?",
+          "formula": "",
+          "key": {
+            "number": "105",
+            "units": [
+              "stamps"
+            ]
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        }
+      ]
     },
     {
       "number": 16,
       "part": "test",
-      "kind": "expression",
+      "kind": "choice",
       "statement": [
-        "Compute.",
-        "68 + 21 ="
+        "Which number is the largest?",
+        "(A) 133  (B) 81  (C) 185  (D) 29"
       ],
-      "formula": "68+21",
-      "key": {
-        "number": "89"
-      },
-      "work": "89",
-      "read": "89",
-      "outcome": "correct"
+      "tasks": [
+        {
+          "statement": "Which number is the largest? (A) 133  (B) 81  (C) 185  (D) 29",
+          "formula": "",
+          "key": {
+            "options": [
+              "A",
+              "B",
+              "C",
+              "D"
+            ],
+            "choice": "C"
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        }
+      ]
     },
     {
       "number": 17,
-      "part": "test",
-      "kind": "equation",
-      "statement": [
-        "Find the missing number.",
-        "□ + 47 = 87"
-      ],
-      "formula": "x+47=87",
-      "key": {
-        "number": "40",
-        "unknown": "x"
-      },
-      "work": "x = 40",
-      "read": "40",
-      "outcome": "correct"
-    },
-    {
-      "number": 18,
-      "part": "test",
-      "kind": "word",
-      "statement": [
-        "Sam has 37 stamps.",
-        "He gets 86 more.",
-        "How many stamps has he now?"
-      ],
-      "formula": "",
-      "key": {
-        "number": "123",
-        "units": [
-          "stamps"
-        ]
-      },
-      "work": "123 stamps",
-      "read": "123",
-      "outcome": "correct"
-    },
-    {
-      "number": 19,
-      "part": "test",
-      "kind": "choice",
-      "statement": [
-        "Which number is the largest?",
-        "(A) 263  (B) 188  (C) 113  (D) 38"
-      ],
-      "formula": "",
-      "key": {
-        "options": [
-          "A",
-          "B",
-          "C",
-          "D"
-        ],
-        "choice": "A"
-      },
-      "work": "A",
-      "read": "A",
-      "outcome": "correct"
-    },
-    {
-      "number": 20,
-      "part": "test",
-      "kind": "open",
-      "statement": [
-        "Draw a line 2 cm long."
-      ],
-      "formula": "",
-      "key": null,
-      "work": "",
-      "read": "",
-      "outcome": "unchecked"
-    },
-    {
-      "number": 21,
-      "part": "test",
-      "kind": "expression",
-      "statement": [
-        "Compute.",
-        "15 × 27 ="
-      ],
-      "formula": "15*27",
-      "key": {
-        "number": "405"
-      },
-      "work": "406",
-      "read": "406",
-      "outcome": "not_yet"
-    },
-    {
-      "number": 22,
-      "part": "test",
-      "kind": "equation",
-      "statement": [
-        "Find the missing number.",
-        "□ + 62 = 133"
-      ],
-      "formula": "x+62=133",
-      "key": {
-        "number": "71",
-        "unknown": "x"
-      },
-      "work": "x = 72",
-      "read": "72",
-      "outcome": "not_yet"
-    },
-    {
-      "number": 23,
-      "part": "test",
-      "kind": "word",
-      "statement": [
-        "Sam has 48 stamps.",
-        "He gets 23 more.",
-        "How many stamps has he now?"
-      ],
-      "formula": "",
-      "key": {
-        "number": "71",
-        "units": [
-          "stamps"
-        ]
-      },
-      "work": "72 stamps",
-      "read": "72",
-      "outcome": "not_yet"
-    },
-    {
-      "number": 24,
-      "part": "test",
-      "kind": "choice",
-      "statement": [
-        "Which number is the largest?",
-        "(A) 121  (B) 33  (C) 209  (D) 297"
-      ],
-      "formula": "",
-      "key": {
-        "options": [
-          "A",
-          "B",
-          "C",
-          "D"
-        ],
-        "choice": "D"
-      },
-      "work": "A",
-      "read": "A",
-      "outcome": "not_yet"
-    },
-    {
-      "number": 25,
       "part": "test",
       "kind": "open",
       "statement": [
         "Draw a line 4 cm long."
       ],
-      "formula": "",
-      "key": null,
-      "work": "",
-      "read": "",
-      "outcome": "unchecked"
+      "tasks": [
+        {
+          "statement": "Draw a line 4 cm long.",
+          "formula": "",
+          "key": null,
+          "work": "",
+          "read": "",
+          "outcome": "unchecked"
+        }
+      ]
     },
     {
-      "number": 26,
+      "number": 18,
+      "part": "test",
+      "kind": "several",
+      "statement": [
+        "Find the missing number."
+      ],
+      "tasks": [
+        {
+          "statement": "□ + 8 = 19",
+          "formula": "x+8=19",
+          "key": {
+            "number": "11",
+            "unknown": "x"
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        },
+        {
+          "statement": "□ + 9 = 19",
+          "formula": "x+9=19",
+          "key": {
+            "number": "10",
+            "unknown": "x"
+          },
+          "work": "x = 10",
+          "read": "10",
+          "outcome": "correct"
+        }
+      ]
+    },
+    {
+      "number": 19,
       "part": "test",
       "kind": "expression",
       "statement": [
         "Compute.",
-        "92 × 77 ="
+        "26 + 32 ="
       ],
-      "formula": "92*77",
-      "key": {
-        "number": "7084"
-      },
-      "work": "",
-      "read": "",
-      "outcome": "unreadable"
+      "tasks": [
+        {
+          "statement": "Compute. 26 + 32 =",
+          "formula": "26+32",
+          "key": {
+            "number": "58"
+          },
+          "work": "58",
+          "read": "58",
+          "outcome": "correct"
+        }
+      ]
     },
     {
-      "number": 27,
+      "number": 20,
       "part": "test",
       "kind": "equation",
       "statement": [
         "Find the missing number.",
-        "□ + 82 = 119"
+        "□ + 92 = 169"
       ],
-      "formula": "x+82=119",
-      "key": {
-        "number": "37",
-        "unknown": "x"
-      },
-      "work": "",
-      "read": "",
-      "outcome": "unreadable"
+      "tasks": [
+        {
+          "statement": "Find the missing number. □ + 92 = 169",
+          "formula": "x+92=169",
+          "key": {
+            "number": "77",
+            "unknown": "x"
+          },
+          "work": "x = 77",
+          "read": "77",
+          "outcome": "correct"
+        }
+      ]
     },
     {
-      "number": 28,
+      "number": 21,
       "part": "test",
       "kind": "word",
       "statement": [
-        "Sam has 39 stamps.",
-        "He gets 22 more.",
+        "Sam has 53 stamps.",
+        "He gets 82 more.",
         "How many stamps has he now?"
       ],
-      "formula": "",
-      "key": {
-        "number": "61",
-        "units": [
-          "stamps"
-        ]
-      },
-      "work": "",
-      "read": "",
-      "outcome": "unreadable"
+      "tasks": [
+        {
+          "statement": "Sam has 53 stamps. He gets 82 more. How many stamps has he now?",
+          "formula": "",
+          "key": {
+            "number": "135",
+            "units": [
+              "stamps"
+            ]
+          },
+          "work": "135 stamps",
+          "read": "135",
+          "outcome": "correct"
+        }
+      ]
     },
     {
-      "number": 29,
+      "number": 22,
       "part": "test",
       "kind": "choice",
       "statement": [
         "Which number is the largest?",
-        "(A) 102  (B) 38  (C) 230  (D) 166"
+        "(A) 76  (B) 115  (C) 37  (D) 154"
       ],
-      "formula": "",
-      "key": {
-        "options": [
-          "A",
-          "B",
-          "C",
-          "D"
-        ],
-        "choice": "C"
-      },
-      "work": "",
-      "read": "",
-      "outcome": "unreadable"
+      "tasks": [
+        {
+          "statement": "Which number is the largest? (A) 76  (B) 115  (C) 37  (D) 154",
+          "formula": "",
+          "key": {
+            "options": [
+              "A",
+              "B",
+              "C",
+              "D"
+            ],
+            "choice": "D"
+          },
+          "work": "D",
+          "read": "D",
+          "outcome": "correct"
+        }
+      ]
+    },
+    {
+      "number": 23,
+      "part": "test",
+      "kind": "open",
+      "statement": [
+        "Draw a line 8 cm long."
+      ],
+      "tasks": [
+        {
+          "statement": "Draw a line 8 cm long.",
+          "formula": "",
+          "key": null,
+          "work": "",
+          "read": "",
+          "outcome": "unchecked"
+        }
+      ]
+    },
+    {
+      "number": 24,
+      "part": "test",
+      "kind": "several",
+      "statement": [
+        "Find the missing number."
+      ],
+      "tasks": [
+        {
+          "statement": "□ + 9 = 19",
+          "formula": "x+9=19",
+          "key": {
+            "number": "10",
+            "unknown": "x"
+          },
+          "work": "x = 10",
+          "read": "10",
+          "outcome": "correct"
+        },
+        {
+          "statement": "□ + 2 = 17",
+          "formula": "x+2=17",
+          "key": {
+            "number": "15",
+            "unknown": "x"
+          },
+          "work": "x = 16",
+          "read": "16",
+          "outcome": "not_yet"
+        },
+        {
+          "statement": "□ + 6 = 15",
+          "formula": "x+6=15",
+          "key": {
+            "number": "9",
+            "unknown": "x"
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        },
+        {
+          "statement": "□ + 5 = 16",
+          "formula": "x+5=16",
+          "key": {
+            "number": "11",
+            "unknown": "x"
+          },
+          "work": "x = 11",
+          "read": "11",
+          "outcome": "correct"
+        }
+      ]
+    },
+    {
+      "number": 25,
+      "part": "test",
+      "kind": "expression",
+      "statement": [
+        "Compute.",
+        "26 × 45 ="
+      ],
+      "tasks": [
+        {
+          "statement": "Compute. 26 × 45 =",
+          "formula": "26*45",
+          "key": {
+            "number": "1170"
+          },
+          "work": "1171",
+          "read": "1171",
+          "outcome": "not_yet"
+        }
+      ]
+    },
+    {
+      "number": 26,
+      "part": "test",
+      "kind": "equation",
+      "statement": [
+        "Find the missing number.",
+        "□ + 46 = 109"
+      ],
+      "tasks": [
+        {
+          "statement": "Find the missing number. □ + 46 = 109",
+          "formula": "x+46=109",
+          "key": {
+            "number": "63",
+            "unknown": "x"
+          },
+          "work": "x = 64",
+          "read": "64",
+          "outcome": "not_yet"
+        }
+      ]
+    },
+    {
+      "number": 27,
+      "part": "test",
+      "kind": "word",
+      "statement": [
+        "Sam has 46 stamps.",
+        "He gets 59 more.",
+        "How many stamps has he now?"
+      ],
+      "tasks": [
+        {
+          "statement": "Sam has 46 stamps. He gets 59 more. How many stamps has he now?",
+          "formula": "",
+          "key": {
+            "number": "105",
+            "units": [
+              "stamps"
+            ]
+          },
+          "work": "106 stamps",
+          "read": "106",
+          "outcome": "not_yet"
+        }
+      ]
+    },
+    {
+      "number": 28,
+      "part": "test",
+      "kind": "choice",
+      "statement": [
+        "Which number is the largest?",
+        "(A) 160  (B) 122  (C) 46  (D) 84"
+      ],
+      "tasks": [
+        {
+          "statement": "Which number is the largest? (A) 160  (B) 122  (C) 46  (D) 84",
+          "formula": "",
+          "key": {
+            "options": [
+              "A",
+              "B",
+              "C",
+              "D"
+            ],
+            "choice": "A"
+          },
+          "work": "B",
+          "read": "B",
+          "outcome": "not_yet"
+        }
+      ]
+    },
+    {
+      "number": 29,
+      "part": "test",
+      "kind": "open",
+      "statement": [
+        "Draw a line 2 cm long."
+      ],
+      "tasks": [
+        {
+          "statement": "Draw a line 2 cm long.",
+          "formula": "",
+          "key": null,
+          "work": "",
+          "read": "",
+          "outcome": "unchecked"
+        }
+      ]
     },
     {
       "number": 30,
       "part": "test",
-      "kind": "open",
+      "kind": "several",
       "statement": [
-        "Draw a line 3 cm long."
+        "Find the missing number."
       ],
-      "formula": "",
-      "key": null,
-      "work": "",
-      "read": "",
-      "outcome": "unchecked"
+      "tasks": [
+        {
+          "statement": "□ + 3 = 10",
+          "formula": "x+3=10",
+          "key": {
+            "number": "7",
+            "unknown": "x"
+          },
+          "work": "x = 8",
+          "read": "8",
+          "outcome": "not_yet"
+        },
+        {
+          "statement": "□ + 7 = 12",
+          "formula": "x+7=12",
+          "key": {
+            "number": "5",
+            "unknown": "x"
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        }
+      ]
     },
     {
       "number": 31,
@@ -536,15 +788,20 @@
       "kind": "expression",
       "statement": [
         "Compute.",
-        "97 × 98 ="
+        "77 + 47 ="
       ],
-      "formula": "97*98",
-      "key": {
-        "number": "9506"
-      },
-      "work": "9506",
-      "read": "9506",
-      "outcome": "correct"
+      "tasks": [
+        {
+          "statement": "Compute. 77 + 47 =",
+          "formula": "77+47",
+          "key": {
+            "number": "124"
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        }
+      ]
     },
     {
       "number": 32,
@@ -552,195 +809,24 @@
       "kind": "equation",
       "statement": [
         "Find the missing number.",
-        "□ + 79 = 148"
+        "□ + 46 = 69"
       ],
-      "formula": "x+79=148",
-      "key": {
-        "number": "69",
-        "unknown": "x"
-      },
-      "work": "x = 69",
-      "read": "69",
-      "outcome": "correct"
+      "tasks": [
+        {
+          "statement": "Find the missing number. □ + 46 = 69",
+          "formula": "x+46=69",
+          "key": {
+            "number": "23",
+            "unknown": "x"
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        }
+      ]
     },
     {
       "number": 33,
-      "part": "test",
-      "kind": "word",
-      "statement": [
-        "Sam has 63 stamps.",
-        "He gets 58 more.",
-        "How many stamps has he now?"
-      ],
-      "formula": "",
-      "key": {
-        "number": "121",
-        "units": [
-          "stamps"
-        ]
-      },
-      "work": "121 stamps",
-      "read": "121",
-      "outcome": "correct"
-    },
-    {
-      "number": 34,
-      "part": "test",
-      "kind": "choice",
-      "statement": [
-        "Which number is the largest?",
-        "(A) 93  (B) 145  (C) 67  (D) 119"
-      ],
-      "formula": "",
-      "key": {
-        "options": [
-          "A",
-          "B",
-          "C",
-          "D"
-        ],
-        "choice": "B"
-      },
-      "work": "B",
-      "read": "B",
-      "outcome": "correct"
-    },
-    {
-      "number": 35,
-      "part": "test",
-      "kind": "open",
-      "statement": [
-        "Draw a line 7 cm long."
-      ],
-      "formula": "",
-      "key": null,
-      "work": "",
-      "read": "",
-      "outcome": "unchecked"
-    },
-    {
-      "number": 36,
-      "part": "test",
-      "kind": "expression",
-      "statement": [
-        "Compute.",
-        "46 × 38 ="
-      ],
-      "formula": "46*38",
-      "key": {
-        "number": "1748"
-      },
-      "work": "1749",
-      "read": "1749",
-      "outcome": "not_yet"
-    },
-    {
-      "number": 37,
-      "part": "test",
-      "kind": "equation",
-      "statement": [
-        "Find the missing number.",
-        "□ + 32 = 126"
-      ],
-      "formula": "x+32=126",
-      "key": {
-        "number": "94",
-        "unknown": "x"
-      },
-      "work": "x = 95",
-      "read": "95",
-      "outcome": "not_yet"
-    },
-    {
-      "number": 38,
-      "part": "test",
-      "kind": "word",
-      "statement": [
-        "Sam has 44 stamps.",
-        "He gets 10 more.",
-        "How many stamps has he now?"
-      ],
-      "formula": "",
-      "key": {
-        "number": "54",
-        "units": [
-          "stamps"
-        ]
-      },
-      "work": "55 stamps",
-      "read": "55",
-      "outcome": "not_yet"
-    },
-    {
-      "number": 39,
-      "part": "test",
-      "kind": "choice",
-      "statement": [
-        "Which number is the largest?",
-        "(A) 113  (B) 64  (C) 162  (D) 15"
-      ],
-      "formula": "",
-      "key": {
-        "options": [
-          "A",
-          "B",
-          "C",
-          "D"
-        ],
-        "choice": "C"
-      },
-      "work": "A",
-      "read": "A",
-      "outcome": "not_yet"
-    },
-    {
-      "number": 40,
-      "part": "test",
-      "kind": "open",
-      "statement": [
-        "Draw a line 7 cm long."
-      ],
-      "formula": "",
-      "key": null,
-      "work": "",
-      "read": "",
-      "outcome": "unchecked"
-    },
-    {
-      "number": 41,
-      "part": "test",
-      "kind": "expression",
-      "statement": [
-        "Compute.",
-        "77 + 47 ="
-      ],
-      "formula": "77+47",
-      "key": {
-        "number": "124"
-      },
-      "work": "",
-      "read": "",
-      "outcome": "unreadable"
-    },
-    {
-      "number": 42,
-      "part": "test",
-      "kind": "equation",
-      "statement": [
-        "Find the missing number.",
-        "□ + 46 = 69"
-      ],
-      "formula": "x+46=69",
-      "key": {
-        "number": "23",
-        "unknown": "x"
-      },
-      "work": "",
-      "read": "",
-      "outcome": "unreadable"
-    },
-    {
-      "number": 43,
       "part": "test",
       "kind": "word",
       "statement": [
@@ -748,315 +834,722 @@
         "He gets 13 more.",
         "How many stamps has he now?"
       ],
-      "formula": "",
-      "key": {
-        "number": "63",
-        "units": [
-          "stamps"
-        ]
-      },
-      "work": "",
-      "read": "",
-      "outcome": "unreadable"
+      "tasks": [
+        {
+          "statement": "Sam has 50 stamps. He gets 13 more. How many stamps has he now?",
+          "formula": "",
+          "key": {
+            "number": "63",
+            "units": [
+              "stamps"
+            ]
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        }
+      ]
     },
     {
-      "number": 44,
+      "number": 34,
       "part": "test",
       "kind": "choice",
       "statement": [
         "Which number is the largest?",
         "(A) 90  (B) 148  (C) 206  (D) 264"
       ],
-      "formula": "",
-      "key": {
-        "options": [
-          "A",
-          "B",
-          "C",
-          "D"
-        ],
-        "choice": "D"
-      },
-      "work": "",
-      "read": "",
-      "outcome": "unreadable"
+      "tasks": [
+        {
+          "statement": "Which number is the largest? (A) 90  (B) 148  (C) 206  (D) 264",
+          "formula": "",
+          "key": {
+            "options": [
+              "A",
+              "B",
+              "C",
+              "D"
+            ],
+            "choice": "D"
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        }
+      ]
+    },
+    {
+      "number": 35,
+      "part": "test",
+      "kind": "open",
+      "statement": [
+        "Draw a line 6 cm long."
+      ],
+      "tasks": [
+        {
+          "statement": "Draw a line 6 cm long.",
+          "formula": "",
+          "key": null,
+          "work": "",
+          "read": "",
+          "outcome": "unchecked"
+        }
+      ]
+    },
+    {
+      "number": 36,
+      "part": "test",
+      "kind": "several",
+      "statement": [
+        "Find the missing number."
+      ],
+      "tasks": [
+        {
+          "statement": "□ + 6 = 14",
+          "formula": "x+6=14",
+          "key": {
+            "number": "8",
+            "unknown": "x"
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        },
+        {
+          "statement": "□ + 1 = 15",
+          "formula": "x+1=15",
+          "key": {
+            "number": "14",
+            "unknown": "x"
+          },
+          "work": "x = 14",
+          "read": "14",
+          "outcome": "correct"
+        }
+      ]
+    },
+    {
+      "number": 37,
+      "part": "test",
+      "kind": "expression",
+      "statement": [
+        "Compute.",
+        "81 + 77 ="
+      ],
+      "tasks": [
+        {
+          "statement": "Compute. 81 + 77 =",
+          "formula": "81+77",
+          "key": {
+            "number": "158"
+          },
+          "work": "158",
+          "read": "158",
+          "outcome": "correct"
+        }
+      ]
+    },
+    {
+      "number": 38,
+      "part": "test",
+      "kind": "equation",
+      "statement": [
+        "Find the missing number.",
+        "□ + 97 = 123"
+      ],
+      "tasks": [
+        {
+          "statement": "Find the missing number. □ + 97 = 123",
+          "formula": "x+97=123",
+          "key": {
+            "number": "26",
+            "unknown": "x"
+          },
+          "work": "x = 26",
+          "read": "26",
+          "outcome": "correct"
+        }
+      ]
+    },
+    {
+      "number": 39,
+      "part": "test",
+      "kind": "word",
+      "statement": [
+        "Sam has 38 stamps.",
+        "He gets 94 more.",
+        "How many stamps has he now?"
+      ],
+      "tasks": [
+        {
+          "statement": "Sam has 38 stamps. He gets 94 more. How many stamps has he now?",
+          "formula": "",
+          "key": {
+            "number": "132",
+            "units": [
+              "stamps"
+            ]
+          },
+          "work": "132 stamps",
+          "read": "132",
+          "outcome": "correct"
+        }
+      ]
+    },
+    {
+      "number": 40,
+      "part": "test",
+      "kind": "choice",
+      "statement": [
+        "Which number is the largest?",
+        "(A) 93  (B) 51  (C) 177  (D) 135"
+      ],
+      "tasks": [
+        {
+          "statement": "Which number is the largest? (A) 93  (B) 51  (C) 177  (D) 135",
+          "formula": "",
+          "key": {
+            "options": [
+              "A",
+              "B",
+              "C",
+              "D"
+            ],
+            "choice": "C"
+          },
+          "work": "C",
+          "read": "C",
+          "outcome": "correct"
+        }
+      ]
+    },
+    {
+      "number": 41,
+      "part": "test",
+      "kind": "open",
+      "statement": [
+        "Draw a line 4 cm long."
+      ],
+      "tasks": [
+        {
+          "statement": "Draw a line 4 cm long.",
+          "formula": "",
+          "key": null,
+          "work": "",
+          "read": "",
+          "outcome": "unchecked"
+        }
+      ]
+    },
+    {
+      "number": 42,
+      "part": "test",
+      "kind": "several",
+      "statement": [
+        "Find the missing number."
+      ],
+      "tasks": [
+        {
+          "statement": "□ + 5 = 18",
+          "formula": "x+5=18",
+          "key": {
+            "number": "13",
+            "unknown": "x"
+          },
+          "work": "x = 13",
+          "read": "13",
+          "outcome": "correct"
+        },
+        {
+          "statement": "□ + 4 = 18",
+          "formula": "x+4=18",
+          "key": {
+            "number": "14",
+            "unknown": "x"
+          },
+          "work": "x = 15",
+          "read": "15",
+          "outcome": "not_yet"
+        },
+        {
+          "statement": "□ + 5 = 12",
+          "formula": "x+5=12",
+          "key": {
+            "number": "7",
+            "unknown": "x"
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        }
+      ]
+    },
+    {
+      "number": 43,
+      "part": "test",
+      "kind": "expression",
+      "statement": [
+        "Compute.",
+        "22 × 37 ="
+      ],
+      "tasks": [
+        {
+          "statement": "Compute. 22 × 37 =",
+          "formula": "22*37",
+          "key": {
+            "number": "814"
+          },
+          "work": "815",
+          "read": "815",
+          "outcome": "not_yet"
+        }
+      ]
+    },
+    {
+      "number": 44,
+      "part": "test",
+      "kind": "equation",
+      "statement": [
+        "Find the missing number.",
+        "□ + 74 = 134"
+      ],
+      "tasks": [
+        {
+          "statement": "Find the missing number. □ + 74 = 134",
+          "formula": "x+74=134",
+          "key": {
+            "number": "60",
+            "unknown": "x"
+          },
+          "work": "x = 61",
+          "read": "61",
+          "outcome": "not_yet"
+        }
+      ]
     },
     {
       "number": 45,
       "part": "test",
-      "kind": "open",
+      "kind": "word",
       "statement": [
-        "Draw a line 6 cm long."
+        "Sam has 47 stamps.",
+        "He gets 70 more.",
+        "How many stamps has he now?"
       ],
-      "formula": "",
-      "key": null,
-      "work": "",
-      "read": "",
-      "outcome": "unchecked"
+      "tasks": [
+        {
+          "statement": "Sam has 47 stamps. He gets 70 more. How many stamps has he now?",
+          "formula": "",
+          "key": {
+            "number": "117",
+            "units": [
+              "stamps"
+            ]
+          },
+          "work": "118 stamps",
+          "read": "118",
+          "outcome": "not_yet"
+        }
+      ]
     },
     {
       "number": 46,
       "part": "test",
-      "kind": "expression",
+      "kind": "choice",
       "statement": [
-        "Compute.",
-        "75 + 28 ="
+        "Which number is the largest?",
+        "(A) 47  (B) 59  (C) 71  (D) 83"
       ],
-      "formula": "75+28",
-      "key": {
-        "number": "103"
-      },
-      "work": "103",
-      "read": "103",
-      "outcome": "correct"
+      "tasks": [
+        {
+          "statement": "Which number is the largest? (A) 47  (B) 59  (C) 71  (D) 83",
+          "formula": "",
+          "key": {
+            "options": [
+              "A",
+              "B",
+              "C",
+              "D"
+            ],
+            "choice": "D"
+          },
+          "work": "A",
+          "read": "A",
+          "outcome": "not_yet"
+        }
+      ]
     },
     {
       "number": 47,
       "part": "test",
-      "kind": "equation",
+      "kind": "open",
       "statement": [
-        "Find the missing number.",
-        "□ + 67 = 116"
+        "Draw a line 8 cm long."
       ],
-      "formula": "x+67=116",
-      "key": {
-        "number": "49",
-        "unknown": "x"
-      },
-      "work": "x = 49",
-      "read": "49",
-      "outcome": "correct"
+      "tasks": [
+        {
+          "statement": "Draw a line 8 cm long.",
+          "formula": "",
+          "key": null,
+          "work": "",
+          "read": "",
+          "outcome": "unchecked"
+        }
+      ]
     },
     {
       "number": 48,
       "part": "test",
-      "kind": "word",
+      "kind": "several",
       "statement": [
-        "Sam has 14 stamps.",
-        "He gets 63 more.",
-        "How many stamps has he now?"
+        "Find the missing number."
       ],
-      "formula": "",
-      "key": {
-        "number": "77",
-        "units": [
-          "stamps"
-        ]
-      },
-      "work": "77 stamps",
-      "read": "77",
-      "outcome": "correct"
+      "tasks": [
+        {
+          "statement": "□ + 8 = 13",
+          "formula": "x+8=13",
+          "key": {
+            "number": "5",
+            "unknown": "x"
+          },
+          "work": "x = 6",
+          "read": "6",
+          "outcome": "not_yet"
+        },
+        {
+          "statement": "□ + 1 = 15",
+          "formula": "x+1=15",
+          "key": {
+            "number": "14",
+            "unknown": "x"
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        },
+        {
+          "statement": "□ + 2 = 11",
+          "formula": "x+2=11",
+          "key": {
+            "number": "9",
+            "unknown": "x"
+          },
+          "work": "x = 9",
+          "read": "9",
+          "outcome": "correct"
+        },
+        {
+          "statement": "□ + 2 = 10",
+          "formula": "x+2=10",
+          "key": {
+            "number": "8",
+            "unknown": "x"
+          },
+          "work": "x = 9",
+          "read": "9",
+          "outcome": "not_yet"
+        }
+      ]
     },
     {
       "number": 49,
       "part": "test",
-      "kind": "choice",
+      "kind": "expression",
       "statement": [
-        "Which number is the largest?",
-        "(A) 81  (B) 158  (C) 312  (D) 235"
+        "Compute.",
+        "30 + 35 ="
       ],
-      "formula": "",
-      "key": {
-        "options": [
-          "A",
-          "B",
-          "C",
-          "D"
-        ],
-        "choice": "C"
-      },
-      "work": "C",
-      "read": "C",
-      "outcome": "correct"
+      "tasks": [
+        {
+          "statement": "Compute. 30 + 35 =",
+          "formula": "30+35",
+          "key": {
+            "number": "65"
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        }
+      ]
     },
     {
       "number": 50,
       "part": "test",
-      "kind": "open",
+      "kind": "equation",
       "statement": [
-        "Draw a line 5 cm long."
+        "Find the missing number.",
+        "□ + 83 = 177"
       ],
-      "formula": "",
-      "key": null,
-      "work": "",
-      "read": "",
-      "outcome": "unchecked"
+      "tasks": [
+        {
+          "statement": "Find the missing number. □ + 83 = 177",
+          "formula": "x+83=177",
+          "key": {
+            "number": "94",
+            "unknown": "x"
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        }
+      ]
     },
     {
       "number": 51,
       "part": "test",
-      "kind": "expression",
+      "kind": "word",
       "statement": [
-        "Compute.",
-        "42 × 79 ="
+        "Sam has 74 stamps.",
+        "He gets 66 more.",
+        "How many stamps has he now?"
       ],
-      "formula": "42*79",
-      "key": {
-        "number": "3318"
-      },
-      "work": "3319",
-      "read": "3319",
-      "outcome": "not_yet"
+      "tasks": [
+        {
+          "statement": "Sam has 74 stamps. He gets 66 more. How many stamps has he now?",
+          "formula": "",
+          "key": {
+            "number": "140",
+            "units": [
+              "stamps"
+            ]
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        }
+      ]
     },
     {
       "number": 52,
       "part": "test",
-      "kind": "equation",
-      "statement": [
-        "Find the missing number.",
-        "□ + 26 = 36"
-      ],
-      "formula": "x+26=36",
-      "key": {
-        "number": "10",
-        "unknown": "x"
-      },
-      "work": "x = 11",
-      "read": "11",
-      "outcome": "not_yet"
-    },
-    {
-      "number": 53,
-      "part": "test",
-      "kind": "word",
-      "statement": [
-        "Sam has 95 stamps.",
-        "He gets 71 more.",
-        "How many stamps has he now?"
-      ],
-      "formula": "",
-      "key": {
-        "number": "166",
-        "units": [
-          "stamps"
-        ]
-      },
-      "work": "167 stamps",
-      "read": "167",
-      "outcome": "not_yet"
-    },
-    {
-      "number": 54,
-      "part": "test",
       "kind": "choice",
       "statement": [
         "Which number is the largest?",
-        "(A) 264  (B) 352  (C) 176  (D) 88"
+        "(A) 73  (B) 115  (C) 199  (D) 157"
       ],
-      "formula": "",
-      "key": {
-        "options": [
-          "A",
-          "B",
-          "C",
-          "D"
-        ],
-        "choice": "B"
-      },
-      "work": "A",
-      "read": "A",
-      "outcome": "not_yet"
+      "tasks": [
+        {
+          "statement": "Which number is the largest? (A) 73  (B) 115  (C) 199  (D) 157",
+          "formula": "",
+          "key": {
+            "options": [
+              "A",
+              "B",
+              "C",
+              "D"
+            ],
+            "choice": "C"
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        }
+      ]
     },
     {
-      "number": 55,
+      "number": 53,
       "part": "test",
       "kind": "open",
       "statement": [
         "Draw a line 6 cm long."
       ],
-      "formula": "",
-      "key": null,
-      "work": "",
-      "read": "",
-      "outcome": "unchecked"
+      "tasks": [
+        {
+          "statement": "Draw a line 6 cm long.",
+          "formula": "",
+          "key": null,
+          "work": "",
+          "read": "",
+          "outcome": "unchecked"
+        }
+      ]
     },
     {
-      "number": 56,
+      "number": 54,
+      "part": "test",
+      "kind": "several",
+      "statement": [
+        "Find the missing number."
+      ],
+      "tasks": [
+        {
+          "statement": "□ + 1 = 17",
+          "formula": "x+1=17",
+          "key": {
+            "number": "16",
+            "unknown": "x"
+          },
+          "work": "",
+          "read": "",
+          "outcome": "unreadable"
+        },
+        {
+          "statement": "□ + 2 = 18",
+          "formula": "x+2=18",
+          "key": {
+            "number": "16",
+            "unknown": "x"
+          },
+          "work": "x = 16",
+          "read": "16",
+          "outcome": "correct"
+        },
+        {
+          "statement": "□ + 1 = 19",
+          "formula": "x+1=19",
+          "key": {
+            "number": "18",
+            "unknown": "x"
+          },
+          "work": "x = 19",
+          "read": "19",
+          "outcome": "not_yet"
+        }
+      ]
+    },
+    {
+      "number": 55,
       "part": "test",
       "kind": "expression",
       "statement": [
         "Compute.",
-        "36 + 22 ="
+        "45 × 59 ="
       ],
-      "formula": "36+22",
-      "key": {
-        "number": "58"
-      },
-      "work": "",
-      "read": "",
-      "outcome": "unreadable"
+      "tasks": [
+        {
+          "statement": "Compute. 45 × 59 =",
+          "formula": "45*59",
+          "key": {
+            "number": "2655"
+          },
+          "work": "2655",
+          "read": "2655",
+          "outcome": "correct"
+        }
+      ]
     },
     {
-      "number": 57,
+      "number": 56,
       "part": "test",
       "kind": "equation",
       "statement": [
         "Find the missing number.",
-        "□ + 24 = 98"
+        "□ + 13 = 110"
       ],
-      "formula": "x+24=98",
-      "key": {
-        "number": "74",
-        "unknown": "x"
-      },
-      "work": "",
-      "read": "",
-      "outcome": "unreadable"
+      "tasks": [
+        {
+          "statement": "Find the missing number. □ + 13 = 110",
+          "formula": "x+13=110",
+          "key": {
+            "number": "97",
+            "unknown": "x"
+          },
+          "work": "x = 97",
+          "read": "97",
+          "outcome": "correct"
+        }
+      ]
+    },
+    {
+      "number": 57,
+      "part": "test",
+      "kind": "word",
+      "statement": [
+        "Sam has 44 stamps.",
+        "He gets 43 more.",
+        "How many stamps has he now?"
+      ],
+      "tasks": [
+        {
+          "statement": "Sam has 44 stamps. He gets 43 more. How many stamps has he now?",
+          "formula": "",
+          "key": {
+            "number": "87",
+            "units": [
+              "stamps"
+            ]
+          },
+          "work": "87 stamps",
+          "read": "87",
+          "outcome": "correct"
+        }
+      ]
     },
     {
       "number": 58,
       "part": "test",
-      "kind": "word",
+      "kind": "choice",
       "statement": [
-        "Sam has 60 stamps.",
-        "He gets 47 more.",
-        "How many stamps has he now?"
+        "Which number is the largest?",
+        "(A) 107  (B) 62  (C) 77  (D) 92"
       ],
-      "formula": "",
-      "key": {
-        "number": "107",
-        "units": [
-          "stamps"
-        ]
-      },
-      "work": "",
-      "read": "",
-      "outcome": "unreadable"
+      "tasks": [
+        {
+          "statement": "Which number is the largest? (A) 107  (B) 62  (C) 77  (D) 92",
+          "formula": "",
+          "key": {
+            "options": [
+              "A",
+              "B",
+              "C",
+              "D"
+            ],
+            "choice": "A"
+          },
+          "work": "A",
+          "read": "A",
+          "outcome": "correct"
+        }
+      ]
     },
     {
       "number": 59,
       "part": "test",
-      "kind": "choice",
+      "kind": "open",
       "statement": [
-        "Which number is the largest?",
-        "(A) 70  (B) 164  (C) 211  (D) 117"
+        "Draw a line 3 cm long."
       ],
-      "formula": "",
-      "key": {
-        "options": [
-          "A",
-          "B",
-          "C",
-          "D"
-        ],
-        "choice": "C"
-      },
-      "work": "",
-      "read": "",
-      "outcome": "unreadable"
+      "tasks": [
+        {
+          "statement": "Draw a line 3 cm long.",
+          "formula": "",
+          "key": null,
+          "work": "",
+          "read": "",
+          "outcome": "unchecked"
+        }
+      ]
     },
     {
       "number": 60,
       "part": "test",
-      "kind": "open",
+      "kind": "several",
       "statement": [
-        "Draw a line 2 cm long."
+        "Find the missing number."
       ],
-      "formula": "",
-      "key": null,
-      "work": "",
-      "read": "",
-      "outcome": "unchecked"
+      "tasks": [
+        {
+          "statement": "□ + 6 = 19",
+          "formula": "x+6=19",
+          "key": {
+            "number": "13",
+            "unknown": "x"
+          },
+          "work": "x = 13",
+          "read": "13",
+          "outcome": "correct"
+        },
+        {
+          "statement": "□ + 1 = 19",
+          "formula": "x+1=19",
+          "key": {
+            "number": "18",
+            "unknown": "x"
+          },
+          "work": "x = 19",
+          "read": "19",
+          "outcome": "not_yet"
+        }
+      ]
     }
   ]
 }

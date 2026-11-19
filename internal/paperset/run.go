@@ -12,6 +12,7 @@ import (
 	"github.com/altnovatrail/module-kit/paper"
 	observationv1 "github.com/altnovatrail/spec/contracts/novatrail/observation/v1"
 	paperv1 "github.com/altnovatrail/spec/contracts/novatrail/paper/v1"
+	"google.golang.org/protobuf/proto"
 
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/render"
@@ -85,84 +86,127 @@ func (s *step) Request() (provider.Request, error) {
 		req = statement.RequestOf(photo(s.pictures.Statement), s.pictures.Statement.Width, s.pictures.Statement.Height)
 		req.MaxOutputTokens = statement.MaxOutputTokens
 	case CallSolving:
-		req = solving.RequestOf(photo(s.pictures.Statement), s.pictures.Statement.Width, s.pictures.Statement.Height)
+		req = solving.RequestOf(photo(s.pictures.Statement), s.pictures.Statement.Width, s.pictures.Statement.Height, s.asked())
 		req.MaxOutputTokens = solving.MaxOutputTokens
 	default:
-		req = reading.PaperRequestOf(s.pictures.Work.PNG, s.pictures.Work.Width, s.pictures.Work.Height)
+		req = reading.PaperRequestOf(s.pictures.Work.PNG, s.pictures.Work.Width, s.pictures.Work.Height, s.statements())
 		req.MaxOutputTokens = reading.MaxOutputTokens
 	}
 	return req, nil
 }
 
-// Right is the answer of a model that is always right, by the case's truth: its formula, its key,
-// or an observation of the value read, none when there is no work.
+// asked are the tasks the solution is asked: every task of the case, by its number and statement,
+// so that the run measures the solution of each.
+func (s *step) asked() []solving.Task {
+	tasks := make([]solving.Task, len(s.kase.Tasks))
+	for i, t := range s.kase.Tasks {
+		tasks[i] = solving.Task{Number: i + 1, Statement: t.Statement}
+	}
+	return tasks
+}
+
+// statements are the statements of the case's tasks, in order, as the reading of the work is given
+// them.
+func (s *step) statements() []string {
+	out := make([]string, len(s.kase.Tasks))
+	for i, t := range s.kase.Tasks {
+		out[i] = t.Statement
+	}
+	return out
+}
+
+// Right is the answer of a model that is always right, by the case's truth: its tasks with their
+// statements and formulas, their keys, or an observation of the values read, one for each task
+// with work.
 func (s *step) Right() (string, error) {
 	switch s.kind {
 	case CallStatement:
-		data, err := json.Marshal(map[string]string{"formula": s.kase.Formula})
+		tasks := []map[string]string{}
+		for _, t := range s.kase.Tasks {
+			tasks = append(tasks, map[string]string{"statement": t.Statement, "formula": t.Formula})
+		}
+		data, err := json.Marshal(map[string]any{"tasks": tasks})
 		return string(data), err
 	case CallSolving:
-		return solving.Answered(s.kase.Key.Answer())
+		answers := map[int]*paperv1.Answer{}
+		for i, t := range s.kase.Tasks {
+			answers[i+1] = t.Key.Answer()
+		}
+		return solving.Answered(answers)
 	}
-	o := reading.Observation{Parts: []reading.Part{}, Results: []reading.Result{}}
-	if s.kase.Work != "" {
-		o.Parts = append(o.Parts, reading.Part{Kind: reading.KindText, Text: s.kase.Work, Legible: true, OtherReadings: []string{}})
-		o.Results = append(o.Results, reading.Result{Part: 1, Value: s.kase.Read, OtherValues: []string{}})
+	o := reading.PaperObservation{Parts: []reading.Part{}, Results: []reading.PaperResult{}}
+	for i, t := range s.kase.Tasks {
+		if t.Work != "" {
+			o.Parts = append(o.Parts, reading.Part{Kind: reading.KindText, Text: t.Work, Legible: true, OtherReadings: []string{}})
+			o.Results = append(o.Results, reading.PaperResult{Result: reading.Result{Part: len(o.Parts), Value: t.Read, OtherValues: []string{}}, Task: i + 1, Box: []int{}})
+		}
 	}
 	data, err := json.Marshal(o)
 	return string(data), err
 }
 
 // Record is the call's record: the answer as the model gave it, and what the program makes of it
-// against the case's truth. Of the statement, the formula and what the solver gives on it — right
-// when it is the answer the solver gives on the true formula, or when both are no formula, since a
-// formula read of a word problem is the reading's mistake. Of the solution, the key it makes (paper
-// .Key) — right when it judges the case's right value correct, or when neither has a key. Of the
-// work, the verdict by the case's key on the observation brought to it — right when it is the
-// case's outcome; with no key it is unchecked. An answer off the schema fails the call.
+// against the truth of each task of the case. Of the statement, each formula and what the solver
+// gives on it — right when the tasks are as many as the case's, and each formula gives the answer
+// the solver gives on the true one, or both are no formula, since a formula read of a word problem
+// is the reading's mistake. Of the solution, the key it makes of each task (paper.Key) — right when
+// each judges its task's right value correct, or neither has a key. Of the work, the verdict of each
+// task by its key on the observation brought to it — right when each is its task's outcome; with no
+// key it is unchecked. An answer off the schema fails the call.
 func (s *step) Record(o runner.Outcome) any {
 	rec := CallRecord{Kind: "call", Call: s.Call, NotAsked: o.NotAsked, Answer: o.Answer, Error: o.Error, Usage: o.Usage}
 	if o.NotAsked || o.Error != "" {
 		return rec
 	}
-	truth := s.kase.Key.Answer()
+	tasks := s.kase.Tasks
 	switch s.kind {
 	case CallStatement:
-		formula, err := statement.Read(o.Answer)
+		read, err := statement.Read(o.Answer)
 		if err != nil {
 			rec.Error = err.Error()
 			return rec
 		}
-		rec.Formula = &formula
-		rec.Solved = solvedOf(formula)
-		rec.Right = rec.Solved == solvedOf(s.kase.Formula) && (formula == "") == (s.kase.Formula == "")
-	case CallSolving:
-		answer, err := solving.Read(o.Answer)
-		if err != nil {
-			rec.Error = err.Error()
-			return rec
-		}
-		key := paper.Key(nil, answer)
-		rec.Key = keyOf(key.GetAnswer())
-		rec.Right = (truth == nil) == (key.GetAnswer() == nil) && (truth == nil || judgesRight(key.GetAnswer(), truth))
-	default:
-		read, err := reading.Read(o.Answer)
-		if err != nil {
-			rec.Error = err.Error()
-			return rec
-		}
-		obs, _ := reading.ObservationOf(read)
-		obs.AnswerSlots[0].AnswerSlot = &observationv1.AnswerSlotPlace{Item: 1, Slot: 1}
-		rec.Verdict, rec.Reason = OutcomeUnchecked, ""
-		if truth != nil {
-			v, err := verdictOf(truth, obs)
-			if err != nil {
-				rec.Error = err.Error()
-				return rec
+		rec.Formulas, rec.Solved = []string{}, []string{}
+		rec.Right = len(read) == len(tasks)
+		for i, r := range read {
+			rec.Formulas, rec.Solved = append(rec.Formulas, r.Formula), append(rec.Solved, solvedOf(r.Formula))
+			if i < len(tasks) {
+				rec.Right = rec.Right && solvedOf(r.Formula) == solvedOf(tasks[i].Formula) && (r.Formula == "") == (tasks[i].Formula == "")
 			}
-			rec.Verdict, rec.Reason = v.Verdict, v.Reason
 		}
-		rec.Right = rec.Verdict == s.kase.Outcome
+	case CallSolving:
+		answers, err := solving.Read(o.Answer, s.asked())
+		if err != nil {
+			rec.Error = err.Error()
+			return rec
+		}
+		rec.Keys, rec.Right = []*Key{}, true
+		for i, t := range tasks {
+			key, truth := paper.Key(nil, answers[i+1]), t.Key.Answer()
+			rec.Keys = append(rec.Keys, keyOf(key.GetAnswer()))
+			rec.Right = rec.Right && (truth == nil) == (key.GetAnswer() == nil) && (truth == nil || judgesRight(key.GetAnswer(), truth))
+		}
+	default:
+		read, err := reading.PaperRead(o.Answer, len(tasks))
+		if err != nil {
+			rec.Error = err.Error()
+			return rec
+		}
+		obs := reading.PaperObservationOf(read, len(tasks))
+		rec.Verdicts, rec.Reasons, rec.Right = []string{}, []string{}, true
+		for i, t := range tasks {
+			v := slotVerdict{Verdict: OutcomeUnchecked}
+			if truth := t.Key.Answer(); truth != nil {
+				slot := proto.Clone(obs.GetAnswerSlots()[i]).(*observationv1.AnswerSlotObservation)
+				slot.AnswerSlot, slot.CropBox = &observationv1.AnswerSlotPlace{Item: 1, Slot: 1}, nil
+				if v, err = verdictOf(truth, &observationv1.Observation{AnswerSlots: []*observationv1.AnswerSlotObservation{slot}}); err != nil {
+					rec.Error = err.Error()
+					return rec
+				}
+			}
+			rec.Verdicts, rec.Reasons = append(rec.Verdicts, v.Verdict), append(rec.Reasons, v.Reason)
+			rec.Right = rec.Right && v.Verdict == t.Outcome
+		}
 	}
 	return rec
 }
@@ -325,20 +369,21 @@ type (
 		Height int    `json:"height"`
 	}
 	// CallRecord tells a call: the answer as the model gave it, the failure if it failed, and what it
-	// took; what the program made of it — the formula and what the solver gives on it, the key, or
-	// the verdict and its reason —, and whether that is right by the case's truth.
+	// took; what the program made of it, task by task — the formulas and what the solver gives on
+	// each, the keys, or the verdicts and their reasons —, and whether that is right by the case's
+	// truth.
 	CallRecord struct {
 		Kind string `json:"kind"`
 		Call
-		NotAsked bool    `json:"not_asked,omitempty"`
-		Answer   string  `json:"answer,omitempty"`
-		Error    string  `json:"error,omitempty"`
-		Formula  *string `json:"formula,omitempty"`
-		Solved   string  `json:"solved,omitempty"`
-		Key      *Key    `json:"key,omitempty"`
-		Verdict  string  `json:"verdict,omitempty"`
-		Reason   string  `json:"reason,omitempty"`
-		Right    bool    `json:"right"`
+		NotAsked bool     `json:"not_asked,omitempty"`
+		Answer   string   `json:"answer,omitempty"`
+		Error    string   `json:"error,omitempty"`
+		Formulas []string `json:"formulas,omitempty"`
+		Solved   []string `json:"solved,omitempty"`
+		Keys     []*Key   `json:"keys,omitempty"`
+		Verdicts []string `json:"verdicts,omitempty"`
+		Reasons  []string `json:"reasons,omitempty"`
+		Right    bool     `json:"right"`
 		runner.Usage
 	}
 )

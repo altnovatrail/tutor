@@ -37,7 +37,8 @@ func recordOf(st runner.Step, answer string) paperset.CallRecord {
 }
 
 // The answer of the stub is right on every case of every kind, and the run's pictures are those of
-// the case: the statement's crop for the statement and the solution, the work's for the reading.
+// the case: the statement's crop for the statement and the solution, the work's for the reading. The
+// cases of several tasks go to every run.
 func TestStubIsRight(t *testing.T) {
 	f := setOf(t, 30)
 	for _, kind := range paperset.CallKinds {
@@ -64,10 +65,25 @@ func TestStubIsRight(t *testing.T) {
 	}
 }
 
+// one is the answer of the statement of one task with a formula, and solved one of the solution
+// of one task by its kind and its fields.
+func one(formula string) string {
+	return `{"tasks": [{"statement": "a task", "formula": "` + formula + `"}]}`
+}
+
+func solved(kind, value, options, key string) string {
+	return `{"answers": [{"task": 1, "kind": "` + kind + `", "value": "` + value + `", "units": [], "unknown": "", "options": [` + options + `], "key": "` + key + `"}]}`
+}
+
 // A model's mistakes are counted wrong: a formula read of a word problem, or one another than the
-// truth's; no key of a task with one, or another value; and a reading of another value.
+// truth's, or another count of tasks; no key of a task with one, or another value; and a reading of
+// another value. A case of several tasks is right only when each of its tasks is.
 func TestMistakesAreWrong(t *testing.T) {
-	f := setOf(t, 5)
+	f := setOf(t, 6)
+	several := f.Set.Cases[5]
+	if several.Kind != paperset.KindSeveral || len(several.Tasks) < 2 || several.Tasks[0].Outcome != paperset.OutcomeCorrect || several.Tasks[1].Outcome != paperset.OutcomeNotYet {
+		t.Fatalf("case 6 is %+v", several)
+	}
 	steps := func(kind string) []runner.Step {
 		r, err := paperset.New(kind, "all", f, haiku(t), 1)
 		if err != nil {
@@ -76,31 +92,74 @@ func TestMistakesAreWrong(t *testing.T) {
 		return r.Steps
 	}
 	st := steps(paperset.CallStatement)
-	for i, answer := range map[int]string{0: `{"formula": "69*42"}`, 2: `{"formula": "14+14"}`, 1: `{"formula": ""}`} {
+	for i, answer := range map[int]string{0: one("69*42"), 2: one("14+14"), 1: one(""), 4: `{"tasks": []}`} {
 		if rec := recordOf(st[i], answer); rec.Right {
 			t.Errorf("case %d: %s is right", i+1, answer)
 		}
 	}
-	if rec := recordOf(st[0], `{"formula": 1}`); rec.Right || rec.Error == "" {
+	if rec := recordOf(st[0], `{"tasks": [{"statement": "a task", "formula": 1}]}`); rec.Right || rec.Error == "" {
 		t.Errorf("off the schema: %+v", rec)
 	}
+	// Several tasks: each formula as the truth's, one fewer, or one another.
+	formulas := func(of []paperset.Task) string {
+		var tasks []map[string]string
+		for _, task := range of {
+			tasks = append(tasks, map[string]string{"statement": task.Statement, "formula": task.Formula})
+		}
+		data, _ := json.Marshal(map[string]any{"tasks": tasks})
+		return string(data)
+	}
+	if rec := recordOf(st[5], formulas(several.Tasks)); !rec.Right || len(rec.Formulas) != len(several.Tasks) || rec.Solved[0] != several.Tasks[0].Key.Number {
+		t.Errorf("several tasks: %+v", rec)
+	}
+	other := append([]paperset.Task(nil), several.Tasks...)
+	other[1].Formula = "x+1=100"
+	for name, answer := range map[string]string{"one fewer": formulas(several.Tasks[1:]), "one another": formulas(other)} {
+		if rec := recordOf(st[5], answer); rec.Right {
+			t.Errorf("several tasks, %s: %+v", name, rec)
+		}
+	}
+
 	so := steps(paperset.CallSolving)
-	none := `{"kind": "none", "value": "", "units": [], "unknown": "", "options": [], "key": ""}`
-	for i, answer := range map[int]string{0: none, 2: `{"kind": "number", "value": "1", "units": [], "unknown": "", "options": [], "key": ""}`, 3: `{"kind": "choice", "value": "", "units": [], "unknown": "", "options": ["A", "B"], "key": "A"}`} {
+	none := solved("none", "", "", "")
+	for i, answer := range map[int]string{0: none, 2: solved("number", "1", "", ""), 3: solved("choice", "", `"A", "B"`, "A")} {
 		if rec := recordOf(so[i], answer); rec.Right {
 			t.Errorf("case %d: %s is right", i+1, answer)
 		}
 	}
-	if rec := recordOf(so[4], none); !rec.Right || rec.Key != nil {
+	if rec := recordOf(so[4], none); !rec.Right || len(rec.Keys) != 1 || rec.Keys[0] != nil {
 		t.Errorf("an open task with no key: %+v", rec)
 	}
+	// Several tasks are right with the key of each, and wrong with one missing.
+	right, err := so[5].Call.Right()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if rec := recordOf(so[5], right); !rec.Right || len(rec.Keys) != len(several.Tasks) || rec.Keys[1].Number != several.Tasks[1].Key.Number {
+		t.Errorf("several tasks: %+v", rec)
+	}
+	if rec := recordOf(so[5], solved("number", several.Tasks[0].Key.Number, "", "")); rec.Right || rec.Keys[0] == nil || rec.Keys[1] != nil {
+		t.Errorf("several tasks, one solved: %+v", rec)
+	}
+
 	pa := steps(paperset.CallPaper)
-	wrong := `{"parts": [{"kind": "text", "text": "7", "legible": true, "other_readings": []}], "results": [{"part": 1, "value": "7", "other_values": []}]}`
-	if rec := recordOf(pa[0], wrong); rec.Right || rec.Verdict != paperset.OutcomeNotYet {
+	wrong := `{"parts": [{"kind": "text", "text": "7", "legible": true, "other_readings": []}], "results": [{"task": 1, "part": 1, "box": [], "value": "7", "other_values": []}]}`
+	if rec := recordOf(pa[0], wrong); rec.Right || len(rec.Verdicts) != 1 || rec.Verdicts[0] != paperset.OutcomeNotYet {
 		t.Errorf("another value: %+v", rec)
 	}
 	if rec := recordOf(pa[0], `{}`); rec.Right || rec.Error == "" {
 		t.Errorf("off the schema: %+v", rec)
+	}
+	// Several tasks are right with each read as written, and wrong with the second not read.
+	if right, err = pa[5].Call.Right(); err != nil {
+		t.Fatal(err)
+	}
+	if rec := recordOf(pa[5], right); !rec.Right || len(rec.Verdicts) != len(several.Tasks) || rec.Verdicts[1] != paperset.OutcomeNotYet {
+		t.Errorf("several tasks: %+v", rec)
+	}
+	first := `{"parts": [{"kind": "text", "text": "` + several.Tasks[0].Work + `", "legible": true, "other_readings": []}], "results": [{"task": 1, "part": 1, "box": [10, 10, 90, 90], "value": "` + several.Tasks[0].Read + `", "other_values": []}]}`
+	if rec := recordOf(pa[5], first); rec.Right || rec.Verdicts[0] != paperset.OutcomeCorrect || rec.Verdicts[1] != paperset.OutcomeUnreadable {
+		t.Errorf("several tasks, the second not read: %+v", rec)
 	}
 }
 
@@ -120,7 +179,7 @@ func TestReport(t *testing.T) {
 	for i, st := range r.Steps {
 		answer, _ := st.Call.Right()
 		if i == 0 {
-			answer = `{"kind": "none", "value": "", "units": [], "unknown": "", "options": [], "key": ""}`
+			answer = solved("none", "", "", "")
 		}
 		_ = enc.Encode(st.Call.Record(runner.Outcome{Answer: answer}))
 	}
@@ -133,21 +192,21 @@ func TestReport(t *testing.T) {
 		t.Fatal(err)
 	}
 	rows := rep.Rows()
-	if last := rows[len(rows)-1]; last.Kind != "all" || last.Calls != 10 || last.Right != 9 || len(rows) != 6 {
+	if last := rows[len(rows)-1]; last.Kind != "all" || last.Calls != 10 || last.Right != 9 || len(rows) != 7 {
 		t.Errorf("the rows are %+v", rows)
 	}
 	if !strings.Contains(rep.Summary(), "9 of 10 answered right, 90.0%") {
 		t.Errorf("the summary is %q", rep.Summary())
 	}
 	var md, csv bytes.Buffer
-	if rep.Markdown(&md, "x.jsonl") != nil || rep.CSV(&csv) != nil || !strings.Contains(md.String(), "| haiku-medium | expression | 2 | 2 | 1 |") || strings.Count(csv.String(), "\n") != 7 {
+	if rep.Markdown(&md, "x.jsonl") != nil || rep.CSV(&csv) != nil || !strings.Contains(md.String(), "| haiku-medium | expression | 2 | 2 | 1 |") || strings.Count(csv.String(), "\n") != 8 {
 		t.Errorf("the report is\n%s\n%s", md.String(), csv.String())
 	}
 }
 
 // Read takes a set as gen writes it, and refuses a case that breaks its form.
 func TestRead(t *testing.T) {
-	f := setOf(t, 5)
+	f := setOf(t, 6)
 	dir := t.TempDir()
 	write := func(s any) string {
 		data, _ := json.Marshal(s)
@@ -157,22 +216,27 @@ func TestRead(t *testing.T) {
 		}
 		return path
 	}
-	if s, err := paperset.Read(write(f.Set)); err != nil || len(s.Cases) != 5 || len(s.Of("dev")) != 1 || len(s.Of("test")) != 4 {
+	if s, err := paperset.Read(write(f.Set)); err != nil || len(s.Cases) != 6 || len(s.Of("dev")) != 1 || len(s.Of("test")) != 5 {
 		t.Fatalf("read %v, %v", s, err)
 	}
 	breaks := map[string]func(c *paperset.Case){
 		"the number":   func(c *paperset.Case) { c.Number = 9 },
 		"the kind":     func(c *paperset.Case) { c.Kind = "proof" },
 		"the part":     func(c *paperset.Case) { c.Part = "train" },
-		"the outcome":  func(c *paperset.Case) { c.Outcome = "fine" },
-		"a key":        func(c *paperset.Case) { c.Key = nil },
-		"the formula":  func(c *paperset.Case) { c.Formula = "" },
-		"the read":     func(c *paperset.Case) { c.Read = "" },
+		"the outcome":  func(c *paperset.Case) { c.Tasks[0].Outcome = "fine" },
+		"a key":        func(c *paperset.Case) { c.Tasks[0].Key = nil },
+		"the formula":  func(c *paperset.Case) { c.Tasks[0].Formula = "" },
+		"the read":     func(c *paperset.Case) { c.Tasks[0].Read = "" },
 		"no statement": func(c *paperset.Case) { c.Statement = nil },
+		"no task's":    func(c *paperset.Case) { c.Tasks[0].Statement = "" },
+		"no task":      func(c *paperset.Case) { c.Tasks = nil },
+		"two tasks":    func(c *paperset.Case) { c.Tasks = append(c.Tasks, c.Tasks[0]) },
+		"several, one": func(c *paperset.Case) { c.Kind = paperset.KindSeveral },
 	}
 	for name, change := range breaks {
 		s := *f.Set
 		s.Cases = append([]paperset.Case(nil), f.Set.Cases...)
+		s.Cases[0].Tasks = append([]paperset.Task(nil), s.Cases[0].Tasks...)
 		change(&s.Cases[0])
 		if _, err := paperset.Read(write(&s)); err == nil {
 			t.Errorf("%s: read", name)

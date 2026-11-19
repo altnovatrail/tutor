@@ -8,8 +8,9 @@ import (
 )
 
 // gen paper writes a set, and a run of each call of a task from paper asks its cases on the stub by
-// the models the library admits, all of them right, which the report counts. The set draws its own
-// pictures: -dir is refused, and -paper is no flag of a kind that reads sheets.
+// the models the library admits, all of them right, which the report counts, the two cases of
+// several tasks too. The set draws its own pictures: -dir is refused, and -paper is no flag of a
+// kind that reads sheets.
 func TestPaperOnTheStub(t *testing.T) {
 	t.Parallel()
 	dir := t.TempDir()

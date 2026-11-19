@@ -177,38 +177,38 @@ var Admitted = []Entry{
 	// The four calls of a task from paper, by the author's word, without a run, until the day
 	// paperWord names, each a cascade of three attempts, the cheapest first: Haiku 5.5 at high, then
 	// Sonnet 5.5 at medium, then Opus 5.5 at medium, all with thinking (R137). The finding of the
-	// tasks on the photo of a page, on version 1 of its prompt, has no set of eval, Д21 (R134).
+	// tasks on the photo of a page, on version 2 of its prompt, has no set of eval, Д21 (R134).
 	{
 		Capability: admissionv0.CapabilityTaskFinding,
 		Models:     paperCascade,
 		Stage:      StageAuthor,
 		Report:     paperWord,
-		Prompt:     "311d729683e8bf38e169990d123005f5ce93ea6571294ee11a85a1461edf023f",
+		Prompt:     "34ec69d1df0f2cc8e211bf56b83d3533c146cd0092ad523fdc382c1f1c87a256",
 	},
-	// The statement read into a formula and the solution, on version 1 of their prompts, one solution
-	// a model until the author has seen how often it errs (R162 spec); and the work read by one model
-	// at a time in any reading mode, on version 1 of the reading of paper. Their sets ran on the stub
-	// alone, and the paid run is Д22 (R135).
+	// The statement read into its tasks and their formulas and the solution, on version 2 of their
+	// prompts, one solution a model until the author has seen how often it errs (R162 spec); and the
+	// work read by one model at a time in any reading mode, on version 2 of the reading of paper.
+	// Their sets ran on the stub alone, and the paid run is Д22 (R135).
 	{
 		Capability: admissionv0.CapabilityStatementReading,
 		Models:     paperCascade,
 		Stage:      StageAuthor,
 		Report:     paperWord,
-		Prompt:     "1e101d0e1e475651f88c2fa4bc0c5910c2421c6a64fe15a4c623e6b38fd98723",
+		Prompt:     "cd0747cc37281291346a44aa17de104efdf8abd825b0fa428d094947194e7e56",
 	},
 	{
 		Capability: admissionv0.CapabilityTaskSolving,
 		Models:     paperCascade,
 		Stage:      StageAuthor,
 		Report:     paperWord,
-		Prompt:     "0bac79715447d6f2e028700328fb1089bdcb7891c770a03f9ce1cbaeee43f823",
+		Prompt:     "b59a541a92783214fc16a1624a966cc734e96bf33b208b6c706ca1e048a74b8e",
 	},
 	{
 		Capability: admissionv0.CapabilityHandwritingReading,
 		Models:     paperCascade,
 		Stage:      StageAuthor,
 		Report:     paperWord,
-		Prompt:     "b62e1229ac711cfb72ecfabf965ef4fa18041a21847453035ff73cc43b7fbe92",
+		Prompt:     "84e47c2f1536337d365e374a16476fbfd5afb9674811979af02994eca11c01d8",
 	},
 }
 

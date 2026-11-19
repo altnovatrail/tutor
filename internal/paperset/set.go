@@ -1,7 +1,8 @@
 // Package paperset is the eval set of a task from paper and its three runs (R135): the reading of a
-// statement into a formula, the solution of a task by AI, and the reading of the work on a task
-// against its key. A case is a task of one of five kinds, with its truth by construction — the
-// formula, the key, what the learner writes and the verdict it comes to —, and its pictures are
+// statement into its tasks and their formulas, the solution of tasks by AI, and the reading of the
+// work on a task against its keys. A case is the crop of one task of one of five kinds, or of
+// several tasks framed together, with the truth of each task by construction — the formula, the
+// key, what the learner writes and the verdict it comes to —, and its pictures are
 // drawn from it when a run asks them, the same from the same case on any machine, so the set is one
 // file and no folder of samples; a folder of the cases the debug mode exported holds its pictures
 // instead (R136). The printed statement is drawn by synth's hand, as the learner's
@@ -25,20 +26,22 @@ import (
 )
 
 // The kinds of a case: an expression and an equation, which are formulas; a word problem with a
-// number for its answer, a choice among printed options, both no formula; and an open task, a
-// drawing, which has no one answer and so no key.
+// number for its answer, a choice among printed options, both no formula; an open task, a drawing,
+// which has no one answer and so no key; and a crop of several tasks framed together, each with an
+// answer of its own and a key of its own (R162 spec).
 const (
 	KindExpression = "expression"
 	KindEquation   = "equation"
 	KindWord       = "word"
 	KindChoice     = "choice"
 	KindOpen       = "open"
+	KindSeveral    = "several"
 )
 
 // Kinds are the kinds of a case, in the order the generator makes them.
-var Kinds = []string{KindExpression, KindEquation, KindWord, KindChoice, KindOpen}
+var Kinds = []string{KindExpression, KindEquation, KindWord, KindChoice, KindOpen, KindSeveral}
 
-// The outcomes a case's work comes to: the verdicts of module-kit by the key, and unchecked for a
+// The outcomes a task's work comes to: the verdicts of module-kit by the key, and unchecked for a
 // task with no key.
 const (
 	OutcomeCorrect    = "correct"
@@ -54,23 +57,34 @@ type Set struct {
 	Cases       []Case `json:"cases"`
 }
 
-// Case is a task of the set: its number, its part of the measurement, its kind, the lines of its
-// statement as printed, the formula the reading of the statement gives — empty for no formula —,
-// the key — none for an open task —, the line the learner writes under the task — empty for none
-// —, the value a reader who is always right reads in it, and the verdict it comes to by the key.
+// Case is a crop of the set: its number, its part of the measurement, its kind, the lines of its
+// statement as printed — of several tasks, the instruction above them —, and its tasks, one, or each
+// of several from 2 to 20, in the order of the page.
 type Case struct {
 	Number    int      `json:"number"`
 	Part      string   `json:"part"`
 	Kind      string   `json:"kind"`
 	Statement []string `json:"statement"`
-	Formula   string   `json:"formula"`
-	Key       *Key     `json:"key"`
-	Work      string   `json:"work"`
-	Read      string   `json:"read"`
-	Outcome   string   `json:"outcome"`
+	Tasks     []Task   `json:"tasks"`
 	// pictures are those of a case the debug mode exported, which no code draws.
 	pictures *Pictures
 }
+
+// Task is a task of a case: its statement as the reading of the statement gives it, the formula it
+// gives — empty for no formula —, the key — none for an open task —, the line the learner writes
+// under it — empty for none —, the value a reader who is always right reads in it, and the verdict
+// it comes to by the key. Of several tasks, the statement is printed on its line too.
+type Task struct {
+	Statement string `json:"statement"`
+	Formula   string `json:"formula"`
+	Key       *Key   `json:"key"`
+	Work      string `json:"work"`
+	Read      string `json:"read"`
+	Outcome   string `json:"outcome"`
+}
+
+// maxTasks is the most tasks of a case, as of a crop (R162 spec).
+const maxTasks = 20
 
 // Key is a case's key as the file writes it: a number with its units and the letter of its
 // unknown, or a choice with its options and the right one.
@@ -95,8 +109,10 @@ func (k *Key) Answer() *paperv1.Answer {
 
 // Read reads the file of a set strictly, or a folder of the cases the debug mode exported (exported):
 // no field it does not name, the cases numbered from 1 in order, each of a known kind, part and
-// outcome, with a statement, or the pictures of an exported case, a key exactly when it is not open,
-// and a formula only of a formula's kind.
+// outcome, with a statement, or the pictures of an exported case; one task, or of several tasks from
+// 2 to 20; each task with a statement, a value read exactly when it has work, and a key exactly when
+// it is not unchecked; and, of one task, a key exactly when it is not open and a formula exactly of
+// a formula's kind.
 func Read(path string) (*Set, error) {
 	var s Set
 	if info, err := os.Stat(path); err != nil {
@@ -132,20 +148,35 @@ func Read(path string) (*Set, error) {
 		if c.Part != sample.PartDev && c.Part != sample.PartTest {
 			problems = append(problems, fmt.Sprintf("the part %q is neither dev nor test", c.Part))
 		}
-		if !slices.Contains([]string{OutcomeCorrect, OutcomeNotYet, OutcomeUnreadable, OutcomeUnchecked}, c.Outcome) {
-			problems = append(problems, fmt.Sprintf("the outcome %q is none of the set's", c.Outcome))
-		}
-		if (c.Work == "") != (c.Read == "") {
-			problems = append(problems, "it has a value read exactly when it has work")
-		}
 		if len(c.Statement) == 0 && c.pictures == nil {
 			problems = append(problems, "it has no statement")
 		}
-		if (c.Key == nil) != (c.Kind == KindOpen) || (c.Key == nil) != (c.Outcome == OutcomeUnchecked) {
-			problems = append(problems, "it has a key exactly when it is not open, and is unchecked then alone")
+		if several := c.Kind == KindSeveral; len(c.Tasks) == 0 || len(c.Tasks) > maxTasks || several != (len(c.Tasks) > 1) {
+			problems = append(problems, fmt.Sprintf("it has %d tasks, and only several tasks have more than one, at most %d", len(c.Tasks), maxTasks))
 		}
-		if (c.Formula != "") != (c.Kind == KindExpression || c.Kind == KindEquation) {
-			problems = append(problems, "it has a formula exactly when it is an expression or an equation")
+		for j, t := range c.Tasks {
+			var of []string
+			if !slices.Contains([]string{OutcomeCorrect, OutcomeNotYet, OutcomeUnreadable, OutcomeUnchecked}, t.Outcome) {
+				of = append(of, fmt.Sprintf("the outcome %q is none of the set's", t.Outcome))
+			}
+			if t.Statement == "" {
+				of = append(of, "it has no statement")
+			}
+			if (t.Work == "") != (t.Read == "") {
+				of = append(of, "it has a value read exactly when it has work")
+			}
+			if (t.Key == nil) != (t.Outcome == OutcomeUnchecked) {
+				of = append(of, "it has a key exactly when it is not unchecked")
+			}
+			if c.Kind != KindSeveral && (t.Key == nil) != (c.Kind == KindOpen) {
+				of = append(of, "it has a key exactly when it is not open")
+			}
+			if c.Kind != KindSeveral && (t.Formula != "") != (c.Kind == KindExpression || c.Kind == KindEquation) {
+				of = append(of, "it has a formula exactly when it is an expression or an equation")
+			}
+			if len(of) > 0 {
+				problems = append(problems, fmt.Sprintf("task %d: %s", j+1, strings.Join(of, ", ")))
+			}
 		}
 		if len(problems) > 0 {
 			return nil, fmt.Errorf("%s: case %d: %s", path, i+1, strings.Join(problems, "; "))
@@ -175,7 +206,7 @@ const (
 )
 
 // Pictures are what a run shows of a case: the PNG of the task's crop, the statement alone, and of
-// the crop of the work, the statement with the learner's line under it, each with its size.
+// the crop of the work, the statement with the learner's line under each task, each with its size.
 type Pictures struct {
 	Statement, Work picture
 }
@@ -187,9 +218,9 @@ type picture struct {
 	Width, Height int
 }
 
-// Draw draws a case's pictures from the set's seed: the statement in one hand, and with the work
-// under it the same lines in the same hand, so that the work's crop holds the statement as the
-// tracing paper does.
+// Draw draws a case's pictures from the set's seed: the statement in one hand — of several tasks,
+// the instruction and each task on its line —, and with the work under each task the same lines in
+// the same hand, so that the work's crop holds the statement as the tracing paper does.
 func Draw(c Case, seed uint64) (*Pictures, error) {
 	if c.pictures != nil {
 		return c.pictures, nil
@@ -204,13 +235,23 @@ func Draw(c Case, seed uint64) (*Pictures, error) {
 		png, err := crop.PNG(strokes)
 		return picture{PNG: png, Width: crop.Width, Height: crop.Height}, err
 	}
-	statement, err := of(c.Statement)
+	printed, written := slices.Clone(c.Statement), slices.Clone(c.Statement)
+	worked := false
+	for _, t := range c.Tasks {
+		if c.Kind == KindSeveral {
+			printed, written = append(printed, t.Statement), append(written, t.Statement)
+		}
+		if t.Work != "" {
+			written, worked = append(written, t.Work), true
+		}
+	}
+	statement, err := of(printed)
 	if err != nil {
 		return nil, fmt.Errorf("case %d: the statement: %w", c.Number, err)
 	}
 	work := statement
-	if c.Work != "" {
-		if work, err = of(append(slices.Clone(c.Statement), c.Work)); err != nil {
+	if worked {
+		if work, err = of(written); err != nil {
 			return nil, fmt.Errorf("case %d: the work: %w", c.Number, err)
 		}
 	}

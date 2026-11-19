@@ -31,7 +31,7 @@ func debugLibrary(t *testing.T, answer string) (*Tutor, map[string]*fake) {
 
 // A route with the debug mode fails on a library whose config has it off, before any model.
 func TestDebugOff(t *testing.T) {
-	lib, haiku, _ := haikuOf(t, `{"formula": "1+1"}`, `{}`)
+	lib, haiku, _ := haikuOf(t, `{"tasks": [{"statement": "1 + 1 =", "formula": "1+1"}]}`, `{}`)
 	r := platform
 	r.Debug = &Debug{First: &sonnetLow}
 	got := lib.ReadStatement(context.Background(), PaperTask{Route: r, Statement: photoJPEG(t, 30, 30)})
@@ -43,24 +43,24 @@ func TestDebugOff(t *testing.T) {
 // The first model serves a call of a task from paper with its effort and thinking, one attempt and
 // no cascade, and each call is recorded with its answer as the model returned it and its usage.
 func TestDebugFirst(t *testing.T) {
-	lib, m := debugLibrary(t, `{"formula": "37+48"}`)
+	lib, m := debugLibrary(t, `{"tasks": [{"statement": "37 + 48 =", "formula": "37+48"}]}`)
 	var rec []DebugCall
 	r := platform
 	r.Debug = &Debug{First: &sonnetLow, Record: func(c DebugCall) { rec = append(rec, c) }}
 	got := lib.ReadStatement(context.Background(), PaperTask{Route: r, Statement: photoJPEG(t, 300, 80)})
-	if got.Outcome.Kind != Answered || got.Formula != "37+48" || len(m["claude-haiku-5-5"].asked) != 0 {
+	if got.Outcome.Kind != Answered || len(got.Tasks) != 1 || got.Tasks[0].Formula != "37+48" || len(m["claude-haiku-5-5"].asked) != 0 {
 		t.Fatalf("read %+v", got)
 	}
 	if q := m["claude-sonnet-5-5"].asked; len(q) != 1 || q[0].Effort != "low" || !q[0].NoThinking {
 		t.Errorf("Sonnet was asked %+v", q)
 	}
-	if len(rec) != 1 || rec[0].Call != CallStatement || rec[0].Reader != 0 || rec[0].Attempt != 1 || rec[0].Model != sonnetLow || rec[0].Answer != `{"formula": "37+48"}` ||
+	if len(rec) != 1 || rec[0].Call != CallStatement || rec[0].Reader != 0 || rec[0].Attempt != 1 || rec[0].Model != sonnetLow || rec[0].Answer != `{"tasks": [{"statement": "37 + 48 =", "formula": "37+48"}]}` ||
 		rec[0].Usage == nil || rec[0].Usage.InputTokens != 900 || rec[0].Err != nil {
 		t.Errorf("recorded %+v", rec)
 	}
 	// A chosen model that does not do is the call's answer: no later attempt.
-	m["claude-sonnet-5-5"].resp.JSON = `{"kind": "none", "value": "", "units": [], "unknown": "", "options": [], "key": ""}`
-	if got := lib.SolveTask(context.Background(), PaperTask{Route: r, Statement: photoJPEG(t, 30, 30)}); got.Outcome.Kind != Answered || got.Answer != nil ||
+	m["claude-sonnet-5-5"].resp.JSON = noAnswer
+	if got := lib.SolveTask(context.Background(), PaperTask{Route: r, Statement: photoJPEG(t, 30, 30)}, []TaskToSolve{{Number: 1, Statement: "Ann has 3 apples."}}); got.Outcome.Kind != Answered || got.Answers[1] != nil ||
 		len(m["claude-opus-5-5"].asked) != 0 || len(m["claude-sonnet-5-5"].asked) != 2 {
 		t.Errorf("solved %+v", got)
 	}
@@ -74,7 +74,7 @@ func TestDebugFirst(t *testing.T) {
 // Without a first model each call keeps its models of the list, the attempts of its cascade, and
 // the mode records each with its place; a failure is recorded with what failed.
 func TestDebugAsAdmitted(t *testing.T) {
-	lib, m := debugLibrary(t, `{"formula": ""}`)
+	lib, m := debugLibrary(t, `{"tasks": [{"statement": "Ann has 3 apples.", "formula": ""}]}`)
 	var rec []DebugCall
 	r := platform
 	r.Debug = &Debug{Record: func(c DebugCall) { rec = append(rec, c) }}
@@ -82,7 +82,7 @@ func TestDebugAsAdmitted(t *testing.T) {
 		t.Fatalf("read %+v", got)
 	}
 	m["claude-haiku-5-5"].err = errors.New("down")
-	lib.SolveTask(context.Background(), PaperTask{Route: r, Statement: photoJPEG(t, 30, 30)})
+	lib.SolveTask(context.Background(), PaperTask{Route: r, Statement: photoJPEG(t, 30, 30)}, []TaskToSolve{{Number: 1, Statement: "Ann has 3 apples."}})
 	if len(rec) != 4 || rec[0].Model.ID != "claude-haiku-5-5" || rec[0].Attempt != 1 || rec[1].Call != CallSolving || rec[1].Err == nil {
 		t.Fatalf("recorded %+v", rec)
 	}
@@ -99,7 +99,7 @@ func TestDebugSecondReader(t *testing.T) {
 	var rec []DebugCall
 	r := platform
 	r.Debug = &Debug{First: &opusHigh, Second: &sonnetLow, Record: func(c DebugCall) { rec = append(rec, c) }}
-	got := lib.ReadPaper(context.Background(), PaperReading{Route: r, Crop: cropPNG(t, 400, 300)})
+	got := lib.ReadPaper(context.Background(), PaperReading{Route: r, Crop: cropPNG(t, 400, 300), Tasks: []string{"Circle the larger number."}})
 	if got.Outcome.Kind != Answered || len(got.Observations) != 2 || len(got.Outcome.Usage) != 2 {
 		t.Fatalf("read %+v", got)
 	}
@@ -120,7 +120,7 @@ func TestDebugSecondReader(t *testing.T) {
 // The mode passes a refusal of the admission by its models, and changes no call outside a task
 // from paper.
 func TestDebugBypassAndScope(t *testing.T) {
-	lib, _ := debugLibrary(t, `{"formula": "1"}`)
+	lib, _ := debugLibrary(t, `{"tasks": [{"statement": "1", "formula": "1"}]}`)
 	child := Route{AI: admissionv0.AiRoutePlatformAi, Category: admissionv0.AgeCategoryUnder13}
 	if _, a, err := lib.ChooseCall(CallStatement, child); err != nil || a.Admitted {
 		t.Fatalf("a child is admitted without the mode: %+v %v", a, err)

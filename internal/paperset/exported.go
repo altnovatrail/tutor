@@ -56,9 +56,20 @@ func exported(dir string) (*Set, error) {
 }
 
 func caseOf(number int, dc *v1.DebugCase) (Case, error) {
-	outcome, ok := outcomes[dc.GetOutcome()]
-	if !ok {
-		return Case{}, fmt.Errorf("the outcome %v is none of the set's", dc.GetOutcome())
+	if n := len(dc.GetTasks()); n == 0 || n > maxTasks {
+		return Case{}, fmt.Errorf("%d tasks, not 1 to %d", n, maxTasks)
+	}
+	var tasks []Task
+	for i, t := range dc.GetTasks() {
+		outcome, ok := outcomes[t.GetOutcome()]
+		if !ok {
+			return Case{}, fmt.Errorf("task %d: the outcome %v is none of the set's", i+1, t.GetOutcome())
+		}
+		if t.GetStatement() == "" {
+			return Case{}, fmt.Errorf("task %d has no statement", i+1)
+		}
+		tasks = append(tasks, Task{Statement: t.GetStatement(), Formula: t.GetFormula(), Key: keyOf(t.GetKey()),
+			Work: t.GetRead(), Read: t.GetRead(), Outcome: outcome})
 	}
 	statement, width, height, err := provider.Photo(dc.GetWork().GetStatement(), nil)
 	if err != nil {
@@ -69,20 +80,22 @@ func caseOf(number int, dc *v1.DebugCase) (Case, error) {
 	if err != nil || format != "png" {
 		return Case{}, fmt.Errorf("the crop of the work is no PNG: %v", err)
 	}
-	c := Case{Number: number, Part: sample.PartDev, Formula: dc.GetFormula(), Key: keyOf(dc.GetKey()),
-		Work: dc.GetRead(), Read: dc.GetRead(), Outcome: outcome,
+	c := Case{Number: number, Part: sample.PartDev, Tasks: tasks,
 		pictures: &Pictures{
 			Statement: picture{JPEG: statement.JPEG, Width: width, Height: height},
 			Work:      picture{PNG: crop, Width: cfg.Width, Height: cfg.Height},
 		}}
+	one := tasks[0]
 	switch {
-	case strings.Contains(c.Formula, "="):
+	case len(tasks) > 1:
+		c.Kind = KindSeveral
+	case strings.Contains(one.Formula, "="):
 		c.Kind = KindEquation
-	case c.Formula != "":
+	case one.Formula != "":
 		c.Kind = KindExpression
-	case c.Key == nil:
+	case one.Key == nil:
 		c.Kind = KindOpen
-	case c.Key.Choice != "":
+	case one.Key.Choice != "":
 		c.Kind = KindChoice
 	default:
 		c.Kind = KindWord

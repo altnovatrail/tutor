@@ -29,9 +29,10 @@ func number(v string) *paperv1.Answer {
 }
 
 // A folder of the cases the debug mode exported is a set of the part dev, read in the order of the
-// files' names: each case's kind follows from its truth, its pictures are those the Check sent —
-// the task's crop as the library sends a photo, a JPEG —, and the stub, which is right by that
-// truth, is right on each. A case with no outcome is refused.
+// files' names: each case's kind follows from its truth — of more than one task, several —, its
+// pictures are those the Check sent — the task's crop as the library sends a photo, a JPEG —, and
+// the stub, which is right by that truth, is right on each. A case with no outcome, with a task of
+// no statement, or with no task is refused.
 func TestExportedCases(t *testing.T) {
 	dir := t.TempDir()
 	write := func(name string, c *v1.DebugCase) {
@@ -45,16 +46,23 @@ func TestExportedCases(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	write("b.json", &v1.DebugCase{Key: number("28"), Read: "27", Outcome: v1.DebugOutcome_DEBUG_OUTCOME_NOT_YET})
-	write("a.json", &v1.DebugCase{Formula: "37+48", Key: number("85"), Read: "85", Outcome: v1.DebugOutcome_DEBUG_OUTCOME_CORRECT,
+	task := func(t *v1.DebugTask) []*v1.DebugTask { return []*v1.DebugTask{t} }
+	write("b.json", &v1.DebugCase{Tasks: task(&v1.DebugTask{Statement: "Sam has 14 stamps and gets 14 more.", Key: number("28"), Read: "27", Outcome: v1.DebugOutcome_DEBUG_OUTCOME_NOT_YET})})
+	write("a.json", &v1.DebugCase{Tasks: task(&v1.DebugTask{Statement: "37 + 48 =", Formula: "37+48", Key: number("85"), Read: "85", Outcome: v1.DebugOutcome_DEBUG_OUTCOME_CORRECT}),
 		Note: "read as 35", Action: &v1.DebugAction{Kind: v1.DebugActionKind_DEBUG_ACTION_KIND_CHECK}})
+	write("ab.json", &v1.DebugCase{Tasks: []*v1.DebugTask{
+		{Statement: "□ + 5 = 12", Formula: "x+5=12", Key: number("7"), Read: "7", Outcome: v1.DebugOutcome_DEBUG_OUTCOME_CORRECT},
+		{Statement: "□ + 3 = 10", Formula: "x+3=10", Key: number("7"), Outcome: v1.DebugOutcome_DEBUG_OUTCOME_UNREADABLE},
+		{Statement: "Draw a line.", Outcome: v1.DebugOutcome_DEBUG_OUTCOME_UNCHECKED},
+	}})
 
 	s, err := paperset.Read(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(s.Cases) != 2 || s.Cases[0].Kind != paperset.KindExpression || s.Cases[0].Read != "85" ||
-		s.Cases[1].Kind != paperset.KindWord || s.Cases[1].Outcome != paperset.OutcomeNotYet || s.Cases[1].Part != "dev" {
+	if len(s.Cases) != 3 || s.Cases[0].Kind != paperset.KindExpression || s.Cases[0].Tasks[0].Read != "85" ||
+		s.Cases[1].Kind != paperset.KindSeveral || len(s.Cases[1].Tasks) != 3 || s.Cases[1].Tasks[2].Key != nil || s.Cases[1].Tasks[1].Formula != "x+3=10" ||
+		s.Cases[2].Kind != paperset.KindWord || s.Cases[2].Tasks[0].Outcome != paperset.OutcomeNotYet || s.Cases[2].Part != "dev" {
 		t.Fatalf("the set = %+v", s.Cases)
 	}
 	digest, err := paperset.Digest(dir)
@@ -86,8 +94,14 @@ func TestExportedCases(t *testing.T) {
 		}
 	}
 
-	write("c.json", &v1.DebugCase{Key: number("1"), Read: "1"})
-	if _, err := paperset.Read(dir); err == nil {
-		t.Error("a case with no outcome was read")
+	for name, c := range map[string]*v1.DebugCase{
+		"no outcome":   {Tasks: task(&v1.DebugTask{Statement: "1 =", Key: number("1"), Read: "1"})},
+		"no statement": {Tasks: task(&v1.DebugTask{Key: number("1"), Read: "1", Outcome: v1.DebugOutcome_DEBUG_OUTCOME_CORRECT})},
+		"no task":      {},
+	} {
+		write("c.json", c)
+		if _, err := paperset.Read(dir); err == nil {
+			t.Errorf("a case with %s was read", name)
+		}
 	}
 }

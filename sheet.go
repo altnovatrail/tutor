@@ -53,18 +53,26 @@ func (t *Tutor) ReadSheet(ctx context.Context, r SheetReading) SheetRead {
 	if err != nil {
 		return SheetRead{Outcome: Outcome{Kind: Failed, Err: err}}
 	}
-	return t.readCrop(ctx, CallSheet, r.Route, r.Crop, place, func(width, height int) provider.Request {
+	return t.readCrop(ctx, CallSheet, r.Route, r.Crop, func(width, height int) provider.Request {
 		return reading.RequestOf(statement, r.Crop, width, height, nil)
+	}, func(answer string) (*observationv1.Observation, error) {
+		o, err := reading.Read(answer)
+		if err != nil {
+			return nil, err
+		}
+		obs, _ := reading.ObservationOf(o)
+		obs.AnswerSlots[0].AnswerSlot = &observationv1.AnswerSlotPlace{Item: place.Item, Slot: place.Slot}
+		return obs, nil
 	})
 }
 
 // readCrop reads a crop of handwriting by the models admitted for the call c — the pair, in
 // parallel, its one reader, or the attempts of a cascade one at a time, a later one only when the
 // one before failed or read the slot as unreadable (R137) —, each by the request of the crop's
-// size, into the observation of one answer slot at place. An answer that is no observation fails
-// the reading.
-func (t *Tutor) readCrop(ctx context.Context, c Call, route Route, crop []byte, place *observationv1.AnswerSlotPlace,
-	request func(width, height int) provider.Request) SheetRead {
+// size, into the observation observe makes of each answer, which has places of its own. An answer
+// that is no observation fails the reading.
+func (t *Tutor) readCrop(ctx context.Context, c Call, route Route, crop []byte,
+	request func(width, height int) provider.Request, observe func(answer string) (*observationv1.Observation, error)) SheetRead {
 	cfg, err := cropSize(crop)
 	if err != nil {
 		return SheetRead{Outcome: Outcome{Kind: Failed, Err: err}}
@@ -80,17 +88,17 @@ func (t *Tutor) readCrop(ctx context.Context, c Call, route Route, crop []byte, 
 	}
 	if cascading(calls) {
 		obs, out := cascade(ctx, calls, func(cl call) ([]*observationv1.Observation, Outcome) {
-			read := readBy(ctx, c, a, []call{cl}, req, place)
+			read := readBy(ctx, c, a, []call{cl}, req, observe)
 			return read.Observations, read.Outcome
 		}, readable)
 		return SheetRead{Observations: obs, Outcome: out}
 	}
-	return readBy(ctx, c, a, calls, req, place)
+	return readBy(ctx, c, a, calls, req, observe)
 }
 
-// readBy asks the models of calls at once, each by req, and reads each answer into the observation
-// of the answer slot at place.
-func readBy(ctx context.Context, c Call, a admission.Answer, calls []call, req provider.Request, place *observationv1.AnswerSlotPlace) SheetRead {
+// readBy asks the models of calls at once, each by req, and reads each answer into its observation
+// by observe.
+func readBy(ctx context.Context, c Call, a admission.Answer, calls []call, req provider.Request, observe func(string) (*observationv1.Observation, error)) SheetRead {
 	reqs := make([]provider.Request, len(calls))
 	for i := range reqs {
 		reqs[i] = req
@@ -101,14 +109,12 @@ func readBy(ctx context.Context, c Call, a admission.Answer, calls []call, req p
 	}
 	obs := make([]*observationv1.Observation, len(resps))
 	for i, resp := range resps {
-		o, err := reading.Read(resp.JSON)
+		o, err := observe(resp.JSON)
 		if err != nil {
 			out.Kind, out.Err = Failed, fmt.Errorf("tutor: %s: %w", calls[i].model.Name(), err)
 			return SheetRead{Outcome: out}
 		}
-		obs[i], _ = reading.ObservationOf(o)
-		// Each observation has a place of its own, so that changing one changes no other.
-		obs[i].AnswerSlots[0].AnswerSlot = &observationv1.AnswerSlotPlace{Item: place.Item, Slot: place.Slot}
+		obs[i] = o
 	}
 	return SheetRead{Observations: obs, Outcome: out}
 }
