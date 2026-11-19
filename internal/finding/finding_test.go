@@ -41,13 +41,13 @@ func TestRead(t *testing.T) {
 	}
 	twentyOne := `{"tasks": [` + strings.Repeat(`{"x1": 0, "y1": 0, "x2": 5, "y2": 5},`, MaxTasks) + `{"x1": 0, "y1": 0, "x2": 5, "y2": 5}]}`
 	for name, answer := range map[string]string{
-		"not JSON":        `tasks`,
-		"no tasks":        `{}`,
-		"another field":   `{"tasks": [], "text": "Name: Ann"}`,
-		"a missed corner": `{"tasks": [{"x1": 0, "y1": 0, "x2": 5}]}`,
+		"not JSON":         `tasks`,
+		"no tasks":         `{}`,
+		"another field":    `{"tasks": [], "text": "Name: Ann"}`,
+		"a missed corner":  `{"tasks": [{"x1": 0, "y1": 0, "x2": 5}]}`,
 		"a field of a box": `{"tasks": [{"x1": 0, "y1": 0, "x2": 5, "y2": 5, "label": "1"}]}`,
-		"more after it":   `{"tasks": []} {}`,
-		"too many":        twentyOne,
+		"more after it":    `{"tasks": []} {}`,
+		"too many":         twentyOne,
 	} {
 		if _, err := Read(answer); err == nil {
 			t.Errorf("%s: read", name)

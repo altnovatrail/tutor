@@ -73,9 +73,9 @@ type step struct {
 }
 
 // photo is a picture as a request of the statement or the solution sends it: the library sends the
-// task's crop as provider.Photo makes it, a JPEG, and a PNG goes as one here, which no Fitter
-// shrinks.
-func photo(p picture) provider.Image { return provider.Image{PNG: p.PNG} }
+// task's crop as provider.Photo makes it, a JPEG, as an exported case holds it, and a PNG goes as
+// one here, which no Fitter shrinks.
+func photo(p picture) provider.Image { return provider.Image{PNG: p.PNG, JPEG: p.JPEG} }
 
 // Request is the call's request, as the library asks it of its kind.
 func (s *step) Request() (provider.Request, error) {

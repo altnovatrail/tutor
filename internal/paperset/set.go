@@ -3,7 +3,8 @@
 // against its key. A case is a task of one of five kinds, with its truth by construction — the
 // formula, the key, what the learner writes and the verdict it comes to —, and its pictures are
 // drawn from it when a run asks them, the same from the same case on any machine, so the set is one
-// file and no folder of samples. The printed statement is drawn by synth's hand, as the learner's
+// file and no folder of samples; a folder of the cases the debug mode exported holds its pictures
+// instead (R136). The printed statement is drawn by synth's hand, as the learner's
 // writing is: the runs on the stub measure the plumbing, and a paid run needs photos of printed
 // pages (Д22).
 package paperset
@@ -67,6 +68,8 @@ type Case struct {
 	Work      string   `json:"work"`
 	Read      string   `json:"read"`
 	Outcome   string   `json:"outcome"`
+	// pictures are those of a case the debug mode exported, which no code draws.
+	pictures *Pictures
 }
 
 // Key is a case's key as the file writes it: a number with its units and the letter of its
@@ -90,19 +93,30 @@ func (k *Key) Answer() *paperv1.Answer {
 	return &paperv1.Answer{Kind: &paperv1.Answer_Number{Number: &paperv1.Number{Value: k.Number, Units: slices.Clone(k.Units), Unknown: k.Unknown}}}
 }
 
-// Read reads the file of a set strictly: no field it does not name, the cases numbered from 1 in
-// order, each of a known kind, part and outcome, with a statement, a key exactly when it is not
-// open, and a formula only of a formula's kind.
+// Read reads the file of a set strictly, or a folder of the cases the debug mode exported (exported):
+// no field it does not name, the cases numbered from 1 in order, each of a known kind, part and
+// outcome, with a statement, or the pictures of an exported case, a key exactly when it is not open,
+// and a formula only of a formula's kind.
 func Read(path string) (*Set, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	dec := json.NewDecoder(bytes.NewReader(data))
-	dec.DisallowUnknownFields()
 	var s Set
-	if err := dec.Decode(&s); err != nil {
-		return nil, fmt.Errorf("%s: not a set of paper: %w", path, err)
+	if info, err := os.Stat(path); err != nil {
+		return nil, err
+	} else if info.IsDir() {
+		e, err := exported(path)
+		if err != nil {
+			return nil, err
+		}
+		s = *e
+	} else {
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return nil, err
+		}
+		dec := json.NewDecoder(bytes.NewReader(data))
+		dec.DisallowUnknownFields()
+		if err := dec.Decode(&s); err != nil {
+			return nil, fmt.Errorf("%s: not a set of paper: %w", path, err)
+		}
 	}
 	if len(s.Cases) == 0 {
 		return nil, fmt.Errorf("%s: a set of paper with no case", path)
@@ -124,7 +138,7 @@ func Read(path string) (*Set, error) {
 		if (c.Work == "") != (c.Read == "") {
 			problems = append(problems, "it has a value read exactly when it has work")
 		}
-		if len(c.Statement) == 0 {
+		if len(c.Statement) == 0 && c.pictures == nil {
 			problems = append(problems, "it has no statement")
 		}
 		if (c.Key == nil) != (c.Kind == KindOpen) || (c.Key == nil) != (c.Outcome == OutcomeUnchecked) {
@@ -167,7 +181,9 @@ type Pictures struct {
 }
 
 type picture struct {
-	PNG           []byte
+	// A picture is a PNG, or the JPEG of the task's crop of an exported case, as provider.Photo
+	// sends a photo.
+	PNG, JPEG     []byte
 	Width, Height int
 }
 
@@ -175,6 +191,9 @@ type picture struct {
 // under it the same lines in the same hand, so that the work's crop holds the statement as the
 // tracing paper does.
 func Draw(c Case, seed uint64) (*Pictures, error) {
+	if c.pictures != nil {
+		return c.pictures, nil
+	}
 	sheet := sample.Sheet{Width: sheetWidth, Height: sheetHeight}
 	of := func(lines []string) (picture, error) {
 		strokes := synth.Text(lines, sheet, seed+uint64(c.Number))

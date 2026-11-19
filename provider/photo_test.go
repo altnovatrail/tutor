@@ -15,10 +15,10 @@ import (
 // fitted is a model that fits a photo to half its size, and plain one that does not fit it.
 type plain struct{}
 
-func (plain) Name() string                                 { return "plain" }
-func (plain) Prices() Prices                               { return Prices{} }
+func (plain) Name() string                                   { return "plain" }
+func (plain) Prices() Prices                                 { return Prices{} }
 func (plain) Ask(context.Context, Request) (Response, error) { return Response{}, nil }
-func (plain) Check(context.Context) error                  { return nil }
+func (plain) Check(context.Context) error                    { return nil }
 
 type fitted struct{ plain }
 

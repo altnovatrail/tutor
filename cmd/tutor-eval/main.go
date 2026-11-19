@@ -110,8 +110,9 @@ const usage = `usage:
                              on the one set of their plan, those of the kinds -case-kinds names,
                              and with -part recorded those of the sheets recorded so far; the
                              statement, the solving and the paper ask the cases of a part of
-                             -paper, eval/paper-gen.json by default, by the models the library
-                             admits unless -readers names others, and log in synthetic/runs
+                             -paper, eval/paper-gen.json by default or a folder of the cases
+                             the debug mode exported, as eval/paper-cases, by the models the library admits unless
+                             -readers names others, and log in synthetic/runs
   tutor-eval judge-words -log F|-controls F [-judge C] [-max-usd N] [-out F] [-stub]
                              judge the hints of a log of the set of the words, the feedback
                              of a log of the essays in two calls, run where that run ran, or the judge's

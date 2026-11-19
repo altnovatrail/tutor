@@ -4,7 +4,7 @@
 >
 > **Rule:** do not re-propose what was rejected without new facts. If a decision has to change, ask the author and rewrite its entry in its place, and every entry the change touches: an entry is its text in force — what was decided, why, what was rejected and where it is described —, git keeps the old text, and the commit says why. An entry that still has dated amendments is rewritten whole, its amendments folded in, when a task touches it (R160 spec).
 >
-> The repository was set up 2026-10-19 from the template of `spec` v0.1.0 (R21 spec). How it comes to differ from the template — tools in the devcontainer, rules in RUN.md — is recorded here as a decision, as R46 canvas-api recorded how it differed from its model. Next number — R136.
+> The repository was set up 2026-10-19 from the template of `spec` v0.1.0 (R21 spec). How it comes to differ from the template — tools in the devcontainer, rules in RUN.md — is recorded here as a decision, as R46 canvas-api recorded how it differed from its model. Next number — R137.
 >
 > Here entries are cited as `R03`, in other repositories as `R03 tutor`. The decisions of `spec` are cited as "R18 spec", the decisions of MathTrail as "R37 canvas-api", and in a list as "canvas-api: R37, R38". Each log has its own numbers.
 >
@@ -3927,3 +3927,19 @@ In development the leaks of Opus fell from 5 to 0, and the hints of Haiku with a
 - **a paid run before the code** — no paid run before 2027-01-17 (R126), and the author checks the three calls by hand on `dev-ai`.
 
 — *Consequence:* `internal/statement`, `internal/solving`, `internal/reading` — `paper.go`; `paper.go`, `price.go`; `admission.Admitted`; `internal/paperset`, `internal/gen` — `paper.go`, `cmd/tutor-eval` — `gen paper`, the kinds `statement`, `solving` and `paper` of `run`, and their report; `eval/paper-gen.json`; architecture 3.2, 3.4, 3.9 and 3.10; [DEBT.md](../run/DEBT.md), Д22.
+
+**R136. The debug mode of a local run (R163 spec) is `Route.Debug` of a call, which the library takes only when `Config.Debug` is on: its first model serves the four calls of a task from paper in place of those of the list, its second reads the work beside the first as a pair, and its record gets each call of a model — the model as asked, its answer as it returned it, its usage, what failed. It bypasses the list and the admission's refusal; on any other call it changes nothing. A Check the mode exports, `DebugCase` of the contract, is a case of the set of a task from paper: `tutor-eval run -kind statement|solving|paper -paper` takes a folder of them, and they are kept in `eval/paper-cases/`.** T233 spec, by its planning, which the author approved on 2026-11-19.
+- **Where it hooks.** `chooseCall`, the one choice of a call, so that `Price`, the reserve of api's quota and the call itself follow the same models; the effort and the thinking go with each model as they go with one of the list. A route with the mode to a library with it off fails before any model.
+- **The exported cases** (`internal/paperset`, `exported.go`). Each file of the folder, in the order of their names, is a case of the part `dev`: its pictures those the Check sent — the task's crop through `provider.Photo`, as the library sends it, and the PNG of the work —, its truth the developer's — the formula, the key, the value read and the verdict —, and its kind follows from that truth. The run's log names the folder by the SHA-256 of its files' names and bytes (`paperset.Digest`). So a task a model misread on the developer's paper is measured again by any model, where a drawn case measures the plumbing alone (Д22).
+- **Where they are kept** — `eval/paper-cases/`, in git, by the author's word of 2026-11-19: the cases are the tests of the reading of real paper, and each run measures the same files on any machine. Their pictures are the developer's own paper, taken on a local run, and so no learner's work (RULES.md spec, Hard rules); the mode is the developer's alone (R163 spec).
+- **The record** is `Debug.Record`, called once the models have answered, not `Usage` or `Outcome`: those hold no content and may be logged (R09 spec), and the answer is the model's reading of the learner's work. api keeps the record in memory for the developer alone.
+
+— *Why:* the author finds the errors of reading and chooses models on a local run without changing the list for each try; a choice that passes `chooseCall` keeps the price and the quota true.
+
+— *Rejected:*
+- **an adapter of api that wraps the dial** — the clients are kept by model, so it would read the choice at each call, and lose `Fit` of the adapter, which `provider.Photo` needs;
+- **the answer in `Usage`** — a log would get it;
+- **the cases outside the repository**, as the author's samples in `samples/` — a run elsewhere would not find them;
+- **the exported case in the file of `paper-gen.json`** — its pictures are no case's to draw, and a file a case lets the developer add and drop cases by hand.
+
+— *Consequence:* `debug.go`, `tutor.go`, `internal/paperset`, `cmd/tutor-eval/paper.go`, `eval/paper-cases/`; architecture 3.1, 3.9.

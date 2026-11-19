@@ -1,9 +1,7 @@
 package main
 
 import (
-	"crypto/sha256"
 	"fmt"
-	"os"
 	"strings"
 
 	"github.com/altnovatrail/tutor/internal/paperset"
@@ -27,7 +25,7 @@ var paperConfigs = map[string][]string{
 // configurations, repeated (paperset.New).
 func planPaper(kind string) func([]sheetFlags, string, options) (*runner.Run, string, error) {
 	return func(_ []sheetFlags, part string, o options) (*runner.Run, string, error) {
-		data, err := os.ReadFile(o.paper)
+		digest, err := paperset.Digest(o.paper)
 		if err != nil {
 			return nil, "", err
 		}
@@ -43,7 +41,7 @@ func planPaper(kind string) func([]sheetFlags, string, options) (*runner.Run, st
 		if err != nil {
 			return nil, "", err
 		}
-		f := &paperset.File{Name: o.paper, SHA256: fmt.Sprintf("%x", sha256.Sum256(data)), Set: s}
+		f := &paperset.File{Name: o.paper, SHA256: digest, Set: s}
 		r, err := paperset.New(kind, part, f, configs, o.repeats)
 		if err != nil {
 			return nil, "", err
