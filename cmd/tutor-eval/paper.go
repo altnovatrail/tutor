@@ -8,7 +8,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/runner"
 )
 
-// paperFile is the set of a task from paper that gen paper made, which the runs of its three calls
+// paperFile is the set of a task from paper that gen paper made, which the runs of its four calls
 // read by default (R135).
 const paperFile = "eval/paper-gen.json"
 
@@ -19,6 +19,7 @@ var paperConfigs = map[string][]string{
 	paperset.CallStatement: cascadeConfigs,
 	paperset.CallSolving:   cascadeConfigs,
 	paperset.CallPaper:     cascadeConfigs,
+	paperset.CallFinding:   cascadeConfigs,
 }
 
 // cascadeConfigs are the attempts of the cascade of a task from paper, in their order.
@@ -50,6 +51,6 @@ func planPaper(kind string) func([]sheetFlags, string, options) (*runner.Run, st
 			return nil, "", err
 		}
 		return r, fmt.Sprintf("%s: %s of the set %s, drawn with the seed %d, the call %s by %s, %s.\n",
-			partName(part), count(len(s.Of(part)), "case"), o.paper, s.Seed, kind, strings.Join(names, " and "), count(o.repeats, "repeat")), nil
+			partName(part), count(len(r.Items), "case"), o.paper, s.Seed, kind, strings.Join(names, " and "), count(o.repeats, "repeat")), nil
 	}
 }

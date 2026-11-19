@@ -9,6 +9,7 @@ import (
 	"strings"
 	"testing"
 
+	observationv1 "github.com/altnovatrail/spec/contracts/novatrail/observation/v1"
 	"github.com/altnovatrail/spec/types/admissionv0"
 
 	"github.com/altnovatrail/tutor/admission"
@@ -123,5 +124,37 @@ func TestFindTasksNotAdmitted(t *testing.T) {
 	}
 	if len(opus.asked) != 0 {
 		t.Errorf("%d calls asked though not admitted", len(opus.asked))
+	}
+}
+
+// With the learner's request the model gets it and the frames on the page, numbered in its order —
+// top to bottom, and of one height the left first — in pixels of the photo it sees; a frame it gives
+// that covers one the learner drew is dropped, the learner's own staying; a model that gave only
+// such frames found tasks, and the next is not asked. Without a request no frame is sent and none is
+// dropped.
+func TestFindTasksByARequest(t *testing.T) {
+	answer := `{"tasks": [{"x1": 0, "y1": 200, "x2": 400, "y2": 300}, {"x1": 0, "y1": 50, "x2": 200, "y2": 150}, {"x1": 200, "y1": 50, "x2": 400, "y2": 150}]}`
+	lib, m := cascadeOf(t, answer, `{}`, `{}`)
+	f := TaskFinding{Route: platform, Photo: photoJPEG(t, 1000, 500), Request: "split frame 1",
+		Found: []*observationv1.CropBox{{Ymin: 100, Xmin: 500, Ymax: 300, Xmax: 900}, {Ymin: 100, Xmin: 0, Ymax: 300, Xmax: 400}},
+		Drawn: []*observationv1.CropBox{{Ymin: 400, Xmin: 0, Ymax: 600, Xmax: 400}}}
+	got := lib.FindTasks(context.Background(), f)
+	if got.Outcome.Kind != Answered || len(got.Frames) != 2 || got.Frames[0].Xmax != 200 || got.Frames[1].Xmin != 200 || got.Frames[0].Ymin != 100 {
+		t.Fatalf("found %+v", got)
+	}
+	want := "<frames>\n1. found x1=0 y1=50 x2=400 y2=150\n2. found x1=500 y1=50 x2=900 y2=150\n3. drawn x1=0 y1=200 x2=400 y2=300\n</frames>"
+	if text := m["claude-haiku-5-5"].asked[0].Text; !strings.Contains(text, "\nsplit frame 1\n</request>") || !strings.HasSuffix(text, want) {
+		t.Errorf("the text is %q", text)
+	}
+	f.Request = ""
+	got = lib.FindTasks(context.Background(), f)
+	if text := m["claude-haiku-5-5"].asked[1].Text; len(got.Frames) != 3 || strings.Contains(text, "<request>") || strings.Contains(text, "<frames>") {
+		t.Errorf("without a request: %+v, %q", got, text)
+	}
+
+	repeats, r := cascadeOf(t, `{"tasks": [{"x1": 0, "y1": 200, "x2": 400, "y2": 300}]}`, `{}`, `{}`)
+	f.Request = "only the drawn one"
+	if got := repeats.FindTasks(context.Background(), f); got.Outcome.Kind != Answered || len(got.Frames) != 0 || len(r["claude-sonnet-5-5"].asked) != 0 {
+		t.Errorf("only a drawn frame repeated: %+v, Sonnet asked %d times", got, len(r["claude-sonnet-5-5"].asked))
 	}
 }

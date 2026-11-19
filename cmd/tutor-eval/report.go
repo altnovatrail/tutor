@@ -165,7 +165,7 @@ type withProtocol interface {
 
 // reportOf builds the report of a log by the kind of call it is of: the judge's, whose log tells no
 // kind, the reading's, the hint's, the workbook's, the essays', the words' after a correct answer,
-// or one of the three calls of a task from paper.
+// or one of the four calls of a task from paper.
 func reportOf(data []byte) (written, error) {
 	switch kind := runner.CallKind(data); kind {
 	case "":
@@ -214,14 +214,14 @@ func reportOf(data []byte) (written, error) {
 			return nil, err
 		}
 		return report.NewEssays(l)
-	case paperset.CallStatement, paperset.CallSolving, paperset.CallPaper:
+	case paperset.CallStatement, paperset.CallSolving, paperset.CallPaper, paperset.CallFinding:
 		l, err := paperset.ReadLog(bytes.NewReader(data), kind)
 		if err != nil {
 			return nil, err
 		}
 		return paperset.NewReport(l)
 	default:
-		return nil, fmt.Errorf("a log of the kind of call %q, and the report knows the judge, the reading, the hint, the words after a correct answer, the workbook, the essays, the judge of the words and the three calls of a task from paper", kind)
+		return nil, fmt.Errorf("a log of the kind of call %q, and the report knows the judge, the reading, the hint, the words after a correct answer, the workbook, the essays, the judge of the words and the four calls of a task from paper", kind)
 	}
 }
 

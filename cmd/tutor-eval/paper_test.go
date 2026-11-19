@@ -22,10 +22,12 @@ func TestPaperOnTheStub(t *testing.T) {
 		"statement": "statement, haiku-high: 15 of 15 answered right, 100.0%",
 		"solving":   "solving, haiku-high: 15 of 15 answered right, 100.0%",
 		"paper":     "paper, haiku-high: 15 of 15 answered right, 100.0%",
+		"finding":   "finding, haiku-high: 2 of 2 answered right, 100.0%",
 	} {
 		log := filepath.Join(dir, kind+".jsonl")
+		cases := map[bool]string{true: "2 cases", false: "15 cases"}[kind == "finding"]
 		code, out, errs := runMeasure("yes\n", "-kind", kind, "-paper", set, "-part", "all", "-stub", "-repeats", "1", "-log", log)
-		if code != exitOK || !strings.HasPrefix(out, "All the sheets: 15 cases of the set "+set+", drawn with the seed 3, the call "+kind+" by ") {
+		if code != exitOK || !strings.HasPrefix(out, "All the sheets: "+cases+" of the set "+set+", drawn with the seed 3, the call "+kind+" by ") {
 			t.Fatalf("the run of %s ends %d:\n%s%s", kind, code, out, errs)
 		}
 		if code, out, errs = runIt("report", log); code != exitOK || !strings.Contains(out, says) {

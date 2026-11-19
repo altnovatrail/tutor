@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"slices"
 	"time"
 
 	"github.com/altnovatrail/module-kit/observation"
@@ -14,6 +15,7 @@ import (
 	paperv1 "github.com/altnovatrail/spec/contracts/novatrail/paper/v1"
 	"google.golang.org/protobuf/proto"
 
+	"github.com/altnovatrail/tutor/internal/finding"
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/runner"
@@ -22,15 +24,21 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// The kinds of call of the three runs, as their logs tell them (runner.CallKind).
+// The kinds of call of the four runs, as their logs tell them (runner.CallKind). The finding asks
+// only the cases of several tasks, each a column of examples under one instruction, with the
+// learner's request to frame each example apart (R138).
 const (
 	CallStatement = "statement"
 	CallSolving   = "solving"
 	CallPaper     = "paper"
+	CallFinding   = "finding"
 )
 
 // CallKinds are the kinds of call of the set, in their order.
-var CallKinds = []string{CallStatement, CallSolving, CallPaper}
+var CallKinds = []string{CallStatement, CallSolving, CallPaper, CallFinding}
+
+// FindingRequest is the learner's request every case of the finding sends.
+const FindingRequest = "each example a task of its own"
 
 // The input tokens a call is expected to take besides its picture's, for the estimate, and a
 // generous count of all of them for the worst case; and the output each kind is expected to write.
@@ -39,7 +47,7 @@ const (
 	inputBudget  = 8000
 )
 
-var outputs = map[string]int64{CallStatement: 300, CallSolving: 2000, CallPaper: 600}
+var outputs = map[string]int64{CallStatement: 300, CallSolving: 2000, CallPaper: 600, CallFinding: 400}
 
 // prompts are the fingerprint and the version of each kind's prompt, which the run's record keeps.
 var prompts = map[string]struct {
@@ -49,6 +57,7 @@ var prompts = map[string]struct {
 	CallStatement: {statement.Fingerprint, statement.Version},
 	CallSolving:   {solving.Fingerprint, solving.Version},
 	CallPaper:     {reading.PaperFingerprint, reading.PaperVersion},
+	CallFinding:   {finding.Fingerprint, finding.Version},
 }
 
 // File is the set a run asks: its file, by its name and SHA-256, and the set read.
@@ -88,6 +97,9 @@ func (s *step) Request() (provider.Request, error) {
 	case CallSolving:
 		req = solving.RequestOf(photo(s.pictures.Statement), s.pictures.Statement.Width, s.pictures.Statement.Height, s.asked())
 		req.MaxOutputTokens = solving.MaxOutputTokens
+	case CallFinding:
+		req = finding.RequestOf(photo(s.pictures.Statement), s.pictures.Statement.Width, s.pictures.Statement.Height, FindingRequest, nil)
+		req.MaxOutputTokens = finding.MaxOutputTokens
 	default:
 		req = reading.PaperRequestOf(s.pictures.Work.PNG, s.pictures.Work.Width, s.pictures.Work.Height, s.statements())
 		req.MaxOutputTokens = reading.MaxOutputTokens
@@ -116,10 +128,17 @@ func (s *step) statements() []string {
 }
 
 // Right is the answer of a model that is always right, by the case's truth: its tasks with their
-// statements and formulas, their keys, or an observation of the values read, one for each task
-// with work.
+// statements and formulas, their keys, an observation of the values read, one for each task with
+// work, or a box round each task's line of the statement's picture.
 func (s *step) Right() (string, error) {
 	switch s.kind {
+	case CallFinding:
+		boxes := []map[string]int{}
+		for _, b := range s.lines() {
+			boxes = append(boxes, map[string]int{"x1": b.X1, "y1": b.Y1, "x2": b.X2, "y2": b.Y2})
+		}
+		data, err := json.Marshal(map[string]any{"tasks": boxes})
+		return string(data), err
 	case CallStatement:
 		tasks := []map[string]string{}
 		for _, t := range s.kase.Tasks {
@@ -160,6 +179,14 @@ func (s *step) Record(o runner.Outcome) any {
 	}
 	tasks := s.kase.Tasks
 	switch s.kind {
+	case CallFinding:
+		boxes, err := finding.Read(o.Answer)
+		if err != nil {
+			rec.Error = err.Error()
+			return rec
+		}
+		rec.Boxes = len(boxes)
+		rec.Right = len(boxes) == len(tasks) && s.apart(boxes) && s.onLines(boxes)
 	case CallStatement:
 		read, err := statement.Read(o.Answer)
 		if err != nil {
@@ -209,6 +236,54 @@ func (s *step) Record(o runner.Outcome) any {
 		}
 	}
 	return rec
+}
+
+// lines are the boxes of the tasks' lines on the statement's picture, below the lines of its
+// instruction: the picture split into its lines evenly, as synth writes them.
+func (s *step) lines() []finding.Box {
+	p, n := s.pictures.Statement, len(s.kase.Statement)+len(s.kase.Tasks)
+	boxes := make([]finding.Box, len(s.kase.Tasks))
+	for i := range boxes {
+		line := len(s.kase.Statement) + i
+		boxes[i] = finding.Box{X1: 0, Y1: line * p.Height / n, X2: p.Width, Y2: (line + 1) * p.Height / n}
+	}
+	return boxes
+}
+
+// apart is whether boxes lie on the statement's picture and no two of them share more than a strip
+// of their edge: a box round two examples, or two round one, is the finding's mistake.
+func (s *step) apart(boxes []finding.Box) bool {
+	p := s.pictures.Statement
+	for i, a := range boxes {
+		if a.X1 < 0 || a.Y1 < 0 || a.X2 > p.Width || a.Y2 > p.Height || a.X2 <= a.X1 || a.Y2 <= a.Y1 {
+			return false
+		}
+		for _, b := range boxes[:i] {
+			w, h := min(a.X2, b.X2)-max(a.X1, b.X1), min(a.Y2, b.Y2)-max(a.Y1, b.Y1)
+			if w > 0 && h > 0 && h*4 > min(a.Y2-a.Y1, b.Y2-b.Y1) {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// onLines is whether the middle of each task's line lies in one of boxes alone: with as many boxes
+// as tasks, each box frames a task of its own, and none frames the statement's lines instead.
+func (s *step) onLines(boxes []finding.Box) bool {
+	for _, l := range s.lines() {
+		x, y := (l.X1+l.X2)/2, (l.Y1+l.Y2)/2
+		in := 0
+		for _, b := range boxes {
+			if b.X1 <= x && x <= b.X2 && b.Y1 <= y && y <= b.Y2 {
+				in++
+			}
+		}
+		if in != 1 {
+			return false
+		}
+	}
+	return true
 }
 
 // solvedOf is what the solver gives on a formula: its value, or "refused: " and its reason; and
@@ -284,6 +359,9 @@ func New(kind, part string, f *File, configs []runner.Config, repeats int) (*run
 		return nil, fmt.Errorf("paperset: no kind of call %q", kind)
 	}
 	cases := f.Set.Of(part)
+	if kind == CallFinding {
+		cases = slices.DeleteFunc(slices.Clone(cases), func(c Case) bool { return c.Kind != KindSeveral })
+	}
 	switch {
 	case repeats < 1:
 		return nil, fmt.Errorf("paperset: %d repeats", repeats)
@@ -370,8 +448,8 @@ type (
 	}
 	// CallRecord tells a call: the answer as the model gave it, the failure if it failed, and what it
 	// took; what the program made of it, task by task — the formulas and what the solver gives on
-	// each, the keys, or the verdicts and their reasons —, and whether that is right by the case's
-	// truth.
+	// each, the keys, the verdicts and their reasons, or how many boxes the finding gave —, and
+	// whether that is right by the case's truth.
 	CallRecord struct {
 		Kind string `json:"kind"`
 		Call
@@ -383,6 +461,7 @@ type (
 		Keys     []*Key   `json:"keys,omitempty"`
 		Verdicts []string `json:"verdicts,omitempty"`
 		Reasons  []string `json:"reasons,omitempty"`
+		Boxes    int      `json:"boxes,omitempty"`
 		Right    bool     `json:"right"`
 		runner.Usage
 	}

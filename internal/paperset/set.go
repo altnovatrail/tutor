@@ -1,6 +1,7 @@
-// Package paperset is the eval set of a task from paper and its three runs (R135): the reading of a
-// statement into its tasks and their formulas, the solution of tasks by AI, and the reading of the
-// work on a task against its keys. A case is the crop of one task of one of five kinds, or of
+// Package paperset is the eval set of a task from paper and its four runs (R135): the reading of a
+// statement into its tasks and their formulas, the solution of tasks by AI, the reading of the work
+// on a task against its keys, and the finding of the tasks of several framed together, each apart,
+// by the learner's request (R138). A case is the crop of one task of one of five kinds, or of
 // several tasks framed together, with the truth of each task by construction — the formula, the
 // key, what the learner writes and the verdict it comes to —, and its pictures are
 // drawn from it when a run asks them, the same from the same case on any machine, so the set is one

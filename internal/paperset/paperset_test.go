@@ -37,16 +37,23 @@ func recordOf(st runner.Step, answer string) paperset.CallRecord {
 }
 
 // The answer of the stub is right on every case of every kind, and the run's pictures are those of
-// the case: the statement's crop for the statement and the solution, the work's for the reading. The
-// cases of several tasks go to every run.
+// the case: the statement's crop for the statement, the solution and the finding, the work's for the
+// reading. The cases of several tasks go to every run, and to the finding alone.
 func TestStubIsRight(t *testing.T) {
 	f := setOf(t, 30)
+	several := 0
+	for _, c := range f.Set.Cases {
+		if c.Kind == paperset.KindSeveral {
+			several++
+		}
+	}
 	for _, kind := range paperset.CallKinds {
 		r, err := paperset.New(kind, "all", f, haiku(t), 1)
 		if err != nil {
 			t.Fatal(err)
 		}
-		if len(r.Steps) != 30 || len(r.Items) != 30 {
+		want := map[bool]int{true: several, false: 30}[kind == paperset.CallFinding]
+		if want == 0 || len(r.Steps) != want || len(r.Items) != want {
 			t.Fatalf("%s: %d steps, %d items", kind, len(r.Steps), len(r.Items))
 		}
 		for _, st := range r.Steps {
@@ -80,6 +87,7 @@ func solved(kind, value, options, key string) string {
 // another value. A case of several tasks is right only when each of its tasks is.
 func TestMistakesAreWrong(t *testing.T) {
 	f := setOf(t, 6)
+	findingIsWrong(t, f)
 	several := f.Set.Cases[5]
 	if several.Kind != paperset.KindSeveral || len(several.Tasks) < 2 || several.Tasks[0].Outcome != paperset.OutcomeCorrect || several.Tasks[1].Outcome != paperset.OutcomeNotYet {
 		t.Fatalf("case 6 is %+v", several)
@@ -247,5 +255,55 @@ func TestRead(t *testing.T) {
 	}
 	if _, err := paperset.Read(write(map[string]any{"cases": 1})); err == nil {
 		t.Error("not a set: read")
+	}
+}
+
+// The finding of the tasks of a case of several is right only with a box round each, apart and on
+// the picture: one box round two examples, two round one, or one off the picture is wrong. The
+// request goes as data with the request every case of the finding sends.
+func findingIsWrong(t *testing.T, f *paperset.File) {
+	t.Helper()
+	r, err := paperset.New(paperset.CallFinding, "all", f, haiku(t), 1)
+	if err != nil || len(r.Steps) != 1 {
+		t.Fatalf("the finding: %v, %v", r, err)
+	}
+	st := r.Steps[0]
+	req, err := st.Call.Request()
+	if err != nil || !strings.Contains(req.Text, "<request>") || !strings.Contains(req.Text, paperset.FindingRequest) {
+		t.Fatalf("the request of the finding: %q, %v", req.Text, err)
+	}
+	var right struct {
+		Tasks []map[string]int `json:"tasks"`
+	}
+	answer, err := st.Call.Right()
+	if err != nil || json.Unmarshal([]byte(answer), &right) != nil || len(right.Tasks) < 2 {
+		t.Fatalf("the stub's finding: %s, %v", answer, err)
+	}
+	box := func(b map[string]int) string {
+		data, _ := json.Marshal(b)
+		return string(data)
+	}
+	first, second := right.Tasks[0], right.Tasks[1]
+	both := map[string]int{"x1": first["x1"], "y1": first["y1"], "x2": second["x2"], "y2": second["y2"]}
+	off := map[string]int{"x1": first["x1"], "y1": first["y1"], "x2": first["x2"] + 1, "y2": first["y2"]}
+	rest := []string{}
+	for _, b := range right.Tasks[2:] {
+		rest = append(rest, box(b))
+	}
+	tail := strings.Join(rest, ",")
+	if tail != "" {
+		tail = "," + tail
+	}
+	statement := map[string]int{"x1": first["x1"], "y1": 0, "x2": first["x2"], "y2": first["y1"] - 1}
+	for name, answer := range map[string]string{
+		"the statement, not the first": `{"tasks": [` + box(statement) + "," + box(second) + tail + `]}`,
+		"one round two":                `{"tasks": [` + box(both) + tail + `]}`,
+		"two round one":                `{"tasks": [` + box(first) + "," + box(first) + tail + `]}`,
+		"off the picture":              `{"tasks": [` + box(off) + "," + box(second) + tail + `]}`,
+		"none":                         `{"tasks": []}`,
+	} {
+		if rec := recordOf(st, answer); rec.Right {
+			t.Errorf("%s: %s is right", name, answer)
+		}
 	}
 }

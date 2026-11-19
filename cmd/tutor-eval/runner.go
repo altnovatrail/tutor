@@ -44,7 +44,7 @@ var partCaps = map[string]float64{"dev": 3, "test": 6, "all": 2, "recorded": 8}
 // its sets of sheets and says what the run asks: the judge, the reading, the hint, the reading of
 // the workbook, which reads the pages of the workbook and no sheets, the assessment by the rubric,
 // which reads the essays, the words after a correct answer, which ask the cases of their set, and
-// the three calls of a task from paper, which ask the cases of its set (R135).
+// the four calls of a task from paper, which ask the cases of its set (R135).
 var plans = map[string]struct {
 	plan func(sets []sheetFlags, part string, o options) (*runner.Run, string, error)
 	// several is whether the kind runs over several sets: the judge runs on one, since its
@@ -68,6 +68,7 @@ var plans = map[string]struct {
 	"statement": {plan: planPaper(paperset.CallStatement), file: "paper"},
 	"solving":   {plan: planPaper(paperset.CallSolving), file: "paper"},
 	"paper":     {plan: planPaper(paperset.CallPaper), file: "paper"},
+	"finding":   {plan: planPaper(paperset.CallFinding), file: "paper"},
 }
 
 // options are what a run is asked besides its sets and part: how many times each call is repeated,
