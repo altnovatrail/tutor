@@ -1138,7 +1138,7 @@ What `tutor` gets from `api` for each call, what of it goes to the model, and wh
 **A task from paper** (R135) — three calls for `api`'s first `SubmitWork` of its attempt and every one after (R162 spec):
 - **the statement** — `Tutor.ReadStatement`, `CallStatement`, `statement_reading`: `PaperTask{Route, Statement}`, the task's crop as `app` cut it, a JPEG or a PNG of at most 4 MiB, sent as a photo by `provider.Photo`; `statement.RequestOf`, version 1; the answer `StatementRead.Formula`, "" for no formula;
 - **the solution** — `Tutor.SolveTask`, `CallSolving`, `task_solving`, one model: the same crop; `solving.RequestOf`, version 1; the answer `TaskSolved.Answer`, `paperv1.Answer` or nil, which `api` holds to the rules of a key by `paper.Key` of `module-kit`;
-- **the work** — `Tutor.ReadPaper`, `CallPaper`, `handwriting_reading` by the pair or by one reader in `single`: `PaperReading{Route, Crop}`, the PNG of the crop of the work; `reading.PaperRequestOf`, version 1 of the reading of paper; the answer `SheetRead`, the observations at the place 1, 1, a circled option read as its label;
+- **the work** — `Tutor.ReadPaper`, `CallPaper`, `handwriting_reading` by one reader, Haiku 5.5 · `medium`, in any reading mode: `PaperReading{Route, Crop}`, the PNG of the crop of the work; `reading.PaperRequestOf`, version 1 of the reading of paper; the answer `SheetRead`, the observations at the place 1, 1, a circled option read as its label;
 - **the kinds** — each one model or the pair, admitted by the author's word, with no expected tokens (section 3.9; Д22); the most input of the first two is the text's bound and a photo's, `maxPhotoTokens`, and of the work a crop's.
 
 Which call kinds are admitted, and at which rung, is `admission.Admitted` (section 3.9); a kind without an entry is "not admitted". The expected tokens by which `Price` prices a kind are in `price.go` (section 3.7).
@@ -1161,7 +1161,7 @@ Which call kinds are admitted, and at which rung, is `admission.Admitted` (secti
 | finding the tasks | task finding | the photo of a page from paper (R162 spec) | the photo, fitted to the model and without the metadata of its file (R134) | the task frames in thousandths of the photo, in the order of the page; no text of the page |
 | reading the statement | statement reading | the task's crop from paper (R162 spec) | the crop, as a photo is sent (R135) | the formula of the solver's grammar, or none |
 | solving the task | task solving | the task's crop from paper | the crop, as a photo is sent | an answer of a key — a number with units and an unknown, or a choice of the printed options — or none |
-| reading the work on paper | handwriting reading | the crop of the work: the tracing paper with the strokes, the printed task under them | the crop, without the key and without a statement — to two readers, or to one in the mode `single` | the observation of the one answer slot: the final answer as written, or the label of the one option circled |
+| reading the work on paper | handwriting reading | the crop of the work: the tracing paper with the strokes, the printed task under them | the crop, without the key and without a statement — to one reader, in any mode | the observation of the one answer slot: the final answer as written, or the label of the one option circled |
 | text reading | text reading | — | — | not in the first slice: it has no text canvas (R41 spec) |
 | voice | voice | — | — | stage 3 (section 3.8) |
 

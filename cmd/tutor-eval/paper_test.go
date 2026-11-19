@@ -20,7 +20,7 @@ func TestPaperOnTheStub(t *testing.T) {
 	for kind, says := range map[string]string{
 		"statement": "statement, haiku-medium: 15 of 15 answered right, 100.0%",
 		"solving":   "solving, haiku-medium: 15 of 15 answered right, 100.0%",
-		"paper":     "paper, opus-high: 15 of 15 answered right, 100.0%",
+		"paper":     "paper, haiku-medium: 15 of 15 answered right, 100.0%",
 	} {
 		log := filepath.Join(dir, kind+".jsonl")
 		code, out, errs := runMeasure("yes\n", "-kind", kind, "-paper", set, "-part", "all", "-stub", "-repeats", "1", "-log", log)
@@ -32,7 +32,7 @@ func TestPaperOnTheStub(t *testing.T) {
 		}
 	}
 	data, err := os.ReadFile(filepath.Join(dir, "paper.jsonl"))
-	if err != nil || strings.Count(string(data), `"kind":"case"`) != 15 || strings.Count(string(data), `"kind":"call"`) != 30 {
+	if err != nil || strings.Count(string(data), `"kind":"case"`) != 15 || strings.Count(string(data), `"kind":"call"`) != 15 {
 		t.Errorf("the log of the work holds:\n%.300s, %v", data, err)
 	}
 	for _, c := range []struct {

@@ -16,11 +16,11 @@ const paperFile = "eval/paper-gen.json"
 
 // paperConfigs are the configurations a run of a call of a task from paper asks unless -readers
 // names others: the models the library admits for it, Haiku at medium for the statement and the
-// solution, and the sheet's pair for the work (R135).
+// solution, and for the work, alone in any reading mode (R135).
 var paperConfigs = map[string][]string{
 	paperset.CallStatement: {"haiku-medium"},
 	paperset.CallSolving:   {"haiku-medium"},
-	paperset.CallPaper:     {"opus-high", "haiku-medium"},
+	paperset.CallPaper:     {"haiku-medium"},
 }
 
 // planPaper plans a run of a call of a task from paper over the cases of a part of its set, by the

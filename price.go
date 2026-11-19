@@ -185,7 +185,7 @@ var kinds = map[Call]kind{
 		prompt:     reading.PaperFingerprint(),
 		maxIn:      maxTextBytes + tokensOf(maxCropSide, 1),
 		maxOut:     reading.MaxOutputTokens,
-		pair:       true,
+		models:     1,
 	},
 }
 

@@ -102,11 +102,10 @@ type PaperReading struct {
 	Crop  []byte
 }
 
-// ReadPaper reads the work on a task from paper by the models admitted for its reading (CallPaper) —
-// the pair, in parallel, or its one reader in ReadingSingle —, each into the observation of the
-// task's one answer slot, at the place 1, 1 (R162 spec): the learner's final answer as written, or
-// the label of the one option circled. A reading gives the observations as ReadSheet does, both of
-// the pair or none; api brings their values to the key and module-kit joins and judges them.
+// ReadPaper reads the work on a task from paper by the one model admitted for its reading
+// (CallPaper), in any reading mode, into the observation of the task's one answer slot, at the place
+// 1, 1 (R162 spec): the learner's final answer as written, or the label of the one option circled.
+// api brings its value to the key and module-kit judges it.
 func (t *Tutor) ReadPaper(ctx context.Context, r PaperReading) SheetRead {
 	return t.readCrop(ctx, CallPaper, r.Route, r.Crop, &observationv1.AnswerSlotPlace{Item: 1, Slot: 1}, func(width, height int) provider.Request {
 		return reading.PaperRequestOf(r.Crop, width, height)

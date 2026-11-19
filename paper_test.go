@@ -87,45 +87,42 @@ func TestPaperTaskFails(t *testing.T) {
 
 const paperObservation = `{"parts": [{"kind": "drawing", "text": "circled: B", "legible": true, "other_readings": []}], "results": [{"part": 1, "value": "B", "other_values": []}]}`
 
-// The work is read by the pair, the strong reader first, each into the one answer slot at 1, 1, by
-// the prompt of paper; in ReadingSingle, by Haiku alone.
+// The work is read by Haiku alone, with thinking, into the one answer slot at 1, 1, by the prompt of
+// paper, in either reading mode; Opus is never asked.
 func TestReadPaper(t *testing.T) {
 	lib, haiku, opus := haikuOf(t, paperObservation, paperObservation)
 	got := lib.ReadPaper(context.Background(), PaperReading{Route: platform, Crop: cropPNG(t, 400, 300)})
-	if got.Outcome.Kind != Answered || len(got.Observations) != 2 || len(got.Outcome.Usage) != 2 {
+	if got.Outcome.Kind != Answered || len(got.Observations) != 1 || len(got.Outcome.Usage) != 1 {
 		t.Fatalf("read %+v", got)
 	}
-	for _, o := range got.Observations {
-		s := o.GetAnswerSlots()[0]
-		if s.GetValue() != "B" || s.GetAnswerSlot().GetItem() != 1 || s.GetAnswerSlot().GetSlot() != 1 {
-			t.Errorf("the observation is %v", o)
-		}
+	if s := got.Observations[0].GetAnswerSlots()[0]; s.GetValue() != "B" || s.GetAnswerSlot().GetItem() != 1 || s.GetAnswerSlot().GetSlot() != 1 {
+		t.Errorf("the observation is %v", got.Observations[0])
 	}
-	if r := opus.asked[0]; r.Effort != "high" || r.Instructions != reading.PaperInstructions() || r.Text != "Image 1 is 400 pixels wide and 300 pixels high." || len(haiku.asked) != 1 {
+	if r := haiku.asked[0]; r.Effort != "medium" || r.NoThinking || r.Instructions != reading.PaperInstructions() || r.Text != "Image 1 is 400 pixels wide and 300 pixels high." || len(opus.asked) != 0 {
 		t.Errorf("the request is %+v", r)
 	}
 	single, err := New(Config{Table: lib.table, Facts: lib.facts, Least: lib.least, Reading: ReadingSingle, Keys: lib.keys, Adapters: lib.adapters})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := single.ReadPaper(context.Background(), PaperReading{Route: platform, Crop: cropPNG(t, 40, 30)}); got.Outcome.Kind != Answered || len(got.Observations) != 1 || len(opus.asked) != 1 {
+	if got := single.ReadPaper(context.Background(), PaperReading{Route: platform, Crop: cropPNG(t, 40, 30)}); got.Outcome.Kind != Answered || len(got.Observations) != 1 || len(haiku.asked) != 2 || len(opus.asked) != 0 {
 		t.Errorf("single: %+v", got)
 	}
 	// An answer off the schema fails the reading, and a crop that is no PNG fails before any call.
-	opus.resp.JSON = `{}`
+	haiku.resp.JSON = `{}`
 	if got := lib.ReadPaper(context.Background(), PaperReading{Route: platform, Crop: cropPNG(t, 40, 30)}); got.Outcome.Kind != Failed || len(got.Observations) != 0 {
 		t.Errorf("off the schema: %+v", got)
 	}
-	if got := lib.ReadPaper(context.Background(), PaperReading{Route: platform, Crop: photoJPEG(t, 40, 30)}); got.Outcome.Kind != Failed || len(opus.asked) != 2 {
+	if got := lib.ReadPaper(context.Background(), PaperReading{Route: platform, Crop: photoJPEG(t, 40, 30)}); got.Outcome.Kind != Failed || len(haiku.asked) != 3 {
 		t.Errorf("no PNG: %+v", got)
 	}
-	opus.err = errors.New("down")
+	haiku.err = errors.New("down")
 	if got := lib.ReadPaper(context.Background(), PaperReading{Route: platform, Crop: cropPNG(t, 40, 30)}); got.Outcome.Kind != Failed {
 		t.Errorf("a failure: %+v", got)
 	}
 	withoutWord(t)
-	lib, _, opus = haikuOf(t, paperObservation, paperObservation)
-	if got := lib.ReadPaper(context.Background(), PaperReading{Route: platform, Crop: cropPNG(t, 40, 30)}); got.Outcome.Kind != NotAdmitted || len(opus.asked) != 0 {
+	lib, haiku, _ = haikuOf(t, paperObservation, paperObservation)
+	if got := lib.ReadPaper(context.Background(), PaperReading{Route: platform, Crop: cropPNG(t, 40, 30)}); got.Outcome.Kind != NotAdmitted || len(haiku.asked) != 0 {
 		t.Errorf("not admitted: %+v", got)
 	}
 }

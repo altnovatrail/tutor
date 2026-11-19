@@ -318,13 +318,14 @@ func listFaultsOn(list []Entry, today string) []string {
 		if e.Capability == admissionv0.CapabilityCorrectAnswerWords && (len(e.Models) != 1 || e.Prompt != correct.Fingerprint()) {
 			out = append(out, fmt.Sprintf("entry %d of the words after a correct answer: %d models, prompt %s, theirs now %s", i, len(e.Models), e.Prompt, correct.Fingerprint()))
 		}
-		// A reading is of a sheet, of a workbook page or of the work on a task from paper, by a pair, or
-		// of an essay, by one reader, each
-		// with its prompt now; the assessment by a rubric is one model's.
+		// A reading is of a sheet or of a workbook page, by a pair, or of an essay or of the work on a
+		// task from paper, by one reader, each with its prompt now; the assessment by a rubric is one
+		// model's.
 		if e.Capability == admissionv0.CapabilityHandwritingReading {
-			pair := e.Prompt == reading.Fingerprint() || e.Prompt == workbook.Fingerprint() || e.Prompt == reading.PaperFingerprint()
+			pair := e.Prompt == reading.Fingerprint() || e.Prompt == workbook.Fingerprint()
+			one := e.Prompt == essay.ReadFingerprint() || e.Prompt == reading.PaperFingerprint()
 			strongFirst := len(e.Models) == 2 && e.Models[0].ID == "claude-opus-5-5"
-			if pair && !strongFirst || e.Prompt == essay.ReadFingerprint() && len(e.Models) != 1 || !pair && e.Prompt != essay.ReadFingerprint() {
+			if pair && !strongFirst || one && len(e.Models) != 1 || !pair && !one {
 				out = append(out, fmt.Sprintf("entry %d of reading: %d models, prompt %s, the readings' now %s, %s, %s and %s", i, len(e.Models), e.Prompt,
 					reading.Fingerprint(), workbook.Fingerprint(), reading.PaperFingerprint(), essay.ReadFingerprint()))
 			}
