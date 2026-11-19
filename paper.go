@@ -7,6 +7,8 @@ import (
 	observationv1 "github.com/altnovatrail/spec/contracts/novatrail/observation/v1"
 	paperv1 "github.com/altnovatrail/spec/contracts/novatrail/paper/v1"
 
+	"github.com/altnovatrail/module-kit/paper"
+
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/solving"
 	"github.com/altnovatrail/tutor/internal/statement"
@@ -28,20 +30,15 @@ type StatementRead struct {
 	Outcome Outcome
 }
 
-// ReadStatement asks the admitted model of the reading of a statement (CallStatement) for the
-// task's statement as a formula (R135). The crop goes as a photo does (provider.Photo): fitted to the
-// size its model takes, and as a JPEG without the metadata of its file. A crop that is no JPEG or
-// PNG fails before any call; an answer off the schema fails the call.
+// ReadStatement asks the admitted models of the reading of a statement (CallStatement) for the
+// task's statement as a formula (R135), one at a time, a later one only when the one before failed:
+// a statement that is no formula is an answer (R137). The crop goes as a photo does
+// (provider.Photo): fitted to the size its model takes, and as a JPEG without the metadata of its
+// file. A crop that is no JPEG or PNG fails before any call; an answer off the schema fails the
+// call.
 func (t *Tutor) ReadStatement(ctx context.Context, p PaperTask) StatementRead {
-	resp, out := t.askCrop(ctx, CallStatement, p, statement.RequestOf, statement.MaxOutputTokens)
-	if out.Kind != Answered {
-		return StatementRead{Outcome: out}
-	}
-	formula, err := statement.Read(resp.JSON)
-	if err != nil {
-		out.Kind, out.Err = Failed, fmt.Errorf("tutor: %w", err)
-		return StatementRead{Outcome: out}
-	}
+	formula, out := askCrop(ctx, t, CallStatement, p, statement.RequestOf, statement.MaxOutputTokens,
+		statement.Read, func(string) bool { return true })
 	return StatementRead{Formula: formula, Outcome: out}
 }
 
@@ -53,45 +50,51 @@ type TaskSolved struct {
 	Outcome Outcome
 }
 
-// SolveTask asks the admitted model of the solution (CallSolving), one model, for the answer of the
-// task on its crop: the key of a task whose statement the solver does not take (R162 spec; R135).
-// The crop goes as ReadStatement sends it; an answer off the schema fails the call.
+// SolveTask asks the admitted models of the solution (CallSolving), one solution of one model, for
+// the answer of the task on its crop: the key of a task whose statement the solver does not take
+// (R162 spec; R135). A later model is asked when the one before failed or gave no answer a key may
+// hold — none, or one that breaks a rule of module-kit (paper.Key) —, and the last one's answer
+// stands (R137). The crop goes as ReadStatement sends it; an answer off the schema fails the call.
 func (t *Tutor) SolveTask(ctx context.Context, p PaperTask) TaskSolved {
-	resp, out := t.askCrop(ctx, CallSolving, p, solving.RequestOf, solving.MaxOutputTokens)
-	if out.Kind != Answered {
-		return TaskSolved{Outcome: out}
-	}
-	answer, err := solving.Read(resp.JSON)
-	if err != nil {
-		out.Kind, out.Err = Failed, fmt.Errorf("tutor: %w", err)
-		return TaskSolved{Outcome: out}
-	}
+	answer, out := askCrop(ctx, t, CallSolving, p, solving.RequestOf, solving.MaxOutputTokens,
+		solving.Read, func(a *paperv1.Answer) bool { return paper.Key(nil, a).GetAnswer() != nil })
 	return TaskSolved{Answer: answer, Outcome: out}
 }
 
-// askCrop asks the one model of a call on the task's crop, by the request of its prompt.
-func (t *Tutor) askCrop(ctx context.Context, c Call, p PaperTask, request func(provider.Image, int, int) provider.Request, maxOut int64) (provider.Response, Outcome) {
+// askCrop asks the models of a call on the task's crop, by the request of its prompt, one at a time
+// (cascade): read takes a model's answer into what the call gives, and did tells whether it will
+// do. The crop is fitted to each model's size.
+func askCrop[T any](ctx context.Context, t *Tutor, c Call, p PaperTask, request func(provider.Image, int, int) provider.Request, maxOut int64,
+	read func(string) (T, error), did func(T) bool) (T, Outcome) {
+	var zero T
 	calls, a, refused := t.prepare(c, p.Route)
 	if refused != nil {
-		return provider.Response{}, *refused
+		return zero, *refused
 	}
-	fail := func(err error) (provider.Response, Outcome) {
-		return provider.Response{}, Outcome{Kind: Failed, Admission: a, Err: err}
-	}
-	crop, width, height, err := provider.Photo(p.Statement, calls[0].client)
-	if err != nil {
-		return fail(fmt.Errorf("tutor: the task's crop: %w", err))
-	}
-	req := request(crop, width, height)
-	req.MaxOutputTokens = maxOut
-	if err := checkText(req); err != nil {
-		return fail(err)
-	}
-	resps, out := ask(ctx, a, calls, []provider.Request{req}, kinds[c].maxIn)
-	if out.Kind != Answered {
-		return provider.Response{}, out
-	}
-	return resps[0], out
+	return cascade(ctx, calls, func(cl call) (T, Outcome) {
+		fail := func(err error) (T, Outcome) {
+			return zero, Outcome{Kind: Failed, Admission: a, Err: err}
+		}
+		crop, width, height, err := provider.Photo(p.Statement, cl.client)
+		if err != nil {
+			return fail(fmt.Errorf("tutor: the task's crop: %w", err))
+		}
+		req := request(crop, width, height)
+		req.MaxOutputTokens = maxOut
+		if err := checkText(req); err != nil {
+			return fail(err)
+		}
+		resps, out := ask(ctx, a, []call{cl}, []provider.Request{req}, kinds[c].maxIn)
+		if out.Kind != Answered {
+			return zero, out
+		}
+		got, err := read(resps[0].JSON)
+		if err != nil {
+			out.Kind, out.Err = Failed, fmt.Errorf("tutor: %s: %w", cl.model.Name(), err)
+			return zero, out
+		}
+		return got, out
+	}, did)
 }
 
 // PaperReading is the work on a task from paper to read: the PNG of the crop of the work — the
@@ -102,8 +105,9 @@ type PaperReading struct {
 	Crop  []byte
 }
 
-// ReadPaper reads the work on a task from paper by the one model admitted for its reading
-// (CallPaper), in any reading mode, into the observation of the task's one answer slot, at the place
+// ReadPaper reads the work on a task from paper by the models admitted for its reading (CallPaper),
+// in any reading mode, one at a time, a later one only when the one before failed or read the
+// answer as unreadable (R137), into the observation of the task's one answer slot, at the place
 // 1, 1 (R162 spec): the learner's final answer as written, or the label of the one option circled.
 // api brings its value to the key and module-kit judges it.
 func (t *Tutor) ReadPaper(ctx context.Context, r PaperReading) SheetRead {

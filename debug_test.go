@@ -40,8 +40,8 @@ func TestDebugOff(t *testing.T) {
 	}
 }
 
-// The first model serves a call of a task from paper with its effort and thinking, and each call
-// is recorded with its answer as the model returned it and its usage.
+// The first model serves a call of a task from paper with its effort and thinking, one attempt and
+// no cascade, and each call is recorded with its answer as the model returned it and its usage.
 func TestDebugFirst(t *testing.T) {
 	lib, m := debugLibrary(t, `{"formula": "37+48"}`)
 	var rec []DebugCall
@@ -54,9 +54,15 @@ func TestDebugFirst(t *testing.T) {
 	if q := m["claude-sonnet-5-5"].asked; len(q) != 1 || q[0].Effort != "low" || !q[0].NoThinking {
 		t.Errorf("Sonnet was asked %+v", q)
 	}
-	if len(rec) != 1 || rec[0].Call != CallStatement || rec[0].Reader != 0 || rec[0].Model != sonnetLow || rec[0].Answer != `{"formula": "37+48"}` ||
+	if len(rec) != 1 || rec[0].Call != CallStatement || rec[0].Reader != 0 || rec[0].Attempt != 1 || rec[0].Model != sonnetLow || rec[0].Answer != `{"formula": "37+48"}` ||
 		rec[0].Usage == nil || rec[0].Usage.InputTokens != 900 || rec[0].Err != nil {
 		t.Errorf("recorded %+v", rec)
+	}
+	// A chosen model that does not do is the call's answer: no later attempt.
+	m["claude-sonnet-5-5"].resp.JSON = `{"kind": "none", "value": "", "units": [], "unknown": "", "options": [], "key": ""}`
+	if got := lib.SolveTask(context.Background(), PaperTask{Route: r, Statement: photoJPEG(t, 30, 30)}); got.Outcome.Kind != Answered || got.Answer != nil ||
+		len(m["claude-opus-5-5"].asked) != 0 || len(m["claude-sonnet-5-5"].asked) != 2 {
+		t.Errorf("solved %+v", got)
 	}
 	// The price follows the models of the mode too: Sonnet alone has prices.
 	p, a, err := lib.Price(CallStatement, r)
@@ -65,8 +71,8 @@ func TestDebugFirst(t *testing.T) {
 	}
 }
 
-// Without a first model each call keeps its model of the list, and the mode still records it; a
-// failure is recorded with what failed.
+// Without a first model each call keeps its models of the list, the attempts of its cascade, and
+// the mode records each with its place; a failure is recorded with what failed.
 func TestDebugAsAdmitted(t *testing.T) {
 	lib, m := debugLibrary(t, `{"formula": ""}`)
 	var rec []DebugCall
@@ -77,8 +83,13 @@ func TestDebugAsAdmitted(t *testing.T) {
 	}
 	m["claude-haiku-5-5"].err = errors.New("down")
 	lib.SolveTask(context.Background(), PaperTask{Route: r, Statement: photoJPEG(t, 30, 30)})
-	if len(rec) != 2 || rec[0].Model.ID != "claude-haiku-5-5" || rec[1].Call != CallSolving || rec[1].Err == nil {
-		t.Errorf("recorded %+v", rec)
+	if len(rec) != 4 || rec[0].Model.ID != "claude-haiku-5-5" || rec[0].Attempt != 1 || rec[1].Call != CallSolving || rec[1].Err == nil {
+		t.Fatalf("recorded %+v", rec)
+	}
+	for i, id := range []string{"claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"} {
+		if c := rec[i+1]; c.Call != CallSolving || c.Attempt != i+1 || c.Model.ID != id {
+			t.Errorf("attempt %d: %+v", i+1, c)
+		}
 	}
 }
 
@@ -95,7 +106,7 @@ func TestDebugSecondReader(t *testing.T) {
 	if q := m["claude-opus-5-5"].asked; len(q) != 1 || q[0].Effort != "high" || q[0].NoThinking {
 		t.Errorf("Opus was asked %+v", q)
 	}
-	if len(rec) != 2 || rec[0].Reader != 1 || rec[1].Reader != 2 || rec[1].Model != sonnetLow {
+	if len(rec) != 2 || rec[0].Reader != 1 || rec[1].Reader != 2 || rec[0].Attempt != 1 || rec[1].Attempt != 1 || rec[1].Model != sonnetLow {
 		t.Errorf("recorded %+v", rec)
 	}
 	// The second reads nothing but the work: the statement keeps one model.

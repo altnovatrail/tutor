@@ -55,13 +55,14 @@ func judgeNamed(name string) measure.Judge {
 func near(a, b float64) bool { return math.Abs(a-b) < 1e-9 }
 
 // Every judge has the output tokens a call is expected to take: about 50, and Haiku with thinking
-// about 300; and so have the four the extended measurement adds (R50).
+// about 300; and so have the four the extended measurement adds (R50), and the two of the cascade
+// of a task from paper (R137).
 func TestJudges(t *testing.T) {
 	var got []string
 	for _, j := range measure.Judges() {
 		got = append(got, fmt.Sprintf("%s %d", j.Name, j.Output))
 	}
-	if s := strings.Join(got, ", "); s != "opus-high 50, haiku-low 300, haiku-low-no-thinking 50, opus-medium 50, sonnet-low 200, sonnet-low-no-thinking 50, haiku-medium 400" {
+	if s := strings.Join(got, ", "); s != "opus-high 50, haiku-low 300, haiku-low-no-thinking 50, opus-medium 50, sonnet-low 200, sonnet-low-no-thinking 50, haiku-medium 400, haiku-high 600, sonnet-medium 300" {
 		t.Errorf("the judges are %s", s)
 	}
 }

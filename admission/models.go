@@ -174,40 +174,40 @@ var Admitted = []Entry{
 		Report:     authorsWord,
 		Prompt:     "a9bf54404fbb8215ac2def2ec16b0a053846ffb9d88ced72ca7d2560b0246cba",
 	},
-	// The finding of the tasks on the photo of a page from paper, Opus 5.5 at medium on version 1 of
-	// its prompt, by the author's word, without a run, until the day authorsWord names: its set of
-	// eval is Д21 (R134).
+	// The four calls of a task from paper, by the author's word, without a run, until the day
+	// paperWord names, each a cascade of three attempts, the cheapest first: Haiku 5.5 at high, then
+	// Sonnet 5.5 at medium, then Opus 5.5 at medium, all with thinking (R137). The finding of the
+	// tasks on the photo of a page, on version 1 of its prompt, has no set of eval, Д21 (R134).
 	{
 		Capability: admissionv0.CapabilityTaskFinding,
-		Models:     []Model{{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "medium"}},
+		Models:     paperCascade,
 		Stage:      StageAuthor,
-		Report:     authorsWord,
+		Report:     paperWord,
 		Prompt:     "311d729683e8bf38e169990d123005f5ce93ea6571294ee11a85a1461edf023f",
 	},
-	// The three calls of a task from paper, by the author's word, without a run, until the day
-	// authorsWord names: the statement read into a formula and the solution, Haiku 5.5 at medium on
-	// version 1 of their prompts, one solution until the author has seen how often it errs (R162
-	// spec); and the work read by Haiku at medium too, alone in any reading mode, on version 1 of the
-	// reading of paper. Their sets ran on the stub alone, and the paid run is Д22 (R135).
+	// The statement read into a formula and the solution, on version 1 of their prompts, one solution
+	// a model until the author has seen how often it errs (R162 spec); and the work read by one model
+	// at a time in any reading mode, on version 1 of the reading of paper. Their sets ran on the stub
+	// alone, and the paid run is Д22 (R135).
 	{
 		Capability: admissionv0.CapabilityStatementReading,
-		Models:     []Model{{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"}},
+		Models:     paperCascade,
 		Stage:      StageAuthor,
-		Report:     authorsWord,
+		Report:     paperWord,
 		Prompt:     "1e101d0e1e475651f88c2fa4bc0c5910c2421c6a64fe15a4c623e6b38fd98723",
 	},
 	{
 		Capability: admissionv0.CapabilityTaskSolving,
-		Models:     []Model{{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"}},
+		Models:     paperCascade,
 		Stage:      StageAuthor,
-		Report:     authorsWord,
+		Report:     paperWord,
 		Prompt:     "0bac79715447d6f2e028700328fb1089bdcb7891c770a03f9ce1cbaeee43f823",
 	},
 	{
 		Capability: admissionv0.CapabilityHandwritingReading,
-		Models:     []Model{{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"}},
+		Models:     paperCascade,
 		Stage:      StageAuthor,
-		Report:     authorsWord,
+		Report:     paperWord,
 		Prompt:     "b62e1229ac711cfb72ecfabf965ef4fa18041a21847453035ff73cc43b7fbe92",
 	},
 }
@@ -218,6 +218,21 @@ var Admitted = []Entry{
 var authorsWord = Evidence{
 	Word:  "author's word 2026-11-17, R07 spec suspended until 2027-01-17",
 	Date:  "2026-11-17",
+	Until: "2027-01-17",
+}
+
+// paperCascade are the attempts of each call of a task from paper, in their order (R137).
+var paperCascade = []Model{
+	{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "high"},
+	{Provider: "anthropic", ID: "claude-sonnet-5-5", Effort: "medium"},
+	{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "medium"},
+}
+
+// paperWord is the author's word that admitted the cascade of a task from paper, under the same
+// suspension of R07 spec as authorsWord, to the same last day (R137).
+var paperWord = Evidence{
+	Word:  "author's word 2026-11-19, R07 spec suspended until 2027-01-17",
+	Date:  "2026-11-19",
 	Until: "2027-01-17",
 }
 

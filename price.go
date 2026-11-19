@@ -72,24 +72,27 @@ const (
 // kind is a kind of call of the library: the capability it serves and the fingerprint of its
 // prompt, the most input tokens it takes, the most it may write, how many models of the entry
 // chosen it asks, every one when 0, whether it reads by the pair of R68 spec, which ReadingSingle
-// makes one reader (Tutor.asked), and the tokens a call of each model is expected to take, by the
-// model's exact ID, the averages of the measurements of the model at the effort admitted.
+// makes one reader (Tutor.asked), whether its models are the attempts of a cascade, asked one after
+// another (R137), and the tokens a call of each model is expected to take, by the model's exact ID,
+// the averages of the measurements of the model at the effort admitted.
 type kind struct {
 	capability    admissionv0.Capability
 	prompt        string
 	maxIn, maxOut int64
 	models        int
 	pair          bool
+	cascade       bool
 	expected      map[string]tokens
 }
 
 // kinds are the kinds of call of the library. The expected tokens of the sheet, the words and the
 // words after a correct answer are those of the runs that admitted them, on the prompts they have
 // now (R82; R86; R113). The workbook, the essay and the rubric were admitted by the author's word,
-// without a run (R126): theirs are the averages of the runs that tried their prompts now. The finding
-// of the tasks, admitted by the author's word too, had no run, and has none (R134), nor have the
-// three calls of a task from paper, admitted so with their sets run on the stub alone (R135). A
-// model without them has no expected price, and api takes the value of its own config then. The words
+// without a run (R126): theirs are the averages of the runs that tried their prompts now. The four
+// calls of a task from paper, admitted by the author's word too, had no run (R134; R135): theirs
+// are an estimate from the calls of the author's own pages, for each model of their cascade, so
+// that api reserves all three attempts (R137). A model without them has no
+// expected price, and api takes the value of its own config then. The words
 // serve the analysis of the steps with the work, CallWords, and the hint without it, CallHint, by
 // one prompt; the hint was measured with the work, so the hint without it has no expected tokens
 // (R106). The words after a correct answer are one kind with the work and without it, and their
@@ -164,28 +167,36 @@ var kinds = map[Call]kind{
 		prompt:     finding.Fingerprint(),
 		maxIn:      maxTextBytes + maxPhotoTokens,
 		maxOut:     finding.MaxOutputTokens,
-		models:     1,
+		models:     3,
+		cascade:    true,
+		expected:   map[string]tokens{"claude-haiku-5-5": {in: 1820, out: 450}, "claude-sonnet-5-5": {in: 1820, out: 150}, "claude-opus-5-5": {in: 1820, out: 130}},
 	},
 	CallStatement: {
 		capability: admissionv0.CapabilityStatementReading,
 		prompt:     statement.Fingerprint(),
 		maxIn:      maxTextBytes + maxPhotoTokens,
 		maxOut:     statement.MaxOutputTokens,
-		models:     1,
+		models:     3,
+		cascade:    true,
+		expected:   map[string]tokens{"claude-haiku-5-5": {in: 1520, out: 500}, "claude-sonnet-5-5": {in: 1520, out: 260}, "claude-opus-5-5": {in: 1520, out: 260}},
 	},
 	CallSolving: {
 		capability: admissionv0.CapabilityTaskSolving,
 		prompt:     solving.Fingerprint(),
 		maxIn:      maxTextBytes + maxPhotoTokens,
 		maxOut:     solving.MaxOutputTokens,
-		models:     1,
+		models:     3,
+		cascade:    true,
+		expected:   map[string]tokens{"claude-haiku-5-5": {in: 1520, out: 500}, "claude-sonnet-5-5": {in: 1520, out: 260}, "claude-opus-5-5": {in: 1520, out: 260}},
 	},
 	CallPaper: {
 		capability: admissionv0.CapabilityHandwritingReading,
 		prompt:     reading.PaperFingerprint(),
 		maxIn:      maxTextBytes + tokensOf(maxCropSide, 1),
 		maxOut:     reading.MaxOutputTokens,
-		models:     1,
+		models:     3,
+		cascade:    true,
+		expected:   map[string]tokens{"claude-haiku-5-5": {in: 910, out: 60}, "claude-sonnet-5-5": {in: 910, out: 100}, "claude-opus-5-5": {in: 910, out: 100}},
 	},
 }
 

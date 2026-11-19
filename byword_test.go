@@ -27,10 +27,10 @@ var byWord = []struct {
 	{CallWorkbook, []string{"claude-opus-5-5 high", "claude-haiku-5-5 medium"}},
 	{CallEssay, []string{"claude-haiku-5-5 medium"}},
 	{CallRubric, []string{"claude-haiku-5-5 medium"}},
-	{CallFinding, []string{"claude-opus-5-5 medium"}},
-	{CallStatement, []string{"claude-haiku-5-5 medium"}},
-	{CallSolving, []string{"claude-haiku-5-5 medium"}},
-	{CallPaper, []string{"claude-haiku-5-5 medium"}},
+	{CallFinding, []string{"claude-haiku-5-5 high", "claude-sonnet-5-5 medium", "claude-opus-5-5 medium"}},
+	{CallStatement, []string{"claude-haiku-5-5 high", "claude-sonnet-5-5 medium", "claude-opus-5-5 medium"}},
+	{CallSolving, []string{"claude-haiku-5-5 high", "claude-sonnet-5-5 medium", "claude-opus-5-5 medium"}},
+	{CallPaper, []string{"claude-haiku-5-5 high", "claude-sonnet-5-5 medium", "claude-opus-5-5 medium"}},
 }
 
 func names(e admission.Entry) []string {
@@ -45,7 +45,7 @@ func names(e admission.Entry) []string {
 // platform AI and on an adult's own key of Anthropic, and none of them at the least stage full, on
 // an own key of OpenAI or for a child whose cells the deployment's facts do not open (R126).
 func TestByWord(t *testing.T) {
-	fs := &fakes{models: map[string]*fake{"claude-opus-5-5": {}, "claude-haiku-5-5": {}}}
+	fs := &fakes{models: map[string]*fake{"claude-opus-5-5": {}, "claude-haiku-5-5": {}, "claude-sonnet-5-5": {}}}
 	lib := library(t, adultFacts, fs)
 	full, err := New(Config{Table: lib.table, Facts: lib.facts, Least: admission.StageFull, Keys: lib.keys,
 		Adapters: map[admissionv0.Provider]provider.Dial{"anthropic": fs.dial}})

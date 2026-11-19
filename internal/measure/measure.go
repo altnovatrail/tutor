@@ -45,7 +45,7 @@ type Judge struct {
 func Judges() []Judge {
 	outputs := map[string]int{
 		"opus-high": 50, "haiku-low": 300, "haiku-low-no-thinking": 50,
-		"opus-medium": 50, "sonnet-low": 200, "sonnet-low-no-thinking": 50, "haiku-medium": 400,
+		"opus-medium": 50, "sonnet-low": 200, "sonnet-low-no-thinking": 50, "haiku-medium": 400, "haiku-high": 600, "sonnet-medium": 300,
 	}
 	var out []Judge
 	for _, c := range runner.Configs() {

@@ -21,7 +21,7 @@ var ownRoute = Route{AI: admissionv0.AiRouteOwnKey, Category: admissionv0.AgeCat
 // provider that did not answer. No error holds the key.
 func TestCheckKey(t *testing.T) {
 	opus, haiku := &fake{}, &fake{}
-	fs := &fakes{models: map[string]*fake{"claude-opus-5-5": opus, "claude-haiku-5-5": haiku}}
+	fs := &fakes{models: map[string]*fake{"claude-opus-5-5": opus, "claude-haiku-5-5": haiku, "claude-sonnet-5-5": {}}}
 	lib := library(t, adultFacts, fs)
 	limit := &provider.LimitError{Limit: provider.LimitBalance, Err: errors.New("400")}
 	for _, tt := range []struct {
@@ -83,7 +83,7 @@ func (*panicCheck) Check(context.Context) error { panic("boom") }
 // A panic of an adapter fails the check rather than the process.
 func TestCheckKeyPanic(t *testing.T) {
 	p := &panicCheck{}
-	lib := library(t, adultFacts, &fakes{models: map[string]*fake{"claude-opus-5-5": {}, "claude-haiku-5-5": {}}})
+	lib := library(t, adultFacts, &fakes{models: map[string]*fake{"claude-opus-5-5": {}, "claude-haiku-5-5": {}, "claude-sonnet-5-5": {}}})
 	lib.adapters["anthropic"] = func(string, string) (provider.Model, error) { return p, nil }
 	if got, err := lib.CheckKey(context.Background(), ownRoute); got != KeyUnanswered || err == nil || !strings.Contains(err.Error(), "panicked: boom") {
 		t.Errorf("a panic: %v, %v", got, err)
@@ -95,7 +95,7 @@ func TestCheckKeyPanic(t *testing.T) {
 // another prompt opens nothing.
 func TestCheckKeyHint(t *testing.T) {
 	opus, haiku := &fake{}, &fake{}
-	lib := library(t, adultFacts, &fakes{models: map[string]*fake{"claude-opus-5-5": opus, "claude-haiku-5-5": haiku}})
+	lib := library(t, adultFacts, &fakes{models: map[string]*fake{"claude-opus-5-5": opus, "claude-haiku-5-5": haiku, "claude-sonnet-5-5": {}}})
 	withWords(t, admissionv0.CapabilityHint)
 	admission.Admitted = slices.DeleteFunc(slices.Clone(admission.Admitted), func(e admission.Entry) bool { return e.Capability != admissionv0.CapabilityHint })
 	if got, err := lib.CheckKey(context.Background(), ownRoute); got != KeyAccepted || err != nil || opus.checked != 1 || haiku.checked != 0 {

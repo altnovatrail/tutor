@@ -377,13 +377,16 @@ type Outcome struct {
 }
 
 // call is a model of the entry chosen with its client, and in the debug mode the kind of the
-// library's call, the reader of the work and the mode, which records it.
+// library's call, the reader of the work and the mode, which records it. attempt is the model's
+// place among the attempts of a cascade, from 1, and 0 where the call asks its models at once
+// (R137).
 type call struct {
-	model  admission.Model
-	client provider.Model
-	kind   Call
-	reader int
-	debug  *Debug
+	model   admission.Model
+	client  provider.Model
+	kind    Call
+	reader  int
+	attempt int
+	debug   *Debug
 }
 
 // prepare chooses the models of a kind of call for a route (chooseCall), those the kind asks, and
@@ -400,6 +403,9 @@ func (t *Tutor) prepare(c Call, r Route) ([]call, admission.Answer, *Outcome) {
 	if !a.Admitted {
 		return nil, a, &Outcome{Kind: NotAdmitted, Admission: a}
 	}
+	// The models of a cascade are its attempts, one after another, unless the debug mode chose the
+	// models of the call (R137).
+	cascading := kinds[c].cascade && !debugOf(c, r).chose(c)
 	calls := make([]call, 0, len(e.Models))
 	for _, m := range e.Models {
 		client, err := t.client(m, r.Own)
@@ -407,7 +413,13 @@ func (t *Tutor) prepare(c Call, r Route) ([]call, admission.Answer, *Outcome) {
 			return nil, a, &Outcome{Kind: Failed, Admission: a, Err: err}
 		}
 		cl := call{model: m, client: client, kind: c, debug: debugOf(c, r)}
-		if c == CallPaper {
+		switch {
+		case cascading:
+			cl.attempt = len(calls) + 1
+			if c == CallPaper {
+				cl.reader = 1
+			}
+		case c == CallPaper:
 			cl.reader = len(calls) + 1
 		}
 		calls = append(calls, cl)
@@ -480,7 +492,7 @@ func ask(ctx context.Context, a admission.Answer, calls []call, reqs []provider.
 			out.Usage, used = append(out.Usage, u), &u
 		}
 		if c.debug != nil && c.debug.Record != nil {
-			c.debug.Record(DebugCall{Call: c.kind, Reader: c.reader, Model: c.model, Answer: resps[i].JSON, Usage: used, Err: errs[i]})
+			c.debug.Record(DebugCall{Call: c.kind, Reader: c.reader, Attempt: max(c.attempt, 1), Model: c.model, Answer: resps[i].JSON, Usage: used, Err: errs[i]})
 		}
 		if errs[i] == nil {
 			continue

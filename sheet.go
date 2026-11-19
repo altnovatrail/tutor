@@ -14,6 +14,7 @@ import (
 
 	observationv1 "github.com/altnovatrail/spec/contracts/novatrail/observation/v1"
 
+	"github.com/altnovatrail/tutor/admission"
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/provider"
 )
@@ -58,8 +59,10 @@ func (t *Tutor) ReadSheet(ctx context.Context, r SheetReading) SheetRead {
 }
 
 // readCrop reads a crop of handwriting by the models admitted for the call c — the pair, in
-// parallel, or its one reader —, each by the request of the crop's size, into the observation of
-// one answer slot at place. An answer that is no observation fails the reading.
+// parallel, its one reader, or the attempts of a cascade one at a time, a later one only when the
+// one before failed or read the slot as unreadable (R137) —, each by the request of the crop's
+// size, into the observation of one answer slot at place. An answer that is no observation fails
+// the reading.
 func (t *Tutor) readCrop(ctx context.Context, c Call, route Route, crop []byte, place *observationv1.AnswerSlotPlace,
 	request func(width, height int) provider.Request) SheetRead {
 	cfg, err := cropSize(crop)
@@ -75,6 +78,19 @@ func (t *Tutor) readCrop(ctx context.Context, c Call, route Route, crop []byte, 
 	if err := checkText(req); err != nil {
 		return SheetRead{Outcome: Outcome{Kind: Failed, Admission: a, Err: err}}
 	}
+	if cascading(calls) {
+		obs, out := cascade(ctx, calls, func(cl call) ([]*observationv1.Observation, Outcome) {
+			read := readBy(ctx, c, a, []call{cl}, req, place)
+			return read.Observations, read.Outcome
+		}, readable)
+		return SheetRead{Observations: obs, Outcome: out}
+	}
+	return readBy(ctx, c, a, calls, req, place)
+}
+
+// readBy asks the models of calls at once, each by req, and reads each answer into the observation
+// of the answer slot at place.
+func readBy(ctx context.Context, c Call, a admission.Answer, calls []call, req provider.Request, place *observationv1.AnswerSlotPlace) SheetRead {
 	reqs := make([]provider.Request, len(calls))
 	for i := range reqs {
 		reqs[i] = req

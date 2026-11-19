@@ -24,17 +24,18 @@ type Debug struct {
 }
 
 // DebugCall is one call of a model in the debug mode: the kind of the library's call; the reader of
-// the work, 1 or 2, and 0 for any other call; the model as it was asked, its effort and thinking
-// with it; what the model returned, as it returned it; its usage when it came back with tokens;
-// and what failed. The answer is the model's reading of the learner's work: it goes to the
+// the work, 1 or 2, and 0 for any other call; the model's place among the attempts of its call, 1,
+// 2 or 3 (R137); the model as it was asked, its effort and thinking with it; what the model
+// returned, as it returned it; its usage when it came back with tokens; and what failed. The answer is the model's reading of the learner's work: it goes to the
 // developer of a local run alone, never to a log (R09 spec).
 type DebugCall struct {
-	Call   Call
-	Reader int
-	Model  admission.Model
-	Answer string
-	Usage  *Usage
-	Err    error
+	Call    Call
+	Reader  int
+	Attempt int
+	Model   admission.Model
+	Answer  string
+	Usage   *Usage
+	Err     error
 }
 
 // errDebugOff is a route with the debug mode to a library whose config has it off.
@@ -60,6 +61,12 @@ func (d *Debug) models(c Call, asked []admission.Model) []admission.Model {
 		models = append(models[:1], *d.Second)
 	}
 	return models
+}
+
+// chose tells whether the debug mode chose the models of a kind of call: the first model, or the
+// second reader of the work. Then the call asks them, and no cascade of the list (R137).
+func (d *Debug) chose(c Call) bool {
+	return d != nil && (d.First != nil || c == CallPaper && d.Second != nil)
 }
 
 // debugOf is the debug mode of a route for a kind of call, or nil where it serves none.

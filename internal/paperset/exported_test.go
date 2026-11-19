@@ -33,8 +33,6 @@ func number(v string) *paperv1.Answer {
 // the task's crop as the library sends a photo, a JPEG —, and the stub, which is right by that
 // truth, is right on each. A case with no outcome is refused.
 func TestExportedCases(t *testing.T) {
-	t.Parallel()
-
 	dir := t.TempDir()
 	write := func(name string, c *v1.DebugCase) {
 		t.Helper()

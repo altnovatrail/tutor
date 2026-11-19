@@ -30,7 +30,7 @@ type Reader = runner.Reader
 func Readers() []Reader {
 	return runner.ReadersOf("essay", map[string]int{
 		"opus-high": 2100, "haiku-low": 1200, "haiku-low-no-thinking": 600,
-		"opus-medium": 2100, "sonnet-low": 1500, "sonnet-low-no-thinking": 600, "haiku-medium": 1600,
+		"opus-medium": 2100, "sonnet-low": 1500, "sonnet-low-no-thinking": 600, "haiku-medium": 1600, "haiku-high": 2400, "sonnet-medium": 2250,
 	})
 }
 
@@ -244,9 +244,9 @@ const PathTwo = "two"
 // 450. A configuration without its output here is a mistake of the code.
 var (
 	readOutputs = map[string]int{"opus-high": 700, "haiku-low": 600, "haiku-low-no-thinking": 200,
-		"opus-medium": 700, "sonnet-low": 500, "sonnet-low-no-thinking": 200, "haiku-medium": 800}
+		"opus-medium": 700, "sonnet-low": 500, "sonnet-low-no-thinking": 200, "haiku-medium": 800, "haiku-high": 1200, "sonnet-medium": 750}
 	textOutputs = map[string]int{"opus-high": 1600, "haiku-low": 900, "haiku-low-no-thinking": 450,
-		"opus-medium": 1600, "sonnet-low": 1100, "sonnet-low-no-thinking": 450, "haiku-medium": 1200}
+		"opus-medium": 1600, "sonnet-low": 1100, "sonnet-low-no-thinking": 450, "haiku-medium": 1200, "haiku-high": 1800, "sonnet-medium": 1650}
 )
 
 // The input tokens a call of each step is expected to take besides the crop: the instructions, the

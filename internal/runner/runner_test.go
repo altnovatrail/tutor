@@ -127,7 +127,8 @@ func TestConfigs(t *testing.T) {
 		}
 	}
 	if got := strings.Join(names, ", "); got != "opus-high claude-opus-5-5 high, haiku-low claude-haiku-5-5 low, haiku-low-no-thinking claude-haiku-5-5 low, "+
-		"opus-medium claude-opus-5-5 medium, sonnet-low claude-sonnet-5-5 low, sonnet-low-no-thinking claude-sonnet-5-5 low, haiku-medium claude-haiku-5-5 medium" {
+		"opus-medium claude-opus-5-5 medium, sonnet-low claude-sonnet-5-5 low, sonnet-low-no-thinking claude-sonnet-5-5 low, haiku-medium claude-haiku-5-5 medium, "+
+		"haiku-high claude-haiku-5-5 high, sonnet-medium claude-sonnet-5-5 medium" {
 		t.Errorf("the configurations are %s", got)
 	}
 	if w := asked(opus, 1).Worst(); !near(w, worst) || !near(opus.Cost(1000, 50), (1000*4+50*20)/1e6) {
@@ -420,8 +421,8 @@ func TestReadRecords(t *testing.T) {
 // tells its model and prices.
 func TestReadersOf(t *testing.T) {
 	readers := runner.ReadersOf("test", map[string]int{"opus-high": 7, "haiku-low": 8, "haiku-low-no-thinking": 9,
-		"opus-medium": 1, "sonnet-low": 2, "sonnet-low-no-thinking": 3, "haiku-medium": 4}, "opus-high")
-	if len(readers) != 7 || readers[6].Output != 4 || readers[3].Once || !readers[0].Once || readers[1].Once || readers[0].Output != 7 || readers[2].Output != 9 {
+		"opus-medium": 1, "sonnet-low": 2, "sonnet-low-no-thinking": 3, "haiku-medium": 4, "haiku-high": 5, "sonnet-medium": 6}, "opus-high")
+	if len(readers) != 9 || readers[6].Output != 4 || readers[3].Once || !readers[0].Once || readers[1].Once || readers[0].Output != 7 || readers[2].Output != 9 {
 		t.Errorf("ReadersOf = %+v", readers)
 	}
 	if rec := readers[1].Record(); rec.Name != "haiku-low" || rec.Model != readers[1].Model.ID || rec.InputUSD != readers[1].Model.Input || rec.Once {
