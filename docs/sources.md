@@ -349,6 +349,22 @@ The sources of the cache of the words' instructions in the Claude adapter, and o
 - **OpenAI** — [Prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching): "Prompt caching is enabled by default for supported OpenAI models."; "The minimum cacheable prompt length is 1,024 tokens for GPT-5.6 and later"; "When `prompt_cache_options.mode` is `implicit`, OpenAI places a breakpoint at the end of the latest eligible message. Eligible messages are:" — the first of them "user messages"; in the explicit mode, "When no explicit breakpoints are placed, the request does not use prompt caching or create cache writes."; "Top-level `instructions` cannot contain an explicit breakpoint. To mark reusable developer instructions, place them in an `input_text` block inside a developer message."; "Prompt caching may store encrypted key/value tensors in GPU-local storage as application state." Which mode a request without `prompt_cache_options` takes, the parts read do not say.
 - **SDK** — anthropic-sdk-go v1.84.0, `message.go`, read in the module cache: `TextBlockParam` has "Create a cache control breakpoint at this content block." over `CacheControl CacheControlEphemeralParam`, whose lifetime "Defaults to `5m`."
 
+### 1.19. Anthropic: the size of a picture and its coordinates, 2026-11-19
+
+The sources of the photo of a page that the Claude adapter fits to the model (T227 spec; R134). Read 2026-11-19; the pages show no date of their own. The quotes are verbatim:
+- [Vision](https://platform.claude.com/docs/en/build-with-claude/vision):
+  - "The maximum dimensions for each image are 8000x8000 px."; "10 MB (base64-encoded) on the Claude API and Claude Models on Google Cloud (Google managed).";
+  - "Claude supports JPEG, PNG, GIF, and WebP images (`image/jpeg`, `image/png`, `image/gif`, `image/webp`).";
+  - "Each patch is a 28×28-pixel block of the image, referred to as a visual token. An image, therefore, costs `⌈width / 28⌉ × ⌈height / 28⌉` visual tokens."; "Each model has a maximum native image resolution, expressed as a long-edge limit and a visual-token limit. Images larger than either limit are downscaled before processing";
+  - the table of the tiers, its cells separated here by " | ": "High-resolution | Claude 4.7 and later models | 2,576 px | 4,784"; "Standard | All other models | 1,568 px | 1,568". Every model of the adapter's catalog, the 5.5 models and Fable 5.1, is later than Claude 4.7;
+  - "heavy JPEG compression can make text difficult to read".
+- [Coordinates and bounding boxes](https://platform.claude.com/docs/en/build-with-claude/vision-coordinates):
+  - "Claude works best with absolute pixel coordinates. Ask for them explicitly in your prompt."; "Claude does not work well when you ask for normalized coordinates";
+  - "Claude finds the largest aspect-preserving size that satisfies both of the model's image limits: 1. Edge limit: neither side exceeds the maximum edge length (1,568 px on the standard tier, 2,576 px on the high-resolution tier). 2. Visual token limit: the image's token cost `⌈width / 28⌉ × ⌈height / 28⌉` does not exceed the model's visual token budget (1,568 tokens on the standard tier, 4,784 on the high-resolution tier).";
+  - its reference implementation in Go, `resizedSize`, checks a side as `((w+27)/28)*28 <= maxEdge`, searches along the long edge, and rounds the short one by `math.RoundToEven`: "matching the live API at exact .5 ties; math.Round would round them up";
+  - "The most reliable approach is to resize your image yourself before uploading, so the image you have is exactly the image Claude processes and the coordinates Claude returns need no conversion."; "Don't pad it yourself.";
+  - of `"oversized_image": "error"`: "A request whose marked image … would be resized is rejected with a 400 `invalid_request_error` naming the image's dimensions and the largest dimensions that fit."
+
 ## 2. Reading handwriting elsewhere
 
 ### 2.1. The market: how others read a handwritten solution, 2026-10-25

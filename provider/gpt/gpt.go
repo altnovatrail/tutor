@@ -80,6 +80,20 @@ func (c *Client) Prices() provider.Prices {
 		CacheWrite: map[time.Duration]float64{TTL30m: 12.50, TTL12h: 25}, LongAbove: LongAbove, Read: PricesRead}
 }
 
+// The limits of a picture that GPT-6 Astra takes at the detail "high": its patches of 32 px and its
+// largest side (sources 1.8).
+const (
+	patchSide = 32
+	maxSide   = 65535
+	maxPatch  = 2500
+)
+
+// Fit is the size at which a photo of width × height px comes to the model unshrunk, by the patches
+// it takes at the detail "high" (provider.Fitter).
+func (c *Client) Fit(width, height int) (int, int) {
+	return provider.FitPatches(width, height, patchSide, maxSide, maxPatch)
+}
+
 // Ask sends a picture and the text and asks for JSON that follows the schema. It sends one picture,
 // after its label, and refuses more before any call. That is the adapter's limit, not the model's:
 // GPT is not used on the board (R20), and the measurement of the writing process asks Claude alone
@@ -111,9 +125,10 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 		if im.Label != "" {
 			content = append(content, responses.ResponseInputContentParamOfInputText(im.Label))
 		}
+		media, data := im.MediaType()
 		content = append(content, responses.ResponseInputContentUnionParam{OfInputImage: &responses.ResponseInputImageParam{
 			Detail:   responses.ResponseInputImageDetailHigh,
-			ImageURL: openai.String("data:image/png;base64," + base64.StdEncoding.EncodeToString(im.PNG)),
+			ImageURL: openai.String("data:" + media + ";base64," + base64.StdEncoding.EncodeToString(data)),
 		}})
 	}
 	content = append(content, responses.ResponseInputContentParamOfInputText(r.Text))

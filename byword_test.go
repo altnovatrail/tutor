@@ -27,6 +27,7 @@ var byWord = []struct {
 	{CallWorkbook, []string{"claude-opus-5-5 high", "claude-haiku-5-5 medium"}},
 	{CallEssay, []string{"claude-haiku-5-5 medium"}},
 	{CallRubric, []string{"claude-haiku-5-5 medium"}},
+	{CallFinding, []string{"claude-opus-5-5 medium"}},
 }
 
 func names(e admission.Entry) []string {

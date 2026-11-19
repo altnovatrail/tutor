@@ -84,7 +84,8 @@ func prices(m Model) provider.Prices {
 // a model takes its own default: medium on Opus 5.5 and Haiku 5.5, high on Sonnet 5.5 and Fable 5.1
 // (Anthropic's guides Models overview and Effort). A request without thinking names its effort,
 // since thinking turns off only at some levels. A picture is never shrunk: a picture larger than
-// the model takes fails the call, rather than leave the model's pixels off the picture's.
+// the model takes fails the call, rather than leave the model's pixels off the picture's. A photo
+// of a page comes already at the size Fit gives (provider.Photo).
 func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response, error) {
 	if err := c.check(r); err != nil {
 		return provider.Response{}, err
@@ -163,6 +164,21 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 	return resp, nil
 }
 
+// The limits of a picture that a model of the high-resolution tier takes unshrunk, every model of
+// the catalog among them: its long edge, rounded up to a whole patch, and its patches of 28 px
+// (sources 1.19).
+const (
+	patchSide = 28
+	maxEdge   = 2576
+	maxPatch  = 4784
+)
+
+// Fit is the size at which a photo of width × height px comes to the model unshrunk, by Anthropic's
+// rule (provider.Fitter): with oversized_image set to error, a larger one would fail the call.
+func (c *Client) Fit(width, height int) (int, int) {
+	return provider.FitPatches(width, height, patchSide, maxEdge, maxPatch)
+}
+
 // MaxImages is the most pictures the adapter sends in one request. Above 20, a stricter limit of
 // size holds for every picture of the request (Anthropic's guide Vision), and with oversized_image
 // set to error a picture over it would fail the call. A request of the measurement holds three at
@@ -202,7 +218,8 @@ func (c *Client) params(r provider.Request) anthropic.MessageNewParams {
 		if im.Label != "" {
 			content = append(content, anthropic.NewTextBlock(im.Label))
 		}
-		image := anthropic.NewImageBlockBase64("image/png", base64.StdEncoding.EncodeToString(im.PNG))
+		media, data := im.MediaType()
+		image := anthropic.NewImageBlockBase64(media, base64.StdEncoding.EncodeToString(data))
 		image.OfImage.Transformations.OversizedImage = anthropic.ImageTransformationsParamOversizedImageError
 		content = append(content, image)
 	}

@@ -12,6 +12,7 @@ import (
 
 	"github.com/altnovatrail/tutor/internal/correct"
 	"github.com/altnovatrail/tutor/internal/essay"
+	"github.com/altnovatrail/tutor/internal/finding"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/workbook"
@@ -324,6 +325,9 @@ func listFaultsOn(list []Entry, today string) []string {
 				out = append(out, fmt.Sprintf("entry %d of reading: %d models, prompt %s, the readings' now %s, %s and %s", i, len(e.Models), e.Prompt,
 					reading.Fingerprint(), workbook.Fingerprint(), essay.ReadFingerprint()))
 			}
+		}
+		if e.Capability == admissionv0.CapabilityTaskFinding && (len(e.Models) != 1 || e.Prompt != finding.Fingerprint()) {
+			out = append(out, fmt.Sprintf("entry %d of the finding: %d models, prompt %s, theirs now %s", i, len(e.Models), e.Prompt, finding.Fingerprint()))
 		}
 		if e.Capability == admissionv0.CapabilityRubricAssessment && (len(e.Models) != 1 || e.Prompt != essay.TextFingerprint()) {
 			out = append(out, fmt.Sprintf("entry %d of the rubric: %d models, prompt %s, the assessment's now %s", i, len(e.Models), e.Prompt, essay.TextFingerprint()))

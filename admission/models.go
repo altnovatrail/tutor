@@ -174,6 +174,16 @@ var Admitted = []Entry{
 		Report:     authorsWord,
 		Prompt:     "a9bf54404fbb8215ac2def2ec16b0a053846ffb9d88ced72ca7d2560b0246cba",
 	},
+	// The finding of the tasks on the photo of a page from paper, Opus 5.5 at medium on version 1 of
+	// its prompt, by the author's word, without a run, until the day authorsWord names: its set of
+	// eval is Д21 (R134).
+	{
+		Capability: admissionv0.CapabilityTaskFinding,
+		Models:     []Model{{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "medium"}},
+		Stage:      StageAuthor,
+		Report:     authorsWord,
+		Prompt:     "311d729683e8bf38e169990d123005f5ce93ea6571294ee11a85a1461edf023f",
+	},
 }
 
 // authorsWord is the evidence of the entries the author admitted without eval, while R07 spec's

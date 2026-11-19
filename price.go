@@ -11,6 +11,7 @@ import (
 	"github.com/altnovatrail/tutor/admission"
 	"github.com/altnovatrail/tutor/internal/correct"
 	"github.com/altnovatrail/tutor/internal/essay"
+	"github.com/altnovatrail/tutor/internal/finding"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/render"
@@ -43,7 +44,7 @@ type tokens struct{ in, out int64 }
 
 // Call is a kind of call of the library: the reading of a sheet, of a workbook page and of an essay,
 // the assessment of an essay by its rubric, the call of the words, with the work and without it, and
-// the words after a correct answer.
+// the words after a correct answer, and the finding of the tasks on the photo of a page from paper.
 // Each serves a capability with a prompt of its own, and an entry of the list admits it only when it
 // measured that prompt (R70 spec).
 type Call string
@@ -57,6 +58,7 @@ const (
 	CallEssay    Call = "essay"
 	CallRubric   Call = "rubric"
 	CallCorrect  Call = "correct"
+	CallFinding  Call = "finding"
 )
 
 // kind is a kind of call of the library: the capability it serves and the fingerprint of its
@@ -76,7 +78,8 @@ type kind struct {
 // kinds are the kinds of call of the library. The expected tokens of the sheet, the words and the
 // words after a correct answer are those of the runs that admitted them, on the prompts they have
 // now (R82; R86; R113). The workbook, the essay and the rubric were admitted by the author's word,
-// without a run (R126): theirs are the averages of the runs that tried their prompts now. A model
+// without a run (R126): theirs are the averages of the runs that tried their prompts now. The finding
+// of the tasks, admitted by the author's word too, had no run, and has none (R134). A model
 // without them has no expected price, and api takes the value of its own config then. The words
 // serve the analysis of the steps with the work, CallWords, and the hint without it, CallHint, by
 // one prompt; the hint was measured with the work, so the hint without it has no expected tokens
@@ -146,6 +149,13 @@ var kinds = map[Call]kind{
 		maxOut:     wordsMaxOutput,
 		models:     1,
 		expected:   map[string]tokens{"claude-opus-5-5": {in: 1371, out: 402}},
+	},
+	CallFinding: {
+		capability: admissionv0.CapabilityTaskFinding,
+		prompt:     finding.Fingerprint(),
+		maxIn:      maxTextBytes + maxPhotoTokens,
+		maxOut:     finding.MaxOutputTokens,
+		models:     1,
 	},
 }
 

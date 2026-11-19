@@ -516,7 +516,7 @@ func TestImagesRefused(t *testing.T) {
 		want   string
 	}{
 		{nil, "a request without a picture"},
-		{[]provider.Image{{PNG: nil}}, "picture 1 has no PNG"},
+		{[]provider.Image{{PNG: nil}}, "picture 1 has no PNG and no JPEG"},
 		{[]provider.Image{{Label: "Image 1:", PNG: []byte("a")}, {PNG: []byte("b")}}, "picture 2 of 2 has no label"},
 		{many, "a request of 21 pictures, and the adapter sends 20 at most"},
 	} {
@@ -682,5 +682,24 @@ func TestCheck(t *testing.T) {
 				t.Errorf("the check was sent %d times, want %d", len(paths), want)
 			}
 		})
+	}
+}
+
+// A photo goes as a JPEG, marked to fail rather than be shrunk, and Fit gives the size of the
+// high-resolution tier, at which no model of the catalog shrinks it (sources 1.19).
+func TestPhoto(t *testing.T) {
+	c, f := fakeAPI(t, catalog.Models[2], reply{body: goodStream})
+	r := request
+	r.Images = []provider.Image{{Label: "Image 1: the photo of the page.", JPEG: []byte("photo")}}
+	if _, err := c.Ask(context.Background(), r); err != nil {
+		t.Fatal(err)
+	}
+	holds(t, f.requests()[0], `"media_type":"image/jpeg"`, `"transformations":{"oversized_image":"error"}`)
+	var fitter provider.Fitter = c
+	if w, h := fitter.Fit(3024, 4032); (w+27)/28*((h+27)/28) > 4784 || (h+27)/28*28 > 2576 {
+		t.Errorf("a phone's photo fits to %d × %d, over the tier", w, h)
+	}
+	if w, h := fitter.Fit(1000, 1400); w != 1000 || h != 1400 {
+		t.Errorf("a photo within the tier fits to %d × %d", w, h)
 	}
 }
