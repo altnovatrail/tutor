@@ -28,6 +28,9 @@ var byWord = []struct {
 	{CallEssay, []string{"claude-haiku-5-5 medium"}},
 	{CallRubric, []string{"claude-haiku-5-5 medium"}},
 	{CallFinding, []string{"claude-opus-5-5 medium"}},
+	{CallStatement, []string{"claude-haiku-5-5 medium"}},
+	{CallSolving, []string{"claude-haiku-5-5 medium"}},
+	{CallPaper, []string{"claude-opus-5-5 high", "claude-haiku-5-5 medium"}},
 }
 
 func names(e admission.Entry) []string {

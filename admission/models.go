@@ -184,6 +184,35 @@ var Admitted = []Entry{
 		Report:     authorsWord,
 		Prompt:     "311d729683e8bf38e169990d123005f5ce93ea6571294ee11a85a1461edf023f",
 	},
+	// The three calls of a task from paper, by the author's word, without a run, until the day
+	// authorsWord names: the statement read into a formula and the solution, Haiku 5.5 at medium on
+	// version 1 of their prompts, one solution until the author has seen how often it errs (R162
+	// spec); and the work read by the sheet's pair on version 1 of the reading of paper. Their sets
+	// ran on the stub alone, and the paid run is Д22 (R135).
+	{
+		Capability: admissionv0.CapabilityStatementReading,
+		Models:     []Model{{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"}},
+		Stage:      StageAuthor,
+		Report:     authorsWord,
+		Prompt:     "1e101d0e1e475651f88c2fa4bc0c5910c2421c6a64fe15a4c623e6b38fd98723",
+	},
+	{
+		Capability: admissionv0.CapabilityTaskSolving,
+		Models:     []Model{{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"}},
+		Stage:      StageAuthor,
+		Report:     authorsWord,
+		Prompt:     "0bac79715447d6f2e028700328fb1089bdcb7891c770a03f9ce1cbaeee43f823",
+	},
+	{
+		Capability: admissionv0.CapabilityHandwritingReading,
+		Models: []Model{
+			{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "high"},
+			{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"},
+		},
+		Stage:  StageAuthor,
+		Report: authorsWord,
+		Prompt: "b62e1229ac711cfb72ecfabf965ef4fa18041a21847453035ff73cc43b7fbe92",
+	},
 }
 
 // authorsWord is the evidence of the entries the author admitted without eval, while R07 spec's

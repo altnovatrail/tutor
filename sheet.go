@@ -52,16 +52,25 @@ func (t *Tutor) ReadSheet(ctx context.Context, r SheetReading) SheetRead {
 	if err != nil {
 		return SheetRead{Outcome: Outcome{Kind: Failed, Err: err}}
 	}
-	cfg, err := cropSize(r.Crop)
+	return t.readCrop(ctx, CallSheet, r.Route, r.Crop, place, func(width, height int) provider.Request {
+		return reading.RequestOf(statement, r.Crop, width, height, nil)
+	})
+}
+
+// readCrop reads a crop of handwriting by the models admitted for the call c — the pair, in
+// parallel, or its one reader —, each by the request of the crop's size, into the observation of
+// one answer slot at place. An answer that is no observation fails the reading.
+func (t *Tutor) readCrop(ctx context.Context, c Call, route Route, crop []byte, place *observationv1.AnswerSlotPlace,
+	request func(width, height int) provider.Request) SheetRead {
+	cfg, err := cropSize(crop)
 	if err != nil {
 		return SheetRead{Outcome: Outcome{Kind: Failed, Err: err}}
 	}
-	k := kinds[CallSheet]
-	calls, a, refused := t.prepare(CallSheet, r.Route)
+	calls, a, refused := t.prepare(c, route)
 	if refused != nil {
 		return SheetRead{Outcome: *refused}
 	}
-	req := reading.RequestOf(statement, r.Crop, cfg.Width, cfg.Height, nil)
+	req := request(cfg.Width, cfg.Height)
 	req.MaxOutputTokens = reading.MaxOutputTokens
 	if err := checkText(req); err != nil {
 		return SheetRead{Outcome: Outcome{Kind: Failed, Admission: a, Err: err}}
@@ -70,7 +79,7 @@ func (t *Tutor) ReadSheet(ctx context.Context, r SheetReading) SheetRead {
 	for i := range reqs {
 		reqs[i] = req
 	}
-	resps, out := ask(ctx, a, calls, reqs, k.maxIn)
+	resps, out := ask(ctx, a, calls, reqs, kinds[c].maxIn)
 	if out.Kind != Answered {
 		return SheetRead{Outcome: out}
 	}

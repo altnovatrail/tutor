@@ -15,6 +15,8 @@ import (
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/render"
+	"github.com/altnovatrail/tutor/internal/solving"
+	"github.com/altnovatrail/tutor/internal/statement"
 	"github.com/altnovatrail/tutor/internal/workbook"
 	"github.com/altnovatrail/tutor/provider"
 )
@@ -44,7 +46,9 @@ type tokens struct{ in, out int64 }
 
 // Call is a kind of call of the library: the reading of a sheet, of a workbook page and of an essay,
 // the assessment of an essay by its rubric, the call of the words, with the work and without it, and
-// the words after a correct answer, and the finding of the tasks on the photo of a page from paper.
+// the words after a correct answer, the finding of the tasks on the photo of a page from paper, and
+// of a task from paper the reading of its statement into a formula, its solution and the reading of
+// the work on it (R135).
 // Each serves a capability with a prompt of its own, and an entry of the list admits it only when it
 // measured that prompt (R70 spec).
 type Call string
@@ -59,6 +63,10 @@ const (
 	CallRubric   Call = "rubric"
 	CallCorrect  Call = "correct"
 	CallFinding  Call = "finding"
+	// The calls of a task from paper: its statement into a formula, its solution, and the work.
+	CallStatement Call = "statement"
+	CallSolving   Call = "solving"
+	CallPaper     Call = "paper"
 )
 
 // kind is a kind of call of the library: the capability it serves and the fingerprint of its
@@ -79,8 +87,9 @@ type kind struct {
 // words after a correct answer are those of the runs that admitted them, on the prompts they have
 // now (R82; R86; R113). The workbook, the essay and the rubric were admitted by the author's word,
 // without a run (R126): theirs are the averages of the runs that tried their prompts now. The finding
-// of the tasks, admitted by the author's word too, had no run, and has none (R134). A model
-// without them has no expected price, and api takes the value of its own config then. The words
+// of the tasks, admitted by the author's word too, had no run, and has none (R134), nor have the
+// three calls of a task from paper, admitted so with their sets run on the stub alone (R135). A
+// model without them has no expected price, and api takes the value of its own config then. The words
 // serve the analysis of the steps with the work, CallWords, and the hint without it, CallHint, by
 // one prompt; the hint was measured with the work, so the hint without it has no expected tokens
 // (R106). The words after a correct answer are one kind with the work and without it, and their
@@ -156,6 +165,27 @@ var kinds = map[Call]kind{
 		maxIn:      maxTextBytes + maxPhotoTokens,
 		maxOut:     finding.MaxOutputTokens,
 		models:     1,
+	},
+	CallStatement: {
+		capability: admissionv0.CapabilityStatementReading,
+		prompt:     statement.Fingerprint(),
+		maxIn:      maxTextBytes + maxPhotoTokens,
+		maxOut:     statement.MaxOutputTokens,
+		models:     1,
+	},
+	CallSolving: {
+		capability: admissionv0.CapabilityTaskSolving,
+		prompt:     solving.Fingerprint(),
+		maxIn:      maxTextBytes + maxPhotoTokens,
+		maxOut:     solving.MaxOutputTokens,
+		models:     1,
+	},
+	CallPaper: {
+		capability: admissionv0.CapabilityHandwritingReading,
+		prompt:     reading.PaperFingerprint(),
+		maxIn:      maxTextBytes + tokensOf(maxCropSide, 1),
+		maxOut:     reading.MaxOutputTokens,
+		pair:       true,
 	},
 }
 

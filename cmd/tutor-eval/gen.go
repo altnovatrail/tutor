@@ -32,7 +32,7 @@ var generators = map[string]struct {
 // own seed and prefix. Of a bank and a plan it writes both files or neither.
 func runGen(args []string, stdout, stderr io.Writer) int {
 	if len(args) == 0 {
-		_, _ = fmt.Fprintln(stderr, "tutor-eval gen: give sheets, near, workbook, essays, words, words-cases or correct")
+		_, _ = fmt.Fprintln(stderr, "tutor-eval gen: give sheets, near, workbook, essays, paper, words, words-cases or correct")
 		return exitUsage
 	}
 	switch args[0] {
@@ -60,7 +60,7 @@ func runGen(args []string, stdout, stderr io.Writer) int {
 	}
 	g, ok := generators[args[0]]
 	if !ok {
-		_, _ = fmt.Fprintf(stderr, "tutor-eval gen: %q is nothing gen makes: give sheets, near, workbook, essays, words, words-cases or correct\n", args[0])
+		_, _ = fmt.Fprintf(stderr, "tutor-eval gen: %q is nothing gen makes: give sheets, near, workbook, essays, paper, words, words-cases or correct\n", args[0])
 		return exitUsage
 	}
 	flags := flag.NewFlagSet("tutor-eval gen "+args[0], flag.ContinueOnError)
@@ -107,7 +107,7 @@ type fileGenerator struct {
 }
 
 // fileGenerators are what gen makes as one file, by its first operand: the pages of the workbook and
-// the essays, each with what it counts (R50).
+// the essays, each with what it counts (R50), and the cases of a task from paper (R135).
 var fileGenerators = map[string]fileGenerator{
 	"workbook": {func(n int, seed uint64) (any, int, error) {
 		wb, err := gen.Workbook(n, seed)
@@ -123,6 +123,13 @@ var fileGenerators = map[string]fileGenerator{
 		}
 		return es, len(es.Essays), nil
 	}, "essay"},
+	"paper": {func(n int, seed uint64) (any, int, error) {
+		s, err := gen.Paper(n, seed)
+		if err != nil {
+			return nil, 0, err
+		}
+		return s, len(s.Cases), nil
+	}, "case"},
 }
 
 // runGenFile makes the pages of the workbook or the essays, with their truth by construction, from

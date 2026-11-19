@@ -13,6 +13,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/measure"
 	"github.com/altnovatrail/tutor/internal/newfile"
+	"github.com/altnovatrail/tutor/internal/paperset"
 	"github.com/altnovatrail/tutor/internal/protocol"
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/report"
@@ -163,7 +164,8 @@ type withProtocol interface {
 }
 
 // reportOf builds the report of a log by the kind of call it is of: the judge's, whose log tells no
-// kind, the reading's, the hint's, the workbook's, the essays' or the words' after a correct answer.
+// kind, the reading's, the hint's, the workbook's, the essays', the words' after a correct answer,
+// or one of the three calls of a task from paper.
 func reportOf(data []byte) (written, error) {
 	switch kind := runner.CallKind(data); kind {
 	case "":
@@ -212,8 +214,14 @@ func reportOf(data []byte) (written, error) {
 			return nil, err
 		}
 		return report.NewEssays(l)
+	case paperset.CallStatement, paperset.CallSolving, paperset.CallPaper:
+		l, err := paperset.ReadLog(bytes.NewReader(data), kind)
+		if err != nil {
+			return nil, err
+		}
+		return paperset.NewReport(l)
 	default:
-		return nil, fmt.Errorf("a log of the kind of call %q, and the report knows the judge, the reading, the hint, the words after a correct answer, the workbook, the essays and the judge of the words", kind)
+		return nil, fmt.Errorf("a log of the kind of call %q, and the report knows the judge, the reading, the hint, the words after a correct answer, the workbook, the essays, the judge of the words and the three calls of a task from paper", kind)
 	}
 }
 
