@@ -14,16 +14,18 @@ import (
 )
 
 var (
-	opusPrices  = provider.Prices{Input: 4, Output: 20, CacheRead: 0.2, CacheWrite: map[time.Duration]float64{5 * time.Minute: 5}, Read: "2026-11-11"}
-	haikuPrices = provider.Prices{Input: 0.1, Output: 0.5, Read: "2026-11-11"}
+	opusPrices   = provider.Prices{Input: 4, Output: 20, CacheRead: 0.2, CacheWrite: map[time.Duration]float64{5 * time.Minute: 5}, Read: "2026-11-11"}
+	haikuPrices  = provider.Prices{Input: 0.1, Output: 0.5, Read: "2026-11-11"}
+	sonnetPrices = provider.Prices{Input: 2, Output: 10, Read: "2026-11-11"}
 )
 
-// pricedPair is a library whose pair of readers are fakes with the prices of Opus and Haiku.
+// pricedPair is a library whose pair of readers are fakes with the prices of Opus and Haiku, and
+// Sonnet, of the cascade of a task from paper, with its own.
 func pricedPair(t *testing.T) (*Tutor, *fake, *fake) {
 	t.Helper()
 	opus := &fake{resp: provider.Response{JSON: `{}`, Model: "claude-opus-5-5", InputTokens: 1000, OutputTokens: 100}, prices: opusPrices}
 	haiku := &fake{resp: provider.Response{JSON: `{}`, Model: "claude-haiku-5-5", InputTokens: 1000, OutputTokens: 400}, prices: haikuPrices}
-	return library(t, adultFacts, &fakes{models: map[string]*fake{"claude-opus-5-5": opus, "claude-haiku-5-5": haiku}}), opus, haiku
+	return library(t, adultFacts, &fakes{models: map[string]*fake{"claude-opus-5-5": opus, "claude-haiku-5-5": haiku, "claude-sonnet-5-5": {prices: sonnetPrices}}}), opus, haiku
 }
 
 func near(a, b float64) bool { return math.Abs(a-b) < 1e-12 }
@@ -92,8 +94,8 @@ func TestPriceUnknown(t *testing.T) {
 func TestPrices(t *testing.T) {
 	lib, _, _ := pricedPair(t)
 	table, err := lib.Prices()
-	if err != nil || len(table) != 2 || table[0].Model != "claude-opus-5-5" || table[1].Model != "claude-haiku-5-5" ||
-		table[0].Provider != "anthropic" || table[0].Prices.Input != 4 || table[1].Prices.Read != "2026-11-11" {
+	if err != nil || len(table) != 3 || table[0].Model != "claude-opus-5-5" || table[1].Model != "claude-haiku-5-5" || table[2].Model != "claude-sonnet-5-5" ||
+		table[0].Provider != "anthropic" || table[0].Prices.Input != 4 || table[1].Prices.Read != "2026-11-11" || table[2].Prices.Input != 2 {
 		t.Errorf("the table is %+v, %v", table, err)
 	}
 	none, err := New(Config{Table: lib.table})

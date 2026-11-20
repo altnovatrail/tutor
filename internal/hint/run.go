@@ -39,7 +39,7 @@ type Tutor struct {
 func Tutors() []Tutor {
 	outputs := map[string]int{
 		"opus-high": 300, "haiku-low": 500, "haiku-low-no-thinking": 200,
-		"opus-medium": 300, "sonnet-low": 400, "sonnet-low-no-thinking": 200, "haiku-medium": 700,
+		"opus-medium": 300, "sonnet-low": 400, "sonnet-low-no-thinking": 200, "haiku-medium": 700, "haiku-high": 1050, "sonnet-medium": 600,
 	}
 	var out []Tutor
 	for _, c := range runner.Configs() {

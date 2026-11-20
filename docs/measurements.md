@@ -1388,6 +1388,21 @@ From architecture 3.10, the calls of the workbook, the essay and the rubric (T17
 - **The reading of an essay, version 2 of the two calls** (T124, 2026-11-11; R98) — the test part of the essays in two calls, Sonnet 5.5 · `low` without thinking and Haiku 5.5 · `medium`: 0 errors in words of 993 for both, all the learner's errors kept, not one essay read as illegible.
 - **The assessment of the text, version 3 of the two calls** (T125, 2026-11-11; R99) — the test part of the essays, the same two models: 0 false alarms of 66, 0 missed "not met" of 24, κ 1.00; the feedback rule broken in 2 of 15 for Sonnet — for version 1 in 11 of 45 — and in 0 for Haiku; the judge of words flagged none of the 30 feedbacks.
 
+### 3.25. The expected tokens of the cascade of a task from paper
+
+**What and why** (T234, 2026-11-19; R137). The four calls of a task from paper ask up to three models in turn, and `api` reserves the expected price of all three, so `price.go` needs the tokens of each. No eval measured them (Д21, Д22): they come from the `ai_usage` lines of `api`'s log of the author's check of T233 on `dev-ai`, 2026-11-19, the author's own pages, counted by a script outside git. The input is `input_tokens` with both of the cache's; the output counts the thinking. `SubmitWork` mixes the statement, the solution and the reading of the work, which the line does not tell apart.
+
+| Method | Model | Calls | Input | Output | Of it thinking | $ a call | Time p50 |
+|---|---|---|---|---|---|---|---|
+| `FindTasks` | Haiku 5.5 | 9 | 1,963 | 311 | 227 | 0.00032 | 2.7 s |
+| `FindTasks` | Sonnet 5.5 | 2 | 1,813 | 37 | 0 | 0.00347 | 1.8 s |
+| `FindTasks` | Opus 5.5 · `medium` | 3 | 1,813 | 128 | 91 | 0.00936 | 3.5 s |
+| `SubmitWork` | Haiku 5.5 | 14 | 1,251 | 263 | 202 | 0.00024 | 3.3 s |
+| `SubmitWork` | Opus 5.5 | 5 | 1,514 | 212 | 135 | 0.01029 | 3.9 s |
+
+- **The expected tokens** of `price.go`: the finding's input 1,820 for every model; the statement's and the solution's 1,520, `SubmitWork`'s Opus, whose calls were these two and the reading; the reading's 910, a crop of work and its text, as Haiku's calls of the reading alone gave. The output of Haiku at `high` is above what its calls at the efforts the author tried gave — 450 for the finding, 500 for the statement and the solution, 60 for the reading —, and Sonnet's is Opus's where Sonnet has no line: 150 and 130 for the finding, 260 for the statement and the solution, 100 for the reading.
+- **What it does not say:** a few dozen calls of one person's pages, at the efforts of the debug mode, not the cascade's; the eval of Д21 and Д22, when paid runs return, gives the averages of admission (Д23).
+
 ## 4. Claude Code sessions
 
 ### 4.1. The spending of tutor's sessions

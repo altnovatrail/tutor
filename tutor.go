@@ -23,7 +23,8 @@ import (
 // a service carries the SDKs of the adapters it gives alone (R90). A provider with no adapter here
 // is no route at all, and one with no key no route of platform AI: Choose takes none of its models.
 // Reading is how the library reads a sheet and a workbook page, by the pair or by one reader; an
-// empty one is the pair.
+// empty one is the pair. Debug lets a call's route carry the debug mode, Route.Debug, which api
+// turns on by its debug flag alone, on a local run (R136); off, such a route fails.
 type Config struct {
 	Table    *admission.Table
 	Facts    admission.Facts
@@ -31,6 +32,7 @@ type Config struct {
 	Reading  Reading
 	Keys     map[admissionv0.Provider]string
 	Adapters map[admissionv0.Provider]provider.Dial
+	Debug    bool
 }
 
 // Reading is how the library reads the handwriting of a sheet and of a workbook page, which api
@@ -62,6 +64,7 @@ type Tutor struct {
 	facts   admission.Facts
 	least   admission.Stage
 	reading Reading
+	debug   bool
 	keys    map[admissionv0.Provider]string
 	// adapters are the adapters of Config, by provider.
 	adapters map[admissionv0.Provider]provider.Dial
@@ -106,7 +109,7 @@ func New(c Config) (*Tutor, error) {
 			return nil, fmt.Errorf("tutor: the config gives a key of %s and no adapter of it", p)
 		}
 	}
-	return &Tutor{table: c.Table, facts: c.Facts, least: least, reading: reading, keys: maps.Clone(c.Keys), adapters: adapters, clients: map[admission.Model]provider.Model{}}, nil
+	return &Tutor{table: c.Table, facts: c.Facts, least: least, reading: reading, debug: c.Debug, keys: maps.Clone(c.Keys), adapters: adapters, clients: map[admission.Model]provider.Model{}}, nil
 }
 
 // dial makes the client of a model of the list with a key, by the adapter of its provider that the
@@ -120,12 +123,13 @@ func (t *Tutor) dial(m admission.Model, key string) (provider.Model, error) {
 }
 
 // Route is what every call of the library carries besides its work: the AI route, the learner's age
-// category, and on the own key the key with its provider. It names no learner, no account and no
-// adult (R15 spec).
+// category, on the own key the key with its provider, and on a local run the debug mode (R136). It
+// names no learner, no account and no adult (R15 spec).
 type Route struct {
 	AI       admissionv0.AiRoute
 	Category admissionv0.AgeCategory
 	Own      *OwnKey
+	Debug    *Debug
 }
 
 // OwnKey is the key of an account owner who learns, with its provider (R84 spec). It lives only in
@@ -207,30 +211,46 @@ func (t *Tutor) ChooseCall(c Call, r Route) (admission.Entry, admission.Answer, 
 // reserves a quota for, and the models a key is checked for, are those the call asks (R111). The
 // words with the work word the hint in the same call, so they are admitted only when the hint is
 // admitted on the model of the analysis (R84): when the model the hint without the work chooses, by
-// the same prompt, is the analysis's first. Otherwise the answer is the hint's refusal, or
-// model_not_admitted when the hint is another model's — another ID or another effort.
+// the same prompt, is the analysis's first, and of a cascade, the words of a task from paper, when
+// its models are the analysis's, in their order (R139). Otherwise the answer is the hint's refusal,
+// or model_not_admitted when the hint is another model's — another ID or another effort.
 func (t *Tutor) chooseCall(c Call, r Route) (admission.Entry, admission.Answer, error) {
 	k := kinds[c]
 	e, a, err := t.choose(k.capability, r, k.prompt)
-	if err != nil || !a.Admitted {
+	if err != nil {
 		return e, a, err
+	}
+	// The debug mode bypasses the list: its models serve the call, and the admission's refusal
+	// stands only where it names none (R136).
+	if d := debugOf(c, r); d != nil && (a.Admitted || d.First != nil) {
+		e.Models = d.models(c, k.asked(e.Models))
+		a.Admitted, a.Reason = true, nil
+		return e, a, nil
+	}
+	if !a.Admitted {
+		return e, a, nil
 	}
 	if e.Models, err = t.asked(c, e.Models); err != nil {
 		return admission.Entry{}, a, err
 	}
-	if c != CallWords {
+	hc, ok := wordsHint[c]
+	if !ok {
 		return e, a, nil
 	}
-	he, ha, err := t.chooseCall(CallHint, r)
+	he, ha, err := t.chooseCall(hc, r)
 	if err != nil || !ha.Admitted {
 		return admission.Entry{}, ha, err
 	}
-	if len(he.Models) == 0 || len(e.Models) == 0 || he.Models[0] != e.Models[0] {
+	if len(he.Models) == 0 || len(e.Models) == 0 || he.Models[0] != e.Models[0] || kinds[c].cascade && !slices.Equal(he.Models, e.Models) {
 		refusal := admission.ReasonModelNotAdmitted
 		return admission.Entry{}, admission.Answer{Answer: admissionv0.Answer{Reason: &refusal}, Version: a.Version}, nil
 	}
 	return e, a, nil
 }
+
+// wordsHint is the kind of the hint without the work that a kind of words with the work words in
+// the same call (R84).
+var wordsHint = map[Call]Call{CallWords: CallHint, CallPaperWords: CallPaperHint}
 
 // asked are the models of an entry a kind of call asks (kind.asked), and for a reading by the pair in
 // ReadingSingle the one reader alone, found as it is. An entry without it is errNoSingleReader: the
@@ -251,6 +271,9 @@ func (t *Tutor) asked(c Call, models []admission.Model) ([]admission.Model, erro
 func (t *Tutor) choose(c admissionv0.Capability, r Route, prompt string) (admission.Entry, admission.Answer, error) {
 	if err := r.check(); err != nil {
 		return admission.Entry{}, admission.Answer{}, err
+	}
+	if r.Debug != nil && !t.debug {
+		return admission.Entry{}, admission.Answer{}, errDebugOff
 	}
 	providers := []admissionv0.Provider{}
 	if r.Own != nil {
@@ -359,10 +382,17 @@ type Outcome struct {
 	Err           error
 }
 
-// call is a model of the entry chosen with its client.
+// call is a model of the entry chosen with its client, and in the debug mode the kind of the
+// library's call, the reader of the work and the mode, which records it. attempt is the model's
+// place among the attempts of a cascade, from 1, and 0 where the call asks its models at once
+// (R137).
 type call struct {
-	model  admission.Model
-	client provider.Model
+	model   admission.Model
+	client  provider.Model
+	kind    Call
+	reader  int
+	attempt int
+	debug   *Debug
 }
 
 // prepare chooses the models of a kind of call for a route (chooseCall), those the kind asks, and
@@ -379,13 +409,26 @@ func (t *Tutor) prepare(c Call, r Route) ([]call, admission.Answer, *Outcome) {
 	if !a.Admitted {
 		return nil, a, &Outcome{Kind: NotAdmitted, Admission: a}
 	}
+	// The models of a cascade are its attempts, one after another, unless the debug mode chose the
+	// models of the call (R137).
+	cascading := kinds[c].cascade && !debugOf(c, r).chose(c)
 	calls := make([]call, 0, len(e.Models))
 	for _, m := range e.Models {
 		client, err := t.client(m, r.Own)
 		if err != nil {
 			return nil, a, &Outcome{Kind: Failed, Admission: a, Err: err}
 		}
-		calls = append(calls, call{model: m, client: client})
+		cl := call{model: m, client: client, kind: c, debug: debugOf(c, r)}
+		switch {
+		case cascading:
+			cl.attempt = len(calls) + 1
+			if c == CallPaper {
+				cl.reader = 1
+			}
+		case c == CallPaper:
+			cl.reader = len(calls) + 1
+		}
+		calls = append(calls, cl)
 	}
 	return calls, a, nil
 }
@@ -449,8 +492,13 @@ func ask(ctx context.Context, a admission.Answer, calls []call, reqs []provider.
 	for i, c := range calls {
 		// A call that came back with tokens is billed whatever ended it: a refused answer, one that
 		// broke off midway, one the context cut short.
+		var used *Usage
 		if r := resps[i]; errs[i] == nil || errors.Is(errs[i], provider.ErrNoAnswer) || r.Partial || r.Counted() {
-			out.Usage = append(out.Usage, usageOf(c.model, c.client, r, errs[i], took[i], maxIn, reqs[i].MaxOutputTokens))
+			u := usageOf(c.model, c.client, r, errs[i], took[i], maxIn, reqs[i].MaxOutputTokens)
+			out.Usage, used = append(out.Usage, u), &u
+		}
+		if c.debug != nil && c.debug.Record != nil {
+			c.debug.Record(DebugCall{Call: c.kind, Reader: c.reader, Attempt: max(c.attempt, 1), Model: c.model, Answer: resps[i].JSON, Usage: used, Err: errs[i]})
 		}
 		if errs[i] == nil {
 			continue

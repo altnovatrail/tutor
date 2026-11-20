@@ -311,7 +311,7 @@ func TestRunWorkbook(t *testing.T) {
 			t.Errorf("%v: ends %d, %q; want %q", c.args, code, errs, c.says)
 		}
 	}
-	if code, _, errs := runMeasure("yes\n", "-part", "dev", "-stub", "-workbook", theWorkbook); code != exitUsage || !strings.Contains(errs, "-workbook and -essays are for -kind workbook and essay") {
+	if code, _, errs := runMeasure("yes\n", "-part", "dev", "-stub", "-workbook", theWorkbook); code != exitUsage || !strings.Contains(errs, "-workbook, -essays and -paper are for -kind workbook, essay and those of paper") {
 		t.Errorf("the judge with -workbook ends %d, %q", code, errs)
 	}
 	if code, _, errs := runMeasure("yes\n", "-kind", "workbook", "-part", "dev", "-stub"); code != exitUsage || !strings.Contains(errs, "cmd/tutor-eval/synthetic/workbook is in the git work tree") {

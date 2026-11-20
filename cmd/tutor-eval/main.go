@@ -73,6 +73,10 @@ const usage = `usage:
                              of their sheets — sheets of lines, six a task, or sheets of the
                              near key, two a task — or pages of the workbook or essays; new
                              files only
+  tutor-eval gen paper [-n N] [-seed N] -file F
+                             make the set of a task from paper: the cases of five kinds, each
+                             with its formula, key, the learner's line and its verdict, whose
+                             pictures a run draws; a new file only
   tutor-eval gen words [-seed N] -bank F -from F -plan F -cases F
                              make the set of the tutor's words of a plan of lines: a plan of
                              parts of its sheets with a mistake, ten again with a note at the
@@ -85,9 +89,9 @@ const usage = `usage:
                              handwriting
   tutor-eval split -seed N [-dev K] [-dir D] [-bank F] [-plan F]
                              divide the recorded sheets into development and test, once
-  tutor-eval run -part dev|test|all|recorded [-kind judge|reading|hint|correct|workbook|essay] [-repeats N]
-                 [-max-usd N] [-log F] [-stub] [-dir D] [-bank F] [-plan F] [-set D,B,P]...
-                 [-reads LIST] [-workbook F] [-essays F] [-readers LIST]
+  tutor-eval run -part dev|test|all|recorded [-kind judge|reading|hint|correct|workbook|essay|statement|solving|paper|finding]
+                 [-repeats N] [-max-usd N] [-log F] [-stub] [-dir D] [-bank F] [-plan F] [-set D,B,P]...
+                 [-reads LIST] [-workbook F] [-essays F] [-paper F] [-readers LIST]
                  [-two] [-cases F] [-case-kinds LIST]
                              run the calls of a kind on a part of the split, or on all the
                              sheets, of one set or, for a reading or a hint, of each -set: the
@@ -104,7 +108,13 @@ const usage = `usage:
                              read, and logs there too; -dir is synthetic/ and the file's name by
                              default; a hint with -cases asks the cases of the set of the words
                              on the one set of their plan, those of the kinds -case-kinds names,
-                             and with -part recorded those of the sheets recorded so far
+                             and with -part recorded those of the sheets recorded so far; the
+                             statement, the solving, the paper and the finding — of the cases
+                             of several tasks alone — ask the cases of a part of -paper,
+                             eval/paper-gen.json by default or a folder of the cases the
+                             debug mode exported, as eval/paper-cases, by the models the
+                             library admits unless -readers names others, and log in
+                             synthetic/runs
   tutor-eval judge-words -log F|-controls F [-judge C] [-max-usd N] [-out F] [-stub]
                              judge the hints of a log of the set of the words, the feedback
                              of a log of the essays in two calls, run where that run ran, or the judge's
@@ -124,7 +134,8 @@ const usage = `usage:
                              about 30 hints to read in .hints.md; of the workbook, the boxes, the
                              items, the line of the item and the heights; of the essays, the
                              criteria, the reading and the feedback, and the feedback to read in
-                             .feedback.md; beside the log. A run of the reading, the workbook or
+                             .feedback.md; of a call of a task from paper, the share right by
+                             the configurations and the kinds of case; beside the log. A run of the reading, the workbook or
                              the essays on samples of the protocol gets the runner's reports
                              too, .<reader>.report.json for each reader and pair, and their
                              measures in .protocol.csv

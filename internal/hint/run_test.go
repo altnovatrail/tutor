@@ -29,7 +29,7 @@ func TestTutors(t *testing.T) {
 			t.Errorf("%s is expected to write %d tokens", tu.Name, tu.Output)
 		}
 	}
-	if strings.Join(names, " ") != "opus-high haiku-low haiku-low-no-thinking opus-medium sonnet-low sonnet-low-no-thinking haiku-medium" {
+	if strings.Join(names, " ") != "opus-high haiku-low haiku-low-no-thinking opus-medium sonnet-low sonnet-low-no-thinking haiku-medium haiku-high sonnet-medium" {
 		t.Errorf("the tutors are %v", names)
 	}
 }

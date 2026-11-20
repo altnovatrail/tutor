@@ -13,12 +13,23 @@ import (
 	"time"
 )
 
-// Image is a picture of a request, as PNG, and the label that introduces it to the model, such as
-// "Image 1: the sheet as it was finished." A picture without a label goes without one: a request of
-// one picture needs none.
+// Image is a picture of a request, as PNG, or a photo of a page as JPEG, which Photo makes, and the
+// label that introduces it to the model, such as "Image 1: the sheet as it was finished." A picture
+// has one of the two. A picture without a label goes without one: a request of one picture needs
+// none.
 type Image struct {
 	Label string
 	PNG   []byte
+	JPEG  []byte
+}
+
+// MediaType is the type of the picture's data, and the data: image/png for a PNG, image/jpeg for a
+// photo.
+func (im Image) MediaType() (string, []byte) {
+	if len(im.PNG) > 0 {
+		return "image/png", im.PNG
+	}
+	return "image/jpeg", im.JPEG
 }
 
 // Request is one question to a model about pictures: instructions, the pictures in the order the
@@ -101,10 +112,10 @@ type Dial func(id, key string) (Model, error)
 var ErrNoAnswer = errors.New("no answer")
 
 // CheckImages refuses the pictures of a request that an adapter sending at most pictures will not
-// send: none, more than most, one without its PNG, or, of two or more, one without its label. A
-// request marked NoPicture is the one that has none, and it is refused with a picture or with a
-// blank text, which asks nothing. Of several pictures each has a label, as Anthropic advises, so
-// that the text can name them.
+// send: none, more than most, one without its PNG or JPEG or with both, or, of two or more, one
+// without its label. A request marked NoPicture is the one that has none, and it is refused with a
+// picture or with a blank text, which asks nothing. Of several pictures each has a label, as
+// Anthropic advises, so that the text can name them.
 func CheckImages(r Request, most int) error {
 	switch {
 	case r.NoPicture && len(r.Images) > 0:
@@ -119,8 +130,11 @@ func CheckImages(r Request, most int) error {
 		return fmt.Errorf("a request of %d pictures, and the adapter sends %d at most", len(r.Images), most)
 	}
 	for i, im := range r.Images {
-		if len(im.PNG) == 0 {
-			return fmt.Errorf("picture %d has no PNG", i+1)
+		if (len(im.PNG) == 0) == (len(im.JPEG) == 0) {
+			if len(im.PNG) == 0 {
+				return fmt.Errorf("picture %d %w", i+1, errNoPicture)
+			}
+			return fmt.Errorf("picture %d has both a PNG and a JPEG", i+1)
 		}
 		if len(r.Images) > 1 && im.Label == "" {
 			return fmt.Errorf("picture %d of %d has no label, and each of several pictures has one", i+1, len(r.Images))

@@ -37,7 +37,8 @@ type Config struct {
 }
 
 // Configs are the configurations of the measurements, in their order: the three a run asks by
-// default first (E4Configs, R24), then the four the extended measurement adds (R50).
+// default first (E4Configs, R24), then the four the extended measurement adds (R50), Haiku at
+// medium, and the two of the cascade of a task from paper not among them yet (R137).
 func Configs() []Config {
 	model := func(id string) catalog.Model {
 		i := slices.IndexFunc(catalog.Models, func(m catalog.Model) bool { return m.ID == id })
@@ -51,6 +52,8 @@ func Configs() []Config {
 		{Name: "sonnet-low", Model: model("claude-sonnet-5-5"), Effort: "low"},
 		{Name: "sonnet-low-no-thinking", Model: model("claude-sonnet-5-5"), Effort: "low", NoThinking: true},
 		{Name: "haiku-medium", Model: model("claude-haiku-5-5"), Effort: "medium"},
+		{Name: "haiku-high", Model: model("claude-haiku-5-5"), Effort: "high"},
+		{Name: "sonnet-medium", Model: model("claude-sonnet-5-5"), Effort: "medium"},
 	}
 }
 

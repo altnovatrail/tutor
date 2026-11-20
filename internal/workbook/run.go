@@ -34,7 +34,7 @@ type Reader = runner.Reader
 func Readers() []Reader {
 	return runner.ReadersOf("workbook", map[string]int{
 		"opus-high": 1200, "haiku-low": 900, "haiku-low-no-thinking": 400,
-		"opus-medium": 1200, "sonnet-low": 1000, "sonnet-low-no-thinking": 400, "haiku-medium": 1200,
+		"opus-medium": 1200, "sonnet-low": 1000, "sonnet-low-no-thinking": 400, "haiku-medium": 1200, "haiku-high": 1800, "sonnet-medium": 1500,
 	}, "opus-high", "opus-medium")
 }
 

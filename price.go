@@ -11,9 +11,13 @@ import (
 	"github.com/altnovatrail/tutor/admission"
 	"github.com/altnovatrail/tutor/internal/correct"
 	"github.com/altnovatrail/tutor/internal/essay"
+	"github.com/altnovatrail/tutor/internal/finding"
 	"github.com/altnovatrail/tutor/internal/hint"
+	"github.com/altnovatrail/tutor/internal/paperwords"
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/render"
+	"github.com/altnovatrail/tutor/internal/solving"
+	"github.com/altnovatrail/tutor/internal/statement"
 	"github.com/altnovatrail/tutor/internal/workbook"
 	"github.com/altnovatrail/tutor/provider"
 )
@@ -43,7 +47,9 @@ type tokens struct{ in, out int64 }
 
 // Call is a kind of call of the library: the reading of a sheet, of a workbook page and of an essay,
 // the assessment of an essay by its rubric, the call of the words, with the work and without it, and
-// the words after a correct answer.
+// the words after a correct answer, the finding of the tasks on the photo of a page from paper, and
+// of a task from paper the reading of its statement into a formula, its solution and the reading of
+// the work on it (R135).
 // Each serves a capability with a prompt of its own, and an entry of the list admits it only when it
 // measured that prompt (R70 spec).
 type Call string
@@ -57,27 +63,41 @@ const (
 	CallEssay    Call = "essay"
 	CallRubric   Call = "rubric"
 	CallCorrect  Call = "correct"
+	CallFinding  Call = "finding"
+	// The calls of a task from paper: its statement into a formula, its solution, and the work.
+	CallStatement Call = "statement"
+	CallSolving   Call = "solving"
+	CallPaper     Call = "paper"
+	// The tutor's words on a task from paper: with the work, the words of a rung, and without it,
+	// the opening question and a rung put another way (R139).
+	CallPaperWords Call = "paper_words"
+	CallPaperHint  Call = "paper_hint"
 )
 
 // kind is a kind of call of the library: the capability it serves and the fingerprint of its
 // prompt, the most input tokens it takes, the most it may write, how many models of the entry
 // chosen it asks, every one when 0, whether it reads by the pair of R68 spec, which ReadingSingle
-// makes one reader (Tutor.asked), and the tokens a call of each model is expected to take, by the
-// model's exact ID, the averages of the measurements of the model at the effort admitted.
+// makes one reader (Tutor.asked), whether its models are the attempts of a cascade, asked one after
+// another (R137), and the tokens a call of each model is expected to take, by the model's exact ID,
+// the averages of the measurements of the model at the effort admitted.
 type kind struct {
 	capability    admissionv0.Capability
 	prompt        string
 	maxIn, maxOut int64
 	models        int
 	pair          bool
+	cascade       bool
 	expected      map[string]tokens
 }
 
 // kinds are the kinds of call of the library. The expected tokens of the sheet, the words and the
 // words after a correct answer are those of the runs that admitted them, on the prompts they have
 // now (R82; R86; R113). The workbook, the essay and the rubric were admitted by the author's word,
-// without a run (R126): theirs are the averages of the runs that tried their prompts now. A model
-// without them has no expected price, and api takes the value of its own config then. The words
+// without a run (R126): theirs are the averages of the runs that tried their prompts now. The four
+// calls of a task from paper, admitted by the author's word too, had no run (R134; R135): theirs
+// are an estimate from the calls of the author's own pages, for each model of their cascade, so
+// that api reserves all three attempts (R137). A model without them has no
+// expected price, and api takes the value of its own config then. The words
 // serve the analysis of the steps with the work, CallWords, and the hint without it, CallHint, by
 // one prompt; the hint was measured with the work, so the hint without it has no expected tokens
 // (R106). The words after a correct answer are one kind with the work and without it, and their
@@ -146,6 +166,60 @@ var kinds = map[Call]kind{
 		maxOut:     wordsMaxOutput,
 		models:     1,
 		expected:   map[string]tokens{"claude-opus-5-5": {in: 1371, out: 402}},
+	},
+	CallFinding: {
+		capability: admissionv0.CapabilityTaskFinding,
+		prompt:     finding.Fingerprint(),
+		maxIn:      maxTextBytes + maxPhotoTokens,
+		maxOut:     finding.MaxOutputTokens,
+		models:     3,
+		cascade:    true,
+		expected:   map[string]tokens{"claude-haiku-5-5": {in: 1820, out: 450}, "claude-sonnet-5-5": {in: 1820, out: 150}, "claude-opus-5-5": {in: 1820, out: 130}},
+	},
+	CallStatement: {
+		capability: admissionv0.CapabilityStatementReading,
+		prompt:     statement.Fingerprint(),
+		maxIn:      maxTextBytes + maxPhotoTokens,
+		maxOut:     statement.MaxOutputTokens,
+		models:     3,
+		cascade:    true,
+		expected:   map[string]tokens{"claude-haiku-5-5": {in: 1520, out: 500}, "claude-sonnet-5-5": {in: 1520, out: 260}, "claude-opus-5-5": {in: 1520, out: 260}},
+	},
+	CallSolving: {
+		capability: admissionv0.CapabilityTaskSolving,
+		prompt:     solving.Fingerprint(),
+		maxIn:      maxTextBytes + maxPhotoTokens,
+		maxOut:     solving.MaxOutputTokens,
+		models:     3,
+		cascade:    true,
+		expected:   map[string]tokens{"claude-haiku-5-5": {in: 1520, out: 500}, "claude-sonnet-5-5": {in: 1520, out: 260}, "claude-opus-5-5": {in: 1520, out: 260}},
+	},
+	CallPaper: {
+		capability: admissionv0.CapabilityHandwritingReading,
+		prompt:     reading.PaperFingerprint(),
+		maxIn:      maxTextBytes + tokensOf(maxCropSide, 1),
+		maxOut:     reading.MaxOutputTokens,
+		models:     3,
+		cascade:    true,
+		expected:   map[string]tokens{"claude-haiku-5-5": {in: 910, out: 60}, "claude-sonnet-5-5": {in: 910, out: 100}, "claude-opus-5-5": {in: 910, out: 100}},
+	},
+	CallPaperWords: {
+		capability: admissionv0.CapabilitySolutionAnalysis,
+		prompt:     paperwords.Fingerprint(),
+		maxIn:      maxTextBytes + tokensOf(maxCropSide, 1),
+		maxOut:     paperwords.MaxOutputTokens,
+		models:     3,
+		cascade:    true,
+		expected:   map[string]tokens{"claude-haiku-5-5": {in: 2300, out: 1500}, "claude-sonnet-5-5": {in: 2300, out: 700}, "claude-opus-5-5": {in: 2300, out: 450}},
+	},
+	CallPaperHint: {
+		capability: admissionv0.CapabilityHint,
+		prompt:     paperwords.Fingerprint(),
+		maxIn:      maxTextBytes + maxPhotoTokens,
+		maxOut:     paperwords.MaxOutputTokens,
+		models:     3,
+		cascade:    true,
+		expected:   map[string]tokens{"claude-haiku-5-5": {in: 2000, out: 1200}, "claude-sonnet-5-5": {in: 2000, out: 600}, "claude-opus-5-5": {in: 2000, out: 400}},
 	},
 }
 

@@ -174,7 +174,75 @@ var Admitted = []Entry{
 		Report:     authorsWord,
 		Prompt:     "a9bf54404fbb8215ac2def2ec16b0a053846ffb9d88ced72ca7d2560b0246cba",
 	},
+	// The four calls of a task from paper, by the author's word, without a run, until the day
+	// paperWord names, each a cascade of three attempts, the cheapest first: Haiku 5.5 at high, then
+	// Sonnet 5.5 at medium, then Opus 5.5 at medium, all with thinking (R137). The finding of the
+	// tasks on the photo of a page, on version 3 of its prompt, with the learner's request about the
+	// page (R138), ran on the stub alone, the cases of several tasks of the set of a task from paper,
+	// and has no set of whole pages, Д21 (R134).
+	{
+		Capability: admissionv0.CapabilityTaskFinding,
+		Models:     paperCascade,
+		Stage:      StageAuthor,
+		Report:     paperWord,
+		Prompt:     "ee66d8e84dd088979e65725e712a30bd8018abf56ec4c0f357116ec47ecec969",
+	},
+	// The statement read into its tasks and their formulas and the solution, on version 2 of their
+	// prompts, one solution a model until the author has seen how often it errs (R162 spec); and the
+	// work read by one model at a time in any reading mode, on version 2 of the reading of paper.
+	// Their sets ran on the stub alone, and the paid run is Д22 (R135).
+	{
+		Capability: admissionv0.CapabilityStatementReading,
+		Models:     paperCascade,
+		Stage:      StageAuthor,
+		Report:     paperWord,
+		Prompt:     "cd0747cc37281291346a44aa17de104efdf8abd825b0fa428d094947194e7e56",
+	},
+	{
+		Capability: admissionv0.CapabilityTaskSolving,
+		Models:     paperCascade,
+		Stage:      StageAuthor,
+		Report:     paperWord,
+		Prompt:     "b59a541a92783214fc16a1624a966cc734e96bf33b208b6c706ca1e048a74b8e",
+	},
+	{
+		Capability: admissionv0.CapabilityHandwritingReading,
+		Models:     paperCascade,
+		Stage:      StageAuthor,
+		Report:     paperWord,
+		Prompt:     "84e47c2f1536337d365e374a16476fbfd5afb9674811979af02994eca11c01d8",
+	},
+	// The tutor's words on a task from paper — the opening question, a rung's words with the place of
+	// the first mistake, and a rung put another way —, on version 1 of their prompt, the analysis and
+	// the hint by the same cascade, as R84 spec has the words of one call. By the author's word of
+	// 2026-11-20, without a set and without a run, which are Д24 (R139).
+	{
+		Capability: admissionv0.CapabilitySolutionAnalysis,
+		Models:     paperCascade,
+		Stage:      StageAuthor,
+		Report:     paperWordsWord,
+		Prompt:     paperWordsPrompt,
+	},
+	{
+		Capability: admissionv0.CapabilityHint,
+		Models:     paperCascade,
+		Stage:      StageAuthor,
+		Report:     paperWordsWord,
+		Prompt:     paperWordsPrompt,
+	},
 }
+
+// paperWordsWord is the author's word that admitted the words of a task from paper, under the same
+// suspension as paperWord, to the same last day, and paperWordsPrompt the fingerprint of their
+// prompt, version 1 (R139).
+var (
+	paperWordsWord = Evidence{
+		Word:  "author's word 2026-11-20, R07 spec suspended until 2027-01-17",
+		Date:  "2026-11-20",
+		Until: "2027-01-17",
+	}
+	paperWordsPrompt = "db9d46040adf1135e94064091ccf8c94d9232607f68338e39eb684228ac5f719"
+)
 
 // authorsWord is the evidence of the entries the author admitted without eval, while R07 spec's
 // eval before admission is suspended. The suspension ends sooner, with the first code of api invite
@@ -182,6 +250,21 @@ var Admitted = []Entry{
 var authorsWord = Evidence{
 	Word:  "author's word 2026-11-17, R07 spec suspended until 2027-01-17",
 	Date:  "2026-11-17",
+	Until: "2027-01-17",
+}
+
+// paperCascade are the attempts of each call of a task from paper, in their order (R137).
+var paperCascade = []Model{
+	{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "high"},
+	{Provider: "anthropic", ID: "claude-sonnet-5-5", Effort: "medium"},
+	{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "medium"},
+}
+
+// paperWord is the author's word that admitted the cascade of a task from paper, under the same
+// suspension of R07 spec as authorsWord, to the same last day (R137).
+var paperWord = Evidence{
+	Word:  "author's word 2026-11-19, R07 spec suspended until 2027-01-17",
+	Date:  "2026-11-19",
 	Until: "2027-01-17",
 }
 

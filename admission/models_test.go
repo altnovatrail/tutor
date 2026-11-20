@@ -12,8 +12,12 @@ import (
 
 	"github.com/altnovatrail/tutor/internal/correct"
 	"github.com/altnovatrail/tutor/internal/essay"
+	"github.com/altnovatrail/tutor/internal/finding"
 	"github.com/altnovatrail/tutor/internal/hint"
+	"github.com/altnovatrail/tutor/internal/paperwords"
 	"github.com/altnovatrail/tutor/internal/reading"
+	"github.com/altnovatrail/tutor/internal/solving"
+	"github.com/altnovatrail/tutor/internal/statement"
 	"github.com/altnovatrail/tutor/internal/workbook"
 	"github.com/altnovatrail/tutor/provider/claude/catalog"
 )
@@ -308,22 +312,40 @@ func listFaultsOn(list []Entry, today string) []string {
 				out = append(out, fmt.Sprintf("entry %d: %s is no model the list may hold", i, m.Name()))
 			}
 		}
+		// The words of a task of a module are one model's, those of a task from paper a cascade of one
+		// to three attempts, each with its prompt now (R139).
 		words := e.Capability == admissionv0.CapabilitySolutionAnalysis || e.Capability == admissionv0.CapabilityHint
-		if words && (len(e.Models) != 1 || e.Prompt != hint.Fingerprint()) {
-			out = append(out, fmt.Sprintf("entry %d of the words: %d models, prompt %s, the hint's now %s", i, len(e.Models), e.Prompt, hint.Fingerprint()))
+		ofModule := e.Prompt == hint.Fingerprint() && len(e.Models) == 1
+		ofPaper := e.Prompt == paperwords.Fingerprint() && len(e.Models) >= 1 && len(e.Models) <= 3
+		if words && !ofModule && !ofPaper {
+			out = append(out, fmt.Sprintf("entry %d of the words: %d models, prompt %s, the hint's now %s and the words of paper's %s", i, len(e.Models), e.Prompt, hint.Fingerprint(), paperwords.Fingerprint()))
 		}
 		if e.Capability == admissionv0.CapabilityCorrectAnswerWords && (len(e.Models) != 1 || e.Prompt != correct.Fingerprint()) {
 			out = append(out, fmt.Sprintf("entry %d of the words after a correct answer: %d models, prompt %s, theirs now %s", i, len(e.Models), e.Prompt, correct.Fingerprint()))
 		}
-		// A reading is of a sheet or of a workbook page, by a pair, or of an essay, by one reader, each
-		// with its prompt now; the assessment by a rubric is one model's.
+		// A reading is of a sheet or of a workbook page, by a pair, of an essay, by one reader, or of
+		// the work on a task from paper, by a cascade, each with its prompt now; the assessment by a
+		// rubric is one model's. A call of a task from paper is a cascade of one to three attempts
+		// (R137).
+		cascade := len(e.Models) >= 1 && len(e.Models) <= 3
 		if e.Capability == admissionv0.CapabilityHandwritingReading {
 			pair := e.Prompt == reading.Fingerprint() || e.Prompt == workbook.Fingerprint()
+			one := e.Prompt == essay.ReadFingerprint()
+			paper := e.Prompt == reading.PaperFingerprint()
 			strongFirst := len(e.Models) == 2 && e.Models[0].ID == "claude-opus-5-5"
-			if pair && !strongFirst || e.Prompt == essay.ReadFingerprint() && len(e.Models) != 1 || !pair && e.Prompt != essay.ReadFingerprint() {
-				out = append(out, fmt.Sprintf("entry %d of reading: %d models, prompt %s, the readings' now %s, %s and %s", i, len(e.Models), e.Prompt,
-					reading.Fingerprint(), workbook.Fingerprint(), essay.ReadFingerprint()))
+			if pair && !strongFirst || one && len(e.Models) != 1 || paper && !cascade || !pair && !one && !paper {
+				out = append(out, fmt.Sprintf("entry %d of reading: %d models, prompt %s, the readings' now %s, %s, %s and %s", i, len(e.Models), e.Prompt,
+					reading.Fingerprint(), workbook.Fingerprint(), reading.PaperFingerprint(), essay.ReadFingerprint()))
 			}
+		}
+		if e.Capability == admissionv0.CapabilityTaskFinding && (!cascade || e.Prompt != finding.Fingerprint()) {
+			out = append(out, fmt.Sprintf("entry %d of the finding: %d models, prompt %s, theirs now %s", i, len(e.Models), e.Prompt, finding.Fingerprint()))
+		}
+		if e.Capability == admissionv0.CapabilityStatementReading && (!cascade || e.Prompt != statement.Fingerprint()) {
+			out = append(out, fmt.Sprintf("entry %d of the statement: %d models, prompt %s, theirs now %s", i, len(e.Models), e.Prompt, statement.Fingerprint()))
+		}
+		if e.Capability == admissionv0.CapabilityTaskSolving && (!cascade || e.Prompt != solving.Fingerprint()) {
+			out = append(out, fmt.Sprintf("entry %d of the solution: %d models, prompt %s, theirs now %s", i, len(e.Models), e.Prompt, solving.Fingerprint()))
 		}
 		if e.Capability == admissionv0.CapabilityRubricAssessment && (len(e.Models) != 1 || e.Prompt != essay.TextFingerprint()) {
 			out = append(out, fmt.Sprintf("entry %d of the rubric: %d models, prompt %s, the assessment's now %s", i, len(e.Models), e.Prompt, essay.TextFingerprint()))

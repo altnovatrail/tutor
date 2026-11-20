@@ -73,8 +73,10 @@ func (t *Tutor) CheckKey(ctx context.Context, r Route) (KeyCheck, error) {
 		if !a.Admitted {
 			continue
 		}
+		// The check of a model does not depend on its effort: a model two kinds ask at two efforts
+		// is checked once.
 		for _, m := range e.Models {
-			if !slices.Contains(models, m) {
+			if !slices.ContainsFunc(models, func(o admission.Model) bool { return o.Provider == m.Provider && o.ID == m.ID }) {
 				models = append(models, m)
 			}
 		}

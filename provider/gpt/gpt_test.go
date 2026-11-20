@@ -303,3 +303,23 @@ func TestCheck(t *testing.T) {
 		}
 	}
 }
+
+// A photo goes as a JPEG, and Fit keeps it within the patches of the detail "high".
+func TestPhoto(t *testing.T) {
+	c, sent := fakeAPI(t, reply{body: goodAnswer})
+	r := request
+	r.Images = []provider.Image{{Label: "Image 1: the photo of the page.", JPEG: []byte("photo")}}
+	if _, err := c.Ask(context.Background(), r); err != nil {
+		t.Fatal(err)
+	}
+	if body := sent()[0]; !strings.Contains(body, `"image_url":"data:image/jpeg;base64,`) {
+		t.Errorf("the photo went otherwise:\n%s", body)
+	}
+	var fitter provider.Fitter = c
+	if w, h := fitter.Fit(3024, 4032); (w+31)/32*((h+31)/32) > 2500 || w < 1000 {
+		t.Errorf("a phone's photo fits to %d × %d", w, h)
+	}
+	if w, h := fitter.Fit(640, 480); w != 640 || h != 480 {
+		t.Errorf("a small photo fits to %d × %d", w, h)
+	}
+}
