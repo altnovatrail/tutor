@@ -21,7 +21,7 @@ type Debug struct {
 	Second *admission.Model
 	// Record gets each call of a model of the call, once the models have answered, in their order,
 	// from the goroutine of the call.
-	Record func(DebugCall)
+	Record func(DebugCall) `json:"-"`
 }
 
 // DebugCall is one call of a model in the debug mode: the kind of the library's call; the reader of

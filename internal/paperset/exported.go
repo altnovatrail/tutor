@@ -77,8 +77,11 @@ func caseOf(number int, dc *v1.DebugCase) (Case, error) {
 	}
 	crop := dc.GetWork().GetCrop()
 	cfg, format, err := image.DecodeConfig(bytes.NewReader(crop))
-	if err != nil || format != "png" {
-		return Case{}, fmt.Errorf("the crop of the work is no PNG: %v", err)
+	if err != nil {
+		return Case{}, fmt.Errorf("the crop of the work is no PNG: %w", err)
+	}
+	if format != "png" {
+		return Case{}, fmt.Errorf("the crop of the work is no PNG but %s", format)
 	}
 	c := Case{Number: number, Part: sample.PartDev, Tasks: tasks,
 		pictures: &Pictures{
@@ -125,8 +128,8 @@ func Digest(path string) (string, error) {
 		if err != nil {
 			return "", err
 		}
-		fmt.Fprintf(h, "%s\x00%d\x00", filepath.Base(name), len(data))
-		h.Write(data)
+		_, _ = fmt.Fprintf(h, "%s\x00%d\x00", filepath.Base(name), len(data))
+		_, _ = h.Write(data)
 	}
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
 }
