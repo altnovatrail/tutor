@@ -211,8 +211,9 @@ func (t *Tutor) ChooseCall(c Call, r Route) (admission.Entry, admission.Answer, 
 // reserves a quota for, and the models a key is checked for, are those the call asks (R111). The
 // words with the work word the hint in the same call, so they are admitted only when the hint is
 // admitted on the model of the analysis (R84): when the model the hint without the work chooses, by
-// the same prompt, is the analysis's first. Otherwise the answer is the hint's refusal, or
-// model_not_admitted when the hint is another model's — another ID or another effort.
+// the same prompt, is the analysis's first, and of a cascade, the words of a task from paper, when
+// its models are the analysis's, in their order (R139). Otherwise the answer is the hint's refusal,
+// or model_not_admitted when the hint is another model's — another ID or another effort.
 func (t *Tutor) chooseCall(c Call, r Route) (admission.Entry, admission.Answer, error) {
 	k := kinds[c]
 	e, a, err := t.choose(k.capability, r, k.prompt)
@@ -232,19 +233,24 @@ func (t *Tutor) chooseCall(c Call, r Route) (admission.Entry, admission.Answer, 
 	if e.Models, err = t.asked(c, e.Models); err != nil {
 		return admission.Entry{}, a, err
 	}
-	if c != CallWords {
+	hc, ok := wordsHint[c]
+	if !ok {
 		return e, a, nil
 	}
-	he, ha, err := t.chooseCall(CallHint, r)
+	he, ha, err := t.chooseCall(hc, r)
 	if err != nil || !ha.Admitted {
 		return admission.Entry{}, ha, err
 	}
-	if len(he.Models) == 0 || len(e.Models) == 0 || he.Models[0] != e.Models[0] {
+	if len(he.Models) == 0 || len(e.Models) == 0 || he.Models[0] != e.Models[0] || kinds[c].cascade && !slices.Equal(he.Models, e.Models) {
 		refusal := admission.ReasonModelNotAdmitted
 		return admission.Entry{}, admission.Answer{Answer: admissionv0.Answer{Reason: &refusal}, Version: a.Version}, nil
 	}
 	return e, a, nil
 }
+
+// wordsHint is the kind of the hint without the work that a kind of words with the work words in
+// the same call (R84).
+var wordsHint = map[Call]Call{CallWords: CallHint, CallPaperWords: CallPaperHint}
 
 // asked are the models of an entry a kind of call asks (kind.asked), and for a reading by the pair in
 // ReadingSingle the one reader alone, found as it is. An entry without it is errNoSingleReader: the

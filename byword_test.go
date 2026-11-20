@@ -31,6 +31,8 @@ var byWord = []struct {
 	{CallStatement, []string{"claude-haiku-5-5 high", "claude-sonnet-5-5 medium", "claude-opus-5-5 medium"}},
 	{CallSolving, []string{"claude-haiku-5-5 high", "claude-sonnet-5-5 medium", "claude-opus-5-5 medium"}},
 	{CallPaper, []string{"claude-haiku-5-5 high", "claude-sonnet-5-5 medium", "claude-opus-5-5 medium"}},
+	{CallPaperWords, []string{"claude-haiku-5-5 high", "claude-sonnet-5-5 medium", "claude-opus-5-5 medium"}},
+	{CallPaperHint, []string{"claude-haiku-5-5 high", "claude-sonnet-5-5 medium", "claude-opus-5-5 medium"}},
 }
 
 func names(e admission.Entry) []string {

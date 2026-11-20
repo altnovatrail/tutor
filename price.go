@@ -13,6 +13,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/essay"
 	"github.com/altnovatrail/tutor/internal/finding"
 	"github.com/altnovatrail/tutor/internal/hint"
+	"github.com/altnovatrail/tutor/internal/paperwords"
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/solving"
@@ -67,6 +68,10 @@ const (
 	CallStatement Call = "statement"
 	CallSolving   Call = "solving"
 	CallPaper     Call = "paper"
+	// The tutor's words on a task from paper: with the work, the words of a rung, and without it,
+	// the opening question and a rung put another way (R139).
+	CallPaperWords Call = "paper_words"
+	CallPaperHint  Call = "paper_hint"
 )
 
 // kind is a kind of call of the library: the capability it serves and the fingerprint of its
@@ -197,6 +202,24 @@ var kinds = map[Call]kind{
 		models:     3,
 		cascade:    true,
 		expected:   map[string]tokens{"claude-haiku-5-5": {in: 910, out: 60}, "claude-sonnet-5-5": {in: 910, out: 100}, "claude-opus-5-5": {in: 910, out: 100}},
+	},
+	CallPaperWords: {
+		capability: admissionv0.CapabilitySolutionAnalysis,
+		prompt:     paperwords.Fingerprint(),
+		maxIn:      maxTextBytes + tokensOf(maxCropSide, 1),
+		maxOut:     paperwords.MaxOutputTokens,
+		models:     3,
+		cascade:    true,
+		expected:   map[string]tokens{"claude-haiku-5-5": {in: 2300, out: 1500}, "claude-sonnet-5-5": {in: 2300, out: 700}, "claude-opus-5-5": {in: 2300, out: 450}},
+	},
+	CallPaperHint: {
+		capability: admissionv0.CapabilityHint,
+		prompt:     paperwords.Fingerprint(),
+		maxIn:      maxTextBytes + maxPhotoTokens,
+		maxOut:     paperwords.MaxOutputTokens,
+		models:     3,
+		cascade:    true,
+		expected:   map[string]tokens{"claude-haiku-5-5": {in: 2000, out: 1200}, "claude-sonnet-5-5": {in: 2000, out: 600}, "claude-opus-5-5": {in: 2000, out: 400}},
 	},
 }
 

@@ -14,6 +14,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/essay"
 	"github.com/altnovatrail/tutor/internal/finding"
 	"github.com/altnovatrail/tutor/internal/hint"
+	"github.com/altnovatrail/tutor/internal/paperwords"
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/solving"
 	"github.com/altnovatrail/tutor/internal/statement"
@@ -311,9 +312,13 @@ func listFaultsOn(list []Entry, today string) []string {
 				out = append(out, fmt.Sprintf("entry %d: %s is no model the list may hold", i, m.Name()))
 			}
 		}
+		// The words of a task of a module are one model's, those of a task from paper a cascade of one
+		// to three attempts, each with its prompt now (R139).
 		words := e.Capability == admissionv0.CapabilitySolutionAnalysis || e.Capability == admissionv0.CapabilityHint
-		if words && (len(e.Models) != 1 || e.Prompt != hint.Fingerprint()) {
-			out = append(out, fmt.Sprintf("entry %d of the words: %d models, prompt %s, the hint's now %s", i, len(e.Models), e.Prompt, hint.Fingerprint()))
+		ofModule := e.Prompt == hint.Fingerprint() && len(e.Models) == 1
+		ofPaper := e.Prompt == paperwords.Fingerprint() && len(e.Models) >= 1 && len(e.Models) <= 3
+		if words && !ofModule && !ofPaper {
+			out = append(out, fmt.Sprintf("entry %d of the words: %d models, prompt %s, the hint's now %s and the words of paper's %s", i, len(e.Models), e.Prompt, hint.Fingerprint(), paperwords.Fingerprint()))
 		}
 		if e.Capability == admissionv0.CapabilityCorrectAnswerWords && (len(e.Models) != 1 || e.Prompt != correct.Fingerprint()) {
 			out = append(out, fmt.Sprintf("entry %d of the words after a correct answer: %d models, prompt %s, theirs now %s", i, len(e.Models), e.Prompt, correct.Fingerprint()))

@@ -212,7 +212,37 @@ var Admitted = []Entry{
 		Report:     paperWord,
 		Prompt:     "84e47c2f1536337d365e374a16476fbfd5afb9674811979af02994eca11c01d8",
 	},
+	// The tutor's words on a task from paper — the opening question, a rung's words with the place of
+	// the first mistake, and a rung put another way —, on version 1 of their prompt, the analysis and
+	// the hint by the same cascade, as R84 spec has the words of one call. By the author's word of
+	// 2026-11-20, without a set and without a run, which are Д24 (R139).
+	{
+		Capability: admissionv0.CapabilitySolutionAnalysis,
+		Models:     paperCascade,
+		Stage:      StageAuthor,
+		Report:     paperWordsWord,
+		Prompt:     paperWordsPrompt,
+	},
+	{
+		Capability: admissionv0.CapabilityHint,
+		Models:     paperCascade,
+		Stage:      StageAuthor,
+		Report:     paperWordsWord,
+		Prompt:     paperWordsPrompt,
+	},
 }
+
+// paperWordsWord is the author's word that admitted the words of a task from paper, under the same
+// suspension as paperWord, to the same last day, and paperWordsPrompt the fingerprint of their
+// prompt, version 1 (R139).
+var (
+	paperWordsWord = Evidence{
+		Word:  "author's word 2026-11-20, R07 spec suspended until 2027-01-17",
+		Date:  "2026-11-20",
+		Until: "2027-01-17",
+	}
+	paperWordsPrompt = "db9d46040adf1135e94064091ccf8c94d9232607f68338e39eb684228ac5f719"
+)
 
 // authorsWord is the evidence of the entries the author admitted without eval, while R07 spec's
 // eval before admission is suspended. The suspension ends sooner, with the first code of api invite

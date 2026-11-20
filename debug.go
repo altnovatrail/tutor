@@ -12,8 +12,9 @@ import (
 // a model. The library takes it only when Config.Debug is on, which api sets by its debug flag
 // alone; on any other call it changes nothing.
 type Debug struct {
-	// First serves the four calls of a task from paper — CallFinding, CallStatement, CallSolving
-	// and CallPaper —; nil leaves each its model of the list.
+	// First serves every call of a task from paper — CallFinding, CallStatement, CallSolving,
+	// CallPaper and the tutor's words, CallPaperWords and CallPaperHint —; nil leaves each its
+	// models of the list.
 	First *admission.Model
 	// Second reads the work beside the first reader, CallPaper alone, the two read as a pair is;
 	// nil leaves one reader.
@@ -44,7 +45,7 @@ var errDebugOff = errors.New("tutor: the route has the debug mode, and the confi
 // debugged tells whether the debug mode serves a kind of call: the calls of a task from paper.
 func debugged(c Call) bool {
 	switch c {
-	case CallFinding, CallStatement, CallSolving, CallPaper:
+	case CallFinding, CallStatement, CallSolving, CallPaper, CallPaperWords, CallPaperHint:
 		return true
 	}
 	return false
