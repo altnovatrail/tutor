@@ -165,8 +165,8 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 }
 
 // The limits of a picture that a model of the high-resolution tier takes unshrunk, every model of
-// the catalog among them: its long edge, rounded up to a whole patch, and its patches of 28 px
-// (sources 1.19).
+// the catalog among them: its long edge, rounded up to a whole patch, and its patches of 28 px, by
+// Anthropic's guide Vision (R134).
 const (
 	patchSide = 28
 	maxEdge   = 2576

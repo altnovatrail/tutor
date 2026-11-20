@@ -81,7 +81,7 @@ func (c *Client) Prices() provider.Prices {
 }
 
 // The limits of a picture that GPT-6 Astra takes at the detail "high": its patches of 32 px and its
-// largest side (sources 1.8).
+// largest side, by OpenAI's guide to images (R134).
 const (
 	patchSide = 32
 	maxSide   = 65535

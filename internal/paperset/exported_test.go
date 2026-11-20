@@ -6,6 +6,7 @@ import (
 	"image/png"
 	"os"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	v1 "github.com/altnovatrail/spec/contracts/novatrail/api/v1"
@@ -31,8 +32,9 @@ func number(v string) *paperv1.Answer {
 // A folder of the cases the debug mode exported is a set of the part dev, read in the order of the
 // files' names: each case's kind follows from its truth — of more than one task, several —, its
 // pictures are those the Check sent — the task's crop as the library sends a photo, a JPEG —, and
-// the stub, which is right by that truth, is right on each. A case with no outcome, with a task of
-// no statement, or with no task is refused.
+// the stub, which is right by that truth, is right on each. The finding, judged by the lines code
+// draws, runs on none of them. A case with no outcome, with a task of no statement, or with no task
+// is refused.
 func TestExportedCases(t *testing.T) {
 	dir := t.TempDir()
 	write := func(name string, c *v1.DebugCase) {
@@ -72,6 +74,12 @@ func TestExportedCases(t *testing.T) {
 	f := &paperset.File{Name: dir, SHA256: digest, Set: s}
 	for _, kind := range paperset.CallKinds {
 		r, err := paperset.New(kind, "dev", f, haiku(t), 1)
+		if kind == paperset.CallFinding {
+			if err == nil {
+				t.Errorf("the finding runs on exported cases: %d steps", len(r.Steps))
+			}
+			continue
+		}
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -91,6 +99,20 @@ func TestExportedCases(t *testing.T) {
 			if rec := recordOf(st, right); !rec.Right || rec.Error != "" {
 				t.Errorf("%s: the stub's %s is %+v", kind, right, rec)
 			}
+		}
+	}
+
+	// Beside a case of several tasks that code draws, the finding asks that one alone.
+	drawn := setOf(t, 30).Set
+	for _, c := range drawn.Cases {
+		if c.Kind == paperset.KindSeveral {
+			c.Number, c.Part = len(s.Cases)+1, "dev"
+			mixed := &paperset.File{Name: dir, SHA256: digest, Set: &paperset.Set{Seed: drawn.Seed, Cases: append(slices.Clone(s.Cases), c)}}
+			r, err := paperset.New(paperset.CallFinding, "dev", mixed, haiku(t), 1)
+			if err != nil || len(r.Items) != 1 || r.Items[0].(paperset.CaseRecord).Case.Number != c.Number {
+				t.Fatalf("the finding beside exported cases: %v, %v", r, err)
+			}
+			break
 		}
 	}
 

@@ -27,7 +27,8 @@ import (
 const Version = 3
 
 // MaxTasks is the most tasks a page gives: the 20 attempts BeginPaperAttempts of spec's contract
-// begins at most. The model is asked for no more, and the program keeps the first of the page.
+// begins at most. The model is asked for no more, and of more the program keeps the first of the
+// page (R165 spec).
 const MaxTasks = 20
 
 // MaxOutputTokens is the most a call may write, thinking included: twenty boxes take a few hundred
@@ -132,8 +133,8 @@ var Schema = map[string]any{
 type Box struct{ X1, Y1, X2, Y2 int }
 
 // Read takes a model's answer apart as strictly as the schema: the boxes, each with its four
-// corners and nothing else, put in order; none is an answer too. More than MaxTasks fail the call:
-// the model was asked for no more.
+// corners and nothing else, put in order; none is an answer too. More than MaxTasks are read too:
+// the caller keeps the first of the page.
 func Read(answer string) ([]Box, error) {
 	var raw struct {
 		Tasks *[]struct {
@@ -153,9 +154,6 @@ func Read(answer string) ([]Box, error) {
 	}
 	if raw.Tasks == nil {
 		return nil, errors.New("finding: the answer lacks the tasks")
-	}
-	if len(*raw.Tasks) > MaxTasks {
-		return nil, fmt.Errorf("finding: the answer gives %d tasks, more than %d", len(*raw.Tasks), MaxTasks)
 	}
 	boxes := make([]Box, 0, len(*raw.Tasks))
 	for i, b := range *raw.Tasks {

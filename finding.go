@@ -14,8 +14,8 @@ import (
 )
 
 // maxPhotoTokens are the most tokens the photo of a page takes: the largest a provider adapter
-// fits a photo to, Anthropic's high-resolution tier (sources 1.19). GPT-6 Astra takes at most 2 500
-// patches, 1.2 tokens each (sources 1.8).
+// fits a photo to, the 4 784 patches of Anthropic's high-resolution tier. GPT-6 Astra takes at most
+// 2 500 patches, 1.2 tokens each (R134).
 const maxPhotoTokens = 4784
 
 // TaskFinding is a call that finds the tasks on the photo of a page from the learner's paper
@@ -45,31 +45,36 @@ type TasksFound struct {
 // FindTasks asks the admitted models of the finding (CallFinding) for the tasks on the photo of a
 // page, one at a time, a later one only when the one before failed or found no task (R137). The
 // adapter fits the photo to the size its model takes unshrunk, and it goes as a JPEG without the
-// metadata of its file (provider.Photo). A photo that is no JPEG or PNG fails before any call; an
-// answer off the schema fails the call. A box with no area on the photo is no frame, nor one that
-// covers a frame the learner drew, which the models' cascade drops once it is over: a model that
-// gave only such frames found tasks, and the next one is not asked. The frames go top to bottom,
-// and of two at one height the left first.
+// metadata of its file (provider.Photo), decoded once for every model. A photo that is no JPEG or
+// PNG fails before any call; an answer off the schema fails the call. A box with no area on the
+// photo is no frame, nor one that covers a frame the learner drew, which the models' cascade drops
+// once it is over: a model that gave only such frames found tasks, and the next one is not asked.
+// The frames go top to bottom, and of two at one height the left first, the first finding.MaxTasks
+// of them (R165 spec).
 func (t *Tutor) FindTasks(ctx context.Context, f TaskFinding) TasksFound {
 	calls, a, refused := t.prepare(CallFinding, f.Route)
 	if refused != nil {
 		return TasksFound{Outcome: *refused}
 	}
+	photos := provider.NewPhotos(f.Photo)
 	frames, out := cascade(ctx, calls, func(c call) ([]*observationv1.CropBox, Outcome) {
-		return t.findBy(ctx, a, c, f)
+		return t.findBy(ctx, a, c, f, photos)
 	}, func(frames []*observationv1.CropBox) bool { return len(frames) > 0 })
 	if f.Request != "" {
 		frames = slices.DeleteFunc(frames, func(b *observationv1.CropBox) bool { return CoversDrawn(b, f.Drawn) })
 	}
+	if len(frames) > finding.MaxTasks {
+		frames = frames[:finding.MaxTasks]
+	}
 	return TasksFound{Frames: frames, Outcome: out}
 }
 
-// findBy asks one model for the frames of the tasks on the photo.
-func (t *Tutor) findBy(ctx context.Context, a admission.Answer, c call, f TaskFinding) ([]*observationv1.CropBox, Outcome) {
+// findBy asks one model for the frames of the tasks on the photo, f's photo as photos fits it.
+func (t *Tutor) findBy(ctx context.Context, a admission.Answer, c call, f TaskFinding, photos *provider.Photos) ([]*observationv1.CropBox, Outcome) {
 	fail := func(err error) ([]*observationv1.CropBox, Outcome) {
 		return nil, Outcome{Kind: Failed, Admission: a, Err: err}
 	}
-	fitted, width, height, err := provider.Photo(f.Photo, c.client)
+	fitted, width, height, err := photos.For(c.client)
 	if err != nil {
 		return fail(fmt.Errorf("tutor: %w", err))
 	}

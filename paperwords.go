@@ -108,11 +108,12 @@ func (t *Tutor) PaperWords(ctx context.Context, w PaperWordsRequest) WordsAnswer
 		answer *paperwords.Answer
 		p      paperwords.Prompt
 	}
+	statements := provider.NewPhotos(w.Statement)
 	got, out := cascade(ctx, calls, func(cl call) (said, Outcome) {
 		failed := func(err error) (said, Outcome) { return said{}, Outcome{Kind: Failed, Admission: a, Err: err} }
 		p := p
 		if w.Ask == PaperOpening {
-			crop, width, height, err := provider.Photo(w.Statement, cl.client)
+			crop, width, height, err := statements.For(cl.client)
 			if err != nil {
 				return failed(fmt.Errorf("tutor: the task's crop: %w", err))
 			}

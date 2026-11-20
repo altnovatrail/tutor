@@ -686,7 +686,7 @@ func TestCheck(t *testing.T) {
 }
 
 // A photo goes as a JPEG, marked to fail rather than be shrunk, and Fit gives the size of the
-// high-resolution tier, at which no model of the catalog shrinks it (sources 1.19).
+// high-resolution tier, at which no model of the catalog shrinks it.
 func TestPhoto(t *testing.T) {
 	c, f := fakeAPI(t, catalog.Models[2], reply{body: goodStream})
 	r := request

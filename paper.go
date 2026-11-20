@@ -100,7 +100,7 @@ func (t *Tutor) SolveTask(ctx context.Context, p PaperTask, tasks []TaskToSolve)
 
 // askCrop asks the models of a call on the task's crop, by the request of its prompt, one at a time
 // (cascade): read takes a model's answer into what the call gives, and did tells whether it will
-// do. The crop is fitted to each model's size.
+// do. The crop is decoded once and fitted to each model's size.
 func askCrop[T any](ctx context.Context, t *Tutor, c Call, p PaperTask, request func(provider.Image, int, int) provider.Request, maxOut int64,
 	read func(string) (T, error), did func(T) bool) (T, Outcome) {
 	var zero T
@@ -108,11 +108,12 @@ func askCrop[T any](ctx context.Context, t *Tutor, c Call, p PaperTask, request 
 	if refused != nil {
 		return zero, *refused
 	}
+	crops := provider.NewPhotos(p.Statement)
 	return cascade(ctx, calls, func(cl call) (T, Outcome) {
 		fail := func(err error) (T, Outcome) {
 			return zero, Outcome{Kind: Failed, Admission: a, Err: err}
 		}
-		crop, width, height, err := provider.Photo(p.Statement, cl.client)
+		crop, width, height, err := crops.For(cl.client)
 		if err != nil {
 			return fail(fmt.Errorf("tutor: the task's crop: %w", err))
 		}

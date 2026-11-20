@@ -65,7 +65,11 @@ func TestRead(t *testing.T) {
 	if boxes, err := Read(`{"tasks": []}`); err != nil || len(boxes) != 0 {
 		t.Errorf("no task: %v, %v", boxes, err)
 	}
+	// More than the model was asked for are read, and the caller keeps the first of the page.
 	twentyOne := `{"tasks": [` + strings.Repeat(`{"x1": 0, "y1": 0, "x2": 5, "y2": 5},`, MaxTasks) + `{"x1": 0, "y1": 0, "x2": 5, "y2": 5}]}`
+	if boxes, err := Read(twentyOne); err != nil || len(boxes) != MaxTasks+1 {
+		t.Errorf("twenty-one: %d, %v", len(boxes), err)
+	}
 	for name, answer := range map[string]string{
 		"not JSON":         `tasks`,
 		"no tasks":         `{}`,
@@ -73,7 +77,6 @@ func TestRead(t *testing.T) {
 		"a missed corner":  `{"tasks": [{"x1": 0, "y1": 0, "x2": 5}]}`,
 		"a field of a box": `{"tasks": [{"x1": 0, "y1": 0, "x2": 5, "y2": 5, "label": "1"}]}`,
 		"more after it":    `{"tasks": []} {}`,
-		"too many":         twentyOne,
 	} {
 		if _, err := Read(answer); err == nil {
 			t.Errorf("%s: read", name)

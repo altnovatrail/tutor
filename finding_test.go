@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"image"
 	"image/jpeg"
 	"strings"
@@ -76,6 +77,23 @@ func TestFindTasks(t *testing.T) {
 	cfg, err := jpeg.DecodeConfig(bytes.NewReader(r.Images[0].JPEG))
 	if err != nil || cfg.Width != 400 || cfg.Height != 500 {
 		t.Errorf("the photo sent is %+v, %v", cfg, err)
+	}
+}
+
+// Of more boxes than finding.MaxTasks the first of the page are kept, an answer and no failure:
+// the model that gave them found tasks, and the next is not asked.
+func TestFindTasksKeepsTheFirst(t *testing.T) {
+	var boxes []string
+	for i := finding.MaxTasks + 4; i >= 1; i-- {
+		boxes = append(boxes, fmt.Sprintf(`{"x1": 0, "y1": %d, "x2": 30, "y2": %d}`, i*10, i*10+5))
+	}
+	lib, m := cascadeOf(t, `{"tasks": [`+strings.Join(boxes, ",")+`]}`, `{}`, `{}`)
+	got := lib.FindTasks(context.Background(), TaskFinding{Route: platform, Photo: photoJPEG(t, 40, 300)})
+	if got.Outcome.Kind != Answered || len(got.Frames) != finding.MaxTasks || len(m["claude-sonnet-5-5"].asked) != 0 {
+		t.Fatalf("found %d frames, %+v", len(got.Frames), got.Outcome)
+	}
+	if first, last := got.Frames[0], got.Frames[finding.MaxTasks-1]; first.Ymin != 33 || last.Ymin != 666 {
+		t.Errorf("the frames from %v to %v", first, last)
 	}
 }
 

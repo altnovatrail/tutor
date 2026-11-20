@@ -304,7 +304,7 @@ func TestCheck(t *testing.T) {
 	}
 }
 
-// A photo goes as a JPEG, and Fit keeps it within the patches of the detail "high" (sources 1.8).
+// A photo goes as a JPEG, and Fit keeps it within the patches of the detail "high".
 func TestPhoto(t *testing.T) {
 	c, sent := fakeAPI(t, reply{body: goodAnswer})
 	r := request

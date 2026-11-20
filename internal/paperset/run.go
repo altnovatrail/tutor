@@ -25,8 +25,8 @@ import (
 )
 
 // The kinds of call of the four runs, as their logs tell them (runner.CallKind). The finding asks
-// only the cases of several tasks, each a column of examples under one instruction, with the
-// learner's request to frame each example apart (R138).
+// only the cases of several tasks that code draws, each a column of examples under one instruction,
+// with the learner's request to frame each example apart (R138).
 const (
 	CallStatement = "statement"
 	CallSolving   = "solving"
@@ -360,7 +360,12 @@ func New(kind, part string, f *File, configs []runner.Config, repeats int) (*run
 	}
 	cases := f.Set.Of(part)
 	if kind == CallFinding {
-		cases = slices.DeleteFunc(slices.Clone(cases), func(c Case) bool { return c.Kind != KindSeveral })
+		// The finding is judged by the lines synth writes the tasks on (step.lines): the photo of a
+		// case the debug mode exported has lines no code knows.
+		cases = slices.DeleteFunc(slices.Clone(cases), func(c Case) bool { return c.Kind != KindSeveral || c.pictures != nil })
+		if len(cases) == 0 {
+			return nil, fmt.Errorf("paperset: no case of several tasks drawn by code in the part %s, the only cases the finding runs on", part)
+		}
 	}
 	switch {
 	case repeats < 1:

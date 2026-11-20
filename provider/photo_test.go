@@ -3,11 +3,14 @@ package provider
 import (
 	"bytes"
 	"context"
+	"encoding/binary"
+	"hash/crc32"
 	"image"
 	"image/color"
 	"image/gif"
 	"image/jpeg"
 	"image/png"
+	"math"
 	"strings"
 	"testing"
 )
@@ -119,15 +122,22 @@ func TestPhotoRefuses(t *testing.T) {
 		t.Errorf("a fit larger than the photo: %v", err)
 	}
 	// A PNG that claims more pixels than any camera gives is refused before they are allocated.
-	huge := encoded(t, page(4, 4), "png")
-	huge[16], huge[17], huge[18], huge[19] = 0, 0, 0x40, 0
-	huge[20], huge[21], huge[22], huge[23] = 0, 0, 0x40, 0
-	if _, _, _, err := Photo(huge, plain{}); err == nil {
-		t.Error("a picture of 16384 × 16384 px was taken")
+	if _, _, _, err := Photo(claimed(t, 16384, 16384), plain{}); err == nil || !strings.Contains(err.Error(), "16384 × 16384 px") {
+		t.Errorf("a picture of 16384 × 16384 px: %v", err)
 	}
 }
 
-// FitPatches is Anthropic's rule (sources 1.19): its examples, and both tiers.
+// claimed is a PNG of 4 × 4 px whose header, its checksum made anew, claims w × h.
+func claimed(t *testing.T, w, h uint32) []byte {
+	t.Helper()
+	p := encoded(t, page(4, 4), "png")
+	binary.BigEndian.PutUint32(p[16:], w)
+	binary.BigEndian.PutUint32(p[20:], h)
+	binary.BigEndian.PutUint32(p[29:], crc32.ChecksumIEEE(p[12:29]))
+	return p
+}
+
+// FitPatches is Anthropic's rule of its guide Vision: its examples, and both tiers.
 func TestFitPatches(t *testing.T) {
 	for _, tc := range []struct{ w, h, edge, most, wantW, wantH int }{
 		{1075, 1520, 1568, 1568, 924, 1307},
@@ -165,5 +175,108 @@ func TestShrinkKeepsAThinLine(t *testing.T) {
 	}
 	if r := got.RGBAAt(5, 15).R; r != 255 {
 		t.Errorf("the paper is %d", r)
+	}
+}
+
+// A PNG is refused past a square of 3200 px a side, the long side app draws a photo at, and one of
+// that square is not refused for its size: a header of 3200 × 3200 over the pixels of 4 × 4 fails
+// at decoding, a header of 3201 × 3200 before it.
+func TestPhotoCeiling(t *testing.T) {
+	if _, _, _, err := Photo(claimed(t, 3201, 3200), plain{}); err == nil || !strings.Contains(err.Error(), "3201 × 3200 px") {
+		t.Errorf("past the ceiling: %v", err)
+	}
+	if _, _, _, err := Photo(claimed(t, 3200, 3200), plain{}); err == nil || !strings.Contains(err.Error(), "cannot be decoded") {
+		t.Errorf("at the ceiling: %v", err)
+	}
+}
+
+// wholeShrink is shrink as the mean over a whole opaque copy of the source: the strips of shrink
+// give the same pixels.
+func wholeShrink(src image.Image, w, h int) *image.RGBA {
+	b := src.Bounds()
+	full := image.NewRGBA(image.Rect(0, 0, b.Dx(), b.Dy()))
+	opaque(full, b.Dy(), src, 0)
+	dst := image.NewRGBA(image.Rect(0, 0, w, h))
+	sx, sy := float64(b.Dx())/float64(w), float64(b.Dy())/float64(h)
+	for y := range h {
+		y0, y1 := float64(y)*sy, float64(y+1)*sy
+		for x := range w {
+			x0, x1 := float64(x)*sx, float64(x+1)*sx
+			var sum [3]float64
+			var area float64
+			for py := int(y0); py < int(math.Ceil(y1)) && py < b.Dy(); py++ {
+				wy := math.Min(y1, float64(py+1)) - math.Max(y0, float64(py))
+				for px := int(x0); px < int(math.Ceil(x1)) && px < b.Dx(); px++ {
+					wx := math.Min(x1, float64(px+1)) - math.Max(x0, float64(px))
+					i := full.PixOffset(px, py)
+					for c := range 3 {
+						sum[c] += wx * wy * float64(full.Pix[i+c])
+					}
+					area += wx * wy
+				}
+			}
+			i := dst.PixOffset(x, y)
+			for c := range 3 {
+				dst.Pix[i+c] = uint8(math.Round(sum[c] / area))
+			}
+			dst.Pix[i+3] = 0xff
+		}
+	}
+	return dst
+}
+
+// Shrinking by strips of rows gives the pixels of a whole copy: at scales whole and not, on a
+// source whose bounds do not start at the origin, and with transparent pixels over white.
+func TestShrinkByStrips(t *testing.T) {
+	m := image.NewNRGBA(image.Rect(0, 0, 211, 157))
+	for y := range 157 {
+		for x := range 211 {
+			m.SetNRGBA(x, y, color.NRGBA{uint8(x * 7), uint8(y * 13), uint8(x ^ y), uint8(255 - (x+y)%3*100)})
+		}
+	}
+	sub := m.SubImage(image.Rect(5, 9, 200, 150))
+	for _, size := range [][2]int{{70, 52}, {100, 75}, {195, 141}, {13, 9}, {1, 1}, {195, 50}} {
+		for _, src := range []image.Image{m, sub} {
+			w, h := size[0], size[1]
+			if w > src.Bounds().Dx() || h > src.Bounds().Dy() {
+				continue
+			}
+			if got, want := shrink(src, w, h), wholeShrink(src, w, h); !bytes.Equal(got.Pix, want.Pix) {
+				t.Errorf("%v at %d × %d: the strips differ from the whole", src.Bounds(), w, h)
+			}
+		}
+	}
+}
+
+// counted fits a photo to half its size, and counts its fits.
+type counted struct {
+	plain
+	fits *int
+}
+
+func (c counted) Fit(w, h int) (int, int) { *c.fits++; return w / 2, h / 2 }
+
+// Photos decodes a photo once and encodes it once for each size: two models of one fit get the same
+// JPEG, a model of another fit its own; a photo that is no picture fails for each.
+func TestPhotos(t *testing.T) {
+	p := NewPhotos(encoded(t, page(400, 300), "png"))
+	fits := 0
+	a, w, h, err := p.For(counted{fits: &fits})
+	if err != nil || w != 200 || h != 150 {
+		t.Fatalf("the first: %d × %d, %v", w, h, err)
+	}
+	b, _, _, err := p.For(counted{fits: &fits})
+	if err != nil || &a.JPEG[0] != &b.JPEG[0] || fits != 2 {
+		t.Errorf("the second is encoded anew: %v, %d fits", err, fits)
+	}
+	c, w, h, err := p.For(plain{})
+	if err != nil || w != 400 || h != 300 || bytes.Equal(c.JPEG, a.JPEG) {
+		t.Errorf("unfitted: %d × %d, %v", w, h, err)
+	}
+	bad := NewPhotos([]byte("a photo"))
+	for range 2 {
+		if _, _, _, err := bad.For(plain{}); err == nil {
+			t.Error("no picture: taken")
+		}
 	}
 }
