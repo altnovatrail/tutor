@@ -280,3 +280,125 @@ func TestPhotos(t *testing.T) {
 		}
 	}
 }
+
+// noise is a picture of w × h px whose every pixel is its own colour.
+func noise(w, h int) *image.RGBA {
+	m := image.NewRGBA(image.Rect(0, 0, w, h))
+	for i := range m.Pix {
+		m.Pix[i] = uint8(i*37 + i/4*11)
+	}
+	for i := 3; i < len(m.Pix); i += 4 {
+		m.Pix[i] = 0xff
+	}
+	return m
+}
+
+// A quarter turn moves the pixels as they are, clockwise: the top row becomes the right column.
+func TestTurnByQuarters(t *testing.T) {
+	src := noise(5, 3)
+	for degrees, from := range map[int]func(x, y int) (int, int){
+		90:   func(x, y int) (int, int) { return y, 3 - 1 - x },
+		-90:  func(x, y int) (int, int) { return 5 - 1 - y, x },
+		270:  func(x, y int) (int, int) { return 5 - 1 - y, x },
+		180:  func(x, y int) (int, int) { return 5 - 1 - x, 3 - 1 - y },
+		-180: func(x, y int) (int, int) { return 5 - 1 - x, 3 - 1 - y },
+		0:    func(x, y int) (int, int) { return x, y },
+	} {
+		got := Turn(src, degrees)
+		w, h := 5, 3
+		if degrees%180 != 0 {
+			w, h = 3, 5
+		}
+		if got.Bounds() != image.Rect(0, 0, w, h) {
+			t.Fatalf("%d: %v", degrees, got.Bounds())
+		}
+		for y := range h {
+			for x := range w {
+				if sx, sy := from(x, y); got.RGBAAt(x, y) != src.RGBAAt(sx, sy) {
+					t.Errorf("%d: the pixel %d, %d is not the source's %d, %d", degrees, x, y, sx, sy)
+				}
+			}
+		}
+	}
+	back := Turn(Turn(Turn(Turn(src, 90), 90), 90), 90)
+	if !bytes.Equal(back.Pix, src.Pix) {
+		t.Error("four quarter turns are not the picture")
+	}
+}
+
+// A turn of 30° is onto the smallest upright rectangle that holds the picture, its corners white,
+// and a mark of the picture lands where the turn about the centre takes it.
+func TestTurnBy30(t *testing.T) {
+	const w, h = 400, 300
+	src := image.NewRGBA(image.Rect(0, 0, w, h))
+	for i := range src.Pix {
+		src.Pix[i] = map[bool]uint8{true: 0xff, false: 0x80}[i%4 == 3]
+	}
+	for y := 74; y <= 76; y++ {
+		for x := 299; x <= 301; x++ {
+			src.SetRGBA(x, y, color.RGBA{0, 0, 0, 255})
+		}
+	}
+	got := Turn(src, 30)
+	// 400 cos 30° + 300 sin 30° = 496.4, 400 sin 30° + 300 cos 30° = 459.8.
+	if got.Bounds() != image.Rect(0, 0, 496, 460) {
+		t.Fatalf("turned onto %v", got.Bounds())
+	}
+	white := color.RGBA{255, 255, 255, 255}
+	for _, c := range []image.Point{{0, 0}, {495, 0}, {0, 459}, {495, 459}} {
+		if got.RGBAAt(c.X, c.Y) != white {
+			t.Errorf("the corner %v is %v", c, got.RGBAAt(c.X, c.Y))
+		}
+	}
+	if mid := got.RGBAAt(248, 230); mid.R != 0x80 || mid.A != 0xff {
+		t.Errorf("the middle is %v", mid)
+	}
+	// The mark's centre, 300.5, 75.5, from the centre 200, 150, turned clockwise about the new one.
+	theta := math.Pi / 6
+	dx, dy := 300.5-200, 75.5-150
+	want := image.Pt(int(dx*math.Cos(theta)-dy*math.Sin(theta)+248), int(dx*math.Sin(theta)+dy*math.Cos(theta)+230))
+	darkest, at := 256, image.Point{}
+	for y := range 460 {
+		for x := range 496 {
+			if r := int(got.RGBAAt(x, y).R); r < darkest {
+				darkest, at = r, image.Pt(x, y)
+			}
+		}
+	}
+	if d := at.Sub(want); darkest > 0x40 || d.X < -1 || d.X > 1 || d.Y < -1 || d.Y > 1 {
+		t.Errorf("the mark is at %v, %d dark; want %v", at, darkest, want)
+	}
+}
+
+// A turned picture keeps within maxPhotoPixels: a strip that turned at its size would take
+// 3260 × 3260 px is shrunk to 3200 × 3200, and one that would not is turned at its size.
+func TestTurnKeepsWithinThePixels(t *testing.T) {
+	if got := Turn(page(4600, 10), 45); got.Bounds() != image.Rect(0, 0, 3200, 3200) || got.RGBAAt(0, 0) != (color.RGBA{255, 255, 255, 255}) {
+		t.Errorf("turned onto %v", got.Bounds())
+	}
+	if got := Turn(page(200, 20), -45); got.Bounds() != image.Rect(0, 0, 156, 156) {
+		t.Errorf("a small strip turned onto %v", got.Bounds())
+	}
+}
+
+// Turned turns the photo decoded once, once for each angle, and each model takes it as For gives
+// it; a turn of 0 is the photo itself, and a photo that is no picture fails turned too.
+func TestPhotosTurned(t *testing.T) {
+	p := NewPhotos(encoded(t, page(400, 300), "png"))
+	if p.Turned(0) != p {
+		t.Error("a turn of 0 is another photo")
+	}
+	q := p.Turned(90)
+	if p.Turned(90) != q || p.Turned(-90) == q {
+		t.Error("a turn is not kept by its angle")
+	}
+	if _, w, h, err := q.For(plain{}); err != nil || w != 300 || h != 400 {
+		t.Errorf("turned: %d × %d, %v", w, h, err)
+	}
+	if _, w, h, err := p.For(plain{}); err != nil || w != 400 || h != 300 {
+		t.Errorf("the photo itself: %d × %d, %v", w, h, err)
+	}
+	if _, _, _, err := NewPhotos([]byte("a photo")).Turned(30).For(plain{}); err == nil {
+		t.Error("no picture: turned")
+	}
+}

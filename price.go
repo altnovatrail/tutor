@@ -78,8 +78,10 @@ const (
 // prompt, the most input tokens it takes, the most it may write, how many models of the entry
 // chosen it asks, every one when 0, whether it reads by the pair of R68 spec, which ReadingSingle
 // makes one reader (Tutor.asked), whether its models are the attempts of a cascade, asked one after
-// another (R137), and the tokens a call of each model is expected to take, by the model's exact ID,
-// the averages of the measurements of the model at the effort admitted.
+// another (R137), the most output of a request each model is asked ahead of the kind's own, of the
+// same most input, 0 for none — the orientation of the page before the finding (R134) —, and the
+// tokens a call of each model is expected to take, by the model's exact ID, the averages of the
+// measurements of the model at the effort admitted, both its requests together.
 type kind struct {
 	capability    admissionv0.Capability
 	prompt        string
@@ -87,6 +89,7 @@ type kind struct {
 	models        int
 	pair          bool
 	cascade       bool
+	ahead         int64
 	expected      map[string]tokens
 }
 
@@ -96,15 +99,17 @@ type kind struct {
 // without a run (R126): theirs are the averages of the runs that tried their prompts now. The four
 // calls of a task from paper, admitted by the author's word too, had no run (R134; R135): theirs
 // are an estimate from the calls of the author's own pages, for each model of their cascade, so
-// that api reserves all three attempts (R137). A model without them has no
-// expected price, and api takes the value of its own config then. The words
-// serve the analysis of the steps with the work, CallWords, and the hint without it, CallHint, by
-// one prompt; the hint was measured with the work, so the hint without it has no expected tokens
-// (R106). The words after a correct answer are one kind with the work and without it, and their
-// worst is with it. The input of each is the whole input, measured before the words cached their
-// instructions: a log with the cache splits it into input_tokens, cache_write_tokens and
-// cache_read_tokens, which a new measurement sums. Their price takes it all at the input's price,
-// between a call that reads the instructions from the cache and one that writes them (R131).
+// that api reserves all three attempts (R137); the finding's add those of the orientation before
+// it, an estimate of their own without a call — the photo and short instructions in, a few words
+// and the model's thinking out (R134). A model without them has no expected price, and api takes
+// the value of its own config then. The words serve the analysis of the steps with the work,
+// CallWords, and the hint without it, CallHint, by one prompt; the hint was measured with the work,
+// so the hint without it has no expected tokens (R106). The words after a correct answer are one
+// kind with the work and without it, and their worst is with it. The input of each is the whole
+// input, measured before the words cached their instructions: a log with the cache splits it into
+// input_tokens, cache_write_tokens and cache_read_tokens, which a new measurement sums. Their price
+// takes it all at the input's price, between a call that reads the instructions from the cache and
+// one that writes them (R131).
 var kinds = map[Call]kind{
 	CallSheet: {
 		capability: admissionv0.CapabilityHandwritingReading,
@@ -174,7 +179,8 @@ var kinds = map[Call]kind{
 		maxOut:     finding.MaxOutputTokens,
 		models:     3,
 		cascade:    true,
-		expected:   map[string]tokens{"claude-haiku-5-5": {in: 1820, out: 450}, "claude-sonnet-5-5": {in: 1820, out: 150}, "claude-opus-5-5": {in: 1820, out: 130}},
+		ahead:      finding.OrientMaxOutputTokens,
+		expected:   map[string]tokens{"claude-haiku-5-5": {in: 1820 + 1500, out: 450 + 200}, "claude-sonnet-5-5": {in: 1820 + 1500, out: 150 + 80}, "claude-opus-5-5": {in: 1820 + 1500, out: 130 + 60}},
 	},
 	CallStatement: {
 		capability: admissionv0.CapabilityStatementReading,
@@ -243,7 +249,8 @@ func tokensOf(side, n int) int64 { return int64(n * render.Tokens(side, side)) }
 // over every model of the entry the call asks — both readers of a pair, or the one reader of
 // ReadingSingle —, and api reserves the quota of platform AI by them before the call. The worst is
 // the most input of the kind, each token at the higher of its price and that of a write to the
-// cache, and its most output. Expected is false when a model of the entry has no expected tokens;
+// cache, and its most output, and as much again for the request ahead of it, with its own most
+// output. Expected is false when a model of the entry has no expected tokens;
 // Worst is false when the prices do not hold the worst, and api takes the value of its own config
 // then.
 type CallPrice struct {
@@ -272,6 +279,10 @@ func (t *Tutor) Price(c Call, r Route) (CallPrice, admission.Answer, error) {
 		prices := client.Prices()
 		worst, ok := worstCost(prices, k.maxIn, k.maxOut)
 		p.WorstUSD, p.Worst = p.WorstUSD+worst, p.Worst && ok
+		if k.ahead > 0 {
+			worst, ok := worstCost(prices, k.maxIn, k.ahead)
+			p.WorstUSD, p.Worst = p.WorstUSD+worst, p.Worst && ok
+		}
 		tok, known := k.expected[m.ID]
 		usd, ok := prices.Cost(provider.Response{InputTokens: tok.in, OutputTokens: tok.out})
 		p.ExpectedUSD, p.Expected = p.ExpectedUSD+usd, p.Expected && known && ok

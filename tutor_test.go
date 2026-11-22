@@ -1,6 +1,7 @@
 package tutor
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
@@ -20,14 +21,21 @@ import (
 	"github.com/altnovatrail/spec/types/admissionv0"
 
 	"github.com/altnovatrail/tutor/admission"
+	"github.com/altnovatrail/tutor/internal/finding"
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// fake is a model that answers as it is told, after its delay, and records what it was asked.
+// upright is the orientation of a page that reads upright, level.
+const upright = `{"top": "up", "tilt": 0}`
+
+// fake is a model that answers as it is told, after its delay, and records what it was asked. The
+// orientation of a page before the finding it answers by orient, upright when empty, with the
+// tokens of resp.
 type fake struct {
 	mu     sync.Mutex
 	asked  []provider.Request
 	resp   provider.Response
+	orient string
 	err    error
 	delay  time.Duration
 	prices provider.Prices
@@ -48,6 +56,9 @@ func (f *fake) Ask(ctx context.Context, r provider.Request) (provider.Response, 
 	f.mu.Lock()
 	f.asked = append(f.asked, r)
 	resp, err, delay := f.resp, f.err, f.delay
+	if r.SchemaName == finding.OrientSchemaName {
+		resp.JSON = cmp.Or(f.orient, upright)
+	}
 	f.mu.Unlock()
 	if delay > 0 {
 		select {
