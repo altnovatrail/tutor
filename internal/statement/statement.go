@@ -22,9 +22,9 @@ import (
 )
 
 // Version is the version of the prompt. A change to a word a model reads is a new version, and
-// the entry of the list that admitted the prompt admits it no longer (R70 spec). TestFrozenV2
+// the entry of the list that admitted the prompt admits it no longer (R70 spec). TestFrozenV3
 // holds it.
-const Version = 2
+const Version = 3
 
 // MaxOutputTokens is the most a call may write, thinking included: a formula is a line, and the rest
 // is the model's reasoning on a statement it has to rewrite sign by sign (R94).
@@ -34,7 +34,8 @@ const MaxOutputTokens = 4000
 const instructions = `You read the tasks of a learner's book or worksheet that Image 1 shows as printed on the page, and write each as a formula when it is one, for a program that computes its answer.
 
 1. List every task on Image 1, in the order of the page: top to bottom, and left to right in a row. Each sum to compute or equation to solve with an answer of its own is a task, though one instruction stands above several: a column of four equations under "Fill in the missing number" is four tasks. The parts of one task that share its statement or its picture, such as a), b) and c) of one word problem, are one task, and so are numbers or pairs that the instruction alone says what to do with, such as numbers under "Round to the nearest ten". List at most 20 tasks; with none on Image 1, list none.
-   For each task give its statement as printed, without the instruction above several and without anything the learner wrote, in at most 200 characters: "□ − 3 = 7", or the words of a word problem.
+   For each task give its statement as printed, in at most 200 characters: "□ − 3 = 7", or the words of a word problem. Leave out the instruction above several, anything the learner wrote, the task's label, such as 1), a) or №3, and the punctuation that parts it from the next task, such as the ; or , at its end.
+   Write the statement's signs as printed, − × ÷ □ among them, and two things LaTeX's way, since a line of text cannot hold them: a fraction with a bar as \frac{numerator}{denominator}, a fraction within one nested as printed, and a raised power as ^{exponent}. So the printed 3 over 17 plus 1 over 17 is "\frac{3}{17} + \frac{1}{17}", a mixed number 2 and a half is "2\frac{1}{2}", and x squared is "x^{2}". Use nothing else of LaTeX: no $, no \cdot, no \left.
 2. Write a task's formula only when its statement is itself an expression to compute or an equation to solve, such as "37 + 48 =", "3x − 5 = 16" or "□ + 5 = 12". A word problem, and one that asks to count in a picture, to compare, to draw, to explain or to prove is no formula: give an empty formula. Do not put words into a formula yourself: that is solving the task, which is not your job.
 3. The formula is one line of ASCII in this grammar, with spaces allowed between its tokens:
    formula = expression [ "=" expression ]; expression = term { ("+" | "-") term }; term = factor { ("*" | "/") factor }; factor = "-" factor | primary [ "^" digits ]; primary = number | letter | "(" expression ")"; number = digits [ "." digits ]; letter = one of a to z.
