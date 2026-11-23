@@ -77,7 +77,7 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T185 | Ссылки: README и architecture 1–3.2 | Claude | — | T197 |
 | [x] | T186 | Ссылки: architecture 3.3–4 | Claude | — | T185 |
 | [x] | T187 | Ссылки: документы листов и sources | Claude | — | T186 |
-| [ ] | T188 | Ссылки: measurements 1–2 | Claude | — | T187 |
+| [x] | T188 | Ссылки: measurements 1–2 | Claude | — | T187 |
 | [ ] | T189 | Ссылки: measurements 3.1–3.10 | Claude | — | T188 |
 | [ ] | T190 | Ссылки: measurements 3.11–5 | Claude | — | T189 |
 | [ ] | T191 | Журнал по R171 spec: начало и записи до «Checking line by line» | Claude | — | T190 |
@@ -87,13 +87,6 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [ ] | T195 | Журнал по R171 spec: от «Move to `spec` `v0.14.0`» до конца; ключ `citations` | Claude | — | T194 |
 
 **Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, pull request #215; T196, T197 — проход по части T184 — и T185–T195 — пачка на ветке `e22-tutor-2`, один pull request (R159 spec), по «Зависит от».
-
-#### T188. Ссылки: measurements 1–2
-
-- **Цель:** разделы 1 и 2 [docs/measurements.md](docs/measurements.md) ссылаются по R171 spec.
-- **Сделать:** по «Ссылкам» описания эпика; запись замера хранит что, как, на чём и числа, дату — в заголовке, без номера задачи; номера разделов не меняются.
-- **Как проверить:** как у T185, на этих разделах.
-- **Разделы:** R171 spec; описание эпика.
 
 #### T189. Ссылки: measurements 3.1–3.10
 
