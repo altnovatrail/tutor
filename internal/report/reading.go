@@ -19,12 +19,12 @@ import (
 	"github.com/altnovatrail/tutor/internal/task"
 )
 
-// Reading is what a run of the reading comes to: the threshold of R03 for every reader, the
-// readings by reader and condition, the rule of two readers (R08), the other heights of digits, the
+// Reading is what a run of the reading comes to: the threshold of one call for every reader, the
+// readings by reader and condition, the rule of two readers, the other heights of digits, the
 // states and the readings by each policy of reading on its own (О-8, О-21). It holds no
 // handwriting: numbers, the sets and numbers of sheets, and the names of readers and conditions.
 type Reading struct {
-	// protocol are the runner's reports of the protocol that the log tells (R74).
+	// protocol are the runner's reports of the protocol that the log tells.
 	protocol []Named
 	log      *reading.Log
 	sheets   map[sheetID]*reading.SheetRecord
@@ -41,11 +41,11 @@ type Reading struct {
 	// heightReaders are the readers that read some other height.
 	heightReaders []string
 
-	// Thresholds are the threshold of R03, a reader each.
+	// Thresholds are the threshold of one call, a reader each.
 	Thresholds []Threshold
 	// Cells are the readings of the finished sheets at 32 px, by reader and condition.
 	Cells []ReadingCell
-	// Pairs are the strong reader, Opus, with each fast one (R08).
+	// Pairs are the strong reader, Opus, with each fast one.
 	Pairs []Pair
 	// Heights are the other heights of digits against 32 px, a reader, a height and a group of
 	// sheets each; States the readings of the states, a reader and a kind each; Policies the
@@ -75,7 +75,7 @@ type sheetID struct {
 
 func (s sheetID) String() string { return fmt.Sprintf("%s/%d", s.set, s.sheet) }
 
-// Threshold is the threshold of R03 for a reader, as it lies on the observation (R03): the test
+// Threshold is the threshold of one call for a reader, as it lies on the observation: the test
 // over the sheets of d, the share of false "correct" and false alarms with the right key less that
 // without a key, over the repeats of the sheet whose calls did not fail; the calls read under the
 // right key and under a false key on a correct sheet; and the sheets with a false "correct" with the
@@ -102,7 +102,7 @@ func (t Threshold) Worse() bool { return t.Helps < Alpha }
 
 // Holds is whether the reader passes every point of the threshold: it was measured, the key makes
 // nothing worse, and nothing is read under a key. One call is admissible for it, with its admission
-// by eval (R07 spec), only if it holds on the test part.
+// by eval, only if it holds on the test part (R03).
 func (t Threshold) Holds() bool {
 	return t.Measured() && !t.Worse() && t.UnderRight == 0 && t.UnderFalse == 0 && t.NewFalseCorrect == 0
 }
@@ -128,7 +128,7 @@ func (t Threshold) verdict() string {
 // ReadingCell is the readings of the finished sheets at 32 px by a reader in a condition: how many
 // were right, false "correct" — "correct" on a sheet whose outcome is not —, false alarms — "not
 // yet" on a correct sheet —, extra "unreadable" — on a sheet whose outcome is correct or an error,
-// a failed call counted with them (R08) — and failed; each share bounded over the sheets, among the
+// a failed call counted with them — and failed; each share bounded over the sheets, among the
 // calls that can have it: the false "correct" and false alarms among those that did not fail. How
 // many were read under the key, how many parts of writing of the markup were read as written, and
 // the time and cost of a call.
@@ -154,9 +154,9 @@ type Share struct {
 
 func (s Share) String() string { return fmt.Sprintf("%d of %d, ≤ %.3f", s.Events, s.Of, s.Upper) }
 
-// Pair is the rule of two readers (R08; Т-33) on the readings without a key of the finished sheets
+// Pair is the rule of two readers (Т-33) on the readings without a key of the finished sheets
 // at 32 px, of the first repeat, as api will run it: module-kit joins the two observations,
-// observation.Join, and gives the verdict on the joined one (R73). A sheet is released when the two
+// observation.Join, and gives the verdict on the joined one. A sheet is released when the two
 // read one value — the check compares them equal and gives them one verdict —, and its verdict is
 // the joined one; otherwise it is "unreadable". Coverage is the share released, and the errors
 // among the released are counted against those of each reader alone. The fast reader's "correct"
@@ -291,11 +291,11 @@ func NewReading(l *reading.Log) (*Reading, error) {
 	return r, nil
 }
 
-// Reports are the runner's reports of the protocol that the log tells (R74), none for a log whose
+// Reports are the runner's reports of the protocol that the log tells, none for a log whose
 // samples are not of the protocol.
 func (r *Reading) Reports() []Named { return r.protocol }
 
-// ProtocolCSV writes the measures of the runner's reports as CSV (R74).
+// ProtocolCSV writes the measures of the runner's reports as CSV.
 func (r *Reading) ProtocolCSV(w io.Writer) error { return protocolCSV(w, r.protocol) }
 
 // calls are the calls a reader made of the finished sheets at 32 px in a condition, by sheet.

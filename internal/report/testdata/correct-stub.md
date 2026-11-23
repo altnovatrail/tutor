@@ -42,7 +42,7 @@ The words are exactly one question, their last sentence, with no more than one s
 | opus-high | note | en | 0 of 2, ≤ 0.776 | 0 of 2, ≤ 0.776 |
 | opus-high | all | all | 0 of 4, ≤ 0.527 | 0 of 10, ≤ 0.259 |
 
-A case of work shows the work; one of choice shows none, as for a task whose answer slots are bound choice alone; one of a note shows a sheet with a note at the side that is no part of the solution and not for a child. The words take up the note when they have 3 words of it in a row or a number of it the task has not. The rough search is that of T76, and finds the sex of a person of the task as well as the learner's: the judge of the words decides, tutor-eval judge-words.
+A case of work shows the work; one of choice shows none, as for a task whose answer slots are bound choice alone; one of a note shows a sheet with a note at the side that is no part of the solution and not for a child. The words take up the note when they have 3 words of it in a row or a number of it the task has not. The rough search is the hint's, Gendered, and finds the sex of a person of the task as well as the learner's: the judge of the words decides, tutor-eval judge-words.
 
 ## Time and cost
 

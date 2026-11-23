@@ -1,7 +1,7 @@
 // Package journal tells how a sheet was written, for the forms of the measurement that show the
-// model the writing process (R11, R24): a journal of numbered steps in English, and up to two
-// frames of the sheet just before erasures. It builds both from the strokes and the erasures
-// alone, as a device would, without the markup.
+// model the writing process: a journal of numbered steps in English, and up to two frames of the
+// sheet just before erasures. It builds both from the strokes and the erasures alone, as a device
+// would, without the markup.
 //
 // A journal comes in two versions, each with its own words. A journal of lines (Of), version 1,
 // is for sheets of lines: its lines are those lines.Group finds among all the strokes, the erased
@@ -11,7 +11,7 @@
 //
 // The journal tells in which order the lines or the parts were written, the long pauses, how many
 // strokes each erasure took and from which, and the returns to those written before. It holds no
-// time, no pressure, no coordinates and nothing of what was erased (R11).
+// time, no pressure, no coordinates and nothing of what was erased.
 package journal
 
 import (
@@ -26,13 +26,13 @@ import (
 )
 
 const (
-	// Pause is the shortest pause the journal tells, in milliseconds (R11; R16 canvas-api). A wait
-	// before the first stroke is the reading of the task, and the journal does not tell it.
+	// Pause is the shortest pause the journal tells, in milliseconds. A wait before the first
+	// stroke is the reading of the task, and the journal does not tell it.
 	Pause = 6000
-	// MaxFrames is how many frames before erasures a sheet gives at most (R11).
+	// MaxFrames is how many frames before erasures a sheet gives at most.
 	MaxFrames = 2
 	// MaxSteps is how many steps the text of a journal tells at most, so that it stays near 300
-	// tokens (R11); it counts the steps after them and leaves them out.
+	// tokens; it counts the steps after them and leaves them out.
 	MaxSteps = 30
 )
 
@@ -62,8 +62,8 @@ type Step struct {
 	Frame int
 }
 
-// Frame is a frame of the sheet just before an erasure (R11): the first erasure of a line or a
-// part, of those most strokes were erased from.
+// Frame is a frame of the sheet just before an erasure: the first erasure of a line or a part, of
+// those most strokes were erased from.
 type Frame struct {
 	Erasure int // the erasure's index in the sample: render.Before draws the frame
 	Step    int // the index of the step of the journal the frame stands just before
@@ -400,10 +400,9 @@ func list(items []string) string {
 // markup's lines, how many the journal found with just their strokes. It compares the strokes the
 // markup's lines hold, which are all on the sheet: an erased stroke, an inscription or a stray mark
 // the journal puts on a line does not count against it. The markup of a sheet starts from the lines
-// the board proposes with lines.Group (R25), so the agreement is higher than it would be with a
-// markup made apart, the more so on a sheet whose markup is the proposal unedited. Of a journal of
-// parts, it compares the parts with the parts of the markup, which the board proposes from
-// lines.Groups.
+// the board proposes with lines.Group, so the agreement is higher than it would be with a markup
+// made apart, the more so on a sheet whose markup is the proposal unedited. Of a journal of parts,
+// it compares the parts with the parts of the markup, which the board proposes from lines.Groups.
 type Agreement struct {
 	Marked int `json:"marked"`
 	Same   int `json:"same"`

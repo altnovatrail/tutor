@@ -13,7 +13,7 @@ import (
 )
 
 // runOpen writes the open views of the tasks of the given files — banks, the workbook and the
-// essays — into a new file, the one that tutor's release carries for canvas's sample page (R64).
+// essays — into a new file, the one that tutor's release carries for canvas's sample page.
 // The file names each bank by the path given, its path in the repository, so it runs at the root
 // alone, as just open-tasks runs it. It never writes over a file.
 func runOpen(args []string, stdout, stderr io.Writer) int {

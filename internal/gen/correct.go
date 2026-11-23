@@ -14,10 +14,9 @@ import (
 // written again as a plan of parts, ten of them once more with a note at the side, as in the set of
 // the words of the hint (Words), and the cases on them.
 
-// CorrectNotes is how many sheets of the set carry a note at the side: two of each kind of note, one
-// in Russian and one in English. CorrectNoTechniques is how many of the other sheets are of a task
-// that names no technique: a task of a module may name none (the module format of spec, section
-// "Techniques").
+// CorrectNotes is how many sheets of the set carry a note at the side: two of each kind of note,
+// one in Russian and one in English. CorrectNoTechniques is how many of the other sheets are of a
+// task that names no technique: a task of a module may name none.
 const (
 	CorrectNotes        = 10
 	CorrectNoTechniques = 10

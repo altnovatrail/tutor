@@ -2,11 +2,11 @@
 // answer not yet right, a model finds the first mistake in the work and words the tutor's question
 // for the rung of the hint ladder that the program chose, in one call. The model sees the crop of
 // the finished sheet, the task, its key and solution and the traps the task names, in a block of
-// data (R02 spec; R57 spec), the rung, the language and the presentation style; it sees neither the
-// writing process (R11; R52 spec), nor the reading's observation, nor the trap the sheet was planned
-// with, which is the report's reference (R38). The program checks the words for a leak and their
-// form before they reach the learner, and gives the fallback text of the rung in their place when
-// they fail (R39): the hint only words them.
+// data, the rung, the language and the presentation style; it sees neither the writing process,
+// nor the reading's observation, nor the trap the sheet was planned with, which is the report's
+// reference. The program checks the words for a leak and their form before they reach the
+// learner, and gives the fallback text of the rung in their place when they fail: the hint only
+// words them.
 package hint
 
 import (
@@ -24,11 +24,11 @@ import (
 	"github.com/altnovatrail/tutor/words"
 )
 
-// Version is the version of the hint's prompt, the one admitted (R100), so its words stay frozen
+// Version is the version of the hint's prompt, the one admitted, so its words stay frozen
 // until they are measured anew; TestFrozenV3 holds it. It gives the model the trap the program
 // found, the techniques of the task and the questions already asked, lets it word the rung again
-// without the work, holds it to the limits of words of R70 spec, has the rules of safety for
-// children (R54; R82 spec), keeps every number of the key out of the similar case of rung 3 and has
+// without the work, holds it to the platform's limits of words, has the rules of safety for
+// children, keeps every number of the key out of the similar case of rung 3 and has
 // the model count the words of its hint. The library and the runner ask it alike (RequestOf).
 const Version = 3
 
@@ -51,7 +51,7 @@ var rungWords = map[Rung]string{
 func Langs() []sample.Lang { return []sample.Lang{sample.LangRussian, sample.LangEnglish} }
 
 // Style is the presentation style every request of the measurement gives: the module's passport v0
-// names none, and the tasks of the banks are olympiad maths of primary school (R38).
+// names none, and the tasks of the banks are olympiad maths of primary school.
 const Style = "a child in primary school; use short, simple, everyday words"
 
 // The instructions of the hint, one text for every rung and language: the request names them.
@@ -118,9 +118,9 @@ func Fingerprint() string {
 }
 
 // Prompt is what a request of the hint holds: the task as the learner reads it; the crop of the
-// work, as PNG with its size, or none, when the learner asks to have the rung put another way
-// (R82 spec); the key and the solution; the traps the model may name, with their descriptions; the
-// trap the program found at the cell of the rung, or none; the techniques of the task; the rung; the
+// work, as PNG with its size, or none, when the learner asks to have the rung put another way; the
+// key and the solution; the traps the model may name, with their descriptions; the trap the
+// program found at the cell of the rung, or none; the techniques of the task; the rung; the
 // language of the hint, by its tag; the presentation style, only what changes the words; and the
 // questions the tutor has already asked on the task, in order.
 type Prompt struct {
@@ -159,7 +159,7 @@ func LanguageName(tag string) (string, bool) {
 // is one, and the text: the size of the crop or that there is none, the task, the rung, the
 // language, the words it allows (words.HintWords) and the style, the block of the task's data and,
 // when there are any, the block of the questions asked. The library and the runner ask it alike,
-// so that eval measures the hint the platform asks (R70 spec). A rung the ladder does not have and
+// so that eval measures the hint the platform asks. A rung the ladder does not have and
 // a language whose tag cannot be read are refused. The model, its effort, whether it thinks and how
 // many tokens it may write the caller sets.
 func RequestOf(p Prompt) (provider.Request, error) {
@@ -195,7 +195,7 @@ func RequestOf(p Prompt) (provider.Request, error) {
 		SchemaName:   "hint",
 		Schema:       Schema,
 		NoPicture:    len(p.PNG) == 0,
-		// The instructions are the same in every request and hold nothing of the learner's (R131).
+		// The instructions are the same in every request and hold nothing of the learner's.
 		CacheInstructions: true,
 	}, nil
 }

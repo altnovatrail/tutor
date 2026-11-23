@@ -23,7 +23,7 @@ type Refusal struct {
 	Reason evalv1.Refusal
 	Detail string
 	// Sample is the ID the sample's file names, or "" when it names none that can be read: the
-	// runner's report names a refused sample by it (R74).
+	// runner's report names a refused sample by it.
 	Sample string
 }
 
@@ -55,7 +55,7 @@ var ErrNotSheet = errors.New("evalsample: the sample is no sheet of measurement 
 
 // Sheet is a sample of the protocol read as a sheet of its plan: the sample tutor's runner takes,
 // whether a mouse wrote any of its strokes, and what the runner's report takes of it, its ID and
-// the truth of its answer slot (R74).
+// the truth of its answer slot.
 type Sheet struct {
 	Sample *sample.Sample
 	Mouse  bool
@@ -74,7 +74,7 @@ type Sheet struct {
 //
 // What the runner takes of a sample is a sheet of measurement with its history: the strokes and
 // erasures of the history (protocol.Ink), and its parts as the lines. Its scenario, its planned
-// erasure and its trap are its plan sheet's, since the protocol names none (R69); its outcome is the
+// erasure and its trap are its plan sheet's, since the protocol names none; its outcome is the
 // verdict of module-kit on the truth, by the task's key, and its first error the markup's. A sample
 // of another ink or surface is no sheet the runner reads, and Read gives an error, not a refusal.
 func Read(es *evalv1.Sample, sh *sample.PlanSheet, b *Bank) (*Sheet, *Refusal, error) {
@@ -187,7 +187,7 @@ func readSheet(es *evalv1.Sample, b *Bank, sh *sample.PlanSheet) (*Sheet, *sampl
 }
 
 // planOf is the plan sheet of a sample that no plan of tutor's names, as its markup has it: its
-// task; no scenario, which the protocol does not carry (R69); its parts in their order, each a text
+// task; no scenario, which the protocol does not carry; its parts in their order, each a text
 // or a drawing in the main column, with the text of its markup and no figure to draw it by, and
 // their texts as its lines; the first part with the final answer as its answer line, or none; its
 // outcome by module-kit's verdict on the truth, and its first error the markup's; the trap of that
@@ -260,9 +260,9 @@ func writerOf(es *evalv1.Sample) sample.Writer {
 // PlannedErasure is the erasure of a sheet the runner takes for the one its plan sheet plans, by its
 // place among the erasures, or -1: the last move of the eraser whose strokes stood where the plan's
 // erasure took them from, the line or the part it names, as sheets.ErasurePlace finds it. What Undo
-// and Clear took away, slips says for each erasure, is never the planned one (R25); the other
+// and Clear took away, slips says for each erasure, is never the planned one; the other
 // erasures are slips of the pen. A sample of the protocol keeps no pick of the planned erasure, so
-// the record mode holds the author's pick to this one (R75).
+// the record mode holds the author's pick to this one.
 func PlannedErasure(s *sample.Sample, sh *sample.PlanSheet, slips []bool) int {
 	pe := sh.Erasure
 	if pe == nil {

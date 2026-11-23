@@ -9,12 +9,12 @@ import (
 )
 
 // paperFile is the set of a task from paper that gen paper made, which the runs of its four calls
-// read by default (R135).
+// read by default.
 const paperFile = "eval/paper-gen.json"
 
 // paperConfigs are the configurations a run of a call of a task from paper asks unless -readers
 // names others: the models the library admits for it, the three attempts of its cascade, each
-// measured alone (R137).
+// measured alone.
 var paperConfigs = map[string][]string{
 	paperset.CallStatement: cascadeConfigs,
 	paperset.CallSolving:   cascadeConfigs,

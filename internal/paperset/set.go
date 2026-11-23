@@ -1,14 +1,13 @@
-// Package paperset is the eval set of a task from paper and its four runs (R135): the reading of a
+// Package paperset is the eval set of a task from paper and its four runs: the reading of a
 // statement into its tasks and their formulas, the solution of tasks by AI, the reading of the work
 // on a task against its keys, and the finding of the tasks of several framed together, each apart,
-// by the learner's request (R138). A case is the crop of one task of one of five kinds, or of
-// several tasks framed together, with the truth of each task by construction — the formula, the
-// key, what the learner writes and the verdict it comes to —, and its pictures are
-// drawn from it when a run asks them, the same from the same case on any machine, so the set is one
-// file and no folder of samples; a folder of the cases the debug mode exported holds its pictures
-// instead (R136). The printed statement is drawn by synth's hand, as the learner's
-// writing is: the runs on the stub measure the plumbing, and a paid run needs photos of printed
-// pages (Д22).
+// by the learner's request. A case is the crop of one task of one of five kinds, or of several
+// tasks framed together, with the truth of each task by construction — the formula, the key, what
+// the learner writes and the verdict it comes to —, and its pictures are drawn from it when a run
+// asks them, the same from the same case on any machine, so the set is one file and no folder of
+// samples; a folder of the cases the debug mode exported holds its pictures instead. The printed
+// statement is drawn by synth's hand, as the learner's writing is: the runs on the stub measure the
+// plumbing, and a paid run needs photos of printed pages (Д22).
 package paperset
 
 import (
@@ -29,7 +28,7 @@ import (
 // The kinds of a case: an expression and an equation, which are formulas; a word problem with a
 // number for its answer, a choice among printed options, both no formula; an open task, a drawing,
 // which has no one answer and so no key; and a crop of several tasks framed together, each with an
-// answer of its own and a key of its own (R162 spec).
+// answer of its own and a key of its own.
 const (
 	KindExpression = "expression"
 	KindEquation   = "equation"
@@ -84,7 +83,7 @@ type Task struct {
 	Outcome   string `json:"outcome"`
 }
 
-// maxTasks is the most tasks of a case, as of a crop (R162 spec).
+// maxTasks is the most tasks of a case, as of a crop.
 const maxTasks = 20
 
 // Key is a case's key as the file writes it: a number with its units and the letter of its

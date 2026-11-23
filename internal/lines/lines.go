@@ -1,12 +1,12 @@
-// Package lines finds the lines of a sheet: the strokes that stand at one height, told apart by
-// the gaps between them down the sheet. The record mode of the board proposes a sheet's lines with
-// it and finds on which line an erasure took its strokes (R25), and the journal of the writing
-// process groups with it all the strokes of a sheet, the erased ones too (internal/journal).
+// Package lines finds the lines of a sheet: the strokes that stand at one height, told apart by the
+// gaps between them down the sheet. The record mode of the board proposes a sheet's lines with it
+// and finds on which line an erasure took its strokes, and the journal of the writing process
+// groups with it all the strokes of a sheet, the erased ones too (internal/journal).
 //
-// It also finds the groups of strokes a device finds, by the eval protocol's rule of groups (R24
-// canvas; R30), and where an erasure stood on the plane on a sheet whose markup is made of parts. A
-// free-form solution — a number line, a drawing, a note at the side — has no lines down the sheet,
-// so that is what its sheets go by.
+// It also finds the groups of strokes a device finds, by the eval protocol's rule of groups, and
+// where an erasure stood on the plane on a sheet whose markup is made of parts. A free-form
+// solution — a number line, a drawing, a note at the side — has no lines down the sheet, so that is
+// what its sheets go by.
 package lines
 
 import (
@@ -16,11 +16,11 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// Gap is the least step, in the sheet's logical units, from the middle of one stroke to the
-// middle of the next one down the sheet that starts a new line. Group raises it to half the
-// height of a typical stroke of the sheet, so that it follows the size of the handwriting. It is
-// a guess made before any sheet was written, and the journal of the writing process may tune it
-// (R25); the markup of a sheet already saved does not change.
+// Gap is the least step, in the sheet's logical units, from the middle of one stroke to the middle
+// of the next one down the sheet that starts a new line. Group raises it to half the height of a
+// typical stroke of the sheet, so that it follows the size of the handwriting. It is a guess made
+// before any sheet was written, and the journal of the writing process may tune it; the markup of a
+// sheet already saved does not change.
 const Gap = 12
 
 // Line is one line that Group finds: its strokes, in the order they were written, and the band of

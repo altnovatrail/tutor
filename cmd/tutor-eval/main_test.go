@@ -40,7 +40,7 @@ func TestRun(t *testing.T) {
 		{name: "unknown command", args: []string{"grade"}, wantCode: exitUsage, wantStderr: `unknown command "grade"`},
 		{name: "check without files", args: []string{"check"}, wantCode: exitUsage, wantStderr: "no files given"},
 		{name: "convert without a directory", args: []string{"convert"}, wantCode: exitUsage, wantStderr: "-from is empty"},
-		{name: "synth, which went with T105", args: []string{"synth", "dir"}, wantCode: exitUsage, wantStderr: `unknown command "synth"`},
+		{name: "synth, which is gone", args: []string{"synth", "dir"}, wantCode: exitUsage, wantStderr: `unknown command "synth"`},
 		{name: "check a missing file", args: []string{"check", "no-such-file.json"}, wantCode: exitFail, wantStderr: "no-such-file.json"},
 	}
 	for _, tt := range tests {
@@ -102,7 +102,7 @@ func TestCheckFailures(t *testing.T) {
 		wantStdout string
 		wantStderr string
 	}{
-		{"a sample of tutor-sample v0", []string{bank, correct}, exitFail, "bank.json: ok, bank of 3 tasks", "sample-correct.json: a sample of tutor-sample v0, which no reader but tutor-eval convert takes since T105"},
+		{"a sample of tutor-sample v0", []string{bank, correct}, exitFail, "bank.json: ok, bank of 3 tasks", "sample-correct.json: a sample of tutor-sample v0, which no reader but tutor-eval convert takes"},
 		{"two banks", []string{bank, bank}, exitFail, "", "a second bank"},
 		{"a plan with a broken bank", []string{write("broken-bank.json", `{"format": "tutor-bank", "version": 0, "tasks": []}`), plan}, exitFail, "its tasks are not checked: the bank is invalid", "broken-bank.json: invalid bank"},
 		{"a plan before its bank", []string{plan, bank}, exitOK, "plan.json: ok, plan of 1 sheet, its tasks and traps are in the bank", ""},

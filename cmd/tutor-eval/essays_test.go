@@ -193,7 +193,7 @@ func TestRunEssays(t *testing.T) {
 	if code != exitOK || !strings.HasPrefix(out, "The dev part: 5 essays of "+theEssays+", drawn with the seed 1 into "+drawn+", at 32 px, by opus-high and haiku-low and haiku-low-no-thinking in 2 repeats, a call an essay, in version 1 of the prompt of the assessment by the rubric.\n30 calls, expected to cost $") {
 		t.Fatalf("the run ends %d:\n%s%s", code, out, errs)
 	}
-	// The test part of the essays is planned at $8, not the $6 of the sheets (R45).
+	// The test part of the essays is planned at $8, not the $6 of the sheets.
 	if code, out, _ := runMeasure("no\n", "-kind", "essay", "-essays", theEssays, "-dir", drawn, "-part", "test", "-stub", "-log", filepath.Join(dir, "test.jsonl")); code != exitOK || !strings.Contains(out, "The cap is $8.00.\n") || strings.Contains(out, "above the") {
 		t.Errorf("the test part of the essays: %d\n%s", code, out)
 	}

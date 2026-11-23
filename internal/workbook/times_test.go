@@ -46,7 +46,7 @@ type timesVector struct {
 }
 
 // The boxes of a time, as a page's record tells them, are joined and judged by module-kit as the
-// vector says (R111 spec): the report takes the items of a page by workbook.ItemsOf, so a box of a
+// vector says: the report takes the items of a page by workbook.ItemsOf, so a box of a
 // time reaches module-kit with its kind, its key and its trap values.
 func TestTimesVector(t *testing.T) {
 	data, err := fs.ReadFile(contracts.Vectors, "observation/v1/times.json")

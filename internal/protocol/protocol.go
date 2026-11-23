@@ -1,15 +1,14 @@
 // Package protocol is spec's eval protocol in tutor's code: the package novatrail.eval.v1, whose
-// messages Sample and Report are the sample file and the runner's report (R93, R95 spec). It reads
-// and writes their files, folds a history of writing into the strokes a sheet shows, and holds the
-// rules of a workbook's boxes and of snapping that the device and the runner share (R94 spec). The
-// groups of strokes and the crop are internal/lines' and internal/render's, and their tests pass
-// spec's vectors too.
+// messages Sample and Report are the sample file and the runner's report. It reads and writes their
+// files, folds a history of writing into the strokes a sheet shows, and holds the rules of a
+// workbook's boxes and of snapping that the device and the runner share. The groups of strokes and
+// the crop are internal/lines' and internal/render's, and their tests pass spec's vectors too.
 //
 // The messages are the generated code of the module github.com/altnovatrail/spec/contracts, at the
 // tag of the spec submodule: code on Go takes a contract from it and generates none of its own.
 // Whether a file keeps the rules of the protocol is spec's check sample-check to say, and tutor
-// writes no check of its own (R93 spec): this package reads a file strictly, as spec's contracts
-// text asks, and no more.
+// writes no check of its own: this package reads a file strictly, as spec's contracts text asks,
+// and no more.
 package protocol
 
 import (

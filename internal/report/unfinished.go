@@ -15,7 +15,7 @@ import (
 )
 
 // The heights of digits, the states and the readings of a sheet by each policy of reading on its
-// own, in the report of a run of the reading (R08; О-8; О-21).
+// own, in the report of a run of the reading (О-8, О-21).
 
 // The groups of sheets the heights are told by: every sheet, and the sheets whose writing has small
 // letters apart from those without them. On the first the crop's estimate may fall to the height of
@@ -75,7 +75,7 @@ const (
 )
 
 // Policy is how many readings a sheet would take beyond its sending by a policy of reading on its
-// own (R10; О-8): the mean, the median and the most over the sheets.
+// own (О-8): the mean, the median and the most over the sheets.
 type Policy struct {
 	Name         string
 	Mean, Median float64
@@ -174,7 +174,7 @@ func (r *Reading) height(reader string, digit int, group string, by map[sheetID]
 	return h
 }
 
-// Advice is the height of digits the report advises spec to take by default (R51 spec): the
+// Advice is the height of digits the report advises spec to take by default: the
 // smallest of 16 and 24 px not worse than 32 px, on every sheet, for every reader that read any
 // height; a reader that did not read that one leaves it unadvised. Otherwise 32 px. Decided is
 // whether the log is of the test part, the only one that decides; read is whether the run read the

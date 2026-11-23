@@ -24,13 +24,15 @@ const CallKind = "workbook"
 
 // Reader is a configuration of the reader: a configuration of the runner, the output tokens a call
 // is expected to take, for the estimate, and whether it reads once whatever the repeats, as Opus
-// does in the reduced matrix, without the other heights of digits (R08; R28).
+// does in the reduced matrix, without the other heights of digits.
 type Reader = runner.Reader
 
 // Readers are the readers, the configurations of the runner by their names. The cells of a page of
 // ten filled boxes come to about 400 tokens; Haiku with thinking writes about 500 more, and Opus at
 // high effort about 800. Opus reads each condition once, and not the other heights
-// (runner.ReadersOf). The four the extended measurement adds (R50) are estimated so: Opus at medium as at high, Sonnet with thinking between Haiku and Opus, without thinking as Haiku without it, and Haiku at medium above Haiku at low.
+// (runner.ReadersOf). The four the extended measurement adds are estimated so: Opus at medium as
+// at high, Sonnet with thinking between Haiku and Opus, without thinking as Haiku without it, and
+// Haiku at medium above Haiku at low.
 func Readers() []Reader {
 	return runner.ReadersOf("workbook", map[string]int{
 		"opus-high": 1200, "haiku-low": 900, "haiku-low-no-thinking": 400,
@@ -50,9 +52,9 @@ const (
 )
 
 // Reads are what a run reads of its pages: the pages at 32 px, bare and captioned, captions; the
-// bare pages at 32 px alone, bare, as the platform reads them, with no line of the item (R53 spec;
-// R50); and the bare pages at the other heights of digits, heights, read once, by the readers that
-// do not read once (R08; R28). Plain is the run of admission (R124): the bare pages at 32 px alone,
+// bare pages at 32 px alone, bare, as the platform reads them, with no line of the item; and the
+// bare pages at the other heights of digits, heights, read once, by the readers that do not read
+// once. Plain is the run of admission: the bare pages at 32 px alone,
 // by every reader in every repeat, Opus too, as the admission run of a sheet reads (reading.Plain);
 // it goes with nothing else. A reader that reads once in a measurement keeps the mark in its
 // record: it is the strong reader of the pair.
@@ -137,7 +139,7 @@ func (s *step) Right() (string, error) {
 
 // Record is the call's record: the answer as the model gave it, the verdict of every box of the
 // page and of every item. An answer off the schema is a failure of the reading, and every box of
-// the page, the blank ones too, is then unchecked (R73).
+// the page, the blank ones too, is then unchecked.
 func (s *step) Record(o runner.Outcome) any {
 	rec := CallRecord{Kind: "call", Call: s.Call, NotAsked: o.NotAsked, Answer: o.Answer, Error: o.Error, Usage: o.Usage}
 	var read []Reading
@@ -314,12 +316,12 @@ type (
 		Prompt        string          `json:"prompt"`
 		PromptVersion int             `json:"prompt_version"`
 		// Runner and ModuleKit are the versions of the build that ran, and Refused the samples it
-		// refused: what the runner's report takes of the run (R74).
+		// refused: what the runner's report takes of the run.
 		Runner    string           `json:"runner,omitempty"`
 		ModuleKit string           `json:"module_kit,omitempty"`
 		Refused   []runner.Refused `json:"refused,omitempty"`
 		// Set names the set of the pages where they are not the samples of the file's directory, as
-		// canvas's synthetic samples are not (R76); "" names it by the file.
+		// canvas's synthetic samples are not; "" names it by the file.
 		Set string `json:"set,omitempty"`
 	}
 	// ReaderRecord is a reader as the run's record tells it: its model and prices, and whether it
@@ -332,7 +334,7 @@ type (
 		Part  string      `json:"part"`
 		Boxes []BoxRecord `json:"boxes"`
 		// Sample is the ID of the page's sample, and Truth the truth of each filled box, in the
-		// task's order: for the runner's report (R74).
+		// task's order: for the runner's report.
 		Sample string             `json:"sample,omitempty"`
 		Truth  []evalsample.Truth `json:"truth,omitempty"`
 	}
@@ -355,7 +357,7 @@ type (
 		Reason   Reason                  `json:"reason,omitempty"`
 		Trap     string                  `json:"trap,omitempty"`
 		// TrapValues are the trap values of its check, by which the report joins two readings of
-		// the page as module-kit would, with no file of the workbook (R74).
+		// the page as module-kit would, with no file of the workbook.
 		TrapValues []sample.TrapValue `json:"trap_values,omitempty"`
 		Width      int                `json:"width,omitempty"`
 		Height     int                `json:"height,omitempty"`
@@ -372,7 +374,7 @@ type (
 		Items    []verdict.Verdict `json:"items"`
 		Error    string            `json:"error,omitempty"`
 		// Invalid is set when the answer is off the schema, which the report of the protocol names
-		// unchecked, UNCHECKED_CAUSE_INVALID (R74).
+		// unchecked, UNCHECKED_CAUSE_INVALID.
 		Invalid bool `json:"invalid,omitempty"`
 		runner.Usage
 	}

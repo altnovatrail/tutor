@@ -73,7 +73,7 @@ func TestPartsSteps(t *testing.T) {
 }
 
 // Writing erased whole is erased writing, numbered apart from the parts: written again after a
-// pause, it has no neighbours on the sheet and is of no group (R30).
+// pause, it has no neighbours on the sheet and is of no group.
 func TestPartsErasedWriting(t *testing.T) {
 	var s sheet
 	s.at("a", 100, 100, 0, 100)
@@ -243,9 +243,9 @@ func TestPartsAgreement(t *testing.T) {
 }
 
 // tokensPerPiece is how many input tokens a piece of a journal's text took in the measurement on
-// sheets of lines (R24): a word, a number, a sign or a line break. On the 30 sheets of its test,
-// the input of form B grew over that of form A by 111 tokens and 1.575 a piece of the journal, the
-// same for each judge.
+// sheets of lines: a word, a number, a sign or a line break. On the 30 sheets of its test, the
+// input of form B grew over that of form A by 111 tokens and 1.575 a piece of the journal, the same
+// for each judge.
 const tokensPerPiece = 1.575
 
 var piece = regexp.MustCompile(`[A-Za-z]+|[0-9]+|\n|[^ A-Za-z0-9\n]`)

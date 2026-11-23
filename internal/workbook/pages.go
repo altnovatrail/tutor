@@ -1,6 +1,6 @@
 // Package workbook is the measurement of the workbook: its pages, which code draws in memory from
-// eval/workbook.json, and the crop of each filled box, which is all a reading of the page sees (R53
-// spec): the ink of the box's strokes alone, cut by the rule of the eval protocol, without the
+// eval/workbook.json, and the crop of each filled box, which is all a reading of the page sees:
+// the ink of the box's strokes alone, cut by the rule of the eval protocol, without the
 // box's frame and the print of its line. A blank box gives no crop.
 package workbook
 

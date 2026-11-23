@@ -116,7 +116,7 @@ func (r *Hint) wordsMarkdown(b *strings.Builder) {
 	if len(cells) == 0 {
 		return
 	}
-	fmt.Fprintf(b, "\n## The set of the words\n\nThe cases of %s, %d of them, sha256 %s (T118).\n\n", r.log.Run.CasesFile, len(r.log.Run.Cases), short(r.log.Run.CasesSHA256))
+	fmt.Fprintf(b, "\n## The set of the words\n\nThe cases of %s, %d of them, sha256 %s.\n\n", r.log.Run.CasesFile, len(r.log.Run.Cases), short(r.log.Run.CasesSHA256))
 	b.WriteString("| Tutor | Case | Language | Calls | Hints that came | Leaked | Broken | Repeats a question asked | A box without the work | Takes up the note | The sex told, rough search |\n|---|---|---|---|---|---|---|---|---|---|---|\n")
 	for _, c := range cells {
 		kind, lang := string(c.Kind), string(c.Lang)
@@ -129,5 +129,5 @@ func (r *Hint) wordsMarkdown(b *strings.Builder) {
 		}
 		fmt.Fprintf(b, "| %s | %s | %s | %d | %d | %s | %s | %s | %s | %s | %s |\n", c.Tutor, kind, lang, c.Calls, c.Came, c.Leaked, c.Broken, shareOrDash(c.Repeated), box, shareOrDash(c.Echo), c.Gendered)
 	}
-	fmt.Fprintf(b, "\nA case of the rung shows the work and gives the questions of the rungs below; one of the rung put another way shows none and gives the question of the rung itself too; one of a note shows a sheet with a note at the side that is no part of the solution and not for a child. A hint repeats a question when it holds %.0f %% of its words; it takes up the note when it has %d words of it in a row or a number of it the task has not. The rough search is that of T76, and finds the sex of a person of the task as well as the learner's: the judge of the words decides, tutor-eval judge-words.\n", hint.RepeatShare*100, hint.EchoWords)
+	fmt.Fprintf(b, "\nA case of the rung shows the work and gives the questions of the rungs below; one of the rung put another way shows none and gives the question of the rung itself too; one of a note shows a sheet with a note at the side that is no part of the solution and not for a child. A hint repeats a question when it holds %.0f %% of its words; it takes up the note when it has %d words of it in a row or a number of it the task has not. The rough search is the hint's, Gendered, and finds the sex of a person of the task as well as the learner's: the judge of the words decides, tutor-eval judge-words.\n", hint.RepeatShare*100, hint.EchoWords)
 }

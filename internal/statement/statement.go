@@ -1,12 +1,12 @@
 // Package statement is the reading of a task's statement from paper into its tasks and their
-// formulas (R162 spec): a model sees the task's crop, as app cut it from the photo of the page, and
-// lists the tasks on it — one, or each of a column of sums framed together —, each with its
-// statement as printed and as a formula when it is an expression or an equation, or none when it is
-// not. The solver of module-kit computes a formula's answer, which is its task's key; a task with
-// no formula goes to the solution of AI (internal/solving), and the reading of the work is given
-// the statements, to tell which task each answer is of (internal/reading). It is the capability
-// statement_reading of spec's admission table (R96 spec), and the grammar of the formula is the one
-// the solver takes (R135).
+// formulas: a model sees the task's crop, as app cut it from the photo of the page, and lists the
+// tasks on it — one, or each of a column of sums framed together —, each with its statement as
+// printed and as a formula when it is an expression or an equation, or none when it is not. The
+// solver of module-kit computes a formula's answer, which is its task's key; a task with no formula
+// goes to the solution of AI (internal/solving), and the reading of the work is given the
+// statements, to tell which task each answer is of (internal/reading). It is the capability
+// statement_reading of spec's admission table, and the grammar of the formula is the one the solver
+// takes.
 package statement
 
 import (
@@ -21,13 +21,12 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// Version is the version of the prompt. A change to a word a model reads is a new version, and
-// the entry of the list that admitted the prompt admits it no longer (R70 spec). TestFrozenV3
-// holds it.
+// Version is the version of the prompt. A change to a word a model reads is a new version, and the
+// entry of the list that admitted the prompt admits it no longer. TestFrozenV3 holds it.
 const Version = 3
 
-// MaxOutputTokens is the most a call may write, thinking included: a formula is a line, and the rest
-// is the model's reasoning on a statement it has to rewrite sign by sign (R94).
+// MaxOutputTokens is the most a call may write, thinking included: a formula is a line, and the
+// rest is the model's reasoning on a statement it has to rewrite sign by sign.
 const MaxOutputTokens = 4000
 
 // The instructions, one text for every task and every language.
@@ -71,7 +70,7 @@ func RequestOf(crop provider.Image, width, height int) provider.Request {
 		Text:         fmt.Sprintf(sizeFormat, width, height),
 		SchemaName:   "statement_formula",
 		Schema:       Schema,
-		// The instructions are the same in every request and hold nothing of the learner's (R131).
+		// The instructions are the same in every request and hold nothing of the learner's.
 		CacheInstructions: true,
 	}
 }
@@ -101,10 +100,10 @@ var Schema = map[string]any{
 	"properties":           schemaProperties,
 }
 
-// MaxTasks is the most tasks one crop holds, as one page begins (R162 spec).
+// MaxTasks is the most tasks one crop holds, as one page begins.
 const MaxTasks = 20
 
-// maxStatement is the most bytes of a task's statement, as the key keeps it (R162 spec).
+// maxStatement is the most bytes of a task's statement, as the key keeps it.
 const maxStatement = 200
 
 // Task is one task a model read on the crop: its statement as printed, and its formula, empty

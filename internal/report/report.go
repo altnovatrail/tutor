@@ -1,10 +1,11 @@
-// Package report turns the log of a run into the measurement's numbers and its criterion (R24),
+// Package report turns the log of a run into the measurement's numbers and its criterion,
 // asking no model, and writes them as Markdown and CSV. A report holds no handwriting: numbers, the
 // numbers and scenarios of sheets, and the names of judges and forms.
 //
 // The report of a run of free writing, in version 2 of the judge's prompt, tells more: the boxes
-// on the sheets with a mistake and form D against form A on them, the data for R52 spec; the
-// answers by layout and by where the first error stands; and the answers sheet by sheet.
+// on the sheets with a mistake and form D against form A on them, the data for whether the course
+// of writing may go to AI; the answers by layout and by where the first error stands; and the
+// answers sheet by sheet.
 package report
 
 import (
@@ -58,7 +59,8 @@ type Report struct {
 	// Free tells a run of free writing, in version 2 of the prompt; the rest only such a run has.
 	Free bool
 	// Boxes are the boxes of the answers on the sheets with a mistake, by judge and form, and
-	// OnMistakes form D against form A on those sheets, a judge each: the data for R52 spec.
+	// OnMistakes form D against form A on those sheets, a judge each: the data for whether the course
+	// of writing may go to AI.
 	Boxes      []Boxes
 	OnMistakes []Comparison
 	// ByLayout and ByFirstError are the right answers by the layout of a sheet and by where its first
@@ -93,7 +95,7 @@ type SheetRow struct {
 	Right, Answers [4]int // by the forms in their order
 }
 
-// Test is the exact one-sided sign-permutation test of a sum of differences over sheets (R03): of
+// Test is the exact one-sided sign-permutation test of a sum of differences over sheets: of
 // all the ways to give each nonzero difference a sign, as likely as each other if the form does
 // nothing, the share whose sum reaches the one observed, upwards for Helps and downwards for Harms.
 type Test struct {
@@ -459,9 +461,9 @@ func abs(x int64) int64 {
 	return x
 }
 
-// holm marks the judges that pass Holm's correction for all the judges, as the criterion was fixed
-// before the first run (R05): the judge's own p below Alpha over the number of judges, the
-// threshold of Holm's first step. The writing process helps Claude if a judge that helps passes.
+// holm marks the judges that pass Holm's correction for all the judges: the judge's own p below
+// Alpha over the number of judges, the threshold of Holm's first step. The writing process helps
+// Claude if a judge that helps passes. The criterion was fixed before the first run (R05).
 func (r *Report) holm() {
 	for i := range r.Main {
 		if r.Main[i].Helps < Alpha/float64(len(r.Main)) {

@@ -77,7 +77,7 @@ func TestSheetOfPartsDrawsThePlan(t *testing.T) {
 	}
 }
 
-// The groups a device would find hold the parts of the plan, by construction (R30): no group holds
+// The groups a device would find hold the parts of the plan, by construction: no group holds
 // strokes of two parts, and a part without its planned erasure is one group. A part with it is one
 // or two, as the fix after a pause may be a group of its own, and a scheme with it up to three: its
 // brace stands apart once the erasure takes the piece near it, as nothing else near holds it. So

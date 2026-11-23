@@ -12,7 +12,7 @@ import (
 // the height of a digit, from 0 to 1; a small letter its lower part, from 0.45 down; a stem of b, d,
 // f, h, k and l rises to the top, that of t to 0.2, and a tail of g, j, p, q and y goes below the
 // line, down to 1.35. They are tutor's own strokes, drawn for these tests: no font of another's is
-// in them, and so no licence of another's (R12 spec). The small letters a Cyrillic letter is drawn
+// in them, and so no licence of another's. The small letters a Cyrillic letter is drawn
 // alike as, a, c, e, o, p and y, take its strokes, and so do O and the bowl of Q of О; x is the
 // font's, as in the equations, and stands 0.1 above the other small letters.
 var latin = map[rune]glyph{

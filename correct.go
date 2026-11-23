@@ -13,7 +13,7 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// CorrectRequest is a call of the words after a correct answer (R112): the praise
+// CorrectRequest is a call of the words after a correct answer: the praise
 // of a step of the solution and one question on the technique that helped, after the program's
 // verdict is correct, as GetCorrectAnswerWords of spec's contract asks them.
 //   - Crop is the PNG of the crop of the work; nil when the task's answer slots are only choices,
@@ -25,8 +25,7 @@ import (
 //     presentation style changes the words.
 //
 // The words are checked by api for leaks and by words.Correct for their form before they reach the
-// learner; when they fail, the learner gets no words, as there is no fallback text for them (R70
-// spec).
+// learner; when they fail, the learner gets no words, as there is no fallback text for them.
 type CorrectRequest struct {
 	Route      Route
 	Task       *open.Task

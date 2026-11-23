@@ -28,7 +28,7 @@ import (
 )
 
 // The board's sheet, in its logical units: the canvas of the page, on which every sheet of the
-// measurement is written (R24).
+// measurement is written.
 const (
 	sheetWidth  = 1000
 	sheetHeight = 600
@@ -42,7 +42,7 @@ var plainName = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
 // history of writing (evalsample.PersonOf), in a directory outside git, once it passes the check
 // against its plan sheet and the bank, the runner reads it back without refusing it, and spec's
 // sample-check holds it to the protocol's rules of the sample file and of what the device and the
-// runner share (R25; R75). The page sends the history as its events — write, erase, undo and
+// runner share. The page sends the history as its events — write, erase, undo and
 // clear — and the markup, and the board folds the history into the strokes and erasures its checks
 // take (protocol.Ink).
 type Recorder struct {
@@ -198,7 +198,7 @@ type ProposeRequest struct {
 
 // ink is a sheet's history as the board's checks take it: every stroke written, the erasures (Ink),
 // and for each erasure whether Undo or Clear made it rather than a move of the eraser: what they
-// take away is a slip, never the planned erasure (R25).
+// take away is a slip, never the planned erasure.
 type ink struct {
 	history  *evalv1.History
 	strokes  []sample.Stroke
@@ -229,13 +229,13 @@ func inkOf(raw json.RawMessage) (*ink, []Note) {
 // the plan sheet's lines in their order. With them come the plan sheet's outcome and how the sheet
 // differs from its plan sheet, such as by a line more. On a sheet of a plan of parts its lines are
 // the parts: each group of strokes the rule of the eval protocol finds (lines.Groups) is one, in
-// the order their first strokes were written, as a device groups them (R30). A drawing drawn
+// the order their first strokes were written, as a device groups them. A drawing drawn
 // after a pause comes as two groups, and the author joins them. A plan sheet of one part, a free
 // solution, takes the whole sheet.
 //
 // On a sheet whose plan sheet plans an erasure, Planned is the index of the erasure the board
-// takes for it. On a sheet of lines it is the one the runner takes and the save holds the pick to
-// (R75): the last move of the eraser that stood on the plan's line (evalsample.PlannedErasure), a
+// takes for it. On a sheet of lines it is the one the runner takes and the save holds the pick to:
+// the last move of the eraser that stood on the plan's line (evalsample.PlannedErasure), a
 // move standing on the line most of its strokes stood on. On a sheet of parts it is the move that
 // took the most strokes from any of its parts, by their place on the plane (lines.PartsTaken):
 // until the author joins the groups of a part, the number of a group is not yet the number of the
@@ -319,7 +319,7 @@ func (rc *Recorder) propose(w http.ResponseWriter, r *http.Request) {
 // proposeParts proposes the parts of a sheet of a plan of parts: a part to each group of strokes,
 // in the order their first strokes were written, with the texts and the answer of the plan sheet's
 // parts in their order. A plan sheet of one part takes the whole sheet as that part, as the author
-// writes a free solution (R28).
+// writes a free solution.
 func proposeParts(sh *sample.PlanSheet, in *ink) Proposal {
 	found := lines.Groups(in.strokes, in.erasures)
 	if len(sh.Parts) == 1 && len(found) > 1 {
@@ -371,7 +371,7 @@ func whole(groups []lines.StrokeGroup, strokes []sample.Stroke) lines.StrokeGrou
 // the eraser — Undo makes slips — the one that took the most strokes from where it counts, took
 // holding how many each erasure took from there, the earlier of two that took as many. It names a
 // sheet with no move of the eraser and one where more than one took strokes from there, as the
-// planned erasure is one move (R25); on a sheet of lines the proposal then takes the runner's pick
+// planned erasure is one move; on a sheet of lines the proposal then takes the runner's pick
 // instead (Proposal). planned names the plan's place of the erasure, such as
 // "line 2", and from where the strokes count.
 func plannedOf(took []int, undone []bool, planned, from string, notes []Note) (*int, []Note) {
@@ -423,7 +423,7 @@ type Planned struct {
 }
 
 // Saved is what a save did: the name of the new file, how many files the sheet has now, and how its
-// markup differs from its plan sheet, which the board names but does not refuse (R25).
+// markup differs from its plan sheet, which the board names but does not refuse.
 type Saved struct {
 	File        string `json:"file"`
 	Saved       int    `json:"saved"`
@@ -518,7 +518,7 @@ func (rc *Recorder) examine(sh *sample.PlanSheet, req SaveRequest) (*sample.Samp
 		return s, in, []Note{{"sample.lines", fmt.Sprintf("the stroke %s, which the sheet shows, is in no %s, and every stroke the sheet shows is in one: pick it and move it to a %s, or press Back and take it away", id, unit, unit)}}
 	}
 	// The sample keeps no pick of the planned erasure: the runner takes the last move of the eraser
-	// on the plan's line or part for it, and the pick is held to that one (R75).
+	// on the plan's line or part for it, and the pick is held to that one.
 	if p := m.Planned; p != nil {
 		switch want := evalsample.PlannedErasure(s, sh, in.undone); {
 		case want < 0:
@@ -643,7 +643,7 @@ func (rc *Recorder) against(s *sample.Sample) []Note {
 
 // differences names how the markup of a sheet differs from its plan sheet (sheets.Differences), at
 // the paths of the request. The board saves such a sheet all the same: what was written, the author
-// knows (R25).
+// knows.
 func differences(sh *sample.PlanSheet, s *sample.Sample) []Note {
 	notes := []Note{}
 	for _, d := range sheets.Differences(sh, s) {

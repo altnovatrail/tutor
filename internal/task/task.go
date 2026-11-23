@@ -1,10 +1,10 @@
 // Package task gives each task of tutor's measurements — a task of a bank, solved on a sheet; a
 // page of the workbook; an essay — the task of spec's module format 0.3 it is, with its checks:
-// formatv0.Task (R68). module-kit takes a task of the format alone: its open view and that view's
-// digest, by which a sample of the eval protocol names its task, and the verdicts on an
-// observation, by which the runner gets the outcome and the trap of the truth of a sample's markup
-// (R95 spec). tutor's banks are not modules, and their files keep their own formats: the tasks are
-// built here, by the kind of each file's tasks.
+// formatv0.Task. module-kit takes a task of the format alone: its open view and that view's digest,
+// by which a sample of the eval protocol names its task, and the verdicts on an observation, by
+// which the runner gets the outcome and the trap of the truth of a sample's markup. tutor's banks
+// are not modules, and their files keep their own formats: the tasks are built here, by the kind of
+// each file's tasks.
 package task
 
 import (
@@ -41,8 +41,8 @@ type File struct {
 }
 
 // Read reads a file of tasks by the format it declares — a bank, the workbook or the essays —, as
-// strictly as anywhere else (R15), and builds its tasks. A bank whose key gives no number is
-// refused: the check of its sheet would have no key.
+// strictly as anywhere else, and builds its tasks. A bank whose key gives no number is refused: the
+// check of its sheet would have no key.
 func Read(data []byte) (*File, error) {
 	var head struct {
 		Format string `json:"format"`
@@ -114,9 +114,9 @@ func Sheet(t *sample.Task) formatv0.Task {
 	return closed(task, formatv0.SkillID(t.Kind))
 }
 
-// SheetItem is the one item of a sheet's task: an answer slot bound anywhere, whose check is
-// number with the key's value. The reading judges an observation by it, and the report of the
-// reading joins the observations of a pair by it, with the key that the log tells (R73).
+// SheetItem is the one item of a sheet's task: an answer slot bound anywhere, whose check is number
+// with the key's value. The reading judges an observation by it, and the report of the reading
+// joins the observations of a pair by it, with the key that the log tells.
 func SheetItem(key string) formatv0.Item {
 	return formatv0.Item{AnswerSlots: []formatv0.AnswerSlot{{
 		Binding: formatv0.AnswerSlotBindingAnywhere,

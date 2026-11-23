@@ -122,8 +122,7 @@ func TestReadBank(t *testing.T) {
 }
 
 // What a drawn sample names of itself: an ID and a writer's code from its seed, in the protocol's
-// forms, and canvas 0.0.0 and the set of texts "none" where only canvas's samples page has one
-// (R93 spec).
+// forms, and canvas 0.0.0 and the set of texts "none" where only canvas's samples page has one.
 func TestHeader(t *testing.T) {
 	for _, c := range []struct {
 		plan  string
@@ -322,7 +321,7 @@ func TestRefusals(t *testing.T) {
 			es.Task.Source = &evalv1.TaskReference_Tutor{Tutor: &evalv1.TutorSource{Tag: "v0.1.4", Bank: b.Path}}
 		}, b, sh, evalv1.Refusal_REFUSAL_OTHER_TASK},
 		// A sample counts to the task of its own source, and one of a package of modules is never
-		// measured with a file of tutor's (R90).
+		// measured with a file of tutor's.
 		{"a task of a package of modules", func(es *evalv1.Sample) {
 			es.Task.Source = &evalv1.TaskReference_Modules{Modules: &evalv1.ModuleSource{Tag: "v0.1.0", Module: "grade-3-math", Version: "1.0.0"}}
 		}, b, sh, evalv1.Refusal_REFUSAL_OTHER_TASK},
@@ -486,7 +485,7 @@ func drawn(t *testing.T) []struct {
 
 // testdata holds a drawn sample of each kind that tutor-eval draw draws, with the seed 1 — of the
 // sheets, a page of the workbook with every scenario of a box and both writings of a fraction, and an
-// essay (R71) —, and they are what draw writes, to the byte: CI holds them to the protocol's rules
+// essay —, and they are what draw writes, to the byte: CI holds them to the protocol's rules
 // with spec's sample-check (just ci-sample-check), so that a drawn file that breaks a rule fails a
 // pull request. go test -update writes them anew.
 func TestDrawn(t *testing.T) {

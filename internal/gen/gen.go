@@ -1,10 +1,10 @@
-// Package gen builds the synthetic sets of the extended measurement (R50): pages of the workbook in
-// the format tutor-workbook and essays in the format tutor-essays, as many as a run needs, each
-// with its truth by construction. A page's numbers are drawn at random, and every box is written as
-// its scenario says; an essay is put together from sentences written here, and each criterion it
-// does not meet comes from a change made to it on purpose. No model writes a word of them, so that
-// the program, and not a model's word, holds whether an essay keeps to its topic and spells its
-// words right. The same seed builds the same set again, on any machine.
+// Package gen builds the synthetic sets of the extended measurement: pages of the workbook in the
+// format tutor-workbook and essays in the format tutor-essays, as many as a run needs, each with
+// its truth by construction. A page's numbers are drawn at random, and every box is written as its
+// scenario says; an essay is put together from sentences written here, and each criterion it does
+// not meet comes from a change made to it on purpose. No model writes a word of them, so that the
+// program, and not a model's word, holds whether an essay keeps to its topic and spells its words
+// right. The same seed builds the same set again, on any machine.
 package gen
 
 import (

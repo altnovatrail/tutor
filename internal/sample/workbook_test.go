@@ -170,7 +170,7 @@ func TestLeaningAndMirrored(t *testing.T) {
 	}
 }
 
-// A box of a time (R111 spec): its key and its values in the notation of a time, hours and minutes,
+// A box of a time: its key and its values in the notation of a time, hours and minutes,
 // a trap value with 60 minutes or more not yet right, and no form.
 func TestWorkbookTime(t *testing.T) {
 	timed := func() *sample.Workbook {

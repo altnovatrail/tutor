@@ -8,7 +8,7 @@ import (
 	evalv1 "github.com/altnovatrail/spec/contracts/novatrail/eval/v1"
 )
 
-// Source is a file of tasks as a sample names it, the source file of its task reference (R69): its
+// Source is a file of tasks as a sample names it, the source file of its task reference: its
 // path in the repository, from the root, with slashes, and the digest of the file, "sha256:" and 64
 // lowercase hexadecimal digits. A bank of sheets, the workbook and the essays are named alike. A
 // file of tutor's tree at the tag of a release, which a sample names by that release (Releases),

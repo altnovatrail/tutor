@@ -10,8 +10,7 @@ import (
 
 // Truth is what the runner's report takes of an answer slot of a sample that a model reads and whose
 // check gives a verdict: its place, module-kit's verdict on the truth of the markup, with its reason
-// or trap, and the markup's notes. The log of a run writes it so, and the report is made of it
-// (R74).
+// or trap, and the markup's notes. The log of a run writes it so, and the report is made of it.
 type Truth struct {
 	Item       int    `json:"item"`
 	Slot       int    `json:"slot"`

@@ -110,7 +110,7 @@ func records(t *testing.T, log []byte) []map[string]any {
 	return out
 }
 
-// The configurations are the three of R24 and the four of R50, each with its model's effort and
+// The configurations are the three a run asks by default and the four the extended measurement adds, each with its model's effort and
 // able to answer as it is asked: without thinking only where the model can turn it off. The worst
 // case of a call is the most input tokens its kind gives and the output limit, at the model's
 // prices, each input token at the higher of the input's and a write's to the cache, and at least the
@@ -198,7 +198,7 @@ func jsonNumber(v any) string {
 
 // A call that writes to the cache or reads from it logs those tokens beside its input and costs
 // them at their prices: Opus 5.5's $5 a million for a write for 5 minutes, $8 for an hour and $0.20
-// for a read (R131).
+// for a read.
 func TestCacheCost(t *testing.T) {
 	ask := func(ctx context.Context, st runner.Step, req provider.Request) (provider.Response, error) {
 		resp, err := runner.Stub(ctx, st, req)

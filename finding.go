@@ -15,13 +15,13 @@ import (
 
 // maxPhotoTokens are the most tokens the photo of a page takes: the largest a provider adapter
 // fits a photo to, the 4 784 patches of Anthropic's high-resolution tier. GPT-6 Astra takes at most
-// 2 500 patches, 1.2 tokens each (R134).
+// 2 500 patches, 1.2 tokens each.
 const maxPhotoTokens = 4784
 
-// TaskFinding is a call that finds the tasks on the photo of a page from the learner's paper
-// (R162 spec): the photo is a JPEG or a PNG of at most 4 MiB, as app sent it. With the learner's
+// TaskFinding is a call that finds the tasks on the photo of a page from the learner's paper:
+// the photo is a JPEG or a PNG of at most 4 MiB, as app sent it. With the learner's
 // request about the page come the frames on it now, in whole thousandths of the photo: those the AI
-// found before, which the answer replaces, and those the learner drew, which stay (R165 spec). api
+// found before, which the answer replaces, and those the learner drew, which stay. api
 // has checked their bounds; without a request the frames are not sent.
 type TaskFinding struct {
 	Route   Route
@@ -32,13 +32,13 @@ type TaskFinding struct {
 }
 
 // sameAsDrawn is the overlap, of their union, from which a frame found covers one the learner drew:
-// the model repeated it, and the learner's own stays (R165 spec).
+// the model repeated it, and the learner's own stays.
 const sameAsDrawn = 0.8
 
 // TasksFound is what the finding gives: the task frames, in whole thousandths of the photo turned by
 // Turn, in the order of the page, top to bottom, when Outcome is Answered — none when the model found
 // no task —; and the turn, in whole degrees clockwise from -179 to 180, by which the photo was turned
-// for its page to read upright (provider.Turn), 0 with a request and with no frames (R162 spec).
+// for its page to read upright (provider.Turn), 0 with a request and with no frames.
 type TasksFound struct {
 	Frames  []*observationv1.CropBox
 	Turn    int
@@ -52,16 +52,16 @@ type found struct {
 }
 
 // FindTasks asks the admitted models of the finding (CallFinding) for the tasks on the photo of a
-// page, one at a time, a later one only when the one before failed or found no task (R137). Without
+// page, one at a time, a later one only when the one before failed or found no task. Without
 // the learner's request each model is asked first which way up the page lies, and the photo is
 // turned upright by its answer before the tasks are found on it; with one, the photo is app's,
-// already turned (R134). The adapter fits the photo to the size its model takes unshrunk, and it
+// already turned. The adapter fits the photo to the size its model takes unshrunk, and it
 // goes as a JPEG without the metadata of its file (provider.Photo), decoded once for every model
 // and turned once for each angle. A photo that is no JPEG or PNG fails before any call; an answer
 // off the schema fails the attempt. A box with no area on the photo is no frame, nor one that
 // covers a frame the learner drew, which the models' cascade drops once it is over: a model that
 // gave only such frames found tasks, and the next one is not asked. The frames go top to bottom,
-// and of two at one height the left first, the first finding.MaxTasks of them (R165 spec).
+// and of two at one height the left first, the first finding.MaxTasks of them.
 func (t *Tutor) FindTasks(ctx context.Context, f TaskFinding) TasksFound {
 	calls, a, refused := t.prepare(CallFinding, f.Route)
 	if refused != nil {

@@ -23,13 +23,13 @@ const CallKind = "reading"
 
 // Reader is a configuration of the reader: a configuration of the runner, the output tokens a call
 // is expected to take, for the estimate, and whether it reads once whatever the repeats, as Opus
-// does in the reduced matrix, without the other heights of digits and the states (R08; R28).
+// does in the reduced matrix, without the other heights of digits and the states.
 type Reader = runner.Reader
 
 // Readers are the readers, the configurations of the runner by their names. An observation of a
 // sheet comes to about 200 tokens, and Haiku with thinking writes about 300 more; Opus reads each
 // condition once, and neither the other heights nor the states. The four the extended measurement
-// adds (R50) are estimated so: Opus at medium as at high, Sonnet with thinking between Haiku and
+// adds are estimated so: Opus at medium as at high, Sonnet with thinking between Haiku and
 // Opus, without thinking as Haiku without it, and Haiku at medium above Haiku at low. A
 // configuration without its reader here is a mistake of the code, and Readers panics on it rather
 // than estimate its calls at nothing or repeat it unasked.
@@ -58,7 +58,7 @@ const (
 // Reads are what a run reads of its sheets: the conditions of the key on the finished sheet with
 // its digits 32 px high, keys; the finished sheet without a key at the other heights of digits,
 // heights; and its states without a key, states. The heights and the states are read once, by the
-// readers that do not read once (R08; R28). Plain is the run of admission: the finished sheet
+// readers that do not read once. Plain is the run of admission: the finished sheet
 // without a key at 32 px alone, by every reader in every repeat, Opus too, as the platform reads
 // it; it goes with nothing else. A reader that reads once in a measurement keeps the mark in its
 // record: it is the strong reader of the pair, which the report pairs with each other.
@@ -187,7 +187,7 @@ func (s *step) Record(o runner.Outcome) any {
 // repeated: it cuts the crops of every sheet and puts the calls in order, repeat by repeat, so that
 // a run cut short has the same repeats of every sheet. Of each sheet, by each reader, as reads says:
 //   - keys: the finished sheet at 32 px, without a key and with the right key, and on a correct
-//     sheet with each false key of its task (R03). A reader that reads once asks only in the first
+//     sheet with each false key of its task. A reader that reads once asks only in the first
 //     repeat;
 //   - heights: the finished sheet without a key at 16, 24 and 48 px, a height whose crop is drawn at
 //     the height of one before it, 32 px first, left out;
@@ -430,7 +430,7 @@ type (
 		Prompt        string          `json:"prompt"`
 		PromptVersion int             `json:"prompt_version"`
 		// Runner and ModuleKit are the versions of the build that ran, and Refused the samples it
-		// refused: what the runner's report takes of the run (R74).
+		// refused: what the runner's report takes of the run.
 		Runner    string           `json:"runner,omitempty"`
 		ModuleKit string           `json:"module_kit,omitempty"`
 		Refused   []runner.Refused `json:"refused,omitempty"`
@@ -462,7 +462,7 @@ type (
 		States    []states.State  `json:"states"`
 		Policies  states.Policies `json:"policies"`
 		// Sample is the ID of the sheet's sample of the protocol, and Truth the truth of its answer
-		// slot, for the runner's report; a sheet of tutor-sample v0 has neither (R74).
+		// slot, for the runner's report; a sheet of tutor-sample v0 has neither.
 		Sample string             `json:"sample,omitempty"`
 		Truth  []evalsample.Truth `json:"truth,omitempty"`
 	}
@@ -480,7 +480,7 @@ type (
 		UnderKey Under  `json:"under_key"`
 		Error    string `json:"error,omitempty"`
 		// Invalid is set when the answer is off the schema: no observation, and the report of the
-		// protocol names the call unchecked, UNCHECKED_CAUSE_INVALID (R74).
+		// protocol names the call unchecked, UNCHECKED_CAUSE_INVALID.
 		Invalid bool `json:"invalid,omitempty"`
 		runner.Usage
 	}

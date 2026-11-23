@@ -21,11 +21,11 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// Model is the exact ID of the model the adapter calls (R07 spec).
+// Model is the exact ID of the model the adapter calls.
 const Model = "gpt-6-astra"
 
 // Efforts are the effort levels the adapter takes: high alone, as on the board, where GPT is not
-// chosen among levels (R20).
+// chosen among levels.
 var Efforts = []string{"high"}
 
 // Client calls GPT-6 Astra, by the two services of the SDK it needs.
@@ -46,8 +46,8 @@ func Dial(id, key string) (provider.Model, error) {
 // environment: openai.NewClient always puts first the SDK's defaults — the address, keys, the
 // organization, the project and headers of the variables OPENAI_… — and its switch without them is
 // internal, so the services are built without it, with the options the SDK's own defaults without
-// the environment have: the adapter's client, provider.HTTPClient, and the production address
-// (R105). The options are for tests: a fake server's URL.
+// the environment have: the adapter's client, provider.HTTPClient, and the production address.
+// The options are for tests: a fake server's URL.
 func New(apiKey string, opts ...option.RequestOption) *Client {
 	opts = append([]option.RequestOption{
 		option.WithHTTPClient(provider.HTTPClient()),
@@ -81,7 +81,7 @@ func (c *Client) Prices() provider.Prices {
 }
 
 // The limits of a picture that GPT-6 Astra takes at the detail "high": its patches of 32 px and its
-// largest side, by OpenAI's guide to images (R134).
+// largest side, by OpenAI's guide to images.
 const (
 	patchSide = 32
 	maxSide   = 65535
@@ -96,11 +96,11 @@ func (c *Client) Fit(width, height int) (int, int) {
 
 // Ask sends a picture and the text and asks for JSON that follows the schema. It sends one picture,
 // after its label, and refuses more before any call. That is the adapter's limit, not the model's:
-// GPT is not used on the board (R20), and the measurement of the writing process asks Claude alone
-// (R21). The picture goes with the detail "high", so that the model does not shrink it; the answer
+// GPT is not used on the board, and the measurement of the writing process asks Claude alone.
+// The picture goes with the detail "high", so that the model does not shrink it; the answer
 // is not stored at OpenAI; the reasoning effort is high, the request's or by default. GPT-6 Astra
 // always reasons, so a request without thinking is refused before any call. The answer is not
-// streamed: GPT is not used on the board (R20), so when its first text comes is not measured.
+// streamed: GPT is not used on the board, so when its first text comes is not measured.
 func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response, error) {
 	if r.Effort != "" && !slices.Contains(Efforts, r.Effort) {
 		return provider.Response{}, fmt.Errorf("gpt: no effort level %q", r.Effort)

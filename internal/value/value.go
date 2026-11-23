@@ -1,8 +1,8 @@
-// Package value is how tutor reads a value as the module format's checks read it (R56 spec): the
-// normalization of steps 1 to 4, a number's value read in steps 1 to 5 and 7, and a text in a
-// notation of number as a rational number, exactly. The reading compares the texts of parts by it
-// and finds a value in its part's writing, the leak check finds the key's number, and the reports
-// compare what was read with what was written. The verdict is module-kit's (R73).
+// Package value is how tutor reads a value as the module format's checks read it: the normalization
+// of steps 1 to 4, a number's value read in steps 1 to 5 and 7, and a text in a notation of number
+// as a rational number, exactly. The reading compares the texts of parts by it and finds a value in
+// its part's writing, the leak check finds the key's number, and the reports compare what was read
+// with what was written. The verdict is module-kit's.
 //
 // The normalization follows Unicode 17.0.0, the version of the tables of Go 1.27 and of
 // golang.org/x/text v0.42.0 (norm.Version); the format's test vectors use only characters that

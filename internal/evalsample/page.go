@@ -22,7 +22,7 @@ import (
 )
 
 // Workbook is the file of the pages of the workbook as a sample names it, the source file of its
-// task reference (R69), and the pages it holds.
+// task reference, and the pages it holds.
 type Workbook struct {
 	Source
 	Workbook *sample.Workbook
@@ -184,7 +184,7 @@ type Page struct {
 	Page *sample.WorkbookPage
 	Ink  *synth.Page
 	// ID is the sample's, and Truth the truth of each filled box, which a model reads, in the
-	// task's order: what the runner's report takes of the page (R74).
+	// task's order: what the runner's report takes of the page.
 	ID    string
 	Truth []Truth
 }

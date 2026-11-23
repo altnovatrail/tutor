@@ -65,14 +65,14 @@ func Read(answer string, traps []sample.Trap) (*Answer, error) {
 }
 
 // Place is where a box in pixels of a crop stands on it, as the adapter of the provider tells it
-// (provider.Place; R53 spec): in whole thousandths of the crop's height and width, [ymin, xmin,
+// (provider.Place): in whole thousandths of the crop's height and width, [ymin, xmin,
 // ymax, xmax], 0 to 1000. A box that has no area on the picture has no place.
 func Place(b judge.Box, c *render.Crop) ([4]int64, bool) {
 	return provider.Place(b.X1, b.Y1, b.X2, b.Y2, c.Width, c.Height)
 }
 
 // OnSheet is where a place on a crop, in thousandths, stands on the sheet, in whole units, as the
-// device would tell it by the crop's place on the sheet (R53 spec): the box judge.Hit takes.
+// device would tell it by the crop's place on the sheet: the box judge.Hit takes.
 func OnSheet(p [4]int64, c *render.Crop) judge.Box {
 	at := func(t int64, lo, hi float64) float64 { return lo + float64(t)*(hi-lo)/1000 }
 	b := c.SheetBox

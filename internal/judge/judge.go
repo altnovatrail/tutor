@@ -1,15 +1,15 @@
-// Package judge holds what the measurement asks of a model and how it reads the answer (R24): the
-// judge's instructions, the request of each form, and the schema of the answer. The judge sees a
-// finished sheet with the task's key and reference solution, as on the board (R19), and gives a
-// verdict and, for a mistake, the box around the first one in pixels of the first picture.
+// Package judge holds what the measurement asks of a model and how it reads the answer: the judge's
+// instructions, the request of each form, and the schema of the answer. The judge sees a finished
+// sheet with the task's key and reference solution, as on the board, and gives a verdict and, for a
+// mistake, the box around the first one in pixels of the first picture.
 //
-// The four forms differ in what the judge is shown besides the picture (R11): nothing (A), the
-// journal of the writing (B), the frames before erasures (C), or both (D). Their instructions are
-// one text, and B, C and D add only the block that tells their inputs.
+// The four forms differ in what the judge is shown besides the picture: nothing (A), the journal of
+// the writing (B), the frames before erasures (C), or both (D). Their instructions are one text,
+// and B, C and D add only the block that tells their inputs.
 //
-// The prompt comes in two versions, each with its own words and fingerprint, each frozen (R24).
-// Version 1 is for sheets of lines; version 2 is that of free writing, where a solution may have
-// drawings and writing at the side, and its journal tells parts of the sheet.
+// The prompt comes in two versions, each with its own words and fingerprint, each frozen. Version 1
+// is for sheets of lines; version 2 is that of free writing, where a solution may have drawings and
+// writing at the side, and its journal tells parts of the sheet.
 package judge
 
 import (
@@ -87,8 +87,8 @@ func (v Version) prompt() (p prompt, ok bool) {
 
 // base is the text of the instructions every form has: the board's (internal/board), for a sheet
 // the writer has finished. Erased writing is not part of the solution in any form. It does not
-// share the board's text: the measurement's prompt is frozen with its run (R24), and a change to
-// the board's must not change it.
+// share the board's text: the measurement's prompt is frozen with its run, and a change to the
+// board's must not change it.
 const base = `You check a handwritten solution to a maths task. The writer has finished it: Image 1 shows the sheet as they left it.
 
 1. Read the handwriting exactly as it is written. Do not correct anything: a wrong digit or sign stays wrong.
@@ -142,9 +142,9 @@ const (
 
 // Fingerprint names a version of the prompt: the SHA-256 of every word a judge reads besides those
 // of the sheet and its task — the instructions of the four forms, the labels of the pictures, the
-// text round the task and the words of the journal. The log of a run keeps it, so that runs of one
-// prompt can be told from runs of another: the prompt is frozen before the test (R24). A
-// version not in Versions has none: its fingerprint is empty.
+// text round the task and the words of the journal. A version not in Versions has none: its
+// fingerprint is empty. The log of a run keeps it, so that runs of one prompt can be told from runs
+// of another: the prompt is frozen before the test (R24).
 func Fingerprint(v Version) string {
 	p, ok := v.prompt()
 	if !ok {

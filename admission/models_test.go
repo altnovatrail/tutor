@@ -121,7 +121,7 @@ func TestSelect(t *testing.T) {
 	}
 	// The platform's list: the first app, where the author alone learns, reads by the author's
 	// pair; a deployment for anyone else has no reader yet, as the pair passed the stage author
-	// alone (R80).
+	// alone.
 	e, a = table.Select(adultFacts, handwriting, admissionv0.AiRoutePlatformAi, adult, StageAuthor, nil)
 	if !a.Admitted || e.Stage != StageAuthor || len(e.Models) != 2 || e.Models[0].Name() != "claude-opus-5-5 high" || e.Models[1].Name() != "claude-haiku-5-5 medium" {
 		t.Errorf("the first app chose %+v, %+v", e, a)
@@ -135,7 +135,7 @@ func TestSelect(t *testing.T) {
 }
 
 // requiresRetention are the models of the adapters that need Anthropic to keep the work 30 days,
-// which the list of admitted models leaves out (R121 spec): "Claude Fable 5.1, Claude Mythos 5.1,
+// which the list of admitted models leaves out: "Claude Fable 5.1, Claude Mythos 5.1,
 // Claude Fable 5, and Claude Mythos 5: These models require 30-day data retention and are not
 // available under ZDR unless expressly authorized by Anthropic" (Anthropic's «API and data
 // retention»). Of them, the adapter of Claude calls Fable 5.1 alone.
@@ -148,7 +148,7 @@ var (
 
 // Every entry of the platform's list names a model an adapter calls, at an effort it takes, none
 // that needs 30-day retention, and the report that admitted it or, at the stage author, the author's
-// word with its last day (R126); a reading of a sheet or of a workbook page is a pair, Opus first,
+// word with its last day; a reading of a sheet or of a workbook page is a pair, Opus first,
 // and of an essay one reader, each with the prompt the reading has now, so that a new prompt fails
 // here until it is measured.
 func TestAdmitted(t *testing.T) {
@@ -183,7 +183,7 @@ func TestAdmitted(t *testing.T) {
 			t.Errorf("%s: no fault", name)
 		}
 	}
-	// The words after a correct answer are one model's, admitted with their prompt now (R112).
+	// The words after a correct answer are one model's, admitted with their prompt now.
 	words := Entry{Capability: admissionv0.CapabilityCorrectAnswerWords, Models: []Model{opus}, Stage: StageAuthor, Report: evidence, Prompt: correct.Fingerprint()}
 	if f := listFaults([]Entry{words}); len(f) != 0 {
 		t.Errorf("a good entry of the words after a correct answer has faults: %v", f)
@@ -199,7 +199,7 @@ func TestAdmitted(t *testing.T) {
 		}
 	}
 	// An entry by the author's word has no report but the word, its day and its last day, holds the
-	// stage author alone, and is a fault once that day has passed (R126).
+	// stage author alone, and is a fault once that day has passed.
 	word := Evidence{Word: "the author's word", Date: "2026-11-17", Until: "2027-01-17"}
 	page := Entry{Capability: admissionv0.CapabilityHandwritingReading, Models: []Model{opus, haiku}, Stage: StageAuthor, Report: word, Prompt: workbook.Fingerprint()}
 	essayRead := Entry{Capability: admissionv0.CapabilityHandwritingReading, Models: []Model{haiku}, Stage: StageAuthor, Report: word, Prompt: essay.ReadFingerprint()}
@@ -238,7 +238,7 @@ func TestAdmitted(t *testing.T) {
 
 // An entry admitted by the author's word serves the least stage author alone, whatever stage it
 // names; the platform's list admits the workbook, the essay and the rubric so at the stage author
-// and none of them at full (R126).
+// and none of them at full.
 func TestSelectByWord(t *testing.T) {
 	table, err := Platform()
 	if err != nil {
@@ -286,7 +286,7 @@ func listFaults(list []Entry) []string {
 
 // listFaultsOn is listFaults on the day named: an entry admitted by the author's word is a fault
 // once the last day of its word has passed, so that the list fails here until a run admits it by
-// the rule or it leaves the list (R126).
+// the rule or it leaves the list.
 func listFaultsOn(list []Entry, today string) []string {
 	var out []string
 	for i, e := range list {
@@ -313,7 +313,7 @@ func listFaultsOn(list []Entry, today string) []string {
 			}
 		}
 		// The words of a task of a module are one model's, those of a task from paper a cascade of one
-		// to three attempts, each with its prompt now (R139).
+		// to three attempts, each with its prompt now.
 		words := e.Capability == admissionv0.CapabilitySolutionAnalysis || e.Capability == admissionv0.CapabilityHint
 		ofModule := e.Prompt == hint.Fingerprint() && len(e.Models) == 1
 		ofPaper := e.Prompt == paperwords.Fingerprint() && len(e.Models) >= 1 && len(e.Models) <= 3
@@ -325,8 +325,7 @@ func listFaultsOn(list []Entry, today string) []string {
 		}
 		// A reading is of a sheet or of a workbook page, by a pair, of an essay, by one reader, or of
 		// the work on a task from paper, by a cascade, each with its prompt now; the assessment by a
-		// rubric is one model's. A call of a task from paper is a cascade of one to three attempts
-		// (R137).
+		// rubric is one model's. A call of a task from paper is a cascade of one to three attempts.
 		cascade := len(e.Models) >= 1 && len(e.Models) <= 3
 		if e.Capability == admissionv0.CapabilityHandwritingReading {
 			pair := e.Prompt == reading.Fingerprint() || e.Prompt == workbook.Fingerprint()

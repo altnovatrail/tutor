@@ -143,7 +143,7 @@ const (
 
 // Layout is the layout of a sheet by its parts: the drawing it has, or else the side if it
 // calculates in a column, or "" when none of its parts shows one, as on a sheet of lines or on an
-// author's free solution, the whole sheet one part (R28).
+// author's free solution, the whole sheet one part.
 func (sh *PlanSheet) Layout() Layout {
 	var layout Layout
 	for _, p := range sh.Parts {

@@ -18,7 +18,7 @@ import (
 )
 
 // PageFile is the name of the sample of a page of the workbook in its directory, page-01.json for the
-// first: by the page's number in its file, which its task names too (R71).
+// first: by the page's number in its file, which its task names too.
 func PageFile(number int) string { return fmt.Sprintf("page-%02d.json", number) }
 
 // EssayFile is the name of the sample of an essay in its directory, essay-01.json for the first.

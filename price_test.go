@@ -56,7 +56,7 @@ func TestPrice(t *testing.T) {
 		t.Errorf("the price of the words after a correct answer: %+v, %+v, %v", p, a, err)
 	}
 	// The hint without the work is the same model with no picture, and has no expected tokens: the
-	// hint was measured with the work (R106). Its worst is the bound of the text and the most
+	// hint was measured with the work. Its worst is the bound of the text and the most
 	// output.
 	if p, a, err := lib.Price(CallHint, platform); err != nil || !a.Admitted || p.Expected || !p.Worst || !near(p.WorstUSD, (24000*5+16000*20)/1e6) {
 		t.Errorf("the price of the hint without the work: %+v, %+v, %v", p, a, err)

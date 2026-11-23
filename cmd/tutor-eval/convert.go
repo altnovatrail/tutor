@@ -19,7 +19,7 @@ import (
 )
 
 // writerCodeFile is where the author's writer's code is kept by default, beside the samples it links
-// and out of git, as the record mode and the converter make and read it (R75).
+// and out of git, as the record mode and the converter make and read it.
 const writerCodeFile = samplesFolder + "/writer-code"
 
 // pending is the prefix of a converted file before sample-check has passed it: no sheet's name
@@ -27,11 +27,11 @@ const writerCodeFile = samplesFolder + "/writer-code"
 const pending = ".converting-"
 
 // runConvert writes every sheet of tutor-sample v0 in a directory, a saved sheet of its plan, as a
-// sample of spec's eval protocol in a new directory, under the same name (convert.Sheet; R75): the
+// sample of spec's eval protocol in a new directory, under the same name (convert.Sheet): the
 // author's as a person's, with their writer's code, and the sheets code drew as tutor-eval draw
 // draws them from the seed. A sheet the new directory holds already is kept as it is, so a second
 // run writes nothing; the split is copied once, and it names the same files. The old files are not
-// touched. Nothing of the author's goes from samples to synthetic or anywhere else (R05, R28). Each
+// touched. Nothing of the author's goes from samples to synthetic or anywhere else. Each
 // sample is held to the rules of the protocol by sample-check before it gets its name, when
 // the new directory is in the work tree. The summary names each sheet by its number, its writer, its
 // pointer and its outcome, and nothing of the handwriting.
@@ -89,7 +89,7 @@ func runConvert(args []string, stdout, stderr io.Writer) int {
 // writerCodeOf is the file of the writer's code for the sheets of a directory: the one given, or by
 // default the author's, samples/writer-code, for a directory in samples; none for one in synthetic,
 // where no person's sheet goes; and a file beside the directory otherwise, so that the sheets of a
-// test name no code of the author's and make none (R75).
+// test name no code of the author's and make none.
 func writerCodeOf(dir, file string, given bool) string {
 	if given {
 		return file
@@ -106,7 +106,7 @@ func writerCodeOf(dir, file string, given bool) string {
 
 // convertDirs refuses directories a conversion may not take: none named, the same twice, one in the
 // work tree outside samples and synthetic, a new directory outside samples for the sheets in samples,
-// which are the author's (R05), and a file of the writer's code outside samples in the work tree.
+// which are the author's, and a file of the writer's code outside samples in the work tree.
 func convertDirs(from, to, codeFile string) error {
 	if from == "" {
 		return errors.New("-from is empty: name the directory of the sheets of tutor-sample v0")
@@ -139,8 +139,8 @@ func convertDirs(from, to, codeFile string) error {
 }
 
 // convertSheets converts the sheets of from into to and says what it did, and whether a sheet was
-// refused. A sheet a person wrote it never writes into synthetic, wherever it comes from (R28). The
-// error is a directory that cannot be read or written, or a check that cannot run.
+// refused. The error is a directory that cannot be read or written, or a check that cannot run. A
+// sheet a person wrote it never writes into synthetic, wherever it comes from (R28).
 func convertSheets(from, to string, plan *sample.Plan, bank *evalsample.Bank, o convert.Options) (string, bool, error) {
 	entries, err := os.ReadDir(from)
 	if err != nil {

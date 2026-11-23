@@ -6,10 +6,10 @@ import (
 )
 
 // MaxWords is the most words a hint of version 1 of the prompt may have: two short sentences of
-// about 15 words each (R39).
+// about 15 words each.
 const MaxWords = 30
 
-// The breaches of the form of a hint, as the log names them (R39).
+// The breaches of the form of a hint, as the log names them.
 const (
 	// BreachQuestions: not exactly one sentence is a question.
 	BreachQuestions = string(words.Questions)
@@ -21,10 +21,10 @@ const (
 	BreachScript = string(words.Script)
 )
 
-// Form is what a hint breaks of the form of R39, in the order of the constants above; nil when it
-// keeps it (words.HintForm, with MaxWords). The logs of version 1 of the prompt keep what it found;
-// a run holds hints to words.Hint, as api does. Its sentences, questions and words are counted as
-// words.Count counts them.
+// Form is what a hint breaks of the form of the measurement, in the order of the constants above;
+// nil when it keeps it (words.HintForm, with MaxWords). The logs of version 1 of the prompt keep
+// what it found; a run holds hints to words.Hint, as api does. Its sentences, questions and words
+// are counted as words.Count counts them.
 func Form(text string, lang sample.Lang, statement string) []string {
 	var out []string
 	for _, b := range words.HintForm(text, string(lang), statement, MaxWords) {
@@ -33,11 +33,11 @@ func Form(text string, lang sample.Lang, statement string) []string {
 	return out
 }
 
-// PlatformWords is the most words R70 spec lets a hint have in its language (words.HintWords): 30
+// PlatformWords is the most words the platform lets a hint have in its language (words.HintWords): 30
 // in Russian and 35 in English, and no limit, 0, in a language the measurement did not measure.
 func PlatformWords(lang sample.Lang) int { return words.HintWords(string(lang)) }
 
-// PlatformBroken is whether a hint breaks the form R70 spec sets, given what Form found it breaks:
+// PlatformBroken is whether a hint breaks the platform's form, given what Form found it breaks:
 // the same rules, with PlatformWords in place of MaxWords — what words.Hint gives, which api calls.
 func PlatformBroken(text string, lang sample.Lang, breaches []string) bool {
 	for _, b := range breaches {

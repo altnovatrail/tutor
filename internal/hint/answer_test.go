@@ -43,7 +43,7 @@ func TestRead(t *testing.T) {
 }
 
 // A box in pixels stands on the crop in thousandths of its size, clamped to the picture, as the
-// adapter tells it (R53 spec); a box with no area on the picture has no place.
+// adapter tells it; a box with no area on the picture has no place.
 func TestPlace(t *testing.T) {
 	c := &render.Crop{Width: 400, Height: 200, SheetBox: [4]float64{100, 50, 300, 450}, Scale: 1}
 	for _, tc := range []struct {

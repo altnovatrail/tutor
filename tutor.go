@@ -17,14 +17,15 @@ import (
 
 // Config is what api gives tutor when it starts: spec's admission table, the deployment's facts,
 // the least stage of admission its learners take — admission.StageAuthor where the operator names
-// it, as novatrail does for adults (R149 spec; R80) —, the platform's keys at the AI providers,
-// which api reads from Secret Manager, and the adapters of the providers whose models the service
-// calls, such as claude.Dial of package provider/claude. The library builds no adapter in, so that
-// a service carries the SDKs of the adapters it gives alone (R90). A provider with no adapter here
-// is no route at all, and one with no key no route of platform AI: Choose takes none of its models.
+// it, as novatrail does for adults —, the platform's keys at the AI providers, which api reads
+// from Secret Manager, and the adapters of the providers whose models the service calls, such as
+// claude.Dial of package provider/claude. The library builds no adapter in, so that a service
+// carries the SDKs of the adapters it gives alone. A provider with no adapter here is no route at
+// all, and one with no key no route of platform AI: Choose takes none of its models.
 // Reading is how the library reads a sheet and a workbook page, by the pair or by one reader; an
-// empty one is the pair. Debug lets a call's route carry the debug mode, Route.Debug, which api
-// turns on by its debug flag alone, on a local run (R136); off, such a route fails.
+// empty one is the pair. Debug lets a call's route carry the debug mode, Route.Debug, which api sets
+// for an account with the right to it, on a local run or on the deployment; off, such a route
+// fails.
 type Config struct {
 	Table    *admission.Table
 	Facts    admission.Facts
@@ -36,10 +37,10 @@ type Config struct {
 }
 
 // Reading is how the library reads the handwriting of a sheet and of a workbook page, which api
-// chooses (R68 spec; R125): ReadingPair, both readers of the entry chosen, the strong one first,
-// whose readings module-kit joins (R68 spec; R86 spec), or ReadingSingle, one reader, Haiku 5.5 at
+// chooses: ReadingPair, both readers of the entry chosen, the strong one first,
+// whose readings module-kit joins, or ReadingSingle, one reader, Haiku 5.5 at
 // medium, the pair's second, whose observation is the reading. The reading of an essay is one
-// reader in both (R68 spec).
+// reader in both.
 type Reading string
 
 // The modes of reading.
@@ -58,7 +59,7 @@ var singleReader = admission.Model{Provider: "anthropic", ID: "claude-haiku-5-5"
 var errNoSingleReader = errors.New("tutor: the reading is single, and the entry chosen has no " + singleReader.Name())
 
 // Tutor is the library as api holds it: made once, at the start, and called by many requests at
-// once. It keeps nothing of a call (R09 spec).
+// once. It keeps nothing of a call.
 type Tutor struct {
 	table   *admission.Table
 	facts   admission.Facts
@@ -123,8 +124,8 @@ func (t *Tutor) dial(m admission.Model, key string) (provider.Model, error) {
 }
 
 // Route is what every call of the library carries besides its work: the AI route, the learner's age
-// category, on the own key the key with its provider, and on a local run the debug mode (R136). It
-// names no learner, no account and no adult (R15 spec).
+// category, on the own key the key with its provider, and for an account with its right the debug
+// mode. It names no learner, no account and no adult.
 type Route struct {
 	AI       admissionv0.AiRoute
 	Category admissionv0.AgeCategory
@@ -132,7 +133,7 @@ type Route struct {
 	Debug    *Debug
 }
 
-// OwnKey is the key of an account owner who learns, with its provider (R84 spec). It lives only in
+// OwnKey is the key of an account owner who learns, with its provider. It lives only in
 // the memory of the request: its fields are unexported, it prints as its provider alone with any
 // verb, and as JSON it is nothing. The key itself stands behind a pointer, so that even an OwnKey
 // printed field by field, as fmt prints an unexported field of another struct, shows an address
@@ -195,8 +196,8 @@ func (t *Tutor) Choose(c admissionv0.Capability, r Route) (admission.Entry, admi
 }
 
 // ChooseCall chooses the models of a kind of call of the library for a route: of its capability, of
-// the entries that measured its prompt (admission.Table.SelectPrompt; R70 spec), and for the words
-// with the work only with the hint on the same model (R84). api calls it before an attempt, and the
+// the entries that measured its prompt (admission.Table.SelectPrompt), and for the words
+// with the work only with the hint on the same model. api calls it before an attempt, and the
 // call before it calls a model. The entry holds only the models the call asks: the first alone for
 // a call of one model, and the one reader of ReadingSingle for a reading of a sheet or a page.
 func (t *Tutor) ChooseCall(c Call, r Route) (admission.Entry, admission.Answer, error) {
@@ -208,12 +209,12 @@ func (t *Tutor) ChooseCall(c Call, r Route) (admission.Entry, admission.Answer, 
 
 // chooseCall is ChooseCall: the one choice of a kind of call that the call, ChooseCall, Price and
 // CheckKey make, with the models the call asks (Tutor.asked), so that what api's gateway admits and
-// reserves a quota for, and the models a key is checked for, are those the call asks (R111). The
+// reserves a quota for, and the models a key is checked for, are those the call asks. The
 // words with the work word the hint in the same call, so they are admitted only when the hint is
-// admitted on the model of the analysis (R84): when the model the hint without the work chooses, by
+// admitted on the model of the analysis: when the model the hint without the work chooses, by
 // the same prompt, is the analysis's first, and of a cascade, the words of a task from paper, when
-// its models are the analysis's, in their order (R139). Otherwise the answer is the hint's refusal,
-// or model_not_admitted when the hint is another model's — another ID or another effort.
+// its models are the analysis's, in their order. Otherwise the answer is the hint's refusal,
+// or model_not_admitted when the hint is another model's — another ID or another effort (R111).
 func (t *Tutor) chooseCall(c Call, r Route) (admission.Entry, admission.Answer, error) {
 	k := kinds[c]
 	e, a, err := t.choose(k.capability, r, k.prompt)
@@ -221,7 +222,7 @@ func (t *Tutor) chooseCall(c Call, r Route) (admission.Entry, admission.Answer, 
 		return e, a, err
 	}
 	// The debug mode bypasses the list: its models serve the call, and the admission's refusal
-	// stands only where it names none (R136).
+	// stands only where it names none.
 	if d := debugOf(c, r); d != nil && (a.Admitted || d.First != nil) {
 		e.Models = d.models(c, k.asked(e.Models))
 		a.Admitted, a.Reason = true, nil
@@ -249,7 +250,7 @@ func (t *Tutor) chooseCall(c Call, r Route) (admission.Entry, admission.Answer, 
 }
 
 // wordsHint is the kind of the hint without the work that a kind of words with the work words in
-// the same call (R84).
+// the same call.
 var wordsHint = map[Call]Call{CallWords: CallHint, CallPaperWords: CallPaperHint}
 
 // asked are the models of an entry a kind of call asks (kind.asked), and for a reading by the pair in
@@ -297,8 +298,8 @@ func (t *Tutor) choose(c admissionv0.Capability, r Route, prompt string) (admiss
 
 // Kind is how a call of the library ended: the models answered; AI failed; a provider refused for a
 // limit, a balance or billing, whose reason Outcome.Limit names; the admission refused the call,
-// before any model was asked; or the provider refused the own key, wrong or revoked (R84 spec).
-// None but the first is the learner's mistake (R04 spec).
+// before any model was asked; or the provider refused the own key, wrong or revoked.
+// None but the first is the learner's mistake.
 type Kind int
 
 // The kinds of outcome.
@@ -347,10 +348,10 @@ const (
 // when the tokens are not its whole bill —, which Priced says the prices hold, and it is an
 // estimate: the provider bills; how long the call took, from when the library asked the adapter to
 // when the answer or the failure came back, the SDK's retries counted in — the span the eval runner
-// times as latency_ms (R107) —, and how many times the SDK sent it again; and when the first text
+// times as latency_ms —, and how many times the SDK sent it again; and when the first text
 // of the answer came, counted from the attempt that answered, or zero where none came or the
 // adapter does not measure it, as GPT's does not. It holds no content and no identifier, and may be
-// written to logs (R09 spec).
+// written to logs.
 type Usage struct {
 	Provider        admissionv0.Provider
 	Model           string
@@ -384,8 +385,7 @@ type Outcome struct {
 
 // call is a model of the entry chosen with its client, and in the debug mode the kind of the
 // library's call, the reader of the work and the mode, which records it. attempt is the model's
-// place among the attempts of a cascade, from 1, and 0 where the call asks its models at once
-// (R137).
+// place among the attempts of a cascade, from 1, and 0 where the call asks its models at once.
 type call struct {
 	model   admission.Model
 	client  provider.Model
@@ -410,7 +410,7 @@ func (t *Tutor) prepare(c Call, r Route) ([]call, admission.Answer, *Outcome) {
 		return nil, a, &Outcome{Kind: NotAdmitted, Admission: a}
 	}
 	// The models of a cascade are its attempts, one after another, unless the debug mode chose the
-	// models of the call (R137).
+	// models of the call.
 	cascading := kinds[c].cascade && !debugOf(c, r).chose(c)
 	calls := make([]call, 0, len(e.Models))
 	for _, m := range e.Models {

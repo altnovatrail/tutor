@@ -91,7 +91,7 @@ func TestVerdicts(t *testing.T) {
 			{Item: 2, Slot: 1, Text: ptr("3/4"), Verdict: verdict.Unreadable, Reason: workbook.Mirrored},
 			{Item: 3, Slot: 1, Text: ptr("3"), Verdict: verdict.Correct}, blank,
 		}},
-		// An answer with no cell for a box, or two, is no valid observation (R73): every box of the
+		// An answer with no cell for a box, or two, is no valid observation: every box of the
 		// page is unchecked, the blank one too, as after a failed call.
 		{"a cell missing and a cell twice", []workbook.Reading{reading(1, 1, "8"), reading(1, 1, "8"), reading(3, 1, "3"), reading(9, 1, "1")}, []workbook.Box{
 			{Item: 1, Slot: 1, Verdict: verdict.Unchecked, Reason: workbook.Twice},
@@ -234,13 +234,13 @@ func TestGolden(t *testing.T) {
 func TestFrozenV3(t *testing.T) {
 	const frozen = "26925af5e000d1c9cb30571f1e4f1b845852dedbb4da056b3b360a9eae3a5789"
 	if got := workbook.Fingerprint(); got != frozen || workbook.Version != 3 {
-		t.Errorf("the fingerprint of version %d is %s, not the one frozen before T123's run, %s", workbook.Version, got, frozen)
+		t.Errorf("the fingerprint of version %d is %s, not the one frozen, %s", workbook.Version, got, frozen)
 	}
 }
 
 // The record of a page tells the items of its task, each box with its check, and the record of a
 // call the observation that module-kit judges as the call did: the same verdicts, box by box. A
-// failed call, an answer with a cell missing and a box judged with no text tell none (R74).
+// failed call, an answer with a cell missing and a box judged with no text tell none.
 func TestRecordObservation(t *testing.T) {
 	pg := testPage()
 	pr := &workbook.PageRecord{Kind: "page", Page: pg.Number}

@@ -23,7 +23,7 @@ const (
 
 // TestFreeSheetPlans checks the plans of the free-form measurement the way the author does, with
 // their bank; that each file is the plan as it is written; that the author's sheets are three free
-// solutions, one to a layout (R28); and that the tables of docs/free-sheets.md are the bank and the
+// solutions, one to a layout; and that the tables of docs/free-sheets.md are the bank and the
 // plans, byte for byte.
 func TestFreeSheetPlans(t *testing.T) {
 	code, out, errs := runIt("check", freeBank, freePlan, authorPlan)
@@ -143,7 +143,7 @@ func layoutsOf(t *testing.T, plan *sample.Plan) map[string]string {
 // author writes it, without parts to mark.
 var authorFree = sample.PlanPart{Kind: sample.PartText, Place: sample.PlaceWide, Text: "свободное решение целиком"}
 
-// authorsFree checks the author's three sheets (R28): one to a layout, in the order of the layouts
+// authorsFree checks the author's three sheets: one to a layout, in the order of the layouts
 // — the number line, the drawing and the working at the side — each a correct free solution of its
 // task, the whole sheet one part, with no planned erasure.
 func authorsFree(t *testing.T, author *sample.Plan, layouts map[string]string) {

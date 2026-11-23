@@ -10,17 +10,17 @@ import (
 	"github.com/altnovatrail/tutor/internal/wordsjudge"
 )
 
-// The rule of admission of the tutor's words (R86): the targets the author set, of the stage author,
-// on the author's sheets with a mistake and the set of the words that code draws.
+// The rule of admission of the tutor's words: the targets the author set, of the stage author, on
+// the author's sheets with a mistake and the set of the words that code draws (R86).
 const (
 	// WordsRepeated is the most share of hints, of the cases with questions asked, that may repeat
 	// one of them.
 	WordsRepeated = 0.05
 	// V1Leaked and V1Broken are the upper bounds of the shares of version 1 of the hint's prompt,
 	// Opus 5.5 at high in the extended measurement: 4 hints of 900 leaked before the check, at most
-	// 0.010, and 8 broke the form of R70 spec, at most 0.016. Version 2 is no worse when its shares
-	// are within them. The words after a correct answer are held to them too: they have no version
-	// 1, and their target is to be no worse than the hint.
+	// 0.010, and 8 broke the platform's form of a hint, at most 0.016. Version 2 is no worse when its
+	// shares are within them. The words after a correct answer are held to them too: they have no
+	// version 1, and their target is to be no worse than the hint.
 	V1Leaked = 0.010
 	V1Broken = 0.016
 )

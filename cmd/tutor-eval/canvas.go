@@ -47,7 +47,7 @@ type canvasSample struct {
 }
 
 // runCanvas checks that tutor's runner reads canvas's synthetic samples, as CI does with those of a
-// pinned release of canvas (R38 spec; R76): every JSON file of -dir is held to the rules of the
+// pinned release of canvas: every JSON file of -dir is held to the rules of the
 // protocol by spec's sample-check, read by the task it names, at the tag of tutor it names, from the
 // trees of those tags under -at, and read on the stub, which asks no model and costs nothing: the
 // sheets in a run of the reading, the pages in a run of the workbook, each with its log in -runs

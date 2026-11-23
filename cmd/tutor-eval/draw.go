@@ -22,13 +22,13 @@ import (
 
 // runDraw draws, with internal/synth, every sheet of the plan that the directory of sheets does
 // not hold yet, and saves each under the name the record mode would give it, as a sample of spec's
-// eval protocol drawn by code from the seed (R26; R69): evalsample.Of. The sheets the author wrote
+// eval protocol drawn by code from the seed: evalsample.Of. The sheets the author wrote
 // stay as they are, and so does every file already there. The same seed draws the same sheets, to
 // the byte. With -png it also saves the pictures of each sheet it draws, in a directory of their
 // own, so that the author and the executor can look at them. It draws the sheets of a plan of parts
 // too: text, columns and drawings. With -workbook or -essays it draws the pages of the workbook or
 // the essays instead, as samples of the protocol too, into a directory of their own (drawPages,
-// drawEssays; R71).
+// drawEssays).
 func runDraw(args []string, stdout, stderr io.Writer, now func() time.Time) int {
 	flags := flag.NewFlagSet("tutor-eval draw", flag.ContinueOnError)
 	var f sheetFlags

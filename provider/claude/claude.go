@@ -20,7 +20,7 @@ import (
 )
 
 // Model is a Claude model the adapter can call: package catalog's, which holds the models, their
-// efforts and those at which thinking can be turned off without the SDK (R90). The adapter reads
+// efforts and those at which thinking can be turned off without the SDK. The adapter reads
 // them there, so that there is one list of them.
 type Model = catalog.Model
 
@@ -45,7 +45,7 @@ func Dial(id, key string) (provider.Model, error) {
 // federation, headers — and not its OpenTelemetry tracing, which by default writes spans into the
 // process's TracerProvider, sends their trace context to Anthropic and, by a variable, puts the
 // requests and the answers in them. The call goes to the production address, with the key and the
-// adapter's client, provider.HTTPClient (R105). The options are for tests: a fake server's URL.
+// adapter's client, provider.HTTPClient. The options are for tests: a fake server's URL.
 func New(apiKey string, m Model, opts ...option.RequestOption) *Client {
 	opts = append([]option.RequestOption{
 		option.WithoutEnvironmentDefaults(),
@@ -166,7 +166,7 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 
 // The limits of a picture that a model of the high-resolution tier takes unshrunk, every model of
 // the catalog among them: its long edge, rounded up to a whole patch, and its patches of 28 px, by
-// Anthropic's guide Vision (R134).
+// Anthropic's guide Vision.
 const (
 	patchSide = 28
 	maxEdge   = 2576

@@ -2,7 +2,7 @@ version: 2
 
 updates:
   # The actions of the workflows, and the references to .github's shared workflows with them. The
-  # references move together, in one pull request, since each names the same release (R117).
+  # references move together, in one pull request, since each names the same release.
   - package-ecosystem: github-actions
     directory: /
     schedule:
@@ -23,18 +23,17 @@ updates:
   # The Go modules the code is built from. Go itself, in the Dockerfile, and the tools the recipes
   # run by `go run` at an exact version are not among them: those are raised by hand. Neither is
   # .devcontainer/gopls/, the lock file of gopls: it is raised together with GOPLS_VERSION in the
-  # Dockerfile (R12).
+  # Dockerfile.
   - package-ecosystem: gomod
     directory: /
     schedule:
       interval: weekly
     cooldown:
       default-days: 3
-    # spec's Go module moves together with the spec submodule, to its tag, in a task of its own
-    # (R64), so Dependabot does not raise it. Nor the module of spec's contracts, which its release
-    # tags contracts/<tag> on the same commit (R67). Nor module-kit, whose release requires spec at
-    # its tag: a newer one may require a newer spec, so it moves by hand with the move to that tag
-    # (R68).
+    # spec's Go module moves together with the spec submodule, to its tag, in a task of its own,
+    # so Dependabot does not raise it. Nor the module of spec's contracts, which its release tags
+    # contracts/<tag> on the same commit. Nor module-kit, whose release requires spec at its tag: a
+    # newer one may require a newer spec, so it moves by hand with the move to that tag.
     ignore:
       - dependency-name: github.com/altnovatrail/spec
       - dependency-name: github.com/altnovatrail/spec/contracts

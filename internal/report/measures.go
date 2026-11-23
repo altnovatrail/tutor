@@ -8,7 +8,7 @@ import (
 )
 
 // The measures of a runner's report, counted from its records, all repeats together, by the rules
-// of the eval protocol (R74): a report holds no totals, and any reader can count them again. T is
+// of the eval protocol: a report holds no totals, and any reader can count them again. T is
 // the verdict on the truth, and R the verdict on a reading.
 
 // Count is a share as the eval protocol counts it: the events among the readings or marks it is
@@ -63,7 +63,7 @@ func (m *SlotMeasures) add(t, r *evalv1.Verdict, cause evalv1.UncheckedCause) {
 }
 
 // ReadingMeasures are the measures of a run of reading: on all its answer slots, and apart on
-// those noted mirrored and on those noted crossed out (R56 spec).
+// those noted mirrored and on those noted crossed out.
 type ReadingMeasures struct {
 	All, Mirrored, CrossedOut SlotMeasures
 }

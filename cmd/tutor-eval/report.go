@@ -23,8 +23,8 @@ import (
 )
 
 // runReport turns the log of a run into its report, asking no model, by the kind of call the log is
-// of. Of the judge, whose log tells no kind (R24): the criterion and its numbers in Markdown, and
-// the answers by judge and form in CSV. Of the reading: the threshold of R03 a reader each, the
+// of. Of the judge, whose log tells no kind: the criterion and its numbers in Markdown, and
+// the answers by judge and form in CSV. Of the reading: the threshold of one call with the key a reader each, the
 // readings by reader and condition and the rule of two readers in Markdown, and the readings in
 // CSV. Of the hint: the leaks before the check and after it, the form, the fallback texts and the
 // place by tutor, language and rung in Markdown and CSV, and about 30 hints for the author to read
@@ -157,7 +157,7 @@ type withReading interface {
 }
 
 // withProtocol is a report whose log tells the runner's reports of the protocol, which the command
-// writes beside the log, each a file, with the CSV of their measures (R74).
+// writes beside the log, each a file, with the CSV of their measures.
 type withProtocol interface {
 	Reports() []report.Named
 	ProtocolCSV(w io.Writer) error

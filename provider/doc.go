@@ -2,7 +2,7 @@
 // adapter that implements it, and a provider's SDK is imported by its adapter alone: that is how
 // the SDKs reach api's build only through tutor. The library does not build the adapters in: a
 // service gives it the Dial of each adapter it takes, so that a service of one provider's models
-// carries no other provider's SDK (R90).
+// carries no other provider's SDK.
 package provider
 
 import (
@@ -59,7 +59,7 @@ type Request struct {
 	// CacheInstructions marks instructions that are the same text in every request of their kind and
 	// hold nothing of the learner's — the platform's words, as those of the tutor's words —, so that
 	// the Claude adapter caches the prompt up to the instructions and no further: never the pictures
-	// or the text after them (R131). The GPT adapter sends nothing for it, and OpenAI may cache by
+	// or the text after them. The GPT adapter sends nothing for it, and OpenAI may cache by
 	// itself more of a request than its instructions.
 	CacheInstructions bool
 }
@@ -96,7 +96,7 @@ type Model interface {
 	// Ask sends the request and returns the answer.
 	Ask(ctx context.Context, r Request) (Response, error)
 	// Check checks the client's key by a request of the provider without any learner's content,
-	// which costs nothing (R84 spec): nil when the provider took the key, else ErrKeyRefused for a
+	// which costs nothing: nil when the provider took the key, else ErrKeyRefused for a
 	// wrong, revoked or expired key, ErrNoRights for a key without rights to the model, or the
 	// error of a provider that did not answer (Checked). An adapter does not let its SDK send it
 	// again after a refusal (NoRetry).
@@ -104,7 +104,7 @@ type Model interface {
 }
 
 // Dial is an adapter as the library takes it: it makes the client of a model of its provider by the
-// model's exact ID (R07 spec) and a key, and refuses an ID it does not call.
+// model's exact ID and a key, and refuses an ID it does not call.
 type Dial func(id, key string) (Model, error)
 
 // ErrNoAnswer is an answer that came back without the JSON asked for: the model refused, or ran

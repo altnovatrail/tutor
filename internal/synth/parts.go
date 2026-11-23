@@ -8,7 +8,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// A sheet of a plan of parts is written so that a device groups its strokes into its parts (R30):
+// A sheet of a plan of parts is written so that a device groups its strokes into its parts:
 // each part goes on without a pause to think — at most about 0.6 s between characters and 1.1 s
 // between the rows of a column — and the next one comes after one, so that no group holds two
 // parts and a part without its planned erasure is one group. A fix written after a pause may be a

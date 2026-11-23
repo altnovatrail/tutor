@@ -13,7 +13,7 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// KeyCheck is how the check of an own key ended (R84 spec), as spec's contract names it
+// KeyCheck is how the check of an own key ended, as spec's contract names it
 // (OwnKeyCheck): the provider took it; the key is wrong, revoked or expired; it is right and has no
 // rights to a model it is needed for; the provider is closed to an own key at the profile, and no
 // call went; or the provider did not answer, and the check says nothing of the key.
@@ -44,7 +44,7 @@ func (k KeyCheck) String() string {
 	return fmt.Sprintf("key check %d", int(k))
 }
 
-// CheckKey checks an own key when its owner connects it (R84 spec): api checks it through tutor and
+// CheckKey checks an own key when its owner connects it: api checks it through tutor and
 // never calls a provider round it. The route is the own key's, with the profile's age category. The
 // key is checked for every model the library would call with it — the models each kind of call
 // chooses (ChooseCall), the hint without the work among them, both readers of a pair or the one

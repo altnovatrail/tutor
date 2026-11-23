@@ -14,7 +14,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// Hint is what a run of the hint comes to (R39): by tutor, language and rung, the hints the leak
+// Hint is what a run of the hint comes to: by tutor, language and rung, the hints the leak
 // check found the answer in, before the check and after it, the hints that break their form, the
 // fallback texts by cause, the box on the part of the first error and the model's trap against the
 // sheet's, and the time and cost of a call; the leaks by task; and about 30 hints for the author to
@@ -43,8 +43,8 @@ type Hint struct {
 //     Phrase the hints it found each in; After, of the calls asked: it found one in what the learner
 //     reads, which is nothing by construction;
 //   - Broken, of the hints that came: the hint breaks its form, Questions, Sentences, Words and Script
-//     the hints that break each rule; PlatformBroken, the form R70 spec sets, with its limits of words
-//     by language (hint.PlatformBroken);
+//     the hints that break each rule; PlatformBroken, the platform's form check, with its limits of
+//     words by language (hint.PlatformBroken);
 //   - FellBack, of the calls asked: the learner reads the fallback text, Failed, Leak and Form by its
 //     cause;
 //   - OnError, of the hints that came: the box hits the part of the first error; NoBox gave none;
@@ -102,7 +102,7 @@ func NewHint(l *hint.Log) (*Hint, error) {
 	case len(l.Run.Tutors) == 0 || len(l.Sheets) == 0:
 		return nil, errors.New("report: the log has no tutors or no sheets")
 	case !l.Run.Checked:
-		return nil, errors.New("report: the run did not check its hints for leaks and form, as runs before T75 did not: run it again")
+		return nil, errors.New("report: the run did not check its hints for leaks and form: run it again")
 	}
 	r := &Hint{log: l, sheets: map[sheetID]*hint.SheetRecord{}, byTutor: map[string]map[sheetID][]*hint.CallRecord{}, cases: map[string]*hint.Case{}}
 	for i := range l.Run.Cases {

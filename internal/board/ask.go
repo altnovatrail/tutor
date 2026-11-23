@@ -15,14 +15,14 @@ import (
 // The most a call may take: output tokens, reasoning included, which bound what it can cost, and
 // a generous count of input tokens — the picture of the board and the prompt come to about 1 300.
 // The output limit is the same at every effort level, so that the levels are compared under one
-// limit (R19).
+// limit.
 const (
 	maxOutputTokens   = 16000
 	inputTokensBudget = 4000
 )
 
 // The forms of an answer. The board asks for the short one: a verdict and, for a mistake, its
-// place (R19). An answer of the earlier form also held the lines the model read, the final answer,
+// place. An answer of the earlier form also held the lines the model read, the final answer,
 // the number of the first wrong line and a comment; the log holds such answers without a form, and
 // the summary counts them apart.
 const (

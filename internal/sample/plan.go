@@ -8,7 +8,7 @@ import (
 )
 
 // Plan is a sheet plan: what the writer writes on each sheet, and the markup that the record mode
-// of the board fills in from it (R25). A plan sheet is checked as the markup of a sample, so that
+// of the board fills in from it. A plan sheet is checked as the markup of a sample, so that
 // what the board fills in passes the sample's check. A plan of Version has lines; one of PlanParts
 // has parts, and in memory their texts are its lines.
 type Plan struct {
@@ -18,7 +18,7 @@ type Plan struct {
 }
 
 // PlanSheet is one sheet of a plan. Who writes it, the plan does not say: the author writes every
-// sheet of the measurement in their own hand (R24).
+// sheet of the measurement in their own hand.
 type PlanSheet struct {
 	// Number is the sheet's place in the plan, from 1.
 	Number int `json:"number"`
@@ -190,7 +190,7 @@ func (sh *PlanSheet) standIn() *Sample {
 	s := &Sample{
 		Format:  SampleFormat,
 		Version: &v,
-		// The measurement's sheet (R24); any sheet would do, as every point is at its corner.
+		// The measurement's sheet; any sheet would do, as every point is at its corner.
 		Sheet:    Sheet{Width: 1000, Height: 600},
 		Task:     sh.Task,
 		Writer:   WriterAuthor,

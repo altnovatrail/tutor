@@ -47,7 +47,7 @@ type WorkbookItem struct {
 }
 
 // MaxItems is the most items a page holds: an item to a row, and a page of the workbook has ten
-// rows (R35 canvas).
+// rows.
 const MaxItems = 10
 
 // BoxMark is how a box stands in the text of an item's line.
@@ -83,7 +83,7 @@ type BoxCheck struct {
 // CheckKind is the kind of a box's check.
 type CheckKind string
 
-// The check kinds of the workbook (R41 spec), and a time of day (R111 spec).
+// The check kinds of the workbook, and a time of day.
 const (
 	KindNumber   CheckKind = "number"
 	KindFraction CheckKind = "fraction"
@@ -133,7 +133,7 @@ const (
 	Inline FractionWriting = "inline"
 )
 
-// similarDigits are the pairs of digits a hand writes alike, each the other's (R36).
+// similarDigits are the pairs of digits a hand writes alike, each the other's.
 var similarDigits = map[rune]rune{'1': '7', '7': '1', '4': '9', '9': '4', '3': '8', '8': '3', '5': '6', '6': '5'}
 
 // PairOf is the digit of a digit's pair, and false for a digit of no pair or no digit at all.
@@ -147,7 +147,7 @@ const Mirrorable = "2579"
 
 // writtenValue is how a value of a number or a fraction is written in a box: digits, or a simple
 // fraction of them; and writtenTime how a time is, hours, ":" and minutes, in the notation of a time
-// of the format (R111 spec), so that a trap value can hold 5:60.
+// of the format, so that a trap value can hold 5:60.
 var (
 	writtenValue = regexp.MustCompile(`^(0|[1-9][0-9]*)(/[1-9][0-9]*)?$`)
 	writtenTime  = regexp.MustCompile(`^[0-9]{1,2}:([0-9]{2}|[1-9][0-9]{2})$`)

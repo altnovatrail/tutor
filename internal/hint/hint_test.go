@@ -191,12 +191,12 @@ func TestFingerprint(t *testing.T) {
 	}
 }
 
-// Version 3 of the prompt is frozen, the version admitted (R100): any change to a word a tutor
-// reads changes the fingerprint, and this test fails until the words are measured anew.
+// Version 3 of the prompt is frozen, the version admitted: any change to a word a tutor reads
+// changes the fingerprint, and this test fails until the words are measured anew (R100).
 func TestFrozenV3(t *testing.T) {
 	const frozen = "7d598021bf716157a54b4e60ac2c5583e0ea8429c43e9e0a30805ef99afdeeeb"
 	if got := hint.Fingerprint(); got != frozen || hint.Version != 3 {
-		t.Errorf("the fingerprint of version %d is %s, not the one frozen after the dev round of T127, %s", hint.Version, got, frozen)
+		t.Errorf("the fingerprint of version %d is %s, not the one frozen, %s", hint.Version, got, frozen)
 	}
 }
 
@@ -223,7 +223,7 @@ func TestRequestOf(t *testing.T) {
 	if len(r.Images) != 0 || !r.NoPicture {
 		t.Errorf("a request without the work has pictures %d, NoPicture %v", len(r.Images), r.NoPicture)
 	}
-	// The instructions, the same in every request, are cached, with the work or without it (R131).
+	// The instructions, the same in every request, are cached, with the work or without it.
 	// Below 512 tokens the cache keeps nothing and no error says so; 2 048 bytes keep them above it
 	// with room.
 	if !r.CacheInstructions || r.Instructions != hint.Instructions() || len(r.Instructions) < 2048 {

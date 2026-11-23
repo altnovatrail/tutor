@@ -1,12 +1,11 @@
 // Package correct is the call of the words after a correct answer: once the program has found the
 // final answer right, a model praises a step of the solution and asks which technique helped, in
-// words of a form of their own (words.Correct; R112). It is a call of its own and an AI capability
-// of its own, correct_answer_words (R96 spec), not a rung of the hint ladder. The model sees the
-// crop of the work, or none when the task's answer slots are bound choice alone and no work goes
-// with the request, the task, its key, its solution and its techniques, in a block of data
-// (R02 spec), the language and the presentation style. The program checks the words for a leak and
-// their form before they reach the learner, and gives no words when they fail (R70 spec): the call
-// only words them.
+// words of a form of their own (words.Correct). It is a call of its own and an AI capability of its
+// own, correct_answer_words, not a rung of the hint ladder. The model sees the crop of the work, or
+// none when the task's answer slots are bound choice alone and no work goes with the request, the
+// task, its key, its solution and its techniques, in a block of data, the language and the
+// presentation style. The program checks the words for a leak and their form before they reach the
+// learner, and gives no words when they fail: the call only words them.
 package correct
 
 import (
@@ -28,8 +27,8 @@ import (
 
 // Version is the version of the prompt of the words after a correct answer, which the library and
 // the runner ask alike (RequestOf). A version is frozen once measured, and the admitted one is
-// version 1: a change to a word a model reads is a new version, measured anew (R112; R113).
-// TestFrozenV1 holds it.
+// version 1: a change to a word a model reads is a new version, measured anew. TestFrozenV1 holds
+// it (R113).
 const Version = 1
 
 // The instructions of the words, one text for every language: the request names it.
@@ -94,10 +93,10 @@ type Prompt struct {
 }
 
 // RequestOf is what the words ask of a model: the instructions, the crop after its label when there
-// is one, and the text: the size of the crop or that there is none, the task, the language, the words
-// it allows (words.HintWords, the limit of the form of these words) and the style, and the block of
-// the task's data. The library and the runner ask it alike, so that eval measures the words the
-// platform asks (R70 spec). A language whose tag cannot be read is refused. The model, its effort,
+// is one, and the text: the size of the crop or that there is none, the task, the language, the
+// words it allows (words.HintWords, the limit of the form of these words) and the style, and the
+// block of the task's data. The library and the runner ask it alike, so that eval measures the
+// words the platform asks. A language whose tag cannot be read is refused. The model, its effort,
 // whether it thinks and how many tokens it may write the caller sets.
 func RequestOf(p Prompt) (provider.Request, error) {
 	// The language is a tag that words.Correct can read, with a name the model can read: a check of
@@ -125,7 +124,7 @@ func RequestOf(p Prompt) (provider.Request, error) {
 		SchemaName:   "correct_answer_words",
 		Schema:       Schema,
 		NoPicture:    len(p.PNG) == 0,
-		// The instructions are the same in every request and hold nothing of the learner's (R131).
+		// The instructions are the same in every request and hold nothing of the learner's.
 		CacheInstructions: true,
 	}, nil
 }

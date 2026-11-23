@@ -10,7 +10,7 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// Version 2 is frozen: the entry of the list admits this fingerprint (R135).
+// Version 2 is frozen: the entry of the list admits this fingerprint.
 func TestFrozenV2(t *testing.T) {
 	const frozen = "b59a541a92783214fc16a1624a966cc734e96bf33b208b6c706ca1e048a74b8e"
 	if got := Fingerprint(); got != frozen || Version != 2 {

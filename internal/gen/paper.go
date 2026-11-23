@@ -14,8 +14,8 @@ import (
 // paperStream is the stream of the random numbers of the set of paper.
 const paperStream = 162
 
-// Paper builds the set of a task from paper (R135) from the seed: n cases, the kinds in turn —
-// an expression, an equation, a word problem, a choice, an open task and several tasks, 2 to 4
+// Paper builds the set of a task from paper from the seed: n cases, the kinds in turn — an
+// expression, an equation, a word problem, a choice, an open task and several tasks, 2 to 4
 // equations under one instruction —, and the work of each task in turn right, wrong and blank, an
 // open task's blank and unchecked, since no key judges a line. The key of a formula is the solver's
 // on it, so the set holds no answer a program did not compute; the key of a word problem and of a

@@ -27,16 +27,16 @@ ARG JUST_VERSION=1.58.0
 # and the Go tools in tools/, and the checks build the module's zip as the Go module proxy will.
 # Every copy gets Go whatever its kind, unused where there is no Go code (R64 spec).
 ARG GO_VERSION=1.27.4
-# golangci-lint runs tutor's linters and formatters, gofmt and goimports among them (R13). It is in
+# golangci-lint runs tutor's linters and formatters, gofmt and goimports among them. It is in
 # this stage, not in toolchain, since .github's go.yml runs ci-lint in the core wherever toolchain
-# holds more than the core (R47 .github). It is under GPL-3.0, an exception R12 names. It is tutor's
-# own difference from spec's devcontainer, and a move to a tag of spec adds it again.
+# holds more than the core. It is under GPL-3.0, a named exception: it never ships. It is tutor's
+# own difference from spec's devcontainer, and a move to a tag of spec adds it again (R12).
 ARG GOLANGCI_LINT_VERSION=2.15.0
 # buf formats, lints, compares with the previous release and generates code from the protobuf
 # API contracts, spec's contracts/ (R83 spec). Every copy gets it as it gets Go, unused where there are
 # no contracts: the other repositories take the generated code from a release of spec. In tutor it
 # builds the image of the submodule's contracts, which spec's sample-check and report-check hold the
-# eval protocol's files to (R69).
+# eval protocol's files to.
 ARG BUF_VERSION=1.75.0
 # Each archive's sha256 per architecture, as its publisher lists it: SHASUMS256.txt of the Node
 # release, SHA256SUMS of just's, go.dev/dl for Go, the checksums.txt of golangci-lint's, sha256.txt

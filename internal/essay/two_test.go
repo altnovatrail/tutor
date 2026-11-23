@@ -210,7 +210,7 @@ func TestNewTwoAssessor(t *testing.T) {
 func TestFrozenTwoV3(t *testing.T) {
 	const frozen = "00cf587cb7fbddeee65c167a7d59561b1942c1eea7b7f8b2bcd42ae4fb4002f1"
 	if got := TwoFingerprint(); got != frozen || TwoVersion != 3 {
-		t.Errorf("the fingerprint of version %d of the two calls is %s, not the one frozen before the runs of T124 and T125, %s", TwoVersion, got, frozen)
+		t.Errorf("the fingerprint of version %d of the two calls is %s, not the one frozen, %s", TwoVersion, got, frozen)
 	}
 }
 

@@ -8,8 +8,8 @@
 // each by its saved file, whose name says the sheet and the time of the save.
 //
 // A sample is the sheet as tutor's code takes it in memory: its files are samples of spec's eval
-// protocol, which internal/evalsample reads into one (R69), and the files of tutor-sample v0, which
-// only internal/convert reads (R75). The bank, the plan and the split are files of their own. A
+// protocol, which internal/evalsample reads into one, and the files of tutor-sample v0, which only
+// internal/convert reads. The bank, the plan and the split are files of their own. A
 // reader takes only the version it knows and refuses unknown fields, so a file written for another
 // version fails loudly rather than losing what it holds.
 package sample
@@ -136,8 +136,8 @@ type Expected struct {
 // Writer is who wrote a sheet.
 type Writer string
 
-// The writers of the measurement: the author, in their own hand or imitating a child's (R08), and
-// the code of internal/synth, which draws the sheets the author does not write (R26).
+// The writers of the measurement: the author, in their own hand or imitating a child's, and the
+// code of internal/synth, which draws the sheets the author does not write.
 const (
 	WriterAuthor        Writer = "author"
 	WriterAuthorAsChild Writer = "author-as-child"
@@ -171,7 +171,7 @@ var Scenarios = []Scenario{
 // Erased is what a planned erasure removed.
 type Erased string
 
-// The two planned erasures of R11.
+// The two planned erasures of the measurement.
 const (
 	// ErasedMistake: a mistake was erased and fixed; the result is correct.
 	ErasedMistake Erased = "mistake"

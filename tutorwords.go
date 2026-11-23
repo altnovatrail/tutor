@@ -18,30 +18,30 @@ import (
 )
 
 // wordsMaxOutput is the most the call of words may write, thinking included: the bound of the
-// runner's calls, as for the reading, so that what the platform asks is what eval measures (R70
-// spec). A tighter bound would make the library ask what eval does not measure (R94).
+// runner's calls, as for the reading, so that what the platform asks is what eval measures.
+// A tighter bound would make the library ask what eval does not measure.
 const wordsMaxOutput = 16000
 
 // Trap is a trap of a task that a model may name, by its ID, with its description from the
-// catalogue of traps, which api takes through module-kit (R57 spec).
+// catalogue of traps, which api takes through module-kit.
 type Trap struct {
 	ID, Description string
 }
 
 // WordsRequest is a call of the tutor's words: the analysis of the steps and the hint of a rung, in
 // one call.
-//   - Crop is the PNG of the crop of the work, sent again, as the server keeps none (R09 spec); nil
-//     when the learner asks to have the rung put another way, which sends no work (R82 spec);
-//   - Key and Solution are the task's, which the model sees here alone (R67 spec);
+//   - Crop is the PNG of the crop of the work, sent again, as the server keeps none; nil
+//     when the learner asks to have the rung put another way, which sends no work;
+//   - Key and Solution are the task's, which the model sees here alone;
 //   - Traps are the task's traps that AI may name, with their descriptions, and Found the trap of
-//     the cell of the rung, which the program found by its value, or empty (R82 spec);
+//     the cell of the rung, which the program found by its value, or empty;
 //   - Techniques are the task's ways to solve it;
 //   - Rung is the rung api picked, 1 to 3; Language the module's language of explanations, by its
 //     tag; Style only what of the presentation style changes the words;
 //   - Asked are the questions the tutor has already asked on the task, in order.
 //
 // The words are checked by api for leaks and by words.Hint for their form, before they reach the
-// learner; api gives the fallback text in their place when they fail (R70 spec).
+// learner; api gives the fallback text in their place when they fail.
 type WordsRequest struct {
 	Route      Route
 	Task       *open.Task
@@ -70,7 +70,7 @@ func question(t *open.Task) *formatv0.Text {
 }
 
 // WordsAnswer is what the call of words gives, when Outcome is Answered: the box round the first
-// mistake, in thousandths of the crop, the same message as an observation's (R86 spec), or nil when
+// mistake, in thousandths of the crop, the same message as an observation's, or nil when
 // the model found none or saw no work; the trap of the request's that the mistake falls into, or
 // empty; the tutor's question; and, of the opening question of a task from paper, the model's own
 // answers of its tasks, which the learner never sees and api's leak check alone reads (PaperBreach).
@@ -129,7 +129,7 @@ func (t *Tutor) Words(ctx context.Context, w WordsRequest) WordsAnswer {
 		return fail(err)
 	}
 	// With the work, the one call words the hint too: the hint must be admitted on the analysis's
-	// model (R84), which prepare holds, as ChooseCall, Price and CheckKey do.
+	// model, which prepare holds, as ChooseCall, Price and CheckKey do.
 	calls, a, refused := t.prepare(c, w.Route)
 	if refused != nil {
 		return WordsAnswer{Outcome: *refused}

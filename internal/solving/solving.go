@@ -1,12 +1,11 @@
-// Package solving is the solution of tasks from paper by AI (R162 spec): a model sees the task's
-// crop, as app cut it from the photo of the page, with the tasks on it it is to solve, each by its
-// number and its statement as the reading of the statement gave them, solves each, and gives its
-// answer — a number, or the label of an option the page prints — or none when the task has no one
-// answer of these kinds.
-// The program holds the answer to the rules of a key and compares the reading of the work with it
-// (module-kit's paper); the model never judges the learner's work. It is the capability
-// task_solving of spec's admission table (R96 spec), and serves a task whose statement is no
-// formula the solver takes (R135).
+// Package solving is the solution of tasks from paper by AI: a model sees the task's crop, as app
+// cut it from the photo of the page, with the tasks on it it is to solve, each by its number and
+// its statement as the reading of the statement gave them, solves each, and gives its answer — a
+// number, or the label of an option the page prints — or none when the task has no one answer of
+// these kinds. The program holds the answer to the rules of a key and compares the reading of the
+// work with it (module-kit's paper); the model never judges the learner's work. It is the
+// capability task_solving of spec's admission table, and serves a task whose statement is no
+// formula the solver takes.
 package solving
 
 import (
@@ -24,13 +23,12 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// Version is the version of the prompt. A change to a word a model reads is a new version, and
-// the entry of the list that admitted the prompt admits it no longer (R70 spec). TestFrozenV2
-// holds it.
+// Version is the version of the prompt. A change to a word a model reads is a new version, and the
+// entry of the list that admitted the prompt admits it no longer. TestFrozenV2 holds it.
 const Version = 2
 
 // MaxOutputTokens is the most a call may write, thinking included: the bound of the runner's calls,
-// as for every call of the library that reasons (R94).
+// as for every call of the library that reasons.
 const MaxOutputTokens = 16000
 
 // The kinds of an answer, as the schema names them.
@@ -76,8 +74,8 @@ type Task struct {
 
 // RequestOf is what the solution asks of a model about a task's crop, as provider.Photo gives it,
 // of width × height px: the instructions, the crop after its label, its size and the tasks to
-// solve, which are data, a model's reading of the page (R02 spec). The model, its effort and how
-// many tokens it may write the caller sets.
+// solve, which are data, a model's reading of the page. The model, its effort and how many tokens
+// it may write the caller sets.
 func RequestOf(crop provider.Image, width, height int, tasks []Task) provider.Request {
 	crop.Label = cropLabel
 	var list strings.Builder
@@ -90,14 +88,14 @@ func RequestOf(crop provider.Image, width, height int, tasks []Task) provider.Re
 		Text:         fmt.Sprintf(sizeFormat, width, height, list.String()),
 		SchemaName:   "task_answer",
 		Schema:       Schema,
-		// The instructions are the same in every request and hold nothing of the learner's (R131).
+		// The instructions are the same in every request and hold nothing of the learner's.
 		CacheInstructions: true,
 	}
 }
 
 // schemaProperties are the properties of the answer, as JSON: an answer for each task, one flat
 // object, every field required, as every schema of the library is; the kind says which fields hold
-// the answer (R135).
+// the answer.
 var schemaProperties = json.RawMessage(`{
 		"answers": {
 			"type": "array",

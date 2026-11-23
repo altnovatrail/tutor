@@ -20,20 +20,20 @@ import (
 	"github.com/altnovatrail/tutor/internal/wordsjudge"
 )
 
-// The kinds of report admit rules on: a sheet's, by the rule of R80, a workbook's, by the rule of the
+// The kinds of report admit rules on: a sheet's, by the rule of a sheet, a workbook's, by the rule of the
 // workbook, and the log of a run of the essays, by the rules of the reading of an essay and of the
-// rubric (R124).
+// rubric.
 const (
 	admitSheet    = "sheet"
 	admitWorkbook = "workbook"
 	admitEssay    = "essay"
 )
 
-// runAdmit applies the rule of admission (R80) to runners' reports and prints, for each, the stage
+// runAdmit applies the rule of admission to runners' reports and prints, for each, the stage
 // it admits its readers to, or why it admits them to nothing, with the numbers the rule reads and the
 // SHA-256 of the file, which an entry of the list of admitted models names. -kind workbook applies
-// the rule of the workbook (R124) and prints the mirrored and the crossed-out boxes in rows of their
-// own. -kind essay applies the rules of the essay (R124) to logs of runs of the essays in two calls,
+// the rule of the workbook and prints the mirrored and the crossed-out boxes in rows of their
+// own. -kind essay applies the rules of the essay to logs of runs of the essays in two calls,
 // each with the judge's log of its feedback beside it, .judge.jsonl, and the judge's log of its
 // control phrases, -controls, and prints a stage or a refusal for the reading, CallEssay, and for the
 // assessment by the rubric, CallRubric, each apart. It prints the IDs of no sample and nothing of any

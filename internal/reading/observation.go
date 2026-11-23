@@ -29,7 +29,7 @@ const (
 
 // Observation is what a model read on a sheet: the parts of the work in the order the solution is
 // read, and its final answers. It says nothing of whether the answer is right: the verdict is the
-// program's (R03 spec).
+// program's.
 type Observation struct {
 	Parts   []Part   `json:"parts"`
 	Results []Result `json:"results"`
@@ -118,7 +118,7 @@ const (
 
 // ObservationOf is an observation as the eval protocol writes it: the one answer slot of a sheet,
 // bound anywhere, with the value of the final answer, or the reason the reading gives none, and
-// that reason in tutor's own words, which the log keeps (R73). A nil observation, a failed call, is
+// that reason in tutor's own words, which the log keeps. A nil observation, a failed call, is
 // none: nil, with no reason.
 //   - no final answer is UNREADABLE_NO_FINAL_ANSWER, no_result, and more than one
 //     UNREADABLE_SEVERAL_FINAL_ANSWERS, results;
@@ -194,10 +194,10 @@ func RecordObservation(c *CallRecord) *observationv1.Observation {
 
 // Verdict is the program's verdict on an observation, against the key of the task's check, the
 // value of the bank's key (KeyOf), whatever key the reading was given: module-kit's, on the
-// observation as the protocol writes it (ObservationOf; R73). No observation, a failed call, is
+// observation as the protocol writes it (ObservationOf). No observation, a failed call, is
 // unchecked; a reason of the reading makes it unreadable, with the reading's own word for it; and
 // otherwise the check of the kind number judges the value: correct, not yet right, or unreadable,
-// blank or in none of its notations (R56 spec). A key that is no number is no check module-kit
+// blank or in none of its notations. A key that is no number is no check module-kit
 // takes, and it gives no verdict, whatever was read: the sheet is unchecked, with no reason. The
 // banks' keys are all numbers, and a test holds them so.
 func Verdict(o *Observation, key string) (verdict.Verdict, Reason) {
@@ -227,7 +227,8 @@ func SlotVerdict(key string, o *observationv1.Observation) (verdict.SlotVerdict,
 var ctx = context.Background()
 
 // seen reports whether a value, read as the check reads it, stands in the writing of its part:
-// both normalized and without spaces, and the value the whole of a number there (R62 canvas-api).
+// both normalized and without spaces, and the value the whole of a number there: a part of
+// another number is not the value written, and taking it for one would give a false "correct".
 // So 2 is not seen in 13/2, in 2.5 or in x = -2, where the minus is a sign and not a subtraction,
 // while 66 is seen in «Ответ: 66.» and 2 in «x = 2, y = 3».
 func seen(v, text string) bool {
@@ -341,7 +342,7 @@ type Given struct {
 	Solution []string `json:"solution"`
 }
 
-// Under is what of an observation was read under a key and a solution (R03): the parts, by their
+// Under is what of an observation was read under a key and a solution: the parts, by their
 // numbers from 1, and whether the final answer was.
 type Under struct {
 	Parts  []int `json:"parts,omitempty"`
@@ -349,7 +350,7 @@ type Under struct {
 }
 
 // UnderKey is what of an observation was read as the given solution or key, though the sheet has
-// something else there (R03):
+// something else there:
 //   - a part of writing whose text, compared as squash compares, is a line of the given solution
 //     or the given key, while no part of the markup that is not crossed out has that text;
 //   - a part that is a drawing, by its numbers in the order they stand, since a drawing told in

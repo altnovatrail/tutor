@@ -1,10 +1,9 @@
 // Package sheets reads the directory where the record mode of the board saves the measurement's
-// sheets (R25), and tutor-eval draw the sheets it draws (R26), against the sheet plan: for each
-// plan sheet its last file, read and checked as a sample. A file is a sample of spec's eval
-// protocol, which its first key tells (R69); one of tutor-sample v0 is a problem of its sheet, and
-// tutor-eval convert writes it as a sample of the protocol (R75). From it come the summary of what
-// is recorded, without the handwriting, and the split of the sheets into a development and a test
-// part (R24).
+// sheets, and tutor-eval draw the sheets it draws, against the sheet plan: for each plan sheet its
+// last file, read and checked as a sample. A file is a sample of spec's eval protocol, which its
+// first key tells; one of tutor-sample v0 is a problem of its sheet, and tutor-eval convert writes
+// it as a sample of the protocol. From it come the summary of what is recorded, without the
+// handwriting, and the split of the sheets into a development and a test part.
 package sheets
 
 import (
@@ -44,7 +43,7 @@ type Sheet struct {
 	// Mouse is set when a mouse wrote a stroke of the sample of the protocol, as its pointer says.
 	Mouse bool
 	// ID is the ID of the sample of the protocol, and Truth the truth of its answer slot: what the
-	// runner's report takes of it (R74).
+	// runner's report takes of it.
 	ID    string
 	Truth []evalsample.Truth
 }
@@ -58,7 +57,7 @@ type Chosen struct {
 	Sample *sample.Sample
 	Task   *sample.Task
 	Plan   *sample.PlanSheet
-	// ID and Truth are the sample's of the protocol, for the runner's report (R74).
+	// ID and Truth are the sample's of the protocol, for the runner's report.
 	ID    string
 	Truth []evalsample.Truth
 }
@@ -162,9 +161,9 @@ func OfProtocol(data []byte) bool {
 	return false
 }
 
-// readProtocol reads a sheet's sample of the protocol as its plan sheet, and refuses it as section
-// 13 has it (evalsample.Read). A file that sample-check finds breaking a rule, at the lines broken,
-// or that cannot be read strictly as a sample is invalid too (evalsample.ReadChecked).
+// readProtocol reads a sheet's sample of the protocol as its plan sheet, and refuses it as the
+// protocol has it (evalsample.Read). A file that sample-check finds breaking a rule, at the lines
+// broken, or that cannot be read strictly as a sample is invalid too (evalsample.ReadChecked).
 func readProtocol(sh *Sheet, data []byte, broken []int, bank *evalsample.Bank) {
 	es, refused := evalsample.ReadChecked(data, broken)
 	if refused != nil {
@@ -192,7 +191,7 @@ func readProtocol(sh *Sheet, data []byte, broken []int, bank *evalsample.Bank) {
 }
 
 // V0Problem is the problem of a sheet whose file is of tutor-sample v0, which no reader but
-// tutor-eval convert takes (R75).
+// tutor-eval convert takes.
 const V0Problem = "(a file of tutor-sample v0: tutor-eval convert writes it as a sample of the protocol)"
 
 // problemPaths are the paths of the problems of a check, nothing of the handwriting.
@@ -413,12 +412,12 @@ func offPaths(diffs []sample.Problem) []string {
 	return paths
 }
 
-// Split divides the sheets into a development part of dev sheets and a test part (R24). Each
-// scenario gives the development part its share of dev, as near its share of the plan as whole
-// sheets allow: the shares left over go to the scenarios with the largest remainders, and of two
-// as large, to the one that comes first among sample.Scenarios. Which of a scenario's sheets go,
-// the seed decides: they stand in the order of the SHA-256 of the seed and the file's name. Every
-// sheet of the plan must be recorded and pass the check.
+// Split divides the sheets into a development part of dev sheets and a test part. Each scenario
+// gives the development part its share of dev, as near its share of the plan as whole sheets allow:
+// the shares left over go to the scenarios with the largest remainders, and of two as large, to the
+// one that comes first among sample.Scenarios. Which of a scenario's sheets go, the seed decides:
+// they stand in the order of the SHA-256 of the seed and the file's name. Every sheet of the plan
+// must be recorded and pass the check.
 func Split(r *Recorded, seed int64, dev int) (*sample.Split, error) {
 	var missing []int
 	for _, sh := range r.Sheets {

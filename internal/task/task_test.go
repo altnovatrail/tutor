@@ -392,9 +392,9 @@ func examples(t *testing.T) (map[string]*evalv1.Sample, map[string][]string) {
 }
 
 // spec's examples name tasks of tutor's files of tasks, and the task this package builds has the
-// open view of the digest each names (R68): the eval runner finds a sample's task by it. The
-// truth of each example is a valid observation of its task, the verdicts on it are those of spec's
-// report of reading, and the essay is an assessment whose marks name criteria of its rubric.
+// open view of the digest each names: the eval runner finds a sample's task by it. The truth of
+// each example is a valid observation of its task, the verdicts on it are those of spec's report of
+// reading, and the essay is an assessment whose marks name criteria of its rubric.
 func TestExamples(t *testing.T) {
 	samples, truths := examples(t)
 	if len(samples) != 5 {

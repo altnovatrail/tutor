@@ -22,7 +22,7 @@ import (
 // written; the items; whether the line of an item helps or harms the reading; and the other heights
 // of digits against 32 px.
 type Workbook struct {
-	// protocol are the runner's reports of the protocol that the log tells (R74).
+	// protocol are the runner's reports of the protocol that the log tells.
 	protocol []Named
 	log      *workbook.Log
 	readers  []runner.ReaderRecord
@@ -84,7 +84,7 @@ func workbookGroups(b *workbook.BoxRecord) []string {
 // WorkbookMirrored is the readings of the boxes with a digit written mirrored by a reader in a
 // condition at 32 px, in every repeat. Such a digit is not read as a digit: the box is ambiguous,
 // unreadable, and the learner writes it again, while a false alarm on it counts against the target
-// of 1 % (R56 spec). Each share is over the pages:
+// of 1 %. Each share is over the pages:
 //   - Rewrite is "unreadable" on such a box, among its readings, and Marked those of them the reader
 //     marked mirrored;
 //   - AsDigit is "correct": the digit read as the digit, against the rule and with no harm;
@@ -296,11 +296,11 @@ func NewWorkbook(l *workbook.Log) (*Workbook, error) {
 	return r, nil
 }
 
-// Reports are the runner's reports of the protocol that the log tells (R74), none for a log whose
+// Reports are the runner's reports of the protocol that the log tells, none for a log whose
 // samples are not of the protocol.
 func (r *Workbook) Reports() []Named { return r.protocol }
 
-// ProtocolCSV writes the measures of the runner's reports as CSV (R74).
+// ProtocolCSV writes the measures of the runner's reports as CSV.
 func (r *Workbook) ProtocolCSV(w io.Writer) error { return protocolCSV(w, r.protocol) }
 
 // calls are a reader's calls in a condition at a height, in the order they were made.
@@ -644,7 +644,7 @@ func (r *Workbook) Markdown(w io.Writer, logName string) error {
 		for _, c := range r.Captions {
 			fmt.Fprintf(&b, "| %s | %d | %d | %d | %s | %s | %d | %s |\n", c.Reader, c.Pages, c.Bare, c.Captioned, p(c.Test.Helps), p(c.Test.Harms), c.OnlyCaptioned, c.verdict())
 		}
-		fmt.Fprintf(&b, "\nd of a page is its errors captioned less those bare, over the repeats read in both conditions; the errors are false \"correct\", false alarms, extra \"unreadable\", \"unchecked\" and, from prompt version %d on, a digit written mirrored read as the digit. The test is the exact one-sided sign-permutation test over the pages, at p < %.2f. The rule written before the run (T80): a false \"correct\" captioned on a box that has none bare means the line of the item does not go into the reading of a box; the line helps when the reading captioned is better, with no such box.\n", workbook.MirroredVersion, Alpha)
+		fmt.Fprintf(&b, "\nd of a page is its errors captioned less those bare, over the repeats read in both conditions; the errors are false \"correct\", false alarms, extra \"unreadable\", \"unchecked\" and, from prompt version %d on, a digit written mirrored read as the digit. The test is the exact one-sided sign-permutation test over the pages, at p < %.2f. The rule written before the run: a false \"correct\" captioned on a box that has none bare means the line of the item does not go into the reading of a box; the line helps when the reading captioned is better, with no such box.\n", workbook.MirroredVersion, Alpha)
 	}
 
 	if len(r.Heights) > 0 {
@@ -652,7 +652,7 @@ func (r *Workbook) Markdown(w io.Writer, logName string) error {
 		for _, h := range r.Heights {
 			fmt.Fprintf(&b, "| %s | %d | %d | %d | %d | %d | %s | %d | %s |\n", h.Reader, h.Digit, h.Sheets, h.Errors, h.At32, h.Test.Nonzero, p(h.Test.Helps), h.NewFalseCorrect, yes(h.NotWorse()))
 		}
-		fmt.Fprintf(&b, "\nBare, the first repeat, paired by pages: d of a page is its errors at the height less those at 32 px, counted as for the line of the item. The height is not worse if the test does not find it worse at p < %.2f and no box has a false \"correct\" at it where it had none at 32 px (T72).\n", Alpha)
+		fmt.Fprintf(&b, "\nBare, the first repeat, paired by pages: d of a page is its errors at the height less those at 32 px, counted as for the line of the item. The height is not worse if the test does not find it worse at p < %.2f and no box has a false \"correct\" at it where it had none at 32 px.\n", Alpha)
 	}
 
 	b.WriteString("\n## Time and cost of a call\n\n| Reader | Condition | Height, px | Calls | Time p50, ms | Time p95, ms | Cost, $ |\n|---|---|---|---|---|---|---|\n")

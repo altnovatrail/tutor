@@ -1,4 +1,4 @@
-# NovaTrail's shared checks (R03 .github), pinned to a release of .github by SHA with its version
+# NovaTrail's shared checks, pinned to a release of .github by SHA with its version
 # beside it; Dependabot moves both. The repository's own jobs go beside them.
 name: CI
 
@@ -31,8 +31,8 @@ jobs:
     uses: altnovatrail/.github/.github/workflows/documents.yml@f1c7e9e6f8245fdbdbc23c4091f3c26350e3a44e # v0.1.33
 
   # The repository's Go code, by its own ci- recipes in its toolchain stage, and the coverage of
-  # its tests, which the shared workflow sends to Codecov (R16 .github; R66). id-token: write is for
-  # its coverage job alone, which asks for an OIDC token: a called workflow can only lower what this
+  # its tests, which the shared workflow sends to Codecov. id-token: write is for its coverage job
+  # alone, which asks for an OIDC token: a called workflow can only lower what this
   # job gives it.
   go:
     name: Go
@@ -43,7 +43,7 @@ jobs:
 
   # The samples of spec's eval protocol that tutor-eval draw writes, one of each kind it draws, as
   # internal/evalsample's testdata holds them, checked by spec's recipe sample-check against the
-  # contracts of the spec submodule (R69). go.yml checks out no submodule, so this job is the
+  # contracts of the spec submodule. go.yml checks out no submodule, so this job is the
   # repository's own, as the shared documents.yml runs its check: in the toolchain stage of
   # .devcontainer/Dockerfile, with its buf, Node and just. It runs no Go, so it takes no Go caches.
   samples:
@@ -57,12 +57,13 @@ jobs:
           persist-credentials: false
 
       # The image of the toolchain stage, from the cache of GitHub Actions, by the steps of the
-      # shared go.yml of the release above (R36, R42 .github; R31 spec; R120): the same file, image,
-      # path and key, so the entry is the one go.yml's job toolchain and documents.yml save on a push
-      # to main. On a miss the job builds the image itself: the artifact of go.yml's job toolchain no
-      # job of this file can take. It saves nothing. The stage is toolchain: tutor's adds nothing to
-      # toolchain-core, so go.yml and documents.yml keep no entry of the core and run every check in
-      # toolchain (R47 .github; R121).
+      # shared go.yml of the release above: the same file, image, path and key, so the entry is the
+      # one go.yml's job toolchain and documents.yml save on a push to main. On a miss the job builds
+      # the image itself: the artifact of go.yml's job toolchain no job of this file can take. It
+      # saves nothing. The stage is toolchain: tutor's adds nothing to toolchain-core, so go.yml and
+      # documents.yml keep no entry of the core and run every check in toolchain. The steps are a
+      # copy, not the composite action toolchain that Canvas calls, which brings the caches of Go
+      # as well (R133).
       - name: Toolchain image from the cache
         id: toolchain
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
@@ -76,7 +77,7 @@ jobs:
           STAGES: toolchain
         run: |
           # Each stage STAGES names, from its own file, novatrail-<stage>.tar, and as the one image
-          # novatrail-toolchain, as spec's toolchain.sh names either stage (R47 .github): the job
+          # novatrail-toolchain, as spec's toolchain.sh names either stage: the job
           # toolchain builds and saves one, then the other, and every other job takes one.
           for stage in $STAGES; do
               case $stage in
@@ -115,7 +116,7 @@ jobs:
 
   # canvas's synthetic samples, from the release of canvas the justfile pins by its tag and the
   # SHA-256 of its archive: tutor's runner must read each, on the stub, with no key and no cost, and
-  # fail on a spoiled one (R38 spec; R76). The recipe takes the banks at the tags of tutor the
+  # fail on a spoiled one. The recipe takes the banks at the tags of tutor the
   # samples name, by git archive, so the checkout fetches the tags; it needs the spec submodule for
   # sample-check, and the network for the archive.
   canvas:
@@ -131,12 +132,12 @@ jobs:
 
       # The image of the toolchain stage and the caches of Go — GOMODCACHE, GOCACHE and
       # GOLANGCI_LINT_CACHE in one folder mounted at /go-cache — by the composite action toolchain of
-      # the release of .github above, the steps of the shared go.yml, not a copy of them (R49 .github;
-      # R133): the image is the entry go.yml's job toolchain saves, and the Go caches an entry of the
+      # the release of .github above, the steps of the shared go.yml, not a copy of them: the image
+      # is the entry go.yml's job toolchain saves, and the Go caches an entry of the
       # check canvas, since go run ./cmd/tutor-eval builds the runner without the race detector and
       # the coverage of Go / test. The key hashes every go.sum of the checkout, spec/'s too, so a
       # move of the tag misses it, and the newest entry of the check comes by the prefix without
-      # go.sum, its modules dropped and its builds kept (R41 .github). Only a push to main saves the
+      # go.sum, its modules dropped and its builds kept. Only a push to main saves the
       # image and the caches, and a pull request reads main's.
       - name: Toolchain image and Go caches
         uses: altnovatrail/.github/.github/actions/toolchain@f1c7e9e6f8245fdbdbc23c4091f3c26350e3a44e # v0.1.33
@@ -151,7 +152,7 @@ jobs:
               novatrail-toolchain just ci-canvas-check
 
       # The action again, after the check: a push to main saves the caches under the key the first
-      # call asked for, when it missed; a pull request and every other event only read (R49 .github).
+      # call asked for, when it missed; a pull request and every other event only read.
       - name: Go caches into the cache
         uses: altnovatrail/.github/.github/actions/toolchain@f1c7e9e6f8245fdbdbc23c4091f3c26350e3a44e # v0.1.33
         with:

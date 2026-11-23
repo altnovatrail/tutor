@@ -17,7 +17,7 @@ import (
 // planned truth, criterion by criterion, with Cohen's κ — and how the reader read the essays and
 // kept the rule of the feedback. It has no threshold: the measure has no target yet (О-22).
 type Essays struct {
-	// protocol are the runner's reports of the protocol that the log tells (R74).
+	// protocol are the runner's reports of the protocol that the log tells.
 	protocol []Named
 	log      *essay.Log
 	essays   map[int]*essay.EssayRecord
@@ -45,8 +45,8 @@ type EssaysReader struct {
 	Paired, Unstable int
 	Reading          essay.Reading
 	// Feedbacks are the calls with feedback, Breaches how many of them break each part of its rule,
-	// PlatformBroken how many break the rule R70 spec sets, with its 80 words (essay.PlatformBroken),
-	// and MeanWords and MostWords its words.
+	// PlatformBroken how many break the platform's rule of feedback, with its 80 words
+	// (essay.PlatformBroken), and MeanWords and MostWords its words.
 	Feedbacks      int
 	Breaches       map[string]int
 	PlatformBroken int
@@ -98,11 +98,11 @@ func NewEssays(l *essay.Log) (*Essays, error) {
 	return r, nil
 }
 
-// Reports are the runner's reports of the protocol that the log tells (R74), none for a log whose
+// Reports are the runner's reports of the protocol that the log tells, none for a log whose
 // samples are not of the protocol.
 func (r *Essays) Reports() []Named { return r.protocol }
 
-// ProtocolCSV writes the measures of the runner's reports as CSV (R74).
+// ProtocolCSV writes the measures of the runner's reports as CSV.
 func (r *Essays) ProtocolCSV(w io.Writer) error { return protocolCSV(w, r.protocol) }
 
 // calls are a reader's calls, in the order of the run.
@@ -290,10 +290,10 @@ func (r *Essays) Markdown(w io.Writer, logName string) error {
 	fmt.Fprintf(&b, "The log %s, of the prompt %s, version %d. The essays of %s, drawn with the seed %d: %s. Readers: %s. Repeats: %d. Calls: %d made, %d of them failed; $%.2f spent of the $%.2f cap.\n",
 		logName, short(l.Run.Prompt), l.Run.PromptVersion, l.Run.File, l.Run.Seed, strings.Join(nums, ", "), strings.Join(readers, "; "), l.Run.Repeats, made, failed, spent, l.Run.MaxUSD)
 	if l.Run.Path == essay.PathTwo {
-		b.WriteString("The run assesses in two calls: a reading of the essay, then the assessment of the text it read (T92); an assessment below is both, and so are its cost and its time.\n")
+		b.WriteString("The run assesses in two calls: a reading of the essay, then the assessment of the text it read; an assessment below is both, and so are its cost and its time.\n")
 	}
 	if a := l.Run.Assessor; a != nil {
-		fmt.Fprintf(&b, "The text every reader read is assessed by %s, a configuration of its own (T156): a row of a reader below is its reading and the assessment of what it read.\n", configName(a.Name, a.Model, a.Effort, a.NoThinking))
+		fmt.Fprintf(&b, "The text every reader read is assessed by %s, a configuration of its own: a row of a reader below is its reading and the assessment of what it read.\n", configName(a.Name, a.Model, a.Effort, a.NoThinking))
 	}
 	b.WriteString(endNote(l.End))
 

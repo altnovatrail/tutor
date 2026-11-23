@@ -9,9 +9,9 @@ import (
 	"github.com/altnovatrail/tutor/words"
 )
 
-// The measures of the set of the words that code counts (R85): they count words and read no
+// The measures of the set of the words that code counts: they count words and read no
 // meaning, so they are the eval's, not checks of api. Whether words tell the learner's sex no
-// program checks without false alarms (R70 spec): Gendered is a rough search, a signal beside the
+// program checks without false alarms: Gendered is a rough search, a signal beside the
 // judge of the words, not a measure of admission.
 
 // RepeatShare is how much of a question asked before a hint holds, its words as a set, to repeat it.

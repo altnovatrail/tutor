@@ -10,7 +10,7 @@ import (
 )
 
 // The hints to read: how many the file holds, and how many of them at most are hints the leak check
-// caught (R39).
+// caught.
 const (
 	HintsToRead  = 30
 	CaughtToRead = 10

@@ -13,7 +13,7 @@ import (
 
 // Fitter is a model that takes a photo at a size of its own: an adapter whose provider would shrink
 // a larger picture itself says how large a photo comes to the model unshrunk, so that the model's
-// pixels are the photo's and a box it gives in them lands where it points (R134).
+// pixels are the photo's and a box it gives in them lands where it points.
 type Fitter interface {
 	// Fit is the largest size, keeping the aspect, at which a photo of width × height px comes to
 	// the model as it is sent: the size itself when it fits.
@@ -21,13 +21,13 @@ type Fitter interface {
 }
 
 // MaxPhoto is the most bytes of a photo that Photo decodes: the 4 MiB FindTasks of spec's contract
-// between app and api takes (R134).
+// between app and api takes.
 const MaxPhoto = 4 << 20
 
 // maxPhotoPixels bounds the pixels a photo may decode to, so that a small file that claims a huge
 // picture is refused before its pixels are allocated: a square of 3200 px a side, the long side app
 // draws a photo at, so that no photo app sends, nor a task's crop cut from one, is refused, and a
-// decoded photo of 8 bits a channel takes some 40 MB at most (R134).
+// decoded photo of 8 bits a channel takes some 40 MB at most.
 const maxPhotoPixels = 3200 * 3200
 
 // photoQuality is the quality of the JPEG a photo is sent as: high enough that the print of a page
@@ -114,7 +114,7 @@ func (p *Photos) Turned(degrees int) *Photos {
 // Turn is src turned by degrees clockwise on the screen, its y down, about its centre onto the
 // smallest upright rectangle that holds it, W' = round(W·|cos θ| + H·|sin θ|) by
 // H' = round(W·|sin θ| + H·|cos θ|), the corners white, as app turns its photo by the turn
-// FindTasks of spec's contract gives (R162 spec): each pixel's centre is taken back to the source
+// FindTasks of spec's contract gives: each pixel's centre is taken back to the source
 // and sampled bilinearly, white beyond it. A quarter turn moves the pixels as they are. A turned
 // picture of more than maxPhotoPixels is shrunk to them, keeping its aspect, so that it takes no
 // more memory than the largest photo decoded: a turn of 45° of a photo of 3200 × 2400 px would
@@ -296,7 +296,7 @@ func shrink(src image.Image, w, h int) *image.RGBA {
 // whole patch, exceeds edge; the size itself when it fits. It is the rule by which Anthropic gives
 // the size it shrinks a picture to, its reference implementation searched along the long edge, the
 // short one rounded half to even, in its guide Vision; an adapter gives its provider's side, edge
-// and most (R134).
+// and most.
 func FitPatches(width, height, side, edge, most int) (int, int) {
 	fits := func(w, h int) bool {
 		pw, ph := (w+side-1)/side, (h+side-1)/side

@@ -9,18 +9,18 @@ import (
 	"github.com/altnovatrail/tutor/internal/wordsjudge"
 )
 
-// The rules of admission of the essay (R124): its reading, CallEssay, and the assessment of the text
+// The rules of admission of the essay: its reading, CallEssay, and the assessment of the text
 // read by the rubric, CallRubric, each with a stage of its own, on a log of a run of the essays in
 // two calls. Both give the stage author alone: their set is synthetic, and the stage full waits for
-// the essays of adult volunteers (R71 spec; П-16).
+// the essays of adult volunteers (П-16).
 const (
 	// EssaySet is the set the rules of the essay admit on: the test part of eval/essays-gen.json,
-	// essays 21–300, as the runner's report names it, without the dev part, the first 20 (R124).
+	// essays 21–300, as the runner's report names it, without the dev part, the first 20.
 	EssaySet = "essays-gen-test"
 	// EssayWordsTarget is the most upper 95 % bound, by essay, of the words the reading read wrong.
 	EssayWordsTarget = 0.01
 	// RubricTarget is the most upper 95 % bound, by essay, of the false alarms on met criteria, the
-	// main measure of R71 spec at the target of product 10 spec.
+	// main measure of an assessment by a rubric.
 	RubricTarget = 0.01
 )
 
@@ -49,8 +49,8 @@ type EssayDecision struct {
 // criteria, with the bound the target reads, and the missed "not met"; the criteria, each with κ;
 // the assessments that failed, and the judgements a valid answer left unchecked, a criterion judged
 // twice or not at all; the judge, its control phrases and what it flagged of the feedback that came;
-// and the feedback that came and breaks the rule of R70 spec. The missed "not met", κ, the judgements
-// unchecked and the broken rule are shown beside and have no target.
+// and the feedback that came and breaks the platform's rule of feedback. The missed "not met", κ,
+// the judgements unchecked and the broken rule are shown beside and have no target.
 type RubricDecision struct {
 	Stage admission.Stage
 	Why   []string
@@ -67,9 +67,8 @@ type RubricDecision struct {
 }
 
 // essayHead reads the head of a log for the rules of the essay, and every reason it refuses both: a
-// run in one call, of more readers than one (R98), of another set than EssaySet, one that refused a
-// sample, and one that did not run to its end, since an event is one of all the repeats of an essay
-// (R124).
+// run in one call, of more readers than one, of another set than EssaySet, one that refused a
+// sample, and one that did not run to its end, since an event is one of all the repeats of an essay.
 func essayHead(r *Essays) (EssayHead, []string) {
 	run := r.log.Run
 	h := EssayHead{Set: setName([]string{fileName(run.File)}, run.Part), Repeats: run.Repeats}
@@ -100,11 +99,11 @@ func essayHead(r *Essays) (EssayHead, []string) {
 	return h, why
 }
 
-// AdmitEssay applies the rule of the reading of an essay to a log of a run of the essays in two calls
-// (R124): one reader, in the prompt of the reading this build asks (essay.ReadFingerprint), on the
+// AdmitEssay applies the rule of the reading of an essay to a log of a run of the essays in two calls:
+// one reader, in the prompt of the reading this build asks (essay.ReadFingerprint), on the
 // essays code drew legible, with the refusals of essayHead; then the stage author is no legible essay
 // read illegible, no reading failed otherwise — not asked, off the schema or with no answer —, so
-// that every essay is measured in every repeat (R124), no essay with an error of the learner's — a
+// that every essay is measured in every repeat, no essay with an error of the learner's — a
 // word spelled wrong, a sentence that begins with a small letter, the last without its mark — read
 // corrected, and the upper bound of the words read wrong within EssayWordsTarget. An event is an
 // essay's when any of its repeats gave it, counted once. An essay's words read wrong are the sum of
@@ -182,14 +181,14 @@ func corrected(rd essay.Reading) bool {
 	return rd.MisspelledKept < rd.Misspelled || rd.LowerStartsKept < rd.LowerStarts || rd.Unended && (rd.UnendedKept == nil || !*rd.UnendedKept)
 }
 
-// AdmitRubric applies the rule of the assessment by the rubric (R124) to a log of a run of the essays
+// AdmitRubric applies the rule of the assessment by the rubric to a log of a run of the essays
 // in two calls, by its file's name and SHA-256, with the judge's run on its control phrases and its
 // log of the log's feedback: the assessor, in the prompt of the assessment of a text this build asks
 // (essay.TextFingerprint), on the text the reading of this build read (essay.ReadFingerprint), with
 // the refusals of essayHead; the judge, in the prompt of this build, passed every control phrase and
-// judged every feedback that came, of this log (R86; R100); then the stage author is no assessment
+// judged every feedback that came, of this log; then the stage author is no assessment
 // failed — its reading failed, it was not asked, or it came off the schema —, so that every essay is
-// assessed in every repeat (R124), the upper bound of the false alarms on met criteria within
+// assessed in every repeat, the upper bound of the false alarms on met criteria within
 // RubricTarget, and the judge flags no feedback for telling the learner's sex, leaving the task or not
 // suiting a child. The unit is the criterion of an essay: a false alarm when any repeat judged a met
 // criterion unmet, counted once, of the met criteria judged at least once, the bound by essay. The

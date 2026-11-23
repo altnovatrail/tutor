@@ -8,7 +8,7 @@ type Task struct {
 	Solution  []string `json:"-"`
 }
 
-// Tasks are the eleven tasks of the board (R19; R28). The first five are two linear equations, two
+// Tasks are the eleven tasks of the board. The first five are two linear equations, two
 // chains of calculations and an olympiad task. The other six are olympiad tasks solved in free
 // form: two on a number line, two with a drawing, a row of objects or a scheme of segments, and two
 // with the working at the side. They are fixed, so that every try of a task is a try of the same

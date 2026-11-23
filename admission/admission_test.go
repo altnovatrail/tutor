@@ -165,9 +165,8 @@ func TestPlatform(t *testing.T) {
 	adult := func(p admissionv0.Provider, route admissionv0.AiRoute) Request {
 		return Request{Capability: admissionv0.CapabilityHandwritingReading, AiRoute: route, Provider: p, AgeCategory: admissionv0.AgeCategoryAdult}
 	}
-	// The own key of an adult needs no fact; platform AI needs its facts; Google is closed (R47
-	// spec). These are what the first app meets (R76 spec): if the table changes them, this test
-	// says so before api does.
+	// The own key of an adult needs no fact; platform AI needs its facts; Google is closed. These
+	// are what the first app meets: if the table changes them, this test says so before api does.
 	if a := table.Admit(adult("anthropic", admissionv0.AiRouteOwnKey), Facts{}); !a.Admitted {
 		t.Errorf("anthropic, own key, adult: %s", asJSON(t, a))
 	}
@@ -186,7 +185,7 @@ func TestPlatform(t *testing.T) {
 	}
 	// Platform AI of an adult needs the processor agreement alone, under the provider's usual
 	// retention, which the privacy policy names: the operator of novatrail withdraws
-	// minimal_retention, and adults keep their platform AI (R96 spec; R149 spec).
+	// minimal_retention, and adults keep their platform AI.
 	agreement, err := ReadFacts(table, []byte("anthropic:\n  data_processing_agreement: [adult]\n"))
 	if err != nil {
 		t.Fatal(err)

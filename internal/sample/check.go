@@ -328,7 +328,7 @@ func checkExpected(p *problems, s *Sample) {
 	}
 }
 
-// plannedErasure is what the planned erasure of each erasure scenario removes (R11).
+// plannedErasure is what the planned erasure of each erasure scenario removes.
 var plannedErasure = map[Scenario]Erased{
 	ScenarioErasureFixed:  ErasedMistake,
 	ScenarioErasureBroken: ErasedCorrectStep,

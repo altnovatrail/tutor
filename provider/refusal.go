@@ -43,12 +43,12 @@ func (e *LimitError) Error() string {
 }
 func (e *LimitError) Unwrap() error { return e.Err }
 
-// ErrKeyRefused is a provider's refusal of the key itself: it is wrong, revoked or expired (R84
-// spec). Sending the call again does not help either.
+// ErrKeyRefused is a provider's refusal of the key itself: it is wrong, revoked or expired.
+// Sending the call again does not help either.
 var ErrKeyRefused = errors.New("the provider refused the key")
 
 // ErrNoRights is a provider's answer to the check of a key that the key is right and has no rights
-// to the model: of its organization, workspace or project (R84 spec).
+// to the model: of its organization, workspace or project.
 var ErrNoRights = errors.New("the key has no rights to the model")
 
 // Checked is the error of the check of a key (Model.Check) that failed with err, with the refusal

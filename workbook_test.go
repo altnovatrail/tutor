@@ -42,7 +42,7 @@ func admitWorkbook(t *testing.T) {
 const cells = `{"cells": [{"item": 1, "slot": 1, "text": "8", "legible": true, "other_readings": [], "mirrored": false, "blank": false}, {"item": 2, "slot": 2, "text": "4", "legible": true, "other_readings": [], "mirrored": false, "blank": false}]}`
 
 // The reading of a sheet admits nothing of the workbook: another prompt is another reading, and
-// without the entry of the author's word (R126) the workbook is "not admitted".
+// without the entry of the author's word the workbook is "not admitted".
 func TestReadWorkbookNotAdmitted(t *testing.T) {
 	withoutWord(t)
 	lib, opus, _ := readers(t)

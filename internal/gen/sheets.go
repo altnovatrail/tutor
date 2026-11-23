@@ -59,7 +59,7 @@ var kinds = []func(r *rand.Rand, id string) task{chain, equation, equationBothSi
 // Sheets is a bank of generated tasks and a plan of their sheets, the truth of each by
 // construction: six sheets a task — correct, an error of each of two traps, a mistake erased and
 // written right, a right step erased and written wrong, and a second correct solution, shorter for
-// a chain and with a check after the answer for an equation (R50). Of ten tasks, that is 14 correct
+// a chain and with a check after the answer for an equation. Of ten tasks, that is 14 correct
 // sheets, 20 with an error, 10 of each erasure and 6 with the answer not last, against 12, 12, 7
 // and 2 of 40 in eval/sheets.json. The tasks are chains and equations, in turn, with numbers drawn
 // from the seed: the same seed gives the same bank and plan. Their IDs begin with prefix.

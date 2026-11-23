@@ -85,7 +85,7 @@ func Sheet(sh *sample.PlanSheet, seed uint64) *sample.Sample {
 
 // SheetLeaning is Sheet with the digit of the answer of a sheet of the scenario "similar-digits"
 // leaning the share shift toward the digit of its pair: draw takes it with -shift, to draw the near
-// sheets of the extended measurement at shares 0.1 to 0.4 (R50).
+// sheets of the extended measurement at shares 0.1 to 0.4.
 func SheetLeaning(sh *sample.PlanSheet, seed uint64, shift float64) *sample.Sample {
 	if len(sh.Parts) > 0 {
 		return sheetOfParts(sh, seed)

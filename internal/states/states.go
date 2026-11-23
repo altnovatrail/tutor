@@ -13,8 +13,8 @@
 // Each state stands after an event of the writing, so no stroke is half drawn on it, and none is
 // the finished sheet: an event follows each. What the writer had written of each part of the markup
 // by then is the truth the report measures the reading of a state against. It counts, too, how many
-// readings a sheet would take beyond its sending by each policy of reading on its own (R10): after
-// each line, and at each pause of 0.4, 2 and 6 s or more.
+// readings a sheet would take beyond its sending by each policy of reading on its own: after each
+// line, and at each pause of 0.4, 2 and 6 s or more.
 package states
 
 import (
@@ -217,10 +217,10 @@ func shownAfter(s *sample.Sample, events []journal.Event, k int) ([]sample.Strok
 	return shown, parts, erased
 }
 
-// Policies are how many readings a sheet would take beyond its sending by each policy of reading
-// on its own (R10): after each line, and at each pause of 0.4, 2 and 6 s or more between one event
-// of the writing and the next. The wait before the first stroke is the reading of the task, and no
-// policy reads at it.
+// Policies are how many readings a sheet would take beyond its sending by each policy of reading on
+// its own: after each line, and at each pause of 0.4, 2 and 6 s or more between one event of the
+// writing and the next. The wait before the first stroke is the reading of the task, and no policy
+// reads at it.
 type Policies struct {
 	AfterLine int `json:"after_line"`
 	Pause400  int `json:"pause_400"`
