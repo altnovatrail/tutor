@@ -11,7 +11,7 @@ import (
 )
 
 // The rule of admission of the tutor's words: the targets the author set, of the stage author, on
-// the author's sheets with a mistake and the set of the words that code draws (R86).
+// the author's sheets with a mistake and the set of the words that code draws.
 const (
 	// WordsRepeated is the most share of hints, of the cases with questions asked, that may repeat
 	// one of them.
@@ -284,7 +284,7 @@ func (d *WordsDecision) targets(what string) {
 		d.why("%s %s leaked before the check, above version 1's %.3f", d.Leaked, what, V1Leaked)
 	}
 	if !d.Broken.within(V1Broken) {
-		d.why("%s %s broke the form of R70 spec, above version 1's %.3f", d.Broken, what, V1Broken)
+		d.why("%s %s broke the form of the platform's check, above version 1's %.3f", d.Broken, what, V1Broken)
 	}
 }
 

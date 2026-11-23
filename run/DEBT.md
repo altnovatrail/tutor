@@ -7,7 +7,7 @@ Table 4 of [RUN.md](../RUN.md): what was put off on purpose, its risk, when to r
 
 ## Table 4. Technical debt
 
-Numbers are not reused: next — Д25.
+Numbers are not reused: next — Д26.
 
 | ID | Debt | From | Risk while open | When to return |
 |---|---|---|---|---|

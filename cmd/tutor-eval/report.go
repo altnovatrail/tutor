@@ -133,7 +133,7 @@ func runReport(args []string, stdout, stderr io.Writer) int {
 		fmt.Fprintf(&b, "%s: %s\n", what, toRead)
 	}
 	if len(reports) > 0 {
-		fmt.Fprintf(&b, "The runner's reports of the protocol (§ 14), and their measures in %s.protocol.csv: %s\n", base, strings.Join(reports, ", "))
+		fmt.Fprintf(&b, "The runner's reports of the protocol, and their measures in %s.protocol.csv: %s\n", base, strings.Join(reports, ", "))
 	}
 	if _, err := io.WriteString(stdout, b.String()); err != nil {
 		return exitFail

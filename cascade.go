@@ -19,7 +19,7 @@ const cascadeFloor = 10 * time.Second
 // provider's refusal for a limit or of the key ends the cascade as its outcome: the next model is of
 // the same provider and key. Otherwise the result is that of the last model that answered, though
 // it did not do, or, when none answered, the last failure; its usage is that of every attempt, since
-// each is billed. A call of one model is one attempt (R137).
+// each is billed. A call of one model is one attempt.
 func cascade[T any](ctx context.Context, calls []call, try func(call) (T, Outcome), did func(T) bool) (T, Outcome) {
 	var (
 		zero, best T

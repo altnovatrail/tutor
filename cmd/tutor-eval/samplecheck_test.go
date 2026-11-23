@@ -22,7 +22,7 @@ func init() {
 // checking runs the test with a check of its own in place of the one that passes every file. A test
 // that calls it stays sequential: Go starts the top-level tests that call t.Parallel only once every
 // sequential one has ended, so the heaviest tests of the package, which swap nothing, run in
-// parallel beside each other and never beside a swap (R92).
+// parallel beside each other and never beside a swap.
 func checking(t *testing.T, check samplecheck.Check) {
 	t.Helper()
 	was := checkSamples

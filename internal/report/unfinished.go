@@ -354,7 +354,7 @@ func (r *Reading) costs() []Cost {
 // markdownUnfinished writes the heights, the states and the policies.
 func (r *Reading) markdownUnfinished(b *strings.Builder) {
 	if len(r.Heights) > 0 {
-		b.WriteString("\n## Heights of digits (R08; R51 spec)\n\nWithout a key, the finished sheets in the first repeat, each height against 32 px on the same sheets.\n\n| Reader | Height, px | Sheets | Errors at the height | Errors at 32 px | Σd | Sheets with d ≠ 0 | p, worse | New false \"correct\" | Drawn smaller, to fit | Not worse than 32 px |\n|---|---|---|---|---|---|---|---|---|---|---|\n")
+		b.WriteString("\n## Heights of digits\n\nWithout a key, the finished sheets in the first repeat, each height against 32 px on the same sheets.\n\n| Reader | Height, px | Sheets | Errors at the height | Errors at 32 px | Σd | Sheets with d ≠ 0 | p, worse | New false \"correct\" | Drawn smaller, to fit | Not worse than 32 px |\n|---|---|---|---|---|---|---|---|---|---|---|\n")
 		for _, h := range r.Heights {
 			name := h.Group
 			if name == AllSheets {
@@ -378,7 +378,7 @@ func (r *Reading) markdownUnfinished(b *strings.Builder) {
 		b.WriteString("\nThe answer is written when every stroke of its part is. A verdict before that is out of place, its share bounded over the sheets; so is a result given then, which the work does not yet give. A state that still shows what is erased later is not scored for its verdict: the markup does not tell what it shows. All but the calls are counted over the calls that did not fail.\n")
 	}
 	if len(r.Policies) > 0 {
-		b.WriteString("\n## Readings of a sheet by each policy of reading on its own (О-8)\n\nBeyond the sending, from the strokes and erasures alone (R10).\n\n| Policy | Mean a sheet | Median | Most |")
+		b.WriteString("\n## Readings of a sheet by each policy of reading on its own (О-8)\n\nBeyond the sending, from the strokes and erasures alone.\n\n| Policy | Mean a sheet | Median | Most |")
 		for _, c := range r.Costs {
 			fmt.Fprintf(b, " %s, $ a sheet |", c.Reader)
 		}

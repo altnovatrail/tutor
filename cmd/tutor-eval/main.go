@@ -123,13 +123,13 @@ const usage = `usage:
                              estimate first, then calls once you type yes, and a log beside
                              the hints' log, .judge.jsonl, or in synthetic/runs
   tutor-eval admit-words -controls LOG HINT-LOG...
-                             the rule of admission of the words (R86) on the judge's control
+                             the rule of admission of the words on the judge's control
                              phrases and logs of the hint with their judges' logs: the stage
                              author, or every reason why not, with the counts and every file's
                              SHA-256; no hint is printed
   tutor-eval report LOG      the report of a run from its log, by its kind, asking no model:
                              of the judge, the criterion, and of the reading, the threshold of
-                             R03, with the numbers in Markdown and CSV; of the hint, the leaks,
+                             the key, with the numbers in Markdown and CSV; of the hint, the leaks,
                              the form, the fallback texts and the place in Markdown and CSV, and
                              about 30 hints to read in .hints.md; of the workbook, the boxes, the
                              items, the line of the item and the heights; of the essays, the
@@ -140,11 +140,11 @@ const usage = `usage:
                              too, .<reader>.report.json for each reader and pair, and their
                              measures in .protocol.csv
   tutor-eval admit [-kind sheet|workbook] REPORT...
-                             the rule of admission on runners' reports (R80): the stage each
+                             the rule of admission on runners' reports: the stage each
                              admits its readers to, full or author, or why none, with the
                              false alarms and false correct by answer slot, their bounds, and
-                             the SHA-256 of the file; -kind workbook, the rule of the workbook
-                             (R124): the stage author on the boxes an adult writes, and the
+                             the SHA-256 of the file; -kind workbook, the rule of the workbook:
+                             the stage author on the boxes an adult writes, and the
                              mirrored and crossed-out boxes beside; no sample is named
   tutor-eval workbook [-file F] [-dir D]
                              check the pages of the workbook, read the samples of them that
@@ -264,7 +264,7 @@ func check(paths []string, stdout, stderr io.Writer) int {
 			continue
 		}
 		// A sample of spec's eval protocol keeps the rules of its text by spec's check alone, and tutor
-		// writes none of its own; the directory of sheets tells one so too (R69).
+		// writes none of its own; the directory of sheets tells one so too.
 		if sheets.OfProtocol(data) {
 			fail(path, errors.New("a file of spec's eval protocol: just -f spec/justfile sample-check holds a sample to its rules, and tutor-eval sheets reads it against its plan"))
 			continue

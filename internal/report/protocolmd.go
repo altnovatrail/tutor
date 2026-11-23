@@ -65,7 +65,7 @@ func markdownProtocol(b *strings.Builder, logName string, reports []Named, refus
 		return
 	}
 	base := strings.TrimSuffix(logName, ".jsonl")
-	fmt.Fprintf(b, "\n## The runner's reports of the protocol (§ 14)\n\nEach is a file beside the log, %s, the message Report of novatrail.eval.v1 that the CI of modules and the rule of admission read: a reader alone, with all its repeats, or a pair joined by module-kit, of what the platform asks. Its verdicts are module-kit's; the measures below are counted from its records, all repeats together.\n\n",
+	fmt.Fprintf(b, "\n## The runner's reports of the protocol\n\nEach is a file beside the log, %s, the message Report of novatrail.eval.v1 that the CI of modules and the rule of admission read: a reader alone, with all its repeats, or a pair joined by module-kit, of what the platform asks. Its verdicts are module-kit's; the measures below are counted from its records, all repeats together.\n\n",
 		ReportFile(base, "<reader>"))
 	reading := reports[0].Report.GetCapability() == evalv1.Capability_CAPABILITY_HANDWRITING_READING
 	if reading {
@@ -84,7 +84,7 @@ func markdownProtocol(b *strings.Builder, logName string, reports []Named, refus
 					slotsOf(n.Report, g.name), g.of.Readings, counted(g.of.FalseAlarm), counted(g.of.FalseCorrect), counted(g.of.Needless), counted(g.of.Kept), counted(g.of.OtherTrap), causesOf(g.of.Unchecked, false))
 			}
 		}
-		b.WriteString("\nA false alarm, the main measure, is a reading \"not yet\" of an answer slot whose truth is not; a digit written mirrored, whose truth is \"unreadable\", counts in it. Each share is among the readings section 14 names; an unchecked reading is counted only by its cause.\n")
+		b.WriteString("\nA false alarm, the main measure, is a reading \"not yet\" of an answer slot whose truth is not; a digit written mirrored, whose truth is \"unreadable\", counts in it. Each share is among the readings the eval protocol names for it; an unchecked reading is counted only by its cause.\n")
 	} else {
 		b.WriteString("| Report | Reader | Repeats | Samples measured | Refused | Readings | Needless \"unreadable\" | False alarm | Agreement | Marks of none | Unchecked: failure / limit / invalid / no mark |\n|---|---|---|---|---|---|---|---|---|---|---|\n")
 		var crit strings.Builder

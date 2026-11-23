@@ -119,7 +119,7 @@ func TestEssaysReport(t *testing.T) {
 	// words: the quote of the first feedback, and the third, of more words than that.
 	long := essaysLog()
 	long.Calls[2].FeedbackWords = essay.PlatformWords + 1
-	if r, _ := NewEssays(long); r.Readers[0].PlatformBroken != 2 || r.Readers[0].MostWords != essay.PlatformWords+1 || !strings.Contains(r.Summary(), "that of R70 spec, with 80 words, 2") {
+	if r, _ := NewEssays(long); r.Readers[0].PlatformBroken != 2 || r.Readers[0].MostWords != essay.PlatformWords+1 || !strings.Contains(r.Summary(), "the platform's, with 80 words, 2") {
 		t.Errorf("a feedback of %d words: %+v", essay.PlatformWords+1, r.Readers[0])
 	}
 	// A call of an essay the log does not tell is in no count and no feedback.

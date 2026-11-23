@@ -1,5 +1,5 @@
 # A rubric has no key, and with no leak phrases nothing is searched for: feedback on an essay is
-# checked in other ways (architecture 3.6).
+# checked in other ways.
 task:
   id: an-essay
   statement:

@@ -28,7 +28,7 @@ import (
 // Version is the version of the prompt of the words after a correct answer, which the library and
 // the runner ask alike (RequestOf). A version is frozen once measured, and the admitted one is
 // version 1: a change to a word a model reads is a new version, measured anew. TestFrozenV1 holds
-// it (R113).
+// it.
 const Version = 1
 
 // The instructions of the words, one text for every language: the request names it.

@@ -97,7 +97,7 @@ func runAdmitWords(args []string, stdout, stderr io.Writer) int {
 	} else {
 		fmt.Fprintf(&b, "- the code: the note echoed %s, a question asked repeated %s (at most %.0f %%)\n", d.Echo, d.Repeated, report.WordsRepeated*100)
 	}
-	fmt.Fprintf(&b, "- leaked before the check %s (at most %.3f), the form of R70 spec broken %s (at most %.3f)\n", d.Leaked, report.V1Leaked, d.Broken, report.V1Broken)
+	fmt.Fprintf(&b, "- leaked before the check %s (at most %.3f), the platform's form check broken %s (at most %.3f)\n", d.Leaked, report.V1Leaked, d.Broken, report.V1Broken)
 	for _, w := range d.Why {
 		fmt.Fprintf(&b, "- not admitted: %s\n", w)
 	}

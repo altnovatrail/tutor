@@ -357,7 +357,7 @@ func (w *writer) scribble(s string, x, y float64) []string {
 
 // stroke draws a polyline as the pen would: points every few units and the clock running. It
 // returns the stroke's ID. The pen's pressure is drawn and not kept, since no sample holds it:
-// the draws stay so that a seed draws the same sheets, to the byte (R75).
+// the draws stay so that a seed draws the same sheets, to the byte.
 func (w *writer) stroke(poly []pt) string {
 	id := fmt.Sprintf("s-%04d", len(w.s.Strokes)+1)
 	_ = w.rng.Float64() // the pressure the stroke starts at

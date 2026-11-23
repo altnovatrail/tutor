@@ -19,7 +19,7 @@ func withoutWord(t *testing.T) {
 	admission.Admitted = slices.DeleteFunc(slices.Clone(saved), func(e admission.Entry) bool { return e.Report.ByWord() })
 }
 
-// The kinds the author admitted by their word, without eval, and the models each asks (R126).
+// The kinds the author admitted by their word, without eval, and the models each asks.
 var byWord = []struct {
 	call   Call
 	models []string

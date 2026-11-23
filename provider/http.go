@@ -33,7 +33,7 @@ var transport = sync.OnceValue(func() *http.Transport {
 // writes spans and sends the trace context to the provider — does not reach a call. What it takes
 // from the process — the proxy of HTTPS_PROXY and NO_PROXY, the certificates of SSL_CERT_FILE and
 // SSL_CERT_DIR — is the standard library's and the deployment's, as for every client of the
-// process, and not a provider's (R105).
+// process, and not a provider's.
 func HTTPClient() *http.Client {
 	return &http.Client{Transport: transport()}
 }

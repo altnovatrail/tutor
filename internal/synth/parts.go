@@ -16,7 +16,7 @@ import (
 const (
 	// maxAdvance is the widest step from one character to the next, in sheet units: a colon before
 	// a space then stays within a group's 50 units of the next character, which a larger hand of
-	// the sheets of the plan of lines does not keep (R30).
+	// the sheets of the plan of lines does not keep.
 	maxAdvance = 32
 	// partPause is the least pause before a part, in milliseconds: longer than a group's 2 s.
 	partPause = 2100

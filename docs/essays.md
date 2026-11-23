@@ -1,14 +1,14 @@
 # Essays
 
-> What the executor wrote in 20 synthetic essays in English, and what in them is correct by the plan (R44). On them the measurement E4 measures how Claude assesses an essay by the author's criteria — assessment by the rubric — and writes feedback (R41 spec; О-22). How the call and the report are built — [architecture.md](architecture.md), section 3.4, "Essays".
+> What the executor wrote in 20 synthetic essays in English, and what in them is correct by the plan. On them a measurement measures how Claude assesses an essay by the author's criteria — assessment by the rubric — and writes feedback (О-22). How the call and the report are built is in [architecture.md](architecture.md), with the call kinds of eval.
 >
-> The essays are the file `eval/essays.json` in the format `tutor-essays` v0 (R44). This is synthetic content under Apache-2.0: the essays were written by the executor, not by learners, on made-up topics and without names (П-20). There are no files of pages: the code draws the strokes in memory, from the file and the seed. The rubric, the counts and the essays below are the same file: a test of `cmd/tutor-eval` builds them from the file and compares them with this document byte for byte, so an essay is edited in both places.
+> The essays are the file `eval/essays.json` in the format `tutor-essays` v0. This is synthetic content under Apache-2.0: the essays were written by the executor, not by learners, on made-up topics and without names (П-20). There are no files of pages: the code draws the strokes in memory, from the file and the seed. The rubric, the counts and the essays below are the same file: a test of `cmd/tutor-eval` builds them from the file and compares them with this document byte for byte, so an essay is edited in both places.
 >
 > **The author's proofreading** confirms the planned truth as an adult's assessment: whether each criterion is met as stated for the essay. Where an adult would assess otherwise, that is a remark on the essay.
 
 ## How to read
 
-- **Rubric** — one for all the essays, six criteria. The text of a criterion is in English, as a module would give it: the explanation language of the essays module is English (R41 spec). The model gets the criteria and the topic as a block of the task's data (R02 spec).
+- **Rubric** — one for all the essays, six criteria. The text of a criterion is in English, as a module would give it: the explanation language of the essays module is English. The model gets the criteria and the topic as a block of the task's data.
 - **Topic** — the task statement, in English. The topics are made up and general, not about the learner's life, as П-20 recommends.
 - **Truth** — whether the criterion is met, by the plan. Five criteria of the six the program computes itself and compares with the plan when the file is checked, `tutor-eval check`. "On topic" is held only by the plan and this proofreading.
 - **No disputable cases** — a divergence from the truth must be the model's error, not a dispute about a rule. The check of the file holds the rules, and what the program does not see, the plan and the proofreading hold:
@@ -25,9 +25,9 @@
 ## How a page is built
 
 - **Sheet** — 1000 × 1400 units, a handwriting sheet of the `spec` format: for a task with a rubric the canvas is `handwriting_sheet` with ruled lines. The title is the first line, and the text below it is wrapped by words, 28–40 characters to a line. Each essay takes its line length from the seed, so their handwriting is of different sizes too.
-- **Handwriting** — `tutor`'s synthetic handwriting, where Latin letters are strokes of its own (R43). Between words there is a gap of two spaces: at half a space, the words of the lines with calculations ran together.
+- **Handwriting** — `tutor`'s synthetic handwriting, where Latin letters are strokes of its own. Between words there is a gap of two spaces: at half a space, the words of the lines with calculations ran together.
 - **Crop** — by the crop rule of the eval protocol at 32 px, as in all the measurements: only the ink. The scale is set by the median of the heights of the stroke bundles, and in a text that is the height of a small letter: it is drawn D′ high, and the capitals almost twice as high (В36). Where the picture at 32 px does not fit in 1568 tokens, the rule reduces D′. On the 20 essays D′ is 23–32 px, a crop 864–1216 × 671–1330 px, 936–1564 tokens.
-- **To view** the crops — what the model will see —, `draw` saves them as it draws the essays, samples of the eval protocol (R71): `go run ./cmd/tutor-eval draw -essays eval/essays.json -png synthetic/png/essays` draws into `synthetic/essays`, where `essays` and its runs find the essays, and wants it with no essays in it yet. The directories are in `synthetic/`, outside git.
+- **To view** the crops — what the model will see —, `draw` saves them as it draws the essays, samples of the eval protocol: `go run ./cmd/tutor-eval draw -essays eval/essays.json -png synthetic/png/essays` draws into `synthetic/essays`, where `essays` and its runs find the essays, and wants it with no essays in it yet. The directories are in `synthetic/`, outside git.
 
 ## Rubric
 

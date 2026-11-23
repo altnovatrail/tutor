@@ -206,7 +206,7 @@ func (c *Client) check(r provider.Request) error {
 // 1:", "Image 2:"), and the text after them. Instructions the request marks to cache end at a
 // breakpoint of the cache, for the 5 minutes Anthropic keeps a write by default: the prefix up to
 // it — the system prompt — is the same in every request of their kind, and the message after it,
-// the work, is never cached (R131).
+// the work, is never cached.
 func (c *Client) params(r provider.Request) anthropic.MessageNewParams {
 	system := anthropic.TextBlockParam{Text: r.Instructions}
 	// Blank instructions are no prefix to cache, and no breakpoint goes on them.

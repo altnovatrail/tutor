@@ -339,15 +339,15 @@ func (r *Hint) Markdown(w io.Writer, logName string) error {
 	b.WriteString("\nThe leak check is the program's, as api runs it before the tutor's words reach the device (the format text of spec, «The leak check»): it searches a hint for the task's key by its value, unless the statement shows the key, and for its leak phrases. A leak before the check is a hint that came in which it found either; after the check is what the learner reads — the hint, or the fallback text of the rung —, in which it finds nothing by construction. What the check does not search for, such as a number in words or the answer put another way, only a reader finds. The learner reads the fallback text when the call failed or its answer was off the schema, when the check found a leak, or when the hint breaks its form; a hint that leaks and breaks its form falls back for the leak. Each share is bounded at 95 % over the sheets.\n")
 
 	b.WriteString("\n## The form\n\n")
-	b.WriteString("| Tutor | Language | Rung | Hints that came | Broken | Not one question | Over two sentences | Words | Script | Broken by R70 spec |\n|---|---|---|---|---|---|---|---|---|---|\n")
+	b.WriteString("| Tutor | Language | Rung | Hints that came | Broken | Not one question | Over two sentences | Words | Script | Broken by the platform's form check |\n|---|---|---|---|---|---|---|---|---|---|\n")
 	for _, c := range r.Cells {
 		lang, rung := c.where()
 		fmt.Fprintf(&b, "| %s | %s | %s | %d | %s | %d | %d | %d | %d | %s |\n", c.Tutor, lang, rung, c.Came, c.Broken, c.Questions, c.Sentences, c.Words, c.Script, c.PlatformBroken)
 	}
 	if l.Run.PromptVersion >= 2 {
-		fmt.Fprintf(&b, "\nA hint is exactly one question in no more than two sentences, of 1 to %d words in Russian and %d in English, in the letters of its language: Cyrillic in Russian, where a Latin letter the statement shows may stand too, and Latin in English. These are the rules of R70 spec, which version 2 of the prompt is held to as api holds hints (words.Hint), so the last column counts the same as Broken.\n", hint.PlatformWords(sample.LangRussian), hint.PlatformWords(sample.LangEnglish))
+		fmt.Fprintf(&b, "\nA hint is exactly one question in no more than two sentences, of 1 to %d words in Russian and %d in English, in the letters of its language: Cyrillic in Russian, where a Latin letter the statement shows may stand too, and Latin in English. These are the rules of the platform's form check, which version 2 of the prompt is held to as api holds hints (words.Hint), so the last column counts the same as Broken.\n", hint.PlatformWords(sample.LangRussian), hint.PlatformWords(sample.LangEnglish))
 	} else {
-		fmt.Fprintf(&b, "\nA hint is exactly one question in no more than two sentences, of 1 to %d words, in the letters of its language: Cyrillic in Russian, where a Latin letter the statement shows may stand too, and Latin in English (R39). R70 spec sets the same rules with %d words in Russian and %d in English, which the last column counts.\n", hint.MaxWords, hint.PlatformWords(sample.LangRussian), hint.PlatformWords(sample.LangEnglish))
+		fmt.Fprintf(&b, "\nA hint is exactly one question in no more than two sentences, of 1 to %d words, in the letters of its language: Cyrillic in Russian, where a Latin letter the statement shows may stand too, and Latin in English. The platform's form check has the same rules, with %d words in Russian and %d in English, which the last column counts.\n", hint.MaxWords, hint.PlatformWords(sample.LangRussian), hint.PlatformWords(sample.LangEnglish))
 	}
 
 	b.WriteString("\n## The place and the trap\n\n")
@@ -416,7 +416,7 @@ func (r *Hint) Summary() string {
 	var b strings.Builder
 	for _, c := range r.Cells {
 		if c.All() {
-			fmt.Fprintf(&b, "%s: leaked before the check %d of %d, after it %d; form broken %d of %d, by R70 spec %d; fallback %d of %d; box on the first error %d of %d.\n",
+			fmt.Fprintf(&b, "%s: leaked before the check %d of %d, after it %d; form broken %d of %d, by the platform's form check %d; fallback %d of %d; box on the first error %d of %d.\n",
 				c.Tutor, c.Leaked.Events, c.Came, c.After, c.Broken.Events, c.Came, c.PlatformBroken.Events, c.FellBack.Events, c.Calls, c.OnError.Events, c.OnError.Of)
 		}
 	}

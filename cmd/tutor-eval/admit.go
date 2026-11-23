@@ -41,7 +41,7 @@ const (
 func runAdmit(args []string, stdout, stderr io.Writer) int {
 	const use = "usage: tutor-eval admit [-kind sheet|workbook] REPORT...\n       tutor-eval admit -kind essay -controls JUDGE-LOG ESSAYS-LOG..."
 	flags := flag.NewFlagSet("tutor-eval admit", flag.ContinueOnError)
-	kind := flags.String("kind", admitSheet, "the kind of report: sheet, of the reading of sheets (R80), workbook, of the reading of the pages of the workbook, or essay, the log of a run of the essays in two calls, for the reading of an essay and the rubric (R124)")
+	kind := flags.String("kind", admitSheet, "the kind of report: sheet, of the reading of sheets, workbook, of the reading of the pages of the workbook, or essay, the log of a run of the essays in two calls, for the reading of an essay and the rubric")
 	controls := flags.String("controls", "", "for -kind essay, the judge's log of its control phrases")
 	flags.SetOutput(stderr)
 	flags.Usage = func() {
@@ -131,7 +131,7 @@ func writeWorkbookDecision(w io.Writer, file, sum string, d report.WorkbookDecis
 		_, _ = fmt.Fprintln(w)
 		return
 	}
-	_, _ = fmt.Fprintln(w, "- the false alarms and false correct above are of the boxes an adult writes, the readings of every box; the rule gives the stage author alone (R124)")
+	_, _ = fmt.Fprintln(w, "- the false alarms and false correct above are of the boxes an adult writes, the readings of every box; the rule gives the stage author alone")
 	for _, a := range []struct {
 		name string
 		of   report.Apart
@@ -201,7 +201,7 @@ func writeEssayDecisions(w io.Writer, file string, e report.EssayDecision, r rep
 		if s == "" {
 			p("- stage: none\n")
 		} else {
-			p("- stage: %s; the rules of the essay give the stage author alone (R124)\n", s)
+			p("- stage: %s; the rules of the essay give the stage author alone\n", s)
 		}
 		for _, y := range why {
 			p("- not admitted: %s\n", y)
@@ -227,10 +227,10 @@ func writeEssayDecisions(w io.Writer, file string, e report.EssayDecision, r rep
 	}
 	p("- assessments failed: %d (none: every essay is assessed in every repeat)\n", r.Failed)
 	p("- κ by criterion, without a target: %s; judgements unchecked, without a target: %d\n", strings.Join(kappas, ", "), r.Unchecked)
-	p("- the feedback in English alone (R124); the judge %s, right on %d of %d control phrases, judged %d of the %d feedbacks that came, %d without a verdict\n",
+	p("- the feedback in English alone; the judge %s, right on %d of %d control phrases, judged %d of the %d feedbacks that came, %d without a verdict\n",
 		r.Judge, r.ControlsRight, r.Controls, r.Judged, r.Feedbacks, r.JudgeFailed)
 	p("- the judge: the learner's sex told %s, off the task %s, not for a child %s\n", r.Gender, r.OffTask, r.NotForAge)
-	p("- feedback breaking the rule of R70 spec, without a target: %d of %d\n\n", r.Broken, r.Feedbacks)
+	p("- feedback breaking the platform's feedback rule, without a target: %d of %d\n\n", r.Broken, r.Feedbacks)
 }
 
 // sha256Of is the SHA-256 of a file's bytes, in hex, as an entry of the list of admitted models names

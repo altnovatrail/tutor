@@ -1,17 +1,14 @@
 {
   "entries": {
-    "R05": 15,
-    "R11": 13,
-    "R19": 19,
-    "R25": 13,
-    "R28": 20,
-    "R102": 14
+    "R19": 14,
+    "R28": 14
   },
   "sections": {
-    "architecture 3.1": 69,
-    "architecture 3.2": 37,
+    "architecture 3.1": 68,
+    "architecture 3.2": 35,
     "architecture 3.3": 27,
-    "architecture 3.4": 45,
-    "architecture 3.10": 27
-  }
+    "architecture 3.4": 44,
+    "architecture 3.10": 26
+  },
+  "citations": true
 }

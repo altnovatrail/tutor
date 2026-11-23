@@ -94,9 +94,9 @@ func HintForm(text, language, statement string, maxWords int) []Breach {
 
 // Correct is what the words after a correct answer break of their form, in the order of the
 // breaches; nil when they keep it: the praise of a step and one question on the technique that
-// helped, as option (2) sets it — exactly one question, and it the last sentence, so that
+// helped — exactly one question, and it the last sentence, so that
 // no more than one sentence of praise stands before it; 1 to HintWords words of the language; and
-// the letters of its script, as a hint's (R109).
+// the letters of its script, as a hint's.
 func Correct(text, language, statement string) []Breach {
 	return CorrectForm(text, language, statement, HintWords(language))
 }

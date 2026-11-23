@@ -320,10 +320,10 @@ func TestAdmitEssayRun(t *testing.T) {
 		"### The assessment by the rubric, CallRubric\n\n- stage: none\n- not admitted: its set is essays-dev",
 		"- false alarms, met criteria judged unmet: 0 of ",
 		"- κ by criterion, without a target: title ",
-		"- the feedback in English alone (R124); the judge sonnet-low, right on ",
+		"- the feedback in English alone; the judge sonnet-low, right on ",
 		"judged 10 of the 10 feedbacks that came, 0 without a verdict\n",
 		"- the judge: the learner's sex told 0 of 10, off the task 0 of 10, not for a child 0 of 10\n",
-		"- feedback breaking the rule of R70 spec, without a target: 0 of 10\n\n",
+		"- feedback breaking the platform's feedback rule, without a target: 0 of 10\n\n",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("admit -kind essay says\n%s\nwithout %q", out, want)

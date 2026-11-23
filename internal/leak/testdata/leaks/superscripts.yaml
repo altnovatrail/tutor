@@ -1,4 +1,4 @@
-# A superscript or a subscript digit is no digit: it becomes U+FFFD before NFKC, as in section 15,
+# A superscript or a subscript digit is no digit: it becomes U+FFFD before NFKC,
 # so that 7² is the number 7 and not 72.
 task:
   id: days-and-hours

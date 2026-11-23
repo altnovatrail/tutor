@@ -1,6 +1,6 @@
 # RUN.md — work plan of tutor
 
-What tutor does, does not do and has still to decide — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.19.11: the component's card — architecture 3.6 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, gathered in epics; only the current epic is in detail, or two when a second runs beside it (R04; R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). No `run/TASKS.md`: a task outside an epic stands in table 1 (R103, R116).
+What tutor does, does not do and has still to decide — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.19.12: the component's card — architecture 3.6 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, gathered in epics; only the current epic is in detail, or two when a second runs beside it (R04; R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). No `run/TASKS.md`: a task outside an epic stands in table 1 (R103, R116).
 
 Language (R154 spec): rules and tables in English, terse, for the session; the epic's description, table 1 and the bodies of tasks in Russian — the author writes and reviews them.
 
@@ -53,7 +53,9 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 
 **2026-11-23: эпик открыт.** Задачи приходят от оркестратора `spec` — эпик E22 `spec`, пачка на ветке `e22-tutor` с одним pull request (R156 spec, R159 spec). Текущего эпика не было — E20 сделан 2026-11-20, таблица 2 пуста, — а задача вне эпика по R103 — первая задача следующего. Первая задача — переход на тег, волна 0; вторая, T184, — ссылки по R171 spec: она больше одного ревью и разбита по своему шагу 9 — сама взяла план, CLAUDE.md, правила частей и комментарии кода, а документы и журнал — задачи T185–T195 ниже. Тела сделанных задач — в архиве, [docs/plan/E21.md](docs/plan/E21.md).
 
-**Результат:** `tutor` на теге `spec` `v0.19.11`, и его ссылки — по правилу R171 spec (строка 7.44 COORDINATION.md spec).
+**2026-11-23: тег v0.19.12.** T196 перевела `tutor` на `spec` `v0.19.12`: в нём R171 spec — строгое правило ссылок (RULES.md spec, Citations), оно заменяет узкое. Вне плана и архивов — ни номера решения, своего или чужого, ни ссылки на раздел или документ, ни датированной атрибуции; внешний факт ссылается на одну запись `sources`/`measurements`, строки Д и В и вопросы О-, П-, Т- остаются. Где «Ссылки (T185–T195)» ниже с ним расходятся, — по нему. Проход по части T184 и T185–T195 — пачка на ветке `e22-tutor-2`; задачи пачки пишет оркестратор `spec`.
+
+**Результат:** `tutor` на теге `spec` `v0.19.12`, и его ссылки — по строгому правилу R171 spec (строка 7.44 COORDINATION.md spec).
 
 **Основа:** R156 spec, R159 spec, R171 spec, R160 spec; RULES.md spec, Citations и Across repositories; R103.
 
@@ -70,93 +72,18 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 |---|---|---|---|---|---|
 | [x] | T183 | Переход на тег `spec` v0.19.11 | Claude | — | — |
 | [x] | T184 | Ссылки по правилу R171 spec: план, CLAUDE.md, правила частей, комментарии кода | Claude | да | T183 |
-| [ ] | T185 | Ссылки: README и architecture 1–3.2 | Claude | — | T184 |
-| [ ] | T186 | Ссылки: architecture 3.3–4 | Claude | — | T185 |
-| [ ] | T187 | Ссылки: документы листов и sources | Claude | — | T186 |
-| [ ] | T188 | Ссылки: measurements 1–2 | Claude | — | T187 |
-| [ ] | T189 | Ссылки: measurements 3.1–3.10 | Claude | — | T188 |
-| [ ] | T190 | Ссылки: measurements 3.11–5 | Claude | — | T189 |
-| [ ] | T191 | Журнал по R171 spec: начало и записи до «Checking line by line» | Claude | — | T190 |
-| [ ] | T192 | Журнал по R171 spec: от «The check board» до «Move to `spec` `v0.2.43`» | Claude | — | T191 |
-| [ ] | T193 | Журнал по R171 spec: от «Reading into an observation» до «OpenSSF Best Practices» | Claude | — | T192 |
-| [ ] | T194 | Журнал по R171 spec: от «The return of epic E3» до «The admission of words» | Claude | — | T193 |
-| [ ] | T195 | Журнал по R171 spec: от «Move to `spec` `v0.14.0`» до конца; ключ `citations` | Claude | — | T194 |
+| [x] | T196 | Переход на тег `spec` v0.19.12 | Claude | — | T184 |
+| [x] | T197 | Ссылки по строгому правилу R171 spec: проход по первой части | Claude | — | T196 |
+| [x] | T185 | Ссылки: README и architecture 1–3.2 | Claude | — | T197 |
+| [x] | T186 | Ссылки: architecture 3.3–4 | Claude | — | T185 |
+| [x] | T187 | Ссылки: документы листов и sources | Claude | — | T186 |
+| [x] | T188 | Ссылки: measurements 1–2 | Claude | — | T187 |
+| [x] | T189 | Ссылки: measurements 3.1–3.10 | Claude | — | T188 |
+| [x] | T190 | Ссылки: measurements 3.11–5 | Claude | — | T189 |
+| [x] | T191 | Журнал по R171 spec: начало и записи до «Checking line by line» | Claude | — | T190 |
+| [x] | T192 | Журнал по R171 spec: от «The check board» до «Move to `spec` `v0.2.43`» | Claude | — | T191 |
+| [x] | T193 | Журнал по R171 spec: от «Reading into an observation» до «OpenSSF Best Practices» | Claude | — | T192 |
+| [x] | T194 | Журнал по R171 spec: от «The return of epic E3» до «The admission of words» | Claude | — | T193 |
+| [x] | T195 | Журнал по R171 spec: от «Move to `spec` `v0.14.0`» до конца; ключ `citations` | Claude | — | T194 |
 
-**Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, один pull request; T185–T195 — после его мержа, по одной, по «Зависит от».
-
-#### T185. Ссылки: README и architecture 1–3.2
-
-- **Цель:** [docs/README.md](docs/README.md) и разделы 1, 2, 3.1 и 3.2 [docs/architecture.md](docs/architecture.md) ссылаются по R171 spec.
-- **Сделать:** по «Ссылкам» описания эпика; раздел стал меньше — его предел в `sections` [docs-budgets.json](docs-budgets.json) понизить или убрать.
-- **Как проверить:** `just -f spec/justfile docs-check-repo` — зелёный, а с ключом `"citations": true`, включённым локально, — без находок в этих разделах; `/code-review high`, один круг.
-- **Разделы:** R171 spec, R160 spec; описание эпика; тело T184 в [docs/plan/E21.md](docs/plan/E21.md).
-
-#### T186. Ссылки: architecture 3.3–4
-
-- **Цель:** разделы 3.3–3.12 и 4 [docs/architecture.md](docs/architecture.md) ссылаются по R171 spec.
-- **Сделать:** по «Ссылкам» описания эпика; раздел стал меньше — его предел в `sections` [docs-budgets.json](docs-budgets.json) понизить или убрать.
-- **Как проверить:** как у T185, на этих разделах.
-- **Разделы:** R171 spec, R160 spec; описание эпика.
-
-#### T187. Ссылки: документы листов и sources
-
-- **Цель:** [docs/sheets.md](docs/sheets.md), [docs/workbook.md](docs/workbook.md), [docs/essays.md](docs/essays.md), [docs/free-sheets.md](docs/free-sheets.md), [docs/near-sheets.md](docs/near-sheets.md) и [docs/sources.md](docs/sources.md) ссылаются по R171 spec.
-- **Сделать:** по «Ссылкам» описания эпика; в `docs/sources.md` запись хранит источник, дату и цитату, без номера задачи, и в заголовке тоже; ссылки на запись из других документов сохраняют её номер — номера записей не меняются.
-- **Как проверить:** как у T185, на этих файлах.
-- **Разделы:** R171 spec, R143 spec; описание эпика.
-
-#### T188. Ссылки: measurements 1–2
-
-- **Цель:** разделы 1 и 2 [docs/measurements.md](docs/measurements.md) ссылаются по R171 spec.
-- **Сделать:** по «Ссылкам» описания эпика; запись замера хранит что, как, на чём и числа, дату — в заголовке, без номера задачи; номера разделов не меняются.
-- **Как проверить:** как у T185, на этих разделах.
-- **Разделы:** R171 spec; описание эпика.
-
-#### T189. Ссылки: measurements 3.1–3.10
-
-- **Цель:** разделы 3.1–3.10 [docs/measurements.md](docs/measurements.md) ссылаются по R171 spec.
-- **Сделать:** как T188.
-- **Как проверить:** как у T185, на этих разделах.
-- **Разделы:** R171 spec; описание эпика.
-
-#### T190. Ссылки: measurements 3.11–5
-
-- **Цель:** разделы [docs/measurements.md](docs/measurements.md) от 3.11 до конца, 4 и 5 тоже, ссылаются по R171 spec.
-- **Сделать:** как T188; строки таблицы measurements 4.1 по эпикам — номера эпиков, не задач.
-- **Как проверить:** как у T185, на этих разделах.
-- **Разделы:** R171 spec; описание эпика.
-
-#### T191. Журнал по R171 spec: начало и записи до «Checking line by line»
-
-- **Цель:** начало [docs/decisions.md](docs/decisions.md) — по заготовке `spec/repo-template/files/docs/decisions.md`: хвост «— *Consequence:*» и запись без датированных поправок (R171 spec); записи разделов `##` от «The `spec` submodule» до «Checking line by line» — по R171 spec, их поправки свёрнуты.
-- **Сделать:** по «Ссылкам» описания эпика; в начале журнала — его отличия от заготовки, которые держат его решения, остаются; запись стала меньше — её предел в `entries` [docs-budgets.json](docs-budgets.json) понизить или убрать.
-- **Как проверить:** как у T185, на этих разделах; в описании pull request — таблица «поправка → место в новом тексте».
-- **Разделы:** R171 spec, R160 spec; заготовка `docs/decisions.md`; описание эпика.
-
-#### T192. Журнал по R171 spec: от «The check board» до «Move to `spec` `v0.2.43`»
-
-- **Цель:** записи разделов `##` [docs/decisions.md](docs/decisions.md) от «The check board» до «Move to `spec` `v0.2.43`» — по R171 spec, их поправки свёрнуты.
-- **Сделать:** как T191, без начала журнала.
-- **Как проверить:** как у T191.
-- **Разделы:** R171 spec, R160 spec; описание эпика.
-
-#### T193. Журнал по R171 spec: от «Reading into an observation» до «OpenSSF Best Practices»
-
-- **Цель:** записи разделов `##` [docs/decisions.md](docs/decisions.md) от «Reading into an observation» до «OpenSSF Best Practices» — по R171 spec, их поправки свёрнуты.
-- **Сделать:** как T192.
-- **Как проверить:** как у T191.
-- **Разделы:** R171 spec, R160 spec; описание эпика.
-
-#### T194. Журнал по R171 spec: от «The return of epic E3» до «The admission of words»
-
-- **Цель:** записи разделов `##` [docs/decisions.md](docs/decisions.md) от «The return of epic E3» до «The admission of words» — по R171 spec, их поправки свёрнуты.
-- **Сделать:** как T192.
-- **Как проверить:** как у T191.
-- **Разделы:** R171 spec, R160 spec; описание эпика.
-
-#### T195. Журнал по R171 spec: от «Move to `spec` `v0.14.0`» до конца; ключ `citations`
-
-- **Цель:** записи разделов `##` [docs/decisions.md](docs/decisions.md) от «Move to `spec` `v0.14.0`» до конца — по R171 spec, их поправки свёрнуты; `"citations": true` в [docs-budgets.json](docs-budgets.json), как в `spec/repo-template/files/docs-budgets.json`, и `docs-check-repo` с ним — зелёный во всём репозитории.
-- **Сделать:** как T192; затем ключ; находки, которые остались в файлах прежних частей, — исправить здесь же.
-- **Как проверить:** `just -f spec/justfile docs-check-repo` — зелёный с ключом; `/code-review high`, один круг; в «Сделано» — ссылок было и стало по всему репозиторию, по видам, командой `cite.mjs` measurements 1.18.4 spec, против замера «до» в «Сделано» T184.
-- **Разделы:** R171 spec, R160 spec, R32 spec; описание эпика; строка 7.44 COORDINATION.md spec.
+**Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, pull request #215; T196, T197 — проход по части T184 — и T185–T195 — пачка на ветке `e22-tutor-2`, pull request #216 (R159 spec), по «Зависит от».

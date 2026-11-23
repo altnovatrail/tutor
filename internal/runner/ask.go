@@ -12,7 +12,7 @@ type Asker func(ctx context.Context, st Step, req provider.Request) (provider.Re
 // Models asks the models of the steps' configurations with the key, each by the client that the
 // adapter dial makes of it once, such as claude.Dial with the Anthropic key: the runner takes the
 // adapter from its caller, so that a package of the library that runs its own measurement takes no
-// SDK. A model the adapter does not call fails its call, and the run goes on (R90).
+// SDK. A model the adapter does not call fails its call, and the run goes on.
 func Models(dial provider.Dial, key string) Asker {
 	clients := map[string]provider.Model{}
 	return func(ctx context.Context, st Step, req provider.Request) (provider.Response, error) {

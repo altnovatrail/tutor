@@ -1,10 +1,10 @@
 # The sheet plan of the measurement of free writing
 
-> What code draws on each of the 40 sheets of the measurement of free writing, and what the author writes with a mouse on their three (R28). How the measurement is built and which answer of the judge is correct in it — [measurements.md](measurements.md), section 3.3.
+> What code draws on each of the 40 sheets of the measurement of free writing, and what the author writes with a mouse on their three. How the measurement is built and which answer of the judge is correct in it — measurements 3.3.
 >
-> The tasks are the bank of free writing, the file `eval/free-bank.json` in the format `tutor-bank` v0 (R15). The bank and the plans are synthetic content under Apache-2.0: the executor wrote them, not learners.
+> The tasks are the bank of free writing, the file `eval/free-bank.json` in the format `tutor-bank` v0. The bank and the plans are synthetic content under Apache-2.0: the executor wrote them, not learners.
 >
-> The plans are data files in the format `tutor-sheet-plan` v1 ([architecture.md](architecture.md), section 3.1, "Format of the sheet plan", version 1):
+> The plans are data files in the format `tutor-sheet-plan` v1, which [architecture.md](architecture.md) describes:
 > - `eval/free-sheets.json` — 40 sheets, drawn by code;
 > - `eval/free-author.json` — the three sheets of the author, free solutions of three tasks, one sheet per layout.
 >
@@ -12,7 +12,7 @@
 
 ## Tasks
 
-The six tasks of the board with free writing, tasks 6–11, word for word and under the same IDs ([architecture.md](architecture.md), section 3.3). The task sets the sheet's layout: two have a number line, two a drawing, a row of houses or a scheme of segments, and in two the counting goes at the side, in a column. That the tasks of the bank are the same as on the board is checked by a test of `cmd/tutor-eval`, and the whole bank by `tutor-eval check eval/free-bank.json`.
+The six tasks of the board with free writing, tasks 6–11, word for word and under the same IDs. The task sets the sheet's layout: two have a number line, two a drawing, a row of houses or a scheme of segments, and in two the counting goes at the side, in a column. That the tasks of the bank are the same as on the board is checked by a test of `cmd/tutor-eval`, and the whole bank by `tutor-eval check eval/free-bank.json`.
 
 | ID | Layout | Statement | Key |
 |---|---|---|---|
@@ -25,7 +25,7 @@ The six tasks of the board with free writing, tasks 6–11, word for word and un
 
 ## How to read the plan
 
-- **Sheet** — one task of the bank and one scenario of the sample format ([architecture.md](architecture.md), section 3.1, "Sample format"). The sheets of code have `writer` `synthetic`, the author's sheets have `author` (R26). The scenario sets the outcome: `correct` and `erasure-fixed` have `correct`, `error` and `erasure-broken` have `error`.
+- **Sheet** — one task of the bank and one scenario of the sample format, which [architecture.md](architecture.md) describes. The sheets of code have `writer` `synthetic`, the author's sheets have `author`. The scenario sets the outcome: `correct` and `erasure-fixed` have `correct`, `error` and `erasure-broken` have `error`.
 - **Parts on the sheet** — what remains on the sheet by the end, in the order in which the solution is written and read. A part has a number, a kind and a place:
   - with no mark — a line of text in the main column, on the left;
   - "column at the side" — a calculation in a column to the right of the main column, as the author wrote in the pilot: the first number on top, under it the sign and the second number, a bar and the result. In the table the column is written inline;
@@ -37,20 +37,20 @@ The six tasks of the board with free writing, tasks 6–11, word for word and un
   - on three `stamps` sheets, the labels of the scheme's segments: □ is the segment of the younger brother, whose stamps the task asks about, △ that of the elder. On a scheme without labels it is not seen which segment is whose, so the trap `longer-segment` stands only on the sheets with □ and △.
 - **Answer** — the number of the part with the result. It is always text and always the last part.
 - **First error** — the number of the part and the task's trap that the error falls into.
-  - The markup sets the first error (R24). The wrong part is the one from which the solution went wrong, even if the calculation in it is right: so, in the task about the grasshopper `15 + 5 = 20` is added right, but the jump is in the wrong direction.
+  - The markup sets the first error. The wrong part is the one from which the solution went wrong, even if the calculation in it is right: so, in the task about the grasshopper `15 + 5 = 20` is added right, but the jump is in the wrong direction.
   - The parts after it follow from what is written: there is no second error on the sheet. A drawing after a wrong line draws what is written in it.
-  - The errors are the bank's traps, with no subtleties beyond them (the 2026-10-27 amendment to R28): a wrong arc ends two divisions or more from the correct one, not on the neighbouring one, and a wrong column has a wrong step, not one digit. There are no slips in the calculation: every equality on the sheets is right.
+  - The errors are the bank's traps, with no subtleties beyond them: a wrong arc ends two divisions or more from the correct one, not on the neighbouring one, and a wrong column has a wrong step, not one digit. There are no slips in the calculation: every equality on the sheets is right.
 - **Planned erasure** — the number of the part written in the place of what was erased, what was erased — a mistake or a correct step, — and what was there, and after the arrow, what came instead:
   - in the text — the whole line, and with the mark "part of a line", one number of it, and the rest of the line remains;
   - "in a column" — one number of it. If the top or the bottom number is erased, the result is written only after the erasure;
   - "in the drawing" — its elements, and what was erased and what is new are named in words, by pieces of its description. What the drawing was like by the erasure is in the table "Drawings", the column "Before the erasure": the erasure removes what is not in the final drawing, and then the new is drawn in.
 
   The order of writing: the parts up to this place; what is erased; its erasure, in one movement of the eraser; the new in its place; then the remaining parts.
-- **Stray erasures** — erasures not by the scenario — are allowed on any sheet. They have no markup (R11).
+- **Stray erasures** — erasures not by the scenario — are allowed on any sheet. They have no markup.
 
 ## How many sheets of each kind
 
-The composition is that of [measurements.md](measurements.md), section 3.3:
+The composition is that of measurements 3.3:
 
 | Task | Layout | `correct` | `error` | `erasure-fixed` | `erasure-broken` | Total |
 |---|---|---|---|---|---|---|
@@ -77,7 +77,7 @@ The order of the sheets is mixed. Neighbouring sheets are different tasks and di
 
 ## The author's sheets
 
-Three sheets — free solutions of three tasks, one per layout of their sheets of code: the grasshopper on the number line, the stamps on the scheme, the album with the counting at the side (the 2026-10-27 amendment to R28). The author solves the task the way they would solve it themselves: these sheets have no scenario, no planned erasure and no deliberate error, and the whole sheet is one part. That the author's sheets are such is checked by a test of `cmd/tutor-eval`.
+Three sheets — free solutions of three tasks, one per layout of their sheets of code: the grasshopper on the number line, the stamps on the scheme, the album with the counting at the side. The author solves the task the way they would solve it themselves: these sheets have no scenario, no planned erasure and no deliberate error, and the whole sheet is one part. That the author's sheets are such is checked by a test of `cmd/tutor-eval`.
 
 The author's sheets have no split and no threshold: their run is after the prompt is frozen, and the report is next to the synthetic sheets, by sheet.
 
@@ -94,7 +94,7 @@ The author's step: the recipe `just free-record`, the directory `samples/free-v1
 2. The board will outline the whole sheet with one box: this is one part, and the markup needs no editing. Press Save.
 3. Made a mistake by accident — press Clear and solve it anew: the author's sheet is a correct solution. Erase stray marks as is convenient — with the eraser or Undo.
 
-After Save — the summary `go run ./cmd/tutor-eval sheets -dir samples/free-v1 -bank eval/free-bank.json -plan eval/free-author.json`. There is no handwriting in it, and its output goes to the executor. `git status` must show no file from `samples/`: the sheets are outside git (R05).
+After Save — the summary `go run ./cmd/tutor-eval sheets -dir samples/free-v1 -bank eval/free-bank.json -plan eval/free-author.json`. There is no handwriting in it, and its output goes to the executor. `git status` must show no file from `samples/`: the sheets are outside git.
 
 ## The sheets of code
 

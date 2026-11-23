@@ -138,12 +138,12 @@
 "use strict";
 // The record page: the author writes a sheet of the sheet plan, the board finds its lines, and the
 // author checks the markup the plan fills in and saves the sheet as a sample of spec's eval protocol,
-// with its history of writing (R25; R75). Every point keeps its time, and every stroke the type of
+// with its history of writing. Every point keeps its time, and every stroke the type of
 // the pointer that wrote it; no pressure is kept, as the protocol holds none. The eraser, Undo and
 // Clear take whole strokes away, and each time they do is an event of the history with its time:
 // erase, undo or clear. Start over drops the history and writes the sheet anew. On a sheet of a plan
 // of parts the board finds its parts instead, by the groups of strokes of the eval protocol, and the
-// page frames them and keeps them in the order of first writing (R30).
+// page frames them and keeps them in the order of first writing.
 const WIDTH = 1000;
 const HEIGHT = 600;
 const REACH = 6;        // how near, in units of the sheet, the eraser's path passes a stroke it takes
@@ -203,7 +203,7 @@ function within(value, low, high) { return Math.min(Math.max(value, low), high);
 function rounded(value, scale) { return Math.round(value * scale) / scale; }
 function unsaved() { return sheet.strokes.length > 0 && !view.saved; }
 // slip says whether Undo or Clear made an erasure, rather than a move of the eraser: what they take
-// away is never the planned erasure (R25).
+// away is never the planned erasure.
 function slip(e) { return e.kind !== "erase"; }
 function erasedIds() { return new Set(sheet.erasures.flatMap((e) => e.strokes)); }
 function visible() {

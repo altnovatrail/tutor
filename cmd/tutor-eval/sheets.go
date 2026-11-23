@@ -160,7 +160,7 @@ func readSplit(dir string, plan *sample.Plan) (*sample.Split, error) {
 
 // runSplit divides the recorded sheets into a development and a test part, by scenario, with the
 // seed given, and writes the split next to the sheets. A split is made once, before the first
-// change of the prompt, and is never overwritten (R24).
+// change of the prompt, and is never overwritten.
 func runSplit(args []string, stdout, stderr io.Writer) int {
 	flags := flag.NewFlagSet("tutor-eval split", flag.ContinueOnError)
 	var f sheetFlags
