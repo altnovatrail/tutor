@@ -75,7 +75,7 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T196 | Переход на тег `spec` v0.19.12 | Claude | — | T184 |
 | [x] | T197 | Ссылки по строгому правилу R171 spec: проход по первой части | Claude | — | T196 |
 | [x] | T185 | Ссылки: README и architecture 1–3.2 | Claude | — | T197 |
-| [ ] | T186 | Ссылки: architecture 3.3–4 | Claude | — | T185 |
+| [x] | T186 | Ссылки: architecture 3.3–4 | Claude | — | T185 |
 | [ ] | T187 | Ссылки: документы листов и sources | Claude | — | T186 |
 | [ ] | T188 | Ссылки: measurements 1–2 | Claude | — | T187 |
 | [ ] | T189 | Ссылки: measurements 3.1–3.10 | Claude | — | T188 |
@@ -87,13 +87,6 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [ ] | T195 | Журнал по R171 spec: от «Move to `spec` `v0.14.0`» до конца; ключ `citations` | Claude | — | T194 |
 
 **Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, pull request #215; T196, T197 — проход по части T184 — и T185–T195 — пачка на ветке `e22-tutor-2`, один pull request (R159 spec), по «Зависит от».
-
-#### T186. Ссылки: architecture 3.3–4
-
-- **Цель:** разделы 3.3–3.12 и 4 [docs/architecture.md](docs/architecture.md) ссылаются по R171 spec.
-- **Сделать:** по «Ссылкам» описания эпика; раздел стал меньше — его предел в `sections` [docs-budgets.json](docs-budgets.json) понизить или убрать.
-- **Как проверить:** как у T185, на этих разделах.
-- **Разделы:** R171 spec, R160 spec; описание эпика.
 
 #### T187. Ссылки: документы листов и sources
 
