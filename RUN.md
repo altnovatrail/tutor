@@ -81,19 +81,12 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T189 | Ссылки: measurements 3.1–3.10 | Claude | — | T188 |
 | [x] | T190 | Ссылки: measurements 3.11–5 | Claude | — | T189 |
 | [x] | T191 | Журнал по R171 spec: начало и записи до «Checking line by line» | Claude | — | T190 |
-| [ ] | T192 | Журнал по R171 spec: от «The check board» до «Move to `spec` `v0.2.43`» | Claude | — | T191 |
+| [x] | T192 | Журнал по R171 spec: от «The check board» до «Move to `spec` `v0.2.43`» | Claude | — | T191 |
 | [ ] | T193 | Журнал по R171 spec: от «Reading into an observation» до «OpenSSF Best Practices» | Claude | — | T192 |
 | [ ] | T194 | Журнал по R171 spec: от «The return of epic E3» до «The admission of words» | Claude | — | T193 |
 | [ ] | T195 | Журнал по R171 spec: от «Move to `spec` `v0.14.0`» до конца; ключ `citations` | Claude | — | T194 |
 
 **Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, pull request #215; T196, T197 — проход по части T184 — и T185–T195 — пачка на ветке `e22-tutor-2`, один pull request (R159 spec), по «Зависит от».
-
-#### T192. Журнал по R171 spec: от «The check board» до «Move to `spec` `v0.2.43`»
-
-- **Цель:** записи разделов `##` [docs/decisions.md](docs/decisions.md) от «The check board» до «Move to `spec` `v0.2.43`» — по R171 spec, их поправки свёрнуты.
-- **Сделать:** как T191, без начала журнала.
-- **Как проверить:** как у T191.
-- **Разделы:** R171 spec, R160 spec; описание эпика.
 
 #### T193. Журнал по R171 spec: от «Reading into an observation» до «OpenSSF Best Practices»
 

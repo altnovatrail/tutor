@@ -409,378 +409,284 @@ The author's own sheets are written by the board's record mode, not by the sampl
 
 ## The check board
 
-**R19. The MVP is the check board. The author solves five given tasks by hand — sometimes on purpose with an error or illegibly —, two models read the solution and assess it themselves, and the author marks under each whether it was right. There is no programmatic check, and the big measurement of AI reading is put off.** How it is built — architecture 3.3; the code — `internal/board`, `provider/claude`, `provider/gpt` and the command `tutor-eval board`.
-- **What the author sees:** the task, a board for writing and the button Check. After the check — the answer of each model side by side: what it read, its assessment — correct, an error and in which line, cannot read it — and a short comment. Under each answer — AI was right and AI was wrong, "the AI is right" and "the AI erred", and above the board — a summary: how many times each model was right.
-- **The models** — `claude-opus-5-5` and `gpt-6-astra`, both at once, on each attempt (R06). The model sees the picture of the board, the statement, the correct answer and the reference solution and answers in JSON by a schema: the lines, the outcome, the assessment, the number of the first wrong line and a comment in Russian.
-- **The tasks** — five fixed ones: two linear equations, two chains of calculations and the task about posts, as in the plan of the measurement (architecture 3.1). They do not change, so that each attempt at one task is an attempt at the same thing.
-- **Where** — in a browser on the author's computer: the command in the devcontainer listens only on a local address, and VS Code opens it in the browser.
-- **What is stored** — the picture of each attempt and the log of the models' answers and of the author's marks, in `samples/board/`, outside git (R05). Agents do not look there (R05; CLAUDE.md), and the author sees the summary on the board itself.
-- **Keys** — for eval, each provider its own (R24 spec; Т-28), in the variables `TUTOR_ANTHROPIC_API_KEY` and `TUTOR_OPENAI_API_KEY`. Not in `ANTHROPIC_API_KEY`: with it, Claude Code in the same container would pay for its own work with the eval key. Without one key the board works with the other model.
-- **The price** — the executor's estimate by the prices of architecture, section 4: Claude Opus 5.5 has $4 and $20 per million input and output tokens, GPT-6 Astra — $10 and $50. The input is a picture of 1000 × 600 and text, about 1,300 tokens; the output with reasoning at effort `high` — about 1–3 thousand tokens. It comes to about 3–7 cents per check at Claude and 6–16 cents at GPT, together — about 10–20 cents. The board shows the exact price of each answer and the sum. The worst case — 16,000 output tokens — is about $0.34 and $0.84.
-- **The spending limit** per launch — the flag `-max-usd`, $5 by default (rule 4 of RUN.md). A check that in the worst case would go beyond the limit the board does not start, and checks go one at a time. So $5 is enough for about 20–40 checks; an answer cut off by tokens or by a refusal is counted in the spending too.
-- **Protection:** the board answers only on its local address and only to its own page — a check of Host and Origin and requests `application/json`. Another site in the same browser will not spend the keys and will not read the answers. A directory of pictures that git does not ignore the board rejects: handwriting must not lie beside the code.
-- **Language** — the board's buttons, captions and messages are in English, like all the code (R14 spec). The statements of the tasks are in Russian, like the measurement's tasks (R05), and the model's comment is in Russian, for the author: this is content, not code.
-- **Calling the models** — through the official SDKs: `github.com/anthropics/anthropic-sdk-go` v1.84.0 and `github.com/openai/openai-go/v3` v3.85.0, the latest releases on 2026-10-22, both under Apache-2.0 (the GitHub API, `repos/anthropics/anthropic-sdk-go/license` and `repos/openai/openai-go/license`, read 2026-10-22). An SDK is imported only by the adapter of its provider (architecture 3.2). The reasoning effort of both models is `high`: the assessment must be correct, not fast. OpenAI's answer is not stored at the provider — `store: false`. There is no fallback model on a refusal: it would mix the assessments of two models.
-
-— *Why:* the author's decision of 2026-10-22: «на этапе MVP мне всего лишь нужно чтобы ты на канве показывал 5 статичных задач. Я сам буду их решать. Иногда специально ошибаться или писать неразборчиво. ИИ будет пытаться понять что я написал и выдавать свою оценку — решил правильно или с ошибкой. Далее я жму кнопку ИИ был прав или нет. Всё. Никаких проверок с твоей стороны не нужно вообще». And earlier: «мне нужно простое решение а не писать программу под каждую канву». Both models side by side, the correct answer for the model, the browser on the computer and the tasks from the executor — the author's answers the same day.
-- The judge here is the author themselves, so a programmatic check is not needed: it was needed by the big measurement, where there are thousands of calls and no one to judge (R05, R18).
-- This is not the product. The model's assessment is seen by the adult author, not by a learner, and it is what the board measures. The decision for the product — the program gives the verdict (R03 spec) — the board does not change. Whether to revisit it, the author will decide by the board's data.
-
-— *Rejected:*
-- **the big measurement now** — about 110 sheets, statistics and about $140 (architecture 3.1): the author first needs a simple board. The plan of the measurement stays in architecture 3.1 and RUN.md, and the measurement's tasks are put off;
-- **a programmatic check** — the check by lines of T14 (R18) is removed, and R18 is superseded by this entry;
-- **one model** — the author chose both side by side, to see at once which is better;
-- **a model without the correct answer** — the author chose to give the answer, as it will be in the product. The cost — the model may "read in" what it expects (R03); the board will show exactly that;
-- **a tablet** — the author chose a browser on the computer: the page opens on a local address without setting up the network;
-- **recording the big measurement into RUN.md in the format of T12, or the page of `canvas`:** the board needs neither the sample format nor the samples page. The format of T12 stays the basis of the eval protocol (R16).
-
-— *Consequence:* the tasks of the big measurement in RUN.md are `[?]`, T14 is `[-]`, and T39 is the board; the author sets up the keys for eval (T25). What of this concerns `spec` is the rows В15 and В20 of table 3 of RUN.md, «в реестр spec». The messages to the agents of `spec` and `canvas` about what the author wants from the MVP are in the report of T39. — architecture 3.1, 3.2, 3.3; RUN.md: table 3, T14, T39; README.md.
-
-— *Amendment 2026-10-22* (the author's decision on В21 of RUN.md): **the board stays on its own sheet and does not take the sheet of `canvas` — the element `<novatrail-canvas>`.** The session of `canvas` reported on 2026-10-22 that the element is ready for the board: a sheet of 1000 × 1400 with scrolling, undo and clearing, a PNG of the whole sheet. It can be taken only from a release of `canvas`, and the release has not come out yet. The author's answer: «нет не брать».
-- *Why:* the executor recommended first running the first checks on the board's own sheet. Only the keys remained before them (T25), and in both cases the models receive a PNG of the sheet.
-- *Rejected:* taking the element when a release of `canvas` comes out — the module file by version and sha256 in `internal/board` through `go:embed`; building the module from the sources of `canvas` — a build of `canvas` in `tutor` bypassing its release. Going back to the sheet of `canvas` — only by a new decision of the author.
-- *Consequence:* the board's sheet, the picture of 1000 × 600, the price above and the comment in `internal/board/ask.go` are as before. — architecture 3.3; RUN.md, table 3.
-
-— *Amendment 2026-10-23* (the author's first launch of the board): **the board answers on any local address with any port, and the request's Origin must match the address the request came to.** VS Code forwarded port 8080 to the author's computer under the number 36615, and the board rejected its own page: it expected port 8080. The words "answers only on its local address" in the item "Protection" above are history. The protection itself is as before: a domain rebound to 127.0.0.1 comes with its own name, and a page of another site or of another local port — with its own Origin. — *Rejected:* asking the author to pin port 8080 in the Ports tab of VS Code — on their computer this port may be taken; pinning the port in `.devcontainer/devcontainer.json` — for the same reason the board would then not open at all. — architecture 3.3.
-
-— *Amendment 2026-10-24* (T40): **on the board the author chooses which Claude models to ask and with what effort, and the summary is by pairs "model · effort".**
-- **The models** — the four current Claude models: `claude-haiku-5-5`, `claude-sonnet-5-5`, `claude-opus-5-5` and `claude-fable-5-1`. The board offers each at all five effort levels, from `low` to `max`: all four accept all five (Anthropic's Models overview and Effort, read 2026-10-23; RUN.md, T40). Check asks all the ticked models at once, each with its level. By default only Opus 5.5 with `high` is ticked — so the board asked before the choice. GPT-6 Astra — only with an OpenAI key, only with `high` and not ticked by default: GPT is not connected to the board (R20).
-- **How it is built** — the effort goes as the field `Effort` of the request of the port `provider`, and the model with its price is taken from the list of the adapter `provider/claude`. A model or a level that the board does not offer, the server rejects before the call.
-- **The output limit** — the former 16,000 tokens at all levels, so that the levels are compared at one limit. The spending limit counts the worst case over the ticked models.
-- **Time and spending** — the board waits up to 10 minutes for an answer, not 4: at high levels a long answer must be cut off by the output limit, not by the clock. A call cut off by the clock or by a closed page brings no bill, though the model may have spent tokens, — the board counts it in the spending by the worst case.
-- **Marks** — only on an answer with an assessment and only on an answer that went into the log: a mark of another would be lost at the next launch.
-- **What is seen and what is written** — on an answer, on the page and in the log, also the effort and the input and output tokens. The summary for each pair: answers and answers without an assessment, marks and how many of them "AI was right", the mean price and the mean time of an answer. Answers recorded before the choice go in it with `high` — so they were asked.
-
-— *Why:* the author's instruction of 2026-10-23 — to choose the models and their effort on the board and once more try the price, the speed of the answer and the accuracy (RUN.md, T40). These numbers are needed by the planning of the measurement too: which Claude models to take in it (R21).
-
-— *Rejected:*
-- **one model per check** — to compare models on the same handwriting, the solution would have to be written again;
-- **two levels of one model in one check** — a mark is bound to the model in the attempt, and for a second level a second Check on the same strokes is enough;
-- **an output limit by level** — the levels would be compared at different limits. — architecture 3.2, 3.3; README.md.
-
-— *Amendment 2026-10-25* (T45): **the model answers only with an assessment, checking is possible along the working, and the model marks the error on the board itself.**
+**R19. The MVP is the check board. The author solves given tasks by hand — sometimes on purpose with an error or illegibly —, the Claude models the author ticks read the solution and assess it themselves, along the working too, the model marks the error on the board itself, and the author marks under each answer whether it was right. There is no programmatic check.** The code is `internal/board`, `provider/claude`, `provider/gpt` and the command `tutor-eval board`.
+- **What the author sees:** the task, a board for writing, the models with their efforts, and the button Check. After the check — the answer of each model side by side: its assessment, the mark of the error on the board, and the price, the time and the tokens. Under each answer — AI was right and AI was wrong, and below — a summary by pairs "model · effort".
 - **The answer** — one of four assessments:
   - "correct" — the solution is finished and correct;
   - "correct so far" — there are no errors, but the solution is not finished, and the board writes "No mistakes so far — keep going";
   - "error";
   - "cannot read it".
 
-  At an error — a mark: a kind that the model chooses itself — underline, circle or box —, and a box around the erroneous writing in the pixels of the picture. There is one mark — at the first error. The lines, the outcome, the number of the wrong line and the comment are no longer in the answer: "What the author sees" and "The models" above are history.
-- **Along the working.** Check is pressed at any moment. The instruction says to judge only what is written: a step that is not there yet and an unfinished last line are not an error. The model still sees the picture, the statement, the correct answer and the reference solution.
+  At an error — one mark, at the first error: a kind that the model chooses itself — underline, circle or box —, and a box around the erroneous writing in the pixels of the picture. The answer has no lines, no outcome, no number of the wrong line and no comment.
+- **Along the working.** Check is pressed at any moment. The instruction says to judge only what is written: a step that is not there yet and an unfinished last line are not an error. The model sees the picture of the board, the statement, the correct answer and the reference solution, and answers in JSON by a schema.
 - **The mark** lies on its own layer above the board, and this layer does not get into the picture for the model.
   - Each model has its own colour, not black and not grey, and its card has the same colour.
   - The board draws the model's box as it is, with the corners in any order. A box that goes beyond the edge of the picture it clamps to the edge, as Anthropic advises. A box wholly beyond the edge, without width or without height — except an underline — it does not draw, and the card says that the model gave no place.
-  - Clear, moving to another task and a new check remove the marks. Undo, as before, keeps the answers, and with them the marks: they belong to the picture that the models checked.
+  - Clear, moving to another task and a new check remove the marks. Undo keeps the answers, and with them the marks: they belong to the picture that the models checked.
   - "AI was right" — when both the assessment and the place of the mark, if there is one, are correct.
-- **From the recommendation of T42** (architecture 3.12) — three items:
-  - thinking tokens — on the card and as means in the summary;
-  - the thinking switch for Haiku 5.5 and Sonnet 5.5, at efforts `low`, `medium` and `high`. For Haiku the board sends `disabled`, for Sonnet — `between_tools`, and for Opus 5.5 and Fable 5.1 thinking is not switched off. An impossible combination the board and the adapter reject before the call;
-  - a streaming call for Claude: the time to the first text of the answer — from the sending of the attempt that answered — and the SDK's retries on the card, in the summary and in the log. GPT stays without streaming: it is not used on the board (R20).
-- **The summary** — still by pairs "model · effort", but answers without thinking and answers with an analysis recorded before this amendment have rows of their own. The means of the time to the first token, of the output tokens and of the thinking tokens are only over the answers with an assessment for which the log knows this: the bill of a failed call may be cut off.
-- **The price of a cut-off answer.** With streaming, the input tokens come at the start of the answer, and the total of tokens at the end. An answer cut off between them the board counts by the worst case, like a call cut off before the bill.
+- **The models** — the four current Claude models: `claude-haiku-5-5`, `claude-sonnet-5-5`, `claude-opus-5-5` and `claude-fable-5-1`. The board offers each at all five effort levels, from `low` to `max`: all four accept all five (Anthropic's Models overview and Effort, read 2026-10-23). Check asks all the ticked models at once, each with its level. By default only Opus 5.5 with `high` is ticked. GPT-6 Astra, `gpt-6-astra`, — only with an OpenAI key, only with `high` and not ticked by default: GPT is not connected to the board. Without one key the board works with the other provider's models.
+  - The effort goes as the field `Effort` of the request of the port `provider`, and the model with its price is taken from the list of the adapter, `provider/claude/catalog`. A model or a level that the board does not offer, the server rejects before the call.
+  - **Without thinking** — Haiku 5.5 and Sonnet 5.5, at efforts `low`, `medium` and `high`: for Haiku the board sends `disabled`, for Sonnet `between_tools`, and for Opus 5.5 and Fable 5.1 thinking is not switched off. An impossible combination the board and the adapter reject before the call.
+  - **Claude's answer comes as a stream:** the time to the first text of the answer — from the sending of the attempt that answered — and the SDK's retries are on the card, in the summary and in the log. GPT is without streaming.
+- **The tasks** — 11 fixed ones, which do not change, so that each attempt at one task is an attempt at the same thing.
+  - Tasks 1–5 — two linear equations, two chains of calculations and the task about posts, the tasks of the measurement of the course of writing.
+  - Tasks 6–11 — with free writing: two on the number line, two on a drawing, a row of objects or a diagram of segments, and two with calculation at the side. In the four with the number line and with a drawing, the drawing carries a step of the solution: a jump, a place in the row, a segment. The two with calculation at the side have no drawing: the calculations go at the side of the main writing. Their bank is `eval/free-bank.json`, `tutor-bank` v0, kind `free-solution`.
+  - The board's prompt is one for all 11 tasks.
+- **Where** — in a browser on the author's computer: the command in the devcontainer listens only on a local address, and VS Code opens it in the browser.
+- **What is stored** — the picture of each attempt and the log of the models' answers and of the author's marks, in `samples/board/`, outside git. The board's record mode writes the measurement's samples in the format `tutor-sample`.
+- **What is seen and what is written** — on an answer, on the page and in the log: the effort, whether it ran without thinking, the input and output tokens and of them the thinking tokens, the time to the first token, the retries, the time and the price.
+- **The summary** — for each pair "model · effort": answers and answers without an assessment, marks and how many of them "AI was right", the mean price and the mean time of an answer, and the means of the time to the first token, of the output tokens and of the thinking tokens. Answers without thinking and answers of the earlier form, with an analysis, have rows of their own, and an answer of the log without an effort goes in with `high`. The means of the time to the first token and of the tokens are only over the answers with an assessment for which the log knows them: the bill of a failed call may be cut off.
+- **Marks** — only on an answer with an assessment and only on an answer that went into the log: a mark of another would be lost at the next launch.
+- **Keys** — for eval, each provider its own, in the variables `TUTOR_ANTHROPIC_API_KEY` and `TUTOR_OPENAI_API_KEY`; where the key for eval lives in the platform is Т-28. Not in `ANTHROPIC_API_KEY`: with it, Claude Code in the same container would pay for its own work with the eval key.
+- **The price** — by the providers' prices per million input and output tokens: Claude Opus 5.5 has $4 and $20 (sources 1.3), GPT-6 Astra $10 and $50 (sources 1.8). The input is a picture of 1000 × 600 and text, about 1,300 tokens; the output with reasoning at effort `high` — about 1–3 thousand tokens. It comes to about 3–7 cents per check at Opus and 6–16 cents at GPT. The board shows the exact price of each answer and the sum. The output limit is 16,000 tokens at all levels, so that the levels are compared at one limit; at it the worst case is about $0.34 and $0.84.
+- **The spending limit** per launch — the flag `-max-usd`, $5 by default. A check that in the worst case over the ticked models would go beyond the limit the board does not start, and checks go one at a time. So $5 is enough for about 20–40 checks of both models; an answer cut off by tokens or by a refusal is counted in the spending too.
+- **Time and spending** — the board waits up to 10 minutes for an answer: at high levels a long answer must be cut off by the output limit, not by the clock. A call cut off by the clock or by a closed page brings no bill, though the model may have spent tokens, — the board counts it in the spending by the worst case. With streaming, the input tokens come at the start of the answer and the total of tokens at the end: an answer cut off between them is counted by the worst case too.
 - **The picture is not downscaled:** the request tells the API to reject a picture that it would downscale — otherwise the model's pixels would diverge from the board's pixels. The board's picture, 1000 × 600, is within the models' limits.
+- **The sheet** — the board's own, not the element `<novatrail-canvas>` of `canvas`.
+- **Protection:** the board answers only on a local address — `localhost` or a loopback IP, with any port — and only to its own page: a check of Host, a request's Origin that must match the address the request came to, and requests `application/json`. A domain rebound to 127.0.0.1 comes with its own name, and a page of another site or of another local port with its own Origin: neither spends the keys nor reads the answers. A directory of pictures in the work tree outside `samples/` the board rejects: handwriting must not lie beside the code.
+- **Language** — the board's buttons, captions and messages are in English, like all the code. The statements of the tasks are in Russian, like the measurement's tasks: this is content, not code.
+- **Calling the models** — through the official SDKs: `github.com/anthropics/anthropic-sdk-go` v1.84.0 and `github.com/openai/openai-go/v3` v3.85.0, the latest releases on 2026-10-22, both under Apache-2.0 (the GitHub API, `repos/anthropics/anthropic-sdk-go/license` and `repos/openai/openai-go/license`, read 2026-10-22). An SDK is imported only by the adapter of its provider. OpenAI's answer is not stored at the provider — `store: false`. There is no fallback model on a refusal: it would mix the assessments of two models.
 
-— *Why:* the author's instruction of 2026-10-25: «мне нужно чтобы модель возвращала только правильно или неправильно. не нужно тратить время и токены на разбор решения. Также теперь я могу нажимать на кнопку отправить запрос на проверку модели до того как я решил задачу- на промежуточных этапах. МОдель если видит проблему в решении то должна сама пометить место на канве другим цветом отличного от моего где у меня ошибка - каким образом должна решать сама». The four assessments, the mark as it is and the three items of T42 the author chose in the planning of T45 (RUN.md, T45).
-
-— *Rejected:*
-- **two assessments or three.** Then on a finished correct solution too the board would say "keep going", and without "cannot read it" the model would guess when in doubt. A false alarm is worse than no check (R04 spec);
-- **a mark snapped to the strokes, and group labels on a copy of the picture,** as in R08. How to mark, at the author's request, the model decides, and "AI was right" must judge its place, not the board's. Besides, the labels would lie on the picture by which the model judges;
-- **`gpt-6-luna` with effort `none`** (T44): GPT was not connected to the board (R20);
-- **a summary only over the new answers:** it would not show how much the short answer saved. — architecture 3.12, 3.3, 4; README.md; RUN.md, T45.
-
-— *Amendment 2026-10-25* (R24): "the board needs neither the sample format nor the samples page" above is history. The board's record mode writes the measurement's samples in the format of R15 (T13).
-
-— *Amendment 2026-10-26* (T52; R28): **the board has 11 tasks: six with free writing are added to the five, for the pilot of epic E4.**
-- **Which:** two on the number line, two on a drawing, a row of objects or a diagram of segments, and two with calculation at the side. In four tasks — with the number line and with a drawing — the drawing carries a step of the solution: a jump, a place in the row, a segment. The two tasks with calculation at the side have no drawing: the calculations go at the side of the main writing.
-- **Where:** their bank is `eval/free-bank.json`, `tutor-bank` v0, kind `free-solution`, the statements in Russian, like those of the five. On the board they are tasks 6–11, and the first five are the same and in their places.
-- **What is as before:** the tasks are still fixed, and "five fixed ones" above is history. The board's prompt is the same: the pilot checks the current one (T53).
-
-— *Why:* R28 puts the pilot first — 5–10 of the author's solutions with the mouse on this board, before the code of the measurement of free writing. The bank is a file, as in E2: the plan and the synthetic sheets of free writing will take the tasks from it (T57, T59).
+— *Why:* for the MVP the author needs a simple board, not a program for each canvas: given tasks that the author solves by hand, sometimes erring on purpose or writing illegibly; AI reads the writing and says whether it is correct or has an error, and the author presses whether AI was right. Nothing else is checked.
+- The judge here is the author, so a programmatic check is not needed: it is needed where there are thousands of calls and no one to judge.
+- This is not the product. The model's assessment is seen by the adult author, not by a learner, and it is what the board measures. In the product the program gives the verdict, and the board does not change that; whether to revisit it, the author decides by the board's data.
+- **The short answer.** An analysis of the solution costs time and tokens, and the author needs only correct or not, at intermediate stages too. Where the model sees a problem, it marks the place itself, in a colour other than the author's, and decides how.
+- **The choice of models and efforts** compares the price, the speed of the answer and the accuracy of each pair on the same handwriting, and the measurements take their Claude models by these numbers.
+- **The own sheet.** In both cases the models receive a PNG of the sheet, and the element of `canvas` enters `tutor` only from a release of `canvas`.
+- **Any local port.** VS Code forwards port 8080 to the author's computer under another number when 8080 is taken there, and the board must answer its own page under that number too.
+- **Tasks 6–11** are for the pilot of free writing — the author's solutions with the mouse on this board, before the code of the measurement of free writing. The bank is a file, so the plan and the synthetic sheets of free writing take the tasks from it. The pilot checks the board's current prompt.
 
 — *Rejected:*
-- **a flag that leaves only the new tasks on the board,** — code for the sake of the pilot: the board's arrows go round in a circle, and from the first task "←" leads to the last;
-- **the tasks of free writing in the bank of E2** — the files of E2 do not change (R28);
-- **the board's prompt adjusted for drawings,** — the pilot checks the current one. — architecture 3.1, 3.3, 3.4; README.md; RUN.md, T52 and the row В32 of table 3.
+- **the big measurement instead of the board** — about 110 sheets, statistics and about $140 before the author sees anything: the author first needs a simple board;
+- **a programmatic check by lines:** the judge on the board is the author;
+- **one model per check** — to compare models on the same handwriting, the solution would have to be written again;
+- **two levels of one model in one check** — a mark is bound to the model in the attempt, and for a second level a second Check on the same strokes is enough;
+- **an output limit by level** — the levels would be compared at different limits;
+- **a model without the correct answer** — the answer is given, as it will be in the product. The cost — the model may "read in" what it expects; the board shows exactly that;
+- **a tablet** — a browser on the computer opens the page on a local address without setting up the network;
+- **the samples page of `canvas`:** the board's record mode writes the samples itself;
+- **two assessments or three.** Then on a finished correct solution too the board would say "keep going", and without "cannot read it" the model would guess when in doubt. A false alarm is worse than no check;
+- **a mark snapped to the strokes, and group labels on a copy of the picture:** the model decides how to mark, and "AI was right" must judge its place, not the board's. Besides, the labels would lie on the picture by which the model judges;
+- **`gpt-6-luna` with effort `none`:** GPT is not connected to the board;
+- **a summary only over the short answers:** it would not show how much the short answer saved;
+- **taking the element `<novatrail-canvas>` from a release of `canvas`** — the module file by version and sha256 in `internal/board` through `go:embed`; **building the module from the sources of `canvas`** — a build of `canvas` in `tutor` bypassing its release;
+- **pinning port 8080 in the Ports tab of VS Code** — on the author's computer this port may be taken; **pinning the port in `.devcontainer/devcontainer.json`** — for the same reason the board would then not open at all;
+- **a flag that leaves only the tasks of free writing on the board** — code for the sake of the pilot: the board's arrows go round in a circle, and from the first task "←" leads to the last;
+- **the tasks of free writing in the bank of the course of writing** — its files do not change;
+- **the board's prompt adjusted for drawings** — the pilot checks the current one.
+
+— *Consequence:* `internal/board/`; `provider/claude/`; `provider/gpt/`; `cmd/tutor-eval/`; `eval/free-bank.json`; `justfile`; `docs/architecture.md`.
 
 ## The outcome of the AI reading measurement
 
-**R20. The measurement of AI reading is passed on the check board: epic E2 is done, there will be no big measurement, GPT is not connected to the board, and E1 — the detailing — becomes current again.**
-- **What the board showed** on 2026-10-23: the author solved all five tasks of the board, in their words, «максимально сложно и непонятно», and Claude Opus 5.5 assessed all five correctly. A check cost about a cent and took about 5 seconds: by the board's summary — $0.05 for five checks, and the last one — $0.010 and 4.7 s. This is about ten times cheaper than the estimate of R19 — 3–7 cents.
-- **The big measurement** (architecture 3.1) we do not do: its tasks — T13, T15–T24, T26–T32, T35 and T37 — are `[-]`. Its plan — R05, R07, R08, R11, R15 and what R03, R06, R10 and R16 say about the measurement — stays a record of what was prepared and not carried out. In force is what the board stands on: handwriting lies in `samples/` outside git, and agents do not look there (R05, R14; CLAUDE.md), and the keys are only for eval and only in environment variables (R06, R19).
-- **GPT** is not connected to the board: the author does not set up an OpenAI key. The code of the adapter `provider/gpt` stays: without a key it costs nothing, and the board works with one model too.
-- **E2 is done** and goes to the archive, `plan/E2.md`. E1 — the detailing, put off until the measurement's conclusions (R04, amendment 2026-10-21) — becomes current again. Its tasks were written on 2026-10-20, before the board, so first comes the planning of the epic.
+**R20. The check board answered the question of the MVP — whether AI reads handwritten work at all: Claude Opus 5.5 assessed all five of the author's solutions correctly, for about a cent and 5 seconds a check. GPT is not connected to the board, and the board offers a choice of Claude model and effort, for trials of price, speed of answer and accuracy.**
+- **What the board showed:** the author solved all five tasks of the board as intricately and unclearly as they could, and Claude Opus 5.5 assessed all five correctly. A check cost about a cent and took about 5 seconds: by the board's summary — $0.05 for five checks, and the last one $0.010 and 4.7 s. This is about ten times cheaper than the estimate made before the board, 3–7 cents a check at Claude.
+- **GPT** is not connected to the board: there is no OpenAI key. The code of the adapter `provider/gpt` stays: without a key it costs nothing, and the board works with one model too.
+- **The choice of model and effort.** The time and the price of one check are among the results, and they depend on the model and its effort, so the board lets the author choose both and try price, speed of answer and accuracy again.
+- **What the board did not measure:** five checks, one adult, a mouse in a browser and one model that sees the correct answer. How many false "correct" there will be on children's work — especially when the model "reads in" the expected answer — the board does not count, and it does not decide whether the program should stop giving the verdict.
 
-— *Why:* the author's words of 2026-10-23: «все 5 задач ИИ выполнил успешно даже лучше чем я предолагал в несколько раз. Не вижу смысла тратить деньги на ChatGPT. Прототип полностью подтвердил гипотезу что решение работоспособно даже с учётом что я максимально сложно и непонятно делал решения. Цена за 5 задач меня устраивает с большим отрывом, римерно в 10 раз. Эпик Замер чтения ИИ успешно пройден». The tasks of the big measurement — «Не делаем», the next epic — E1: the author's answers the same day. The question of the MVP — whether reading works at all — the board closed, and the author judges by it (R19).
+— *Why:* the board's checks are what the author judges by, and they closed the question of the MVP — whether reading works at all. The price of a check suits by a wide margin, about ten times, and paying for a second provider's model brings nothing the board needs.
 
 — *Rejected:*
-- **putting the big measurement off as an epic for later**, as `canvas` put its tasks off as epics E4 and E5: the author chose not to do it;
-- **a comparison with GPT-6 Astra:** the author sees no sense in paying for it;
-- **one more series on the board before closing the epic** — for example, only with deliberate errors: the author closed the epic on five checks.
+- **a comparison with GPT-6 Astra:** paying for it makes no sense;
+- **a series only with deliberate errors:** five checks answered whether the model reads at all, and the next series compares models and effort on price, speed and accuracy.
 
-— *What the board did not measure:* five checks, one adult, a mouse in a browser and one model that sees the correct answer. How many false "correct" there will be on children's work — especially when the model "reads in" the expected answer (R03) — the board does not count. Whether to revisit R03 spec — the program gives the verdict — the author did not decide (R19). Т-23 and О-8 waited for the measurement's numbers, and will be decided without them (В20 of RUN.md).
-
-— *Consequence:* RUN.md — T25 `[x]`, the tasks of the big measurement `[-]`, E2 — in `plan/E2.md`, in table 1 — E1, in table 3 — В20 extended and the rows that waited for the measurement's conclusions named; architecture 3, 3.1 and 3.3; README.md.
-
-— *Amendment 2026-10-23* (the author's decision the same day): **E2 is not closed: its last task is T40, the choice of model and effort on the board and one more series of trials on price, speed of answer and accuracy.** The author's words: «единственно что я хочу ещё сделать - это возможность выбора типа моделей на доске и их effort. И после этого ещё раз поэксперементировать с ценой и скоростью отклика и точностью модели. Давай добавим это в виде следующей задачи». The task is the remainder of E2: among its results were the time and price of one check. The done tasks of E2 and those we do not do stay in the archive, and T40 goes into RUN.md — so `canvas` ran its E2 with task T37 after the move to the archive. E1 — right after T40. The words "epic E2 is done" above are history before this amendment. — RUN.md: table 1, T40; `plan/E2.md`; README.md.
-
-— *Amendment 2026-10-23* (R21): **the big measurement comes back — only on Claude models; E2 is not done, and E1 again waits for the measurement's conclusions.** The items above about the big measurement, about E2 being done and going to the archive, and about the next epic are history: R21 replaced them. In force are the outcome of the board, GPT not on the board, and T40.
+— *Consequence:* `internal/board/`; `docs/architecture.md`; `README.md`.
 
 ## The return of the big measurement
 
-**R21. The big measurement of AI reading comes back — by the plan of architecture 3.1, only on Claude models. Its main question is whether the working helps the model: the order of writing and erasing. Before its tasks comes the planning of the measurement; E2 goes on, and E1 again waits for the measurement's conclusions.**
-- **What is measured** — the plan of architecture 3.1 with the kinds of input of R11: in reading — the picture, the picture with the order of writing, and the order without the picture; in analysis — without the working, with the log of actions, with the key frames before erasure and with both together. Whether the working helps is data for В8 too.
-- **The models** — only Claude: OpenAI is removed from the measurement, as Google was earlier (R06, amendments 2026-10-21 and 2026-10-23). By R06 these are `claude-haiku-5-5` and `claude-opus-5-5`; whether to take `claude-sonnet-5-5` and `claude-fable-5-1` as well, and with what effort, the planning of the measurement will decide by the numbers of T40.
-- **The order** — T40, then the planning of the measurement in planning mode, then its tasks; until the planning they are `[?]`. E1 waits for the measurement's conclusions, as the 2026-10-21 amendment to R04 decided.
-- **What the planning decides** — the list «Решить при планировании замера» in the description of E2 in RUN.md: the verdict without the check by lines, the models and effort, recording samples with strokes, the checks of R08 with one provider, the links with `spec` and `canvas`, and the estimate.
+**R21. The big measurement of AI reading runs only on Claude models, narrowed to its main question: whether the working — the order of writing and the erasures — helps the model.**
+- **What is measured:** the model judges the same sheets without the working and with it — the log of actions, the key frames before erasure, or both.
+- **The models** — Opus 5.5 · `high` and Haiku 5.5 · `low`, with thinking and without; neither OpenAI's models nor Google's, which the platform cannot give to children.
+- **The truth** the model's assessment is checked against is the markup made while writing; the samples are written by the board's record mode.
+- **Outside the measurement:** the study's checks of two readers, the digit height and handwritten injections — of its four checks only the place of the first error is in it —, and the links with `spec` and `canvas`.
+- **The estimate** — about $4.
 
-— *Why:* the author's words of 2026-10-23: «давай вернём большой замер. всё же нужно понять помогает ли "История добавляет только процесс: порядок и стирания. Помогает ли он, должен был показать большой замер" это важно проверить на начальном этапе. Будем проверять только на claude моделях». The board answered whether the model reads handwriting (R20), but not whether the working helps it: it gives the models only the picture. Of the two paths — first a trial on the board, or the full plan at once — the author chose the full plan.
+— *Why:* the board answered whether the model reads handwriting, but not whether the working helps it: it gives the models only the picture. Whether it helps is worth checking at the start, and the full plan answers it at once.
 
 — *Rejected:*
-- **a trial of the working on the board**, and the full plan only if the board gives no clear answer: the executor proposed this, and the author chose the full plan at once;
-- **OpenAI's models** — the author checks only on Claude;
-- **not doing the measurement** (R20) — then the question about the working would remain unanswered.
+- **a trial of the working on the board first**, and the full plan only if the board gives no clear answer: the full plan goes at once;
+- **OpenAI's models:** the measurement checks only on Claude models;
+- **not doing the measurement:** the question about the working would remain unanswered.
 
-— *Consequence:* amendments to R06 and R20; RUN.md — E2 is again the current epic as a whole, the measurement's tasks `[?]` until its planning, T40 is next, E1 — in table 2, В20 extended; architecture 3, 3.1 and 3.3; README.md.
-
-— *Amendment 2026-10-25* (R24): **the plan of the measurement is narrowed to the main question, and the planning list is decided.** The models — Opus 5.5 · `high` and Haiku 5.5 · `low`, with thinking and without; the verdict — by the markup; the samples are written by the board; the checks of R08, except the place, and the links with `spec` and `canvas` — outside the measurement, the links — in epic E3; the estimate — about $4.
+— *Consequence:* `docs/architecture.md`; `cmd/tutor-eval/`; `README.md`.
 
 ## Move to `spec` `v0.2.32`
 
-**R22. `spec` is at the tag `v0.2.32`. The tag closed nine of our rows «в реестр spec» — В5, В6, В8–В11, В13, В15 and В17. The card of `tutor` has a new item "To decide when detailed" — assessment by the rubric, and the README carries status badges.** The submodule moves from `v0.2.18` to `v0.2.32`: this is the latest release of `spec` on 2026-10-25, commit 15026e2. The release is immutable, and `gh release verify v0.2.32 -R altnovatrail/spec` confirmed it by its attestation. What the tag brings `tutor` (`git -C spec diff v0.2.18 v0.2.32`, read 2026-10-25):
-- **the answers to the rows «в реестр spec».** The author recorded them in `spec` on 2026-10-22, and Д19 and Д26 of RUN.md of `spec` say to close them by the move to the tag:
-  - В5 — R47 spec: Google's generative AI is closed on the platform — both the Gemini API and Vertex AI, for all learners on both paths to AI and for the other parts of the platform — until a lawyer answers otherwise. Architecture, sections 1, 3.6, and 2.5, and the tasks T02 and T05 speak of Google by it. The measurement is not concerned: Google was removed from it already on 2026-10-21 (R06);
-  - В6 — by an addition to Т-23: the answer plan is the threshold of R03;
-  - В8 — by the open question П-21, and В11 — by the open question Т-33;
-  - В9 — by an addition to П-16: the volunteers' consent is extended to use in the measurement;
-  - В10 and В13 — by inputs of the tasks T29 and T28 of RUN.md of `spec`: whether the check kind "steps" enters the module format v0, T29 decides, and the digit height on a crop is a canvas setting of the module, 32 px by default until the measurement's conclusions;
-  - В15 — by R43 spec and the card architecture 3.6 spec: the eval CLI serves the check board on 127.0.0.1, and it is not a service;
-  - В17 — by a refinement of the recommendation of О-8.
+**R22. The move of `spec` from `v0.2.18` to `v0.2.32`: the tag answers nine of our questions to `spec`, adds assessment by the rubric to what `tutor` has still to decide, and brings the README's status badges.** `v0.2.32` was the latest release of `spec` on 2026-10-25, commit 15026e2; the release is immutable, and `gh release verify v0.2.32 -R altnovatrail/spec` confirmed it by its attestation. What it brings `tutor` (`git -C spec diff v0.2.18 v0.2.32`, read 2026-10-25):
+- **the answers to our questions «в реестр spec»**, whose rows leave `run/QUESTIONS.md`:
+  - Google's generative AI is closed on the platform — both the Gemini API and Vertex AI, for all learners on both AI routes and for the other parts of the platform — until a lawyer answers otherwise. The measurement does not take Google already;
+  - Т-23 gets as its answer plan the threshold by which one call is admitted against two;
+  - what of the course of solution goes to AI beyond the picture, and the rule of two different readers for "unreadable", become open questions of `spec`, П-21 and Т-33;
+  - the volunteers' consent of П-16 is extended to use in the measurement;
+  - whether the check kind "steps" enters the module format v0, `spec` decides, and the digit height on a crop is a canvas setting of the module, 32 px by default until the measurement's conclusions;
+  - the eval CLI serves the check board on 127.0.0.1, and it is not a service;
+  - the recommendation of О-8 is refined;
+- **the board in `spec`:** the tag calls the board the first code of stage 2, with "two models", and the big measurement put off, since its return had not reached `spec`; the question to `spec` about the board says so too;
+- **the first slice of three modules** — olympiad maths on a sheet, school maths of grade 3 on the workbook, and short essays in English assessed by the rubric. Hence:
+  - `tutor` has a new item to decide when detailed: assessment by the rubric, its measure (О-22) and how the feedback does not write the essay for the learner;
+  - the conclusions about handwritten maths on a sheet do not carry over to the workbook and essays: these get a measurement of their own, on synthetic pages of the workbook and synthetic essays, and its conclusions are an input of the detailing of assessment by the rubric;
+  - the slice has no Spanish A1, and with it no step "say": nothing in `tutor` waits for it;
+- **the README's badges:** CI, CodeQL, the Go version, Scorecard and the license, and a line below with five measures of SonarCloud. A badge comes only with what it shows: the release and its number with the first release, coverage with the upload to Codecov through `go.yml` of `.github`, OpenSSF Best Practices with the project on bestpractices.dev, which the author creates;
+- **the module format:** the format has its own version, the schemas are JSON Schema 2020-12, and a module is a folder with a module manifest. The eval runner reads modules through `module-kit`, in its window of versions, and a module has one explanation language. The temporary format of the bank of the measurement's tasks is not the module format;
+- **normative texts for authors are written in English:** `tutor` has none;
+- **the term "solution":** `spec`'s glossary now calls so the author's solution — the course of solution of a task, shown after a correct answer —, while `spec` and `tutor`'s documents also say "solution" of the learner's writing, "the learner's free solution" and "a handwritten solution". Corrected in `tutor` alone, its documents would diverge from `spec`, so the term goes to `spec` as a question «в реестр spec»;
+- the rest does not change the documents of `tutor`: the module format in `format/` and its check `format-check`, coverage and Codecov at `spec` itself, the glossary's edits about the module — ID, layout and module manifest. The documents check of `tutor` passed on the tag without edits.
 
-  The rows leave table 3 of RUN.md, and the live documents and tasks name the numbers of `spec`. The done tasks and the entries of the log stay as they were: this is history;
-- **В20 stays.** R43 spec recorded its version of 2026-10-22: the board is the first code of stage 2, and the big measurement is put off. The return of the measurement on 2026-10-23 (R21) did not get there. So the card and repositories 6 spec, item 5, call the measurement put off, and the board has "two models". В20 is extended with this;
-- **R41 spec — the first slice of three modules:** olympiad maths on a sheet, school maths of grade 3 on the workbook and short essays in English with assessment by the rubric. Hence:
-  - the card has a new item "To decide when detailed", second in its list — assessment by the rubric, its measure (О-22) and how the feedback does not write the essay for the learner (R05 spec). This is architecture 3.5 and the task T46, put off together with E1;
-  - the measurement's conclusions about handwritten maths on a sheet do not carry over to the workbook and essays (Д18 of RUN.md of `spec`). Whether to measure them and when, the planning of the measurement decides — a new item of its list in the description of E2;
-  - there is no Spanish A1 in the slice, and with it no step "say": subsection 2.4 of architecture no longer waits for it;
-- **R48 spec — README badges** by repositories 2.3 spec, as Д28 of RUN.md of `spec` says: CI, CodeQL, the Go version, Scorecard and the license, and a line below — five measures of SonarCloud. There are no badges for what `tutor` does not have yet. Release and the release number wait for the first release (T35). Coverage waits for the upload to Codecov through the wrapper `go.yml` of `.github` (Д29 of RUN.md of `spec`). OpenSSF Best Practices waits for a project on bestpractices.dev, and the author creates it (R48 spec);
-- **R44–R46 spec — the module format:** the format has its own version, the schemas are JSON Schema 2020-12, and a module is a folder with a module manifest. The eval runner of `tutor` will read modules through `module-kit`, in its window of versions (Д20 of RUN.md of `spec`), and a module has one explanation language (Д22 of RUN.md of `spec`). `tutor` has no code that reads modules yet, and the temporary format of the bank of the measurement's tasks (R15) is not the module format;
-- **R42 spec** — normative texts for authors are written in English: this is the language rule in RULES.md and in rule 10 of the template of RUN.md. `tutor` has no such texts, and rule 10 of our RUN.md does not change;
-- **the term "solution".** concepts 15 spec now calls so the author's solution — the course of solution of a task, which is shown after a correct answer. But `spec` itself and the documents of `tutor` say "solution" of the learner's writing too: product 2 spec — of "the learner's free solution", and architecture, section 3.1, — of "a handwritten solution". If only `tutor` is corrected, its documents will diverge from `spec`. So this is the row В25 of table 3 of RUN.md, «в реестр spec»;
-- **the rest** does not change the documents of `tutor`: the module format in `format/` and its check `format-check`, coverage and Codecov at `spec` itself, the edits of concepts about the module — ID, layout and module manifest. The `.devcontainer/` of `spec` is the same, and rebuilding the container is not needed. The documents check of `tutor` on the new tag passed without edits.
-
-— *Why:* the author's decision of 2026-10-25 in the planning of T42 — the move as a separate task T43, before T44, — and their instruction of the same day: «выполни задачу T43 и доведи изменения до мержа main самостоятельно». T44 reconciles the providers' terms by privacy 5.3 spec, and the tag changes them (R47 spec). The move is a task of its own and an entry here (RULES.md, Across repositories).
-
-— *Decided by the executor on the author's instruction:* the task is not split, and the badges are put at once. Both questions stood in «Решить при планировании» of T43. The author told the executor to bring the task to the merge on their own, and Д28 of RUN.md of `spec` says to put the badges with the same move to the tag.
+— *Why:* the reconciliation of the providers' terms with `spec`'s privacy document comes next, and the tag changes those terms about Google. The badges come with the move, as `spec` asks of the move to this tag.
 
 — *Rejected:*
-- staying on `v0.2.18` — nine rows would hang open, and T44 would read the old terms about Google;
-- the intermediate `v0.2.19`–`v0.2.31` — the latest is taken;
-- closing В20 too, as Д19 of RUN.md of `spec` says, — the return of the measurement, which `spec` does not know yet, would be lost;
-- correcting along the way the phrase about the first code in CLAUDE.md: it is a file of rules, and an edit in it is a decision of the author (В22).
+- staying on `v0.2.18`: nine questions would hang open, and the reconciliation would read the old terms about Google;
+- the intermediate `v0.2.19`–`v0.2.31`: a move takes the latest release;
+- the badges in a task of their own: `spec` asks for them with the move to this tag;
+- closing the question to `spec` about the board too: the return of the measurement, which `spec` did not know, would be lost;
+- correcting along the way the phrase about the first code in CLAUDE.md: it is a file of rules, and its edits are the author's.
 
-— *Consequence:* the tag `v0.2.32` — in CLAUDE.md, at the start of RUN.md and in README.md; in the README — the badges. RUN.md — table 3 with the new row В25, the description of E2 with a new item of the planning of the measurement, E1 with T46, and the tasks T02, T05, T29, T44 and T45. architecture 1, 2, 3.11, 3.6, 2.4, 3.9, 3.12, 3.5, 3.1, 3.3 and 4. — RUN.md, T43; CLAUDE.md; README.md.
-
-— *Amendment 2026-10-25* (R24): **the workbook and essays — by a measurement of their own later, not by this one.** T46 waits for it.
-
-— *Amendment 2026-10-26* (R28): **this measurement is in E4,** on synthetic pages of the workbook and synthetic essays (T78–T84). Its conclusions are an input for T46.
+— *Consequence:* `CLAUDE.md`; `RUN.md`; `README.md`; `run/QUESTIONS.md`; `docs/architecture.md`. Rebuilding the container was not needed: `.devcontainer/` of `spec` did not change.
 
 ## The archive of done tasks
 
 **R23. A done or dropped task goes to the archive of its epic at the end of its own work, without waiting until the whole epic is done; a done epic, a put-off epic and the closed questions have their files in `docs/plan/` too.**
-- **What moves.** The task's body, with its one line of «Сделано» (R160 spec), moves word for word into `docs/plan/<epic>.md`, the file the whole epic goes to later, with its gist sentence as an unheaded item at the start of the receiving section (RUN.md, rule 9). Only the addresses of relative links change, for the file's new place. What stays open is rows of `run/QUESTIONS.md` and `run/DEBT.md`, not text of the body.
-- **What stays in RUN.md** — the task's row in table 1 with its status, the epic's description and the bodies of the other tasks: the table shows the epic as a whole, and «Зависит от» of the remaining tasks leads to rows that exist. A task outside an epic is a task of an epic (R103); the sections «Задачи вне эпика» of the older archives hold those done before it.
-- **A done epic** — its description and table of tasks move word for word into its archive (RUN.md, Epics).
+- **What moves.** The task's body, with its one line of «Сделано», moves word for word into `docs/plan/<epic>.md`, the file the whole epic goes to later, with its gist sentence as an unheaded item at the start of the receiving section. Only the addresses of relative links change, for the file's new place. What stays open is rows of `run/QUESTIONS.md` and `run/DEBT.md`, not text of the body.
+- **What stays in RUN.md** — the task's row in table 1 with its status, the epic's description and the bodies of the other tasks: the table shows the epic as a whole, and «Зависит от» of the remaining tasks leads to rows that exist. A task that comes from no epic stands in table 1 of an epic and goes to its archive; the sections «Задачи вне эпика» of the older archives hold such tasks done earlier.
+- **A done epic** — its description and table of tasks move word for word into its archive.
 - **A put-off epic** waits in its own file, `docs/plan/<epic>.md`: the description, the table of tasks and the bodies of its `[?]` tasks, after the done ones; its row in `run/EPICS.md` leads to the file. When it comes back, its table goes into table 1 and the bodies of its open tasks into RUN.md.
-- **Table 3.** An answered question's row leaves, and «Закрыты» of [plan/questions.md](plan/questions.md) names where the answer went. A row «В реестр spec» stands until `spec` has recorded it (R81 spec), its question opening with the mark (RULES.md spec, Across repositories); an edit of the row before then changes its fingerprint, and `spec` rereads it. It leaves with the move to the tag that recorded it: word for word into «Переданы в spec» of the same file, and where its answer went into «Закрыты».
+- **`run/QUESTIONS.md`.** An answered question's row leaves, and «Закрыты» of [plan/questions.md](plan/questions.md) names where the answer went. A row «В реестр spec» stands until `spec` has recorded it, its question opening with the mark; an edit of the row before then changes its fingerprint, and `spec` rereads it. It leaves with the move to the tag that recorded it: word for word into «Переданы в spec» of the same file, and where its answer went into «Закрыты».
 
-— *Why:* the author's instructions of 2026-10-25, «архивируй сделанные задачи в RUN.md», and, to the executor's question about the dropped T14, «да»: its body goes to the archive too; of 2026-10-26, «давай добавим в архив текущие задачи из таблицы текущих задач и потом почисть RUN.md от ненужной информации чтобы уменьшить расход токенов», and the same day «переслал в spec твой текст. закрывай Шесть из них и почисти RUN.md после этого чтобы уменьшить расход токенов». About two thirds of RUN.md were the bodies of done tasks. The template of `spec` moves a body at once, at the end of its task (R153 spec), and the author reviews «Сделано» in the archive.
+— *Why:* about two thirds of RUN.md were the bodies of done tasks, and every task reads RUN.md. `spec`'s template moves a body at once, at the end of its task, and the author reviews «Сделано» in the archive. A dropped task's body goes there as a done one's does.
 
 — *Rejected:*
 - **waiting until the epic is done:** the done tasks would lie in RUN.md, and every task reads it;
 - **moving a task at the start of the next one:** the edit is the next task's, and a run of the orchestrator has no next session to make it;
 - **moving the table's rows too:** the table would not show the epic as a whole, and «Зависит от» would lead to rows that are not in RUN.md;
-- **a file per task:** the archive by epics is `spec`'s and canvas-api's (R59 canvas-api), and a task is found in it by the same `grep` of its heading;
-- **deleting the bodies and leaving them to git:** documents and other repositories cite tasks and questions by number, and `git log` does not find a body by it;
-- **shortening the rows of table 3 by retelling:** they are the author's open questions with options and a recommendation.
+- **a file per task:** the archive by epics is `spec`'s and canvas-api's, and a task is found in it by the same `grep` of its heading;
+- **deleting the bodies and leaving them to git:** the plan and other repositories cite tasks and questions by number, and `git log` does not find a body by it;
+- **shortening the rows of `run/QUESTIONS.md` by retelling:** they are the author's open questions with options and a recommendation.
 
-— RUN.md: rule 9, Epics, table 1; `run/EPICS.md`, `run/QUESTIONS.md`; `docs/plan/`.
+— *Consequence:* `RUN.md`; `run/EPICS.md`; `run/QUESTIONS.md`; `docs/plan/`.
 
 ## The measurement of the working
 
-**R24. The measurement of AI reading measures one question — whether the working helps the model. About 40 of the author's sheets are recorded by the board, judged by Opus 5.5 · `high` and Haiku 5.5 · `low` with thinking and without, in the four forms 2×2 of R11, and the truth is the markup made while writing.**
-- **The question.** The model judges the same sheets in four forms: the picture only; the picture and the log of actions; the picture and the frames before erasure; both (R11). The answer is an assessment and the box of the first error, as on the board (R19). The main check is the form with the working against the picture alone, by sheets. The criterion is recorded before the first run: architecture 3.1, "The measurement of the working".
-- **The samples** — about 40 of the author's sheets. The board's record mode writes the strokes with time and pressure and the erasures, and the author puts the markup while writing: the planned text of the lines, the answer line and the first error. The file is `tutor-sample` v0 (R15), outside git (R05). The tasks are from the bank of T15, about 10, on a sheet of 1000 × 600.
-- **The models** — Opus 5.5 · `high`, Haiku 5.5 · `low` and Haiku 5.5 · `low` without thinking (R06).
+**R24. The measurement of AI reading measures one question — whether the working helps the model. About 40 sheets of the plan, written in the board's record mode and drawn by code where the author did not write them, are judged by Opus 5.5 · `high` and Haiku 5.5 · `low` with thinking and without, in the four forms 2×2, and the truth is the markup made while writing. The judge has two versions of the prompt — v1 of this measurement and v2 of free writing —, and the runner and the report serve both.**
+- **The question.** The model judges the same sheets in four forms: the picture only; the picture and the log of actions; the picture and the frames before erasure; both. The answer is an assessment and the box of the first error, as on the check board. The main check is the form with the working against the picture alone, by sheets. The criterion is recorded before the first run (measurements 1.1), and the measurement of free writing takes it word for word.
+- **The samples** — about 40 sheets of the plan `eval/sheets.json`, on a sheet of 1000 × 600, from the 10 tasks of the bank `eval/bank.json`. The board's record mode writes the strokes in the order of writing with their time, and the erasures, and the author puts the markup while writing: the planned text of the lines, the answer line and the first error. The sheets the author did not write are drawn by code. They lie in `samples/`, outside git.
+- **The models** — Opus 5.5 · `high`, Haiku 5.5 · `low` and Haiku 5.5 · `low` without thinking.
 - **The truth** is the markup. An answer is correct if the assessment matches the outcome of the sheet, and for a sheet with an error the box also hits the line of the first error. Neither manual marks nor a check by lines.
-- **Outside the measurement** — Т-23 and statements with the key, hints and the leak check, digit heights, states and О-8, handwritten injections, the rule of two readers, the workbook and essays. These are measurements of their own later, and until the answer to Т-23 — two calls (R03).
-- **The links with `spec` and `canvas`** — T30–T32, T35 and T37 — the measurement does not need, and they wait in the put-off epic E3, as the tasks of the put-off E1 wait (R04, amendment 2026-10-21). The author's samples are written by the board of `tutor`, not by the page of `canvas`. This is a departure from the amendments to R25 spec, and it goes «в реестр spec» as the row В20.
-- **The estimate** — about $4: the test — about $2.8, development — about $0.9. The limit is $9: $3 for development and $6 for the test. Paid runs are started by the author (rule 4 of RUN.md).
+- **Outside the measurement** — Т-23 and statements with the key, hints and the leak check, digit heights, states and О-8, two readers, the workbook and essays, which are measured by measurements of their own, and handwritten injections, which still wait for one. Until Т-23 is answered, the reading and the analysis are two calls.
+- **The links with `spec` and `canvas`** the measurement does not need: the author's samples are written by the board of `tutor`, not by the samples page of `canvas`.
+- **The estimate** — about $4: the test about $2.8, development about $0.9. The ceiling is $9: $3 for development and $6 for the test (measurements 1.1); a paid run starts only within it.
+- **The judge's prompt** has two versions. `judge.Prepare` and `judge.Fingerprint` take the version, and the request is built by the sheet's version.
+  - **v1** — the prompt of this measurement, frozen byte for byte, with the fingerprint `6a98139b…`.
+  - **v2** — for free writing, frozen with the fingerprint `505a799f…`, `TestFrozenV2`. The solution may go freely across the sheet. It may have drawings — the number line, a row of objects, a diagram of segments —, writing at the side, column calculations and □ with △ in place of unknowns, and all this is part of the solution. An error in a drawing is the same error as a wrong number. The reference solution describes the drawing in words.
+  - **The box in v2** is around the wrong writing or drawing itself, tightly, without the writing above and below. Of several wrong ones, the first in the order of the solution's steps, not by the place on the sheet, and a correct step before the error is not an error.
+  - **The log block in v2** is about the log of parts. An erased writing is not on Image 1, and a part's place is a third of the height and width of Image 1. The log of parts has up to 30 steps, like the log of lines, without a limit of its own.
+  - Common to the versions are the response schema, the captions of the pictures, the text around the task and the hit `judge.Hit`.
+- **The runner and the report** serve the measurement of free writing too:
+  - **the version** is by the version of the plan: for a plan of lines the prompt v1, for a plan of parts v2. The log writes it in the field `prompt_version`; the logs of this measurement do not have the field, and their prompt is v1;
+  - **`-part all`** — all the sheets of the plan without the split, for the author's three sheets, with a default ceiling of $2. Each sheet of the plan must be recorded;
+  - **the sheet's record** names who wrote it, the layout and the place of the first error — in a drawing, in the text or at the side —, taken from the plan's sheet. The agreement field `lines` keeps its name, though in free writing it compares parts;
+  - **the report of a v2 log** also gives the boxes on the sheets with an error and the test D against A on these sheets, the breakdown by layouts and by the place of the first error, and a table by sheets. The report of a v1 log does not change in a single byte;
+  - **the estimate of v2** — about 2,050 input tokens for form A and about 360 with the log (measurements 3.4).
 
-— *Why:* the author's choice of 2026-10-25 in the planning of the measurement — the main question, recording on the board, Opus 5.5 · `high` and Haiku 5.5 · `low` with thinking and without, the markup while writing, the log and the frames 2×2, about 40 sheets, and the links with `spec` and `canvas` — as an epic of their own for later.
-- The plan of 2026-10-21 — about 110 sheets, about 14 code tasks and about $140 — was written for three providers, and the main question of R21 was one of many in it.
-- The series T45 showed the judge's price and time on the board: Opus 5.5 · `high` — about $0.008 and 2.5 s, Haiku 5.5 — $0.0002–0.0003 (architecture 3.12).
-- The input, storage outside git and the keys for eval the board already has (T25, T39–T45), and `canvas` has no release — checked 2026-10-25.
+— *Why:* the question is one. The wide plan of measurements 1.4 — about 110 sheets, about 14 code tasks and about $140 — was written for three providers, and the main question was one of many in it.
+- **The board** already has the input, storage outside git and the keys for eval, and `canvas` had no release on 2026-10-25.
+- **The judge's price and time** on the board, by the series of assessments: Opus 5.5 · `high` about $0.008 and 2.5 s, Haiku 5.5 $0.0002–0.0003 (measurements 2.1).
+- **v2.** The prompt v1 names neither a drawing nor writing at the side: it has only writing, and the first error there is a line from top to bottom. "First" is by steps, because the parts of the plan stand in the order in which the solution is written and read, and writing at the side and a drawing are not always below the text. The box is told tight on the wrong writing itself because Haiku without thinking put it one part above the error; this did not move the numbers — it is the model's limit, and Opus makes no errors.
+- **The log's limit** is that of the log of lines. The log of the author's sheets is about 320–560 tokens, but they have 12–26 steps, fewer than 30, so the log is not cut: in forms B and D that is extra hundreds of tokens per call, not dollars. Cutting the log would hide part of the writing from the judge, and on the sheets of code there are no more than 10 steps.
+- **The runner.** The version is by the plan and not by a flag, because a plan of lines has no prompt v2, and a plan of parts has no v1. The name `lines` stays so that the logs of the two measurements are read by one code. The new sections are only for a log of v2, so that the report by which the conclusions of this measurement are written stays as it is.
 
 — *Rejected:*
-- **the whole plan of 2026-10-21 on Claude** and **the main question together with Т-23** — more sheets, tasks and money, and the question is one;
-- **its own record page, the former T13** — the input would be written anew, and the board has it;
+- **the whole wide plan on Claude** and **the main question together with Т-23** — more sheets, tasks and money, and the question is one;
+- **a record page of its own** — the input would be written anew, and the board has it;
 - **the samples page of `canvas`** — it has no release, and the measurement would wait for someone else's code;
 - **the author's marks by hand, as on the board** — hundreds of marks on 40 sheets, four forms, three configurations and three repeats;
-- **bringing back the check by lines of T14** — a program for each kind of task, and the markup is already in the format;
-- **Sonnet 5.5 and Fable 5.1** — the author did not choose them, and R06 did not take Fable also because of storage without ZDR;
+- **a check by lines** — a program for each kind of task, and the markup is already in the format;
+- **Sonnet 5.5 and Fable 5.1** — a cheap and a strong model are enough, and Fable keeps requests without zero data retention;
 - **only the log, without the frames** — then it cannot be checked whether seeing what was erased helps the model;
-- **labels in the margins and snapping the box to the strokes** (R08, R11) — a hit is counted by the line, and the box is enough for the model;
-- **Batch** — half the price, but it keeps requests up to 29 days, and the measurement holds to ZDR (R06; architecture 3.12).
-
-— *Consequence:* amendments to R03, R05, R06, R08, R10, R11, R15, R16, R19, R21 and R22. architecture 3.1 — the block "The measurement of the working", and the plan of 2026-10-21 is history. RUN.md — the measurement's tasks rewritten, T17, T18 and T20 — `[-]`, T30–T32, T35 and T37 — in epic E3, and in table 3 — В16, В20 and В24.
-
-— *Amendment 2026-10-26* (R28): **what this measurement left outside itself E4 measures,** except handwritten injections: Т-23 and statements with the key, hints and the leak check, the digit height, states and О-8, two readers, the workbook and essays. The criterion of this entry the measurement of free writing takes word for word (T54).
-
-— *Amendment 2026-10-27* (T64; R28): **the judge has two versions of the prompt: v1 — the prompt of this measurement, byte for byte the same, with the fingerprint `6a98139b…`, and v2 — for the free writing of E4.** The version is received by `judge.Prepare` and `judge.Fingerprint`, and the request is built by the sheet's version (architecture 3.1, "Versions of the prompt").
-- **v2 speaks of free writing.** The solution may go freely across the sheet. It may have drawings — the number line, a row of objects, a diagram of segments —, writing at the side, column calculations and □ with △ in place of unknowns, and all this is part of the solution. An error in a drawing is the same error as a wrong number. The reference solution describes the drawing in words;
-- **the box in v2** — around the writing or drawing where the solution first went wrong. "First" is by the order of the solution's steps, not by the place on the sheet;
-- **the log block in v2** — about the log of parts. An erased writing is not on Image 1, and a part's place is a third of the height and width of Image 1;
-- common to the versions are the response schema, the captions of the pictures, the text around the task and the hit `judge.Hit`. The fingerprint of v2 is frozen after the development of T66;
-- the log of parts in v2 — up to 30 steps, like the log of lines, without a limit of its own.
-
-— *Why:* the items «Сделать» of T64, by T54, and the words were proposed by the executor. The text of v2 is proofread by the author (RUN.md, T64).
-- The prompt v1 names neither a drawing nor writing at the side: it has only writing, and the first error there is a line from top to bottom.
-- "First" by steps, because the parts of the plan stand in the order in which the solution is written and read, and writing at the side and a drawing are not always below the text.
-- The log's limit is as before. The log of the author's sheets is about 320–560 tokens, but they have 12–26 steps, fewer than 30, so the log is not cut. On the run of T77 this is extra hundreds of tokens per call in forms B and D, not dollars. Cutting the log would mean hiding part of the writing from the judge, and on the sheets of code there are no more than 10 steps.
-
-— *Rejected:*
-- **the plan's traps in the text** — a jump of the wrong length, an extra object, the wrong segment longer. The judge would look for what was built into the test, and the measurement would measure the hint, not the judge;
-- **the box by the parts of the log** — by the part's number instead of pixels. The response schema and the hit would diverge between the versions, and the numbers of the device's parts are not the parts of the markup (R30);
-- **v1 with an added block about drawings** — the fingerprint of E2 would change, and the prompt of E2 is frozen (T27);
-- **a limit of steps of its own** for the log of parts — the argument above.
-— *Amendment 2026-10-27* (T65; R28): **the runner and the report of this measurement also serve the measurement of free writing: the version of the prompt is by the version of the plan, `-part all` is all the sheets of the plan without the split, and the report of a v2 log answers about the analysis too** (architecture 3.1, "The runner of free writing" and "The report of free writing").
-- **the version:** for a plan of lines — the prompt v1, for a plan of parts — v2. The log writes it in the field `prompt_version`, and the logs of E2 do not have this field, and their prompt is v1;
-- **`-part all`** — for the author's three sheets (T77), with a default ceiling of $2, as for T77. Each sheet of the plan must be recorded;
-- **the sheet's record** names who wrote it, the layout and the place of the first error — in a drawing, in the text or at the side. It takes the layout and the place from the plan's sheet. The agreement field `lines` keeps its name, though in free writing it compares parts;
-- **the report of a v2 log** — also the boxes on the sheets with an error and the test D against A on these sheets, the breakdown by layouts and by the place of the first error, and a table by sheets. The report of an E2 log does not change in a single byte;
-- **the estimate of v2** — about 2,050 input tokens for form A and about 360 with the log, by the measurement of T63.
-
-— *Why:* the items «Сделать» of T65, by T54, and the details were proposed by the executor. The version is by the plan and not by a flag, because a plan of lines has no prompt v2, and a plan of parts has no v1. The name `lines` is the old one, so that the logs of the two measurements are read by one code. The new sections are only for a log of v2, so that the report of E2 stays what is already written down in section 3.1.
-
-— *Rejected:*
+- **labels in the margins and snapping the box to the strokes** — a hit is counted by the line, and the box is enough for the model;
+- **Batch** — half the price, but it keeps requests up to 29 days, and the measurement holds to zero data retention (sources 1.6);
+- **the plan's traps in the text of v2** — a jump of the wrong length, an extra object, the wrong segment longer. The judge would look for what was built into the test, and the measurement would measure the hint, not the judge;
+- **the box by the parts of the log** — by the part's number instead of pixels. The response schema and the hit would diverge between the versions, and the numbers of the device's parts are not the parts of the markup;
+- **v1 with an added block about drawings** — the fingerprint of the frozen prompt of this measurement would change;
+- **a limit of steps of its own** for the log of parts — the argument above;
 - **a prompt version flag on `run`** — it could be forgotten or given wrong: prompt v1 on drawings or v2 on lines;
-- **a new name of the field, `parts`** — the logs of E2 and of free writing would need two readings;
-- **the breakdown and the table by sheet for the logs of E2 too** — the report by which the conclusions of E2 are written down would change;
-- **`-part all` with the test's ceiling, $6** — the author's three sheets cost about $1, and the ceiling of T77 is $2.
-— *Amendment 2026-10-27* (T66): **prompt v2 was edited in development and frozen: `505a799f…`, `TestFrozenV2`.** Item 6 now tells the model to box the wrong writing or drawing itself, tightly, without the writing above and below. Of several wrong ones, the first in the order of steps, and a correct step before the error is not an error. The edits were made in the second and the third of three rounds of one repeat each: for Haiku without thinking the box landed one part above the error. The edits did not move the numbers: this is the model's limit, and Opus makes no errors. The words of the T64 amendment "the box in v2 is around the writing or drawing where the solution first went wrong" are about the prompt before development. The author, 2026-10-27: «у меня 190+ долларов остальсь и онм сгоряд через несколько дней. поэтому можно не экономить»; the ceilings of T66 were enough anyway: $1.15 for development and $3.29 for the test.
+- **a new name of the field, `parts`** — the logs of the two measurements would need two readings;
+- **the breakdown and the table by sheet for v1 logs too** — the report by which the conclusions of this measurement are written would change;
+- **`-part all` with the test's ceiling, $6** — the author's three sheets cost about $1, and $2 covers them.
 
-— *Amendment 2026-11-01* (R61): **E3 came back as the current epic.** Its task table is again in table 1 of RUN.md, and the bodies of its tasks are in RUN.md. T35, the release, goes first, and T30, T31, T37 and T32 wait for `spec` and `canvas`.
+— *Consequence:* `eval/bank.json`; `eval/sheets.json`; `internal/judge/`; `internal/measure/`; `internal/runner/`; `internal/report/`; `cmd/tutor-eval/`; `docs/architecture.md`.
 
 ## The board's record mode
 
-**R25. In record mode the author writes a sheet of the sheet plan on the board. The eraser erases whole strokes, and one movement of it is one erasure. The board fills in the markup from the plan, and the server reads the saved sheet with the strict reading of the format. Three tasks build record mode: T49, T50 and T13.**
+**R25. In record mode the author writes a sheet of the sheet plan on the board, and the sheet is saved as a sample of `spec`'s eval protocol with the writing history. The eraser erases whole strokes, and one movement of it is one erasure. The board fills in the markup from the plan, the server reads what the page sends strictly and checks the sheet against the plan, and `sample-check` checks it before it is saved. Sheets of lines go by the bands of lines, sheets of parts by stroke groups.**
 - **How it is built.**
   - `tutor-eval board -record` works without the keys for eval and asks no models.
   - The author chooses a sheet of the plan — "Sheet 7 of 40", — and the board shows the task and what to write on the sheet.
-  - Each point has its time from the opening of the sheet and its pressure from Pointer Events, and each erasure has its time.
+  - Each point has its time from the opening of the sheet, each stroke its pointer type, and each erasure its time. The history has the events `write`, `erase`, `undo` and `clear`; there is no pressure.
   - After "Done" the board proposes the sheet's lines, and their text, the answer line, the outcome, the first error and the trap are already filled in from the plan. The author checks them and saves the sheet.
-  - The sheet lies as a file `tutor-sample` v0 (R15) in a directory outside git (R05).
-- **The author's decisions** — 2026-10-26, in planning T13:
-  - **the text of the lines comes from the sheet plan.** The plan stands beside the bank also as a data file, `eval/sheets.json` (T49). The table in `docs/sheets.md` stays, and a test holds the two the same;
-  - **one movement of the eraser is one erasure.** Everything the eraser touched between the press and the release is one erasure record: the format, too, knows an erasure as "one touch of the eraser" (`internal/sample/sample.go`). If the eraser is lifted in the middle of an erasure by the scenario, the sheet is written anew: a sheet has one such erasure (R15);
-  - **the tab was closed before saving** — the browser asks whether to really leave. If the author left, the sheet is lost and is written anew. There are no drafts;
-  - **the board's five tasks are in two copies.** The check takes them from `internal/board/tasks.go`, record mode takes all ten from the bank, and a test of `cmd/tutor-eval` holds the copies the same;
+  - The sheet lies in a directory of `samples/`, outside git, by default `samples/sheets-v1`. A sheet with a visible stroke outside the lines and parts is not saved.
+- **The rules of record mode:**
+  - **the text of the lines comes from the sheet plan.** The plan stands beside the bank also as a data file, `eval/sheets.json`. The table in `docs/sheets.md` stays, and a test holds the two the same;
+  - **one movement of the eraser is one erasure.** Everything the eraser touched between the press and the release is one erasure record: the format, too, knows an erasure as "one touch of the eraser" (`internal/sample/sample.go`). If the eraser is lifted in the middle of the erasure by the scenario, the sheet is written anew: a sheet has one such erasure. Undo is the event `undo`, Clear the event `clear` — the sheet goes on with the same clock —, and both are stray erasures; Start over starts the sheet anew;
+  - **the tab is closed before saving** — the browser asks whether to really leave. If the author left, the sheet is lost and is written anew. There are no drafts;
+  - **the board's tasks are in two copies, and their copies are in two banks.** The check takes all 11 tasks from `internal/board/tasks.go`. Five of them are copies of tasks of `eval/bank.json`, and six with free writing are copies of tasks of `eval/free-bank.json`. A test of `cmd/tutor-eval` holds each task of the board equal to its copy in one of the two banks, and a trap ID has one description in both. Record mode takes its tasks from the bank `-bank`, by default `eval/bank.json`;
   - **a repeated save of a sheet is a new file, and the last one counts.** Nothing is deleted or overwritten, and the board shows how many times the sheet has been saved;
-  - **after "Done" one can go back to writing** — for example, to erase an accidental stroke. The time of the markup is cut out of the record.
-- **The executor's proposals:**
-  - **strict saving.** The page sends the sample document itself, and the server reads it with `ReadSample`, the strict pass of R15. Then it checks the sheet against the plan: the task, the scenario, `writer` is `author`, the sheet is 1000 × 600;
+  - **after "Done" one can go back to writing** — for example, to erase an accidental stroke. The time of the markup is cut out of the record;
+  - **strict saving.** The page sends the writing history and the markup, and the server reads them strictly. It checks the sheet against the plan: the task, the scenario, `writer` is `author`, the sheet is 1000 × 600; then `sample-check` checks the file before it gets its name;
   - **one clock per sheet:** the time of points and of erasures only grows. The format's rules of time are non-strict — time does not decrease, — so equal milliseconds are allowed, and a sheet from the page passes the format check by construction;
   - **the first point of a stroke is at the press, and after it the points come from the coalesced move events** of Pointer Events. At the release there is no point. So a tap stroke, too, has a point of its own, for example the dot of a colon;
-  - **the lines are proposed by the Go function** `lines.Group` — by vertical gaps. Its threshold is a constant. For the log of T22, T27 may tune it, and the markup of the sheets already recorded does not change from this;
+  - **the lines are proposed by the Go function `lines.Group` by the middles of the strokes, not by their edges.** A stroke stands at the middle of its band. A new line is started by a step between the middles of neighbouring strokes of no less than the constant `Gap`, or than half the usual stroke height of the sheet, if that is larger. A line of small strokes only — stray marks, dots, an exponent — goes into the nearest line, if that is closer than the usual stroke height. The log of the course builds its lines with the same function, and the references of the prompt v1 are the same with it. Tuning it does not change the markup of the sheets already recorded;
   - **the differences of the markup from the plan** the server does not forbid but names. If a sheet is written otherwise than in the plan, the truth about it is known to the author;
-  - **the default directory** is `samples/sheets`. The file name starts with the number of the plan's sheet and the time of the save, so the last file of a sheet is the last by name.
-- **The division.** As one task, T13 would come to about 2,100 lines of code and tests and 780 lines of data — twice as much as T45. By rule 11 of RUN.md it is divided into three:
-  - T49 — the sheet plan as a data file;
-  - T50 — the record server, the search for lines and the command;
-  - T13 — the record page.
+  - **the file name** starts with the number of the plan's sheet and the time of the save, so the last file of a sheet is the last by name.
+- **Sheets of parts** — of a plan of version 1 — are by stroke groups, in boxes and in the order of first writing; sheets of version 0 keep the bands of lines and the order from top to bottom. `just free-record` writes the author's three sheets, the plan `eval/free-author.json`, into `samples/free-v1`.
+  - **strokes after Done are selected with a mouse box and with a click.** A drag farther than 4 units from the press draws a selection box, and at the release all the visible strokes whose boxes lie wholly in it are selected. A click selects or releases the nearest stroke. Sheets of lines have the selection box too: it does not change the markup;
+  - **one group is one proposed part.** The parts are proposed by `lines.Groups`, in the order of first writing, and the texts and the answer are taken from the plan by number. A drawing finished after a pause comes as two groups or more, and the author merges them with "Join with the next part". The server's answer names the extra and the missing parts and suggests an edit;
+  - **the erasure by the scenario is on the plane.** The server chooses the movement of the eraser that took the most strokes from the sheet's parts, and of two equal ones the earlier, and a stroke stands on a part by its place, as in `lines.ErasurePart`. `lines.PartsTaken` counts this. All the parts count, not one part of the plan: until the author has merged the groups, a group's number is not yet the number of a part of the plan, and stray marks on sheets of parts are erased only with Undo. On which part of the author's markup the erasure stood, the check names;
+  - **the parts are given as the plan's view for the page.** The parts field of the plan in memory does not go out into JSON, so the server gives the parts beside the sheet: the page shows the kind and the place of each part and calls it a part, not a line.
 
-— *Why:* the author's choice of 2026-10-26 in planning T13 — the six decisions above and the division into three tasks.
+— *Why:*
 - **The text of the lines from the plan** spares 150 lines that would otherwise be typed by hand on 40 sheets. And with them, a wrong number of the first error, put by mistake.
-- **Strict saving** — for the same reason as the strict reading of R15. The board's `readJSON` takes a missing field as zero, does not tell the letter case in a field's name apart and keeps the last of repeated keys, so pressure 0 would pass the check.
-- **The coalesced events and the point at the release** — by [Pointer Events Level 3](https://www.w3.org/TR/pointerevents3/), W3C Recommendation 30 June 2026, read 2026-10-26:
+- **Strict saving.** The board's `readJSON` takes a missing field as zero, does not tell the letter case in a field's name apart and keeps the last of repeated keys, so a missing value would pass the check.
+- **The middles of the strokes.** On one of the author's sheets the edges put four lines together into two: the tall "4" of the second line rose almost to the "x" of the first, the tail of the "2" dropped to the "3", and the bands of the strokes came closer than 12 units. On those strokes the middles find four lines.
+- **The coalesced events and the point at the release** — by Pointer Events Level 3 (sources 4.1):
   - the points from `getCoalescedEvents()` give "a smoother approximation of the pointer movement", and their time is "Monotonically increasing timeStamp values";
   - "All pointerup events have a pressure value of 0".
-
-  The quotes will go to architecture 4 together with T13.
+- **Sheets of parts.** The sheet's parts are the groups of the eval protocol, as they are, and the device will find them the same way. On the sheets of code for the author's plan a drawing with an erasure comes as two or three groups — after an erasure, the brace of a scheme too stands as a group of its own, — and the other parts as exactly one (the test `TestRecordProposeParts`). So it is enough for the author to merge neighbouring groups, and the selection box is needed when parts have merged: with a mouse, a line is about 15 strokes, and a number line 30 and more.
 
 — *Rejected:*
 - **the author types the text** — about 150 lines by hand on 40 sheets;
-- **the markup of T47 folds several erasures into one by the scenario** — this is more convenient, but the time of some of the erased strokes shifts in the record;
+- **folding several erasures into one by the scenario** — this is more convenient, but the time of some of the erased strokes shifts in the record;
 - **a draft in the browser** — after a return, the pause while the tab was closed would go into the record, and the handwriting would lie in the browser's profile;
 - **one source of the board's tasks** — the check on the board would depend on the bank file and would not start without it;
 - **one file per sheet** and **replacement from the board.** In the first case, to rewrite a sheet, the author would remove the old file from the samples folder themselves. In the second, the board would have to rename files already saved;
-- **no return to writing** — until there is an editing of lines (T47), an accidental stroke would make the sheet be written anew;
-- **one task T13** — about 2–2.5 hours of review instead of 30–60 minutes per task (rule 11 of RUN.md);
-- **only `pointermove`, without the coalesced events** — a point per event, not per every movement of the pen. What is recorded once cannot be restored later, and what is extra can be thinned out.
-
-— *Consequence:* RUN.md — T49 and T50 before T13, the body of T13 rewritten, additions to T22, T26, T47 and T48; `docs/sheets.md` — the eraser rule; architecture 3.1 names the record tasks. The plan's format will be written down by an amendment to R15 in T49, and the build of record mode by architecture 3.3, in T50 and T13. — RUN.md: table 1, T13, T49, T50.
-
-— *Amendment 2026-10-26* (T26): **lines are by the middles of the strokes, not by their edges.** On the author's sheet 2 the board put four lines together into two: the tall "4" of the second line rose almost to the "x" of the first, and the tail of the "2" dropped to the "3", and the bands of the strokes came closer than 12 units. Now `lines.Group` puts a stroke at the middle of its band. A new line is started by a step between the middles of neighbouring strokes of no less than `Gap`, or than half the usual stroke height of the sheet, if that is larger. A line of small strokes only — stray marks, dots, an exponent — goes into the nearest line, if that is closer than the usual stroke height. On the strokes from the screenshot of sheet 2 the new rule finds four lines. Rejected — raising `Gap`: in large handwriting the tails come together at 20 units too, and in small handwriting the lines stand closer. The log of the course builds its lines with the same function, and the references of the prompt of T19 did not change.
-
-— *Amendment 2026-10-26* (T52; R19, the 2026-10-26 amendment): **the board's tasks are in two copies, and their copies are in two banks.** The check takes all 11 tasks from `internal/board/tasks.go`. Five of them are copies of tasks of `eval/bank.json`, and six with free writing are copies of tasks of `eval/free-bank.json`. A test of `cmd/tutor-eval` holds each task of the board equal to its copy in one of the two banks, and a trap ID has one description in both. "The board's five tasks are in two copies" above is history. Record mode still takes its tasks from the bank `-bank`, by default `eval/bank.json`; it will start writing the sheets of free writing from T61.
-
-— *Amendment 2026-10-27* (T61; R30): **sheets of parts are by stroke groups, in boxes and in the order of first writing, and sheets of lines are as before.** Record mode takes a plan of version 1, and `just free-record` writes the author's three sheets, the plan `eval/free-author.json`, into `samples/free`.
-- **The author's decisions** — 2026-10-27, in planning T61:
-  - **sheets of version 0 are as they were:** the bands of lines and the order from top to bottom. Boxes and the order of first writing are only for sheets of parts;
-  - **strokes after Done are selected with a mouse box and with a click.** A drag farther than 4 units from the press draws a selection box, and at the release all the visible strokes whose boxes lie wholly in it are selected. A click, as before, selects or releases the nearest stroke. Sheets of lines have the selection box too: it does not change the markup.
-- **The executor's proposals:**
-  - **one group is one proposed part.** The parts are proposed by `lines.Groups`, in the order of first writing, and the texts and the answer are taken from the plan by number. A drawing finished after a pause comes as two groups or more, and the author merges them with "Join with the next part". The server's answer names the extra and the missing parts and suggests an edit;
-  - **the erasure by the scenario is on the plane.** The server chooses the movement of the eraser that took the most strokes from the sheet's parts, and of two equal ones the earlier, and a stroke stands on a part by its place, as in `lines.ErasurePart`. `lines.PartsTaken` counts this. All the parts count, not one part of the plan: until the author has merged the groups, a group's number is not yet the number of a part of the plan, and stray marks on sheets of parts are erased only with Undo ([free-sheets.md](free-sheets.md), "How to write the author's sheets"). On which part the erasure stood, the check names from T58 already by the author's markup;
-  - **the parts are given as the plan's view for the page.** The parts field of the plan in memory does not go out into JSON, so the server gives the parts beside the sheet: the page shows the kind and the place of each part and calls it a part, not a line.
-
-— *Why:* the author's decisions of 2026-10-27 in planning T61. The sheet's parts are the groups of the eval protocol, as they are (R30), and the device will find them the same way. On the sheets of code for the author's plan a drawing with an erasure comes as two or three groups — after an erasure, the brace of a scheme too stands as a group of its own, — and the other parts as exactly one (the test `TestRecordProposeParts`). So it is enough for the author to merge neighbouring groups, and the selection box is needed when parts have merged: with a mouse, a line is about 15 strokes, and a number line 30 and more.
-
-— *Rejected:*
-- **a merging of groups of its own by the plan** — by place or by the kind of the parts. Groups are the protocol's rule as it is (R30), and a merging would guess, and the author would not see where it went wrong;
-- **boxes and the order of first writing for sheets of lines too** — the sheets of E2 already recorded are marked up by bands, and a repeated recording would diverge from them;
+- **no return to writing** — an accidental stroke would make the sheet be written anew;
+- **only `pointermove`, without the coalesced events** — a point per event, not per every movement of the pen. What is recorded once cannot be restored later, and what is extra can be thinned out;
+- **raising `Gap`** instead of the middles — in large handwriting the tails come together at 20 units too, and in small handwriting the lines stand closer;
+- **a merging of groups of its own by the plan** — by place or by the kind of the parts. Groups are the protocol's rule as it is, and a merging would guess, and the author would not see where it went wrong;
+- **boxes and the order of first writing for sheets of lines too** — the sheets of lines already recorded are marked up by bands, and a repeated recording would diverge from them;
 - **only a click** — splitting merged parts would take dozens of clicks for each;
 - **a separate page for parts** — two pages with one writing, eraser and saving would diverge;
-- **the erasure by the scenario by the strokes from one part of the plan**, as for lines: the numbers of the groups before merging are shifted, and if a part fell apart into two groups before the erasure, the proposal would not find the erasure or would take the wrong one (the review of T61).
+- **the erasure by the scenario by the strokes from one part of the plan**, as for lines: the numbers of the groups before merging are shifted, and if a part fell apart into two groups before the erasure, the proposal would not find the erasure or would take the wrong one.
 
-*2026-11-07 (T105; R75): record mode writes a sample of the protocol with the writing history — the events `write`, `erase`, `undo` and `clear`, `pointer` instead of pressure; Clear is the event `clear`, and starting a sheet anew is Start over; a sheet with a stroke outside the lines and parts is not saved, and a saved one is checked by `sample-check`; the default directory is `samples/sheets-v1`.*
+— *Consequence:* `internal/board/`; `internal/lines/`; `cmd/tutor-eval/`; `eval/sheets.json`; `docs/sheets.md`; `justfile`; `docs/architecture.md`.
 
 ## The measurement's synthetic sheets
 
-**R26. The plan's sheets that the author did not write are drawn by code: `tutor-eval draw`. Such sheets have `writer` `synthetic`.**
+**R26. The sheets of a plan that the author did not write are drawn by code, `tutor-eval draw`, as samples of the eval protocol whose writer is code: `synthetic`, with the seed.**
 - **How it is built.**
-  - The command draws each sheet of the plan that has no file in `samples/sheets` yet and saves it the same way as the board: the same format, the same file name. The author's sheets and other files stay as they were.
-  - `synth.Sheet` draws: the plan's lines from top to bottom and the erasure by the scenario in the plan's order, with the time and pressure of the points. Each sheet has its own "handwriting" from the number `-seed`: the size, the slant, the indent, the line step, the speed of the pen and the pauses, long ones among them, from 6 s. The Russian letters of the answers are drawn with strokes of their own.
+  - The command draws each sheet of the plan that the directory of sheets, in `samples/` or in `synthetic/`, does not hold yet, and saves it as a sample of the eval protocol drawn from a seed — `synthetic` with the seed and `WRITER_ADULT` —, under the file name the board's record mode would give it. The author's sheets and other files stay as they are; the sheets that the directory already holds it does not draw and therefore does not check.
+  - A sample of the protocol whose writer is code and not a person is `synthetic`, and `evalsample.Read` gives the sheet `sample.WriterSynthetic`. The plan of the author's sheets, where the answer is the whole solution, `draw` does not draw: the truth of a sample is the value of the answer.
+  - `synth.Sheet` draws the plan's lines from top to bottom, or its parts by their place, and the erasure by the scenario in the plan's order, with the time of the points. Each sheet has its own "handwriting" from the number `-seed`: the size, the slant, the indent, the line step, the speed of the pen and the pauses, long ones among them, from 6 s. It draws the random numbers of pressure but writes no pressure, so that a seed draws the same sheets to the byte.
   - Before saving, the sheet passes the format check with the bank, and its markup matches the plan. Otherwise the command stops and saves nothing further.
   - The summary names the drawn sheets in a line of their own.
-- **What this changes in the measurement.** Synthetic handwriting is more even than live handwriting, and the erasure in it is exactly by the plan, without stray marks. So the measurement answers its question — whether the course of writing helps the model — on even handwriting. If the course of writing does not help even there, the question is closed cheaply. If it helps, this does not yet mean that it will help on live handwriting. That is how the conclusions of T29 write it.
-
-— *Why:* the author's decision of 2026-10-26. The author wrote sheet 1 on the board, and on sheet 2 — the one with an erasure by the scenario — the board glued the lines together, and it could not be saved. The author did not write the other sheets: «делай остальные сценарии сам». An agent cannot write by hand for the author, and of three paths the author chose the synthetic sheets.
-
-— *Rejected:*
-- **the author writes 25 sheets without an erasure, and code draws the 14 with an erasure** — the author would still have about an hour and a half of writing;
-- **stopping the measurement** — the product would go on one picture without learning anything about the course of writing;
-- **`writer` `author` for the drawn sheets** — the synthetic sheets could not be told from the author's handwriting.
-
-— *Consequence:* the sample format — the value `synthetic` of the field `writer` (architecture 3.1); `tutor-eval draw`; the line of the summary; `docs/sheets.md` — the step "The other sheets"; RUN.md — T26.
-
-— *Amendment 2026-10-27* (T55; R28): **`tutor-eval draw` draws into `synthetic/` too, and with `-png DIR` it also saves the pictures of the drawn sheets.**
-- **The directory of sheets** is in `samples/` or in `synthetic/` (R05, the 2026-10-27 amendment). The sheets of E2 lie in `samples/`, beside the author's sheet, and the sheets of code in E4 only in `synthetic/` (R28).
-- **`-png DIR`** — the final picture of each sheet that the command drew, and the frame before each of its erasures. These are PNGs of the same render as the measurement's (architecture 3.1, "Rendering a sheet"), under the sheet's file name: `….png` and `…-frame-1.png`.
+- **Where the sheets lie.** The 39 sheets of code of the plan of lines lie in `samples/sheets-v1`, beside the author's sheet, as `draw` draws them from seed 1; the other sheets of code lie only in `synthetic/`.
+- **`-png DIR`** — the final picture of each sheet that the command drew, and the frame before each of its erasures. These are PNGs of the same render as the measurement's, under the sheet's file name: `….png` and `…-frame-1.png`.
   - The directory of pictures is its own: not the directory of sheets and not a folder in it.
   - The sheets the command left as they were have no pictures.
   - A sheet is saved together with its pictures or not at all: the pictures are written first, and if one of them was not written, the command removes both them and the sheet. The next launch draws such a sheet anew.
-- **The lines of E2 for reading** — the plan of E2, `eval/sheets.json`, redrawn by code into `synthetic/lines` with `-seed 1`, as in T26. Sheet 1, which the author wrote in E2, is drawn by code here too. The split is made once, before the first edit of the reading prompt (T73), with seed 55, written down before the split (measurements 3.1).
-
-— *Why:* T55, by R28. The pictures are needed so that the author and the executor see the drawn sheets without a render of their own: the executor draws the sheets of free writing with `-png` and looks at all the pictures (T59, T60). Seed 55 is by the task's number: the split of E2 had 2026, and that of free writing 20261027.
-
-— *Rejected:*
-- **pictures among the sheets** — the summary would name each of them as a file that does not read;
-- **pictures of all the sheets of the directory, not only of the drawn ones:** in `samples/` these would be pictures of the author's handwriting, and `-png` into `synthetic/` would carry it out into a folder open to the agent;
-- **only the frames that the log of the course chooses:** a drawn sheet has one erasure, and the frame is the same, and a frame before each erasure does not depend on the version of the log (T63);
-- **the sheet before the pictures:** a launch broken off between them would leave the sheet without pictures, and the next launch no longer draws such a sheet.
-
-— *Amendment 2026-10-27* (T59; R30): **`synth.Sheet` draws the sheets of a plan of version 1 too, by the place of the parts.**
-- **The layout:**
+- **The lines for reading** — the plan of lines, `eval/sheets.json`, drawn by code into `synthetic/lines` with `-seed 1`, sheet 1, which the author wrote, among them. Its split is made once, before the first edit of the reading prompt, with seed 55, written down before the split (measurements 3.1).
+- **The sheets of lines** are held byte for byte by a hash of the 40 sheets of the plan with seed 1 in a test. The products in the sums of `hand.go` are rounded separately, `float64(…)`: Go does not fuse them on amd64 and may on arm64, so both draw the same sheets.
+- **A plan of version 1** is drawn by the place of its parts:
   - the main column is on the left, from top to bottom;
   - the columns at the side are in a row on the right, beside the part of the main column written before them, and without one, at the top;
   - a full-width part is under what is above it;
@@ -788,348 +694,284 @@ The author's own sheets are written by the board's record mode, not by the sampl
 
   The handwriting shrinks until the main column and the widest row of columns stand side by side across the sheet. The proportions of the handwriting are kept meanwhile. The width of a part also holds what the erasure by the scenario in it takes away.
 - **A column** is written in one go: the first number, under it the sign on the left and the second number, the bar and the result, the numbers to the right edge of the column. At an erasure in a column, first the erased number is written, then comes one movement of the eraser and in its place the plan's number, and the result last.
-- **Time and the letter step** are by R30. Within a part the pauses are shorter than 2 s: between signs up to 0.6 s, between the lines of a column up to 1.1 s. Between parts, from 2.1 to 4.5 s, sometimes a long pause from 6 s, and the letter step is no more than 32 units. So no stroke group takes two parts, and a part without an erasure by the scenario is one group, and a test holds this on a hundred seeds. The fix after the pause before an erasure, 1.5–5 s, as in E2, is a group of its own.
-- **The letters** are all the Russian lowercase ones, □ and △: no letter of the plans comes out as a wavy line.
-- **`draw`** takes a plan of version 1, and a sheet with a drawing that it would have to draw it rejects until T60, naming the drawing, and creates nothing. The sheets that the directory already holds it does not draw and therefore does not check.
-- **The sheets v0** are byte for byte as before: the hash of the 40 sheets of E2 with seed 1 holds this. The products in the sums of `hand.go` are now rounded separately, `float64(…)`. On amd64, where Go does not fuse them, the sheets did not change from this, and on arm64 they will become the same as on amd64.
-
-— *Why:* T59, by R28 and R30. The erasure in a column is by T54 and [free-sheets.md](free-sheets.md): "If the top or the bottom number is erased, the result is written only after the erasure".
-
-— *Rejected:*
-- **columns one under another** — in the author's pilot they stood in a row;
-- **a quick fix** — R30 rejected it;
-- **drawing a sheet with a drawing without the drawing** — the markup would diverge from the plan, and the summary would not accept it.
-
-— *Amendment 2026-10-27* (T60; R30): **`synth.Sheet` draws the drawings of a plan of version 1 too, and `draw` draws all of its sheets.**
+- **Time and the letter step** keep the parts apart by the stroke-group rule of the eval protocol. Within a part the pauses are shorter than 2 s: between signs up to 0.6 s, between the lines of a column up to 1.1 s. Between parts, from 2.1 to 4.5 s, sometimes a long pause from 6 s, and the letter step is no more than 32 units. So no stroke group takes two parts, and a part without an erasure by the scenario is one group, and a test holds this on a hundred seeds. The fix after the pause before an erasure, 1.5–5 s, is a group of its own.
+- **The letters** are all the Russian lowercase ones, □ and △: no letter of the plans comes out as a wavy line. The Russian letters of the answers are drawn with strokes of their own.
 - **A drawing is things with keys:**
   - a number line has the axis, the divisions, the labels and the arcs of the jumps;
   - a row has the houses, the flag and the numbers;
   - a scheme has the labels of the segments, their pieces with labels, the brace and its label.
-- **The order** — each thing next to the one just drawn and no later than 2 s after it, so that a drawing without an erasure is one stroke group:
+- **The order of a drawing** — each thing next to the one just drawn and no later than 2 s after it, so that a drawing without an erasure is one stroke group:
   - a number line — the axis, then the divisions from left to right, with a label right at its division, and an arc as soon as both of its divisions are drawn, in the order of the jumps;
   - a row — the houses from left to right, the flag right after the marked one, a number under each house right after it;
   - a scheme — the segments from top to bottom, a label before each and the pieces with their labels, then the brace by the longest segment and its label.
-- **The sizes:**
+- **The sizes of a drawing:**
   - the step of the divisions is no more than 45 units;
   - the labels of neighbouring divisions are at least 14 units apart, so that "10" and "11" do not merge into "1011";
   - the step of the houses is no more than 54 units;
   - a scheme is written in handwriting no taller than 32 units: rows without the labels □ and △ hold to each other by the segments alone.
 - **An erasure in a drawing.** First the figure "before" is drawn: what will remain, and last what will go, so that what remains holds together without it. Then one movement of the eraser takes away the things that are not in the final figure, and after a pause its new things are drawn in: on a number line, each new arc, and after it the new labels at its ends. A thing that is in both figures keeps its strokes.
-- **Groups.** A part with a drawing without an erasure is one group, on a hundred seeds. With an erasure, up to three. A fix is a group of its own, and on a scheme where the erasure takes away a piece of the longest segment, the brace too stands apart: nothing stays next to it, and the new piece comes later than 2 s. The device will group it so too.
-- **`draw`** rejects nothing any more. The refusal of T59 went away together with `synth.Drawable`.
+- **Groups of a drawing.** A part with a drawing without an erasure is one group, on a hundred seeds. With an erasure, up to three. A fix is a group of its own, and on a scheme where the erasure takes away a piece of the longest segment, the brace too stands apart: nothing stays next to it, and the new piece comes later than 2 s. The device will group it so too.
+- **`draw`** draws every sheet of a plan of version 1, drawings among them.
 - **What the plans do not have yet but the code holds:**
   - a drawing at the side — the plan check rejects it: `right` is writing at the side, a text;
   - a drawing of the main column next to columns — the handwriting shrinks until they too stand next to a drawing up to 560 units wide;
   - a main column that does not fit even with a line step of 1.6 heights — the handwriting shrinks;
   - the labels of a number line are no lower than 14 units, though neighbouring labels then stand closer;
   - a drawing with an erasure whose figure "before" holds nothing that is not in the final one — there is nothing to erase, and `draw` names such a sheet as drawn wrong.
+- **What this changes in the measurement.** Synthetic handwriting is more even than live handwriting, and the erasure in it is exactly by the plan, without stray marks. So the measurement answers its question — whether the course of writing helps the model — on even handwriting. If the course of writing does not help even there, the question is closed cheaply. If it helps, this does not yet mean that it will help on live handwriting.
 
-— *Why:* T60, by R28 and R30. The order "what will go comes last" was found by the tests: on sheet 7 the erased arc and label tied together in time the divisions up to 13 and after it, and without them the number line fell apart into two groups.
+— *Why:* an agent cannot write by hand for the author. The author wrote one sheet of lines on the board; on the one with an erasure by the scenario the board glued the lines together, and it could not be saved, and the other sheets were left to code. Of the three paths, synthetic sheets cost the author no hours of writing and do not stop the measurement.
+- **The pictures** let the author and the executor see the drawn sheets without a render of their own: the executor draws the sheets of free writing with `-png` and looks at all the pictures.
+- **Seed 55** is a number of its own, written down before the split: the split of the lines in `samples/` has 2026, and that of free writing 20261027.
+- **The erasure in a column** is as `docs/free-sheets.md` sets it: "If the top or the bottom number is erased, the result is written only after the erasure".
+- **The order "what will go comes last"** was found by the tests: on sheet 7 the erased arc and label tied together in time the divisions up to 13 and after it, and without them the number line fell apart into two groups.
 
 — *Rejected:*
+- **the author writes 25 sheets without an erasure, and code draws the 14 with an erasure** — the author would still have about an hour and a half of writing;
+- **stopping the measurement** — the product would go on one picture without learning anything about the course of writing;
+- **`writer` `author` for the drawn sheets** — the synthetic sheets could not be told from the author's handwriting;
+- **pictures among the sheets** — the summary would name each of them as a file that does not read;
+- **pictures of all the sheets of the directory, not only of the drawn ones:** in `samples/` these would be pictures of the author's handwriting, and `-png` into `synthetic/` would carry it out into a folder open to the agent;
+- **only the frames that the log of the course chooses:** a drawn sheet has one erasure, and the frame is the same, and a frame before each erasure does not depend on the version of the log;
+- **the sheet before the pictures:** a launch broken off between them would leave the sheet without pictures, and the next launch no longer draws such a sheet;
+- **columns one under another** — in the author's pilot they stood in a row;
+- **a fix without a pause after the erasure** — the synthetic sheets would correct errors without a pause, and the order of drawing would come out artificial;
+- **drawing a sheet with a drawing without the drawing** — the markup would diverge from the plan, and the summary would not accept it;
 - **erasing the scheme's brace too**, so that it comes anew next to the new piece — the erasure would be larger than the plan says;
 - **drawing the labels of a number line after all the divisions** — the label on the left would come later than 2 s after its division, and each would stand as a separate group;
 - **"one or two groups" for drawings with an erasure too** — a scheme with a brace does not hold this by the rule, not by an error of the code.
 
-— *Amendment 2026-11-07* (T104; R69): **`draw` writes a sheet as a sample of the eval protocol drawn from a seed — `synthetic` with the seed and `WRITER_ADULT`, — under the old file name.** "`writer` — `synthetic`" now reads so: a sample of the protocol whose writer is code and not a person is `synthetic`, and `evalsample.Read` gives the sheet `sample.WriterSynthetic`. The plan of the author's sheets, where the answer is the whole solution, `draw` does not draw: the truth of a sample is the value of the answer.
-
-*2026-11-07 (T105; R75): the 39 sheets of code in `samples/sheets` were converted to the protocol as `draw` draws them from seed 1, after a check against the present `synth`; `synth` draws the random numbers of pressure as before, but does not write the pressure.*
+— *Consequence:* `internal/synth/`; `internal/sample/`; `internal/evalsample/`; `cmd/tutor-eval/`; `docs/sheets.md`; `docs/free-sheets.md`; `docs/architecture.md`.
 
 ## The outcome of the working measurement
 
-**R27. `tutor` reads the work by one final picture: the order of writing, the log of the course and the frames before erasures do not go into the reading request.**
-- The measurement T28 did not show this benefit for any configuration (architecture 3.1, "Result of the measurement"). Opus 5.5 · `high` is right by one picture in all 90 answers, and with the course the same. For Haiku 5.5 the course helps without thinking and hinders with thinking, and both times not significantly.
-- So the recommendation of П-21 holds too: of the forms that give the same benefit, take the one poorest in data. Strokes and erasures stay on the device (R09 spec; privacy 1 spec).
-- The working in the analysis is not a question of this measurement. Its measurement comes later (epic E4 of RUN.md).
+**R27. One final picture of the work goes to AI, into reading and into analysis alike: the order of writing, the log of the course and the frames before erasures go into no request of `tutor`.**
+- **What was measured.** The call of both measurements was reading and analysis in one call, with the key: the model saw the key and the task's solution and looked for the first error. In the product reading goes without the key; the conclusion holds for both calls.
+- **On lines** the help of the course of writing is not shown for any configuration (measurements 1.2). Opus 5.5 · `high` is right by one picture in all 90 answers, and with the course the same. For Haiku 5.5 the course helps without thinking and hinders with thinking, and both times not significantly.
+- **On free writing** — 30 test sheets of code with a number line, drawings and writing at the side, prompt v2 — the help of the course of writing to the judge is not shown for any of the three judges (measurements 3.4). Opus 5.5 · `high` here too makes almost no errors. Haiku 5.5 · `low` has p 0.094, and Haiku without thinking p 0.123, and the latter also has more false alarms in D than in A.
+- **Without a threshold,** the log of parts helps Haiku find the first error in a drawing: without thinking, 1 right answer of 18 in A and 13 in B. These are data for `spec`'s rule on the course of writing, not a benefit by the criterion (measurements 3.9).
+- **The rule of the platform.** `spec` makes it a rule: one picture goes to AI — both into reading and into analysis —, until a measurement on the live handwriting of adult volunteers and on free writing shows a benefit of the course of writing and a new decision of `spec` accepts it. Of the forms that give the same benefit, the one poorest in data is taken: strokes and erasures stay on the device.
 
-— *Why:* decided by the executor — the author gave it the measurement and the conclusions, 2026-10-26 (R05, the 2026-10-26 amendment). The measurement's answer is "not shown", and the picture is what already goes to the model now: the decision changes nothing in the code or in the contract.
+— *Why:* both measurements, on lines and on free writing, answered "not shown" for every judge, and the picture is what already goes to the model: the decision changes nothing in the code or in the contract.
 
 — *Rejected:*
 - **the course into reading for Haiku without thinking** — its gain is not significant (p = 0.061), and in form D it is lower anyway than Haiku · `low` by one picture;
-- **the conclusion "the course does not help"** — the measurement does not prove this: the handwriting is synthetic, the sheets are easy for Opus, and there is no free writing on them. "Not shown" is written down, and the next measurement is on live handwriting and free writing;
+- **the conclusion "the course does not help"** — the measurements do not prove this: the handwriting is synthetic, and the sheets are easy for Opus. "Not shown" is written down, and the next measurement is on live handwriting and free writing;
 - **a measurement on a larger number of synthetic sheets** — Opus makes no errors as it is, and synthetic sheets will not give the answer about live handwriting.
 
-— *Consequence:* architecture 3.1 — "Result of the measurement"; RUN.md — T29, the rows В30 and В31 «в реестр spec», epic E4 in table 2.
-
-— *Amendment 2026-10-27* (T86; R29): **the measurement's call is reading and analysis in one call, with the key.** So R52 spec names it, by the vocabulary of `spec`, where reading goes without the key (architecture 3.6 spec): the model saw the key and the task's solution and looked for the first error. The entry above calls it reading, and the course of writing the working (R55 spec). The conclusion does not change from this, and R52 spec makes it a rule of the platform: one picture goes to AI — both into reading and into analysis, — until a measurement on the live handwriting of adult volunteers and on free writing shows a benefit of the course of writing and a new decision of `spec` accepts it.
-— *Amendment 2026-10-27* (T66; R28): **the measurement of free writing answered the same: the help of the course of writing to the judge is "not shown" for any of the three judges, and R27 stands.** These are 30 test sheets of code with a number line, drawings and writing at the side, prompt v2. Opus 5.5 · `high` here too makes almost no errors. Haiku 5.5 · `low` has p 0.094, and Haiku without thinking p 0.123, and the latter also has more false alarms in D than in A. Without a threshold, the log of parts helps Haiku find the first error in a drawing: without thinking, 1 right answer of 18 in A and 13 in B. What of this is data for R52 spec, T77 and T85 decide (measurements 3.4).
-— *Amendment 2026-10-28* (T85; the author's decision): **R27 stays.** One final picture goes to AI, without the course of writing. Both measurements — E2 on lines and E4 on free writing — answered "not shown" for every judge (measurements 3.9). The author's answer of 2026-10-28 in planning T82 is «R27 остаётся», by the recommendation. That the log of parts without a threshold helped the weak judge find an error in a drawing is data for R52 spec, the row В50 of table 3 of RUN.md.
+— *Consequence:* `internal/reading/`; `docs/architecture.md`. A change goes first to `spec` as a row «в реестр spec» of `run/QUESTIONS.md`: there the ban is a rule of the platform.
 
 ## Epic E4
 
-**R28. Epic E4 takes all the measurements of its row: free writing, the working in the analysis, reading into an observation — with Т-23, two readers, digit height and states, — hints, the workbook and essays. The pilot on the board goes first. The live handwriting is three of the author's sheets with a mouse, and the rest is drawn by code. The synthetic sheets lie outside `samples/`, and the executor starts the runs on them itself, within the task's ceiling.** The plan of the measurements is architecture 3.4, the tasks are T52–T85 in RUN.md.
-- **The scope** is the whole row E4 of table 2 of RUN.md:
+**R28. The measurements of the capabilities take free writing, the working in the analysis, reading into an observation — with Т-23, two readers, digit height and states —, hints, the workbook and essays, with a pilot on the board first. The live handwriting is three of the author's free solutions with a mouse, and the rest is drawn by code; the synthetic sheets lie in `synthetic/`, outside `samples/`, and the executor starts the runs on them itself, within the task's ceiling. One runner serves all their call kinds.**
+- **The scope:**
   - free writing on live handwriting — a number line, a drawing, writing at the side;
-  - the working in the analysis (П-21);
+  - the working in the analysis;
   - Т-23 and hints;
-  - two readers (Т-33);
+  - two readers;
   - digit height;
   - states (О-8, О-21);
-  - the workbook and essays — data for T46.
-- **The pilot goes first.** On the check board, six tasks with free writing. The author writes 5–10 solutions with a mouse and marks whether the model is right (T52, T53). What the pilot shows may change the plan of free writing before the code (T54).
-- **The sheets:**
-  - free writing — 40 sheets are drawn by code, in `synthetic/free`. Three are written by the author with a mouse in the board's record mode — with a number line, with a drawing and with writing at the side, — in `samples/free`. The author's sheets are copies of three sheets of code, and they have no split and no threshold;
-  - reading also takes the plan of E2, redrawn by code, and about 12 sheets with a near-key: the result on them differs from the key by one similar digit (T70);
-  - the workbook and essays — synthetic sheets only: about 20 pages and about 20 essays;
-  - the files of E2 — the bank, the plan, the sheets and the prompt — do not change.
-- **The judges** are the three configurations of R24: Opus 5.5 · `high`, Haiku 5.5 · `low` and Haiku 5.5 · `low` without thinking. In reading Opus goes by a reduced matrix — each condition once, without heights and states, — as R06 and R08 told for the strong model. There is no Batch: the measurements keep to ZDR (R06).
-- **Two readers** — Haiku and Opus on the same reading runs, without new calls: the option of Т-33 "two readers of one provider". A pair of different providers stays unmeasured.
-- **The analysis of the working** gets no task of its own. The judge of free writing sees the key and the solution and gives the box of the first error: this is the analysis, with the working and without it, and the report counts the hits on the sheets with an error by form (T65). The hint is one call of the analysis and the hint, as on the diagram of architecture 4.1 spec, and it does not see the working (R11).
-- **The verdict** is made by the runner's code by the observation: the value of the result against the key, exactly, as a fraction, and in doubt, "unreadable" (concepts 9.1 spec; R04 spec). The lines are compared with the markup only as a metric of reading.
-- **The synthetic sheets are outside `samples/`**, in the folder `synthetic/` outside git. There is no handwriting in it (R26), and it is open to the agent. The rule about `samples/` is as before (R05; CLAUDE.md). The folder, the section of CLAUDE.md about it and the line of `.gitignore` are set up by T55.
-- **The runs** on the synthetic sheets the executor starts itself: with the author's key for eval from a file outside the repository and within the ceiling that the task names. The ceilings of this plan are the confirmation by rule 4 of RUN.md. The executor checks the day's prices before each run. The runs on the author's three sheets are started by the author, with one command (T77), and the report without handwriting goes to the executor.
-- **The criteria** are set before the first run of their measurement (R05):
-  - for free writing — the criterion of R24 word for word (T54);
-  - for Т-23 — the threshold of R03 with all its amendments (T71);
-  - for two readers and heights — the metrics of R08, without a threshold;
-  - for О-8 — the two quantities of R10 (T72);
-  - for hints, the workbook and essays — in the tasks of their reports.
+  - the workbook and essays.
+- **The pilot goes first.** On the check board, six tasks with free writing: the author writes solutions with a mouse and marks whether the model is right. On free writing with a mouse Opus 5.5 makes no errors either, and Haiku 5.5 does: with thinking it is right in 10 answers of 11, without thinking in none of 6 (measurements 3.2). The plan of free writing stands, and the sheets take the way the author writes.
+- **The sheets of free writing.** 40 sheets are drawn by code, in `synthetic/free`, by the plan `eval/free-sheets.json`; the plan and the criterion are in measurements 3.3.
+  - The first error is in a drawing on about half of the sheets with an error that have a drawing.
+  - The erasures by the scenario are both in the drawing and in the text: an arc, a house or a segment erased and redrawn on 6 of the 11 sheets with an erasure that have a drawing.
+  - The figures: a number line with arcs, a row of objects with numbers, a scheme of segments; and, as the author writes, the calculations at the side in a column and the unknowns as □ and △, in the text and as the labels of the scheme's segments.
+  - The split has the seed 20261027, written down before the split.
+- **The author's sheets** are three free solutions with a mouse, in `samples/`, by the plan `eval/free-author.json`: `grasshopper`, `stamps` and `album`, one per layout. The scenario of each is `correct`, the outcome is `correct`, and there is no erasure by the scenario. There is one part — a full-width text, «свободное решение целиком», and it is also the answer. They have no split and no threshold.
+  - Record mode takes a plan's sheet of one part whole, as one part, whatever the stroke groups are. The author solves the task, presses Done, then Save; stray marks are erased however is convenient, and an accidental error with Clear, solving anew.
+  - An erasure in a drawing and an error in a drawing and in a column are only on the 40 sheets of code. On the author's sheets the judge answers whether the solution is right: a false alarm on live handwriting with a mouse is what these sheets measure.
+- **The sheets of reading.** Reading also takes the plan of the course of writing, redrawn by code, and about 12 sheets with a near key: the result on them differs from the key by one similar digit. The workbook and essays have synthetic sheets only: about 20 pages and about 20 essays. The bank, the plan, the sheets and the judge's prompt of the course of writing do not change.
+- **The parts of a sheet** come from `lines.Groups`, by the stroke-group rule of `spec`'s eval protocol, which `canvas` takes: two strokes are neighbours if the pause between them is no more than 2 s and the gap no more than 50 units.
+- **The judges** are Opus 5.5 · `high`, Haiku 5.5 · `low` and Haiku 5.5 · `low` without thinking. In reading Opus goes by a reduced matrix — each condition once, without heights and states. There is no Batch: the measurements keep to zero data retention.
+- **Two readers** — Haiku and Opus on the same reading runs, without new calls: two readers of one provider. A pair of different providers stays unmeasured.
+- **The analysis of the working** has no measurement of its own. The judge of free writing sees the key and the solution and gives the box of the first error: this is the analysis, with the working and without it, and the report counts the hits on the sheets with an error by form. The hint is one call with the analysis, as `spec` puts it, and does not see the working: the working goes only into the analysis.
+- **The verdict** is made by the runner's code by the observation: the value of the result against the key, exactly, as a fraction, and in doubt, "unreadable". The lines are compared with the markup only as a metric of reading.
+- **The synthetic sheets are outside `samples/`**, in the folder `synthetic/`, outside git. Code draws them, so there is no handwriting in it, and it is open to the agent; `samples/` keeps its rule: nothing from it goes into git or into `synthetic/`.
+- **The runs** on the synthetic sheets the executor starts itself, with the author's key for eval from a file outside the repository and within the ceiling that the task names: that ceiling is the confirmation a paid run needs. A run also keeps under the spending limit the author set for the eval key's workspace at the provider, and the task's «Сделано» names what was spent — the provider, the number of calls and the sum; without a ceiling in the task the run waits for the author's confirmation. The executor checks the day's prices before each run. A run on the author's sheets starts within its task's ceiling too, and it logs only in `samples/`.
+- **The criteria** are set before the first run of their measurement:
+  - for free writing — the criterion of the measurement of the working, word for word (measurements 3.3);
+  - for Т-23 — the threshold of one call against two;
+  - for two readers and heights — the metrics of the study's checks, without a threshold;
+  - for О-8 — two quantities: how often reading at a pause gives "not yet" or "correct" out of place, and how many readings a sheet each pause policy gives;
+  - for hints, the workbook and essays — in the reports of their measurements.
+- **The runner** is one for all the call kinds: what is shared is in `internal/runner`, and the judge is a kind on it, `internal/measure`.
+  - The runner knows what does not depend on the kind: the configurations of models, the steps of a run in order, the estimate, the worst case and the ceiling, `Do` with the clock and `provider.Billed`, the JSONL log and its reading, the stub and the call of the models. The kind says three things about each call: the request, the answer of an always right model by the markup — the stub gives it — and the record in the log. The kind builds the records of the run and of the sheets itself and reads its own log. It also sets the worst input of a call: for the judge 8,000 tokens, and a request of another kind may be larger. The runner does not know the kind's types: it writes the records as they are, and the kind parses them.
+  - **Sets.** One run may go over several sets of sheets, `-set`, with the field `set` in the records: one estimate, one "yes", one ceiling — the task's —, and one log, and the report sees all the sheets for the paired tests. The judge takes one set: its criterion counts the test part of one set.
+  - **`internal/measure`** keeps the plan of forms A–D, the rule "D instead of B on a sheet without frames", the records of the log with the old field names and their reading, the answer of an always right judge, the estimate's tokens by the version of the prompt, `PromptOf` and `Framed`. `internal/report` is the judge's report, and `internal/judge` its prompt.
+  - **The kind in the log** is the field `call_kind` of the run record. The judge's log does not write it: a log without it is a judge's log. By this field `tutor-eval report` chooses the report.
+  - **`-kind`** of `tutor-eval run` is `judge` by default, so `just measure` and `just free` do not change; the other kinds are named in the command's table of kinds.
+  - **The default log name** is the time to the millisecond, the kind, the sets — the names of their directories, joined by `+` — and the part, for example `…-judge-free-test.jsonl`, so logs of different sets in one `synthetic/runs` are not confused by name.
 
-— *Why:* the author's decisions of 2026-10-26 in planning E4. Their answers: «Всё из строки E4»; «Пилот на доске»; «я 3 разнородные задачи и 40 задач синтетика», and then «Три свободных решения»; writing — with a mouse; «Две модели Claude»; «Исполнитель, синтетика вне samples/». The rest of the entry is the recommendations of planning, which the author accepted together with the plan.
-- **The pilot first** — by one picture Opus made no errors (R27). If it is so on free writing too, the help of the course is invisible for it by construction, and the plan is better changed before the code.
-- **The sheets with a near-key** — the model reads an even synthetic digit confidently, and the key has nothing to shift: the threshold of Т-23 would pass by construction.
-- **The synthetic sheets outside `samples/`** — so the executor starts the runs itself, without one-off exceptions to the rule about `samples/`, such as were needed in T27–T29.
-- **The analysis without a task of its own** — the judge of the measurement of the working already sees the key and looks for the first error (R24), and `spec` puts the hint in one call with the analysis (architecture 4.1 spec).
-- **The reduced matrix for Opus** — heights and states are needed by the cheap reader that the product puts on reading (architecture 3.12), and the full matrix would cost about $6 more.
+— *Why:*
+- **The pilot first** — on one picture Opus made no errors on the lines of the course of writing (measurements 1.2). If it is so on free writing too, the help of the course is invisible for it by construction, and the plan is better changed before the code. For Opus the answer is most likely "not shown" again, by construction, and the question is decided on Haiku.
+- **The columns and □ with △** — so the author wrote the free solutions in the pilot, and the synthetic sheets must be close to that writing.
+- **The author's sheets of one part** — copies of the sheets of code would require the author to follow the scenario and mark up the parts, and in writing with a mouse the parts fall apart into dozens of groups: on the grasshopper the mouse gave 23 stroke groups instead of four parts, almost every division, label and arc after a pause longer than 2 s. A sheet of one part requires nothing but the solution. The runner's verdict needs no texts of the parts either: it compares the value of the result with the key of the bank.
+- **The sheets with a near key** — the model reads an even synthetic digit confidently, and the key has nothing to shift: the threshold of Т-23 would pass by construction.
+- **The parts by the protocol's rule** — otherwise the parts of `tutor` and the groups of the device would diverge.
+- **The synthetic sheets outside `samples/`** — the agent runs the measurements on them itself, and no handwriting may go where the agent writes.
+- **The analysis without a measurement of its own** — the judge of the measurement of the working already sees the key and looks for the first error, and `spec` puts the hint in one call with the analysis.
+- **The reduced matrix for Opus** — heights and states are needed by the cheap reader that the product puts on reading, and the full matrix would cost about $6 more.
+- **One runner** — reading, the hint, the slots of the workbook and the rubric need the same estimate, the same ceiling, the same "yes" and the same log as the judge. One estimate per run over sets is one confirmation and one task ceiling. The judge's behaviour does not change: its reports on the logs of the earlier runs are the same byte for byte, and the stub's log on 40 sheets is the same line by line.
 
 — *Rejected:*
-- **one question** — free writing, and the rest in later epics: this is what the executor recommended, and the author took everything;
-- **20 or 40 of the author's sheets** and **waiting for volunteers** — there is no consent text (П-16, П-18), and the author chose three sheets;
-- **code draws the author's sheets too** — synthetic sheets will say nothing about live handwriting (R27);
+- **only free writing, the rest in later epics** — the other capabilities are needed with it;
+- **20 or 40 of the author's sheets** — long to write with a mouse; **waiting for volunteers** — there is no consent text (П-16, П-18);
+- **code draws the author's sheets too** — synthetic sheets say nothing about live handwriting;
 - **one author's sheet for each kind** — a free solution, a workbook page and an essay: record mode would need two new kinds of sheet for the sake of two sheets;
-- **GPT-6 Luna as the second reader** — an OpenAI key is needed, and there is no GPT in the measurements (R20, R21);
-- **the executor with `samples/` open**, as in T27 and T28, and **all the runs by the author**. The first is an exception to the rule for every run, the second is the author at every task with a run;
-- **the sheets of E4 beside the sheets of E2** — the split and the logs of E2 name their files;
-- **the full matrix for Opus in reading** and **a separate analysis call** — the arguments are above.
-
-— *Consequence:* amendments to R04, R05, R08, R10, R11, R22 and R24; RUN.md — table 1, table 2 and the section «Эпик E4»; architecture 1, 2, 3.11, 3.5, 3 and the new section 3.4; `docs/plan/E1.md`; README.md.
-
-— *Amendment 2026-10-27* (T54; the pilot T53): **the pilot does not change the plan in the main, but adds to the sheets the way the author writes.** The plan and the criterion are in measurements 3.3.
-- **The measurement of free writing goes by the plan:** 40 sheets of code, the three judges of R24, the first error in a drawing — on about half of the sheets with an error that have a drawing.
-  - The pilot showed: Opus 5.5 makes no errors on free writing with a mouse too, and Haiku 5.5 does. With thinking it is right in 10 answers of 11, without thinking in none of 6 (measurements 3.2).
-  - For Opus the answer is most likely "not shown" again, by construction, and the question is decided on Haiku.
-- **The erasures by the scenario** are both in the drawing and in the text. An arc, a house or a segment erased and redrawn — on 6 of the 11 sheets with an erasure that have a drawing.
-- **The figures** are by the plan: a number line with arcs, a row of objects with numbers, a scheme of segments. And as the author wrote in the pilot: the calculations at the side in a column, and the unknowns as □ and △, in the text and as the labels of the scheme's segments.
-- **The author's sheets** — one per layout:
-  - the number line — `erasure-fixed`, with an erasure in the drawing;
-  - the drawing — `erasure-broken`, with an erasure in the drawing;
-  - the writing at the side — `error` in a column, without an erasure.
-- **The split** — seed 20261027, written down before the split.
-
-— *Why:* the author's answers of 2026-10-27 in planning T54, all four by the recommendation: «Дальше, как в плане», «И в рисунке, и в тексте», «По плану и как в пилоте», «Разные сценарии». The columns and □ with △ — because so the author wrote the free solutions in the pilot, and the synthetic sheets must be closer to their writing.
-
-— *Rejected:*
-- **harder sheets** — subtle errors beyond the plan: an arc to the neighbouring division, one wrong digit in a column, similar digits. They take code longer to draw and the author longer to proofread;
-- **without Opus** — about $0.3 instead of $3.9, but without the agreement of Haiku with Opus and without the answer whether Opus sees an error in a drawing;
-- **stopping** — the judge with the working on free writing would stay unmeasured;
-- **erasing only in the text** — the measurement would not show whether the course of an erased drawing helps;
-- **the figures only by the plan** — the sheets are further from the author's writing;
-- **as in the pilot, without the scheme of segments** — the technique that stands in the solution of the task about the stamps goes away;
-- **the author's sheets without the eraser** — the course of writing without erasures gives the model little;
-- **all three of the author's sheets with an erasure** — longer to write with a mouse, and strictly in the plan's order.
-
-— *Consequence:* architecture 3.4, "How it is built"; measurements 3.1 and 3.3; RUN.md — T54 and the bodies of T56, T57, T58, T59, T60, T62, T64, T65 and T66.
-
-— *Amendment 2026-10-27* (the author's decision; T56): **E4 has one more task, T86, the move to the latest tag of `spec`, and it goes before T58.** The tasks of E4 are T52–T86.
-- **What was found in planning T56.** `spec` v0.2.38 came out, and `tutor` stands on v0.2.32.
-  - The eval protocol (epic E3 of RUN.md `spec`) now takes the stroke-group rule of `canvas`, R24 canvas. Two strokes are neighbours if the pause between them is no more than 2 s and the gap no more than 50 units.
-  - Д36 RUN.md `spec` tells the runner of `tutor` to build the groups by this rule, and the scale of the crop by stroke bundles, and to amend R08.
-- **Why before T58.** T58 builds the parts of a sheet, `lines.Parts`, and it had better take the protocol's rule rather than its own: otherwise the parts of `tutor` and the groups of the device will diverge.
-
-— *Why:* the author's answer is «Задачей до T58», by the executor's recommendation. A move to a new tag is a task of its own (RULES.md, Across repositories), and T56 does not touch it: the plan's format is a detail of `tutor`.
-
-— *Rejected:*
-- **after E4** — T58 would build the parts by its own rule, and the reconciliation with the protocol would fall on finished code;
-- **deciding later**, as a row of table 3 — the answer is needed before T58, and it is already there.
-
-— *Amendment 2026-10-27* (the author's decision; T62): **the author's sheets are free solutions of three tasks: without a scenario of an erasure and an error, and the whole sheet is one part.** On the first sheet, the grasshopper, the mouse gave 23 stroke groups instead of the plan's four parts: almost every division, label and arc came after a pause longer than 2 s. To save the sheet, the author would have had to merge groups and type in texts. The author's answer: «я не робот. я не буду всё это заполнять. довольствуйся тем что я заполняю» and «я буду просто решать задачи в свободной форме и всё. не грузи меня этими вопросами».
-- **The plan `eval/free-author.json`** is three sheets: `grasshopper`, `stamps` and `album`, one per layout. The scenario of each is `correct`, the outcome is `correct`, and there is no erasure by the scenario. There is one part — a full-width text, «свободное решение целиком», and it is also the answer.
-- **Record mode** takes a plan's sheet of one part whole, as one part, whatever the groups are. The author solves the task, presses Done, then Save. Stray marks they erase however is convenient, and an accidental error with Clear, and solve anew.
-- **An erasure in a drawing and an error in a drawing and in a column** are only on the 40 sheets of code. On the author's sheets the judge answers whether the solution is right: a false alarm on live handwriting with a mouse is what these sheets measure (T77).
-
-— *Why:* the author's decision of 2026-10-27. The copies of the sheets of code required the author to follow the scenario and mark up the parts, and in writing with a mouse the parts fall apart into dozens of groups. A sheet of one part requires nothing but the solution. The texts of the parts are not needed by the runner's verdict either: it compares the value of the result with the key of the bank (section 3.4, "How it is built").
-
-— *Rejected:*
-- **copies of the sheets of code 7, 8 and 2** (the 2026-10-27 amendment above, T54) — the author will not mark up parts and follow the scenario;
+- **copies of three sheets of code as the author's sheets** — the author does not mark up parts and follow the scenario;
 - **a button "Next part" while writing** and **a cut of the order of writing by the board by the plan** — the first still requires writing the plan's parts in order, and the second silently cuts wrong if a part is skipped or written in the wrong place;
-- **a scenario in which the outcome is free** — the format has no such scenario, and an accidental error on three sheets is more simply rewritten than marked up.
-
-— *Consequence:* `eval/free-author.json`; `internal/board` — a plan's sheet of one part takes the whole sheet; the tests of `cmd/tutor-eval` and `internal/board`. architecture 3.1, 3.3 and 3.4, [free-sheets.md](free-sheets.md) — "The author's sheets" and "How to write the author's sheets". RUN.md — T62.
-
-— *Amendment 2026-10-27* (the author's decision; T67): **the runner is one for all the call kinds of E4: what is shared is in `internal/runner`, and the judge is a kind on it, `internal/measure`. One run may go over several sets of sheets. The judge's log does not change.**
-- **The runner** knows what does not depend on the kind: the configurations of models, the steps of a run in order, the estimate, the worst case and the ceiling, `Do` with the clock and `provider.Billed`, the JSONL log and its reading, the stub and the call of the models. The kind says three things about each call: the request, the answer of an always right model by the markup — the stub gives it — and the record in the log. The records of the run and of the sheets the kind builds itself, and it reads its own log too. The worst input of a call is also set by the kind: for the judge, 8,000 tokens, and a request of another kind may be larger. The runner does not know the kind's types: it writes the records as they are, and the kind parses them.
-- **Sets.** One run may go over several sets of sheets: one estimate, one "yes", one ceiling — the task's ceiling, — and one log, and the report sees all the sheets for the paired tests (T71). The flag `-set` and the field `set` in the records come with the first kind over several sets — reading (T68). The judge takes one set: its criterion counts the test part of one set.
-- **`internal/measure` is the kind "judge".** It keeps the plan of forms A–D, the rule "D instead of B on a sheet without frames", the records of the log with the old field names and their reading. It also takes the answer of an always right judge, the estimate's tokens by the version of the prompt, `PromptOf` and `Framed`. `internal/report` stays the judge's report, and `internal/judge` its prompt.
-- **The kind in the log** is the field `call_kind` of the run record. The judge's log does not write it: a log without it is a judge's log, as for E2 and T66. By this field `tutor-eval report` chooses the report.
-- **`-kind`** of `tutor-eval run` is `judge` by default, so `just measure` and `just free` do not change. There are no other kinds yet, and with them, starting with reading, a table of kinds will come into the command.
-- **The default log name** is the time to the millisecond, the kind, the set — the name of the directory of sheets — and the part, for example `…-judge-free-test.jsonl`. So the logs of free writing and of the lines of E2 in the one `synthetic/runs` are not confused by name: this is the «Открыто» of T55. The name of a run over several sets is decided by T68.
-
-— *Why:* the author's decision of 2026-10-27, on approving the plan of T67. Reading, the hint, the slots of the workbook and the rubric need the same estimate, the same ceiling, the same "yes" and the same log as the judge. One estimate per run over sets is one confirmation by rule 4 of RUN.md and one task ceiling. The judge's behaviour does not change. The reports on all the run logs — E2 from `samples/runs`, and T65 and T66 from `synthetic/runs` — are the same byte for byte, and the stub's log on 40 sheets is the same line by line.
-
-— *Rejected:*
+- **a scenario in which the outcome is free** — the format has no such scenario, and an accidental error on three sheets is more simply rewritten than marked up;
+- **harder sheets of code** — subtle errors beyond the plan: an arc to the neighbouring division, one wrong digit in a column, similar digits. They take code longer to draw and the author longer to proofread;
+- **erasing only in the text** — the measurement would not show whether the course of an erased drawing helps;
+- **the figures only by the plan** — the sheets are further from the author's writing; **as in the pilot, without the scheme of segments** — the technique that stands in the solution of the task about the stamps goes away;
+- **free writing without Opus** — about $0.3 instead of $3.9, but without the agreement of Haiku with Opus and without the answer whether Opus sees an error in a drawing;
+- **stopping after the pilot** — the judge with the working on free writing would stay unmeasured;
+- **parts by a rule of `tutor`'s own** — they would diverge from the groups of the device;
+- **GPT-6 Luna as the second reader** — an OpenAI key is needed, and the measurements run only on Claude models;
+- **all the runs by the author** — the author at every task with a run;
+- **the new sheets beside the sheets of the course of writing** — the split and the logs of that measurement name their files;
+- **the full matrix for Opus in reading** and **a separate analysis call** — the arguments are above;
 - **a report over several logs**, a log per set — three "yes", the task's ceiling would have to be divided by hand, and the report would have to reconcile the logs with each other: the kind, the prompt and the configurations;
 - **the kind "judge" in `internal/judge`** — the prompt would drag the runner along with it;
-- **renaming or dissolving `internal/measure`** — an edit with no benefit for the behaviour, and the decision log and architecture 3.1 call the package so;
+- **renaming or dissolving `internal/measure`** — an edit with no benefit for the behaviour, and the documents call the package so;
 - **`call_kind: judge` in the new logs of the judge** — the judge's log would change without need, and a log without the field reads as a judge's log anyway;
 - **generics instead of a call interface** — the runner does not need the kind's types: it writes and reads the records as JSON, and the kind parses them;
-- **a mandatory `-kind`** — it would change the commands of E2 and T66 that the author uses.
+- **a mandatory `-kind`** — it would change the judge's commands that the author uses.
 
-— *Consequence:* `internal/runner` with tests on a call kind of its own; `internal/measure` on the runner, and the references of its log `internal/measure/testdata/stub-v1.jsonl` and `stub-v2.jsonl`; `tutor-eval run -kind`, the log name and `tutor-eval report` by the kind of the log; the help of `tutor-eval`. architecture 3.1, "The runner", "The runner of call kinds" and "The report", 3.2 and 3.4. RUN.md — T67 and the item about sets in T68.
-
-— *Amendment 2026-11-13* (R110): **a paid run of eval that the executor starts within its task's ceiling also keeps under the spending limit the author set for the eval key's workspace at the provider, and the task's «Сделано» names what was spent — the provider, the number of calls and the sum; without a ceiling in the task the run waits for the author's confirmation.** This is the exception of R146 spec in rule 4 of RUN.md.
+— *Consequence:* `docs/architecture.md`; `docs/measurements.md`; `docs/free-sheets.md`; `eval/free-sheets.json`; `eval/free-author.json`; `eval/near-sheets.json`; `internal/board/`; `internal/lines/`; `internal/runner/`; `internal/measure/`; `cmd/tutor-eval/`; `justfile`; `.gitignore`; `CLAUDE.md`; `.claude/rules/eval.md`; `README.md`; `RUN.md`.
 
 ## Move to `spec` `v0.2.39`
 
-**R29. `spec` is at the tag `v0.2.39`. The tag recorded all six rows that we passed to `spec` — В20, В23, В25 and В29–В31, — closed П-21 and Т-32 and brought the stroke-group rule of the eval protocol, by which T58 builds the groups. The order of writing, the pauses and the erasures the live documents of `tutor` now call the course of writing, not the working.** The submodule moves from `v0.2.32` to `v0.2.39`: this is the latest release of `spec` as of 2026-10-27, commit b40788b. The release is immutable, and `gh release verify v0.2.39 -R altnovatrail/spec` confirmed it by its attestation. What the tag brings to `tutor` (`git -C spec diff v0.2.32 v0.2.39`, read 2026-10-27; Д32–Д34, Д36 and Д37 RUN.md `spec`):
-- **the answers to the rows we passed** (Д33 RUN.md `spec`):
-  - В20 — by the 2026-10-26 amendments to R43 spec and R25 spec: the measurement of the course of writing came back and is done, the author's samples were written by the board of `tutor`, and the release of `tutor` and the synthetic sheets of `canvas` in its CI wait in epic E3. The card architecture 3.6 spec and repositories 6 spec, item 5, now say this themselves;
-  - В23 — R54 spec: the tutor's words go to the device whole, after the leak check, and streaming is only for reading, whose answer a program reads;
-  - В25 — R55 spec: "the task's solution" and "the learner's solution", and where it is clear whose, simply "solution". The order of writing, the pauses and the erasures are the course of writing, and "the analysis of the course of solution" stays the name of the capability;
-  - В29 — by the 2026-10-26 amendment to R32 spec: the documents check takes only the files that git sees, and does not go into `samples/` and `synthetic/`. On the new tag it reads 13 files of `tutor`, not 20;
-  - В30 — R52 spec: П-21 is closed. Nothing of the learner's writing history goes to AI, neither into reading nor into analysis. R52 spec says to come back with a measurement on the live handwriting of adult volunteers (П-16) and on free writing, and only a new decision, with an amendment to R09 spec and privacy 4 spec and a lawyer's answer, will accept a benefit of the course of writing. The measurement is not a check of a learner: E4 still sends the model forms with the course of writing;
-  - В31 — R53 spec: Т-32 is closed by the first option. The place is in fractions 0–1000 of the crop, and the adapter of `tutor` converts into fractions: it divides by the size of the picture sent, and first clamps the box to it.
+**R29. The move of `spec` from `v0.2.32` to `v0.2.39`: `tutor` builds the stroke groups by the rule of the eval protocol, and the order of writing, the pauses and the erasures are the course of writing.** `v0.2.39` was the latest release of `spec` on 2026-10-27, commit b40788b; the release is immutable, and `gh release verify v0.2.39 -R altnovatrail/spec` confirmed it by its attestation. What the tag brings `tutor` (`git -C spec diff v0.2.32 v0.2.39`, read 2026-10-27):
+- **the answers to the rows `tutor` passed to `spec`:**
+  - the card of `tutor` in `spec` says that the measurement of the course of writing is done and that the author's samples were written by the board of `tutor`;
+  - the tutor's words go to the device whole, after the leak check; streaming is only for reading, whose answer a program reads;
+  - the vocabulary: "the task's solution" and "the learner's solution", and simply "solution" where it is clear whose. The order of writing, the pauses and the erasures are the course of writing, and "the analysis of the course of solution" stays the name of the capability;
+  - the documents check takes only the files git sees, and goes into neither `samples/` nor `synthetic/`;
+  - nothing of the learner's writing history goes to AI, neither into reading nor into analysis. The question comes back only with a measurement on the live handwriting of adult volunteers and on free writing, and only a new decision of `spec`, with a lawyer's answer, accepts a benefit of the course of writing. A measurement is no check of a learner: it may send the model forms with the course of writing;
+  - the place is in fractions 0–1000 of the crop, and the adapter of `tutor` converts into them: it clamps the box to the picture sent, then divides by the picture's size;
+- **the vocabulary in the live documents.** `docs/architecture.md`, `docs/sheets.md` and the plan say "the course of writing" where it is about the order of writing, the pauses and the erasures, and call the measurement of these the measurement of the course of writing. Where both meanings of "solution" stand side by side, they write "the task's solution" and "the learner's solution". The log and the archives keep their words;
+- **the call of the measurement of the course of writing** is, by the vocabulary of `spec`, reading and analysis in one call, with the key: the model saw the key and the task's solution and looked for the first error;
+- **the rules of `canvas` in the eval protocol:**
+  - the stroke groups — by `canvas`'s rule as it is, with its vectors. An erased stroke belongs to the groups of the visible strokes that would be its neighbours: without visible neighbours to none, with neighbours in two groups to both;
+  - the scale of the crop — by the lower median of the heights of the stroke bundles, no more than 100 units, not by groups;
+  - the snapping of the model's box is a rule of the protocol, and the runner of `tutor` does not snap the box;
+  - the writing history in the protocol is the events of `canvas`, folded by their IDs, a clearing read as an erasure;
+- **the check kinds of format v0:** `number`, `fraction`, `choice`, `predicate` and `rubric`; there is no kind "steps". Reading gives the value of an answer slot as it is written, and the check kind in `module-kit` normalizes it, by the format text of `spec`. The rubric's criteria are data for the model's feedback;
+- **a task is a file of the format**, by its task schema. The digit height on a crop is set by the module manifest, 32 px without the field, and the handwriting sheet is 1000 × 1400;
+- **RULES.md:** code comes with its tests, and `tutor` already worked so;
+- **the rest** does not change the documents of `tutor`: the skill graph and the shared taxonomy, the vectors of the open view and of the verdicts and `format-check` are `module-kit`, `modules` and `spec` itself. `.devcontainer/` and the repository template of `spec` are the same, and the container needs no rebuild. The documents check of `tutor` passed on the new tag without edits.
 
-  The rows are closed in [plan/questions.md](plan/questions.md), and the live documents name the numbers of `spec`;
-- **the vocabulary by R55 spec.** Д33 RUN.md `spec` tells `tutor` to say "the course of writing" where it is about the order of writing, the pauses and the erasures, and to call the measurement of E2 the measurement of the course of writing. So it now is in the live places:
-  - [architecture.md](architecture.md) — sections 1, 3.12, 3, 3.1 outside the plan of 2026-10-21, 3.2, 3.3, 3.4 and 4;
-  - [sheets.md](sheets.md);
-  - the description of E4 and the open tasks of RUN.md.
-
-  The plan of 2026-10-21 in section 3.1, the dated notes, the log and the archives are history, and the words there are the old ones. Where both meanings of the word "solution" stand side by side, section 1 writes "the task's solution" and "the learner's solution";
-- **the call of the measurement of E2** — by the vocabulary of `spec` it is reading and analysis in one call, with the key (R52 spec; architecture 3.6 spec): the model saw the key and the task's solution and looked for the first error. R27 calls it reading — an amendment to R27;
-- **the rules of `canvas` in the eval protocol** (Д36 RUN.md `spec`):
-  - stroke groups — by the rule of R24 canvas, with its vectors `vectors/groups.json`, as it is. An erased stroke belongs to the groups of the visible strokes that would be its neighbours: without visible neighbours, to none, and with neighbours in two groups, to both. So T58 builds the groups, and this stands in its body;
-  - the scale of the crop — by the lower median of the heights of the stroke bundles, no more than 100 units (R25 canvas), not by groups. This is an amendment to R08 and an input of T69;
-  - the snapping of the model's box is a rule of the protocol (R26 canvas), and the runner of `tutor` does not snap the box (R24);
-  - the writing history in the protocol is the events of `canvas`: the runner will fold it by the event IDs, and will read a clearing as an erasure. The temporary format of `tutor` knows only strokes and erasures, so this is for epic E3;
-- **the check kinds of format v0** — R56 spec and Д37 RUN.md `spec`: `number`, `fraction`, `choice`, `predicate` and `rubric`. There is no kind "steps", and this adds to В24 in table 3 of RUN.md. Reading gives the value of an answer slot as it is written, and the check kind in `module-kit` normalizes it, by the format text of `spec`. The rubric's criteria are data for the model's feedback. These are inputs of T68, T79 and T83;
-- **a task is a file of the format** — R51 spec and Д32 RUN.md `spec`. The digit height on a crop is set by the module manifest, and without the field it is 32 px, and the handwriting sheet is 1000 × 1400. The temporary file of the open tasks of the measurement of `tutor` moves to the task schema (the 2026-10-26 amendment to R25 spec) — this is for epic E3. T28 RUN.md `spec` is done, so E4 now advises the default height to the new decision of `spec` (T72, T85);
-- **RULES.md** — a new rule: code comes with its tests (the 2026-10-26 amendment to R48 spec; Д34 RUN.md `spec`). `tutor` already works so, and it has no Codecov, and the gate `codecov/patch` does not concern it. The project on bestpractices.dev for the OpenSSF badge is set up by the author (rule 4 of RUN.md), and `.bestpractices.json` and the badge come in a task of their own after that: the debt Д2 in table 4 of RUN.md;
-- **В32 stays.** The card and repositories 6 spec, item 5, still say "the author solves five tasks";
-- **the rest** does not change the documents of `tutor`: the skill graph and the shared taxonomy (R49, R50 spec), the task schema and the vectors of the open view (R51 spec), the verdict vectors and `format-check` — these are `module-kit`, `modules` and `spec` itself. `.devcontainer/` and the repository template of `spec` are the same, and the container does not need rebuilding. The documents check of `tutor` on the new tag passed without edits.
-
-— *Why:* the author's decision of 2026-10-27 in planning T58 — «T86 на v0.2.39, затем T58–T60» — and the author's instruction of the same day: «После одобрения плана будешь последовательно делать T58, T59, T60. Сам будешь доводить код до мержа в main». So the executor itself carries both T86 and T58–T60 to the merge, as T43 by R22. T86, by the 2026-10-27 amendment to R28, goes before T58: T58 builds the parts of a sheet by the group rule of the protocol, and the rule comes with the tag. The move is a task of its own and an entry here (RULES.md, Across repositories).
+— *Why:* `tutor` builds the parts of a sheet by the group rule of the protocol, and the rule comes with this tag, so the move goes first, as a task of its own. Without it the rows `tutor` passed to `spec` would hang without answers.
 
 — *Rejected:*
-- `v0.2.38`, named in T86: `v0.2.39` came out 2026-10-27 at 03:53 UTC, already after T86 was written down, and beyond it carries only the check kinds (R56 spec). T68 and T79 will need them;
-- staying on `v0.2.32` — the six rows we passed would hang without numbers, and T58 would build the groups not by the rule of its tag;
-- changing "the working" in the plan of 2026-10-21, in the log and in the archives too — this is history, and history is not rewritten (RULES.md, How we work).
+- `v0.2.38`, which the move was first planned on: `v0.2.39` came out 2026-10-27 at 03:53 UTC, and beyond it carries only the check kinds, which the reading of answer values needs;
+- staying on `v0.2.32`: the rows `tutor` passed would hang without answers, and the groups would not be built by the rule of the tag;
+- changing "the working" into "the course of writing" in the log and the archives too: they are history, and history is not rewritten.
 
-— *Consequence:* the tag `v0.2.39` — in CLAUDE.md, at the start of RUN.md and in README.md. RUN.md:
-- the description of E4, table 2 (E3), table 3 (В24, В32) and table 4 (Д2);
-- the tasks T58, T65, T68, T69, T74, T79, T83 and T85.
-
-[plan/questions.md](plan/questions.md) — В20, В23, В25 and В29–В31 closed; [plan/E3.md](plan/E3.md) — a note on В20 and the task schema. architecture 1, 3.12, 3, 3.1, 3.2, 3.3, 3.4 and 4; [sheets.md](sheets.md). Amendments to R08 and R27. — RUN.md, T86.
+— *Consequence:* `CLAUDE.md`; `README.md`; `RUN.md`; `docs/architecture.md`; `docs/sheets.md`.
 
 ## The stroke groups of a sheet
 
-**R30. `tutor` builds the stroke groups by the rule of the eval protocol — R24 canvas, as it is, without a merge of its own: `lines.Groups`. A drawing, a column and an arrow get no special cases. A part of a plan is one group or several, and on the sheets of code a part without erasure by the scenario is exactly one group.**
-- **The rule** — what the protocol takes from `canvas`, R24 canvas:
+**R30. `tutor` builds the stroke groups by the rule of the eval protocol, `canvas`'s rule as it is, without a merge of its own: `lines.Groups`. A drawing, a column and an arrow get no special cases. A part of a plan is one group or several, and on the sheets of code a part without erasure by the scenario is exactly one group.**
+- **The rule:**
   - two strokes are neighbours if the pause between them, from the end of the earlier to the start of the later, is no more than 2000 ms, and the gap between the boxes of their points is no more than 50 units horizontally and vertically; the bounds are included;
   - a group is the strokes that a chain of neighbours links;
   - it counts in integers: places in tenths of a unit, rounding a half up, as `Math.round`, time in milliseconds, and after that the rule only subtracts and compares;
   - the labels are A, B, … by place: top, left, bottom, right, then the earlier start, then the first stroke in the order of writing. At `canvas` the last is the smallest ID, and its IDs go in the order of writing;
-  - an erased stroke is in the groups of those visible strokes that would be its neighbours: without them, in none; with neighbours in two groups, in both (Д36 RUN.md `spec`).
+  - an erased stroke is in the groups of those visible strokes that would be its neighbours: without them, in none; with neighbours in two groups, in both.
 
-  The groups go in the order of first writing: so record mode and the log of the course expect them (T61, T63).
-- **A drawing, a column and an arrow.** The rule keeps a drawing and a column as one group while their neighbouring elements are written without a pause to think. What is drawn in later nearby is a group of its own, as at the device. So a part of a plan is one group or several (В35). There is no arrow in a plan of version 1, and in the pilot the author did not draw one. And a stroke that touches two groups joins them by the rule only if it is no further than 2 s from the strokes of both.
-- **The sheets of code** (T59, T60). Code writes each part without pauses longer than 2 s, and between parts waits longer than 2 s. So each part without erasure by the scenario is exactly one group, and no group takes two parts. A correction after a pause is a group of its own, as at the device: a part with erasure by the scenario may also be two groups.
+  The groups go in the order of first writing, as record mode and the log of the course expect them.
+- **A drawing, a column and an arrow.** The rule keeps a drawing and a column as one group while their neighbouring elements are written without a pause to think. What is drawn in later nearby is a group of its own, as at the device. So a part of a plan is one group or several. A plan of version 1 has no arrow. A stroke that touches two groups joins them by the rule only if it is no further than 2 s from the strokes of both.
+- **The sheets of code.** Code writes each part without pauses longer than 2 s, and between parts waits longer than 2 s. So each part without erasure by the scenario is exactly one group, and no group takes two parts. A correction after a pause is a group of its own, as at the device: a part with erasure by the scenario may be two groups.
 - **The place of an erasure on the plane** — `lines.ErasurePart`, for a sheet of parts:
   - an erased stroke stands on the part with the visible stroke nearest to it, if their boxes are no further than 50 units from each other on both axes, the bound included. The distance is the larger of the two gaps, and of two parts at an equal distance the earlier one is taken;
   - time is not counted: a part rewritten after a pause has no neighbours in time, and the markup is what the writer intended;
-  - by it `sheets.Differences` compares the erasure by the scenario for a plan of version 1, and for version 0 by bands, as before. `sheets.ErasurePlace` chooses between them by the sheet's plan, and so does the check of record mode. The log of the course v1 stands on `lines.Group`, and it does not change.
-- **The vectors** — a copy of `vectors/groups.json` of `canvas`, commit 82ac1d8, unedited since 6e268f8, under Apache-2.0, as all of `canvas`. It lies in `internal/lines/testdata/groups.json`:
-  - `spec`'s releases have no vectors yet — T35 RUN.md `spec` will release them —, and the code and tests of `tutor` do not read `spec/` (architecture 3.2);
-  - the test compares all pairs of neighbours and all groups with them — labels, IDs and boxes — exactly, on all 11 cases;
-  - when the vectors come out in a release of `spec`, the test will take them from there.
-- **E2 and the reference of `canvas`** — «группа не должна выходить за размеченную строку» (R24 canvas, «Пересмотреть»):
-  - on the 40 sheets of E2, drawn with seeds 1, 2 and 77, it is so. A line is one group, except the lines where a part is erased: on sheets 9, 20 and 36 a correction after a pause is a group of its own;
-  - this holds on these seeds, not by construction. On 300 seeds a line splits on 27 seeds, at a colon before a space in large handwriting: «Ответ: 1…», "66 : 6", "20 : 5". And on 2 seeds the short line "x = 2" merges with the next one: the pause is less than 2 s, the gap 47 × 41 units;
-  - this is the rule, not an error: the device will group it so too. So T59 does not change what `synth.Sheet` draws for a plan of version 0, and for sheets of version 1 keeps the letter step no more than 32 units and the pauses between parts from 2.1 s.
+  - by it `sheets.Differences` compares the erasure by the scenario for a plan of version 1, and for version 0 by bands. `sheets.ErasurePlace` chooses between them by the sheet's plan, and so does the check of record mode. The log of the course v1 stands on `lines.Group`.
+- **The vectors** are `spec`'s, `contracts.Vectors` `eval/v1/groups.json`: 16 cases, 11 of `canvas` and five with erased, undone and cleared strokes. The test compares all pairs of neighbours and all groups with them — labels, IDs and boxes — exactly, and the groups of an erased stroke too.
+- **The check that a group stays within its marked line**, «группа не должна выходить за размеченную строку», which `canvas` leaves to review:
+  - on the 40 sheets of the measurement of the course of writing, drawn with seeds 1, 2 and 77, it holds. A line is one group, except the lines where a part is erased: on sheets 9, 20 and 36 a correction after a pause is a group of its own;
+  - it holds on these seeds, not by construction. On 300 seeds a line splits on 27 seeds, at a colon before a space in large handwriting: «Ответ: 1…», "66 : 6", "20 : 5". On 2 seeds the short line "x = 2" merges with the next one: the pause is less than 2 s, the gap 47 × 41 units;
+  - this is the rule, not an error: the device groups it so too. So `synth.Sheet` draws a plan of version 0 as it is, and for sheets of version 1 keeps the letter step no more than 32 units and the pauses between parts from 2.1 s.
 
-— *Why:* the author's answers of 2026-10-27 in planning T58, all three by the recommendation: «T86 на v0.2.39, затем T58–T60», «Правило как есть», «Часть без стирания — одна группа». The author chose the protocol's rule already in planning T56 (R28, the 2026-10-27 amendment): otherwise the groups of `tutor` and of the device would diverge. The name is `Groups`, by the vocabulary: "stroke group" in concepts 15 spec. And a "part" at `tutor` is a part of the plan, what the writer intended. The numbers about the seeds were found by the checking agent in planning, and the probe test of T58 repeated them on 300 seeds.
+— *Why:* with a rule of its own the groups of `tutor` and of the device would diverge. The name is `Groups`, by the glossary of `spec`, "stroke group"; a "part" at `tutor` is a part of the plan, what the writer intended.
 
 — *Rejected:*
-- **the rule and a merge of its own** — first the groups, then gluing the touching groups into parts: this is a rule of its own on top of the protocol, and the log of the course would diverge from the device;
-- **each part is one group**, and the correction too: the synthetic sheets would correct errors without a pause, and the order of drawing would come out artificial;
+- **the rule and a merge of its own** — first the groups, then gluing the touching groups into parts: a rule of its own on top of the protocol, and the log of the course would diverge from the device;
+- **each part one group**, the correction too: the synthetic sheets would correct errors without a pause, and the order of drawing would come out artificial;
 - **only "do not merge"** — a weak check: drawings would fall apart into many groups, and the log of the course into small parts;
 - **time in the place of an erasure** — the erasure of a line rewritten after a pause would stand on no part: it has no neighbours in time, and the summary would name a difference that is not there;
-- **vectors of its own instead of a copy** — it would not be seen that the implementations of `tutor` and `canvas` agree exactly;
-- **the name `lines.Parts`**, as in the epic's plan: "part" would mean both a part of the plan and a group of the device.
+- **vectors of its own** — it would not be seen that the implementation of `tutor` agrees with the protocol's exactly;
+- **the name `lines.Parts`:** "part" would mean both a part of the plan and a group of the device.
 
-— *Consequence:* `internal/lines` — `Groups`, `Neighbours`, `ErasurePart` and the vectors; `internal/sheets` — `ErasurePlace`, and by it `Differences` and the check of record mode; the check of the groups in `TestSheetDrawsThePlan`. architecture 3.2 and 3.4. RUN.md — T58 and the bodies of T59, T60, T61 and T63. — RUN.md, T58.
-
-— *Amendment 2026-11-07* (T31; R67): **the test of the rule goes by the vectors of `spec`, `contracts.Vectors` `eval/v1/groups.json`, and the copy of `canvas` in `internal/lines/testdata` is gone.** There are 16 cases: the same 11 and five with erased, undone and cleared strokes. `lines.Groups` passes them without an edit, and the groups of an erased stroke too.
+— *Consequence:* `internal/lines/`; `internal/sheets/`; `internal/synth/`; `docs/architecture.md`.
 
 ## Move to `spec` `v0.2.40`
 
-**R31. `spec` is at the tag `v0.2.40`. The tag brought R57 spec: the trap and technique catalogs, the solving steps, the fallback texts and the leak check, which the format text sets normatively. The analysis gets the task's traps as a marked block of data, with descriptions from the catalog. The leak check does not look for a key that stands in the text of its own item, and catches numbers in words only by leak phrases. These are the inputs of T74 and T75. The tag recorded none of our rows «в реестр spec».** The submodule moves from `v0.2.39` to `v0.2.40`: this is the latest release of `spec` as of 2026-10-27, commit e87f933. The release is immutable, and `gh release verify v0.2.40 -R altnovatrail/spec` confirmed it by its attestation. What the tag brings `tutor` (`git -C spec diff v0.2.39 v0.2.40`, read 2026-10-27; R57 spec; Д38 RUN.md `spec`):
-- **the analysis of the working** — the card architecture 3.6 spec. The task's traps that the AI may suppose, and the matched trap, the model gets as a marked block of data, with descriptions from the catalog (R02 spec; R57 spec). Д38 RUN.md `spec` names the whole block for `tutor`: the task's traps and the matched one, the techniques and the solution. Which traps the AI may suppose, the task lists itself. The trap by a wrong value is found by the program — by the trap value in the slot check, `trap_values`, at the verdict "not yet" (concepts 6, 9.2 spec). So the format settles the question of T74, how the program finds a trap by the result. But the measurement's bank has no trap values, and what to give the call, the planning of T74 will decide;
-- **the leak check** — normatively, in the section on it of `spec`'s format text, and its vectors are `format/vectors/leaks/` (concepts 10 spec):
+**R31. The move of `spec` from `v0.2.39` to `v0.2.40`: the trap and technique catalogs, the solving steps, the fallback texts and the leak check, which the format text sets normatively.** `v0.2.40` was the latest release of `spec` on 2026-10-27, commit e87f933; the release is immutable, and `gh release verify v0.2.40 -R altnovatrail/spec` confirmed it by its attestation. What the tag brings `tutor` (`git -C spec diff v0.2.39 v0.2.40`, read 2026-10-27):
+- **the analysis of the working.** The task's traps that the AI may suppose, and the matched trap, the model gets as a marked block of data, with descriptions from the catalog; the block for `tutor` is the task's traps and the matched one, the techniques and the solution. Which traps the AI may suppose, the task lists itself. The trap by a wrong value the program finds — by the trap value in the slot check, `trap_values`, at the verdict "not yet";
+- **the leak check**, normative in the format text, with its vectors `format/vectors/leaks/`:
   - a key is looked for as a separate token, and a number by its value;
-  - a key that already stands in the statement or in the text, line and options of its own item — «2 ноги» in the task about rabbits — is not looked for: there the answer is held by leak phrases. So the open question of T75 about a legitimate digit of the key is settled;
-  - numbers in words are caught only by leak phrases. The tables of the key in words leave T75: the runner looks for a leak as `api` does, by the format text, and passes the tag's leak vectors. There is no code of the check in `module-kit` yet;
-- **the fallback texts** (concepts 10 spec). On rungs 1–2 — the trap text of the value, without it — the trap advice, and without that — the rung template from the module manifest. On the third — the simpler case of the item, and without it — the same as on the second. `api` puts them in. The measurement's bank has no trap values, no trap advice and no simpler cases, so the fallback text of T75 is the rung template;
-- **a hint at the learner's request** — О-21 is decided as far as the format goes: before the first submission the request gives "the givens and the unknown" and the task's technique, without AI and without reading the work, and `tutor` is not called for it. What the request gives after a wrong answer and "explain differently" is still О-21. So architecture 1 now says;
-- **the normalization of numbers** — the first step also replaces a fraction like `½` that a number adjoins (the amendment to R56 spec). Otherwise NFKC makes `1½` the notation `11⁄2`, and a mixed number would get a false "not yet". This is an input of T68 and T79;
-- **our rows «в реестр spec»** — В24, В26–В28, В32 and В35 — the tag did not record, and they stay in table 3 of RUN.md. The card and repositories 6 spec, item 5, still say "the author solves five tasks" (В32);
-- **the rest** does not change the documents of `tutor`: the catalogs, the solving steps and their exit conditions, the task's open fields, the schemas, the vectors and `format-check` are `module-kit`, `modules`, `app`, `canvas` and `spec` itself. RULES.md, `.devcontainer/`, the repository template and the documents check tool are the same, and the container need not be rebuilt. The documents check of `tutor` passed on the new tag.
+  - a key that already stands in the statement or in the text, line and options of its own item — «2 ноги» in the task about rabbits — is not looked for: there leak phrases hold the answer;
+  - numbers in words are caught only by leak phrases, so the runner keeps no tables of the key in words: it looks for a leak as `api` does, by the format text, and passes the tag's leak vectors;
+- **the fallback texts.** On rungs 1–2 the trap text of the value; without it, the trap advice; without that, the rung template from the module manifest. On the third, the simpler case of the item; without it, the same as on the second. `api` puts them in. The measurement's banks have no trap values, no trap advice and no simpler cases, so the runner's fallback text is the rung template;
+- **a hint at the learner's request** before the first submission gives "the givens and the unknown" and the task's technique, without AI and without reading the work, and `tutor` is not called for it;
+- **the normalization of numbers:** the first step also replaces a fraction like `½` that a number adjoins. Otherwise NFKC makes `1½` the notation `11⁄2`, and a mixed number would get a false "not yet";
+- **the rows `tutor` passed to `spec`** the tag does not answer;
+- **the rest** does not change the documents of `tutor`: the catalogs, the solving steps and their exit conditions, the task's open fields, the schemas, the vectors and `format-check` are `module-kit`, `modules`, `app`, `canvas` and `spec` itself. RULES.md, `.devcontainer/`, the repository template and the documents check are the same, and the container needs no rebuild. The documents check of `tutor` passed on the new tag.
 
-— *Why:* the author's decision of 2026-10-27 in planning T61 — «перейди на новую версию spec в рамках этой задачи». A tag is moved by a task of its own (rule 4 of RUN.md; RULES.md, Across repositories), so the move is row T87 and the entry here, and it goes in the same run, before T61. T61 itself does not need the tag, and T74 and T75 are built on R57 spec.
+— *Why:* the hint's traps and its leak check are built on the format text this tag brings. The move goes at once, as a task of its own, before the next work in the same run.
 
 — *Rejected:*
-- a move as a separate task before T74 — the executor's recommendation: before T74 new tags could come out, and the move would take the latest. The author chose to move now;
-- a move in the body of T61, without its own row: the submodule is moved to a new tag by a separate task (rule 4 of RUN.md);
-- the tables of the key in words in T75: R57 spec gave numbers in words to leak phrases, and a table is needed for each language.
+- putting the move off until the traps and the leak check are built, so that it takes the latest tag then: the move goes at once, and a later tag gets a move of its own;
+- the move inside the body of another task, without a row of its own: a tag is moved by a task of its own;
+- tables of the key in words: the format gives numbers in words to leak phrases, and a table would be needed for each language.
 
-— *Consequence:* the tag `v0.2.40` — in CLAUDE.md, README.md and at the top of RUN.md. RUN.md — the row and the body of T87, «Почему такой порядок», the tasks T68, T74 and T75. architecture 1. — RUN.md, T87.
-
-— *Amendment 2026-10-28* (T74; R38): **the call is given neither the matched trap nor the task's techniques.** The measurement's banks do not have them, and the hint prompt v1 is silent about them: the product will add them with a new version of the prompt, with its own eval.
+— *Consequence:* `CLAUDE.md`; `README.md`; `RUN.md`; `docs/architecture.md`; `internal/leak/`; `internal/hint/`.
 
 ## Access to the author's samples
 
-**R32. The folder `samples/` is open to agents: they read and list it and run commands on it as a task needs. There are no `deny` rules on it in `.claude/settings.json` any more, and there will be none. As before, nothing from `samples/` goes either into git or into `synthetic/`, and a paid run on it is only within the task's ceiling.** The author's decision of 2026-10-27, after T62: «я навсегда дал тебе доступ к samples. не добавляй запрет больше».
-- **What is open** — reading, listing and searching, commands and runs on `samples/`: summaries, splits, logs and their analysis. Nothing stands in the way of a command whose text holds the folder's name, or of a walk of the whole tree, any more, so the exception of R14 for the command `go` is no longer needed.
+**R32. The folder `samples/` is open to agents: they read and list it and run commands on it as a task needs. `.claude/settings.json` has no `deny` rules on it, and none come back. Nothing from `samples/` goes either into git or into `synthetic/`, and a paid run on it starts only within the task's ceiling.**
+- **What is open** — reading, listing and searching, commands and runs on `samples/`: summaries, splits, logs and their analysis. A command whose text holds the folder's name, or a walk of the whole tree, `go` among them, needs no exception.
 - **What holds:**
-  - `/samples/` is in `.gitignore`. The samples are not committed, and are neither moved nor copied into the repository or into `synthetic/`. Only numbers and words go from them into documents and reports, without the handwriting and its pictures (R05);
-  - a paid run on `samples/` is as on `synthetic/`: within the task's ceiling (rule 4 of RUN.md; R28). Who starts a run on the author's sheets, its task says, T77;
-  - in `samples/` there is only the author's handwriting. The samples of volunteers, when they come (П-16), are not opened to agents until that is decided anew.
-- **CLAUDE.md** says this in the section `samples/`, and, as before, it is binding on any agent by AGENTS.md.
+  - `/samples/` is in `.gitignore`. The samples are not committed, and are neither moved nor copied into the repository or into `synthetic/`. Only numbers and words go from them into documents and reports, without the handwriting and its pictures;
+  - a paid run on `samples/` is as on `synthetic/`: within the ceiling its task names, and the task says who starts a run on the author's sheets;
+  - `samples/` holds only the author's handwriting. The samples of volunteers, when they come (П-16), are not opened to agents until that is decided anew.
+- **CLAUDE.md** says this in its section on `samples/`, and AGENTS.md binds any agent to it.
 
-— *Why:* the author's decision of 2026-10-27. The one-off exceptions — the series of T45 (the 2026-10-25 amendment to R05), the measurement of T27–T29 (the 2026-10-26 amendment to R08), the pilot of T53 (the 2026-10-27 amendment to R05) and the summary of T62 — the author lifted the bans each time themselves, and the executor brought them back. Now the access is permanent, and the exception is not written anew in every task. So В34 is closed. The recommendation of П-12 closes learners' work and eval samples outside the repositories to agents. But in `samples/` there is only the handwriting of the author themselves, not of a learner or a volunteer, and opening it is the author's right. For learners' work and the samples of volunteers the recommendation of П-12 stays in force.
+— *Why:* `samples/` holds only the handwriting of the author themselves, not of a learner or a volunteer, and opening it is the author's right. Access granted one task at a time had to be written anew in every task, and the bans brought back after it. The platform keeps agents away from learners' work and from eval samples outside the repositories, and that stays in force for learners' work and the samples of volunteers.
 
 — *Rejected:*
-- **one-off exceptions by amendments**, as before, and **one permanent amendment about lifting the bans one-off** — the options of В34. The author opened the folder for good;
-- **remove only the `deny` rules, and keep the rule in CLAUDE.md** — the agent would read a rule that diverges from what it is allowed.
+- **one-off exceptions for each task**, and **a standing rule of lifting the bans one task at a time:** the folder is open for good;
+- **removing only the `deny` rules and keeping the ban in CLAUDE.md:** the agent would read a rule that diverges from what it is allowed.
 
-— *Consequence:* `.claude/settings.json` — without `deny` rules; CLAUDE.md — the sections `samples/` and `synthetic/`; `.gitignore`; architecture 3.1 and 3.4; the amendments to R05 and R14. В34 is closed in [plan/questions.md](plan/questions.md). — RUN.md, T62.
+— *Consequence:* `.claude/settings.json`; `CLAUDE.md`; `AGENTS.md`; `.gitignore`; `docs/architecture.md`.
 
 ## Move to `spec` `v0.2.43`
 
-**R33. `spec` is at the tag `v0.2.43`. The tag brought an amendment to R53 spec: on the workbook the crop of each filled box goes to the check, and the place in the observation is the answer slot by place, `{ item, slot }`. These are the inputs of T78 and T79. Lessons, the randomness generator and the task templates do not change the documents of `tutor`. The tag recorded none of our rows «в реестр spec». The move is part of T68, without its own row, by the author's decision.** The submodule moves from `v0.2.40` to `v0.2.43`: this is the latest release of `spec` as of 2026-10-27, commit 8cc3536. The release is immutable, and `gh release verify v0.2.43 -R altnovatrail/spec` confirmed it by its attestation. What the tags v0.2.41–v0.2.43 bring `tutor` (`git -C spec diff v0.2.40 v0.2.43`, read 2026-10-27; R53, R58–R60 spec; Д39–Д42 RUN.md `spec`):
-- **the workbook** — the 2026-10-27 amendment to R53 spec and Д41 RUN.md `spec`:
-  - the crop of a box is by the crop rule of R25 canvas, by the box's strokes, at the digit height of the manifest (R51 spec), ink only, without the box's frame and the line's text. The workbook's request carries a list of "item, box, crop";
+**R33. The move of `spec` from `v0.2.40` to `v0.2.43`, inside the work on reading answer values: on the workbook the crop of each filled box goes to the check, and the place in the observation is the answer slot by place, `{ item, slot }`.** `v0.2.43` was the latest release of `spec` on 2026-10-27, commit 8cc3536; the release is immutable, and `gh release verify v0.2.43 -R altnovatrail/spec` confirmed it by its attestation. What the tags `v0.2.41`–`v0.2.43` bring `tutor` (`git -C spec diff v0.2.40 v0.2.43`, read 2026-10-27):
+- **the workbook:**
+  - the crop of a box is by the crop rule of the eval protocol, by the box's strokes, at the digit height of the manifest, ink only, without the box's frame and the line's text. The workbook's request carries a list of "item, box, crop";
   - at the digit heights of eval the crop of a box is 200 × 200 px, 64 tokens, and a page of ten items with a box each is 640 tokens;
-  - an empty box gives no crop: its verdict is "unreadable" with the cause `blank` (R56 spec);
+  - an empty box gives no crop: its verdict is "unreadable" with the cause `blank`;
   - the draft — writing outside the boxes — does not leave the device;
   - the place on the workbook is the slot by the place of the item and the box, from 1. There are no crop fractions, stroke groups or their boxes on the workbook;
-  - the item's text does not go on the crop. If T80 shows that reading needs it, `api` will give it as a caption;
-  - the strokes of a workbook sample the eval runner assigns to boxes by the device's table and the rule of boxes, without the layout of `canvas` (epic E3 RUN.md `spec`).
+  - the item's text does not go on the crop; if a measurement shows that reading needs it, `api` gives it as a caption;
+  - the eval runner assigns the strokes of a workbook sample to boxes by the device's table and the rule of boxes, without the layout of `canvas`;
+- **lessons:** a worked example has neither slots nor a key, and there is no learner's work on its sheet. A lesson adds no call to `tutor`;
+- **the randomness generator:** the `rand.NewPCG` of `tutor`'s synthetic sheets is no place of randomness of the platform, until `tutor` itself decides to move to `spec`'s derivation. The splits of the sheets and the drawings of code stay as they are;
+- **task templates:** the key of a template's instance is known at the module's check, and a template's key may hold placeholders. The measurement's banks are not templates. The leak vectors take no templates: a template is checked through its instances;
+- **the rows `tutor` passed to `spec`** the tags do not answer;
+- **the rest** does not change the documents of `tutor`: lessons, the generator and templates in the format, their schemas, vectors and `format-check` are `module-kit`, `modules`, `app`, `engine`, `sim` and `spec` itself. The sections of the format on check kinds, the normalization of numbers and the leak check, and their vectors `format/vectors/verdicts/` and `format/vectors/leaks/`, are in substance the same, but for placeholders in a template's key. RULES.md, `.devcontainer/`, the repository template and the documents check are the same, and the container needs no rebuild. The documents check of `tutor` passed on the new tag.
 
-  So T78 and T79 build the workbook, and their bodies now say it themselves;
-- **lessons** — R58 spec: a worked example has neither slots nor a key, and there is no learner's work on its sheet. A lesson adds no call to `tutor`;
-- **the randomness generator** — R59 spec and Д40 RUN.md `spec`. The `rand.NewPCG` of `tutor`'s synthetic sheets is not a place of randomness of the platform, until `tutor` itself decides to move to the derivation of R59 spec. The splits of the sheets and the drawings of code stay as they were;
-- **task templates** — R60 spec: the key of a template's instance is known at the module's check, and a template's key may hold placeholders. The measurement's banks are not templates. The leak vectors do not take templates: a template is checked through its instances. This is an input of T75;
-- **our rows «в реестр spec»** — В24, В26–В28, В32 and В35 — the tags did not record, and they stay in table 3 of RUN.md. The card architecture 3.6 spec did not change and still says "the author solves five tasks" (В32);
-- **the rest** does not change the documents of `tutor`: lessons, the generator and templates in the format, their schemas, vectors and `format-check` are `module-kit`, `modules`, `app`, `engine`, `sim` and `spec` itself. The sections of the format on check kinds, the normalization of numbers and the leak check, their vectors `format/vectors/verdicts/` and `format/vectors/leaks/` are in substance the same. The section of the format on check kinds added placeholders in a template's key. RULES.md, `.devcontainer/`, the repository template and the documents check tool are the same, and the container need not be rebuilt. The documents check of `tutor` passed on the new tag.
-
-— *Why:* the author's decision of 2026-10-27 in planning T68: «сделай Переход на spec v0.2.42 в этом же бранче а не отдельной задачей». v0.2.43 came out the same evening, after this request, and only it concerns `tutor`: the author approved it in the plan of T68. RULES.md (Across repositories) and rule 4 of RUN.md say to move a tag by a separate task. By the author's word the move goes in T68, without its own row, and this departure is recorded here. The move itself is made on purpose and recorded as a decision, as the same rules require.
+— *Why:* the workbook's crops and its place by answer slot change how `tutor` builds the workbook, and the work on reading answer values needed them, so the move went inside that work, not as a task of its own. The move itself is made on purpose and recorded as a decision.
 
 — *Rejected:*
-- **row T88 for the move**, as T87 at T61 — the author said «а не отдельной задачей»;
-- **the tag v0.2.42**, which the author named — it came out before v0.2.43 and brings `tutor` nothing, and the amendment to R53 spec in v0.2.43 changes the plans of T78 and T79.
+- **a task of its own for the move:** the work that needed the tag would have waited for it;
+- **the tag `v0.2.42`**, first named for the move: `v0.2.43` came out after it the same evening, `v0.2.42` brings `tutor` nothing, and the workbook's crops of `v0.2.43` change how the workbook is built.
 
-— *Consequence:* the tag `v0.2.43` — in CLAUDE.md, README.md and at the top of RUN.md. RUN.md — the bodies of T78 and T79 and T68. architecture 3.4 — the workbook. — RUN.md, T68.
+— *Consequence:* `CLAUDE.md`; `README.md`; `RUN.md`; `docs/architecture.md`; `docs/workbook.md`.
 
 ## Reading into an observation
 
