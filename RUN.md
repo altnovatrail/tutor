@@ -1,6 +1,6 @@
 # RUN.md — work plan of tutor
 
-What tutor does, does not do and has still to decide — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.19.9: the component's card — architecture 3.6 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, gathered in epics; only the current epic is in detail, or two when a second runs beside it (R04; R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). No `run/TASKS.md`: a task outside an epic stands in table 1 (R103, R116).
+What tutor does, does not do and has still to decide — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.19.11: the component's card — architecture 3.6 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, gathered in epics; only the current epic is in detail, or two when a second runs beside it (R04; R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). No `run/TASKS.md`: a task outside an epic stands in table 1 (R103, R116).
 
 Language (R154 spec): rules and tables in English, terse, for the session; the epic's description, table 1 and the bodies of tasks in Russian — the author writes and reviews them.
 
@@ -47,6 +47,16 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 - **A done epic** goes to `docs/plan/<epic>.md` (R59 canvas-api): bodies and gist sentences are there already (rule 9); move its description and table of tasks verbatim; questions and debt stay in `run/`; until the next epic, table 1 reads «Current epic — none» and names the last done epic. Measure the epic's sessions — `just -f spec/justfile tokens-report --since <first day of the epic> --row` — as a row of measurements 4.1; a new analysis by the threshold of R145 spec.
 - Never read an archive whole: find a task by heading — `grep -n '^#### T03\.' RUN.md docs/plan/*.md`; from another repository — «T03 tutor». Task numbers are global, never reused, and taken free at the moment of writing.
 
-## Table 1. Current epic — none
+## Table 1. Current epic — E21. Эпик E22 `spec`: тег v0.19.11 и ссылки по R171 spec
 
-Текущего эпика нет. E20 сделан 2026-11-20, и его описание, таблица задач и тела задач — в архиве, [docs/plan/E20.md](docs/plan/E20.md). Следующий эпик выбирает автор: таблица 2 пуста.
+**2026-11-23: эпик открыт.** Задачи приходят от оркестратора `spec` — эпик E22 `spec`, пачка на ветке `e22-tutor` с одним pull request (R156 spec, R159 spec). Текущего эпика не было — E20 сделан 2026-11-20, таблица 2 пуста, — а задача вне эпика по R103 — первая задача следующего. Первая задача — переход на тег, волна 0; следующие задачи пачки записывают их сессии. Тела сделанных задач — в архиве, [docs/plan/E21.md](docs/plan/E21.md).
+
+**Результат:** `tutor` на теге `spec` `v0.19.11`, и его ссылки — по правилу R171 spec (строка 7.44 COORDINATION.md spec).
+
+**Основа:** R156 spec, R159 spec, R171 spec, R160 spec; RULES.md spec, Citations и Across repositories; R103.
+
+| Статус | ID | Задача | Кто | План | Зависит от |
+|---|---|---|---|---|---|
+| [x] | T183 | Переход на тег `spec` v0.19.11 | Claude | — | — |
+
+**Порядок:** по одной, на ветке `e22-tutor`.

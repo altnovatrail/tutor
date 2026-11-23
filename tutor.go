@@ -23,8 +23,9 @@ import (
 // a service carries the SDKs of the adapters it gives alone (R90). A provider with no adapter here
 // is no route at all, and one with no key no route of platform AI: Choose takes none of its models.
 // Reading is how the library reads a sheet and a workbook page, by the pair or by one reader; an
-// empty one is the pair. Debug lets a call's route carry the debug mode, Route.Debug, which api
-// turns on by its debug flag alone, on a local run (R136); off, such a route fails.
+// empty one is the pair. Debug lets a call's route carry the debug mode, Route.Debug, which api sets
+// for an account with the right to it, on a local run or on the deployment (R136); off, such a
+// route fails.
 type Config struct {
 	Table    *admission.Table
 	Facts    admission.Facts
@@ -123,8 +124,8 @@ func (t *Tutor) dial(m admission.Model, key string) (provider.Model, error) {
 }
 
 // Route is what every call of the library carries besides its work: the AI route, the learner's age
-// category, on the own key the key with its provider, and on a local run the debug mode (R136). It
-// names no learner, no account and no adult (R15 spec).
+// category, on the own key the key with its provider, and for an account with its right the debug
+// mode (R136). It names no learner, no account and no adult (R15 spec).
 type Route struct {
 	AI       admissionv0.AiRoute
 	Category admissionv0.AgeCategory
