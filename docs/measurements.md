@@ -419,23 +419,21 @@ In the first series the model answered with an analysis, in the second with only
   - **API.** `between_tools` with an answer by the schema for Sonnet 5.5 and `"oversized_image": "error"` for all four models went without an error, and before the series they could not be checked. There were no SDK retries. The only error is a 401 on one answer of Haiku without thinking because of a wrong key, for $0.
   - **Coverage.** 26 attempts are on the equation 2(x − 3) = 10, seven on the task about posts, four on the chain 17 + 49 − 14 × 2 and two on the equation 3x + 1 = 7, one of them a key failure. The task (47 + 19) : 6 is not in the series. This is a comparison of models on one error, not a measurement of accuracy;
 
-## 3. Measurements of epic E4
+## 3. Measurements of the capabilities
 
-### 3.1. Plan of the measurements of E4
+### 3.1. Plan of the measurements of the capabilities, 2026-10-26
 
-From architecture 3.4: the note of 2026-10-26, «Что меряется», «Наборы», «Судьи», «Критерии», «Прогоны» and «Чего в E4 нет» (R102; T133). Where the sets and the files of E2 lie stayed in architecture 3.4.
-
-**2026-10-26** (R28): the plan of the next reading measurements. The tasks are epic E4 in [RUN.md](../RUN.md). The criterion of each measurement is written down here before its first run (R05).
+The plan of the reading measurements that follow the measurement of the course of writing. The criterion of each measurement is written down here before its first run.
 
 **What is measured:**
-- **free writing** — whether Claude rightly judges a finished sheet where the solution is not lines from top to bottom but a number line, a drawing or writing at the side, and whether the course of writing helps it. This is the question of measurements 1.1, where its answer "not shown" may become another (R27; R52 spec). The box of the first error on sheets with an error is also the solution analysis, with the course of writing and without;
-- **reading into an observation** — the model reads the work without the key, as the capability "reading the handwriting" (concepts 9.1 spec), and the runner's code gives the verdict on the observation. On the same sheets:
-  - Т-23 — reading with the right key and solution and with false ones, by the threshold of R03;
+- **free writing** — whether Claude rightly judges a finished sheet where the solution is not lines from top to bottom but a number line, a drawing or writing at the side, and whether the course of writing helps it. This is the question of measurements 1.1, where its answer "not shown" may become another. The box of the first error on sheets with an error is also the solution analysis, with the course of writing and without;
+- **reading into an observation** — the model reads the work without the key, as the capability "reading the handwriting", and the runner's code gives the verdict on the observation. On the same sheets:
+  - Т-23 — reading with the right key and solution and with false ones, by the threshold of one call;
   - two readers — Haiku and Opus (Т-33);
   - digit height — 16, 24, 32 and 48 px on the crop;
   - states — reading unfinished work and the readings per sheet by pause policies (О-8, О-21);
-- **hint** — the tutor's question at rungs 1–3, in Russian and in English, in one call with the analysis, as in the diagram of architecture 4.1 spec, with the leak check and the form check (concepts 10 spec);
-- **workbook** — reading the answer slots and the verdict on each item (R41 spec). The crop of each filled box goes for checking, and the place in the observation is the slot by place, `{ item, slot }` (the 2026-10-27 amendment to R53 spec; R33);
+- **hint** — the tutor's question at rungs 1–3, in Russian and in English, in one call with the analysis, with the leak check and the form check;
+- **workbook** — reading the answer slots and the verdict on each item. The crop of each filled box goes for checking, and the place in the observation is the slot by place, `{ item, slot }`;
 - **essays** — the assessment by the rubric and its measure (О-22).
 
 **Sets:**
@@ -443,82 +441,80 @@ From architecture 3.4: the note of 2026-10-26, «Что меряется», «Н
 | Set | How many | What it is | Where | Who writes |
 |---|---|---|---|---|
 | free writing | 40 sheets | number line, drawing, writing at the side; split 10/30 | `synthetic/free` | code |
-| E2 lines | 40 sheets | the plan of E2, `eval/sheets.json`, redrawn by code with `-seed 1`, as in T26; its own split 10/30, seed 55 (T55) | `synthetic/lines` | code |
-| near key | 12 sheets | the result differs from the key by one similar digit, plan `eval/near-sheets.json`, bank `eval/near-bank.json`; split 4/8 (T70; [near-sheets.md](near-sheets.md)) | `synthetic/near` | code |
-| the author's sheets | 3 sheets | free solutions of three tasks, one per layout, without a scenario of erasing and error (T62) | `samples/free` | the author, with a mouse |
-| workbook | 20 pages of 10 items and 11 boxes | a number, a fraction in any writing and an irreducible one; seven box scenarios; pages 1–5 development, 6–20 test (T78; [workbook.md](workbook.md)) | drawn in memory from `eval/workbook.json` | code |
-| essays | 20 | 52–74 words in English, on made-up topics, without names; a rubric of six criteria, each with 5 not met; the Latin letters of the synthetic sheets are strokes of their own; essays 1–5 development, 6–20 test (T81, T82; R43, R44; [essays.md](essays.md)) | drawn in memory from `eval/essays.json` | the executor, strokes by code |
+| lines | 40 sheets | the plan of the measurement of the course of writing, `eval/sheets.json`, redrawn by code with `-seed 1`; its own split 10/30, seed 55 | `synthetic/lines` | code |
+| near key | 12 sheets | the result differs from the key by one similar digit, plan `eval/near-sheets.json`, bank `eval/near-bank.json`; split 4/8 ([near-sheets.md](near-sheets.md)) | `synthetic/near` | code |
+| the author's sheets | 3 sheets | free solutions of three tasks, one per layout, without a scenario of erasing and error | `samples/free` | the author, with a mouse |
+| workbook | 20 pages of 10 items and 11 boxes | a number, a fraction in any writing and an irreducible one; seven box scenarios; pages 1–5 development, 6–20 test ([workbook.md](workbook.md)) | drawn in memory from `eval/workbook.json` | code |
+| essays | 20 | 52–74 words in English, on made-up topics, without names; a rubric of six criteria, each with 5 not met; the Latin letters of the synthetic sheets are strokes of their own; essays 1–5 development, 6–20 test ([essays.md](essays.md)) | drawn in memory from `eval/essays.json` | the executor, strokes by code |
 
-- **Near key** (T70; R36) — six tasks of E2, copies word for word, but for the false keys. In each the false key is replaced by a near-false one: the last digit of the key by the similar digit of its pair, 1 and 7, 4 and 9, 8 and 3, 5 and 6, and in the solution the same digit is replaced in the last line. Two sheets per task, scenario `similar-digits`:
+- **Near key** — six tasks of the plan of the lines, copies word for word, but for the false keys. In each the false key is replaced by a near-false one: the last digit of the key by the similar digit of its pair, 1 and 7, 4 and 9, 8 and 3, 5 and 6, and in the solution the same digit is replaced in the last line. Two sheets per task, scenario `similar-digits`:
   - the correct one is read also with the near-false key — whether the model reads the key instead of what is written;
   - the one with an error, where the answer is the near-false key, is read with the right one — whether the key gives a false "correct".
 
-  The synthetic sheets draw the last digit of the answer shifted towards the digit of its pair by the share `synth.SimilarShift`. The share is 0.1: the development of T73 set it (R36, the 2026-10-28 amendment). The split is one, `split -seed 70 -dev 4`, and the set is not redrawn after it: the split depends on the file names. The sheets and the tasks are [near-sheets.md](near-sheets.md).
-- The bank of free writing is six tasks of the board, tasks 6–11, kind `free-solution` (T52; architecture 3.3):
+  The synthetic sheets draw the last digit of the answer shifted towards the digit of its pair by the share `synth.SimilarShift`. The share is 0.1: the development part of the reading measurement chose it (measurements 3.5). The split is one, `split -seed 70 -dev 4`, and the set is not redrawn after it: the split depends on the file names. The sheets and the tasks are [near-sheets.md](near-sheets.md).
+- The bank of free writing is six tasks of the board, tasks 6–11, kind `free-solution`:
   - two on the number line — `grasshopper` and `backwards`;
   - two on a drawing — a row of objects `houses` and a diagram with segments `stamps`;
   - two with counting at the side — `pages` and `album`.
 
-  The drawing in the bank's solution is described in words. Each of the four tasks with a number line and with a drawing has a trap whose error is visible in the drawing itself: a jump of the wrong length, an extra object on one side of the row, the wrong segment longer. The sheets where the first error is in the drawing rest on them (T54). The tasks with counting at the side have no drawing.
-- The author's sheets have no split and no threshold. The run on them is after the prompts are frozen, and the report is beside the synthetic set, by sheet (T77).
+  The drawing in the bank's solution is described in words. Each of the four tasks with a number line and with a drawing has a trap whose error is visible in the drawing itself: a jump of the wrong length, an extra object on one side of the row, the wrong segment longer. The sheets where the first error is in the drawing rest on them. The tasks with counting at the side have no drawing.
+- The author's sheets have no split and no threshold. The run on them is after the prompts are frozen, and the report is beside the synthetic set, by sheet.
 
-**Judges** — the three configurations of measurements 1.1: Opus 5.5 · `high`, Haiku 5.5 · `low` and Haiku 5.5 · `low` without thinking, with an answer limit of 16,000 tokens. In reading, Opus goes by the reduced matrix: each condition once, without heights and states (R06; R08). There is no Batch (R06).
+**Judges** — the three configurations of measurements 1.1: Opus 5.5 · `high`, Haiku 5.5 · `low` and Haiku 5.5 · `low` without thinking, with an answer limit of 16,000 tokens. In reading, Opus goes by the reduced matrix: each condition once, without heights and states. There is no Batch.
 
 **Criteria:**
-- **free writing** — the criterion of measurements 1.1 word for word, on the test part of free writing. It and the make-up of the sheets are measurements 3.3 (T54);
-- **Т-23** — the threshold of R03 with all its amendments, per model (T71);
-- **two readers** — the coverage and the errors among agreeing readings, without a threshold (R08);
-- **digit height** — the errors at each height paired with 32 px, by sheet: without the key, a finished sheet, the first repeat (R08). The rule of the recommendation for `spec` was written down on 2026-10-28, before the run (T72):
+- **free writing** — the criterion of measurements 1.1 word for word, on the test part of free writing. It and the make-up of the sheets are measurements 3.3;
+- **Т-23** — the threshold of one call of measurements 1.4, per model;
+- **two readers** — the coverage and the errors among agreeing readings, without a threshold;
+- **digit height** — the errors at each height paired with 32 px, by sheet: without the key, a finished sheet, the first repeat. The rule of the recommendation for `spec` was written down on 2026-10-28, before the run:
   - an error is a false "correct", a false alarm or a needless "unreadable", and a failed call counts as a needless "unreadable";
   - a height is no worse than 32 px for a configuration if the exact one-sided sign permutation test over sheets on d — the errors at the height minus at 32 px — finds no worsening at p < 0.05, and there is no sheet with a false "correct" at the height where there was none at 32 px;
   - the recommendation is the smallest of 16 and 24 px that is no worse on all sheets for every configuration that read the heights, that is for Haiku. Otherwise 32 px. 48 px is only measured;
   - the test part decides. The pairs are also shown separately on the sheets with lowercase letters and without them: on the former the digits come out larger than D (В36);
-- **О-8** — the two quantities of R10 (T72):
+- **О-8** — two quantities:
   - "correct" or "not yet" out of place — the verdict of a state while the answer line is not finished, by kind of state, with an upper bound by sheet. Where the answer is finished, the verdict is checked against the outcome of the sheet, but for a state on which what is later erased is still visible: what it shows, the markup does not say. Failed calls enter no share;
   - the readings per sheet by each policy — mean, median and maximum — and their cost at the mean cost of a call;
-- **О-21** — how unfinished work is read (T72): the accuracy of the finished parts; a result given before the answer line; a started part read as if finished whole;
-- **hints** — written down on 2026-10-28, before the first run (T75; R39). There is no threshold: the report observes, by configuration, language and rung, with a 95 % upper bound by sheet — architecture 3.4, "Hint":
+- **О-21** — how unfinished work is read: the accuracy of the finished parts; a result given before the answer line; a started part read as if finished whole;
+- **hints** — written down on 2026-10-28, before the first run. There is no threshold: the report observes, by configuration, language and rung, with a 95 % upper bound by sheet:
   - leaks before the check — the key or a phrase that the leak check found — and after it, in what the learner will read;
   - form violations by rule;
   - the fallback text by cause;
   - the box in the part of the first error;
   - the model's trap against the sheet's trap.
 
-  In development the prompt is edited only if an error from the prompt's words repeats: a leak or a form violation of one kind in a model that follows the prompt — as for the judge and reading (T66, T73). What the leak check missed only a reader sees: a file of about 30 hints for the author, if he wishes (T76);
-- **workbook** — written down on 2026-10-28, before the first run (T80): measurements 3.7;
-- **essays** — written down on 2026-10-28, before the first run (T83): measurements 3.8.
+  In development the prompt is edited only if an error from the prompt's words repeats: a leak or a form violation of one kind in a model that follows the prompt — as for the judge and reading. What the leak check missed only a reader sees: a file of about 30 hints for the author to read;
+- **workbook** — written down on 2026-10-28, before the first run: measurements 3.7;
+- **essays** — written down on 2026-10-28, before the first run: measurements 3.8.
 
-**Runs.** On the synthetic sheets the executor starts them, within the task's ceiling (R28), and on the author's sheets the author, with one command (T77). *2026-10-28 (T75): on the author's sheets too, the executor: `samples/` is open to agents (R32), and T77 runs only the judge and reading (R39).* The day's prices are checked against Anthropic's Pricing page before each run (sources 1.3).
+**Runs.** The executor starts them within the ceiling of each run, on the synthetic sheets and on the author's sheets too: `samples/` is open to agents. On the author's sheets only the judge and reading run. The day's prices are checked against Anthropic's Pricing page before each run (sources 1.3).
 
-| Measurement | Task | Expected | Ceiling |
-|---|---|---|---|
-| the pilot on the board | T53 | done: $1.12 | $2 |
-| free writing | T66 | done: $4.44 | $3 for the development and $6 for the test |
-| reading | T73 | done: $2.20 for the development — of this $1.52 for choosing the shift share — and $2.17 for the test | $4 and $6 |
-| hints | T76 | done: $2.11 for the development and $3.26 for the test | $50, the author's decision of 2026-10-28 (R39); before it, $5 |
-| the author's sheets | T77 | done: $0.61 for the judge and $0.17 for reading | $2 |
-| workbook | T80 | done: $0.24 for the development and $0.72 for the test | $2 and $4, within the author's $100 for T78–T81 (R40) |
-| essays | T84 | done: $0.31 for the development — two rounds — and $1.43 for the test; the stub's estimate about $2.9 | $3 and $8, within the author's $100 for T82–T85 (R44, R45); before them, $2 |
-| new configurations | T91 | done: $14.62 — reading $6.96, hints $4.95, workbook $0.48, essays $2.23 | $30, within the author's $150 for T90–T97 (R50) |
-| essays in two calls | T92 | done: development $0.20, test $1.43 and $0.56 | $3 and $7 |
-| the big run | T95 | done: $81.67, of this $10.25 an attempt cut off by the workspace limit | $100 |
-| ten of the author's sheets | T97 | done: $1.03 | $10 |
+| Measurement | Expected | Ceiling |
+|---|---|---|
+| the pilot on the board | done: $1.12 | $2 |
+| free writing | done: $4.44 | $3 for the development and $6 for the test |
+| reading | done: $2.20 for the development — of this $1.52 for choosing the shift share — and $2.17 for the test | $4 and $6 |
+| hints | done: $2.11 for the development and $3.26 for the test | $50 |
+| the author's sheets | done: $0.61 for the judge and $0.17 for reading | $2 |
+| workbook | done: $0.24 for the development and $0.72 for the test | $2 and $4, within the $100 for the workbook's runs |
+| essays | done: $0.31 for the development — two rounds — and $1.43 for the test; the stub's estimate about $2.9 | $3 and $8, within the $100 for the essays' runs |
+| new configurations | done: $14.62 — reading $6.96, hints $4.95, workbook $0.48, essays $2.23 | $30, within the $150 of the extended measurement |
+| essays in two calls | done: development $0.20, test $1.43 and $0.56 | $3 and $7 |
+| the big run | done: $81.67, of this $10.25 an attempt cut off by the workspace limit | $100 |
+| ten of the author's sheets | done: $1.03 | $10 |
 
-The total is about $18.5, together with the $1.12 of the pilot, and the ceilings come to $33. This is the executor's estimate at the prices of sources 1.3 and the numbers of the measurement in measurements 1.2. *2026-10-28 (T74): the hints by the estimate of their kind are about $4.8, not $3, and the total grew from about $17. The margin to the ceiling of T76 is small — question В42 in table 3 of [RUN.md](../RUN.md).* *2026-10-28 (T75): the author raised the ceiling of T76 to $50, and the ceilings now come to $78. The plan of the runs did not grow (R39).* *2026-10-28 (T83): the essays by the estimate of their kind are about $2.9, not $1: Opus assesses in each repeat (R45). The ceilings of the essays are $3 and $8 instead of $2.*
+The executor's estimate before the runs, at the prices of sources 1.3 and the numbers of measurements 1.2, was about $18.5, together with the $1.12 of the pilot. The hints by the estimate of their kind are about $4.8, close to their first ceiling of $5 (В42), and their ceiling is $50; the plan of their runs did not grow with it. The essays by the estimate of their kind are about $2.9: Opus assesses in each repeat.
 
-**What E4 does not have:** samples of volunteers and of children — there is no consent text (П-16, П-18, П-10); a pair of readers of different providers; handwritten injections; Google (R47 spec); "explain differently" — О-21 is open; voice; the eval protocol, the release of `tutor` and the samples page of `canvas` — that is epic E3.
+**What the plan does not have:** samples of volunteers (П-16) and of children (П-10) — there is no consent text; a pair of readers of different providers; handwritten injections; Google, whose generative AI is closed on the platform; "explain differently" — О-21 is open; voice; the eval protocol, the release of `tutor` and the samples page of `canvas`, which are planned apart.
 
-### 3.2. Pilot on the board
+### 3.2. Pilot on the board, 2026-10-27
 
-From architecture 3.4, «Пилот на доске» (R102; T133).
-
-**Pilot on the board** (T53). The pilot ran in the night to 2026-10-27, the analysis on 2026-10-27. The author wrote 14 solutions with the mouse:
-- eight on the six tasks with free writing, tasks 6–11 of the board (architecture 3.3);
+**Pilot on the board.** The pilot ran in the night to 2026-10-27, the analysis on 2026-10-27. The author wrote 14 solutions with the mouse:
+- eight on the six tasks with free writing, tasks 6–11 of the board;
 - six on tasks 1–5.
 
 He pressed Check 35 times and asked all four Claude models, at different effort levels, with thinking and without. That made 133 answers, and the author marked 132 of them. The pilot cost $1.12 with a ceiling of $2.
 
-The executor analysed the journal and the pictures of the board. The author lifted the bans on `samples/`, and the executor opened in it only the pilot's folder (R05, amendment 2026-10-27). Only numbers and words came here; there is no handwriting.
+The executor analysed the journal and the pictures of the board. In `samples/` the executor opened only the pilot's folder. Only numbers and words came here; there is no handwriting.
 
 *What is written on the free solutions:*
 - **grasshopper** — a number line with arcs of the jumps and labels of the points; correct;
@@ -559,24 +555,22 @@ The plan's three judges on tasks 6–11:
   - in «задумали число» the box is not on the answer — with thinking at `low` and twice without thinking;
   - on the answer "74" in the task about pages, "I can't read it", with thinking at `low`. The author did not mark this answer.
 
-*What the pilot gives the plan* — T54 decides:
-- **Opus and Fable** make no errors on free writing with the mouse either, as Opus did on a single picture in E2 (R27). The help of the course of writing cannot be seen for them on such sheets, by construction.
+*What the pilot gives the plan* — the measurement of free writing decides:
+- **Opus and Fable** make no errors on free writing with the mouse either, as Opus did on a single picture in the measurement of the course of writing. The help of the course of writing cannot be seen for them on such sheets, by construction.
 - **Haiku** is not free of errors: with thinking it erred in 1 answer of 11, without thinking in all six.
 - **Errors in the drawing** the pilot did not test. How the judges see them, the sheets of code will show.
 - **Opus · `low`** is right in all 18 answers, on tasks 6–11 and 1–5, at about $0.008 and 2.6 s per answer, without thinking tokens. `high` on tasks 6–11 was asked once, so the pilot cannot compare the levels on free writing.
 - **In one check** the board asks a model once. Haiku with thinking and without on the same strokes is two Checks.
 
-### 3.3. Measurement of free writing
+### 3.3. Measurement of free writing: plan and criterion, 2026-10-27
 
-From architecture 3.4, «Замер свободной записи» (R102; T133).
-
-**Measurement of free writing** (T54; R28, amendment 2026-10-27). The plan and the criterion were written down on 2026-10-27, before the code and before the first run (R05).
+**Measurement of free writing.** The plan and the criterion were written down on 2026-10-27, before the code and before the first run.
 
 *The question* is the same as in measurements 1.1: does the course of writing — the order of writing and erasing — help a model judge a finished sheet. The sheets here are free writing: a number line, a drawing, a record at the side.
 
 The pilot (measurements 3.2) showed that Opus 5.5 makes no errors on free writing with the mouse either, and Haiku 5.5 does. So for Opus the answer is most likely "not shown" again, by construction, and the question is decided on Haiku. There were no errors in the drawing in the pilot: the sheets of code give them.
 
-*The sheets* — 40, drawn by code (T59, T60), in `synthetic/free`. The tasks are the free writing bank `eval/free-bank.json` (T52), and the task sets the sheet's layout. How many sheets of which kind there are by task and scenario, and where on the sheet the first error and the erasure stand by scenario, are two tables in [free-sheets.md](free-sheets.md), "How many sheets of each kind": until T133 they stood here too, and a test of `cmd/tutor-eval` checks them against the plan files (T133).
+*The sheets* — 40, drawn by code, in `synthetic/free`. The tasks are the free writing bank `eval/free-bank.json`, and the task sets the sheet's layout. How many sheets of which kind there are by task and scenario, and where on the sheet the first error and the erasure stand by scenario, are two tables in [free-sheets.md](free-sheets.md), "How many sheets of each kind", and a test of `cmd/tutor-eval` checks them against the plan files.
 
 There are 20 correct sheets: `correct` and `erasure-fixed`. With an error, also 20: `error` and `erasure-broken`. An erasure by scenario, and with it frames, is on 16 sheets.
 
@@ -592,23 +586,21 @@ In the second table of [free-sheets.md](free-sheets.md), "How many sheets of eac
   - on three `backwards` sheets, in the text: the condition is written as an equation with □;
   - on three `stamps` sheets, in the drawing: □ and △ label the segments of the diagram.
 
-  *2026-10-27 (T57): □ is the segment of the younger one, whose stamps the task asks about, △ of the elder. On a diagram without labels one cannot see which segment is whose, so `longer-segment` stands only on sheets with □ and △.*
+  □ is the segment of the younger one, whose stamps the task asks about, △ of the elder. On a diagram without labels one cannot see which segment is whose, so `longer-segment` stands only on sheets with □ and △.
 - **The first error** stands in different parts of the sheet, not always in the last. The parts after it follow from what is written, as in [sheets.md](sheets.md).
-- The sheets by number — their texts, parts, the place of the error and of the erasure — are in [free-sheets.md](free-sheets.md) (T57). The errors there are the bank's traps, without the subtleties that the amendment to R28 rejected: a wrong arc ends two divisions or more from the correct one, and a wrong column has a wrong step, not one digit.
+- The sheets by number — their texts, parts, the place of the error and of the erasure — are in [free-sheets.md](free-sheets.md). The errors there are the bank's traps, without subtleties: a wrong arc ends two divisions or more from the correct one, and a wrong column has a wrong step, not one digit.
 
-*The author's sheets* — three, with the mouse, in record mode (T61, T62): free solutions of the tasks `grasshopper`, `stamps` and `album`, one per layout, the plan `eval/free-author.json`. The author solves the task as they would solve it on their own. The sheet's scenario is `correct`, there is no planned erasure and no deliberate error, and the whole sheet is one part, and its markup needs no editing (R28, amendment 2026-10-27). An erasure in the drawing and an error in the drawing and in the column remain on the sheets of code.
+*The author's sheets* — three, with the mouse, in record mode: free solutions of the tasks `grasshopper`, `stamps` and `album`, one per layout, the plan `eval/free-author.json`. The author solves the task as they would solve it on their own. The sheet's scenario is `correct`, there is no planned erasure and no deliberate error, and the whole sheet is one part, and its markup needs no editing. An erasure in the drawing and an error in the drawing and in the column remain on the sheets of code.
 
-*2026-10-27 (T62): before the amendment the author's sheets were copies of sheets of code 7, 8 and 2 with an erasure in the drawing and an error in the column (T57).*
+The sheets were recorded on 2026-10-27: all three pass the check, with no differences from the plan. All are written with the mouse, there are no erasures by scenario, and there are 17 stray erasures on the three sheets, so each has frames before an erasure.
 
-The sheets were recorded on 2026-10-27 (T62): all three pass the check, with no differences from the plan. All are written with the mouse, there are no erasures by scenario, and there are 17 stray erasures on the three sheets, so each has frames before an erasure.
-
-They have no split and no threshold. Their run comes after the prompt is frozen (T77), and on them the judge answers only whether the solution is correct: an error box on a correct sheet is a false alarm.
+They have no split and no threshold. Their run comes after the prompt is frozen, and on them the judge answers only whether the solution is correct: an error box on a correct sheet is a false alarm.
 
 *The judges* — Opus 5.5 · `high`, Haiku 5.5 · `low` and Haiku 5.5 · `low` without thinking, with an answer limit of 16,000 tokens. The judge sees the key and the reference solution.
 
-*The forms* — A–D of measurements 1.1 (R11):
-- the journal of the course is version 2: about the parts of the sheet by their place, `journal.OfParts` (T63; architecture 3.1, "The log of parts, version 2");
-- the prompt is version 2: drawings and records at the side are part of the solution in it (T64; architecture 3.1, "Versions of the prompt");
+*The forms* — A–D of measurements 1.1:
+- the journal of the course is version 2: about the parts of the sheet by their place, `journal.OfParts`;
+- the prompt is version 2: drawings and records at the side are part of the solution in it;
 - C and D only on sheets with frames, and on a sheet without frames D is the same as B.
 
 *An answer is right* as in measurements 1.1, but by writing parts, not by lines:
@@ -617,12 +609,12 @@ They have no split and no threshold. Their run comes after the prompt is frozen 
 
 A drawing is one part. So a box on a drawing counts, whichever of its elements it stands on. A failed call is a wrong answer; such calls are also counted separately.
 
-*The split* — 10 dev sheets and 30 test sheets, by scenario, `tutor-eval split -seed 20261027`. It is split once, before the first edit of the prompt. In the dev part, 3 `correct`, 3 `error`, 2 `erasure-fixed` and 2 `erasure-broken`. A layout that ends up with no sheet in the dev part the split does not correct: the report's breakdown by layout names it (T65), and T66 writes it into «Сделано».
+*The split* — 10 dev sheets and 30 test sheets, by scenario, `tutor-eval split -seed 20261027`. It is split once, before the first edit of the prompt. In the dev part, 3 `correct`, 3 `error`, 2 `erasure-fixed` and 2 `erasure-broken`. A layout that ends up with no sheet in the dev part the split does not correct: the report's breakdown by layout names it, and so does the result.
 
-*The repeats* — 3 for each form and judge in the test part. In the dev part, up to four rounds of one repeat (T66).
+*The repeats* — 3 for each form and judge in the test part. In the dev part, up to four rounds of one repeat.
 
 *The criterion* is the criterion of measurements 1.1, word for word. It is computed for each configuration, on the test part:
-- d_s is the share of right repeats on sheet s in form D minus the share in form A. The test is a one-sided exact sign-permutation test on Σd_s, as in R03 (amendment 2026-10-21);
+- d_s is the share of right repeats on sheet s in form D minus the share in form A. The test is a one-sided exact sign-permutation test on Σd_s, as for the threshold of one call in measurements 1.4;
 - **the course helps** if p < 0.05 and D has no more false `correct` on sheets with an error and no more false alarms on correct sheets than A;
 - **harms** — the same the other way; otherwise **not shown**. If fewer than five sheets have d ≠ 0, the test cannot be passed, and the report says so;
 - **the overall conclusion** "the course helps Claude" holds if at least one configuration passes with the Holm correction for three as well: its p must be below 0.05/3. That needs at least six sheets with d ≠ 0;
@@ -630,23 +622,21 @@ A drawing is one part. So a box on a drawing counts, whichever of its elements i
   - B and C against A, D against B — on sheets with frames;
   - false alarms on `erasure-fixed` and hits on `erasure-broken`;
   - the spread of repeats, time and cost by form;
-  - Haiku's agreement with Opus on "correct" (architecture 3.12).
+  - Haiku's agreement with Opus on "correct".
 
 Beyond the criterion of measurements 1.1 the report computes, also without a threshold:
-- **data for R52 spec** — whether to return to the course of writing: the box's hits on sheets with an error by form, and the same test of D against A on these sheets only (T65);
+- **data for `spec`** — whether the course of writing should go to AI again: the box's hits on sheets with an error by form, and the same test of D against A on these sheets only;
 - **a breakdown** — by layout and by the place of the first error: in the drawing, in the text or at the side.
 
 *The estimate and the ceilings* — the executor's estimate by the prices of sources 1.3, the result of measurements 1.2 and the pilot of measurements 3.2:
 - the dev part — about $1.2, the ceiling $3;
 - the test — about $2.7, the ceiling $6.
 
-In all, about $3.9. The executor checks the day's prices against the Pricing page before the run (T66).
+In all, about $3.9. The executor checks the day's prices against the Pricing page before the run.
 
-### 3.4. Result of the measurement of free writing
+### 3.4. Result of the measurement of free writing, 2026-10-27
 
-From architecture 3.4, «Итог замера свободной записи» (R102; T133).
-
-**Result of the measurement of free writing** (T66, 2026-10-27; R27, amendment 2026-10-27). The day's prices were checked against the Pricing page the same day, and the sheets were split once, with the seed `20261027`. In the dev part are sheets 4, 7, 9, 17, 19, 20, 22, 32, 35 and 40, all three layouts. The journals and reports lie in `synthetic/runs`, outside git.
+**Result of the measurement of free writing.** The day's prices were checked against the Pricing page the same day, and the sheets were split once, with the seed `20261027`. In the dev part are sheets 4, 7, 9, 17, 19, 20, 22, 32, 35 and 40, all three layouts. The journals and reports lie in `synthetic/runs`, outside git.
 - **The dev part** — three rounds of one repeat, $1.15. Right answers of 34 per round:
   - Opus 5.5 · `high` — 34, 34, 34;
   - Haiku 5.5 · `low` — 33, 32, 32;
@@ -668,31 +658,31 @@ From architecture 3.4, «Итог замера свободной записи»
   - Haiku without thinking — 32 / 37 / 18 / 44.
 
   There is no false "correct" in any answer, and every "correct" of Haiku is "correct" for Opus too.
-- **Without a threshold, data for R52 spec** — on sheets with an error:
+- **Without a threshold, data for `spec`** on the course of writing — on sheets with an error:
   - the box on the first error in A / B / C / D: for Opus 42 / 42 / 15 / 42 of 45 / 45 / 18 / 45, for Haiku · `low` 35 / 42 / 15 / 41, for Haiku without thinking 10 / 20 / 6 / 24;
   - D against A on these sheets only: for Haiku · `low` +2.00 on 4 sheets, p 0.0625, for Haiku without thinking +4.67 on 8 sheets, p 0.023. This test is without a threshold: it is not part of the criterion, and Haiku without thinking has more false alarms in D than in A;
   - **the first error in the drawing** (6 sheets) — here the journal helps most. Haiku · `low` is right in 10 answers of 18 in A and in 15 in B, Haiku without thinking in 1 in A, in 13 in B and in 14 in D. In the text (5 sheets) and at the side (4) there is no such thing: at the side Haiku without thinking is wrong in A and B in all 12 answers;
   - erasures for Haiku without thinking: false alarms on `erasure-fixed` in A 9 of 18, in D 5; right on `erasure-broken` in A 6 of 18, in D 13. For Opus and Haiku · `low`, 0 alarms and 15 of 18.
-- **Opus's only miss** is sheet 8, `stamps`, `erasure-broken`, in all 12 answers. By the plan the first error is in the diagram: □, the younger one's segment, is drawn longer (T57). Opus reads the diagram as correct and circles the answer "13 stamps", which is wrong too. Which one is □ on the diagram and which △ is not labelled on the sheet, so the truth of this sheet is disputable. The markup was written down before the runs, and the measurement does not change it.
+- **Opus's only miss** is sheet 8, `stamps`, `erasure-broken`, in all 12 answers. By the plan the first error is in the diagram: □, the younger one's segment, is drawn longer. Opus reads the diagram as correct and circles the answer "13 stamps", which is wrong too. Which one is □ on the diagram and which △ is not labelled on the sheet, so the truth of this sheet is disputable. The markup was written down before the runs, and the measurement does not change it.
 - **Input tokens**, by the dev journals: form A about 1,962, the journal with a block 291–359, 331 on average, a frame about 970. The estimate expected 2,050, 360 and 820.
 - **Answer time**, p50: Opus 2.5–3.2 s, Haiku · `low` 2.2–2.8 s, without thinking 1.2 s. An Opus call costs $0.0104 in A and $0.0161 in D.
-- **What this means.** E2's answer is the same here: the help of the course of writing to the judge is "not shown", and R27 stands. Opus makes no errors on almost all sheets, so help to it cannot be seen, by construction, as T66 warned. But without a threshold the journal of parts helps a weak judge find an error in the drawing. These are data for R52 spec, and what of them goes to `spec`, T77 and T85 decide.
+- **What this means.** The answer of the measurement of the course of writing is the same here: the help of the course of writing to the judge is "not shown", and `tutor` still reads the work by one final picture. Opus makes no errors on almost all sheets, so help to it cannot be seen, by construction, as the plan warned. But without a threshold the journal of parts helps a weak judge find an error in the drawing. These are data for `spec`'s ban on the course of writing going to AI, and the conclusions decide what of them goes to `spec` (measurements 3.9).
 
-### 3.5. Reading into an observation: estimate and result
+### 3.5. Reading into an observation: estimate and result, 2026-10-28
 
-From architecture 3.4: the estimate of "Reading into an observation" and «Итог замера чтения» (R102; T133). The call kind `reading` is in architecture 3.4.
+How the call kind `reading` is built is in [architecture.md](architecture.md).
 
 The estimate of "Reading into an observation":
 
 - **the estimate** — about 1,210 text tokens, 150 more with the key block, and the crop's tokens, ⌈w / 28⌉ × ⌈h / 28⌉. By the free `count_tokens` on 2026-10-28 on ten sheets of both plans, the text is 1,194–1,246, the key block another 100–162, and the crop's tokens matched the formula. The output is about 200 tokens, for Haiku with thinking about 500. The dev part of the two sets, `free` and `lines`, with one repeat and everything the run reads, is 442 calls: 150 key conditions, 120 heights and 172 states, 86 on 20 sheets, at $0.64 by the estimate;
 
-**Result of the measurement of reading** (T73, 2026-10-28; R37). The day's prices were checked against the Pricing page the same day: Haiku 5.5 — $0.10 and $0.50, Opus 5.5 — $4 and $20 per 1 million tokens, as in sources 1.3.
-- **The near-key shift share** is 0.1, by the sheets of the plan of seed 2 (R36, amendment 2026-10-28). The set `synthetic/near` is split by `split -seed 70 -dev 4`.
+**Result of the measurement of reading** (2026-10-28). The day's prices were checked against the Pricing page the same day: Haiku 5.5 — $0.10 and $0.50, Opus 5.5 — $4 and $20 per 1 million tokens, as in sources 1.3.
+- **The near-key shift share** is 0.1, by the sheets of the plan of seed 2. The set `synthetic/near` is split by `split -seed 70 -dev 4`.
 - **The dev part** — the dev parts of the three sets, 24 sheets, one repeat, $2.20 with the choice of the share:
   - key conditions: Opus read all 24 sheets right in each condition. Haiku has a few extra "unreadable", almost all on near-key sheets, where the digit is meant to be ambiguous. There are no false "correct" and no false alarms;
   - no error from the prompt's words repeated, and the prompt was not edited. It is frozen at version 1, prompt fingerprint `94452c62dab0872381ccf556a2d54b4724d06a76887cd02c05c4f68679659cfb`.
-- **The test** — the test parts of the three sets, 68 sheets: free writing 30, E2's lines 30 and near key 8. Haiku has three repeats, Opus one, heights and states once each for Haiku. 2,278 calls, not one failure, $2.17. The run log and the report are `synthetic/runs/20261028-021628-854-reading-free+lines+near-test.*`, outside git.
-- **Т-23, the threshold of R03** — all three configurations have not one false "correct" and not one false alarm in any condition. Not one call under the correct key, not one under a false key on correct sheets, not one new false "correct". No sheet has d ≠ 0, so there was nothing for the paired test to fail on; only the zero-tolerance points could give a failure, and there were none. By the threshold, one call is admissible for all three: Opus 5.5 · `high`, Haiku 5.5 · `low` and Haiku 5.5 · `low` without thinking.
+- **The test** — the test parts of the three sets, 68 sheets: free writing 30, lines 30 and near key 8. Haiku has three repeats, Opus one, heights and states once each for Haiku. 2,278 calls, not one failure, $2.17. The run log and the report are `synthetic/runs/20261028-021628-854-reading-free+lines+near-test.*`, outside git.
+- **Т-23, the threshold of one call** — all three configurations have not one false "correct" and not one false alarm in any condition. Not one call under the correct key, not one under a false key on correct sheets, not one new false "correct". No sheet has d ≠ 0, so there was nothing for the paired test to fail on; only the zero-tolerance points could give a failure, and there were none. By the threshold, one call is admissible for all three: Opus 5.5 · `high`, Haiku 5.5 · `low` and Haiku 5.5 · `low` without thinking.
   - The key still shifts Haiku's reading — toward "unreadable", not toward a false verdict. On near-key sheets with an error, Haiku · `low` with the correct key gave the right verdict in 4 calls of 15, without a key in 12; the rest became "unreadable". Without thinking, on correct near-key sheets with a near-false key, 3 of 9 right, without a key 9. For Opus the key changed nothing.
   - Extra "unreadable" on a finished sheet at 32 px without a key: Opus 2 of 68, Haiku · `low` 17 of 204, without thinking 42 of 204. Writing parts read as written: 228 of 230, 683 of 690 and 674 of 690.
 - **Two readers** (Т-33) — Opus with Haiku · `low` released 61 sheets of 68, with Haiku without thinking 51. There are no errors among the released ones. Haiku said "correct" on 32 and on 28 sheets, and Opus agrees with it everywhere. The hybrid's p is 0.53 and 0.59: half of the test's sheets have an error, and on them the fast reader is not supposed to confirm "correct".
@@ -705,19 +695,19 @@ The estimate of "Reading into an observation":
   For Haiku without thinking it is the same: 88, 36 and 10 verdicts before the answer.
 - **О-8, readings per sheet beyond the submission** — after each line 2.91 on average; at pauses from 0.4 s 15.63, from 2 s 2.87, from 6 s 0.43. A policy of pauses from 0.4 s would cost about $0.15 per sheet with Opus, about $0.004 with Haiku.
 
-### 3.6. Hints: estimate, result and the author's sheets
+### 3.6. Hints: estimate, result and the author's sheets, 2026-10-28
 
-From architecture 3.4: the estimate of "Hint", «Итог замера подсказок» and «Итог прогонов на листах автора» (R102; T133). The call kind `hint` is in architecture 3.4.
+How the call kind `hint` is built is in [architecture.md](architecture.md).
 
 The estimate of "Hint":
 
-- **the estimate** — about 1,700 text tokens and the crop's tokens. By the free `count_tokens` on 2026-10-28 on ten sheets of the three sets, the text is 1,618–1,751 tokens, the same for Opus and Haiku. The output is about 300 tokens for Opus, 500 for Haiku with thinking and 200 without it. That is by the judge of free writing: in the test of T66 it wrote in form A 124 tokens on average for Opus, 96 of them thinking, and 267 for Haiku with thinking, and a hint adds a trap and a text to the box. By the stub:
+- **the estimate** — about 1,700 text tokens and the crop's tokens. By the free `count_tokens` on 2026-10-28 on ten sheets of the three sets, the text is 1,618–1,751 tokens, the same for Opus and Haiku. The output is about 300 tokens for Opus, 500 for Haiku with thinking and 200 without it. That is by the judge of free writing: in the test of free writing it wrote in form A 124 tokens on average for Opus, 96 of them thinking, and 267 for Haiku with thinking, and a hint adds a trap and a text to the box. By the stub:
   - the dev part of the three sets, one repeat, is 198 calls, $0.96;
   - the test part, 612 calls, $2.91, of which $2.76 is Opus.
 
-  Two dev rounds and the test of T76 come to about $4.8 with a ceiling of $5 (В42). *2026-10-28 (T75): the ceiling of T76 is $50 (R39).*
+  Two dev rounds and the test come to about $4.8, and the ceiling is $50 (В42).
 
-**Result of the measurement of hints** (T76, 2026-10-28; R39, amendment 2026-10-28). The day's prices were checked against the Pricing page the same day: Haiku 5.5 — $0.10 and $0.50, Opus 5.5 — $4 and $20 per 1 million tokens, as in sources 1.3. The journals and reports are `synthetic/runs/t76-*`, outside git.
+**Result of the measurement of hints** (2026-10-28). The day's prices were checked against the Pricing page the same day: Haiku 5.5 — $0.10 and $0.50, Opus 5.5 — $4 and $20 per 1 million tokens, as in sources 1.3. The journals and reports are `synthetic/runs/t76-*`, outside git.
 - **The stub** on the dev part of the three sets went the whole way to the three files of the report.
 - **The dev part** — 11 sheets with an error, 198 calls per round, two rounds, $1.05 and $1.06. The number of hints that got the fallback text, of 66 for each configuration:
 
@@ -753,7 +743,7 @@ The estimate of "Hint":
   - 4 name the answer or confirm it, all Haiku's: «сколько будет 6 умножить на 11?» for `chain-2` with key 11; "the 7 is right" twice for `stamps` with key 7, where the learner added 6 more to the 7; «1 курица и 2 кролика» in a simpler case for `rabbits` with key 2;
   - 2 are the bank's phrase «на 2 ноги больше» for `rabbits` in the reasoning of rung 3, as the bank intended.
 
-  False leaks, as T76 warned, are the price of a strict check: the rule "the key of its own item is not searched for" (R31) does not cover them. What the check missed only a reader sees — the file `synthetic/runs/t76-test.hints.md`, 30 hints.
+  False leaks, as the plan warned, are the price of a strict check: the rule "the key of its own item is not searched for" does not cover them. What the check missed only a reader sees — the file `synthetic/runs/t76-test.hints.md`, 30 hints.
 - **The learner's gender** in Russian, by a rough search: the hint has «ты» or «вы» and a word that ends in a vowel and «л», «ла», «лся» or «лась», or «прав», «права», «молодец» or «умница». Opus — 0 hints of 102, Haiku — 13, Haiku without thinking — 37. In the dev part, 0, 14 and 33 of 33 in the first round and 0, 2 and 13 in the second: the edit of the second round helped both Haikus. No check catches this.
 - **Praise of a wrong step.** Point 6 says to begin with what is already correct, and it has no exception for a sheet where the error is in the very first line. Then the model praises what is wrong: for `stamps`, where by the markup the error is in the diagram, Opus writes «Схема и первая строка верны», and Haiku without thinking, for `pages` with an error in the first line, «Первая строка верна». There are 12 test sheets with the first error in the first part. No check catches this, and the next version of the prompt will fix it.
 - **What this means:**
@@ -762,14 +752,14 @@ The estimate of "Hint":
   - Haiku without thinking breaks the form in a third of the calls, puts the box on the first error in two thirds and gives away the gender in a third of the Russian hints;
   - the handwriting is synthetic, and the sheets are neat: this is a measurement of the hint's words and of the checks, not of reading.
 
-**Result of the runs on the author's sheets** (T77, 2026-10-28; R39, amendment 2026-10-28). The author's three sheets, `samples/free`, are free solutions of `grasshopper`, `stamps` and `album`, all correct (T62). The recipe `just live`: judge v2 and reading, all sheets, `-part all`, with a ceiling of $1 per run, which the recipe itself sets. There is no hint: all sheets are correct (В41). The day's prices were checked against the Pricing page the same day, before the run and after it, and are the same. The judge — 108 calls, $0.61, reading — 171 calls, $0.17, no failures. The journals and reports are `samples/runs/20261028-144736-live-*`, outside git; only numbers came here. There is no threshold: three sheets, and the report stands beside the synthetic sheets.
+**Result of the runs on the author's sheets** (2026-10-28). The author's three sheets, `samples/free`, are free solutions of `grasshopper`, `stamps` and `album`, all correct. The recipe `just live`: judge v2 and reading, all sheets, `-part all`, with a ceiling of $1 per run, which the recipe itself sets. There is no hint: all sheets are correct (В41). The day's prices were checked against the Pricing page the same day, before the run and after it, and are the same. The judge — 108 calls, $0.61, reading — 171 calls, $0.17, no failures. The journals and reports are `samples/runs/20261028-144736-live-*`, outside git; only numbers came here. There is no threshold: three sheets, and the report stands beside the synthetic sheets.
 - **Judge v2** — 36 answers per configuration: 3 sheets, 4 forms, 3 repeats. Right:
   - Opus 5.5 · `high` — 36, 9 of 9 in each form;
   - Haiku 5.5 · `low` — 35: one false alarm in form C;
   - Haiku without thinking — 17: in forms A / B / C / D right 6 / 2 / 6 / 3 of 9, the rest false alarms.
 
-  On the correct sheets of free writing of code in the test of T66, Opus had no false alarms in forms A and D, Haiku · `low` had one each, Haiku without thinking 23 and 25 of 45 (measurements 3.4). On the sheets written with the mouse, Haiku without thinking alarms just as often, and with the journal of the course in forms B and D even more often: 7 and 6 of 9 against 3 in form A. The criterion of the course of writing is not measured here: sheets with d ≠ 0 are 0, 0 and 1. Every "correct" of Haiku is "correct" for Opus too. An Opus call is $0.012 in form A and $0.020 in form D, p50 3.0–3.9 s.
-- **Reading** — Opus once, Haiku three repeats each, without a key, with the correct and with false keys, and Haiku also at 16, 24 and 48 px and on states (`-reads keys,heights,states`). The markup of an author's sheet is one part with no value of the answer (R28, amendment 2026-10-27). So "under the key" and "parts read as written" are not measured here: the report would count every read value equal to the key as read under the key. The verdicts are measured:
+  On the correct sheets of code in the test of free writing, Opus had no false alarms in forms A and D, Haiku · `low` had one each, Haiku without thinking 23 and 25 of 45 (measurements 3.4). On the sheets written with the mouse, Haiku without thinking alarms just as often, and with the journal of the course in forms B and D even more often: 7 and 6 of 9 against 3 in form A. The criterion of the course of writing is not measured here: sheets with d ≠ 0 are 0, 0 and 1. Every "correct" of Haiku is "correct" for Opus too. An Opus call is $0.012 in form A and $0.020 in form D, p50 3.0–3.9 s.
+- **Reading** — Opus once, Haiku three repeats each, without a key, with the correct and with false keys, and Haiku also at 16, 24 and 48 px and on states (`-reads keys,heights,states`). The markup of an author's sheet is one part with no value of the answer. So "under the key" and "parts read as written" are not measured here: the report would count every read value equal to the key as read under the key. The verdicts are measured:
   - without a key Opus is right on 2 sheets of 3, Haiku in 8 calls of 9, both configurations. The errors are extra "unreadable": for Opus on `stamps`, where it found several results, `results`, and for both Haikus on `grasshopper`, where the result was also read as another value, `ambiguous`. There could be no false "correct", and there are no false alarms;
   - with the correct key Haiku is right in 9 of 9, with false keys in 7 of 9: "unreadable" on `grasshopper` and on `stamps`. On three sheets this is one or two errors one way or the other;
   - two readers — Opus with Haiku · `low` released 2 sheets of 3, with Haiku without thinking 1, no errors among the released;
@@ -778,7 +768,7 @@ The estimate of "Hint":
   - there are 45 states on the three sheets, and each Haiku reads each: after a line 45, at a pause 3, before an erasure 4. A state of two kinds is counted in both;
   - "correct" or "not yet" before the end of the sheet after a line, 7 and 6 of 45, at a pause 1 of 3, before an erasure 0 of 4. An author's sheet has one part, so "before the answer" here is before the end of the sheet;
   - readings per sheet beyond the submission: after each line 15.0 on average, at pauses from 0.4 s 54.0, from 2 s 7.7, from 6 s 1.7. On the synthetic sheets, 2.9, 15.6, 2.9 and 0.4. Transitions between stroke groups with the mouse are five times as many, pauses from 0.4 s three and a half times as many;
-  - a policy of pauses from 0.4 s would cost about $0.69 per sheet with Opus, not $0.15 as on the synthetic sheets. Data for В40 of table 3 of [RUN.md](../RUN.md).
+  - a policy of pauses from 0.4 s would cost about $0.69 per sheet with Opus, not $0.15 as on the synthetic sheets. Data for В40.
 - **What this means.** On the author's live handwriting, with the mouse:
   - Opus judges right all 36 times and reads 2 sheets of 3 — the third it did not read, having found several results on it;
   - Haiku · `low` is almost as reliable, and Haiku without thinking gives a false alarm on half of the answers;
@@ -786,15 +776,15 @@ The estimate of "Hint":
 
   Three sheets are data, not a measurement: the threshold and the conclusions are on the handwriting of adult volunteers (П-16).
 
-### 3.7. Workbook: estimate, criterion and result
+### 3.7. Workbook: estimate, criterion and result, 2026-10-28
 
-From architecture 3.4: the estimate of "Reading the slots", «Критерий тетради» and «Итог замера тетради» (R102; T133). The set and the call kind `workbook` are in architecture 3.4.
+How the set and the call kind `workbook` are built is in [architecture.md](architecture.md).
 
 The estimate of "Reading the slots":
 
 - **The estimate** on the stub: the dev part — 5 pages, 70 calls, about $0.33; the test with heights — 15 pages, 300 calls, about $1.04. On the stub, every box's verdict matches the page's truth.
 
-**Criterion of the workbook** (T80; written down on 2026-10-28, before the first run). The report is `report.NewWorkbook`, by a journal of kind `workbook`. There is no threshold: the report measures, for each configuration, and the rule about the item's text is written down before the run.
+**Criterion of the workbook** (written down on 2026-10-28, before the first run). The report is `report.NewWorkbook`, by a journal of kind `workbook`. There is no threshold: the report measures, for each configuration, and the rule about the item's text is written down before the run.
 - **The unit** is a box's reading in a call, in all repeats. The truth is the box's verdict by what is written in it, with the trap ([workbook.md](workbook.md)). An empty box does not go to the model, and its reading is always right: its scenario is checked by code, not by the model.
 - **The measures** — at 32 px, in each condition, in all and separately by scenario, by kind of check — a number, a fraction of any notation, an irreducible one — and by how the fraction is written, stacked and in a line:
   - **right** — the reading's verdict and its trap are the same as the box's;
@@ -804,13 +794,13 @@ The estimate of "Reading the slots":
   - **extra "unreadable"** — on a filled box, and "unchecked" — a failure, a missing or a doubled slot — is counted with it; the share is among the filled boxes.
 
   Each share has a 95 % upper bound by page, Clopper–Pearson on n / Deff, as for reading a sheet (measurements 1.6). The same by item: right, false "correct" and false alarm of the item.
-- **The item's text** — the label against the crops alone, for each configuration, paired by page, over all repeats. A page's d is the mean number of errors of a call with the label minus without it. The errors are false "correct", false alarm, extra "unreadable" and "unchecked". The test is an exact one-sided sign-permutation test by page, at p < 0.05. **The rule written down before the run** (T80): a false "correct" that occurs only with the label — on a box where without the label it occurs in no repeat — means that the item's text does not go into the reading of a slot. The item's text helps only if there are fewer errors with the label at p < 0.05 and there is no such box. Otherwise "it is not shown that the text helps", and the label from `api` is not needed (the 2026-10-27 amendment to R53 spec). *2026-10-28 (T80, review): a page's d is computed over the repeats read in both conditions — errors with the label minus without it. On a full run this is the mean multiplied by the number of repeats, and the p are the same.*
-- **Heights** — 16, 24 and 48 px against 32 px, without the label, the first repeat, for both Haikus, paired by page — the rule of T72: a page's d is the errors at the height minus at 32 px. A height is no worse if the test finds no worsening at p < 0.05 and there is no box with a false "correct" at the height where at 32 px there was none. The workbook gives no advice to `spec`: the data are for В39.
-- **The dev part** — pages 1–5, no more than two rounds. The prompt is edited only if an error from its words repeats for a model that follows the prompt, as for the judge, reading and the hint (T66, T73, T76). Then version 1 is frozen by a fingerprint test.
+- **The item's text** — the label against the crops alone, for each configuration, paired by page, over all repeats. A page's d is the errors with the label minus without it, over the repeats read in both conditions: on a full run, the mean number of errors of a call times the number of repeats, with the same p. The errors are false "correct", false alarm, extra "unreadable" and "unchecked". The test is an exact one-sided sign-permutation test by page, at p < 0.05. **The rule written down before the run:** a false "correct" that occurs only with the label — on a box where without the label it occurs in no repeat — means that the item's text does not go into the reading of a slot. The item's text helps only if there are fewer errors with the label at p < 0.05 and there is no such box. Otherwise "it is not shown that the text helps", and the label from `api` is not needed.
+- **Heights** — 16, 24 and 48 px against 32 px, without the label, the first repeat, for both Haikus, paired by page, by the rule of the heights in reading: a page's d is the errors at the height minus at 32 px. A height is no worse if the test finds no worsening at p < 0.05 and there is no box with a false "correct" at the height where at 32 px there was none. The workbook gives no advice to `spec`: the data are for В39.
+- **The dev part** — pages 1–5, no more than two rounds. The prompt is edited only if an error from its words repeats for a model that follows the prompt, as for the judge, reading and the hint. Then version 1 is frozen by a fingerprint test.
 - **The test** — pages 6–20: at 32 px with the label and without, Haiku three repeats each, Opus once each; heights once each. The day's prices are checked against the Pricing page before the run.
-- **The ceilings** — $2 for the dev part and $4 for the test: above the plan's $3, but within the $100 that the author named for T78–T81 (R40).
+- **The ceilings** — $2 for the dev part and $4 for the test, within the $100 for the workbook's runs.
 
-**Result of the measurement of the workbook** (T80, 2026-10-28; R42). The day's prices were checked against the Pricing page the same day, before the runs: Haiku 5.5 — $0.10 and $0.50, Opus 5.5 — $4 and $20 per 1 million tokens, as in sources 1.3. The journals and reports are `synthetic/runs/t80-dev-1.*` and `t80-test.*`, outside git.
+**Result of the measurement of the workbook** (2026-10-28). The day's prices were checked against the Pricing page the same day, before the runs: Haiku 5.5 — $0.10 and $0.50, Opus 5.5 — $4 and $20 per 1 million tokens, as in sources 1.3. The journals and reports are `synthetic/runs/t80-dev-1.*` and `t80-test.*`, outside git.
 - **The dev part** — pages 1–5, one round: 70 calls, $0.24, no failures. No configuration has a false "correct". The errors are in mirrored digits and crossed-out ones, and none comes from the prompt's words: a mirrored 5 looks like 2, and 2 like 5, and a single crossed-out digit is read together with the new one. The prompt is frozen at version 1 without edits, prompt fingerprint `40a9244b…`, `TestFrozenV1`.
 - **The test** — pages 6–20: 300 calls, $0.72 with a ceiling of $4, no failures. Opus — about $0.020 per page, Haiku · `low` — $0.0006, Haiku without thinking — $0.0004. The input is about 1,700 tokens, 640 of them crops.
 - **Without the label, at 32 px** (right / false "correct" / false alarms / extra "unreadable"):
@@ -827,32 +817,32 @@ The estimate of "Reading the slots":
   - **crossed out** — right for Opus 11 of 15, for Haiku · `low` 31 of 45, for Haiku without thinking 21 of 45. A single digit under a short stroke is read together with the new one: "73", "23". That is how the synthetic sheets draw the stroke: a live child crosses out otherwise, and the error comes partly from the drawing;
   - **a stacked fraction** — for Haiku · `low`, extra "unreadable" 16 of 99 against 5 of 99 in a line. A "3/4" written in a line is read as it should be, and stacked too: for Opus right 27 of 33 and 29 of 33.
 - **Items** — without the label no one has a false "correct" of an item. False alarms of an item: for Opus 8 of 108, for Haiku · `low` 9 of 324, for Haiku without thinking 20 of 324.
-- **The item's text** — the label against the crops alone, over all repeats. Errors without the label and with it: for Opus 22 and 17, p better with the label 0.063; for Haiku · `low` 64 and 56, p 0.14; for Haiku without thinking 96 and 55, p 0.0002. But Haiku without thinking has with the label one false "correct" that is not there without the label: a quotient written as "3" instead of 4, in the line «… = [ ] (ост. [ ])», was read as 4. **By the rule written down before the run, the item's text does not go into the reading of a slot.** For Opus and Haiku · `low`, "it is not shown that it helps". This is what the 2026-10-27 amendment to R53 spec requires: there is no label from `api`. Row В47 «в реестр spec».
+- **The item's text** — the label against the crops alone, over all repeats. Errors without the label and with it: for Opus 22 and 17, p better with the label 0.063; for Haiku · `low` 64 and 56, p 0.14; for Haiku without thinking 96 and 55, p 0.0002. But Haiku without thinking has with the label one false "correct" that is not there without the label: a quotient written as "3" instead of 4, in the line «… = [ ] (ост. [ ])», was read as 4. **By the rule written down before the run, the item's text does not go into the reading of a slot.** For Opus and Haiku · `low`, "it is not shown that it helps". This is what `spec` requires: there is no label from `api`. Row В47 «в реестр spec».
 - **Heights** — for both Haikus 16, 24 and 48 px are no worse than 32 px: errors at 16 px 16 and 22 against 20 and 32 at 32 px, no new false "correct". Data for В39.
 - **What this means:**
   - on the neat synthetic sheets of the workbook, no model without the label gave a false "correct" — neither on an error nor on a near key;
-  - the false alarms are almost all on mirrored digits and crossed-out ones. The success criterion of the first slice aims at the goal of canvas-api — no more than 1 % false alarms (product 10 spec) —, and on mirrored digits no model holds it: row В48 «в реестр spec»;
+  - the false alarms are almost all on mirrored digits and crossed-out ones. The success criterion of the first slice aims at the goal carried over from MathTrail — no more than 1 % false alarms —, and on mirrored digits no model holds it: row В48 «в реестр spec»;
   - Haiku · `low` reads the workbook almost as Opus does, 30 times cheaper.
 
-  The handwriting is synthetic: neat, without the pressure of a child's hand. The threshold and the conclusions are on the workbook samples of volunteers (П-16; Д18 RUN.md `spec`).
+  The handwriting is synthetic: neat, without the pressure of a child's hand. The threshold and the conclusions are on the workbook samples of volunteers (П-16; row Д18 of `spec`).
 
-### 3.8. Essays: criterion and result
+### 3.8. Essays: criterion and result, 2026-10-28
 
-From architecture 3.4: «Критерий сочинений» and «Итог замера сочинений» (R102; T133). The set and the call kind `essay` are in architecture 3.4.
+How the set and the call kind `essay` are built is in [architecture.md](architecture.md).
 
-**Criterion of the essays** (T83; written down on 2026-10-28, before the first run). The report is `report.NewEssays`, by a journal of kind `essay`. There is no threshold: О-22 has no goal in the first slice, and the goal will be set by the measurement on the essays of adult volunteers (П-16).
+**Criterion of the essays** (written down on 2026-10-28, before the first run). The report is `report.NewEssays`, by a journal of kind `essay`. There is no threshold: О-22 has no goal in the first slice, and the goal will be set by the measurement on the essays of adult volunteers (П-16).
 - **The unit** is a criterion's assessment in a call, in all repeats. The truth is the plan ([essays.md](essays.md)). A criterion without an assessment goes into no share and is counted separately.
 - **The main measure of О-22** is the false alarm: "not met" on a met criterion. The share is among the assessments of met criteria, in all and by criterion, with a 95 % upper bound by essay, Clopper–Pearson on n / Deff, as for reading a sheet (measurements 1.6).
 - **The second measure** is agreement with the plan's truth by criterion: the share of matching assessments and Cohen's kappa, over all assessments of the criterion in all repeats. Beside it, a missed "not met": "met" on an unmet criterion, among the assessments of unmet ones.
 - **Stability** — of an essay's criteria assessed at least twice, those that the repeats assessed differently.
 - **Reading** — errors by word: the edit distance in words between the essay, the title and the text, and what the model read, ignoring case and the marks around words, among the essay's words. Beside it, which of the learner's errors the model read as written: misspelled words, lowercase letters at the start of a sentence and a last sentence without a mark. A reading that corrected a learner's error can give a false "met" on spelling or capitals, and the report shows that beside the assessments.
-- **Feedback** — breaches of the rule by kind: sentences, words, quotation and letter — the mean and the largest length in words. The third file of the report, `.feedback.md`, is the feedback of the first repeat of the first assessor, Opus, with the criteria unmet by the plan and the assessments that diverged from the plan, for the author (T84).
-- **The dev part** — essays 1–5, one repeat each, no more than two rounds. The prompt is edited only if an error from its words repeats for a model that follows the prompt, as for the judge, reading, the hint and the workbook (T66, T73, T76, T80). Then version 1 is frozen by a fingerprint test.
-- **The test** — essays 6–20, three configurations with three repeats each, Opus too (R45). The day's prices are checked against the Pricing page before the run.
+- **Feedback** — breaches of the rule by kind: sentences, words, quotation and letter — the mean and the largest length in words. The third file of the report, `.feedback.md`, is the feedback of the first repeat of the first assessor, Opus, with the criteria unmet by the plan and the assessments that diverged from the plan, for the author.
+- **The dev part** — essays 1–5, one repeat each, no more than two rounds. The prompt is edited only if an error from its words repeats for a model that follows the prompt, as for the judge, reading, the hint and the workbook. Then version 1 is frozen by a fingerprint test.
+- **The test** — essays 6–20, three configurations with three repeats each, Opus too. The day's prices are checked against the Pricing page before the run.
 - **The estimate** on the stub: the dev part — 15 calls per round, about $0.27; the test — 135 calls, about $2.37. An Opus call is about $0.05.
-- **The ceilings** — $3 for the dev part and $8 for the test: above the $2 of the body of T84, but within the $100 that the author named for T82–T85 (R44).
+- **The ceilings** — $3 for the dev part and $8 for the test, within the $100 for the essays' runs.
 
-**Result of the measurement of essays** (T84, 2026-10-28; R45, amendment 2026-10-28). The day's prices were checked against the Pricing page the same day, before the runs: Haiku 5.5 — $0.10 and $0.50, Opus 5.5 — $4 and $20 per 1 million tokens, as in sources 1.3. The journals and reports are `synthetic/runs/t84-dev-1.*`, `t84-dev-2.*` and `t84-test.*`, outside git.
+**Result of the measurement of essays** (2026-10-28). The day's prices were checked against the Pricing page the same day, before the runs: Haiku 5.5 — $0.10 and $0.50, Opus 5.5 — $4 and $20 per 1 million tokens, as in sources 1.3. The journals and reports are `synthetic/runs/t84-dev-1.*`, `t84-dev-2.*` and `t84-test.*`, outside git.
 - **The dev part** — essays 1–5, two rounds of one repeat: 30 calls, $0.31, no failures.
   - In the first round, for both Haikus the assessment contradicted their own evidence: "there are three sentences … fewer than five" — and "met". In the schema `met` stood before `evidence`, and the model gave the assessment before it reasoned. The error repeated for two models and came from the prompt's design, so in the second round `evidence` stands before `met`, and the instruction says that the assessment follows from the evidence.
   - In the second round all three configurations assessed all 30 criteria right. An Opus feedback of 70 words is one error, not a repeating one, and there was no edit.
@@ -867,7 +857,7 @@ From architecture 3.4: «Критерий сочинений» and «Итог з
 
   A false alarm is the main measure of О-22: a criterion called unmet though it is met. The bound is the upper 95 % by essay. "Repeats diverged" are an essay's criteria that the three repeats assessed differently.
 - **Where the errors are:**
-  - **false alarms** — only on the criterion "capitals and full stops" and only for Haiku. In essay 7, "because every book" inside a sentence was taken for the start of a new one. In essay 11, "One" was read with a lowercase letter: in the synthetic sheets a capital O is written as a lowercase one, only larger (R43). For an unmet criterion the truth avoids such letters (R44), but a met one may begin with them too;
+  - **false alarms** — only on the criterion "capitals and full stops" and only for Haiku. In essay 7, "because every book" inside a sentence was taken for the start of a new one. In essay 11, "One" was read with a lowercase letter: in the synthetic sheets a capital O is written as a lowercase one, only larger. For an unmet criterion the truth avoids such letters, but a met one may begin with them too;
   - **a miss** — for Haiku without thinking, five sentences were counted in essay 14 instead of four;
   - **without an assessment** — Opus in one call assessed the title twice.
 - **Reading** — not one error in words for each configuration: 0 of 2,979. All the learner's errors were read as written: 24 of 24 misspelled words, 12 of 12 lowercase letters at the start of a sentence, 3 of 3 last sentences without a full stop.
@@ -879,68 +869,72 @@ From architecture 3.4: «Критерий сочинений» and «Итог з
 
   The handwriting is synthetic, neat and legible, and the criteria have no disputable cases. The goal of О-22 and the eval set are on the essays of adult volunteers (П-16). Row В49 «в реестр spec».
 
-### 3.9. Conclusions of E4
+### 3.9. Conclusions of the measurements of the capabilities, 2026-10-28
 
-From architecture 3.4, «Выводы E4» (R102; T133).
+**Conclusions.** The answer to each question of the plan is by its criterion, written down before the run. Everything that goes beyond `tutor` went to `spec` as rows «в реестр spec».
 
-**Conclusions of E4** (T85, 2026-10-28; R46, R47, R48). The answer to each question of the epic is by its criterion, written down before the run. The author's decisions were given on 2026-10-28 when T82 was planned. Everything that goes beyond `tutor` is rows of table 3 of [RUN.md](../RUN.md) «в реестр spec».
-
-| Question | Criterion | Answer | Decision and row |
+| Question | Criterion | Answer | What `tutor` chose, and the row |
 |---|---|---|---|
-| does the course of writing help judge free writing (R27; R52 spec) | measurements 1.1: form D against A, p < 0.05 | **not shown** for any judge: Opus makes almost no errors without the course too, for Haiku p 0.094 and 0.123 (T66). Without a threshold the journal of parts helps a weak judge find an error in the drawing. On the author's three sheets — without a threshold, data (T77) | R27 stays, the author's decision (R27, amendment 2026-10-28); data for R52 spec — В50 |
-| Т-23: reading and solution analysis in one call or two | the threshold of R03, by model (T71) | the threshold is passed by all three configurations, but **the test has no power**: on no sheet did the reading with the key diverge from the reading without it. The key shifts Haiku toward "unreadable", and Opus toward nothing (T73) | two calls, the author's decision (R46); В37 |
-| Т-33: the rule of two readers | coverage and errors among agreeing readings, without a threshold (R08) | the pair of Opus with Haiku caught no errors — there were none for either reader —, and released 61 and 51 sheets of 68 (T73) | the rule of two readers of one provider, the author's decision (R47); В38 |
-| the default digit height (R51 spec) | the rule of T72: the smallest height no worse than 32 px | by the rule, **16 px**: 16 and 24 px are no worse than 32 px for both Haikus, and in the workbook too (T73, T80) | 24 px, the author's decision (R48); В39 |
-| О-8 and О-21: reading unfinished work | the two quantities of R10 (T72) | "correct" or "not yet" before the answer is written — after a line in 94 readings of 196, at a pause in 46 of 131; readings per sheet beyond the submission at pauses from 0.4 s — 15.6 on the synthetic sheets and 54 on the author's sheets (T73, T77) | read only on "Check" — the recommendation of В40 |
-| hints: leaks, form, place | observation without a threshold (T75) | Opus keeps the rules best of all; the leaks caught for it are the numbers of a simpler case, not the answer; the limit of 30 words is tight for English; Haiku repeats the learner's records and gives away the learner's gender (T76) | В43, В44, В45 |
-| workbook: reading of slots and the verdict | the criterion of T80, with the rule about the item's text | without the label no one has a false "correct"; the item's text does not go into the reading; the false alarms are on mirrored digits and crossed-out ones (T80) | В46, В47, В48 |
-| essays: assessment by the rubric (О-22) | the measure of R45, without a threshold | Opus — not one false alarm of 197, κ 1.00; Haiku — 1 and 2 of 198; reading without errors; the feedback limit of 60 words is tight for Opus (T84) | В49 |
+| does the course of writing help judge free writing | measurements 1.1: form D against A, p < 0.05 | **not shown** for any judge: Opus makes almost no errors without the course too, for Haiku p 0.094 and 0.123. Without a threshold the journal of parts helps a weak judge find an error in the drawing. On the author's three sheets — without a threshold, data | the work is still read by one final picture; data for `spec`'s ban on the course of writing going to AI — В50 |
+| Т-23: reading and solution analysis in one call or two | the threshold of one call, by model | the threshold is passed by all three configurations, but **the test has no power**: on no sheet did the reading with the key diverge from the reading without it. The key shifts Haiku toward "unreadable", and Opus toward nothing | two calls, until the threshold is passed on the handwriting of adult volunteers; В37 |
+| Т-33: the rule of two readers | coverage and errors among agreeing readings, without a threshold | the pair of Opus with Haiku caught no errors — there were none for either reader —, and released 61 and 51 sheets of 68 | the rule of two readers of one provider, a pair of Claude models; В38 |
+| the default digit height | the rule of the heights: the smallest height no worse than 32 px | by the rule, **16 px**: 16 and 24 px are no worse than 32 px for both Haikus, and in the workbook too | 24 px: live handwriting is smaller and less even than the synthetic sheets, and 24 px leave a margin; В39 |
+| О-8 and О-21: reading unfinished work | the two quantities of the plan | "correct" or "not yet" before the answer is written — after a line in 94 readings of 196, at a pause in 46 of 131; readings per sheet beyond the submission at pauses from 0.4 s — 15.6 on the synthetic sheets and 54 on the author's sheets | read only on "Check" — the recommendation of В40 |
+| hints: leaks, form, place | observation without a threshold | Opus keeps the rules best of all; the leaks caught for it are the numbers of a simpler case, not the answer; the limit of 30 words is tight for English; Haiku repeats the learner's records and gives away the learner's gender | В43, В44, В45 |
+| workbook: reading of slots and the verdict | the criterion of the workbook, with the rule about the item's text | without the label no one has a false "correct"; the item's text does not go into the reading; the false alarms are on mirrored digits and crossed-out ones | В46, В47, В48 |
+| essays: assessment by the rubric (О-22) | the false alarms on met criteria, without a threshold | Opus — not one false alarm of 197, κ 1.00; Haiku — 1 and 2 of 198; reading without errors; the feedback limit of 60 words is tight for Opus | В49 |
 
-- **The handwriting** is almost all synthetic: neat, legible, without the pressure of a child's hand. Live writing is the author's three sheets, with the mouse. So the thresholds and goals of E4 are not a model's admission: they are repeated on the samples of adult volunteers (П-16), and children's samples go to AI only by П-10.
-- **What E4 did not measure** — a pair of readers of different providers, handwritten injections, "explain differently" and voice (measurements 3.1).
+- **The handwriting** is almost all synthetic: neat, legible, without the pressure of a child's hand. Live writing is the author's three sheets, with the mouse. So the thresholds and goals of these measurements are not a model's admission: they are repeated on the samples of adult volunteers (П-16), and children's samples go to AI only by П-10.
+- **What was not measured** — a pair of readers of different providers, handwritten injections, "explain differently" and voice (measurements 3.1).
 - **Spending** — the pilot $1.12 and the runs $17.66, in all $18.78 (measurements 3.1).
 
-*2026-10-28 (T89; R49): `spec` `v0.3.2` recorded all the rows of this table. Т-23 is closed by R67 spec, Т-33 by R68 spec, О-8 by R69 spec, and О-21 is amended there and open in the part after a wrong answer. The digit height of 24 px is recorded by an amendment to R51 spec and will come with format version 0.2. Hints — R70 spec and an amendment to R57 spec: the leak check is strict. The workbook — amendments to R53 and R56 spec. Essays — R71 and R70 spec, and О-22 is closed. R52 spec stays as it is. Where each row went, [plan/questions.md](plan/questions.md) names.*
+`spec` `v0.3.2` recorded all the rows of this table:
+- Т-23, Т-33, О-8 and О-22 are closed: reading and analysis are two calls, reading is by two readers of one provider, and the work is read only on the learner's action. О-21 stays open in the part after a wrong answer;
+- the default digit height of 24 px comes with format version 0.2;
+- the model's words are checked by a program for their form too, and the leak check of hints is strict;
+- on the workbook the crop of each filled box goes to the check, the place in the observation is the answer slot, and the check belongs to each slot;
+- assessment by a rubric is measured by the false alarms and by agreement with people's assessment;
+- the ban on the course of writing going to AI stays as it is.
 
-### 3.10. Extended measurement: plan
+Where each row went, [plan/questions.md](plan/questions.md) names.
 
-From architecture 3.4, «Расширенный замер», with «Наборами T95» (R102; T133).
+### 3.10. Extended measurement: plan, 2026-10-28
 
-**The extended measurement** (T90; R50; recorded 2026-10-28, before the first run). E4 measured three configurations on small test parts. The extended measurement adds four configurations, a second path for essays, and sets of hundreds of sheets, pages and essays that code composes. It answers how the measures of E4 change for other configurations of Claude and on more sheets, and what follows from that is for the choice of the reader pair (R68 spec) and for T46. There are no thresholds, except the R03 threshold per model: the synthetic sheets give no admission (R67, R68, R71 spec; П-16).
+**The extended measurement** (recorded 2026-10-28, before the first run). The plan of 2026-10-26 measured three configurations on small test parts. The extended measurement adds four configurations, a second path for essays, and sets of hundreds of sheets, pages and essays that code composes. It answers how those measures change for other configurations of Claude and on more sheets, and what follows from that is for the choice of the reader pair and for whether assessment by a rubric is one call or two. There are no thresholds, except the threshold of one call per model: the synthetic sheets give no admission (П-16).
 
 - **Configurations:**
-  - E4 — `opus-high`, `haiku-low`, `haiku-low-no-thinking`;
+  - of the plan of 2026-10-26 — `opus-high`, `haiku-low`, `haiku-low-no-thinking`;
   - new — `opus-medium` (Opus 5.5 · `medium`), `sonnet-low` (Sonnet 5.5 · `low`), `sonnet-low-no-thinking` (Sonnet 5.5 · `low` without thinking) and `haiku-medium` (Haiku 5.5 · `medium`).
 
-  A run asks the configurations named by the flag `-readers`, and without the flag, the three of E4. Opus reads once, as in E4. Prices of 2026-10-28 from the Pricing page, per 1 million tokens: Opus 5.5 — $4 and $20, Sonnet 5.5 — $2 and $10, Haiku 5.5 — $0.10 and $0.50 (sources 1.3).
-- **Measures** — the same as in E4, and the same reports:
+  A run asks the configurations named by the flag `-readers`, and without the flag, those three. Opus reads once, as before. Prices of 2026-10-28 from the Pricing page, per 1 million tokens: Opus 5.5 — $4 and $20, Sonnet 5.5 — $2 and $10, Haiku 5.5 — $0.10 and $0.50 (sources 1.3).
+- **Measures** — the same as before, and the same reports:
   - reading:
-    - the R03 threshold per model;
+    - the threshold of one call per model;
     - false "correct", false alarms and extra "unreadable" without the key at 32 px;
     - reader pairs — Opus with each fast reader: how many are released and how many errors among those released;
     - heights of 16, 24 and 48 px against 32 px — for the readers that do not read once;
-  - hints — leaks before the check, place and form, and form also by the limits of R70 spec: 30 words in Russian and 35 in English;
+  - hints — leaks before the check, place and form, and form also by the limits of `spec`: 30 words in Russian and 35 in English;
   - workbook — without a label at 32 px (`-reads bare`): false "correct", false alarms and extra "unreadable", with mirrored and crossed-out digits on a separate row;
   - essays:
-    - the measure of R71 spec — false alarms on met criteria, agreement and κ;
+    - the measures of `spec` — false alarms on met criteria, agreement and κ;
     - reading;
-    - feedback — by the rule of the measurement and by the 80 words of R70 spec;
+    - feedback — by the rule of the measurement and by the 80 words of `spec`;
   - each rate has its 95% upper bound by sheets, pages or essays, Clopper–Pearson on n / Deff. Where there are no errors, on 300 sheets it is about 1%, and on 68 about 4%.
-- **T91** — the test parts of E4, one repeat, and the essays three, as in T84:
-  - reading — `-reads keys,heights`, in one run log together with the pair of R68 spec, `opus-high` and `haiku-low`, so that the pairs with the new readers are counted on the same sheets;
+- **The new configurations** — the test parts of the plan of 2026-10-26, one repeat, and the essays three, as in their measurement:
+  - reading — `-reads keys,heights`, in one run log together with the reader pair of `spec`, `opus-high` and `haiku-low`, so that the pairs with the new readers are counted on the same sheets;
   - workbook — `-reads bare`;
   - the stub estimate of 2026-10-28 — about $18: reading $8.14, hints $5.63, workbook $0.75, essays $3.72;
   - the ceiling — $30, and each run has its own `-max-usd`: reading $11, hints $9, workbook $2, essays $8.
-- **The selection rule for T95** (recorded before T91). T95 takes the pair of R68 spec — `opus-high` and `haiku-low` — and the new configurations that in T91:
-  1. gave not a single false "correct" without the key at 32 px — neither in reading nor in the workbook. Reading with the key does not count here: the R03 threshold measures it;
+- **The selection rule for the big run** (recorded before the run of the new configurations). The big run takes the reader pair of `spec` — `opus-high` and `haiku-low` — and the new configurations that in the run of the new configurations:
+  1. gave not a single false "correct" without the key at 32 px — neither in reading nor in the workbook. Reading with the key does not count here: the threshold of one call measures it;
   2. gave false alarms and extra "unreadable" without the key at 32 px in reading, together, no more than `haiku-low` on the same sheets.
 
-  Those that pass are taken in order of rising cost per call by the T91 estimate, while the T95 estimate fits within the ceiling of $100. If none passes, T95 runs on the pair of R68 spec and the one of the new ones that has the fewest false "correct", false alarms and extra "unreadable" without the key at 32 px — in reading and the workbook together.
-- **The sets of T95** (T93; recorded 2026-10-28, before the run). A generator composes them, and the truth of each sheet holds by construction:
-  - **lines** — five plans of 60 sheets: `eval/lines-gen-1.json` … `lines-gen-5.json`, each with its own bank of 10 tasks, seeds 1–5. 300 sheets in all, drawn with seed 1 into `synthetic/lines-gen-1` … `lines-gen-5`. The tasks are chains `a + b − c × d` and equations `ax + b = c` and `ax − b = cx + d`, in turn, and the numbers come from the seed. Six sheets per task: a correct one, an error by each of the two traps, a corrected erasure, a spoiled erasure and a second correct solution — shorter for a chain, with a check after the answer for an equation. For 10 tasks — 14 correct sheets, 20 with an error, 10 with each erasure and 6 with the answer not last; the E2 plan of 40 sheets has 12, 12, 7 each and 2. A plan holds no more than 99 sheets: the sheet number in the file name is two digits (`sample.MaxSheets`), so there are five plans;
-  - **near key** — one plan of 40 sheets, `eval/near-gen.json`, for 20 tasks with a key whose last digit is from a pair of similar ones. The task's false key is the near key, as in T70. The plan is drawn four times with the same seed and a shift fraction of 0.1, 0.2, 0.3 and 0.4 — `synthetic/near-gen-10` … `near-gen-40`. The sheets are the same at every shift, and the power of the Т-23 threshold is compared across shifts pairwise, as when the fraction was chosen in T73.
-  - **workbook** — `eval/workbook-gen.json`, 300 pages, seed 1. Each page has the ten items of E4, in its order, with the same kinds of lines and checks, and the numbers come from the seed. Of a page's 11 boxes, three are mirrored digits, two are crossed out and written again, one each is an error, a near key, a similar digit and empty, and two are correct. Mirrored and crossed-out together: 1500 of 3300 boxes, 45.5%, and in E4, 40 of 220, 18.2%. Stacked fractions and inline fractions come in equal numbers. The dev part takes the first 20 pages, the test part 280;
-  - **essays** — `eval/essays-gen.json`, 300 essays, seed 1, with the E4 rubric word for word. The texts are assembled from banks of sentences on 22 invented topics, and each unmet criterion gives its own transformation:
+  Those that pass are taken in order of rising cost per call by the estimate of the run of the new configurations, while the estimate of the big run fits within the ceiling of $100. If none passes, the big run takes the reader pair of `spec` and the one of the new ones that has the fewest false "correct", false alarms and extra "unreadable" without the key at 32 px — in reading and the workbook together.
+- **The sets of the big run** (recorded 2026-10-28, before the run). A generator composes them, and the truth of each sheet holds by construction:
+  - **lines** — five plans of 60 sheets: `eval/lines-gen-1.json` … `lines-gen-5.json`, each with its own bank of 10 tasks, seeds 1–5. 300 sheets in all, drawn with seed 1 into `synthetic/lines-gen-1` … `lines-gen-5`. The tasks are chains `a + b − c × d` and equations `ax + b = c` and `ax − b = cx + d`, in turn, and the numbers come from the seed. Six sheets per task: a correct one, an error by each of the two traps, a corrected erasure, a spoiled erasure and a second correct solution — shorter for a chain, with a check after the answer for an equation. For 10 tasks — 14 correct sheets, 20 with an error, 10 with each erasure and 6 with the answer not last; the plan of the lines, of 40 sheets, has 12, 12, 7 each and 2. A plan holds no more than 99 sheets: the sheet number in the file name is two digits (`sample.MaxSheets`), so there are five plans;
+  - **near key** — one plan of 40 sheets, `eval/near-gen.json`, for 20 tasks with a key whose last digit is from a pair of similar ones. The task's false key is the near key, as in the near-key set. The plan is drawn four times with the same seed and a shift fraction of 0.1, 0.2, 0.3 and 0.4 — `synthetic/near-gen-10` … `near-gen-40`. The sheets are the same at every shift, and the power of the Т-23 threshold is compared across shifts pairwise, as when the fraction was chosen in the reading measurement.
+  - **workbook** — `eval/workbook-gen.json`, 300 pages, seed 1. Each page has the ten items of the first workbook, in its order, with the same kinds of lines and checks, and the numbers come from the seed. Of a page's 11 boxes, three are mirrored digits, two are crossed out and written again, one each is an error, a near key, a similar digit and empty, and two are correct. Mirrored and crossed-out together: 1500 of 3300 boxes, 45.5%, and in the first workbook, 40 of 220, 18.2%. Stacked fractions and inline fractions come in equal numbers. The dev part takes the first 20 pages, the test part 280;
+  - **essays** — `eval/essays-gen.json`, 300 essays, seed 1, with the rubric of the first essays word for word. The texts are assembled from banks of sentences on 22 invented topics, and each unmet criterion gives its own transformation:
     - there is no title;
     - the sentences are merged down to three or four;
     - one or two sentences start with a lowercase letter that does not look like its capital, or the last has no full stop;
@@ -948,12 +942,12 @@ From architecture 3.4, «Расширенный замер», with «Набор�
     - 2–3 frequent words from a closed list are misspelled;
     - the title and the body are from another topic.
 
-    Each criterion is unmet in a quarter of the essays: in 5 of 20 in the dev part and in 70 of 280 in the test part. All six are met by 4 and 56. Words: 40–75; sentences: 3–8. Not a word is written by a model: the truth of "on topic" and "spelling" holds by construction. An "off topic" essay takes its body from another invented topic, not from an everyday one as in E4, and only proofreading will check this truth.
+    Each criterion is unmet in a quarter of the essays: in 5 of 20 in the dev part and in 70 of 280 in the test part. All six are met by 4 and 56. Words: 40–75; sentences: 3–8. Not a word is written by a model: the truth of "on topic" and "spelling" holds by construction. An "off topic" essay takes its body from another invented topic, not from an everyday one as in the first essays, and only proofreading will check this truth.
 
-  Both files are written by `tutor-eval gen workbook|essays`, and the same call writes them again byte for byte (T94).
-- **T92** — essays in two calls: the dev part in no more than two rounds, then a freeze by a fingerprint test; the test part — 15 essays, three repeats each; ceilings — $3 and $7.
-- **T95** — the sets of T93 and T94, one repeat, for the configurations by the rule above; the ceiling — $100.
-- **T97** — the plan `eval/free-messy.json` — six correct sheets and four with an error by a trap of the bank, each as one part «свободное решение целиком»; the author writes the sheets with the recipe `just messy-record` into `samples/free-messy`. The author's ten sheets go without a threshold: the judge, forms A and D, and reading without the key and with it, for the configurations of E4 and those chosen by the rule above; the ceiling — $10.
+  Both files are written by `tutor-eval gen workbook|essays`, and the same call writes them again byte for byte.
+- **Essays in two calls** — the dev part in no more than two rounds, then a freeze by a fingerprint test; the test part — 15 essays, three repeats each; ceilings — $3 and $7.
+- **The big run** — these sets, one repeat, for the configurations by the rule above; the ceiling — $100.
+- **The author's ten sheets** — the plan `eval/free-messy.json` — six correct sheets and four with an error by a trap of the bank, each as one part «свободное решение целиком»; the author writes the sheets with the recipe `just messy-record` into `samples/free-messy`. The author's ten sheets go without a threshold: the judge, forms A and D, and reading without the key and with it, for the three configurations of the plan of 2026-10-26 and those chosen by the rule above; the ceiling — $10.
 
 ### 3.11. New configurations, two essay calls and the author's ten sheets
 
