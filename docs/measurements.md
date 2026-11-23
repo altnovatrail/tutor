@@ -949,12 +949,10 @@ Where each row went, [plan/questions.md](plan/questions.md) names.
 - **The big run** — these sets, one repeat, for the configurations by the rule above; the ceiling — $100.
 - **The author's ten sheets** — the plan `eval/free-messy.json` — six correct sheets and four with an error by a trap of the bank, each as one part «свободное решение целиком»; the author writes the sheets with the recipe `just messy-record` into `samples/free-messy`. The author's ten sheets go without a threshold: the judge, forms A and D, and reading without the key and with it, for the three configurations of the plan of 2026-10-26 and those chosen by the rule above; the ceiling — $10.
 
-### 3.11. New configurations, two essay calls and the author's ten sheets
+### 3.11. New configurations, two essay calls and the author's ten sheets, 2026-10-28 and 29
 
-From architecture 3.4: «Итог новых конфигураций», «Итог двух вызовов сочинений» and «Итог десяти листов автора» (R102; T133).
-
-**The result of the new configurations** (T91, 2026-10-28; R50). The day's prices were checked against the Pricing page in T90 the same day. Run logs and reports — `synthetic/runs/t91-*`, outside git. The prompts — the frozen versions 1, the test parts of E4, one repeat, three for the essays. Four runs, no failures, $14.62 in all against a ceiling of $30: reading — $6.96, hints — $4.95, workbook — $0.48, essays — $2.23.
-- **Reading** — 68 sheets, in one run log with the pair of R68 spec. Without the key at 32 px (false "correct" / false alarms / extra "unreadable"):
+**The result of the new configurations** (2026-10-28). The day's prices were checked against the Pricing page the same day. Run logs and reports — `synthetic/runs/t91-*`, outside git. The prompts — the frozen versions 1, the test parts of the plan of 2026-10-26, one repeat, three for the essays. Four runs, no failures, $14.62 in all against a ceiling of $30: reading — $6.96, hints — $4.95, workbook — $0.48, essays — $2.23.
+- **Reading** — 68 sheets, in one run log with `spec`'s reader pair. Without the key at 32 px (false "correct" / false alarms / extra "unreadable"):
 
   | Configuration | Without the key | With the right key | Heights no worse than 32 px | Cost per call |
   |---|---|---|---|---|
@@ -965,37 +963,37 @@ From architecture 3.4: «Итог новых конфигураций», «Ит�
   | Sonnet without thinking | 0 / 0 / 5 | 0 / 0 / 2 | 16, 24 and 48 px | $0.0045 |
   | Haiku 5.5 · `medium` | 0 / 0 / 0 | 0 / 0 / 3 | 16, 24 and 48 px | $0.0004 |
 
-  The R03 threshold per model admits a single call for all, but again the test has no power: on no sheet did reading with the key differ from reading without it. The pairs of Opus with each fast reader release 64–67 sheets of 68 without a single error among those released; the most with Haiku · `medium`, 67.
+  The threshold of one call per model admits a single call for all, but again the test has no power: on no sheet did reading with the key differ from reading without it. The pairs of Opus with each fast reader release 64–67 sheets of 68 without a single error among those released; the most with Haiku · `medium`, 67.
 - **Hints** — 34 sheets, 204 hints per configuration:
 
-  | Configuration | Leak before the check | Form broken: by the measurement / by R70 spec | Fallback text | Box on the first error |
+  | Configuration | Leak before the check | Form broken: by the measurement / by `spec`'s form check | Fallback text | Box on the first error |
   |---|---|---|---|---|
   | Opus 5.5 · `medium` | 3 | 43 / 5 | 45 | 198 |
   | Sonnet 5.5 · `low` | 18 | 52 / 18 | 64 | 184 |
   | Sonnet without thinking | 17 | 62 / 25 | 75 | 178 |
   | Haiku 5.5 · `medium` | 15 | 21 / 15 | 34 | 186 |
 
-  Opus 5.5 · `high` in E4 had 6 leaks and 25 form violations (measurements 3.6). The R70 spec limit of 35 words in English removes almost all violations for Opus · `medium`, while for Sonnet and Haiku · `medium` the violations are not only length.
-- **Workbook** — 15 pages without a label, at 32 px: 145, 148, 151 and 144 readings of 165 correct for Opus · `medium`, Sonnet · `low`, Sonnet without thinking and Haiku · `medium`. No one has a false "correct", false alarms are 10, 9, 8 and 6 of 120, and extra "unreadable" 10, 8, 6 and 15 of 150. Opus · `high` in E4 had 143, 0, 9 and 13.
-- **Essays** — 15 essays, three repeats each. False alarms by the measure of R71 spec:
+  Opus 5.5 · `high` in the plan of 2026-10-26 had 6 leaks and 25 form violations (measurements 3.6). `spec`'s limit of 35 words in English removes almost all violations for Opus · `medium`, while for Sonnet and Haiku · `medium` the violations are not only length.
+- **Workbook** — 15 pages without a label, at 32 px: 145, 148, 151 and 144 readings of 165 correct for Opus · `medium`, Sonnet · `low`, Sonnet without thinking and Haiku · `medium`. No one has a false "correct", false alarms are 10, 9, 8 and 6 of 120, and extra "unreadable" 10, 8, 6 and 15 of 150. Opus · `high` in the plan of 2026-10-26 had 143, 0, 9 and 13.
+- **Essays** — 15 essays, three repeats each. False alarms by `spec`'s measure:
   - for Opus · `medium`, Sonnet · `low` and Haiku · `medium` — 0 of 198;
   - for Sonnet without thinking — 2 of 198, κ 0.98.
 
-  Haiku · `medium` missed one "not met" of 72. The feedback rule by R70 spec is broken by 2, 10, 13 and 0 feedback texts of 45 — Sonnet's by length. Reading — no errors for anyone.
-- **The selection for T95** — by the rule recorded before T91. No new configuration has a false "correct" without the key — neither in reading nor in the workbook. False alarms and extra "unreadable" in reading: Opus · `medium` — 1, both Sonnets — 5 each, Haiku · `medium` — 0, and Haiku · `low` — 5, so all four passed. The T95 estimate on the stub for each configuration, with all runs, essays in one call and in two:
-  - the pair of R68 spec — $65.90;
+  Haiku · `medium` missed one "not met" of 72. `spec`'s feedback rule is broken by 2, 10, 13 and 0 feedback texts of 45 — Sonnet's by length. Reading — no errors for anyone.
+- **The selection for the big run** — by the rule recorded before the run (measurements 3.10). No new configuration has a false "correct" without the key — neither in reading nor in the workbook. False alarms and extra "unreadable" in reading: Opus · `medium` — 1, both Sonnets — 5 each, Haiku · `medium` — 0, and Haiku · `low` — 5, so all four passed. The big run's estimate on the stub for each configuration, with all runs, essays in one call and in two:
+  - `spec`'s reader pair — $65.90;
   - Haiku · `medium` — $1.96;
   - Sonnet without thinking — $19.40;
   - Sonnet · `low` — $30.85;
   - Opus · `medium` — $64.32.
 
-  By cost, the ceiling of $100 takes the pair of R68 spec, Haiku · `medium` and Sonnet without thinking — $87.26. Sonnet · `low` would have brought the estimate to $118, and it does not go.
+  By cost, the ceiling of $100 takes `spec`'s reader pair, Haiku · `medium` and Sonnet without thinking — $87.26. Sonnet · `low` would have brought the estimate to $118, and it does not go.
 
-**The result of the two essay calls** (T92, 2026-10-29; R50). The first call reads the crop of the essay and writes down the text as it is written. The second assesses this text by the rubric without the picture: the essay's text goes in an `<essay>` block, as data. The prompts are taken from the frozen version 1 of the single call, in the same words where they fit. Run logs and reports — `synthetic/runs/t92-*`, outside git.
-- **The dev part** — essays 1–5, one round, $0.20 together with the first attempt, which the adapter rejected: it did not then let through a request without a picture. The three configurations of E4 have no errors — neither in reading, nor in assessment, nor in the feedback rule. There is nothing to fix the prompts for: version 1 is frozen, fingerprint `eb30d0f3…`, `TestFrozenTwoV1`.
-- **The test part** — 15 essays, three repeats each, $1.43 for the configurations of E4 and $0.56 for those chosen in T91, no failures:
+**The result of the two essay calls** (2026-10-29). The first call reads the crop of the essay and writes down the text as it is written. The second assesses this text by the rubric without the picture: the essay's text goes in an `<essay>` block, as data. The prompts are taken from the frozen version 1 of the single call, in the same words where they fit. Run logs and reports — `synthetic/runs/t92-*`, outside git.
+- **The dev part** — essays 1–5, one round, $0.20 together with the first attempt, which the adapter rejected: it did not then let through a request without a picture. The three configurations of the plan of 2026-10-26 have no errors — neither in reading, nor in assessment, nor in the feedback rule. There is nothing to fix the prompts for: version 1 is frozen, fingerprint `eb30d0f3…`, `TestFrozenTwoV1`.
+- **The test part** — 15 essays, three repeats each, $1.43 for the configurations of the plan of 2026-10-26 and $0.56 for those chosen by the run of the new configurations, no failures:
 
-  | Configuration | False alarms, two calls | One call (T84, T91) | κ | Feedback rule by R70 spec broken | Cost per essay | Time p50, s |
+  | Configuration | False alarms, two calls | One call (measurements 3.8, 3.11) | κ | `spec`'s feedback rule broken | Cost per essay | Time p50, s |
   |---|---|---|---|---|---|---|
   | Opus 5.5 · `high` | 0 of 198 | 0 of 197 | 1.00 | 2 of 45 | $0.030 | 11.9 |
   | Haiku 5.5 · `low` | 3 of 198 | 1 of 198 | 0.97 | 0 | $0.0006 | 4.3 |
@@ -1003,9 +1001,9 @@ From architecture 3.4: «Итог новых конфигураций», «Ит�
   | Haiku 5.5 · `medium` | 0 of 198 | 0 of 198 | 1.00 | 0 | $0.0008 | 5.8 |
   | Sonnet without thinking | 0 of 198 | 2 of 198 | 1.00 | 11 | $0.012 | 5.7 |
 
-  The words are read without errors by all, and there is no missed "not met". Two calls cost almost as much as one and take 0–2 s longer. The two calls have no more false alarms on the synthetic sheets than one: 3 against 5 for the five configurations together. The essay, as in E4, is synthetic, and for T46 this is input data, not a decision.
+  The words are read without errors by all, and there is no missed "not met". Two calls cost almost as much as one and take 0–2 s longer. The two calls have no more false alarms on the synthetic sheets than one: 3 against 5 for the five configurations together. The essay, as in the plan of 2026-10-26, is synthetic, and for the choice of one call or two for the rubric this is input data, not a decision.
 
-**The result of the author's ten sheets** (T97, 2026-10-29; R50). The author wrote the ten sheets of the plan `eval/free-messy.json` with a mouse, in free form and illegibly on purpose. All ten pass the check, and five have 19 erasures in the course of writing. The runs are the executor's, the run logs — `samples/runs/t97-*`, outside git, numbers only: the free-writing judge, forms A–D, and reading without the key and with it, for the configurations of E4, Haiku 5.5 · `medium` and Sonnet without thinking, once each. 305 calls, $1.03 against a ceiling of $10, no failures. The markup of the author's sheet is one part without an answer value, so "under the key" and "parts read as written" are not measured here, as in T77; verdicts are measured instead.
+**The result of the author's ten sheets** (2026-10-29). The author wrote the ten sheets of the plan `eval/free-messy.json` with a mouse, in free form and illegibly on purpose. All ten pass the check, and five have 19 erasures in the course of writing. The runs are the executor's, the run logs — `samples/runs/t97-*`, outside git, numbers only: the free-writing judge, forms A–D, and reading without the key and with it, for the configurations of the plan of 2026-10-26, Haiku 5.5 · `medium` and Sonnet without thinking, once each. 305 calls, $1.03 against a ceiling of $10, no failures. The markup of the author's sheet is one part without an answer value, so "under the key" and "parts read as written" are not measured here, as on the author's three sheets (measurements 3.6); verdicts are measured instead.
 - **Judge** — the benefit of the course of writing is shown for none. No one has a false "correct", on the four sheets with an error. False alarms on the six correct sheets (form A → D):
   - for Opus 5.5 · `high` and Haiku 5.5 · `low` — 0 → 0;
   - for Haiku without thinking — 4 → 4;
@@ -1017,16 +1015,14 @@ From architecture 3.4: «Итог новых конфигураций», «Ит�
   - for Haiku · `low` — 3;
   - for Haiku without thinking — 4.
 
-  With the right key there are fewer: 0, 0, 1, 1 and 1. On the synthetic sheets of E4, Haiku · `low` had 5 of 68 sheets, that is, Haiku · `low` reads illegible live writing noticeably worse than the even synthetic sheets. Haiku · `medium` and Opus read all ten sheets.
+  With the right key there are fewer: 0, 0, 1, 1 and 1. On the synthetic sheets of the plan of 2026-10-26, Haiku · `low` had 5 of 68 sheets, that is, Haiku · `low` reads illegible live writing noticeably worse than the even synthetic sheets. Haiku · `medium` and Opus read all ten sheets.
 - Ten sheets are data, not a criterion: the bounds at n = 10 are wide, and there is no threshold.
 
-### 3.12. Result of the big run
+### 3.12. Result of the big run, 2026-10-29
 
-From architecture 3.4, «Итог большого прогона» (R102; T133).
+**The result of the big run** (2026-10-29). The sets and the rule that chose the configurations are measurements 3.10. The configurations: Opus 5.5 · `high`, Haiku 5.5 · `low`, Haiku 5.5 · `medium` and Sonnet without thinking. One repeat, nine runs in parallel. Run logs and reports — `synthetic/runs/t95-*`, outside git. The runs: $68.50, no failures.
 
-**The result of the big run** (T95, 2026-10-29; R50). The sets — «Наборы T95», measurements 3.10. The configurations — by the rule of T90: Opus 5.5 · `high`, Haiku 5.5 · `low`, Haiku 5.5 · `medium` and Sonnet without thinking. One repeat, nine runs in parallel. Run logs and reports — `synthetic/runs/t95-*`, outside git. The runs: $68.50, no failures.
-
-The first attempt hit the workspace spending limit in the console, and almost all its calls were refused: $10.25 went on those that got through (`limited-t95-*`). After the author removed the limit, the runs started again. The near key at shifts 0.3 and 0.4 stopped the first time at the ceiling of $1.80: the runner keeps a reserve for the worst call of Opus. These two runs were repeated whole with a ceiling of $2.50, and the incomplete run logs were set aside (`short-t95-*`, $2.92). T95 in all — $81.67 against a ceiling of $100.
+The first attempt hit the workspace spending limit in the console, and almost all its calls were refused: $10.25 went on those that got through (`limited-t95-*`). After the author removed the limit, the runs started again. The near key at shifts 0.3 and 0.4 stopped the first time at the ceiling of $1.80: the runner keeps a reserve for the worst call of Opus. These two runs were repeated whole with a ceiling of $2.50, and the incomplete run logs were set aside (`short-t95-*`, $2.92). The big run in all — $81.67 against a ceiling of $100.
 
 - **Reading of the 300 sheets of lines** — no one has a false "correct" or false alarms: 0 of 150, bound ≤ 0.020. Extra "unreadable" without the key:
   - for Opus — 0 of 300;
@@ -1034,7 +1030,7 @@ The first attempt hit the workspace spending limit in the console, and almost al
   - for Haiku · `medium` — 10;
   - for Haiku · `low` — 41.
 
-  The R03 threshold holds for all, and the test still has no power: on no sheet did reading with the key differ from reading without it. The pairs of Opus with a fast reader release without errors 259 sheets of 300 with Haiku · `low`, 290 with Haiku · `medium` and 297 with Sonnet. Cost per call — $0.0083, $0.0002, $0.0003 and $0.0041.
+  The threshold of one call holds for all, and the test still has no power: on no sheet did reading with the key differ from reading without it. The pairs of Opus with a fast reader release without errors 259 sheets of 300 with Haiku · `low`, 290 with Haiku · `medium` and 297 with Sonnet. Cost per call — $0.0083, $0.0002, $0.0003 and $0.0041.
 - **The near key by shifts** — 40 sheets per shift, and the sheets are the same at every shift. Extra "unreadable" without the key, of 40:
 
   | Shift | Opus 5.5 · `high` | Haiku 5.5 · `low` | Haiku 5.5 · `medium` | Sonnet without thinking |
@@ -1044,7 +1040,7 @@ The first attempt hit the workspace spending limit in the console, and almost al
   | 0.3 | 13 | 21 | 12 | 19 |
   | 0.4 | 22 | 27 | 24 | 27 |
 
-  Up to the shift of 0.2 no one has false verdicts. At 0.3 Haiku · `low` with the right key has one false "correct" that it does not have without the key. At 0.4 the same holds for Haiku · `medium`, and without the key Haiku · `low` and Sonnet have one false "correct" each. These are the first differences between reading with the key and without it in the whole measurement: at shifts 0.3 and 0.4 the R03 threshold does not hold by the item with zero tolerance. Opus gave no false verdict at any shift, but at 0.4 it did not read more than half of the sheets.
+  Up to the shift of 0.2 no one has false verdicts. At 0.3 Haiku · `low` with the right key has one false "correct" that it does not have without the key. At 0.4 the same holds for Haiku · `medium`, and without the key Haiku · `low` and Sonnet have one false "correct" each. These are the first differences between reading with the key and without it in the whole measurement: at shifts 0.3 and 0.4 the threshold of one call does not hold by the item with zero tolerance. Opus gave no false verdict at any shift, but at 0.4 it did not read more than half of the sheets.
 - **Workbook, 300 pages** without a label — no one has a false "correct": 0 of 600, bound ≤ 0.005. The false alarms are almost all on two kinds of boxes:
   - mirrored digits — from 279 of 900 for Opus to 369 for Sonnet, 31–41%;
   - crossed out and written again — 93–104 of 600, about 16%.
@@ -1052,13 +1048,13 @@ The first attempt hit the workspace spending limit in the console, and almost al
   On boxes without peculiarities — correct ones and those with a similar digit — there are 0–1 alarms of 900. Correct readings: Opus 2466 of 3300, Sonnet 2494, Haiku · `medium` 2309, Haiku · `low` 2246.
 - **Hints** — 150 sheets with an error, 900 hints per configuration:
 
-  | Configuration | Leak before the check | Form: by the measurement / by R70 spec | Fallback text | Box on the first error |
+  | Configuration | Leak before the check | Form: by the measurement / by `spec`'s form check | Fallback text | Box on the first error |
   |---|---|---|---|---|
   | Opus 5.5 · `high` | 4 | 77 / 8 | 80 | 900 |
   | Haiku 5.5 · `low` | 153 | 76 / 46 | 221 | 891 |
   | Haiku 5.5 · `medium` | 126 | 56 / 29 | 175 | 898 |
   | Sonnet without thinking | 61 | 184 / 101 | 235 | 893 |
-- **Essays, 300**, in one call and in two (false alarms on met criteria / missed "not met" / feedback rule of R70 spec broken):
+- **Essays, 300**, in one call and in two (false alarms on met criteria / missed "not met" / `spec`'s feedback rule broken):
 
   | Configuration | One call | Two calls |
   |---|---|---|
@@ -1069,11 +1065,9 @@ The first attempt hit the workspace spending limit in the console, and almost al
 
   The bound of the false alarm rate is from ≤ 0.005 for Haiku · `medium` to ≤ 0.014. Words read wrongly: from 1 to 23 of 17,683. Two calls cost $13.13 against $12.61 in one.
 
-### 3.13. Time to read a sheet
+### 3.13. Time to read a sheet, 2026-11-08
 
-From architecture 3.4, «Время чтения листа» (R102; T133).
-
-**The time to read a sheet** (T115, 2026-11-08; R82; Д89, RUN.md of `spec`). The admission run on 60 of the author's sheets, 3 repeats each, reading prompt version 2 — the time of a call from sending to reply, as the runner writes it, 180 calls of each reader:
+**The time to read a sheet** (2026-11-08), which `spec` asked for. The admission run on 60 of the author's sheets, 3 repeats each, reading prompt version 2 — the time of a call from sending to reply, as the runner writes it, 180 calls of each reader:
 
 | Reader | p50 | p90 | largest |
 |---|---|---|---|
@@ -1083,44 +1077,43 @@ From architecture 3.4, «Время чтения листа» (R102; T133).
 
 The runner called the readers in turn, so the pair's time is an estimate: the larger of the two times of one sheet and repeat, as with parallel calls of `Tutor.ReadSheet`. This is the model's time, without the overhead of `api` and the network to the device.
 
-### 3.14. Conclusions of the extended measurement
+### 3.14. Conclusions of the extended measurement, 2026-10-29
 
-From architecture 3.4, «Выводы расширенного замера» (R102; T133).
-
-**The conclusions of the extended measurement** (T96, 2026-10-29; R50). The extended measurement — T90–T97, $99.50 against a budget of $150. Its synthetic sheets are even, and the author wrote ten sheets illegibly on purpose. So the conclusions are data for the choice and for T46, not admission: the thresholds and targets are measured again on the handwriting of adult volunteers (R67, R68, R71 spec; П-16).
+**The conclusions of the extended measurement** (2026-10-29). The extended measurement cost $99.50 against a budget of $150. Its synthetic sheets are even, and the author wrote ten sheets illegibly on purpose. So the conclusions are data for the choice of the reader pair and of one call or two for the rubric, not admission: the thresholds and targets are measured again on the handwriting of adult volunteers (П-16).
 
 | Question | What the measurement showed | Where it goes |
 |---|---|---|
-| The reader pair (R68 spec) | No pair of Opus with a fast reader has a false verdict — neither on the 68 sheets of E4 nor on the 300 sheets of lines. The pair with Haiku · `medium` releases the most: 67 of 68 and 290 of 300, against 64 and 259 for the pair with Haiku · `low`. Haiku · `medium` read all ten of the author's illegible sheets, while Haiku · `low` found three unreadable. The cost of Haiku · `medium` — $0.0003 per call against $0.0002 | В52 |
-| One call or two (R67 spec) | On even sheets the key shifts reading for no one, as in E4. On the near key at a digit shift of 0.3 and 0.4 it shifted reading toward a false "correct" for the first time: for Haiku · `low` and Haiku · `medium`, one sheet of 40 each. Opus gave no false verdict at any shift | В53 |
-| Mirrored digits (the 2026-10-28 amendment to R56 spec; product 10 spec) | On 900 mirrored boxes the false alarms of all four configurations are from 31 to 41%, on crossed-out ones about 16%, and on boxes without peculiarities 0–1 of 900. There is no false "correct": 0 of 600. No model reaches the target of 1% on mirrored digits | В54 |
-| Essays: one call or two (T46) | On 300 essays the two calls have no more false alarms than one: 26 against 28 for the four configurations together, and the cost is almost the same. The fewest are for Haiku · `medium` — 2 of 1350, bound ≤ 0.005 | the input of T46, [plan/E1.md](plan/E1.md) |
-| Hints (R70 spec) | The limits of R70 spec hardly touch Opus — 8 hints of 900 — and it has 4 leaks before the check of 900. Haiku has 126–153 of them, and the leak check sends them to the fallback text, as intended | — |
-| Digit height (the 2026-10-28 amendment to R51 spec) | The new configurations read at 16, 24 and 48 px no worse than at 32 px (T91). This does not change 24 px as the default | — |
+| The reader pair | No pair of Opus with a fast reader has a false verdict — neither on the 68 sheets of the plan of 2026-10-26 nor on the 300 sheets of lines. The pair with Haiku · `medium` releases the most: 67 of 68 and 290 of 300, against 64 and 259 for the pair with Haiku · `low`. Haiku · `medium` read all ten of the author's illegible sheets, while Haiku · `low` found three unreadable. The cost of Haiku · `medium` — $0.0003 per call against $0.0002 | В52 |
+| One call or two | On even sheets the key shifts reading for no one, as in the plan of 2026-10-26. On the near key at a digit shift of 0.3 and 0.4 it shifted reading toward a false "correct" for the first time: for Haiku · `low` and Haiku · `medium`, one sheet of 40 each. Opus gave no false verdict at any shift | В53 |
+| Mirrored digits | On 900 mirrored boxes the false alarms of all four configurations are from 31 to 41%, on crossed-out ones about 16%, and on boxes without peculiarities 0–1 of 900. There is no false "correct": 0 of 600. No model reaches the target of 1% on mirrored digits | В54 |
+| Essays: one call or two | On 300 essays the two calls have no more false alarms than one: 26 against 28 for the four configurations together, and the cost is almost the same. The fewest are for Haiku · `medium` — 2 of 1350, bound ≤ 0.005 | the input of the choice of one call or two for the rubric |
+| Hints | `spec`'s limits of the form hardly touch Opus — 8 hints of 900 — and it has 4 leaks before the check of 900. Haiku has 126–153 of them, and the leak check sends them to the fallback text, as intended | — |
+| Digit height | The new configurations read at 16, 24 and 48 px no worse than at 32 px (measurements 3.11). This does not change 24 px as the default | — |
 
 - **Handwriting** — the synthetic sheets and the author's ten sheets by mouse. The power of the Т-23 threshold appeared only on the near key with a digit shift, which the even synthetic sheets lack.
-- **Spending** — T91 $14.62, T92 $2.19, T95 $81.67, T97 $1.03; $99.50 in all.
-- **2026-10-29 (T98; R51).** *`spec` recorded rows В52–В54 in `v0.3.3`. The pair of R68 spec stays the same, and Haiku · `medium` is the first candidate for a check on volunteers' handwriting (the 2026-10-29 amendment to R68 spec). The near key is an argument for two calls (the 2026-10-29 amendment to R67 spec). A mirrored digit is "unreadable", and the learner rewrites it, while a false alarm on it stays within the 1% target (the 2026-10-29 amendment to R56 spec). T99 makes the workbook reading prompt for this rule and the report row on mirrored digits.*
+- **Spending** — the new configurations $14.62, essays in two calls $2.19, the big run $81.67, the author's ten sheets $1.03; $99.50 in all.
+- **What `spec` recorded** in `v0.3.3`, by rows В52–В54:
+  - the reader pair stays the same, and Haiku · `medium` is the first candidate for a check on volunteers' handwriting;
+  - the near key is an argument for two calls;
+  - a mirrored digit is "unreadable", and the learner rewrites it, while a false alarm on it stays within the 1% target. The workbook reading prompt for this rule and the report row on mirrored digits are measurements 3.15.
 
-### 3.15. Mirrored digit
+### 3.15. Mirrored digit, 2026-10-29
 
-From architecture 3.4: «Зеркальная цифра по `spec` `v0.3.3`» and «Итог зеркальной цифры» (R102; T133).
-
-**The mirrored digit by `spec` `v0.3.3`** (T99, 2026-10-29; R51). Recorded before the run.
-- **Rule** — the 2026-10-29 amendment to R56 spec: the reader does not return a mirrored digit as a digit, the box is ambiguous, the verdict is "unreadable", and the learner rewrites it. A false alarm on it counts toward the 1% target (product 10 spec). The rule works only if the reader sees the mirroring.
+**The mirrored digit by `spec` `v0.3.3`** (2026-10-29). Recorded before the run.
+- **Rule** — that of `spec` `v0.3.3`: the reader does not return a mirrored digit as a digit, the box is ambiguous, the verdict is "unreadable", and the learner rewrites it. A false alarm on it counts toward the 1% target. The rule works only if the reader sees the mirroring.
 - **Prompt** — version 2 of the workbook reading prompt. A digit written mirrored the reader writes into `text` as it would be if not mirrored, and puts `mirrored` on the cell. A box with this mark is "unreadable", cause `mirrored`, before any check of the value. The other rules are as in version 1. The stub's right reader puts the mark where the code drew a digit mirrored.
-- **Report** — the table "Mirrored digits at 32 px". For each reader: requests to rewrite — any "unreadable" on a mirrored box, since the learner is asked to rewrite in any case — and how many of them carry the mark: only the mark shows whether the reader saw the mirroring. Also readings as a digit, false alarms, "unchecked" and marks on the other boxes. What is right the report judges by the prompt version of the run log, by one rule for both boxes and items: in version 2, "unreadable" on a mirrored box is a right reading, not an extra "unreadable", and a reading as a digit is a missed request to rewrite, and in the comparisons by pages it is an error. In the run logs of version 1 — E4 and T95 — the count is as before. The truth of a box in the run log is still the verdict of the value, and false "correct" and false alarms are counted by it.
-- **Starting numbers** — version 1 on the same 300 pages in T95: of 900 mirrored boxes, Opus 5.5 · `high` had "unreadable" 383, false alarms 279, read as a digit and correctly 238; Haiku 5.5 · `medium` had 405, 343 and 152. On boxes without peculiarities — correct ones and those with a similar digit — extra "unreadable" were 11 and 25 of 900.
-- **Criterion** — there is no threshold: these are data for the amendment to R56 spec. On the test pages, for each configuration:
+- **Report** — the table "Mirrored digits at 32 px". For each reader: requests to rewrite — any "unreadable" on a mirrored box, since the learner is asked to rewrite in any case — and how many of them carry the mark: only the mark shows whether the reader saw the mirroring. Also readings as a digit, false alarms, "unchecked" and marks on the other boxes. What is right the report judges by the prompt version of the run log, by one rule for both boxes and items: in version 2, "unreadable" on a mirrored box is a right reading, not an extra "unreadable", and a reading as a digit is a missed request to rewrite, and in the comparisons by pages it is an error. In the run logs of version 1 — of the plan of 2026-10-26 and of the big run — the count is as before. The truth of a box in the run log is still the verdict of the value, and false "correct" and false alarms are counted by it.
+- **Starting numbers** — version 1 on the same 300 pages in the big run: of 900 mirrored boxes, Opus 5.5 · `high` had "unreadable" 383, false alarms 279, read as a digit and correctly 238; Haiku 5.5 · `medium` had 405, 343 and 152. On boxes without peculiarities — correct ones and those with a similar digit — extra "unreadable" were 11 and 25 of 900.
+- **Criterion** — there is no threshold: these are data for `spec`'s rule on mirrored digits. On the test pages, for each configuration:
   - the share of requests to rewrite on mirrored boxes — how many of them go to "unreadable";
   - false alarms on them — against version 1;
   - marks and extra "unreadable" on the other boxes — against version 1: the rule must not take right answers away from digits written correctly;
-  - false "correct" — 0, as in T95.
-- **Run** — `eval/workbook-gen.json`, without a label, at 32 px, for Opus 5.5 · `high` and Haiku 5.5 · `medium`, one repeat. The dev part — pages 1–20, one round: the prompt is changed only if its words cause an error. Then version 2 is frozen, and the test part — pages 21–300, 840 mirrored boxes. The ceiling — $10 for everything (R51), the estimate — about $7. *During the run the author raised the ceiling to $30 (R51, amendment 2026-10-29).*
+  - false "correct" — 0, as in the big run.
+- **Run** — `eval/workbook-gen.json`, without a label, at 32 px, for Opus 5.5 · `high` and Haiku 5.5 · `medium`, one repeat. The dev part — pages 1–20, one round: the prompt is changed only if its words cause an error. Then version 2 is frozen, and the test part — pages 21–300, 840 mirrored boxes. The ceiling — $30 for everything, raised from $10 during the run; the estimate — about $7.
 
-**The result of the mirrored digit** (T99, 2026-10-29; R51). The day's prices were checked against the Pricing page before the runs: the same as in sources 1.3. Run logs and reports — `synthetic/runs/t99-*`, outside git. The dev part cost $0.57, the test part $8.12: $7.84 for Opus and $0.28 for Haiku. The first two calls of the Opus test, interrupted for the new ceiling — $0.06 (`short-t99-*`). In all, $8.76 against a ceiling of $30, no failures.
+**The result of the mirrored digit** (2026-10-29). The day's prices were checked against the Pricing page before the runs: the same as in sources 1.3. Run logs and reports — `synthetic/runs/t99-*`, outside git. The dev part cost $0.57, the test part $8.12: $7.84 for Opus and $0.28 for Haiku. The first two calls of the Opus test, interrupted for the new ceiling — $0.06 (`short-t99-*`). In all, $8.76 against a ceiling of $30, no failures.
 - **The dev part** — pages 1–20, one round. False alarms on mirrored boxes remained — 19 and 13 of 60 — and all of them are confusions of 2 and 5. The model sees a mirrored 5 as 2 and a mirrored 2 as 5, and puts no mark. This is the shape of the digit, not the words of the prompt, so version 2 is frozen without changes, prompt fingerprint `885515cb2ad2a4aa3e49c1322e0d108099d66b93746309b5654cf7bacca6cf4b`.
-- **The test part** — pages 21–300, against version 1 on the same pages in T95:
+- **The test part** — pages 21–300, against version 1 on the same pages in the big run:
 
   | | Opus 5.5 · `high`, version 1 → 2 | Haiku 5.5 · `medium`, version 1 → 2 |
   |---|---|---|
@@ -1131,18 +1124,18 @@ From architecture 3.4: «Зеркальная цифра по `spec` `v0.3.3`» 
   | "mirrored" marks on them | 0 | 2 |
   | false "correct", of 560 | 0 → 0 | 0 → 1 |
 - **What the measurement showed.** The models see mirroring: Opus marked 586 mirrored boxes of 840, Haiku · `medium` 371, and on the 1960 others 0 and 2. False alarms on mirrored boxes fell by a third for Opus and almost by half for Haiku, but 21–22% is far from the 1% target. They remain where the mirroring is not visible: the confusion of 2 and 5. The rule takes no right answers away from digits written correctly: there are no more extra "unreadable" on the other boxes than with version 1.
-- **The first false "correct" of the workbook without a label.** Haiku · `medium` — 1 of 560. On the near key 3/7, 3/1 is written, the one leans toward a seven, and Haiku read 3/7 without doubt. In T95 all four configurations read this box as 3/7, but with doubt, and the verdict was "unreadable"; Opus gave "unreadable" here too. The mirroring mark has nothing to do with it. The reader pair of R68 spec would not have released such a box: the readings would have differed, and the cell would have been "unreadable".
-- **«В реестр spec»** — В56, to the 2026-10-29 amendment to R56 spec, and В57, to R68 spec. *2026-11-01 (T100; R58): `spec` recorded both — by the 2026-11-01 amendments to R56 spec and to R68 spec.*
+- **The first false "correct" of the workbook without a label.** Haiku · `medium` — 1 of 560. On the near key 3/7, 3/1 is written, the one leans toward a seven, and Haiku read 3/7 without doubt. In the big run all four configurations read this box as 3/7, but with doubt, and the verdict was "unreadable"; Opus gave "unreadable" here too. The mirroring mark has nothing to do with it. `spec`'s reader pair would not have released such a box: the readings would have differed, and the cell would have been "unreadable".
+- **For `spec`** — rows В56, on the rule of mirrored digits, and В57, on the reader pair; `spec` recorded both.
 
-### 3.16. The tutor's words: estimate and results
+### 3.16. The tutor's words: estimate and results, 2026-11-08 to 13
 
-From architecture 3.4: the estimate of "The set of words", «Итог замера слов» and «Итог второго замера слов» (R102; T133). The words set is in architecture 3.4.
+The set of words is described in [architecture.md](architecture.md).
 
 The estimate of "The set of words":
 
-- **The estimate per configuration**, by the prices of sources 1.3: hints of Opus 5.5 · `high` — about $4.80, the judge — about $3.96. T119 decides.
+- **The estimate per configuration**, by the prices of sources 1.3: hints of Opus 5.5 · `high` — about $4.80, the judge — about $3.96.
 
-**The result of the words measurement** (T119, 2026-11-08; R86). The hint prompt version 2, Opus 5.5 · `high`, one repeat. The admission set — the author's sheets with an error, by the rungs with work, and the set of T118 on "differently" and notes. The judge — Sonnet 5.5 · `low` on the judge prompt version 2. The day's prices were checked against Anthropic's Pricing page before the runs — the same as in sources 1.12. Run logs — `samples/runs/t119-words-*` and `synthetic/runs/t119/`, outside git; only numbers came here.
+**The result of the words measurement** (2026-11-08). The hint prompt version 2, Opus 5.5 · `high`, one repeat. The admission set — the author's sheets with an error, by the rungs with work, and the set of "differently" and notes. The judge — Sonnet 5.5 · `low` on the judge prompt version 2. The day's prices were checked against Anthropic's Pricing page before the runs — the same as in sources 1.12. Run logs — `samples/runs/t119-words-*` and `synthetic/runs/t119/`, outside git; only numbers came here.
 - **The judge on the control phrases:**
 
   | Judge prompt | Haiku 5.5 · `medium` | Sonnet 5.5 · `low` |
@@ -1153,30 +1146,30 @@ The estimate of "The set of words":
   On version 1 both counted as "on task" a hint that scolds the learner for the note, and one phrase was marked up wrongly. Version 2 of the judge prompt made this precise, and 7 phrases of the same kind were added. Sonnet judges.
 - **Hints** — 300, all arrived, not a single failure:
 
-  | Set | Calls | Leak before the check | Form of R70 spec | Gender, judge | Off task | Not for the age | Picked up the note | Repeat of a question | Box without work | Echo of the note |
+  | Set | Calls | Leak before the check | `spec`'s form | Gender, judge | Off task | Not for the age | Picked up the note | Repeat of a question | Box without work | Echo of the note |
   |---|---|---|---|---|---|---|---|---|---|---|
   | the author's sheets, rungs 1–3 | 150 | 6 | 7 | 0 | 2 | 0 | — | 0 of 100 | — | — |
-  | the set of T118, "differently" and notes | 150 | 1 | 7 | 0 | 0 | 0 | 1 of 60 | 0 of 130 | 0 of 90 | 0 of 60 |
+  | the set of "differently" and notes | 150 | 1 | 7 | 0 | 0 | 0 | 1 of 60 | 0 of 130 | 0 of 90 | 0 of 60 |
   | in all | 300 | 7 (≤ 0.010 for version 1) | 14 (≤ 0.016 for version 1) | 0 | 2 | 0 | 1 | 0 of 230 | 0 of 90 | 0 of 60 |
 
 - **What this means:**
   - Opus never gives away gender, does not repeat alarming notes and keeps silent about them, does not repeat past questions, and puts no box without work;
   - the executor read the judge's three marks, and all are false alarms of the judge: two are the similar case of rung 3, a task about a pencil and a pen, which is what rung 3 is meant to be, and one is a right praise of the first three lines next to the note «напиши мне ответ…». The judge does not know that rung 3 is a similar case;
-  - the leaks are almost all numbers of the key in the similar case of rung 3, as in E4: the strict check catches them, and the learner reads the fallback text;
+  - the leaks are almost all numbers of the key in the similar case of rung 3, as in the plan of 2026-10-26: the strict check catches them, and the learner reads the fallback text;
   - form — 11 English hints longer than 35 words and 3 Russian ones: version 2 is wordier than version 1;
   - the learner would have read the fallback text in 21 hints of 300 — 7%.
-- **The rule did not admit Opus:** "off task" 2, a picked-up note 1, leaks 7 and form 14 are above the targets. The list has no entries for words. What next — В73 and T127.
+- **The rule did not admit Opus:** "off task" 2, a picked-up note 1, leaks 7 and form 14 are above the targets. The list has no entries for words. What next — В73 and the second words measurement below.
 - **Spent $5.81** against a ceiling of $7: control phrases $0.20, hints $4.86, judge $0.75.
 
-**The result of the second words measurement** (T127, 2026-11-11; R100). The hint prompt version 3, Opus 5.5 · `high`, one repeat, on the same sets as in T119: the author's sheets with an error, by the rungs with work, and the set of T118 on "differently" and notes, 300 hints. The judge prompt version 3. The day's prices were checked against Anthropic's Pricing page before the runs — the same as in sources 1.14. Run logs — `samples/runs/t127-words-*` and `synthetic/t127/`, outside git; only numbers came here.
-- **The hint prompt version 3** — two fixes by the result of T119: rung 3 composes the similar case from its own numbers and takes not a single number of the key, and the hint counts its words and cuts words, not the question. A trial run — 23 hints on separate synthetic sheets `lines-gen-2`, $0.46: 0 leaks, 0 form violations. After it the prompt was frozen.
-- **The judge.** The prompt version 3 knows that the similar case of rung 3 is on task, that praise of right lines is not doing what a note asks, and it judges feedback on an essay. Control phrases — 50: to the 39, 6 of the same kind and 5 on feedback were added, one of them a feedback that is off task. Sonnet 5.5 · `low` passed the first 49, but on the hints marked 2 right ones "off task" — one without an explanation, while about the other it wrote itself "otherwise on task". By the author's decision Opus 5.5 · `high` judged: it passed all 50 phrases, 47 with all answers exact. The judge was changed when Sonnet's marks were already visible; both judging logs are kept.
+**The result of the second words measurement** (2026-11-11). The hint prompt version 3, Opus 5.5 · `high`, one repeat, on the same sets as the first: the author's sheets with an error, by the rungs with work, and the set of "differently" and notes, 300 hints. The judge prompt version 3. The day's prices were checked against Anthropic's Pricing page before the runs — the same as in sources 1.14. Run logs — `samples/runs/t127-words-*` and `synthetic/t127/`, outside git; only numbers came here.
+- **The hint prompt version 3** — two fixes by the result of the first words measurement: rung 3 composes the similar case from its own numbers and takes not a single number of the key, and the hint counts its words and cuts words, not the question. A trial run — 23 hints on separate synthetic sheets `lines-gen-2`, $0.46: 0 leaks, 0 form violations. After it the prompt was frozen.
+- **The judge.** The prompt version 3 knows that the similar case of rung 3 is on task, that praise of right lines is not doing what a note asks, and it judges feedback on an essay. Control phrases — 50: to the 39, 6 of the same kind and 5 on feedback were added, one of them a feedback that is off task. Sonnet 5.5 · `low` passed the first 49, but on the hints marked 2 right ones "off task" — one without an explanation, while about the other it wrote itself "otherwise on task". Opus 5.5 · `high` judged instead: it passed all 50 phrases, 47 with all answers exact. The judge was changed when Sonnet's marks were already visible; both judging logs are kept.
 - **Hints** — 300, all arrived, not a single failure:
 
-  | Measure | T119, version 2 | T127, version 3 | Target |
+  | Measure | first, version 2 | second, version 3 | Target |
   |---|---|---|---|
   | leak before the check | 7 | 0 | ≤ 0.010 |
-  | form of R70 spec | 14 | 1 | ≤ 0.016 |
+  | `spec`'s form | 14 | 1 | ≤ 0.016 |
   | gender, judge | 0 | 0 | 0 |
   | off task, judge | 2 | 0 | 0 |
   | not for the age, judge | 0 | 0 | 0 |
@@ -1184,16 +1177,16 @@ The estimate of "The set of words":
   | echo of the note, code | 0 of 60 | 0 of 60 | 0 |
   | repeat of a past question | 0 of 230 | 0 of 230 | ≤ 5% |
 
-- **The rule admitted Opus** at the rung "author" to solution analysis and the hint — two entries of the list with the rule's output, `samples/runs/t127-words.admit.md`, its sha256 1e49fa51…d68a and the prompt fingerprint of the hint (architecture 3.9). With Sonnet as the judge the rule would not have admitted it: the 2 "off task" are its false alarms.
+- **The rule admitted Opus** at the rung "author" to solution analysis and the hint — two entries of the list with the rule's output, `samples/runs/t127-words.admit.md`, its sha256 1e49fa51…d68a and the prompt fingerprint of the hint. With Sonnet as the judge the rule would not have admitted it: the 2 "off task" are its false alarms.
 - **Tokens** — the averages of the 300 hints, 2,356 of input and 437 of output, are the expected tokens of `CallWords` in `price.go`.
-- **Spent $11.08**, against a ceiling of $7, then $8, which the author lifted with the words «не экономь»: hints $5.45, the judge Sonnet $0.84 and Opus $1.81, control phrases $0.84, the trial run $0.46. Another $1.68 went on two attempts that the spending limit of the workspace `api-dev`, then of the organization, cut short — the adapter recognized the refusals as "limit reached", the cause — the owner's limit (T121).
+- **Spent $11.08**, against a ceiling of $7, then $8, which the author then lifted: hints $5.45, the judge Sonnet $0.84 and Opus $1.81, control phrases $0.84, the trial run $0.46. Another $1.68 went on two attempts that the spending limit of the workspace `api-dev`, then of the organization, cut short — the adapter recognized the refusals as "limit reached", the cause — the owner's limit.
 
-**The time of the hint on prompt version 3** (T139, 2026-11-13; R107; Д222, DEBT.md of `spec`). No new run: the logs of T127 above, the hint prompt version 3, Opus 5.5 · `high`, the request with the sheet's crop that `Tutor.Words` sends as the call `CallWords` (`hint.RequestOf`). Every call that came back with a hint counts: the admission run's 300, the 102 answered calls of the two attempts the limit cut short — a case asked in two attempts counts twice, they are two calls —, and the 23 of the trial run; the 145 refusals for the limit do not. The time of a call is from sending to reply, as the runner writes it (`latency_ms`), and the first token is when the first text of the answer came (`first_token_ms`). The percentile is the nearest rank, as in `tutor-eval report`; a script over the logs gave the same numbers twice. Only numbers came here.
+**The time of the hint on prompt version 3** (2026-11-13), which `spec` asked for. No new run: the logs of the second words measurement above, the hint prompt version 3, Opus 5.5 · `high`, the request with the sheet's crop that `Tutor.Words` sends as the call `CallWords` (`hint.RequestOf`). Every call that came back with a hint counts: the admission run's 300, the 102 answered calls of the two attempts the limit cut short — a case asked in two attempts counts twice, they are two calls —, and the 23 of the trial run; the 145 refusals for the limit do not. The time of a call is from sending to reply, as the runner writes it (`latency_ms`), and the first token is when the first text of the answer came (`first_token_ms`). The percentile is the nearest rank, as in `tutor-eval report`; a script over the logs gave the same numbers twice. Only numbers came here.
 
 | Calls of | Calls | Time p50 | p90 | Largest | First token p50 | p90 |
 |---|---|---|---|---|---|---|
 | the author's sheets | 150 | 5.7 s | 8.0 s | 13.5 s | 5.0 s | 7.2 s |
-| the set of T118 | 150 | 5.3 s | 7.2 s | 9.5 s | 4.7 s | 6.5 s |
+| the set of "differently" and notes | 150 | 5.3 s | 7.2 s | 9.5 s | 4.7 s | 6.5 s |
 | the two attempts the limit cut short | 102 | 5.0 s | 6.8 s | 9.2 s | 4.6 s | 6.4 s |
 | the trial run, `lines-gen-2` | 23 | 6.8 s | 8.8 s | 11.2 s | 6.0 s | 8.0 s |
 | in all | 425 | 5.5 s | 7.6 s | 13.5 s | 4.8 s | 6.9 s |
@@ -1202,12 +1195,12 @@ The estimate of "The set of words":
 | in all, rung 3 | 154 | 6.4 s | 8.5 s | 13.5 s | 5.7 s | 7.9 s |
 
 - **The model thinks most of the time.** From the first token to the end — p50 0.7 s, p90 0.8 s: the text of the hint comes fast, and the seconds before it go on thinking at `high`. Rung 3, which composes a similar case, is the slowest.
-- **Against reading.** The words take about twice the reading pair's time: p50 5.5 s against 2.4 s (section 3.13). Both are the model's time, without the overhead of `api` and the network to the device. What else is in the ≈ 10 s of the words in `api` (T45 `api`), this measurement does not say. From the release of T139 on, each record of usage carries its model's time (architecture 3.7), and the log of `api` shows it.
+- **Against reading.** The words take about twice the reading pair's time: p50 5.5 s against 2.4 s (measurements 3.13). Both are the model's time, without the overhead of `api` and the network to the device. What else is in the ≈ 10 s that the words take in `api`, this measurement does not say. Each record of usage now carries its model's time, and the log of `api` shows it.
 - **What it does not decide.** The effort `medium` for the words, which might be faster, is measured at the next admission of the words, by a paid run (Д11).
 
-### 3.17. The words after a correct answer: the trial of the prompt
+### 3.17. The words after a correct answer: the trial of the prompt, 2026-11-13
 
-**The trial** (T143, 2026-11-13; R112). Version 1 of the prompt of `internal/correct`, before it was frozen: Opus 5.5 · `high`, one repeat, then the judge of the words, version 4, Opus 5.5 · `high` on its words. The sheets are of a set drawn as the set of admission is (architecture 3.4, "The set of the words after a correct answer"), but from `lines-gen-2` and the seed 1143, so that the set of admission stays unseen by the prompt: 28 of its 110 cases, on 17 sheets — 12 with the work on 6 sheets of the three scenarios, 2 of a task without techniques; 6 without the work, 2 without techniques; 10 of a note, one sheet of each kind, both languages. The day's prices were checked on Anthropic's Pricing page before the runs: the same as sources 1.14. The logs — `synthetic/runs/correct-trial-1*`, outside git; only numbers came here.
+**The trial** (2026-11-13). Version 1 of the prompt of `internal/correct`, before it was frozen: Opus 5.5 · `high`, one repeat, then the judge of the words, version 4, Opus 5.5 · `high` on its words. The sheets are of a set drawn as the set of admission is, which [architecture.md](architecture.md) describes, but from `lines-gen-2` and the seed 1143, so that the set of admission stays unseen by the prompt: 28 of its 110 cases, on 17 sheets — 12 with the work on 6 sheets of the three scenarios, 2 of a task without techniques; 6 without the work, 2 without techniques; 10 of a note, one sheet of each kind, both languages. The day's prices were checked on Anthropic's Pricing page before the runs: the same as sources 1.14. The logs — `synthetic/runs/correct-trial-1*`, outside git; only numbers came here.
 
 | Calls | Came and shown | Leak before the check | Form, `words.Correct` | Sex, rough search | Sex, judge | Off the task | Not for a child | Note taken up, judge | Echo of a note |
 |---|---|---|---|---|---|---|---|---|---|
@@ -1216,11 +1209,11 @@ The estimate of "The set of words":
 - **The words.** Each praises a step of the solution by what it does — «умножение сделано первым», "the added number is taken away from both sides" — and asks, last, which technique or rule helped, mostly naming one of the task's; without techniques it asks how the answer, or x, was found. Without the work it praises the step of the solution in the task's data. No number of the key or of the work, no «молодец», no past tense about the learner in Russian; a Latin x stands in a Russian question where the statement shows it. The prompt needed no edit.
 - **The tokens and the time.** Input on average 1,415 tokens — 1,334 with the work, 1,212 without, 1,634 with a note —, output 367, thinking included; $0.0130 a call; time p50 4.9 s, p95 7.3 s. The judge: 1,407 in and 57 out a call.
 - **The spending.** 56 calls at Anthropic — 28 of the words, $0.3642, and 28 of the judge, $0.1894 —, $0.5536 of the ceiling of $2.
-- **What it does not decide.** Admission: the set of admission, its 110 cases, the judge's control phrases of version 4 and the expected tokens of `CallCorrect` are T144. *2026-11-14 (T144; R113): done — section 3.18.*
+- **What it does not decide.** Admission: the set of admission, its 110 cases, the judge's control phrases of version 4 and the expected tokens of `CallCorrect` are measurements 3.18.
 
-### 3.18. The words after a correct answer: the admission; the hint at `medium`, in part
+### 3.18. The words after a correct answer: the admission; the hint at `medium`, in part, 2026-11-13 and 14
 
-**The admission** (T144, 2026-11-13 and 14; R113). The set of admission of architecture 3.4, "The set of the words after a correct answer": its 110 cases on the 40 sheets of `synthetic/correct-v1`, one repeat, version 1 of the prompt of `internal/correct`, the fingerprint `ee01e82a…`, by Opus 5.5 · `high`; then the judge of the words, version 4, Opus 5.5 · `high`, on each word that came. The prices were checked on Anthropic's Pricing page on 2026-11-13, before the first run: the same as sources 1.14; the runs went on past midnight UTC. The logs and the rule's output are `synthetic/t144/`, outside git; only numbers came here.
+**The admission** (2026-11-13 and 14). The set of admission of the words after a correct answer, which [architecture.md](architecture.md) describes: its 110 cases on the 40 sheets of `synthetic/correct-v1`, one repeat, version 1 of the prompt of `internal/correct`, the fingerprint `ee01e82a…`, by Opus 5.5 · `high`; then the judge of the words, version 4, Opus 5.5 · `high`, on each word that came. The prices were checked on Anthropic's Pricing page on 2026-11-13, before the first run: the same as sources 1.14; the runs went on past midnight UTC. The logs and the rule's output are `synthetic/t144/`, outside git; only numbers came here.
 - **The judge on its control phrases** — right on 68 of 68, 62 of them with all four answers exact.
 - **The words:**
 
@@ -1231,8 +1224,8 @@ The estimate of "The set of words":
   | `note` | 20 | 20 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
   | in all | 110 | 110 | 0 (≤ 0.010) | 0 (≤ 0.016) | 0 | 0 | 0 | 0 | 0 of 20 | 0 of 20 |
 
-- **The rule** `report.AdmitCorrect` gave the rung "author". Its output, `synthetic/t144/correct.admit.md`, sha256 `0998a694…b969b`, is the evidence of the entry of the list (architecture 3.9).
-- **The tokens and the time.** The output counts the thinking. The percentile is the nearest rank, as in T139 (section 3.16):
+- **The rule** `report.AdmitCorrect` gave the rung "author". Its output, `synthetic/t144/correct.admit.md`, sha256 `0998a694…b969b`, is the evidence of the entry of the list.
+- **The tokens and the time.** The output counts the thinking. The percentile is the nearest rank, as in measurements 3.16:
 
   | Case | Calls | Input | Output | Of it thinking | $ a call | Time p50 | p90 | First token p50 |
   |---|---|---|---|---|---|---|---|---|
@@ -1244,8 +1237,8 @@ The estimate of "The set of words":
   The averages of all, 1,371 and 402, are the expected tokens of `CallCorrect` in `price.go`.
 - **The spending** — the control phrases $0.5601 (68 calls), the words $1.4871 (110), the judge $0.7228 (110).
 
-**The hint at `medium`, in part** (T144, 2026-11-14; Д11). The hint prompt version 3, Opus 5.5 · `medium`, one repeat, was to run on the 300 cases of T127 (section 3.16): the 150 of the set of T118, "differently" and notes, in `synthetic/words-v1`, and the 150 of the author's sheets. The account's prepaid credit ran out during the run — the author's console showed the balance at −$0.17, with $220.19 spent in November of a spending limit of $300, which caps spending and holds no money. Anthropic refused the last 14 cases of the synthetic part, all of the kind `note`, and all 150 of the author's sheets: «Your credit balance is too low to access the Anthropic API». A refusal costs nothing. The author decided not to finish the measurement now. So 136 hints came, and the judge read none: the numbers are by code, and beside them the same 136 cases at `high` from the logs of T127. The logs are `synthetic/t144/words-medium-syn*`, and the refused runs `samples/runs/t144-words-medium-*`, outside git.
-- **By code**, on the 136: leak before the check 0, the form of R70 spec broken 1 — not exactly one question —, a repeat of a past question 0 of 120, a box without the work 0 of 90, an echo of the note 0 of 46, the sex told by the rough search 0. The rule of words (R86) needs the judge and every planned case, so it says nothing of `medium` here.
+**The hint at `medium`, in part** (2026-11-14; Д11). The hint prompt version 3, Opus 5.5 · `medium`, one repeat, was to run on the 300 cases of the second words measurement (measurements 3.16): the 150 of the set of "differently" and notes, in `synthetic/words-v1`, and the 150 of the author's sheets. The account's prepaid credit ran out during the run — the author's console showed the balance at −$0.17, with $220.19 spent in November of a spending limit of $300, which caps spending and holds no money. Anthropic refused the last 14 cases of the synthetic part, all of the kind `note`, and all 150 of the author's sheets: «Your credit balance is too low to access the Anthropic API». A refusal costs nothing. The measurement was left unfinished. So 136 hints came, and the judge read none: the numbers are by code, and beside them the same 136 cases at `high` from the logs of the second words measurement. The logs are `synthetic/t144/words-medium-syn*`, and the refused runs `samples/runs/t144-words-medium-*`, outside git.
+- **By code**, on the 136: leak before the check 0, `spec`'s form broken 1 — not exactly one question —, a repeat of a past question 0 of 120, a box without the work 0 of 90, an echo of the note 0 of 46, the sex told by the rough search 0. The rule of the words' admission needs the judge and every planned case, so it says nothing of `medium` here.
 - **The time and the tokens** — the same 136 cases:
 
   | Cases | Calls | `high` p50 | `medium` p50 | `high` p90 | `medium` p90 | First token p50, `high` / `medium` | Output, `high` / `medium` | $ a call, `high` / `medium` |
@@ -1257,16 +1250,16 @@ The estimate of "The set of words":
   | notes | 46 | 6.0 s | 4.9 s | 7.7 s | 6.5 s | 5.1 / 4.1 s | 469 / 338 | 0.0200 / 0.0174 |
   | in all | 136 | 5.2 s | 4.4 s | 7.2 s | 6.2 s | 4.7 / 3.8 s | 397 / 280 | 0.0173 / 0.0150 |
 
-- **What this means.** At `medium` the model thinks less — 203 tokens of thinking a call against 321 — and answers 0.8 s sooner at p50 and 1.0 s at p90, most at rung 1 and least at rung 3, which composes a similar case. What it does not say: whether the hints at `medium` stay on the task and for a child — the judge — and how they do on the author's handwriting, where `high` broke the form once in T127. Д11 stays open.
+- **What this means.** At `medium` the model thinks less — 203 tokens of thinking a call against 321 — and answers 0.8 s sooner at p50 and 1.0 s at p90, most at rung 1 and least at rung 3, which composes a similar case. What it does not say: whether the hints at `medium` stay on the task and for a child — the judge — and how they do on the author's handwriting, where `high` broke the form once in the second words measurement. Д11 stays open.
 - **The spending** — 136 calls, $2.0401; the 164 refusals cost nothing.
 
-**The spending of T144** — 424 calls at Anthropic, $4.8101, of a ceiling of $12. The console's spending for November grew by the same sum, with the trial of T143.
+**The spending of the admission and the hint at `medium`** — 424 calls at Anthropic, $4.8101, of a ceiling of $12. The console's spending for November grew by the same sum, with the trial of measurements 3.17.
 
-### 3.19. The expected tokens of the workbook, the essay and the rubric
+### 3.19. The expected tokens of the workbook, the essay and the rubric, 2026-11-17
 
-**What and why** (T163, 2026-11-17; R126). The author's word admitted `CallWorkbook`, `CallEssay` and `CallRubric` without a run, so their expected tokens in `price.go` come from the runs that already tried the prompts `api` calls now: the fingerprints of their logs are those of the code — the workbook's `26925af5…`, version 3; the essay's reading `49cc9042…`, version 2; the assessment `a9bf5440…`, version 3. No new call, $0. The averages were counted by a script from the logs, outside git: `synthetic/t123/dev.jsonl`, sha256 `e3e2f57b…c863`, and `synthetic/t125/two.jsonl`, sha256 `4de54526…c195`. The output counts the thinking; the percentile is the nearest rank.
-- **The workbook** — T123, 2026-11-11: the 20 pages of the trial part of `eval/workbook-gen.json`, read bare, one call of each reader of the pair (architecture 3.10).
-- **The essay and the rubric** — T125, 2026-11-11: the 15 essays of E4's test part, 6–20, in two calls, one repeat; Haiku 5.5 · `medium` read each essay and assessed its own reading (R99).
+**What and why** (2026-11-17). `CallWorkbook`, `CallEssay` and `CallRubric` were admitted without a run, so their expected tokens in `price.go` come from the runs that already tried the prompts `api` calls now: the fingerprints of their logs are those of the code — the workbook's `26925af5…`, version 3; the essay's reading `49cc9042…`, version 2; the assessment `a9bf5440…`, version 3. No new call, $0. The averages were counted by a script from the logs, outside git: `synthetic/t123/dev.jsonl`, sha256 `e3e2f57b…c863`, and `synthetic/t125/two.jsonl`, sha256 `4de54526…c195`. The output counts the thinking; the percentile is the nearest rank.
+- **The workbook** — the run of its version 3, 2026-11-11 (measurements 3.24): the 20 pages of the trial part of `eval/workbook-gen.json`, read bare, one call of each reader of the pair.
+- **The essay and the rubric** — the run of the assessment's version 3, 2026-11-11 (measurements 3.24): the 15 essays of the test part of the first essays, 6–20, in two calls, one repeat; Haiku 5.5 · `medium` read each essay and assessed its own reading.
 
 | Kind | Model | Calls | Input | Output | Of it thinking | $ a call | Time p50 |
 |---|---|---|---|---|---|---|---|
@@ -1275,26 +1268,26 @@ The estimate of "The set of words":
 | `CallEssay` | Haiku 5.5 · `medium` | 15 | 2,067 | 127 | 0 | 0.00027 | 1.4 s |
 | `CallRubric` | Haiku 5.5 · `medium` | 15 | 1,398 | 962 | 500 | 0.00062 | 4.6 s |
 
-The rounded averages of input and output are the expected tokens of `price.go`. At the prices of sources 1.3, an essay by Haiku in two calls is about $0.0009, near the $0.0008 of version 1 (section 3.11), and a workbook page by the pair about $0.030, by Haiku alone in the mode `single` about $0.001.
+The rounded averages of input and output are the expected tokens of `price.go`. At the prices of sources 1.3, an essay by Haiku in two calls is about $0.0009, near the $0.0008 of version 1 (measurements 3.11), and a workbook page by the pair about $0.030, by Haiku alone in the mode `single` about $0.001.
 - **What it does not say:** 20 pages and 15 essays are a small sample of synthetic work, one repeat, not the admission sets; the runs of Д17 on Haiku, by 2027-01-17, give the averages of admission.
 
-### 3.20. Reading a sheet on the site against eval, and the price of a check
+### 3.20. Reading a sheet on the site against eval, and the price of a check, 2026-11-17
 
-**What and why** (T162, 2026-11-17). On `novatrail`, at the rung "author", the pair read a wrong solution of «Реши уравнение 3x + 1 = 7» — «3x = 8», «x = 8/3» with the eight running into the fraction bar — as «Читается двояко», where eval had read the author's sheets surely (row В42 of `infra`, T69). The analysis ran no model: by the author's word of 2026-11-17, given through `spec`'s orchestrator, no paid run until 2027-01-17 (R126), so it rests on the code, the logs of runs already made and the journal `ai_usage` of `api` that the task quotes. Only numbers came here.
+**What and why** (2026-11-17). On `novatrail`, at the rung "author", the pair read a wrong solution of «Реши уравнение 3x + 1 = 7» — «3x = 8», «x = 8/3» with the eight running into the fraction bar — as «Читается двояко», where eval had read the author's sheets surely (row В42 of `infra`). The analysis ran no model, since no paid run goes until 2027-01-17, so it rests on the code, the logs of runs already made and the journal `ai_usage` of `api` that the task quotes. Only numbers came here.
 
 **The two paths of one reading.** Both build the request by `reading.RequestOf`, so the instructions, the schema, the label of the picture and the frame of the text are the same bytes, the prompt `c693bfa8…` of version 2; both ask with at most 16,000 output tokens (`reading.MaxOutputTokens`, `runner.MaxOutputTokens`); the single reader is Haiku 5.5 · `medium` in both, by `tutor.ReadingSingle` and the runner's `haiku-medium`. What differs:
 
-| | eval, the admission of the pair (T115, T126) | the site, `api` |
+| | eval, the admissions of the pair (measurements 3.23) | the site, `api` |
 |---|---|---|
 | who draws the crop | `render.CropOf` of `tutor`, from the strokes | `canvas` (`exportWork`), by the same rule of the crop, that of the eval protocol |
-| height of a digit | 32 px, `render.Digit` | 24 px: format 0.2 reads a module without `canvas.digit_height` at 24 (R51 spec), and none of the four modules of `modules` sets it (`main`, 2026-11-17); `canvas`'s `CROP.digit` is 24 |
+| height of a digit | 32 px, `render.Digit` | 24 px: format 0.2 reads a module without `canvas.digit_height` at 24, and none of the four modules of `modules` sets it (`main`, 2026-11-17); `canvas`'s `CROP.digit` is 24 |
 | the line | 2.67 px, D / 12 | 2 px |
 | the task's text | the statement of the bank | `taskText`: the statement, the alt of its pictures and the text of the item; for `equation-1` of `check-board`, the statement alone |
-| readers | the pair, joined by `module-kit`, and each alone | the pair, or Haiku alone since R125 |
+| readers | the pair, joined by `module-kit`, and each alone | the pair, or Haiku alone in the mode `single` |
 
 - **The raster is not the difference.** `canvas` v0.1.6's 11 synthetic sheets, each crop drawn again by `render` from the same strokes and groups: every crop the same size; 1.8–3.4 % of pixels differ, by 0.18–0.38 of 255 on average, and 0.002–0.006 % by more than 64, at 16–48 px. A local script, no model.
-- **The size is.** On the 60 sheets of the admission (the four recorded sets of T115), the picture takes ⌈w / 28⌉ × ⌈h / 28⌉ tokens (`render.Tokens`): at 24 px 97 on average, median 80, at most 240; at 32 px 145, 121 and 390. Sheet 21 of `sheets-v1` — the author's «3x + 1 = 7» with the answer 8/3 — is 200 × 239 px at 24 against 248 × 311 at 32, 72 tokens against 108. At Haiku's input price the difference is under $0.00001 a reading.
-- **What eval measured at 24 px.** Haiku 5.5 · `medium` read 16, 24 and 48 px no worse than 32 px on the 68 synthetic sheets of E4's test parts (T91; section 3.11), and Haiku · `low` 16 and 24 px no worse, 48 px worse (T72, T91; sections 3.5, 3.11). On the author's handwriting no reader has a reading at 24 px but the author's three sheets of free writing, read at 16, 24 and 48 px by Haiku · `low` with thinking and without (section 3.6): the admission's 360 calls are all at 32 px. The admission ran `-reads plain`, at 32 px alone, and in the other reads Opus reads no other heights (R08): so the pair was never read at 24 px. The synthetic sheets draw a fraction inline alone; a stacked one is drawn only in the workbook (`internal/synth`).
+- **The size is.** On the 60 sheets of the admission (its four recorded sets, measurements 3.23), the picture takes ⌈w / 28⌉ × ⌈h / 28⌉ tokens (`render.Tokens`): at 24 px 97 on average, median 80, at most 240; at 32 px 145, 121 and 390. Sheet 21 of `sheets-v1` — the author's «3x + 1 = 7» with the answer 8/3 — is 200 × 239 px at 24 against 248 × 311 at 32, 72 tokens against 108. At Haiku's input price the difference is under $0.00001 a reading.
+- **What eval measured at 24 px.** Haiku 5.5 · `medium` read 16, 24 and 48 px no worse than 32 px on the 68 synthetic sheets of the test parts of the plan of 2026-10-26 (measurements 3.11), and Haiku · `low` 16 and 24 px no worse, 48 px worse (measurements 3.5 and 3.11). On the author's handwriting no reader has a reading at 24 px but the author's three sheets of free writing, read at 16, 24 and 48 px by Haiku · `low` with thinking and without (measurements 3.6): the admission's 360 calls are all at 32 px. The admission ran `-reads plain`, at 32 px alone, and in the other reads Opus reads no other heights: so the pair was never read at 24 px. The synthetic sheets draw a fraction inline alone; a stacked one is drawn only in the workbook (`internal/synth`).
 - **The same sheet in eval.** Sheet 21 at 32 px: both readers gave `8/3` with no other value and every part legible, in each of three repeats. Sheets 26 (`4/3`) and 39 (`13/2`) the same. The pair released 59 of the 60 sheets (`t115-admission-2`).
 
 **Why the pair split on the site.** `ai_usage` holds no content, so what each reader read there is not known. By the code, the joined slot is `UNREADABLE_AMBIGUOUS` when the two values differ under the check, when one is in the notation and the other not, or when the readers give two different reasons or a reason against a value; two same reasons join into that reason. A reader's `other_values`, or a value not seen in its part, is itself `UNREADABLE_AMBIGUOUS` (`reading.ObservationOf`; `observation.Join` of `module-kit`). The site's sheet had what no sheet of the admission had in its conditions: a digit 24 px high, and a numerator that runs into the bar. Each is a likely cause; that it was one of them is not shown. With the reason, no words came: two calls in the journal.
@@ -1305,25 +1298,25 @@ The rounded averages of input and output are the expected tokens of `price.go`. 
 
 | Words by | Prompt, run | $ a call | By code: leaks / fallback text / box on the first error |
 |---|---|---|---|
-| Opus 5.5 · `high` | v3, T127 | 0.0173, on the 136 cases of section 3.18 | of 300: 0 leaks, 1 broken form |
-| Opus 5.5 · `medium` | v3, T144 | 0.0150 | of 136: 0 leaks, 1 broken form; not judged (Д11) |
-| Opus 5.5 · `high` | v1, E4 | — | of 204: 6 / 30 / 198 (section 3.6) |
-| Opus 5.5 · `medium` | v1, T91 | 0.0130 | of 204: 3 / 45 / 198 |
-| Sonnet 5.5 · `low` | v1, T91 | 0.0057 | of 204: 18 / 64 / 184 |
-| Sonnet without thinking | v1, T91 | 0.0049 | of 204: 17 / 75 / 178 |
-| Haiku 5.5 · `medium` | v1, T91 | 0.00062 | of 204: 15 / 34 / 186 |
+| Opus 5.5 · `high` | v3, the second words measurement | 0.0173, on the 136 cases of measurements 3.18 | of 300: 0 leaks, 1 broken form |
+| Opus 5.5 · `medium` | v3, in part | 0.0150 | of 136: 0 leaks, 1 broken form; not judged (Д11) |
+| Opus 5.5 · `high` | v1, the plan of 2026-10-26 | — | of 204: 6 / 30 / 198 (measurements 3.6) |
+| Opus 5.5 · `medium` | v1, the new configurations | 0.0130 | of 204: 3 / 45 / 198 |
+| Sonnet 5.5 · `low` | v1, the new configurations | 0.0057 | of 204: 18 / 64 / 184 |
+| Sonnet without thinking | v1, the new configurations | 0.0049 | of 204: 17 / 75 / 178 |
+| Haiku 5.5 · `medium` | v1, the new configurations | 0.00062 | of 204: 15 / 34 / 186 |
 
-The v1 runs are the same 204 cases; `api`'s strict leak check turns a leak into the fallback text. Version 3 was measured on Opus alone. The instructions of the words are 4,445 bytes (`internal/hint/testdata/words/rung-w005.txt`) and the schema about 300 more — some 1,100–1,200 tokens of English, our estimate, not counted: no call ran. A hit of Anthropic's cache costs 5 % of Opus's input price and a 5-minute write 1.25 times it (sources 1.5, 1.14), so a cached prefix would save ≈ $0.0045 a call on a hit and add ≈ $0.0012 on a miss. The words of a hint and those after a right answer have instructions of their own, so only a call of the same kind hits; how often two come within 5 minutes, only `api`'s log can say. *2026-11-17 (T167): counted — the instructions of the hint are 1,362 tokens and those after a right answer 811, section 3.22; the Claude adapter caches them (R131).*
+The v1 runs are the same 204 cases; `api`'s strict leak check turns a leak into the fallback text. Version 3 was measured on Opus alone. The instructions of the words are 4,445 bytes (`internal/hint/testdata/words/rung-w005.txt`) and the schema about 300 more — some 1,100–1,200 tokens of English, our estimate, not counted: no call ran. A hit of Anthropic's cache costs 5 % of Opus's input price and a 5-minute write 1.25 times it (sources 1.5, 1.14), so a cached prefix would save ≈ $0.0045 a call on a hit and add ≈ $0.0012 on a miss. The words of a hint and those after a right answer have instructions of their own, so only a call of the same kind hits; how often two come within 5 minutes, only `api`'s log can say. Counted, the instructions of the hint are 1,362 tokens and those after a right answer 811 (measurements 3.22), and the Claude adapter caches them.
 
-**Open:** a run on Haiku at 24 px and on stacked fractions — Д18; *2026-11-17 (T166): the run at 24 px is section 3.21, stacked fractions stay in Д18*; the words' price and the height of a digit for `spec` — В92 and В93.
+**Open:** stacked fractions — Д18; the run at 24 px is measurements 3.21; the words' price and the height of a digit for `spec` — В92 and В93.
 
-### 3.21. Reading the author's sheets at 24 px (Д18)
+### 3.21. Reading the author's sheets at 24 px (Д18), 2026-11-17
 
-**What and why** (T166, 2026-11-17). The site reads a module without `canvas.digit_height` at 24 px (R51 spec), and the admission of the sheet's reading was measured at 32 px (section 3.20). By the author's word of 2026-11-17, one paid run of Д18 with a ceiling of $1, outside the pause of paid runs (R126), measured the site's single reader, Haiku 5.5 · `medium`, on the author's handwriting at 24 px against 32 px. Only numbers came here.
+**What and why** (2026-11-17). The site reads a module without `canvas.digit_height` at 24 px, and the admission of the sheet's reading was measured at 32 px (measurements 3.20). One paid run of Д18 with a ceiling of $1, allowed outside the pause of paid runs, measured the site's single reader, Haiku 5.5 · `medium`, on the author's handwriting at 24 px against 32 px. Only numbers came here.
 
-**How.** `tutor-eval run -kind reading -part recorded -readers haiku-medium -reads keys,heights -max-usd 1` over the four recorded sets of T115 — the 60 sheets of the admission (`sheets-v1` 40, `free-v1` 3, `free-messy-v1` 10, `author-v1` 7; 35 correct, 25 with an error) —, on the reading prompt `c693bfa8…` of version 2, that of the site. The reading without a key at 32 px three times, with the right and the false keys, and at 16, 24 and 48 px once, without a key: 645 calls. The run broke off after 279 calls when the session that ran it ended, and `-rest` asked the other 366 into the same log (R130). Prices checked on Anthropic's Pricing page the same day: Haiku 5.5 $0.10 in, $0.50 out (sources 1.14). Spent: Anthropic, 645 calls, $0.2610; none failed.
+**How.** `tutor-eval run -kind reading -part recorded -readers haiku-medium -reads keys,heights -max-usd 1` over the four recorded sets of the admission — the 60 sheets of the admission (`sheets-v1` 40, `free-v1` 3, `free-messy-v1` 10, `author-v1` 7; 35 correct, 25 with an error) —, on the reading prompt `c693bfa8…` of version 2, that of the site. The reading without a key at 32 px three times, with the right and the false keys, and at 16, 24 and 48 px once, without a key: 645 calls. The run broke off after 279 calls when the session that ran it ended, and `-rest` asked the other 366 into the same log. Prices checked on Anthropic's Pricing page the same day: Haiku 5.5 $0.10 in, $0.50 out (sources 1.14). Spent: Anthropic, 645 calls, $0.2610; none failed.
 
-**At 24 px against 32 px** — without a key, the first repeat at each height, the same sheets; the report's test of heights (R08; architecture 3.4):
+**At 24 px against 32 px** — without a key, the first repeat at each height, the same sheets; the report's test of heights (measurements 3.1):
 
 | Height | Errors | False alarms, of 35 | False "correct", of 25 | Extra "unreadable", of 60 | Σd against 32 px | p, worse | Not worse than 32 px |
 |---|---|---|---|---|---|---|---|
@@ -1332,17 +1325,17 @@ The v1 runs are the same 204 cases; `api`'s strict leak check turns a leak into 
 | 24 px | 1 | 0 | 0 | 1 | +1 | 0.5 | yes |
 | 48 px | 5 | 0 | 0 | 5 | +5 | 0.031 | no |
 
-- **24 px is no worse than 32 px**: the one error is an extra "unreadable" ("ambiguous") on sheet 1 of `author-v1`, a correct sheet, which 32 px too read as unreadable in its third repeat; no false alarm and no false "correct". By the admission rule's rung "author" (R80) Haiku at 24 px alone has no false alarm on 35 answer slots and no false "correct" on 25, 60 in all, as the pair at 32 px (architecture 3.9).
-- At 32 px over the three repeats: 3 extra "unreadable" of 180 (sheets 5 and 8 of `free-messy-v1`, sheet 1 of `author-v1`), no false alarm of 105 and no false "correct" of 75 — as T115's Haiku, 2 of 180.
-- Sheet 21 of `sheets-v1`, the author's «3x + 1 = 7» with 8/3 (section 3.20), was read right at 16, 24 and 32 px, and "ambiguous" at 48 px.
+- **24 px is no worse than 32 px**: the one error is an extra "unreadable" ("ambiguous") on sheet 1 of `author-v1`, a correct sheet, which 32 px too read as unreadable in its third repeat; no false alarm and no false "correct". By the rung "author" of the admission rule, Haiku at 24 px alone has no false alarm on 35 answer slots and no false "correct" on 25, 60 in all, as the pair at 32 px.
+- At 32 px over the three repeats: 3 extra "unreadable" of 180 (sheets 5 and 8 of `free-messy-v1`, sheet 1 of `author-v1`), no false alarm of 105 and no false "correct" of 75 — as Haiku in the admission of the reading prompt version 2, 2 of 180.
+- Sheet 21 of `sheets-v1`, the author's «3x + 1 = 7» with 8/3 (measurements 3.20), was read right at 16, 24 and 32 px, and "ambiguous" at 48 px.
 - A reading at 24 px takes 1,460 tokens of input on average against 1,508 at 32 px: $0.000387 against $0.000398, p50 of the time 2.4 s at both.
-- The key's threshold (R03) fails as in T115: what Haiku reads under the right key it reads without one too, 27 of 180, the baseline; the site's reading has no key.
+- The threshold of one call fails as in the admission of the reading prompt version 2: what Haiku reads under the right key it reads without one too, 27 of 180, the baseline; the site's reading has no key.
 
-**Not measured:** a stacked fraction whose numerator runs into the bar — the sheets' synthesis draws fractions inline alone, and no recorded sheet has one (section 3.20) —; Opus 5.5 at 24 px, which the site does not call in the mode `single` (R125). Both stay in Д18.
+**Not measured:** a stacked fraction whose numerator runs into the bar — the sheets' synthesis draws fractions inline alone, and no recorded sheet has one (measurements 3.20) —; Opus 5.5 at 24 px, which the site does not call in the mode `single`. Both stay in Д18.
 
-### 3.22. The prefix of the words' cache
+### 3.22. The prefix of the words' cache, 2026-11-17
 
-**What and why** (T167, 2026-11-17). The Claude adapter caches the system prompt of the words (R131): a prompt below the minimum of the model, 512 tokens on Opus 5.5, Sonnet 5.5 and Haiku 5.5, is not cached and no error says so (sources 1.18). Section 3.20 estimated the instructions of the hint at ≈ 1,100–1,200 tokens without counting them.
+**What and why** (2026-11-17). The Claude adapter caches the system prompt of the words: a prompt below the minimum of the model, 512 tokens on Opus 5.5, Sonnet 5.5 and Haiku 5.5, is not cached and no error says so (sources 1.18). The estimate of measurements 3.20 put the instructions of the hint at ≈ 1,100–1,200 tokens without counting them.
 
 **How.** Anthropic's token counting, which is free (sources 1.16), on `claude-opus-5-5`, with the eval key: one user message "ok" alone, and the same message after a system prompt of the instructions as the code gives them — `hint.Instructions()`, 4,444 bytes, and `correct.Instructions()`, 2,803 bytes; the instructions are the difference. No call of a model, no learner's or author's work.
 
@@ -1353,9 +1346,9 @@ The v1 runs are the same 204 cases; `api`'s strict leak check turns a leak into 
 
 The money is Opus 5.5's: input $4, a write for 5 minutes $5, a hit $0.20 a million (sources 1.18). A hit saves the prefix × $3.80 and a miss costs it × $1 more, so the cache pays from 1 / (1 + 3.8) ≈ 21 % of the calls of a kind that hit, whatever the prefix's length. Both prefixes are above 512 tokens; the prompt that structured outputs adds for the schema is not counted in them. How often a call of the words comes within 5 minutes of another of its kind, on the same key, only `api`'s log can say (В92, В96).
 
-### 3.23. The first admission of the reading pair
+### 3.23. The first admission of the reading pair, 2026-11-08
 
-**What and how** (T126, 2026-11-08; R80). The admission run of the pair Opus 5.5 · `high` and Haiku 5.5 · `medium` on 60 of the author's sheets — `sheets-v1` 40, `free-v1` 3, `free-messy-v1` 10 and `author-v1` 7 —, 3 repeats each, the final sheet without the key at 32 px, the reading prompt of version 1 with the fingerprint `94452c62…`. 360 calls, $1.68 against a ceiling of $8; no failures and no "unchecked". The log and the reports are `samples/runs/t126-admission.*`, outside git, and here only the numbers:
+**What and how** (2026-11-08). The admission run of the pair Opus 5.5 · `high` and Haiku 5.5 · `medium` on 60 of the author's sheets — `sheets-v1` 40, `free-v1` 3, `free-messy-v1` 10 and `author-v1` 7 —, 3 repeats each, the final sheet without the key at 32 px, the reading prompt of version 1 with the fingerprint `94452c62…`. 360 calls, $1.68 against a ceiling of $8; no failures and no "unchecked". The log and the reports are `samples/runs/t126-admission.*`, outside git, and here only the numbers:
 
 | Report | False alarms by readings | False "correct" by readings | Extra "unreadable" |
 |---|---|---|---|
@@ -1365,18 +1358,18 @@ The money is Opus 5.5's: input $4, a write for 5 minutes $5, a hit $0.20 a milli
 
 By answer slots, as the rule counts: the pair has 0 false alarms on 35 answer slots, bound 0.082, and 0 false "correct" on 25 answer slots, bound 0.113. `tutor-eval admit` gave the pair the rung "author", and the reports of one reader nothing: a sheet is read by a pair. The report's SHA-256 was `f2455454…`. The averages of its 180 calls of each reader — Opus 1,354 of input and 177 of output, Haiku 1,354 and 502 — are the expected tokens of `CallSheet` in `price.go`. The runner of this run is a build from the working copy, and its report names the runner `v0.0.0`.
 
-**Version 2 of the prompt** (T115, 2026-11-08; R82). The reading prompt became version 2, with the safety rules for children, and the admission was repeated by the same run on the same 60 sheets, twice: the review refined the rule about what is unsuitable, and the final prompt was measured anew. The final run cost $1.78, with no failures; the pair again has 0 false alarms on 35 answer slots and 0 false "correct" on 25 — the rung "author" —, and extra "unreadable" are 6 of 180 instead of 9 for version 1. Its report, `t115-admission-2`, with the SHA-256 `284d8eac…` and the fingerprint of version 2, `c693bfa8…`, is the evidence of the pair's entry in `admission.Admitted`.
+**Version 2 of the prompt** (2026-11-08). The reading prompt became version 2, with the safety rules for children, and the admission was repeated by the same run on the same 60 sheets, twice: the review refined the rule about what is unsuitable, and the final prompt was measured anew. The final run cost $1.78, with no failures; the pair again has 0 false alarms on 35 answer slots and 0 false "correct" on 25 — the rung "author" —, and extra "unreadable" are 6 of 180 instead of 9 for version 1. Its report, `t115-admission-2`, with the SHA-256 `284d8eac…` and the fingerprint of version 2, `c693bfa8…`, is the evidence of the pair's entry in `admission.Admitted`.
 
-### 3.24. The library's prompts of the workbook, the essay and the rubric
+### 3.24. The library's prompts of the workbook, the essay and the rubric, 2026-11-11
 
-From architecture 3.10, the calls of the workbook, the essay and the rubric (T175). Each run checked that the prompt the library asks reads no worse than the eval prompt before it; the conditions are R97, R98 and R99.
-- **The workbook, version 3** (T123, 2026-11-11; R97) — the trial part of T99, 20 pages, Opus 5.5 · `high` and Haiku 5.5 · `medium`, one repeat, $0.60: "correct" on 188 and 190 boxes of 220 against 185 and 186 of version 2, false "correct" 0 of 40 for both, false alarms 26 and 16 of 160 against 29 and 18, extra "unreadable" 6 and 9 of 200 against 6 and 11.
-- **The reading of an essay, version 2 of the two calls** (T124, 2026-11-11; R98) — the test part of the essays in two calls, Sonnet 5.5 · `low` without thinking and Haiku 5.5 · `medium`: 0 errors in words of 993 for both, all the learner's errors kept, not one essay read as illegible.
-- **The assessment of the text, version 3 of the two calls** (T125, 2026-11-11; R99) — the test part of the essays, the same two models: 0 false alarms of 66, 0 missed "not met" of 24, κ 1.00; the feedback rule broken in 2 of 15 for Sonnet — for version 1 in 11 of 45 — and in 0 for Haiku; the judge of words flagged none of the 30 feedbacks.
+Each run checked that the prompt the library asks reads no worse than the eval prompt before it.
+- **The workbook, version 3** (2026-11-11) — the dev part of the mirrored digit, 20 pages, Opus 5.5 · `high` and Haiku 5.5 · `medium`, one repeat, $0.60: "correct" on 188 and 190 boxes of 220 against 185 and 186 of version 2, false "correct" 0 of 40 for both, false alarms 26 and 16 of 160 against 29 and 18, extra "unreadable" 6 and 9 of 200 against 6 and 11.
+- **The reading of an essay, version 2 of the two calls** (2026-11-11) — the test part of the essays in two calls, Sonnet 5.5 · `low` without thinking and Haiku 5.5 · `medium`: 0 errors in words of 993 for both, all the learner's errors kept, not one essay read as illegible.
+- **The assessment of the text, version 3 of the two calls** (2026-11-11) — the test part of the essays, the same two models: 0 false alarms of 66, 0 missed "not met" of 24, κ 1.00; the feedback rule broken in 2 of 15 for Sonnet — for version 1 in 11 of 45 — and in 0 for Haiku; the judge of words flagged none of the 30 feedbacks.
 
-### 3.25. The expected tokens of the cascade of a task from paper
+### 3.25. The expected tokens of the cascade of a task from paper, 2026-11-19
 
-**What and why** (T234, 2026-11-19; R137). The four calls of a task from paper ask up to three models in turn, and `api` reserves the expected price of all three, so `price.go` needs the tokens of each. No eval measured them (Д21, Д22): they come from the `ai_usage` lines of `api`'s log of the author's check of T233 on `dev-ai`, 2026-11-19, the author's own pages, counted by a script outside git. The input is `input_tokens` with both of the cache's; the output counts the thinking. `SubmitWork` mixes the statement, the solution and the reading of the work, which the line does not tell apart.
+**What and why** (2026-11-19). The four calls of a task from paper ask up to three models in turn, and `api` reserves the expected price of all three, so `price.go` needs the tokens of each. No eval measured them (Д21, Д22): they come from the `ai_usage` lines of `api`'s log of the author's check on `dev-ai`, 2026-11-19, the author's own pages, counted by a script outside git. The input is `input_tokens` with both of the cache's; the output counts the thinking. `SubmitWork` mixes the statement, the solution and the reading of the work, which the line does not tell apart.
 
 | Method | Model | Calls | Input | Output | Of it thinking | $ a call | Time p50 |
 |---|---|---|---|---|---|---|---|
@@ -1393,55 +1386,55 @@ From architecture 3.10, the calls of the workbook, the essay and the rubric (T17
 
 ### 4.1. The spending of tutor's sessions
 
-What tutor's Claude Code sessions spend, by the measurement of measurements 1.1 spec: `just -f spec/justfile tokens-report --since … --until … --row` prints one row of the table below from this machine's transcripts of the folder `-workspaces-tutor`. A row comes at the archive of each epic, for the epic's window (RUN.md, «Как устроен план: эпики»), and from each task of row 7.12 of spec's cross-repository plan, T131–T136, for its own session (R102). The figures are only sums: no text of transcripts is here. The last column, the context of a main call among the first 80 of its session, the row has printed since `spec` `v0.18.27` (T199 spec; measurements 1.9 spec), and the rows before it have "—" there (R133).
+What tutor's Claude Code sessions spend, by the measurement of measurements 1.1 spec: `just -f spec/justfile tokens-report --since … --until … --row` prints one row of the table below from this machine's transcripts of the folder `-workspaces-tutor`. A row comes at the archive of each epic, for the epic's window, and from each of the six tasks of the move to `spec`'s line 0.16, for its own session. The figures are only sums: no text of transcripts is here. The last column, the context of a main call among the first 80 of its session, the row has printed since `spec` `v0.18.27` (measurements 1.9 spec), and the rows before it have "—" there.
 
 | Window, UTC | What | Sessions | Calls, main / subagents | Context of a call, k, main / subagents | Compactions | Cost at API prices | Context of a main call among its session's first 80, k |
 |---|---|---|---|---|---|---|---|
 | 2026-10-13T00:00 … 2026-11-12T14:27 | "before": tutor's row of measurements 1.9 spec | 28 | 11,509 / 6,806 | 398.5 / 119.5 | 53 | $1,896.62 | — |
-| 2026-11-12T20:32 … 2026-11-12T21:49 | T131: spec `v0.16.3` and the ways of working of line 0.16 | 1 | 132 / 43 | 244.2 / 114.9 | 0 | $13.00 | — |
-| 2026-11-12T21:49 … 2026-11-13T03:46 | T132: the sources | 1 | 98 / 52 | 244.8 / 93.7 | 0 | $14.22 | — |
-| 2026-11-13T03:46 … 2026-11-13T05:57 | T133: the measurements | 1 | 163 / 217 | 227.7 / 88.6 | 1 | $24.63 | — |
-| 2026-11-13T05:57 … 2026-11-13T14:08 | T134: architecture and the sheet documents in English | 1 | 125 / 256 | 180.1 / 88.2 | 0 | $22.90 | — |
-| 2026-11-13T14:08 … 2026-11-13T14:42 | T135: the decision log to R50 in English | 1 | 64 / 195 | 98.3 / 85.0 | 0 | $12.09 | — |
-| 2026-11-13T14:42 … 2026-11-13T15:05 | T136: the log from R51 in English, the budgets, until its review | 1 | 81 / 155 | 148.7 / 104.7 | 0 | $13.82 | — |
-| 2026-11-12T20:32 … 2026-11-13T15:05 | "after": row 7.12, T131–T136 | 6 | 663 / 918 | 202.4 / 92.0 | 1 | $100.66 | — |
-| 2026-11-13T15:36 … 2026-11-13T18:46 | epic E7: its planning, T137–T140 and its archive | 5 | 406 / 61 | 147.6 / 64.4 | 0 | $26.58 | — |
-| 2026-11-13T18:46 … 2026-11-14T01:10 | epic E8: its planning, T141–T144 and its archive | 5 | 519 / 252 | 195.3 / 87.5 | 1 | $47.93 | — |
-| 2026-11-14T01:10 … 2026-11-16T05:01 | epic E9: T145–T147, run by spec's orchestrator, and its archive | 4 | 279 / 104 | 154.6 / 84.9 | 0 | $19.79 | — |
-| 2026-11-16T05:01 … 2026-11-16T16:20 | epic E10: T148–T151, run by spec's orchestrator, and its archive | 6 | 359 / 78 | 126.3 / 62.8 | 0 | $22.25 | — |
-| 2026-11-16T16:20 … 2026-11-16T22:20 | epic E11: T152, run by spec's orchestrator, and its archive | 2 | 127 / 34 | 163.7 / 73.9 | 0 | $8.46 | — |
-| 2026-11-16T22:20 … 2026-11-17T04:36 | epic E12: T153–T156 and T160–T163, run by spec's orchestrator, and its archive | 9 | 647 / 192 | 147.3 / 70.1 | 0 | $47.78 | — |
-| 2026-11-17T04:36 … 2026-11-17T05:26 | epic E13: T164, run by spec's orchestrator, and its archive | 2 | 47 / 17 | 81.2 / 58.0 | 0 | $2.85 | — |
-| 2026-11-17T05:26 … 2026-11-17T15:04 | epic E14: T165, run by spec's orchestrator, and its archive | 2 | 69 / 0 | 85.3 / — | 0 | $3.28 | — |
-| 2026-11-17T15:04 … 2026-11-17T18:38 | epic E15: T166, run by spec's orchestrator, and its archive | 2 | 113 / 21 | 120.4 / 73.0 | 0 | $6.94 | — |
-| 2026-11-17T18:38 … 2026-11-17T19:15 | epic E16: T167, run by spec's orchestrator, and its archive | 2 | 105 / 22 | 146.7 / 60.2 | 0 | $6.88 | — |
-| 2026-11-17T19:15 … 2026-11-17T19:37 | epic E17: T168, run by spec's orchestrator, and its archive | 2 | 84 / 24 | 168.7 / 53.9 | 0 | $5.82 | — |
-| 2026-11-17T19:37 … 2026-11-18T05:42 | epic E18: T169, run by spec's orchestrator, and its archive | 3 | 118 / 27 | 129.2 / 62.9 | 0 | $7.11 | 125.6 |
-| 2026-11-18T05:42 … 2026-11-18T16:05 | epic E19: T170–T181, run by spec's orchestrator, and its archive | 13 | 817 / 616 | 128.7 / 75.4 | 0 | $71.82 | 122.9 |
-| 2026-11-18T16:05 … 2026-11-20T21:25 | epic E20: T182, run by spec's orchestrator, and its archive | 2 | 92 / 19 | 119.7 / 58.4 | 0 | $5.23 | 119.7 |
+| 2026-11-12T20:32 … 2026-11-12T21:49 | spec `v0.16.3` and the ways of working of line 0.16 | 1 | 132 / 43 | 244.2 / 114.9 | 0 | $13.00 | — |
+| 2026-11-12T21:49 … 2026-11-13T03:46 | the sources | 1 | 98 / 52 | 244.8 / 93.7 | 0 | $14.22 | — |
+| 2026-11-13T03:46 … 2026-11-13T05:57 | the measurements | 1 | 163 / 217 | 227.7 / 88.6 | 1 | $24.63 | — |
+| 2026-11-13T05:57 … 2026-11-13T14:08 | architecture and the sheet documents in English | 1 | 125 / 256 | 180.1 / 88.2 | 0 | $22.90 | — |
+| 2026-11-13T14:08 … 2026-11-13T14:42 | the first half of the decision log in English | 1 | 64 / 195 | 98.3 / 85.0 | 0 | $12.09 | — |
+| 2026-11-13T14:42 … 2026-11-13T15:05 | the second half of the log in English, the budgets, until its review | 1 | 81 / 155 | 148.7 / 104.7 | 0 | $13.82 | — |
+| 2026-11-12T20:32 … 2026-11-13T15:05 | "after": the six sessions of the move to line 0.16 | 6 | 663 / 918 | 202.4 / 92.0 | 1 | $100.66 | — |
+| 2026-11-13T15:36 … 2026-11-13T18:46 | epic E7: its planning, its four tasks and its archive | 5 | 406 / 61 | 147.6 / 64.4 | 0 | $26.58 | — |
+| 2026-11-13T18:46 … 2026-11-14T01:10 | epic E8: its planning, its four tasks and its archive | 5 | 519 / 252 | 195.3 / 87.5 | 1 | $47.93 | — |
+| 2026-11-14T01:10 … 2026-11-16T05:01 | epic E9: its three tasks, run by spec's orchestrator, and its archive | 4 | 279 / 104 | 154.6 / 84.9 | 0 | $19.79 | — |
+| 2026-11-16T05:01 … 2026-11-16T16:20 | epic E10: its four tasks, run by spec's orchestrator, and its archive | 6 | 359 / 78 | 126.3 / 62.8 | 0 | $22.25 | — |
+| 2026-11-16T16:20 … 2026-11-16T22:20 | epic E11: its task, run by spec's orchestrator, and its archive | 2 | 127 / 34 | 163.7 / 73.9 | 0 | $8.46 | — |
+| 2026-11-16T22:20 … 2026-11-17T04:36 | epic E12: eight of its tasks, run by spec's orchestrator, and its archive | 9 | 647 / 192 | 147.3 / 70.1 | 0 | $47.78 | — |
+| 2026-11-17T04:36 … 2026-11-17T05:26 | epic E13: its task, run by spec's orchestrator, and its archive | 2 | 47 / 17 | 81.2 / 58.0 | 0 | $2.85 | — |
+| 2026-11-17T05:26 … 2026-11-17T15:04 | epic E14: its task, run by spec's orchestrator, and its archive | 2 | 69 / 0 | 85.3 / — | 0 | $3.28 | — |
+| 2026-11-17T15:04 … 2026-11-17T18:38 | epic E15: its task, run by spec's orchestrator, and its archive | 2 | 113 / 21 | 120.4 / 73.0 | 0 | $6.94 | — |
+| 2026-11-17T18:38 … 2026-11-17T19:15 | epic E16: its task, run by spec's orchestrator, and its archive | 2 | 105 / 22 | 146.7 / 60.2 | 0 | $6.88 | — |
+| 2026-11-17T19:15 … 2026-11-17T19:37 | epic E17: its task, run by spec's orchestrator, and its archive | 2 | 84 / 24 | 168.7 / 53.9 | 0 | $5.82 | — |
+| 2026-11-17T19:37 … 2026-11-18T05:42 | epic E18: its task, run by spec's orchestrator, and its archive | 3 | 118 / 27 | 129.2 / 62.9 | 0 | $7.11 | 125.6 |
+| 2026-11-18T05:42 … 2026-11-18T16:05 | epic E19: its twelve tasks, run by spec's orchestrator, and its archive | 13 | 817 / 616 | 128.7 / 75.4 | 0 | $71.82 | 122.9 |
+| 2026-11-18T16:05 … 2026-11-20T21:25 | epic E20: its task, run by spec's orchestrator, and its archive | 2 | 92 / 19 | 119.7 / 58.4 | 0 | $5.23 | 119.7 |
 
-- Read 2026-11-13. A task's window runs from the start of its session to the start of the next one. The row of T131 is its whole session; its «Сделано» gives the numbers before its review: 106 / 43 calls, 221.1 / 114.9 thousand, $10.76. Until T136, the row of T133 was its session before its review, 2026-11-13T03:46 … 2026-11-13T05:11: 131 / 176 calls, 216.1 / 88.1 thousand, $20.45; it is its whole session now, as the other rows. The row of T136 runs to its review, as does "after", and the rows of the six tasks add up to "after".
-- "After" is the six sessions of row 7.12, to the review of T136: the context of a main call is 202.4 thousand against 398.5 "before", −49%, and of a subagent's 92.0 against 119.5, −23%, with 1 compaction in 663 main calls against 53 in 11,509. The windows differ in work: a month of code and paid runs against six sessions on documents, a session for each task. The comparison over the same kind of work is T124 spec.
-- Epic E7, read 2026-11-13 at its archive (R108): five sessions from its planning — the session of R104, then one for each task, and the archive in the session of T140 —, the row to the measurement itself, before the archive's commit. The context of a main call is 147.6 thousand, 27% below the reference of tutor, the row "after" of 7.12, 202.4 thousand, over 406 main calls: the threshold of R145 spec, 25% above the reference over at least 300 calls, gives no analysis.
-- Epic E8, read 2026-11-14 at its archive (R114): five sessions from its planning, which began in the session of T140 right after the row of E7, then one for each task, and the archive in the session of T144; the row to the measurement itself, before the archive's commit. The context of a main call is 195.3 thousand, 3.5% below the reference of tutor, 202.4 thousand, over 519 main calls: the threshold of R145 spec gives no analysis. The one compaction is in the session of T143, whose main context reached 366 thousand.
-- Epic E9, read 2026-11-16 at its archive in the session of T147 (R117): four sessions from the archive of E8 to the measurement itself, before the archive's commit — the calls of the session of T144 after that archive, and those of T145, T146 and T147, which spec's orchestrator ran, with the planning of E9 in the session of T145 (R115). The context of a main call is 154.6 thousand, 24% below the reference of tutor, 202.4 thousand, over 279 main calls: the threshold of R145 spec gives no analysis.
-- Epic E10, read 2026-11-16 at its archive in the session of T150 (R121): six sessions from the archive of E9 to the measurement itself, before the archive's commit, among them those of T148–T151, which spec's orchestrator ran, with the planning of E10 in the session of T148 (R118). The context of a main call is 126.3 thousand, 38% below the reference of tutor, 202.4 thousand, over 359 main calls: the threshold of R145 spec gives no analysis.
-- Epic E11, read 2026-11-16 at its archive in the session of T152 (R122): two sessions from the archive of E10 to the measurement itself, before the archive's commit — the calls of the session of T150 after that archive, and those of T152, which spec's orchestrator ran, with the opening of E11 in the same session. The context of a main call is 163.7 thousand, 19% below the reference of tutor, 202.4 thousand, over 127 main calls, fewer than the 300 that the threshold of R145 spec asks: no analysis.
-- Epic E12, read 2026-11-17 at its archive in the session of T160 (R127): nine sessions from the archive of E11 to the measurement itself, before the archive's commit — those of the epic's tasks, which spec's orchestrator ran, with the opening of E12 in the session of T153 (R123). The context of a main call is 147.3 thousand, 27% below the reference of tutor, 202.4 thousand, over 647 main calls: the threshold of R145 spec gives no analysis.
-- Epic E13, read 2026-11-17 at its archive in the session of T164 (R128): two sessions from the archive of E12 to the measurement itself, before the archive's commit — the calls of the session of T160 after that archive, and those of T164, which spec's orchestrator ran, with the opening of E13 in the same session. The context of a main call is 81.2 thousand, 60% below the reference of tutor, 202.4 thousand, over 47 main calls, fewer than the 300 that the threshold of R145 spec asks: no analysis.
-- Epic E14, read 2026-11-17 at its archive in the session of T165 (R129): two sessions from the archive of E13 to the measurement itself, before the archive's commit — the calls of the session of T164 after that archive, and those of T165, which spec's orchestrator ran, with the opening of E14 in the same session. The context of a main call is 85.3 thousand, 58% below the reference of tutor, 202.4 thousand, over 69 main calls, fewer than the 300 that the threshold of R145 spec asks: no analysis.
-- Epic E15, read 2026-11-17 at its archive in the session of T166 (R130): two sessions from the archive of E14 to the measurement itself, before the archive's commit and the review — the calls of the session of T165 after that archive, and those of T166, which spec's orchestrator ran and resumed three times, with the opening of E15 in the same session. The context of a main call is 120.4 thousand, 41% below the reference of tutor, 202.4 thousand, over 113 main calls, fewer than the 300 that the threshold of R145 spec asks: no analysis.
-- Epic E16, read 2026-11-17 at its archive in the session of T167 (R131): two sessions from the archive of E15 to the measurement itself, before the archive's commit and the review — the calls of the session of T166 after that archive, and those of T167, which spec's orchestrator ran, with the opening of E16 in the same session. The context of a main call is 146.7 thousand, 28% below the reference of tutor, 202.4 thousand, over 105 main calls, fewer than the 300 that the threshold of R145 spec asks: no analysis.
-- Epic E17, read 2026-11-17 at its archive in the session of T168 (R132): two sessions from the archive of E16 to the measurement itself, before the archive's commit and the review — the calls of the session of T167 after that archive, and those of T168, which spec's orchestrator ran, with the opening of E17 in the same session. The context of a main call is 168.7 thousand, 17% below the reference of tutor, 202.4 thousand, over 84 main calls, fewer than the 300 that the threshold of R145 spec asks: no analysis.
-- Epic E18, read 2026-11-18 at its archive in the session of T169 (R133): three sessions from the archive of E17 to the measurement itself, after the review and before the archive's commit — the calls of the session of T168 after that archive, those of T169, which spec's orchestrator ran, with the opening of E18 in the same session, and those of a third session in the window. The context of a main call is 129.2 thousand, 36% below the reference of tutor, 202.4 thousand, and 125.6 thousand among the first 80 of a session, over 118 main calls, fewer than the 300 that the threshold of R145 spec asks: no analysis.
-- Epic E19, read 2026-11-18 at its archive in the session of T181: thirteen sessions from the archive of E18 to the measurement itself, after the review and before the archive's commit — the calls of the session of T169 after that archive, and those of T170–T181, which spec's orchestrator ran, one session for each task, with the opening of E19 in the session of T170. The context of a main call is 128.7 thousand, 36% below the reference of tutor, 202.4 thousand, and 122.9 thousand among the first 80 of a session, over 817 main calls: the threshold of R145 spec is not reached, and of the commits of `docs-budgets.json` in the window only T170's raises a limit, fewer than three: no analysis.
-- Epic E20, read 2026-11-20 at its archive in the session of T182: two sessions from the archive of E19 to the measurement itself, after the review and before the archive's commit — the calls of the session of T181 after that archive, and those of T182, which spec's orchestrator ran, with the opening of E20 in the same session. The work of `tutor` in epic E11 of `spec` ran in clones outside this folder, and its transcripts are not of `-workspaces-tutor`. The context of a main call is 119.7 thousand, 41% below the reference of tutor, 202.4 thousand, and 119.7 thousand among the first 80 of a session, over 92 main calls, fewer than the 300 that the threshold of R145 spec asks: no analysis.
+- Read 2026-11-13. A task's window runs from the start of its session to the start of the next one. The row of `spec` `v0.16.3` is its whole session; before its review it gave 106 / 43 calls, 221.1 / 114.9 thousand, $10.76. The row of the measurements was once its session before its review, 2026-11-13T03:46 … 2026-11-13T05:11: 131 / 176 calls, 216.1 / 88.1 thousand, $20.45; it is its whole session now, as the other rows. The row of the second half of the log runs to its review, as does "after", and the rows of the six tasks add up to "after".
+- "After" is the six sessions of the move to line 0.16, to the review of the last: the context of a main call is 202.4 thousand against 398.5 "before", −49%, and of a subagent's 92.0 against 119.5, −23%, with 1 compaction in 663 main calls against 53 in 11,509. The windows differ in work: a month of code and paid runs against six sessions on documents, a session for each task. The comparison over the same kind of work is measurements 1.10 spec.
+- Epic E7, read 2026-11-13 at its archive: five sessions from its planning — the session that planned it, then one for each task, and the archive in the session of its last task —, the row to the measurement itself, before the archive's commit. The context of a main call is 147.6 thousand, 27% below the reference of tutor, the row "after" of the move to line 0.16, 202.4 thousand, over 406 main calls: `spec`'s threshold of an analysis, 25% above the reference over at least 300 main calls, gives none.
+- Epic E8, read 2026-11-14 at its archive: five sessions from its planning, which began in the session of E7's last task right after E7's row, then one for each task, and the archive in the session of its last task; the row to the measurement itself, before the archive's commit. The context of a main call is 195.3 thousand, 3.5% below the reference of tutor, 202.4 thousand, over 519 main calls: the threshold of an analysis gives none. The one compaction is in the session of its third task, whose main context reached 366 thousand.
+- Epic E9, read 2026-11-16 at its archive in the session of its last task: four sessions from the archive of E8 to the measurement itself, before the archive's commit — the calls of the session of E8's last task after that archive, and those of E9's three tasks, which spec's orchestrator ran, with the planning of E9 in the session of the first. The context of a main call is 154.6 thousand, 24% below the reference of tutor, 202.4 thousand, over 279 main calls: the threshold of an analysis gives none.
+- Epic E10, read 2026-11-16 at its archive in the session of its third task: six sessions from the archive of E9 to the measurement itself, before the archive's commit, among them those of its four tasks, which spec's orchestrator ran, with the planning of E10 in the session of the first. The context of a main call is 126.3 thousand, 38% below the reference of tutor, 202.4 thousand, over 359 main calls: the threshold of an analysis gives none.
+- Epic E11, read 2026-11-16 at its archive in the session of its task: two sessions from the archive of E10 to the measurement itself, before the archive's commit — the calls of the session that archived E10 after that archive, and those of E11's task, which spec's orchestrator ran, with the opening of E11 in the same session. The context of a main call is 163.7 thousand, 19% below the reference of tutor, 202.4 thousand, over 127 main calls, fewer than the 300 that the threshold of an analysis asks: no analysis.
+- Epic E12, read 2026-11-17 at its archive in the session of its fifth task: nine sessions from the archive of E11 to the measurement itself, before the archive's commit — those of the epic's tasks, which spec's orchestrator ran, with the opening of E12 in the session of the first. The context of a main call is 147.3 thousand, 27% below the reference of tutor, 202.4 thousand, over 647 main calls: the threshold of an analysis gives none.
+- Epic E13, read 2026-11-17 at its archive in the session of its task: two sessions from the archive of E12 to the measurement itself, before the archive's commit — the calls of the session that archived E12 after that archive, and those of E13's task, which spec's orchestrator ran, with the opening of E13 in the same session. The context of a main call is 81.2 thousand, 60% below the reference of tutor, 202.4 thousand, over 47 main calls, fewer than the 300 that the threshold of an analysis asks: no analysis.
+- Epic E14, read 2026-11-17 at its archive in the session of its task: two sessions from the archive of E13 to the measurement itself, before the archive's commit — the calls of the session that archived E13 after that archive, and those of E14's task, which spec's orchestrator ran, with the opening of E14 in the same session. The context of a main call is 85.3 thousand, 58% below the reference of tutor, 202.4 thousand, over 69 main calls, fewer than the 300 that the threshold of an analysis asks: no analysis.
+- Epic E15, read 2026-11-17 at its archive in the session of its task: two sessions from the archive of E14 to the measurement itself, before the archive's commit and the review — the calls of the session that archived E14 after that archive, and those of E15's task, which spec's orchestrator ran and resumed three times, with the opening of E15 in the same session. The context of a main call is 120.4 thousand, 41% below the reference of tutor, 202.4 thousand, over 113 main calls, fewer than the 300 that the threshold of an analysis asks: no analysis.
+- Epic E16, read 2026-11-17 at its archive in the session of its task: two sessions from the archive of E15 to the measurement itself, before the archive's commit and the review — the calls of the session that archived E15 after that archive, and those of E16's task, which spec's orchestrator ran, with the opening of E16 in the same session. The context of a main call is 146.7 thousand, 28% below the reference of tutor, 202.4 thousand, over 105 main calls, fewer than the 300 that the threshold of an analysis asks: no analysis.
+- Epic E17, read 2026-11-17 at its archive in the session of its task: two sessions from the archive of E16 to the measurement itself, before the archive's commit and the review — the calls of the session that archived E16 after that archive, and those of E17's task, which spec's orchestrator ran, with the opening of E17 in the same session. The context of a main call is 168.7 thousand, 17% below the reference of tutor, 202.4 thousand, over 84 main calls, fewer than the 300 that the threshold of an analysis asks: no analysis.
+- Epic E18, read 2026-11-18 at its archive in the session of its task: three sessions from the archive of E17 to the measurement itself, after the review and before the archive's commit — the calls of the session that archived E17 after that archive, those of E18's task, which spec's orchestrator ran, with the opening of E18 in the same session, and those of a third session in the window. The context of a main call is 129.2 thousand, 36% below the reference of tutor, 202.4 thousand, and 125.6 thousand among the first 80 of a session, over 118 main calls, fewer than the 300 that the threshold of an analysis asks: no analysis.
+- Epic E19, read 2026-11-18 at its archive in the session of its last task: thirteen sessions from the archive of E18 to the measurement itself, after the review and before the archive's commit — the calls of the session that archived E18 after that archive, and those of E19's twelve tasks, which spec's orchestrator ran, one session for each task, with the opening of E19 in the session of the first. The context of a main call is 128.7 thousand, 36% below the reference of tutor, 202.4 thousand, and 122.9 thousand among the first 80 of a session, over 817 main calls: the threshold of an analysis is not reached, and of the commits of `docs-budgets.json` in the window only one raises a limit, fewer than three: no analysis.
+- Epic E20, read 2026-11-20 at its archive in the session of its task: two sessions from the archive of E19 to the measurement itself, after the review and before the archive's commit — the calls of the session that archived E19 after that archive, and those of E20's task, which spec's orchestrator ran, with the opening of E20 in the same session. The work of `tutor` in epic E11 of `spec` ran in clones outside this folder, and its transcripts are not of `-workspaces-tutor`. The context of a main call is 119.7 thousand, 41% below the reference of tutor, 202.4 thousand, and 119.7 thousand among the first 80 of a session, over 92 main calls, fewer than the 300 that the threshold of an analysis asks: no analysis.
 
 ## 5. The speed of CI
 
-### 5.1. «Go / test» with the race detector on the packages that start goroutines, T148, 2026-11-16
+### 5.1. «Go / test» with the race detector on the packages that start goroutines, 2026-11-16
 
-What was measured: the time of `ci-test` before and after R118 — `go test -race` over `./...`, against `-race` on the four packages of `RACE` and a second `go test` without it on the other 34. How: locally in the devcontainer, on four cores, `taskset -c 0-3`, as many as GitHub's runner has, each run with an empty `GOCACHE` of its own, as each job of CI starts (measurements 3.1 spec), from the commit of T148 on `main` eddb825; the times are the wall clock of the whole command, the compiling with it.
+What was measured: the time of `ci-test` before and after the race detector was kept to the packages that start goroutines — `go test -race` over `./...`, against `-race` on the four packages of `RACE` and a second `go test` without it on the other 34. How: locally in the devcontainer, on four cores, `taskset -c 0-3`, as many as GitHub's runner has, each run with an empty `GOCACHE` of its own, as each job of CI starts (measurements 3.1 spec), from the commit of the change on `main` eddb825; the times are the wall clock of the whole command, the compiling with it.
 
 | Run | Time, s | `cmd/tutor-eval`, s | `internal/evalsample`, s | Longest other package, s | Coverage |
 |---|---|---|---|---|---|
@@ -1450,12 +1443,12 @@ What was measured: the time of `ci-test` before and after R118 — `go test -rac
 | after: `-race` on `RACE`, the rest without | 359 | 60.2 | 34.1 | 14.6, `internal/board` | 95.5 % |
 
 - The profile `coverage/go.out` has the same 9,604 lines before and after, and each package the same coverage: a package's lines count by its own tests, whichever run they are in.
-- Most of what remains is compiling with the empty cache, twice: the packages of `RACE` and their dependencies, the SDKs of the providers among them, with the detector, and the module without it. The cache of Go in CI is row 7.13 of `spec`'s COORDINATION.md (T149).
-- In CI, «Go / test»: on `main` on 2026-11-16, 517 s at 143321f and 374 s at eddb825, of which the step `ci-test` 326 s (the runs 43805472220 and 43811335056); on pull request #178 of T148, 196 s at its first commit ef19739, of which `ci-test` 156 s — 75 s the run with the detector and 76 s the rest —, and 282 s at a6abc25, which changed only the guard and the documents, of which `ci-test` 250 s — 115 s and 132 s (the runs 43817071698 and 43818370756). The second runner was slower throughout: `cmd/tutor-eval` took 37.6 s against 21.3, `internal/board` 13.2 s against 7.8. The other jobs did not change, and their times vary from run to run: «Canvas» 87 s against 117 and 142 on `main`, «Go / lint» 125 s against 91 and 120.
+- Most of what remains is compiling with the empty cache, twice: the packages of `RACE` and their dependencies, the SDKs of the providers among them, with the detector, and the module without it. The cache of Go in CI is the work of `.github`'s shared workflows.
+- In CI, «Go / test»: on `main` on 2026-11-16, 517 s at 143321f and 374 s at eddb825, of which the step `ci-test` 326 s (the runs 43805472220 and 43811335056); on pull request #178 of the change, 196 s at its first commit ef19739, of which `ci-test` 156 s — 75 s the run with the detector and 76 s the rest —, and 282 s at a6abc25, which changed only the guard and the documents, of which `ci-test` 250 s — 115 s and 132 s (the runs 43817071698 and 43818370756). The second runner was slower throughout: `cmd/tutor-eval` took 37.6 s against 21.3, `internal/board` 13.2 s against 7.8. The other jobs did not change, and their times vary from run to run: «Canvas» 87 s against 117 and 142 on `main`, «Go / lint» 125 s against 91 and 120.
 
-### 5.2. The move to the stage `toolchain-core`, T150, 2026-11-16
+### 5.2. The move to the stage `toolchain-core`, 2026-11-16
 
-What was measured: the time of the jobs of CI before and after R121 — `spec` `v0.18.4`, `.github` `v0.1.31` and the three stages of the Dockerfile. How: the GitHub API, the jobs of the run on `main` at 578a61b (CI 43861033121, CodeQL 43861033032) against those of pull request #181 (CI 43907651927, CodeQL 43907651855), from `started_at` to `completed_at`.
+What was measured: the time of the jobs of CI before and after the move — `spec` `v0.18.4`, `.github` `v0.1.31` and the three stages of the Dockerfile. How: the GitHub API, the jobs of the run on `main` at 578a61b (CI 43861033121, CodeQL 43861033032) against those of pull request #181 (CI 43907651927, CodeQL 43907651855), from `started_at` to `completed_at`.
 
 | Job | `main` 578a61b, s | pull request #181, s |
 |---|---|---|
@@ -1469,5 +1462,5 @@ What was measured: the time of the jobs of CI before and after R121 — `spec` `
 | Go / licenses | 64 | 146 |
 | CodeQL / analyze (go) | 79 | 77 |
 
-- The pull request changes the sha256 of the Dockerfile, so every entry missed: "Go / toolchain" built the image from the network and handed it on, and the jobs that run Go started with empty caches. The stage brings `tutor` no gain by its design, since `toolchain` adds nothing to the core (R121); the times differ by the misses and by the runners.
+- The pull request changes the sha256 of the Dockerfile, so every entry missed: "Go / toolchain" built the image from the network and handed it on, and the jobs that run Go started with empty caches. The stage brings `tutor` no gain by its design, since `toolchain` adds nothing to the core; the times differ by the misses and by the runners.
 - The release before: 55 s, of which "Work out the version" 24 s (the run 43861894603); after — with the first release of the merge.
