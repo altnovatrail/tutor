@@ -1,8 +1,7 @@
 {
   "entries": {
     "R19": 14,
-    "R28": 14,
-    "R102": 14
+    "R28": 14
   },
   "sections": {
     "architecture 3.1": 68,
@@ -10,5 +9,6 @@
     "architecture 3.3": 27,
     "architecture 3.4": 44,
     "architecture 3.10": 26
-  }
+  },
+  "citations": true
 }
