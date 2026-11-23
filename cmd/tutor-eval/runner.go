@@ -335,11 +335,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 
 	above := ""
 	if *maxUSD > planned {
-		plan := "measurements 1.1 and 3.1"
-		if *part == "recorded" {
-			plan = "docs/architecture.md"
-		}
-		above = fmt.Sprintf("That is above the $%.2f that %s plan for -part %s.\n", planned, plan, *part)
+		above = fmt.Sprintf("That is above the $%.2f planned for -part %s.\n", planned, *part)
 	}
 	return startFrom(ctx, "tutor-eval run", r, done, size, what, above, path, *maxUSD, *stub, ask, stdin, stdout, stderr, now)
 }

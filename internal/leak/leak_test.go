@@ -14,9 +14,9 @@ import (
 // The test vectors of the leak check are copies of format/vectors/leaks of spec at v0.14.0 (commit
 // c318cb4), where they last changed in 8f12e24, under Apache-2.0 as spec is. CI checks the
 // repository out without the spec submodule, so the copies are what it tests; TestCopies holds them
-// to spec's wherever the submodule is there. Their lines of comments may differ: tutor's documents
-// check forbids a comment to cite a section, which some of spec's comments do, so a copy words them
-// itself, and the data stays spec's byte for byte.
+// to spec's wherever the submodule is there. The comment that opens a copy may differ: tutor's
+// documents check forbids a comment to cite a section, which some of spec's do, so a copy words it
+// itself, and the rest stays spec's byte for byte.
 const vectors = "testdata/leaks"
 
 // vector is a vector file: a task, as much of it as the leak check reads, and the texts searched,
@@ -128,8 +128,8 @@ func sameSet(a, b []string) bool {
 	return slices.Equal(a, b)
 }
 
-// The copies are spec's vectors as they are, file for file, where the spec submodule is checked
-// out; in CI, which has no submodule, the test is skipped.
+// The copies are spec's vectors, file for file and but for the comment that opens each, where the
+// spec submodule is checked out; in CI, which has no submodule, the test is skipped.
 func TestCopies(t *testing.T) {
 	spec := filepath.Join("..", "..", "spec", "format", "vectors", "leaks")
 	theirs, err := os.ReadDir(spec)
@@ -154,20 +154,23 @@ func TestCopies(t *testing.T) {
 		a, _ := os.ReadFile(filepath.Join(vectors, name))
 		b, _ := os.ReadFile(filepath.Join(spec, name))
 		if !bytes.Equal(withoutComments(a), withoutComments(b)) {
-			t.Errorf("%s is not spec's: copy it again, and say which tag in the comment of the vectors", name)
+			t.Errorf("%s is not spec's: copy it again, keep the opening comment of tutor's copy where spec's cites a section, and say which tag in the comment of the vectors", name)
 		}
 	}
 }
 
-// withoutComments drops the lines of a YAML file that are a comment alone.
+// withoutComments drops the comment that opens a YAML file, its lines up to the first that is not a
+// comment; a later line that starts with # may be data, in a block scalar, and stays.
 func withoutComments(file []byte) []byte {
-	var out [][]byte
-	for _, line := range bytes.SplitAfter(file, []byte("\n")) {
-		if !bytes.HasPrefix(bytes.TrimSpace(line), []byte("#")) {
-			out = append(out, line)
+	rest := file
+	for bytes.HasPrefix(rest, []byte("#")) {
+		end := bytes.IndexByte(rest, '\n')
+		if end < 0 {
+			return nil
 		}
+		rest = rest[end+1:]
 	}
-	return bytes.Join(out, nil)
+	return rest
 }
 
 // numbers are the numbers of a text, as numerator/denominator in lowest terms.
