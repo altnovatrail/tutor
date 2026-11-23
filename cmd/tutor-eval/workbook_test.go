@@ -254,7 +254,7 @@ func TestAdmitWorkbookRun(t *testing.T) {
 		"- stage: none: its set is workbook-dev, not workbook-gen-test, the test part of eval/workbook-gen.json\n",
 		"- set: workbook-dev, 2 repeats",
 		"- false alarms: 0 of 30 answer slots",
-		"- the false alarms and false correct above are of the boxes an adult writes, the readings of every box; the rule gives the stage author alone (R124)\n",
+		"- the false alarms and false correct above are of the boxes an adult writes, the readings of every box; the rule gives the stage author alone\n",
 		"- mirrored boxes, without a target: false alarms 0 of 5, false correct 0 of 5\n",
 		"- crossed-out boxes, without a target: false alarms 0 of 5, false correct 0 of 0\n\n",
 	} {
@@ -262,7 +262,7 @@ func TestAdmitWorkbookRun(t *testing.T) {
 			t.Errorf("admit -kind workbook says\n%s\nwithout %q", out, want)
 		}
 	}
-	if code, out, _ := runIt("admit", pair); code != exitOK || strings.Contains(out, "mirrored") || !strings.Contains(out, "- stage: none: it is a run of the workbook, whose rule is AdmitWorkbook (R124)\n") || !strings.HasSuffix(out, "\n\n") {
+	if code, out, _ := runIt("admit", pair); code != exitOK || strings.Contains(out, "mirrored") || !strings.Contains(out, "- stage: none: it is a run of the workbook, whose rule is AdmitWorkbook\n") || !strings.HasSuffix(out, "\n\n") {
 		t.Errorf("admit of a sheet ends %d:\n%s", code, out)
 	}
 	if code, _, errs := runIt("admit", "-kind", "page", pair); code != exitUsage || !strings.Contains(errs, "give sheet, workbook or essay") {

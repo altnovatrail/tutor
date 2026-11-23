@@ -134,7 +134,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	logPath := flags.String("log", "", "the log of the run, a new file out of git: in samples or synthetic, and in samples alone for sheets there; by default in runs next to the directory of the sheets, and for the workbook and the essays in synthetic/runs")
 	rest := flags.String("rest", "", "the log of this run that stopped short — broke off, or stopped by its cap or an interruption —, in place of -log: the run is planned with the same flags, asks only the calls the log does not hold, and appends them and the end to it; -max-usd counts what the log spent, and the log's record keeps the cap and the moment of its first start")
 	two := flags.Bool("two", false, "for -kind essay, assess in two calls: read the essay, then assess the text read")
-	assessor := flags.String("assessor", "", "for -kind essay -two, the configuration that assesses the text every reader read, as the library asks a model of its own for it, such as haiku-medium on the reading of opus-high, the run of admission (R124); each reader assesses its own reading by default")
+	assessor := flags.String("assessor", "", "for -kind essay -two, the configuration that assesses the text every reader read, as the library asks a model of its own for it, such as haiku-medium on the reading of opus-high, the run of admission; each reader assesses its own reading by default")
 	casesPath := flags.String("cases", "", "for -kind hint, the file of the cases of the set of the words, such as eval/words-cases.json, and for -kind correct, of the set of the words after a correct answer, eval/correct-cases.json, on the one set of its plan, asked case by case")
 	kindsList := flags.String("case-kinds", "", "with -cases, the kinds of case to ask, joined by commas: of a hint rung, otherwise, note; of the words after a correct answer work, choice, note; all of them by default")
 	stub := flags.Bool("stub", false, "ask no model: a stub answers by the markup, and the run needs no key and no network")
@@ -337,7 +337,7 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	if *maxUSD > planned {
 		plan := "measurements 1.1 and 3.1"
 		if *part == "recorded" {
-			plan = "architecture 3.9"
+			plan = "docs/architecture.md"
 		}
 		above = fmt.Sprintf("That is above the $%.2f that %s plan for -part %s.\n", planned, plan, *part)
 	}

@@ -39,7 +39,7 @@ const photoQuality = 90
 // encoded anew as a JPEG, so that no metadata of the file it came in — where it was taken, the
 // device, the time — reaches the provider. It returns the picture and its size in pixels, by which
 // the text of the request names it and a box the model gives is placed (Place). The EXIF
-// orientation of a JPEG is not applied: app draws every photo upright and sends no metadata (R134).
+// orientation of a JPEG is not applied: app draws every photo upright and sends no metadata.
 func Photo(photo []byte, m Model) (Image, int, int, error) {
 	return NewPhotos(photo).For(m)
 }

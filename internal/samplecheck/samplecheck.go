@@ -1,7 +1,7 @@
 // Package samplecheck holds sample files of the eval protocol to the protocol's rules by spec's own
 // code, its recipe sample-check: the runner refuses a sample by the same code as sample-check. The
 // recipe runs from the repository's root, with the spec submodule there, in the toolchain of the
-// devcontainer: Node and buf. A repository other than spec writes no check of its own (R93 spec).
+// devcontainer: Node and buf. A repository other than spec writes no check of its own.
 package samplecheck
 
 import (

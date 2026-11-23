@@ -265,7 +265,7 @@ ci-lint: lint
 # library's calls to the models, the board's checks, and the adapters' tests on servers of
 # httptest. The rest start none, but for the runner's parallel tests, which share nothing they
 # write, and run without the detector, which would take most of the job's time on them.
-# TestRaceStartsGoroutines, in tutor_test.go, holds this list to the code both ways (R118).
+# TestRaceStartsGoroutines, in tutor_test.go, holds this list to the code both ways.
 RACE := ". ./internal/board ./provider/claude ./provider/gpt"
 
 # Run every test, without the test cache, and the check of the release recipe, which is shell and

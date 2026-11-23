@@ -63,7 +63,7 @@ jobs:
       # saves nothing. The stage is toolchain: tutor's adds nothing to toolchain-core, so go.yml and
       # documents.yml keep no entry of the core and run every check in toolchain. The steps are a
       # copy, not the composite action toolchain that Canvas calls, which brings the caches of Go
-      # as well (R133).
+      # as well.
       - name: Toolchain image from the cache
         id: toolchain
         uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0

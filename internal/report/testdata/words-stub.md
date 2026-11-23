@@ -18,7 +18,7 @@ The leak check is the program's, as api runs it before the tutor's words reach t
 
 ## The form
 
-| Tutor | Language | Rung | Hints that came | Broken | Not one question | Over two sentences | Words | Script | Broken by R70 spec |
+| Tutor | Language | Rung | Hints that came | Broken | Not one question | Over two sentences | Words | Script | Broken by the platform's form check |
 |---|---|---|---|---|---|---|---|---|---|
 | opus-high | ru | 1 | 5 | 0 of 5, ≤ 0.451 | 0 | 0 | 0 | 0 | 0 of 5, ≤ 0.451 |
 | opus-high | en | 1 | 5 | 0 of 5, ≤ 0.451 | 0 | 0 | 0 | 0 | 0 of 5, ≤ 0.451 |
@@ -28,7 +28,7 @@ The leak check is the program's, as api runs it before the tutor's words reach t
 | opus-high | en | 3 | 5 | 0 of 5, ≤ 0.451 | 0 | 0 | 0 | 0 | 0 of 5, ≤ 0.451 |
 | opus-high | all | all | 30 | 0 of 30, ≤ 0.095 | 0 | 0 | 0 | 0 | 0 of 30, ≤ 0.095 |
 
-A hint is exactly one question in no more than two sentences, of 1 to 30 words in Russian and 35 in English, in the letters of its language: Cyrillic in Russian, where a Latin letter the statement shows may stand too, and Latin in English. These are the rules of R70 spec, which version 2 of the prompt is held to as api holds hints (words.Hint), so the last column counts the same as Broken.
+A hint is exactly one question in no more than two sentences, of 1 to 30 words in Russian and 35 in English, in the letters of its language: Cyrillic in Russian, where a Latin letter the statement shows may stand too, and Latin in English. These are the rules of the platform's form check, which version 2 of the prompt is held to as api holds hints (words.Hint), so the last column counts the same as Broken.
 
 ## The place and the trap
 

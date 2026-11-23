@@ -9,7 +9,7 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// Version 2 of the reading of paper is frozen: the entry of the list admits this fingerprint (R135).
+// Version 2 of the reading of paper is frozen: the entry of the list admits this fingerprint.
 func TestFrozenPaperV2(t *testing.T) {
 	const frozen = "84e47c2f1536337d365e374a16476fbfd5afb9674811979af02994eca11c01d8"
 	if got := PaperFingerprint(); got != frozen || PaperVersion != 2 {

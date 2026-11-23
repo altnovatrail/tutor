@@ -325,7 +325,7 @@ func TestRootImportsNoProvider(t *testing.T) {
 // AfterFunc, of time or context; a server of httptest, whose handlers run on goroutines of their
 // own, or Serve and ListenAndServe of net/http; and t.Parallel, which runs tests beside one
 // another. A package that comes to start one fails until it is in RACE, and one that no longer
-// does, until it leaves; files under build constraints count too (R118).
+// does, until it leaves; files under build constraints count too.
 func TestRaceStartsGoroutines(t *testing.T) {
 	// What a package outside RACE may start, and why the detector need not watch it: the
 	// runner's parallel tests share nothing they write, and its board's server, ListenAndServe

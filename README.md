@@ -27,4 +27,4 @@ A component of [NovaTrail](https://github.com/altnovatrail/spec), a universal op
 - **engine** picks what comes next, without a model.
 - **canvas** is where the learner writes the work that tutor reads; tutor's CI checks that its eval runner reads canvas's synthetic samples, and canvas's samples page takes the open views of tutor's eval tasks from tutor's release.
 
-Its card is [architecture 3.6 spec](https://github.com/altnovatrail/spec/blob/main/docs/architecture.md#36-tutor--the-tutor-reading-and-words) in spec; the detail, the decisions and everything else are in [docs/](docs/README.md).
+Its card is in [the architecture of spec](https://github.com/altnovatrail/spec/blob/main/docs/architecture.md#36-tutor--the-tutor-reading-and-words); the detail, the decisions and everything else are in [docs/](docs/README.md).

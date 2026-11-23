@@ -192,7 +192,7 @@ func TestFingerprint(t *testing.T) {
 }
 
 // Version 3 of the prompt is frozen, the version admitted: any change to a word a tutor reads
-// changes the fingerprint, and this test fails until the words are measured anew (R100).
+// changes the fingerprint, and this test fails until the words are measured anew.
 func TestFrozenV3(t *testing.T) {
 	const frozen = "7d598021bf716157a54b4e60ac2c5583e0ea8429c43e9e0a30805ef99afdeeeb"
 	if got := hint.Fingerprint(); got != frozen || hint.Version != 3 {

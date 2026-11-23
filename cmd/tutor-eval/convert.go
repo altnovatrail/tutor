@@ -140,7 +140,7 @@ func convertDirs(from, to, codeFile string) error {
 
 // convertSheets converts the sheets of from into to and says what it did, and whether a sheet was
 // refused. The error is a directory that cannot be read or written, or a check that cannot run. A
-// sheet a person wrote it never writes into synthetic, wherever it comes from (R28).
+// sheet a person wrote it never writes into synthetic, wherever it comes from.
 func convertSheets(from, to string, plan *sample.Plan, bank *evalsample.Bank, o convert.Options) (string, bool, error) {
 	entries, err := os.ReadDir(from)
 	if err != nil {

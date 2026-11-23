@@ -127,7 +127,7 @@ func checkTask(p *problems, path string, t Task) {
 	}
 
 	if len(t.FalseKeys) == 0 {
-		p.add(path+".false_keys", "are missing: every task has a false key, for the condition with a false key (R03)")
+		p.add(path+".false_keys", "are missing: every task has a false key, for the condition with a false key")
 	}
 	keys := map[string]bool{t.Key: true}
 	for j, fk := range t.FalseKeys {

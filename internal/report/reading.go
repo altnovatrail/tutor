@@ -102,7 +102,7 @@ func (t Threshold) Worse() bool { return t.Helps < Alpha }
 
 // Holds is whether the reader passes every point of the threshold: it was measured, the key makes
 // nothing worse, and nothing is read under a key. One call is admissible for it, with its admission
-// by eval, only if it holds on the test part (R03).
+// by eval, only if it holds on the test part.
 func (t Threshold) Holds() bool {
 	return t.Measured() && !t.Worse() && t.UnderRight == 0 && t.UnderFalse == 0 && t.NewFalseCorrect == 0
 }
@@ -387,7 +387,7 @@ func (r *Reading) cell(reader string, cond reading.Condition) ReadingCell {
 			var obs *reading.Observation
 			if failed(call) {
 				c.Failed++
-				e.Extra++ // a failed call of a legible sheet counts as an extra "unreadable" (R08)
+				e.Extra++ // a failed call of a legible sheet counts as an extra "unreadable"
 			} else {
 				asked++
 				got := errorsOf(o, call)
@@ -518,7 +518,7 @@ func (r *Reading) Markdown(w io.Writer, logName string) error {
 		logName, short(l.Run.Prompt), l.Run.PromptVersion, strings.Join(readers, "; "), l.Run.Repeats, strings.Join(l.Run.Reads, ", "), len(r.order), setsOf(l.Run.Sets, r.order), made, failed, spent, l.Run.MaxUSD)
 	b.WriteString(endNote(l.End))
 
-	b.WriteString("\n## Does the key make the reading worse? The threshold of R03 (Т-23)\n\n")
+	b.WriteString("\n## Does the key make the reading worse? The threshold of the key (Т-23)\n\n")
 	b.WriteString("| Reader | Sheets | Σd | Sheets with d ≠ 0 | p, worse | Under the right key | Under a false key, on correct sheets | Sheets with a new false \"correct\" | Under no key, against the right key | One call admissible |\n|---|---|---|---|---|---|---|---|---|---|\n")
 	var few []string
 	for _, t := range r.Thresholds {
@@ -528,7 +528,7 @@ func (r *Reading) Markdown(w io.Writer, logName string) error {
 			few = append(few, fmt.Sprintf("%s has %d", t.Reader, t.Nonzero))
 		}
 	}
-	fmt.Fprintf(&b, "\nd of a sheet is the share of its false \"correct\" and false alarms with the right key less that without a key, over the repeats whose calls did not fail; a false \"correct\" is \"correct\" on a sheet whose outcome is not, and a false alarm \"not yet\" on a correct sheet. The test is the exact one-sided sign-permutation test over the sheets, and the key makes the reading worse at p < %.2f. One call is admissible for a reader, with its admission by eval, only if the key makes nothing worse, no call with the right key and none with a false key on a correct sheet reads anything under the key, and no sheet has a false \"correct\" with the right key where it had none without a key (R03). What is read under the right key without a key is the baseline, outside the threshold. Only the test part decides (R03).\n", Alpha)
+	fmt.Fprintf(&b, "\nd of a sheet is the share of its false \"correct\" and false alarms with the right key less that without a key, over the repeats whose calls did not fail; a false \"correct\" is \"correct\" on a sheet whose outcome is not, and a false alarm \"not yet\" on a correct sheet. The test is the exact one-sided sign-permutation test over the sheets, and the key makes the reading worse at p < %.2f. One call is admissible for a reader, with its admission by eval, only if the key makes nothing worse, no call with the right key and none with a false key on a correct sheet reads anything under the key, and no sheet has a false \"correct\" with the right key where it had none without a key. What is read under the right key without a key is the baseline, outside the threshold. Only the test part decides.\n", Alpha)
 	if len(few) > 0 {
 		fmt.Fprintf(&b, "\nWith fewer than %d sheets with d ≠ 0 the test cannot find the reading worse: %s.\n", MinSheets, strings.Join(few, "; "))
 	}
@@ -537,15 +537,15 @@ func (r *Reading) Markdown(w io.Writer, logName string) error {
 	for _, c := range r.Cells {
 		fmt.Fprintf(&b, "| %s | %s | %d | %d | %s | %s | %s | %d | %d | %d of %d |\n", c.Reader, c.Condition, c.Calls, c.Right, c.FalseCorrect, c.FalseAlarm, c.Extra, c.Failed, c.Under, c.PartsRead, c.PartsOf)
 	}
-	b.WriteString("\nA share's bound is the one-sided upper bound of 95 % over the sheets, Clopper–Pearson on n / Deff. False \"correct\" are counted among the readings that did not fail of sheets whose outcome is not correct, and false alarms among those of correct sheets; extra \"unreadable\" among all the readings of sheets whose outcome is correct or an error, a failed one counted as one (R08). A part of writing is read when the observation has it as written, compared without spaces and after normalization.\n")
+	b.WriteString("\nA share's bound is the one-sided upper bound of 95 % over the sheets, Clopper–Pearson on n / Deff. False \"correct\" are counted among the readings that did not fail of sheets whose outcome is not correct, and false alarms among those of correct sheets; extra \"unreadable\" among all the readings of sheets whose outcome is correct or an error, a failed one counted as one. A part of writing is read when the observation has it as written, compared without spaces and after normalization.\n")
 
 	if len(r.Pairs) > 0 {
-		b.WriteString("\n## Two readers (R08; Т-33)\n\nWithout a key, the finished sheets at 32 px, the first repeat.\n\n| Readers | Sheets | Released | Released, false \"correct\" | Released, false alarms | Released, extra \"unreadable\" | The strong alone | The fast alone | The fast says \"correct\" | The strong too | p of the hybrid |\n|---|---|---|---|---|---|---|---|---|---|---|\n")
+		b.WriteString("\n## Two readers (Т-33)\n\nWithout a key, the finished sheets at 32 px, the first repeat.\n\n| Readers | Sheets | Released | Released, false \"correct\" | Released, false alarms | Released, extra \"unreadable\" | The strong alone | The fast alone | The fast says \"correct\" | The strong too | p of the hybrid |\n|---|---|---|---|---|---|---|---|---|---|---|\n")
 		for _, pr := range r.Pairs {
 			fmt.Fprintf(&b, "| %s and %s | %d | %d | %d | %d | %d | %s | %s | %d | %d | %.3f |\n", pr.Strong, pr.Fast, pr.Sheets, pr.Released, pr.FalseCorrect, pr.FalseAlarm, pr.Extra,
 				pr.StrongAlone, pr.FastAlone, pr.FastCorrect, pr.BothCorrect, pr.P())
 		}
-		b.WriteString("\nA sheet is released when both readers give one result and its values, read as the check of the kind number reads them, and their verdicts are one; otherwise it is \"unreadable\". A reader alone is counted as false \"correct\" / false alarms / extra \"unreadable\" on the same sheets. p of the hybrid is the share of sheets the fast reader does not confirm \"correct\" on, which go on to the strong one (architecture 3.12).\n")
+		b.WriteString("\nA sheet is released when both readers give one result and its values, read as the check of the kind number reads them, and their verdicts are one; otherwise it is \"unreadable\". A reader alone is counted as false \"correct\" / false alarms / extra \"unreadable\" on the same sheets. p of the hybrid is the share of sheets the fast reader does not confirm \"correct\" on, which go on to the strong one.\n")
 	}
 
 	r.markdownUnfinished(&b)

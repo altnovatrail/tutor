@@ -214,7 +214,7 @@ func (t *Tutor) ChooseCall(c Call, r Route) (admission.Entry, admission.Answer, 
 // admitted on the model of the analysis: when the model the hint without the work chooses, by
 // the same prompt, is the analysis's first, and of a cascade, the words of a task from paper, when
 // its models are the analysis's, in their order. Otherwise the answer is the hint's refusal,
-// or model_not_admitted when the hint is another model's — another ID or another effort (R111).
+// or model_not_admitted when the hint is another model's — another ID or another effort.
 func (t *Tutor) chooseCall(c Call, r Route) (admission.Entry, admission.Answer, error) {
 	k := kinds[c]
 	e, a, err := t.choose(k.capability, r, k.prompt)

@@ -11,7 +11,7 @@ const SplitFormat = "tutor-split"
 // Split divides the recorded sheets of the measurement into a development part, on which the
 // prompt, the journal and the rule of frames are tuned, and a test part, which is run once they are
 // frozen. It is made once, before the first change of the prompt, and is never rewritten: each
-// sheet in it is the file that counted then (R24).
+// sheet in it is the file that counted then.
 type Split struct {
 	Format  string `json:"format"`
 	Version *int   `json:"version"`

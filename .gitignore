@@ -1,15 +1,14 @@
 # The samples of the AI-reading measurement: the author's handwriting, with the time and pressure
-# of every stroke. They stay out of git; agents may open them since 2026-10-27, but nothing of them
-# comes into the repository: CLAUDE.md and docs/architecture.md, section 3.1 (R05, R32).
+# of every stroke. They stay out of git; agents may open them, but nothing of them comes into the
+# repository, as CLAUDE.md says.
 /samples/
 
 # What code draws — sheets, their pictures and splits — and the runs on them: no handwriting. They
-# stay out of git too, and agents work with them: CLAUDE.md and docs/architecture.md, section 3.4
-# (R28).
+# stay out of git too, and agents work with them, as CLAUDE.md says.
 /synthetic/
 
-# What release-files writes, for .github's shared release to sign and publish (R62).
+# What release-files writes, for .github's shared release to sign and publish.
 /dist/
 
-# The coverage of the tests that ci-test writes, which CI sends to Codecov (R66).
+# The coverage of the tests that ci-test writes, which CI sends to Codecov.
 /coverage/

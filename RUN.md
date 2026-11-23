@@ -73,7 +73,8 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T183 | Переход на тег `spec` v0.19.11 | Claude | — | — |
 | [x] | T184 | Ссылки по правилу R171 spec: план, CLAUDE.md, правила частей, комментарии кода | Claude | да | T183 |
 | [x] | T196 | Переход на тег `spec` v0.19.12 | Claude | — | T184 |
-| [ ] | T185 | Ссылки: README и architecture 1–3.2 | Claude | — | T196 |
+| [x] | T197 | Ссылки по строгому правилу R171 spec: проход по первой части | Claude | — | T196 |
+| [ ] | T185 | Ссылки: README и architecture 1–3.2 | Claude | — | T197 |
 | [ ] | T186 | Ссылки: architecture 3.3–4 | Claude | — | T185 |
 | [ ] | T187 | Ссылки: документы листов и sources | Claude | — | T186 |
 | [ ] | T188 | Ссылки: measurements 1–2 | Claude | — | T187 |
@@ -85,7 +86,7 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [ ] | T194 | Журнал по R171 spec: от «The return of epic E3» до «The admission of words» | Claude | — | T193 |
 | [ ] | T195 | Журнал по R171 spec: от «Move to `spec` `v0.14.0`» до конца; ключ `citations` | Claude | — | T194 |
 
-**Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, pull request #215; T196, проход по части T184 и T185–T195 — пачка на ветке `e22-tutor-2`, один pull request (R159 spec), по «Зависит от».
+**Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, pull request #215; T196, T197 — проход по части T184 — и T185–T195 — пачка на ветке `e22-tutor-2`, один pull request (R159 spec), по «Зависит от».
 
 #### T185. Ссылки: README и architecture 1–3.2
 

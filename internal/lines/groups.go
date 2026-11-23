@@ -12,7 +12,7 @@ import (
 // two strokes are neighbours when no more than GroupPause milliseconds lie between them, from the
 // end of the earlier to the start of the later, and the boxes of their points come within
 // GroupAcross units of each other across the sheet and within GroupDown units down it. Each bound
-// is included. A group is the strokes a chain of neighbours joins (R30).
+// is included. A group is the strokes a chain of neighbours joins.
 const (
 	GroupPause  = 2000 // milliseconds
 	GroupAcross = 50   // sheet units

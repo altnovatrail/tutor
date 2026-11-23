@@ -18,7 +18,7 @@ import (
 // frames of the groups. They are whole numbers, in tenths of a unit for places, and each one that
 // is not whole is one division of two of them, which IEEE 754 rounds alike in Go and in JavaScript.
 // Its pixels are this renderer's, in whole numbers as the board's are; canvas's raster may draw
-// them a level of grey apart, as canvas's vectors allow (R35).
+// them a level of grey apart, as canvas's vectors allow.
 const (
 	// CropMargin is the margin around the work, px.
 	CropMargin = 12

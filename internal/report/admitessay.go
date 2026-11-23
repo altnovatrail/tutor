@@ -76,13 +76,13 @@ func essayHead(r *Essays) (EssayHead, []string) {
 	if len(run.Readers) == 1 {
 		h.Reader, h.Assessor = run.Readers[0].Name, run.Readers[0].Name
 	} else {
-		why = append(why, fmt.Sprintf("it names %d readers, not the one reader of an essay (R98)", len(run.Readers)))
+		why = append(why, fmt.Sprintf("it names %d readers, not the one reader of an essay", len(run.Readers)))
 	}
 	if run.Assessor != nil {
 		h.Assessor = run.Assessor.Name
 	}
 	if run.Path != essay.PathTwo {
-		why = append(why, "it is not a run in two calls, the reading and the assessment of the text read (R53)")
+		why = append(why, "it is not a run in two calls, the reading and the assessment of the text read")
 	}
 	if h.Set != EssaySet {
 		why = append(why, fmt.Sprintf("its set is %s, not %s, the test part of eval/essays-gen.json", h.Set, EssaySet))

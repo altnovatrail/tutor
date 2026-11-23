@@ -11,7 +11,7 @@ import (
 )
 
 // The rule of admission: which stage a runner's report admits its readers to. Only a report of
-// reading handwriting is ruled on: a sheet's by Admit, a workbook's by AdmitWorkbook (R80).
+// reading handwriting is ruled on: a sheet's by Admit, a workbook's by AdmitWorkbook.
 const (
 	// FullTarget is the target of the stage full: the upper bound of the share of false alarms, and
 	// of false "correct", no more than 1 %.
@@ -71,7 +71,7 @@ func Admit(r *evalv1.Report) Decision {
 		return d
 	}
 	if strings.HasPrefix(d.Set, workbookSets) {
-		d.Why = "it is a run of the workbook, whose rule is AdmitWorkbook (R124)"
+		d.Why = "it is a run of the workbook, whose rule is AdmitWorkbook"
 		return d
 	}
 	var p slotPair

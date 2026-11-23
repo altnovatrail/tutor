@@ -86,7 +86,7 @@ func TestAdmitStages(t *testing.T) {
 		t.Errorf("the decision names %q, %d repeats, %v", d.Set, d.Repeats, d.Readers)
 	}
 	if m := d.Measures.All; m.Readings != 300 || m.Unchecked[evalv1.UncheckedCause_UNCHECKED_CAUSE_FAILURE] != 40 || m.Needless.Events != 40 {
-		t.Errorf("the measures of section 14 are %+v", m)
+		t.Errorf("the measures of the protocol are %+v", m)
 	}
 }
 
@@ -195,12 +195,12 @@ func TestAdmitWorkbook(t *testing.T) {
 		t.Errorf("the crossed-out boxes are %+v", c)
 	}
 	if m := d.Measures.All; m.Readings != 3*57 {
-		t.Errorf("the measures of section 14 count %d readings, not every box's", m.Readings)
+		t.Errorf("the measures of the protocol count %d readings, not every box's", m.Readings)
 	}
 	// Admit's rule rules on no set of the workbook, and over all the boxes it would take the alarms on
 	// the mirrored and crossed-out boxes.
 	page := pageReport(append(adult, apart...)...)
-	if s := report.Admit(page); s.Stage != "" || s.Why != "it is a run of the workbook, whose rule is AdmitWorkbook (R124)" {
+	if s := report.Admit(page); s.Stage != "" || s.Why != "it is a run of the workbook, whose rule is AdmitWorkbook" {
 		t.Errorf("Admit on the page is %q, %q", s.Stage, s.Why)
 	}
 	page.EvalSet = &evalv1.Report_CapabilitySet{CapabilitySet: &evalv1.CapabilityEvalSet{Name: "author-all"}}

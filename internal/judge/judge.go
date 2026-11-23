@@ -144,7 +144,7 @@ const (
 // of the sheet and its task — the instructions of the four forms, the labels of the pictures, the
 // text round the task and the words of the journal. A version not in Versions has none: its
 // fingerprint is empty. The log of a run keeps it, so that runs of one prompt can be told from runs
-// of another: the prompt is frozen before the test (R24).
+// of another: the prompt is frozen before the test.
 func Fingerprint(v Version) string {
 	p, ok := v.prompt()
 	if !ok {

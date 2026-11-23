@@ -8,7 +8,8 @@ Table 3 of [RUN.md](../RUN.md): the author's open questions that tasks leave (R1
 
 ## Table 3. Questions to the author
 
-Numbers are not reused: next — В98.
+Numbers are not reused: next — В99.
 
 | ID | Question | From | Options | Recommendation |
 |---|---|---|---|---|
+| В98 | «В реестр spec»: under `"citations": true` the copies of three of spec's leak vectors in `internal/leak/testdata/leaks/` fail `docs-check-repo`: their comments cite sections — `numbers-in-a-picture-path.yaml` — `(section 20)`, `superscripts.yaml` — `as in section 15`, `rubric.yaml` — `(architecture 3.6)`. In spec they are `format/` vectors, whose comments the rule does not read; in tutor the checker reads them, and `TestCopies` holds every copy byte for byte to `spec/format/vectors/leaks/`, so tutor cannot reword them. T195 turns the key on for the whole repository. Решено исполнителем по рекомендации, до проверки автора: (a); the copies stay as they are until a tag of spec brings the reworded vectors | T197 | (a) spec rewords the three comments in words — a comment of a vector changes no contract — and tutor copies them with its next move to a tag; (b) spec's component profile skips the copies of spec's `format/` vectors a repository keeps, named in `docs-budgets.json`; (c) tutor alone: `TestCopies` compares the vectors without their comments, and tutor rewords its copies | (a): the smallest change, the copies stay spec's byte for byte, and every repository that copies the vectors gains it |

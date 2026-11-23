@@ -1,6 +1,6 @@
 // Package providertest is what the tests of the adapters share: a transport that answers every
 // request itself and keeps what reached the network, and the check that the requests went where a
-// client that takes nothing from the environment sends them (R105).
+// client that takes nothing from the environment sends them.
 package providertest
 
 import (

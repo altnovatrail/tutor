@@ -22,7 +22,7 @@ const paperStream = 162
 // choice is built with it. The first devCount cases go to the development.
 func Paper(n int, seed uint64) (*paperset.Set, error) {
 	rng := newRand(seed, paperStream)
-	s := &paperset.Set{Description: "Tasks from paper made by code (R135): the statement, the formula and key of each task, and the learner's line under it.", Seed: seed}
+	s := &paperset.Set{Description: "Tasks from paper made by code: the statement, the formula and key of each task, and the learner's line under it.", Seed: seed}
 	for i := range n {
 		c, err := paperCase(rng, i)
 		if err != nil {

@@ -38,7 +38,7 @@ func serveHTTP(s *http.Server) error { return s.ListenAndServe() }
 
 // choices are the models the board offers: every current Claude model at every effort level with
 // the Anthropic key — without thinking, too, where its thinking can be turned off — and GPT-6
-// Astra at high alone with the OpenAI key, unticked, since GPT is not used on the board (R20).
+// Astra at high alone with the OpenAI key, unticked, since GPT is not used on the board.
 func choices(getenv func(string) string, stderr io.Writer) []board.Choice {
 	var offered []board.Choice
 	if key := getenv(anthropicKeyVar); key != "" {

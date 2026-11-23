@@ -463,7 +463,7 @@ func abs(x int64) int64 {
 
 // holm marks the judges that pass Holm's correction for all the judges: the judge's own p below
 // Alpha over the number of judges, the threshold of Holm's first step. The writing process helps
-// Claude if a judge that helps passes. The criterion was fixed before the first run (R05).
+// Claude if a judge that helps passes. The criterion was fixed before the first run.
 func (r *Report) holm() {
 	for i := range r.Main {
 		if r.Main[i].Helps < Alpha/float64(len(r.Main)) {
@@ -654,7 +654,7 @@ func (r *Report) freeMarkdown(b *strings.Builder) {
 	for _, c := range r.Boxes {
 		fmt.Fprintf(b, "| %s | %s | %d | %d | %d | %d |\n", c.Judge, c.Form, c.Answers, c.Errors, c.Boxed, c.Hit)
 	}
-	b.WriteString("\nA box is on the first error when the part of the markup it holds the most points of is the part of the first error, the drawing whole if the mistake is in a drawing. These and the test below are the data for R52 spec: whether to come back to the writing process.\n")
+	b.WriteString("\nA box is on the first error when the part of the markup it holds the most points of is the part of the first error, the drawing whole if the mistake is in a drawing. These and the test below are the data for whether to come back to the writing process.\n")
 	b.WriteString("\n### Form D against form A on the sheets with a mistake\n\n| Judge | Σd | Sheets with d ≠ 0 | p, helps | p, harms |\n|---|---|---|---|---|\n")
 	for _, c := range r.OnMistakes {
 		fmt.Fprintf(b, "| %s | %+.2f | %d | %s | %s |\n", c.Judge, c.Sum, c.Nonzero, p(c.Helps), p(c.Harms))

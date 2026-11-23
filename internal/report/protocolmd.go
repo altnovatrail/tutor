@@ -84,7 +84,7 @@ func markdownProtocol(b *strings.Builder, logName string, reports []Named, refus
 					slotsOf(n.Report, g.name), g.of.Readings, counted(g.of.FalseAlarm), counted(g.of.FalseCorrect), counted(g.of.Needless), counted(g.of.Kept), counted(g.of.OtherTrap), causesOf(g.of.Unchecked, false))
 			}
 		}
-		b.WriteString("\nA false alarm, the main measure, is a reading \"not yet\" of an answer slot whose truth is not; a digit written mirrored, whose truth is \"unreadable\", counts in it. Each share is among the readings section 14 names; an unchecked reading is counted only by its cause.\n")
+		b.WriteString("\nA false alarm, the main measure, is a reading \"not yet\" of an answer slot whose truth is not; a digit written mirrored, whose truth is \"unreadable\", counts in it. Each share is among the readings the eval protocol names for it; an unchecked reading is counted only by its cause.\n")
 	} else {
 		b.WriteString("| Report | Reader | Repeats | Samples measured | Refused | Readings | Needless \"unreadable\" | False alarm | Agreement | Marks of none | Unchecked: failure / limit / invalid / no mark |\n|---|---|---|---|---|---|---|---|---|---|---|\n")
 		var crit strings.Builder

@@ -63,7 +63,7 @@ func (m Model) Name() string {
 // author, whatever its own stage, and lapses with Until: by then a run on Haiku admits it by the
 // rule, or the entry leaves the list. The package has no clock, so Select does not refuse it after
 // Until: the entry chosen carries its evidence, and whoever holds a clock, as api, can read Until
-// there (R126).
+// there.
 type Evidence struct {
 	Set, File, SHA256, Date string
 	Word, Until             string
@@ -235,7 +235,7 @@ var Admitted = []Entry{
 // prompt, version 1.
 var (
 	paperWordsWord = Evidence{
-		Word:  "author's word 2026-11-20, R07 spec suspended until 2027-01-17",
+		Word:  "the author's word, while eval before admission is suspended",
 		Date:  "2026-11-20",
 		Until: "2027-01-17",
 	}
@@ -246,12 +246,12 @@ var (
 // admission is suspended. The suspension ends sooner, with the first code of api invite to another
 // adult or the first child, which no clock here sees.
 var authorsWord = Evidence{
-	Word:  "author's word 2026-11-17, R07 spec suspended until 2027-01-17",
+	Word:  "the author's word, while eval before admission is suspended",
 	Date:  "2026-11-17",
 	Until: "2027-01-17",
 }
 
-// paperCascade are the attempts of each call of a task from paper, in their order (R137).
+// paperCascade are the attempts of each call of a task from paper, in their order.
 var paperCascade = []Model{
 	{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "high"},
 	{Provider: "anthropic", ID: "claude-sonnet-5-5", Effort: "medium"},
@@ -261,7 +261,7 @@ var paperCascade = []Model{
 // paperWord is the author's word that admitted the cascade of a task from paper, under the same
 // suspension as authorsWord, to the same last day.
 var paperWord = Evidence{
-	Word:  "author's word 2026-11-19, R07 spec suspended until 2027-01-17",
+	Word:  "the author's word, while eval before admission is suspended",
 	Date:  "2026-11-19",
 	Until: "2027-01-17",
 }

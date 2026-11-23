@@ -43,7 +43,7 @@ func written(sh *sample.PlanSheet) string {
 //     height of a small letter, about half the hand's: the code writes them apart, each a bundle of
 //     its own, and when they are half the bundles, the lower median is one of them, and the digits
 //     of such a crop come out up to twice D. The rule is the protocol's, and tutor does not change
-//     it (R35).
+//     it.
 func TestTheCropFindsTheHeightOfTheHand(t *testing.T) {
 	for _, path := range []string{"../../eval/sheets.json", "../../eval/free-sheets.json"} {
 		f, err := os.Open(path)
