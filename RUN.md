@@ -1,6 +1,6 @@
 # RUN.md — work plan of tutor
 
-What tutor does, does not do and has still to decide — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.19.11: the component's card — architecture 3.6 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, gathered in epics; only the current epic is in detail, or two when a second runs beside it (R04; R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). No `run/TASKS.md`: a task outside an epic stands in table 1 (R103, R116).
+What tutor does, does not do and has still to decide — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.19.12: the component's card — architecture 3.6 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, gathered in epics; only the current epic is in detail, or two when a second runs beside it (R04; R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). No `run/TASKS.md`: a task outside an epic stands in table 1 (R103, R116).
 
 Language (R154 spec): rules and tables in English, terse, for the session; the epic's description, table 1 and the bodies of tasks in Russian — the author writes and reviews them.
 
@@ -53,7 +53,9 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 
 **2026-11-23: эпик открыт.** Задачи приходят от оркестратора `spec` — эпик E22 `spec`, пачка на ветке `e22-tutor` с одним pull request (R156 spec, R159 spec). Текущего эпика не было — E20 сделан 2026-11-20, таблица 2 пуста, — а задача вне эпика по R103 — первая задача следующего. Первая задача — переход на тег, волна 0; вторая, T184, — ссылки по R171 spec: она больше одного ревью и разбита по своему шагу 9 — сама взяла план, CLAUDE.md, правила частей и комментарии кода, а документы и журнал — задачи T185–T195 ниже. Тела сделанных задач — в архиве, [docs/plan/E21.md](docs/plan/E21.md).
 
-**Результат:** `tutor` на теге `spec` `v0.19.11`, и его ссылки — по правилу R171 spec (строка 7.44 COORDINATION.md spec).
+**2026-11-23: тег v0.19.12.** T196 перевела `tutor` на `spec` `v0.19.12`: в нём R171 spec — строгое правило ссылок (RULES.md spec, Citations), оно заменяет узкое. Вне плана и архивов — ни номера решения, своего или чужого, ни ссылки на раздел или документ, ни датированной атрибуции; внешний факт ссылается на одну запись `sources`/`measurements`, строки Д и В и вопросы О-, П-, Т- остаются. Где «Ссылки (T185–T195)» ниже с ним расходятся, — по нему. Проход по части T184 и T185–T195 — пачка на ветке `e22-tutor-2`; задачи пачки пишет оркестратор `spec`.
+
+**Результат:** `tutor` на теге `spec` `v0.19.12`, и его ссылки — по строгому правилу R171 spec (строка 7.44 COORDINATION.md spec).
 
 **Основа:** R156 spec, R159 spec, R171 spec, R160 spec; RULES.md spec, Citations и Across repositories; R103.
 
@@ -70,7 +72,8 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 |---|---|---|---|---|---|
 | [x] | T183 | Переход на тег `spec` v0.19.11 | Claude | — | — |
 | [x] | T184 | Ссылки по правилу R171 spec: план, CLAUDE.md, правила частей, комментарии кода | Claude | да | T183 |
-| [ ] | T185 | Ссылки: README и architecture 1–3.2 | Claude | — | T184 |
+| [x] | T196 | Переход на тег `spec` v0.19.12 | Claude | — | T184 |
+| [ ] | T185 | Ссылки: README и architecture 1–3.2 | Claude | — | T196 |
 | [ ] | T186 | Ссылки: architecture 3.3–4 | Claude | — | T185 |
 | [ ] | T187 | Ссылки: документы листов и sources | Claude | — | T186 |
 | [ ] | T188 | Ссылки: measurements 1–2 | Claude | — | T187 |
@@ -82,7 +85,7 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [ ] | T194 | Журнал по R171 spec: от «The return of epic E3» до «The admission of words» | Claude | — | T193 |
 | [ ] | T195 | Журнал по R171 spec: от «Move to `spec` `v0.14.0`» до конца; ключ `citations` | Claude | — | T194 |
 
-**Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, один pull request; T185–T195 — после его мержа, по одной, по «Зависит от».
+**Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, pull request #215; T196, проход по части T184 и T185–T195 — пачка на ветке `e22-tutor-2`, один pull request (R159 spec), по «Зависит от».
 
 #### T185. Ссылки: README и architecture 1–3.2
 
