@@ -45,26 +45,33 @@ func Photo(photo []byte, m Model) (Image, int, int, error) {
 }
 
 // Photos is one photo as each model of a cascade takes it, as Photo makes it: decoded once, on the
-// first For, and encoded once for each size a model fits it to. It is not safe for concurrent use.
+// first For or Turned, turned once for each angle, and encoded once for each size a model fits it
+// to. It is not safe for concurrent use.
 type Photos struct {
-	photo []byte
-	src   image.Image
-	err   error
-	sized map[image.Point]Image
+	photo  []byte
+	src    image.Image
+	err    error
+	sized  map[image.Point]Image
+	turned map[int]*Photos
 }
 
 // NewPhotos is the photo, not yet decoded.
 func NewPhotos(photo []byte) *Photos {
-	return &Photos{photo: photo, sized: map[image.Point]Image{}}
+	return &Photos{photo: photo, sized: map[image.Point]Image{}, turned: map[int]*Photos{}}
+}
+
+// decode decodes the photo on its first use: a photo that failed to decode fails each time.
+func (p *Photos) decode() error {
+	if p.src == nil && p.err == nil {
+		p.src, p.err = decoded(p.photo)
+	}
+	return p.err
 }
 
 // For is the photo as Photo gives it to m: a photo that failed to decode fails each time.
 func (p *Photos) For(m Model) (Image, int, int, error) {
-	if p.src == nil && p.err == nil {
-		p.src, p.err = decoded(p.photo)
-	}
-	if p.err != nil {
-		return Image{}, 0, 0, p.err
+	if err := p.decode(); err != nil {
+		return Image{}, 0, 0, err
 	}
 	width, height := p.src.Bounds().Dx(), p.src.Bounds().Dy()
 	w, h := width, height
@@ -84,6 +91,124 @@ func (p *Photos) For(m Model) (Image, int, int, error) {
 	im := Image{JPEG: out.Bytes()}
 	p.sized[image.Pt(w, h)] = im
 	return im, w, h, nil
+}
+
+// Turned is the photo turned by degrees clockwise, from -179 to 180, as Turn turns it, for each
+// model as For gives it: the picture decoded once, turned once for each angle. A turn of 0 is the
+// photo itself, and a photo that failed to decode fails each time.
+func (p *Photos) Turned(degrees int) *Photos {
+	if degrees == 0 {
+		return p
+	}
+	if t, ok := p.turned[degrees]; ok {
+		return t
+	}
+	t := &Photos{sized: map[image.Point]Image{}, turned: map[int]*Photos{}}
+	if t.err = p.decode(); t.err == nil {
+		t.src = Turn(p.src, degrees)
+	}
+	p.turned[degrees] = t
+	return t
+}
+
+// Turn is src turned by degrees clockwise on the screen, its y down, about its centre onto the
+// smallest upright rectangle that holds it, W' = round(W·|cos θ| + H·|sin θ|) by
+// H' = round(W·|sin θ| + H·|cos θ|), the corners white, as app turns its photo by the turn
+// FindTasks of spec's contract gives (R162 spec): each pixel's centre is taken back to the source
+// and sampled bilinearly, white beyond it. A quarter turn moves the pixels as they are. A turned
+// picture of more than maxPhotoPixels is shrunk to them, keeping its aspect, so that it takes no
+// more memory than the largest photo decoded: a turn of 45° of a photo of 3200 × 2400 px would
+// take some 3960 × 3960. The frames are in thousandths, at any scale, and the model is sent a
+// picture smaller still.
+func Turn(src image.Image, degrees int) *image.RGBA {
+	b := src.Bounds()
+	w, h := b.Dx(), b.Dy()
+	full := image.NewRGBA(image.Rect(0, 0, w, h))
+	opaque(full, h, src, 0)
+	degrees = ((degrees % 360) + 360) % 360
+	if degrees%90 == 0 {
+		return quarter(full, degrees/90)
+	}
+	theta := float64(degrees) * math.Pi / 180
+	sin, cos := math.Sin(theta), math.Cos(theta)
+	tw := math.Round(float64(w)*math.Abs(cos) + float64(h)*math.Abs(sin))
+	th := math.Round(float64(w)*math.Abs(sin) + float64(h)*math.Abs(cos))
+	scale := math.Min(1, math.Sqrt(maxPhotoPixels/(tw*th)))
+	dw, dh := max(int(math.Round(tw*scale)), 1), max(int(math.Round(th*scale)), 1)
+	dst := image.NewRGBA(image.Rect(0, 0, dw, dh))
+	cx, cy := float64(w)/2, float64(h)/2
+	for y := range dh {
+		dy := (float64(y)+0.5)*th/float64(dh) - th/2
+		for x := range dw {
+			dx := (float64(x)+0.5)*tw/float64(dw) - tw/2
+			sx, sy := dx*cos+dy*sin+cx, -dx*sin+dy*cos+cy
+			bilinear(dst.Pix[dst.PixOffset(x, y):], full, sx, sy)
+		}
+	}
+	return dst
+}
+
+// quarter is src turned by n quarter turns clockwise, each pixel moved as it is.
+func quarter(src *image.RGBA, n int) *image.RGBA {
+	w, h := src.Bounds().Dx(), src.Bounds().Dy()
+	dw, dh := w, h
+	if n%2 == 1 {
+		dw, dh = h, w
+	}
+	dst := image.NewRGBA(image.Rect(0, 0, dw, dh))
+	for y := range dh {
+		for x := range dw {
+			sx, sy := x, y
+			switch n {
+			case 1:
+				sx, sy = y, h-1-x
+			case 2:
+				sx, sy = w-1-x, h-1-y
+			case 3:
+				sx, sy = w-1-y, x
+			}
+			copy(dst.Pix[dst.PixOffset(x, y):dst.PixOffset(x, y)+4], src.Pix[src.PixOffset(sx, sy):])
+		}
+	}
+	return dst
+}
+
+// bilinear writes into px the colour of src at the point x, y, its pixels' centres at the halves,
+// the four pixels nearest it weighed by how near each is, a pixel beyond src white.
+func bilinear(px []uint8, src *image.RGBA, x, y float64) {
+	w, h := src.Bounds().Dx(), src.Bounds().Dy()
+	if x < -1 || y < -1 || x > float64(w)+1 || y > float64(h)+1 {
+		copy(px, []uint8{0xff, 0xff, 0xff, 0xff})
+		return
+	}
+	fx, fy := x-0.5, y-0.5
+	x0, y0 := int(math.Floor(fx)), int(math.Floor(fy))
+	ax, ay := fx-float64(x0), fy-float64(y0)
+	var sum [3]float64
+	for j := range 2 {
+		wy := ay
+		if j == 0 {
+			wy = 1 - ay
+		}
+		for i := range 2 {
+			wx := ax
+			if i == 0 {
+				wx = 1 - ax
+			}
+			sx, sy := x0+i, y0+j
+			for c := range 3 {
+				v := 255.0
+				if sx >= 0 && sx < w && sy >= 0 && sy < h {
+					v = float64(src.Pix[src.PixOffset(sx, sy)+c])
+				}
+				sum[c] += wx * wy * v
+			}
+		}
+	}
+	for c := range 3 {
+		px[c] = uint8(math.Round(sum[c]))
+	}
+	px[3] = 0xff
 }
 
 // decoded is the picture of a JPEG or a PNG of at most MaxPhoto bytes and maxPhotoPixels pixels.

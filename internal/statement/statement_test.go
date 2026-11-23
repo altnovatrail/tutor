@@ -8,10 +8,10 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// Version 2 is frozen: the entry of the list admits this fingerprint (R135).
-func TestFrozenV2(t *testing.T) {
-	const frozen = "cd0747cc37281291346a44aa17de104efdf8abd825b0fa428d094947194e7e56"
-	if got := Fingerprint(); got != frozen || Version != 2 {
+// Version 3 is frozen: the entry of the list admits this fingerprint (R135).
+func TestFrozenV3(t *testing.T) {
+	const frozen = "6454ba0b86393043e8c7bad38335e51cd6098a3bb9932d7b27c3ea75fa259c10"
+	if got := Fingerprint(); got != frozen || Version != 3 {
 		t.Errorf("the fingerprint of version %d is %s, not the one the list admits, %s", Version, got, frozen)
 	}
 }
@@ -26,9 +26,10 @@ func TestRequestOf(t *testing.T) {
 	if err := provider.CheckImages(r, 1); err != nil {
 		t.Error(err)
 	}
-	// Each sum of a column is a task, the parts of a word problem are one, a word problem is no
-	// formula, and the reader writes the grammar of the solver.
-	for _, rule := range []string{"is four tasks", "are one task", "A word problem", "is no formula", "3x is 3*x", `"□ + 5 = 12" is x+5=12`} {
+	// A statement has no label and no separator, a fraction and a power are LaTeX's, each sum of a
+	// column is a task, the parts of a word problem are one, a word problem is no formula, and the
+	// reader writes the grammar of the solver.
+	for _, rule := range []string{"1), a) or №3", "; or , at its end", "\\frac{3}{17} + \\frac{1}{17}", "x^{2}", "is four tasks", "are one task", "A word problem", "is no formula", "3x is 3*x", `"□ + 5 = 12" is x+5=12`} {
 		if !strings.Contains(Instructions(), rule) {
 			t.Errorf("the instructions lost %q", rule)
 		}

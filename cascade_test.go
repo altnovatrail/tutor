@@ -29,24 +29,27 @@ func timesAsked(m map[string]*fake) [3]int {
 }
 
 // The finding asks a later model when the one before found no task, each at the effort of its
-// attempt, and the frames are the first that found any; the usage is every attempt's.
+// attempt, its orientation and its finding, and the frames are the first that found any; the usage
+// is every request's of every attempt.
 func TestCascadeOfTheFinding(t *testing.T) {
 	lib, m := cascadeOf(t, noTasks, noTasks, twoTasks)
 	got := lib.FindTasks(context.Background(), TaskFinding{Route: platform, Photo: photoJPEG(t, 20, 30)})
-	if got.Outcome.Kind != Answered || len(got.Frames) != 2 || len(got.Outcome.Usage) != 3 || timesAsked(m) != [3]int{1, 1, 1} {
+	if got.Outcome.Kind != Answered || len(got.Frames) != 2 || len(got.Outcome.Usage) != 6 || timesAsked(m) != [3]int{2, 2, 2} {
 		t.Fatalf("found %+v, asked %v", got, timesAsked(m))
 	}
 	for id, effort := range map[string]string{"claude-haiku-5-5": "high", "claude-sonnet-5-5": "medium", "claude-opus-5-5": "medium"} {
-		if r := m[id].asked[0]; r.Effort != effort || r.NoThinking {
-			t.Errorf("%s was asked at %q, no thinking %v", id, r.Effort, r.NoThinking)
+		for _, r := range m[id].asked {
+			if r.Effort != effort || r.NoThinking {
+				t.Errorf("%s was asked at %q, no thinking %v", id, r.Effort, r.NoThinking)
+			}
 		}
 	}
-	if u := got.Outcome.Usage; u[0].Model != "claude-haiku-5-5" || u[1].Model != "claude-sonnet-5-5" || u[2].Model != "claude-opus-5-5" {
+	if u := got.Outcome.Usage; u[0].Model != "claude-haiku-5-5" || u[1].Model != "claude-haiku-5-5" || u[2].Model != "claude-sonnet-5-5" || u[5].Model != "claude-opus-5-5" {
 		t.Errorf("the usage is %+v", u)
 	}
 	// Sonnet finds them, and Opus is not asked.
 	lib, m = cascadeOf(t, noTasks, twoTasks, twoTasks)
-	if got := lib.FindTasks(context.Background(), TaskFinding{Route: platform, Photo: photoJPEG(t, 20, 30)}); len(got.Frames) != 2 || timesAsked(m) != [3]int{1, 1, 0} {
+	if got := lib.FindTasks(context.Background(), TaskFinding{Route: platform, Photo: photoJPEG(t, 20, 30)}); len(got.Frames) != 2 || timesAsked(m) != [3]int{2, 2, 0} {
 		t.Errorf("found %+v, asked %v", got, timesAsked(m))
 	}
 }
@@ -108,7 +111,7 @@ func TestCascadeOfTheWork(t *testing.T) {
 func TestCascadeEnds(t *testing.T) {
 	lib, m := cascadeOf(t, noTasks, noTasks, twoTasks)
 	m["claude-sonnet-5-5"].err = &provider.LimitError{Limit: provider.LimitOwner}
-	if got := lib.FindTasks(context.Background(), TaskFinding{Route: platform, Photo: photoJPEG(t, 20, 30)}); got.Outcome.Kind != LimitReached || timesAsked(m) != [3]int{1, 1, 0} {
+	if got := lib.FindTasks(context.Background(), TaskFinding{Route: platform, Photo: photoJPEG(t, 20, 30)}); got.Outcome.Kind != LimitReached || timesAsked(m) != [3]int{2, 1, 0} {
 		t.Errorf("a limit: %+v, asked %v", got, timesAsked(m))
 	}
 	m["claude-sonnet-5-5"].err = provider.ErrKeyRefused
@@ -131,7 +134,7 @@ func TestCascadeFloor(t *testing.T) {
 	lib, m := cascadeOf(t, noTasks, twoTasks, twoTasks)
 	ctx, cancel := context.WithTimeout(context.Background(), cascadeFloor-time.Second)
 	defer cancel()
-	if got := lib.FindTasks(ctx, TaskFinding{Route: platform, Photo: photoJPEG(t, 20, 30)}); got.Outcome.Kind != Answered || len(got.Frames) != 0 || timesAsked(m) != [3]int{1, 0, 0} {
+	if got := lib.FindTasks(ctx, TaskFinding{Route: platform, Photo: photoJPEG(t, 20, 30)}); got.Outcome.Kind != Answered || len(got.Frames) != 0 || timesAsked(m) != [3]int{2, 0, 0} {
 		t.Errorf("found %+v, asked %v", got, timesAsked(m))
 	}
 	ctx, cancel = context.WithTimeout(context.Background(), cascadeFloor+time.Minute)

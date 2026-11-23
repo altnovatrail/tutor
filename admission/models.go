@@ -177,26 +177,29 @@ var Admitted = []Entry{
 	// The four calls of a task from paper, by the author's word, without a run, until the day
 	// paperWord names, each a cascade of three attempts, the cheapest first: Haiku 5.5 at high, then
 	// Sonnet 5.5 at medium, then Opus 5.5 at medium, all with thinking (R137). The finding of the
-	// tasks on the photo of a page, on version 3 of its prompt, with the learner's request about the
-	// page (R138), ran on the stub alone, the cases of several tasks of the set of a task from paper,
-	// and has no set of whole pages, Д21 (R134).
+	// tasks on the photo of a page, on version 4 of its prompt, which first asks which way up the
+	// page is, admitted by the author's word of 2026-11-22 (T254 spec), with the learner's request
+	// about the page (R138), ran on the stub alone, the cases of several tasks of the set of a task
+	// from paper, and has no set of whole pages, Д21 (R134).
 	{
 		Capability: admissionv0.CapabilityTaskFinding,
 		Models:     paperCascade,
 		Stage:      StageAuthor,
 		Report:     paperWord,
-		Prompt:     "ee66d8e84dd088979e65725e712a30bd8018abf56ec4c0f357116ec47ecec969",
+		Prompt:     "23e1063e95678c0f8f28a8e994ac9979590d1954e4d928437ad54c7b490ee7a0",
 	},
-	// The statement read into its tasks and their formulas and the solution, on version 2 of their
-	// prompts, one solution a model until the author has seen how often it errs (R162 spec); and the
-	// work read by one model at a time in any reading mode, on version 2 of the reading of paper.
-	// Their sets ran on the stub alone, and the paid run is Д22 (R135).
+	// The statement read into its tasks and their formulas, on version 3 of its prompt, which writes a
+	// fraction and a power LaTeX's way and leaves out a task's label and separator, admitted by the
+	// author's word of 2026-11-22 (T254 spec); and the solution, on version 2 of its prompt, one
+	// solution a model until the author has seen how often it errs (R162 spec); and the work read by
+	// one model at a time in any reading mode, on version 2 of the reading of paper. Their sets ran
+	// on the stub alone, and the paid run is Д22 (R135).
 	{
 		Capability: admissionv0.CapabilityStatementReading,
 		Models:     paperCascade,
 		Stage:      StageAuthor,
 		Report:     paperWord,
-		Prompt:     "cd0747cc37281291346a44aa17de104efdf8abd825b0fa428d094947194e7e56",
+		Prompt:     "6454ba0b86393043e8c7bad38335e51cd6098a3bb9932d7b27c3ea75fa259c10",
 	},
 	{
 		Capability: admissionv0.CapabilityTaskSolving,
