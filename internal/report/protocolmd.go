@@ -65,7 +65,7 @@ func markdownProtocol(b *strings.Builder, logName string, reports []Named, refus
 		return
 	}
 	base := strings.TrimSuffix(logName, ".jsonl")
-	fmt.Fprintf(b, "\n## The runner's reports of the protocol (§ 14)\n\nEach is a file beside the log, %s, the message Report of novatrail.eval.v1 that the CI of modules and the rule of admission read: a reader alone, with all its repeats, or a pair joined by module-kit, of what the platform asks. Its verdicts are module-kit's; the measures below are counted from its records, all repeats together.\n\n",
+	fmt.Fprintf(b, "\n## The runner's reports of the protocol\n\nEach is a file beside the log, %s, the message Report of novatrail.eval.v1 that the CI of modules and the rule of admission read: a reader alone, with all its repeats, or a pair joined by module-kit, of what the platform asks. Its verdicts are module-kit's; the measures below are counted from its records, all repeats together.\n\n",
 		ReportFile(base, "<reader>"))
 	reading := reports[0].Report.GetCapability() == evalv1.Capability_CAPABILITY_HANDWRITING_READING
 	if reading {
