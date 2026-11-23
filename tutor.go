@@ -17,15 +17,15 @@ import (
 
 // Config is what api gives tutor when it starts: spec's admission table, the deployment's facts,
 // the least stage of admission its learners take — admission.StageAuthor where the operator names
-// it, as novatrail does for adults —, the platform's keys at the AI providers,
-// which api reads from Secret Manager, and the adapters of the providers whose models the service
-// calls, such as claude.Dial of package provider/claude. The library builds no adapter in, so that
-// a service carries the SDKs of the adapters it gives alone. A provider with no adapter here
-// is no route at all, and one with no key no route of platform AI: Choose takes none of its models.
+// it, as novatrail does for adults —, the platform's keys at the AI providers, which api reads
+// from Secret Manager, and the adapters of the providers whose models the service calls, such as
+// claude.Dial of package provider/claude. The library builds no adapter in, so that a service
+// carries the SDKs of the adapters it gives alone. A provider with no adapter here is no route at
+// all, and one with no key no route of platform AI: Choose takes none of its models.
 // Reading is how the library reads a sheet and a workbook page, by the pair or by one reader; an
 // empty one is the pair. Debug lets a call's route carry the debug mode, Route.Debug, which api sets
-// for an account with the right to it, on a local run or on the deployment; off, such a
-// route fails.
+// for an account with the right to it, on a local run or on the deployment; off, such a route
+// fails.
 type Config struct {
 	Table    *admission.Table
 	Facts    admission.Facts

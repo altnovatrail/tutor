@@ -7,11 +7,10 @@ import (
 	"github.com/altnovatrail/tutor/admission"
 )
 
-// Debug is the debug mode, in a call's Route: the models that serve the calls of
-// a task from paper in place of those of the list, and a record of each call of a model. api puts
-// it in the route of an account with the right to the mode alone, on a local run or on the
-// deployment; the library takes it only when Config.Debug is on, and on any other call it changes
-// nothing.
+// Debug is the debug mode, in a call's Route: the models that serve the calls of a task from
+// paper in place of those of the list, and a record of each call of a model. api puts it in the
+// route of an account with the right to the mode alone, on a local run or on the deployment; the
+// library takes it only when Config.Debug is on, and on any other call it changes nothing.
 type Debug struct {
 	// First serves every call of a task from paper — CallFinding, CallStatement, CallSolving,
 	// CallPaper and the tutor's words, CallPaperWords and CallPaperHint —; nil leaves each its
