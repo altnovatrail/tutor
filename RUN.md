@@ -1,6 +1,6 @@
 # RUN.md — work plan of tutor
 
-What tutor does, does not do and has still to decide — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.19.12: the component's card — architecture 3.6 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, gathered in epics; only the current epic is in detail, or two when a second runs beside it (R04; R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). No `run/TASKS.md`: a task outside an epic stands in table 1 (R103, R116).
+What tutor does, does not do and has still to decide — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.19.16: the component's card — architecture 3.6 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, gathered in epics; only the current epic is in detail, or two when a second runs beside it (R04; R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). No `run/TASKS.md`: a task outside an epic stands in table 1 (R103, R116).
 
 Language (R154 spec): rules and tables in English, terse, for the session; the epic's description, table 1 and the bodies of tasks in Russian — the author writes and reviews them.
 
@@ -55,6 +55,8 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 
 **2026-11-23: тег v0.19.12.** T196 перевела `tutor` на `spec` `v0.19.12`: в нём R171 spec — строгое правило ссылок (RULES.md spec, Citations), оно заменяет узкое. Вне плана и архивов — ни номера решения, своего или чужого, ни ссылки на раздел или документ, ни датированной атрибуции; внешний факт ссылается на одну запись `sources`/`measurements`, строки Д и В и вопросы О-, П-, Т- остаются. Где «Ссылки (T185–T195)» ниже с ним расходятся, — по нему. Проход по части T184 и T185–T195 — пачка на ветке `e22-tutor-2`; задачи пачки пишет оркестратор `spec`.
 
+**2026-11-23: тег v0.19.16 и строка 5.23.** Оркестратор `spec` дал T198 — одну задачу, своя ветка и свой pull request: переход на `spec` `v0.19.16`, в котором T283 spec и R172 spec — стиль штриха и частичное стирание, — и `internal/evalsample` по ним (строка 5.23 COORDINATION.md spec).
+
 **Результат:** `tutor` на теге `spec` `v0.19.12`, и его ссылки — по строгому правилу R171 spec (строка 7.44 COORDINATION.md spec).
 
 **Основа:** R156 spec, R159 spec, R171 spec, R160 spec; RULES.md spec, Citations и Across repositories; R103.
@@ -85,5 +87,19 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T193 | Журнал по R171 spec: от «Reading into an observation» до «OpenSSF Best Practices» | Claude | — | T192 |
 | [x] | T194 | Журнал по R171 spec: от «The return of epic E3» до «The admission of words» | Claude | — | T193 |
 | [x] | T195 | Журнал по R171 spec: от «Move to `spec` `v0.14.0`» до конца; ключ `citations` | Claude | — | T194 |
+| [ ] | T198 | Образцы со стилем штриха и частичным стиранием (R172 spec), обрезка в цвете | Claude | — | T195 |
 
-**Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, pull request #215; T196, T197 — проход по части T184 — и T185–T195 — пачка на ветке `e22-tutor-2`, pull request #216 (R159 spec), по «Зависит от».
+**Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, pull request #215; T196, T197 — проход по части T184 — и T185–T195 — пачка на ветке `e22-tutor-2`, pull request #216 (R159 spec), по «Зависит от». T198 — своя ветка `t198-styles` и свой pull request.
+
+#### T198. Образцы со стилем штриха и частичным стиранием (R172 spec), обрезка в цвете
+
+- **Цель:** `tutor` на `spec` `v0.19.16` (в нём T283 spec) читает образцы, где у штриха есть стиль и где ластик стёр часть штриха, и рисует обрезку для проверки в цвете — по правилам `contracts/README.md` spec; строка 5.23 COORDINATION.md spec.
+- **Почему:** в `spec` `v0.19.16` история письма получила стиль штриха `StrokeStyle` — вид пера (ручка, лайнер, маркер), цвет `#rrggbb`, толщина в единицах листа, непрозрачность — и событие `cut` с кусками `Piece`: частичное стирание режет штрих на куски с новыми ID (`sample.proto`: `StrokeStyle`, `PenKind`, `Cut`, `Piece`, `Stroke.style`, `FinalStroke.style`, `HistoryEvent.cut`). Обрезка для проверки теперь в цвете.
+- **Сделать:**
+  1. Переход на тег: подмодуль `spec/`, модули Go `spec` и `spec/contracts` — `v0.19.16`; тег — в строках CLAUDE.md и RUN.md, которые его называют.
+  2. `internal/evalsample` и правила, на которых он стоит: читать стиль штриха и `cut` в образце; складывать историю с кусками по правилам свёртки.
+  3. Рисовать обрезку в цвете по правилу `contracts/README.md`: каждый штрих своей толщиной в масштабе обрезки, своей непрозрачностью и своим пером, маркер — умножением, на белом; поля и рамки групп — по самой широкой линии; PNG серый без стилей и RGB со стилем; без стиля все числа прежние.
+  4. Новые векторы `contracts.Vectors` (`cut-in-two`, `cut-undone`, `styles`, `wide-marker`) проходят.
+- **Не делать:** нажима в образце по-прежнему нет.
+- **Как проверить:** тесты на чтение стиля и кусков, свёртку и цветную обрезку; `just lint`, `just ci-test`, `just -f spec/justfile docs-check-repo` зелёные; `/code-review high`.
+- **Разделы:** R172 spec; `contracts/README.md` spec — файл образца и правила, общие для устройства и прогона; строка 5.23 COORDINATION.md spec.

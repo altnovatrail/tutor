@@ -104,8 +104,8 @@ func TestMeasuresOfSpecExamples(t *testing.T) {
 	}
 	m := report.MeasuresOf(read("report-reading.json")).Reading
 	all := m.All
-	if all.Readings != 6 || all.FalseAlarm != (report.Count{}) || all.FalseCorrect != (report.Count{Events: 1, Of: 5}) || all.Needless != (report.Count{Events: 1, Of: 5}) ||
-		all.Kept != (report.Count{}) || all.OtherTrap != (report.Count{Of: 3}) || all.Unchecked[evalv1.UncheckedCause_UNCHECKED_CAUSE_FAILURE] != 1 || m.Mirrored.Readings != 0 || m.CrossedOut.Readings != 0 {
+	if all.Readings != 8 || all.FalseAlarm != (report.Count{}) || all.FalseCorrect != (report.Count{Events: 1, Of: 7}) || all.Needless != (report.Count{Events: 1, Of: 7}) ||
+		all.Kept != (report.Count{}) || all.OtherTrap != (report.Count{Of: 5}) || all.Unchecked[evalv1.UncheckedCause_UNCHECKED_CAUSE_FAILURE] != 1 || m.Mirrored.Readings != 0 || m.CrossedOut.Readings != 0 {
 		t.Errorf("the reading of spec's example: %+v", m)
 	}
 	e := report.MeasuresOf(read("report-assessment.json")).Essay

@@ -13,7 +13,8 @@
 //
 // It cuts the crop of a sheet for checking too, by the rule of the eval protocol (crop.go): the work
 // with its margins, scaled so that its digits stand a given height, and drawn by the same whole
-// numbers, in 48ths of a pixel, with a line of the crop's own width.
+// numbers, in 48ths of a pixel, each stroke black at a line of the crop's own width or in its style,
+// its colour and its width at the crop's scale.
 package render
 
 import (
@@ -85,7 +86,7 @@ func shown(s *sample.Sample, t int64, gone map[string]bool) []sample.Stroke {
 			n++
 		}
 		if n > 0 {
-			out = append(out, sample.Stroke{ID: st.ID, Points: st.Points[:n]})
+			out = append(out, sample.Stroke{ID: st.ID, Points: st.Points[:n], Style: st.Style})
 		}
 	}
 	return out
@@ -175,12 +176,20 @@ func draw(s *sample.Sample, strokes []sample.Stroke) (*image.Gray, error) {
 	return img, nil
 }
 
-// stroke draws a line through the points: within half the pen's width of each piece between two
-// of them, which makes the ends and the joins round. A stroke of one point is a dot. A sample the
-// line covers counts once, however many of its pieces cover it, so the line keeps one shade where
-// it goes over itself.
+// stroke draws a line through the points in the pen's grey, as cover finds it.
 func (p pen) stroke(img *image.Gray, pts []point) {
-	b := img.Bounds()
+	p.cover(img.Bounds(), pts, func(px, py, n int) {
+		o := &img.Pix[img.PixOffset(px, py)]
+		*o = uint8((int(*o)*(grid*grid-n) + int(p.ink)*n + grid*grid/2) / (grid * grid))
+	})
+}
+
+// cover finds the pixels within b that a line through the points covers: within half the pen's
+// width of each piece between two of them, which makes the ends and the joins round. A stroke of
+// one point is a dot. It calls paint once for each pixel the line touches, with how many of the
+// pixel's grid × grid samples it covers. A sample the line covers counts once, however many of its
+// pieces cover it, so the line keeps one shade where it goes over itself.
+func (p pen) cover(b image.Rectangle, pts []point, paint func(px, py, n int)) {
 	lo, hi := pts[0], pts[0]
 	for _, q := range pts[1:] {
 		lo = point{min(lo.x, q.x), min(lo.y, q.y)}
@@ -230,20 +239,17 @@ func (p pen) stroke(img *image.Gray, pts []point) {
 	}
 	for py := y0; py < y1; py++ {
 		for px := x0; px < x1; px++ {
-			n := bits.OnesCount16(cover[(py-y0)*(x1-x0)+px-x0])
-			if n == 0 {
-				continue
+			if n := bits.OnesCount16(cover[(py-y0)*(x1-x0)+px-x0]); n > 0 {
+				paint(px, py, n)
 			}
-			o := &img.Pix[img.PixOffset(px, py)]
-			*o = uint8((int(*o)*(grid*grid-n) + int(p.ink)*n + grid*grid/2) / (grid * grid))
 		}
 	}
 }
 
 // near reports whether the point q lies within r of the piece from a to c. On a sheet of up to
-// MaxSide a side, in sixteenths of a pixel or, on a crop, in 48ths of one, no product here but
-// cross² leaves 64 bits, and r²·l2 stays under 2⁶². A cross of 2³¹ or more is then farther than r,
-// and cross² is not taken: on the board's sheet it never comes so far.
+// MaxSide a side, in sixteenths of a pixel or, on a crop, in 48ths of one, no product here leaves
+// 64 bits but cross² and r²·l2, which a wide line of a style on a crop takes past them: those two are
+// compared in 128 bits.
 func near(qx, qy int64, a, c point, r int64) bool {
 	dx, dy := c.x-a.x, c.y-a.y
 	px, py := qx-a.x, qy-a.y
@@ -257,10 +263,12 @@ func near(qx, qy int64, a, c point, r int64) bool {
 		return ex*ex+ey*ey <= r*r
 	}
 	cross := px*dy - py*dx
-	if cross >= 1<<31 || cross <= -(1<<31) {
-		return false
+	if cross < 0 {
+		cross = -cross
 	}
-	return cross*cross <= r*r*l2
+	chi, clo := bits.Mul64(uint64(cross), uint64(cross))
+	rhi, rlo := bits.Mul64(uint64(r*r), uint64(l2))
+	return chi < rhi || chi == rhi && clo <= rlo
 }
 
 // pixel is the pixel a coordinate in the pen's parts of a pixel falls in, below zero too.

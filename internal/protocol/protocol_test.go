@@ -26,8 +26,8 @@ func TestExamplesReadBack(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(names) != 7 {
-		t.Errorf("%d examples, want spec's 7: %v", len(names), names)
+	if len(names) != 8 {
+		t.Errorf("%d examples, want spec's 8: %v", len(names), names)
 	}
 	for _, name := range names {
 		t.Run(name, func(t *testing.T) {

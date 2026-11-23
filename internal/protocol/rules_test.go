@@ -206,15 +206,20 @@ func TestFoldVectors(t *testing.T) {
 	}
 }
 
-// Ink gives every stroke written and an erasure at the event that took a hidden stroke off for the
-// last time: an erasure put back by undo is none, an undo of a write is one, and a clear is one.
+// Ink gives every stroke written, the pieces of a cut among them, and an erasure at the event that
+// took a hidden stroke off for the last time: an erasure put back by undo is none, an undo of a write
+// is one, a clear is one, a cut is one of the stroke it cut, and the undo of a cut one of its piece.
 func TestInk(t *testing.T) {
 	v := readVectors(t, "groups.json")
 	want := map[string][]sample.Erasure{
 		"undone":       nil,
 		"undone-write": {{TMs: 1200, Strokes: []string{"2"}}},
 		"cleared":      {{TMs: 1200, Strokes: []string{"1", "2"}}},
+		"cut-in-two":   {{TMs: 3000, Strokes: []string{"1"}}},
+		"cut-undone":   {{TMs: 2600, Strokes: []string{"2"}}},
 	}
+	// The kind of the event each erasure comes of.
+	kinds := map[string]string{"undone-write": "undo", "cleared": "clear", "cut-in-two": "cut", "cut-undone": "undo"}
 	seen := 0
 	for _, c := range v.Cases {
 		n := name(t, c)
@@ -239,7 +244,8 @@ func TestInk(t *testing.T) {
 			t.Fatalf("%s: %d events, and %d erasures", n, len(events), len(erasures))
 		}
 		for i, e := range events {
-			if e.GetTMs() != int32(erasures[i].TMs) || (n == "undone-write") != (e.GetUndo() != nil) || (n == "cleared") != (e.GetClear() != nil) {
+			kind := map[bool]string{true: "undo"}[e.GetUndo() != nil] + map[bool]string{true: "clear"}[e.GetClear() != nil] + map[bool]string{true: "cut"}[e.GetCut() != nil]
+			if e.GetTMs() != int32(erasures[i].TMs) || kind != kinds[n] || protocol.ByEraser(e) != (kind == "cut") {
 				t.Errorf("%s: erasure %d comes of the event %v", n, i, e)
 			}
 		}
@@ -270,5 +276,55 @@ func TestFinalOf(t *testing.T) {
 		if !slices.Equal(sorted, f.Visible) {
 			t.Errorf("%s: final strokes %v, and the visible %v", name(t, c), ids, f.Visible)
 		}
+	}
+}
+
+// A stroke's style goes with it: Ink gives each stroke written, a piece of a cut too, the style it was
+// written in, FinalOf keeps it in the final geometry, and Final takes it back; a stroke written with
+// none has none.
+func TestStyles(t *testing.T) {
+	v := readVectors(t, "groups.json")
+	liner := &sample.Style{Pen: sample.PenLiner, Color: "#0a63d6", Width: 1.2, Opacity: 100}
+	for _, c := range v.Cases {
+		n := name(t, c)
+		h := message(t, c["history"], &evalv1.History{})
+		strokes, _, f := protocol.Ink(h)
+		var ids []string
+		for i, st := range strokes {
+			ids = append(ids, st.ID)
+			if (st.Style == nil) != (f.Written[i].GetStyle() == nil) {
+				t.Errorf("%s: stroke %s has the style %v, and was written in %v", n, st.ID, st.Style, f.Written[i].GetStyle())
+			}
+		}
+		final := protocol.FinalOf(f)
+		for i, st := range protocol.Final(final) {
+			if !proto.Equal(final[i].GetStyle(), f.Written[slices.IndexFunc(f.Written, func(w *evalv1.Stroke) bool { return w.GetId() == final[i].GetId() })].GetStyle()) ||
+				(st.Style == nil) != (final[i].GetStyle() == nil) {
+				t.Errorf("%s: the final stroke %s lost its style", n, st.ID)
+			}
+		}
+		if n != "cut-in-two" {
+			continue
+		}
+		if !slices.Equal(ids, []string{"1", "2", "3", "4"}) {
+			t.Errorf("cut-in-two: strokes %v, want the line, «1» and the two pieces", ids)
+		}
+		for _, st := range strokes {
+			if st.Style == nil || *st.Style != *liner {
+				t.Errorf("cut-in-two: stroke %s in %+v, want %+v", st.ID, st.Style, liner)
+			}
+		}
+	}
+	for kind, pen := range map[evalv1.PenKind]sample.Pen{
+		evalv1.PenKind_PEN_KIND_PEN: sample.PenPen, evalv1.PenKind_PEN_KIND_LINER: sample.PenLiner,
+		evalv1.PenKind_PEN_KIND_MARKER: sample.PenMarker, evalv1.PenKind_PEN_KIND_UNSPECIFIED: sample.PenNone, 9: sample.PenNone,
+	} {
+		got := protocol.StyleOf(&evalv1.StrokeStyle{Pen: kind, Color: "#ffcc00", Width: 12, Opacity: 40})
+		if *got != (sample.Style{Pen: pen, Color: "#ffcc00", Width: 12, Opacity: 40}) {
+			t.Errorf("%v: %+v", kind, got)
+		}
+	}
+	if protocol.StyleOf(nil) != nil {
+		t.Error("no style: a style")
 	}
 }

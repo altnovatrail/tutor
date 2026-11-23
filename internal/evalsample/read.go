@@ -168,7 +168,7 @@ func readSheet(es *evalv1.Sample, b *Bank, sh *sample.PlanSheet) (*Sheet, *sampl
 	}
 	var slips []bool
 	for _, e := range protocol.ErasureEvents(h) {
-		slips = append(slips, e.GetErase() == nil)
+		slips = append(slips, !protocol.ByEraser(e))
 	}
 	if i := PlannedErasure(s, sh, slips); i >= 0 {
 		pe := sh.Erasure

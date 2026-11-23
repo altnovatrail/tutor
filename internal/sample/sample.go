@@ -73,6 +73,33 @@ type Stroke struct {
 	// ID is unique within the sample, such as "s-0031".
 	ID     string  `json:"id"`
 	Points []Point `json:"points"`
+	// Style is how the stroke looks, as a sample file of the eval protocol holds it: nil for a stroke
+	// drawn black and opaque, as every stroke of tutor-sample v0 is, which holds no style.
+	Style *Style `json:"-"`
+}
+
+// Pen is the kind of pen a stroke of a style is written with.
+type Pen int
+
+// The kinds of pen. A pen's line a device draws wider and finer by its pressure or speed, and a
+// crop at its width; a liner's is one width all along; a marker's is one width, multiplied with
+// what lies under it.
+const (
+	PenNone Pen = iota
+	PenPen
+	PenLiner
+	PenMarker
+)
+
+// Style is how a stroke looks: its kind of pen, its colour as "#rrggbb" of sRGB, the width of its
+// line in units of the sheet and its opacity in whole percent. Whether a style is valid — a kind of
+// pen, a colour of six lowercase hexadecimal digits, a width of 0.1 to 50 to a tenth and an opacity
+// of 10 to 100 — is the check's of the sample file to say; the crop refuses one it cannot draw.
+type Style struct {
+	Pen     Pen
+	Color   string
+	Width   float64
+	Opacity int
 }
 
 // Point is one sample of the pen.
