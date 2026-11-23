@@ -1,10 +1,10 @@
 # tutor — sources
 
-> The external facts the repository's documents under `docs/` rest on: a provider's terms, a price, a law, a standard, a library's documentation. Here are their records — the address, the version or date of the page, the date it was read and a quote in the source's language — and [architecture.md](architecture.md) and the decision log hold the claim and a citation of the record by its number, as a section: `sources 1.1` (RULES.md, The bar; R143 spec).
+> The external facts the repository's documents under `docs/` rest on: a provider's terms, a price, a law, a standard, a library's documentation. Here are their records — the address, the version or date of the page, the date it was read and a quote in the source's language — and [architecture.md](architecture.md) and the decision log hold the claim and a citation of its one record by its number, `sources 1.1`, not a chain. A record's heading names its topic and date, not a task.
 >
-> A record is a subsection "N.M" of a topic: one source, or one reading of several sources for one decision. A record's number never changes: a new one goes at the end of its topic, a new topic at the end of the file. A source read again is an item with its date in the same record, and the earlier text is not edited. The model is sources spec. The results of measurements are not here but in `docs/measurements.md`, which the first measurement starts.
+> A record is a subsection "N.M" of a topic: one source, or one reading of several sources for one decision. A record's number never changes: a new one goes at the end of its topic, a new topic at the end of the file. A source read again is an item with its date in the same record, and the earlier text is not edited. The model is `spec/docs/sources.md`. The results of measurements are not here but in `docs/measurements.md`, which the first measurement starts.
 >
-> Until T132 these records stood in architecture 4, which stays as a pointer to them: the decision log, the archives of `docs/plan/` and spec cite it, and those are not rewritten (R102; T132). The quotes are verbatim; what is retold is ours, and our reading of terms or of a law is not a lawyer's. Not here: the quotes an entry of the decision log gives itself, which stay in the entry (RULES.md, How we work: a decision is never rewritten).
+> [architecture.md](architecture.md) keeps a pointer to these records, where the plan's archives and `spec` still look for them. The quotes are verbatim; what is retold is ours, and our reading of terms or of a law is not a lawyer's. Not here: the quotes an entry of the decision log gives itself, which stay in the entry.
 
 ## 1. AI providers
 
@@ -22,7 +22,7 @@ Read 2026-10-20, unless said otherwise.
 
 ### 1.2. Google: models and prices, 2026-10-20
 
-Read 2026-10-20. The measurement no longer takes them (R06, the 2026-10-21 amendment). They stay here as the basis of the former estimate, and the terms of sources 1.1 as the source of architecture 3.6 and R47 spec.
+Read 2026-10-20. The measurement no longer takes them. They stay here as the basis of the former estimate, and the terms of sources 1.1 as the source of the measures for minors and of why the platform keeps Google's generative AI closed.
 - [Model versions](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/model-versions) — release and retirement:
   - `gemini-4-argon` — October 13, 2026, retirement "October 13, 2027 or later";
   - `gemini-3.8-flash` — September 2, 2026, "September 2, 2027 or later";
@@ -34,7 +34,7 @@ Read 2026-10-20. The measurement no longer takes them (R06, the 2026-10-21 amend
   - 4 Argon: "through November 30, 2026" $2 input and $10 output, "Starting December 1, 2026" — $4 and $20;
   - the endpoints other than global cost about 10% more.
 - [Batch inference](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/capabilities/batch-inference): "Batch processing is offered at a 50% discounted rate".
-- Preview models, which the measurement does not take (R06), — for example [`gemini-3.1-pro-preview`](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/3-1-pro): "Launch stage: Public preview". In the card: "This product or feature is a Generative AI Preview offering, subject to the "Pre-GA Offerings Terms"". Previews have no retirement dates.
+- Preview models, which the measurement does not take, — for example [`gemini-3.1-pro-preview`](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/gemini/3-1-pro): "Launch stage: Public preview". In the card: "This product or feature is a Generative AI Preview offering, subject to the "Pre-GA Offerings Terms"". Previews have no retirement dates.
 - [Image understanding](https://docs.cloud.google.com/gemini-enterprise-agent-platform/models/capabilities/image-understanding):
   - "The models might also hallucinate when interpreting handwritten text in images documents";
   - at Gemini 3 a picture is 280, 560, 1,120 or 2,240 tokens by `media_resolution`, 1,120 by default.
@@ -49,34 +49,34 @@ Read 2026-10-20, unless said otherwise.
   - `claude-haiku-5-5` — retirement "Not sooner than October 7, 2027";
   - `claude-opus-5-5` — "Not sooner than September 22, 2027";
   - `claude-fable-5-1` — "Not sooner than September 1, 2027".
-- [Pricing](https://platform.claude.com/docs/en/about-claude/pricing), per 1M tokens: Haiku 5.5 — $0.10 input and $0.50 output (a request of up to 100,000 tokens); Opus 5.5 — $4 and $20; Fable 5.1 — $10 and $50. The prices of Haiku 5.5 and Opus 5.5 were checked again on 2026-10-26, before the development run of T27, and on 2026-10-28, before the runs of T73: the same. Sonnet 5.5 — $2 and $10, read 2026-10-28 for the extended measurement (T90), and the same day the prices of Haiku 5.5 and Opus 5.5 were the same. The prices of Haiku 5.5 and Opus 5.5 were checked again on 2026-10-29, before the runs of T99: the same. Thinking is paid as output; batch — "a 50% discount".
+- [Pricing](https://platform.claude.com/docs/en/about-claude/pricing), per 1M tokens: Haiku 5.5 — $0.10 input and $0.50 output (a request of up to 100,000 tokens); Opus 5.5 — $4 and $20; Fable 5.1 — $10 and $50. The prices of Haiku 5.5 and Opus 5.5 were checked again on 2026-10-26 and on 2026-10-28, before paid runs: the same. Sonnet 5.5 — $2 and $10, read 2026-10-28 for the extended measurement, and the same day the prices of Haiku 5.5 and Opus 5.5 were the same. The prices of Haiku 5.5 and Opus 5.5 were checked again on 2026-10-29, before paid runs: the same. Thinking is paid as output; batch — "a 50% discount".
 - [Vision](https://platform.claude.com/docs/en/build-with-claude/vision): a picture costs "⌈width / 28⌉ × ⌈height / 28⌉ visual tokens".
-- [Data](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention): Fable 5.1 requires 30 days of retention and is "not available under ZDR unless expressly authorized by Anthropic". That is why the measurement's strong model is Opus 5.5 (R06).
-- [Minors](https://support.claude.com/en/articles/9307344-responsible-use-of-anthropic-s-models-guidelines-for-organizations-serving-minors): the article of 16.03.2026 has not changed since privacy 5.3 spec. The new [Usage Policy](https://www.anthropic.com/legal/aup) was published in advance and takes effect on 12.11.2026 ("Effective November 12, 2026"); the version of 15.09.2025 is in force now. The new one adds: "Any specific age eligibility requirements for use of our products will be set out in our Terms of Service."
+- [Data](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention): Fable 5.1 requires 30 days of retention and is "not available under ZDR unless expressly authorized by Anthropic". That is why the measurement's strong model is Opus 5.5.
+- [Minors](https://support.claude.com/en/articles/9307344-responsible-use-of-anthropic-s-models-guidelines-for-organizations-serving-minors): the article of 16.03.2026 has not changed since `spec` read it, sources 2.4 spec. The new [Usage Policy](https://www.anthropic.com/legal/aup) was published in advance and takes effect on 12.11.2026 ("Effective November 12, 2026"); the version of 15.09.2025 is in force now. The new one adds: "Any specific age eligibility requirements for use of our products will be set out in our Terms of Service."
 - [Workspaces](https://platform.claude.com/docs/en/manage-claude/workspaces): "Spend limits: Cap monthly spending for a workspace"; "You cannot set limits on the Default Workspace".
 - [Thinking](https://platform.claude.com/docs/en/build-with-claude/thinking): custom values of `temperature` give an error 400 on the current models; the [Messages API](https://platform.claude.com/docs/en/api/messages/create) has no `seed`.
-- The middle model, which the measurement does not take (R06), — `claude-sonnet-5-5`: $2 input and $10 output per 1M tokens, retirement "Not sooner than September 28, 2027" (the same pages of prices and models).
+- The middle model, which the measurement does not take, — `claude-sonnet-5-5`: $2 input and $10 output per 1M tokens, retirement "Not sooner than September 28, 2027" (the same pages of prices and models).
 - The Go SDK `github.com/anthropics/anthropic-sdk-go`: v1.82.0 of 2026-10-15, MIT.
 
 ### 1.4. Anthropic: images in a request
 
 Read 2026-10-21 and 2026-10-26.
 - [Vision](https://platform.claude.com/docs/en/build-with-claude/vision), checked 2026-10-21. Images in one request: "600 per request on the API, for all other models", and at the models with a window of 200k, "100 per request on the API". The window of Haiku 5.5 and Opus 5.5 is "1M tokens" ([Models overview](https://platform.claude.com/docs/en/about-claude/models/overview)), so they get 600. With more than 20 images, each is at most 2,000 px: "resize each image so that neither dimension exceeds 2000 px, or keep the request to 20 or fewer image and document blocks". A picture of 1,000×1,000 px the model does not shrink: in the table of resizing both tiers have "Not resized".
-- [Vision](https://platform.claude.com/docs/en/build-with-claude/vision), read 2026-10-26, — several images in a request (T16):
+- [Vision](https://platform.claude.com/docs/en/build-with-claude/vision), read 2026-10-26, — several images in a request:
   - "You can include multiple images in a single request, and Claude analyzes them jointly. This is useful for comparing images, asking about differences, or working with a sequence such as pages of a document.";
   - "When sending several images, introduce each one with a short text label (Image 1:, Image 2:, and so on) so you can refer to them by name in your prompt and in follow-up turns.";
   - the limit is "100 for each request on the API, for models with a 200k-token context window" and "600 for each request on the API, for all other models"; "If a single API request contains more than 20 images, a stricter per-image dimension limit applies to every image in that request." A request of the measurement has at most three images: the final one and two frames.
 
 ### 1.5. Anthropic: prompt caching, 2026-10-25
 
-[Prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching), checked 2026-10-25 against the text of the page (T41):
+[Prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching), checked 2026-10-25 against the text of the page:
 - "By default, the cache has a 5-minute lifetime. The cache is refreshed for no additional cost each time the cached content is used."; "If you find that 5 minutes is too short, Anthropic also offers a 1-hour cache duration at additional cost";
 - "Cache reads: When cached content is used (10% of base input token price, or 2.5% on Claude Fable 5.1 and Claude Mythos 5.1, and 5% on Claude Opus 5.5 and Claude Sonnet 5.5)";
 - "the minimum cacheable prompt length is: 512 tokens for Claude Fable 5.1, … Claude Opus 5.5, … and Claude Haiku 5.5". The other models of the list are left out.
 
 ### 1.6. Anthropic: latency and speed, 2026-10-25
 
-Read 2026-10-25 (T42). The pages show no date of their own.
+Read 2026-10-25. The pages show no date of their own.
 - [Reducing latency](https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/reduce-latency): the levers are "1. Choose the right model", "2. Optimize prompt and output length", "3. Stream responses". "For speed-critical applications, Claude Haiku 5.5 offers the fastest response times while maintaining high intelligence. Effort is its main control for speed and cost."; "The fewer tokens the model has to process and generate, the faster the response will be." On streaming: "This can significantly improve the perceived responsiveness of your application".
 - [Models overview](https://platform.claude.com/docs/en/models/overview), the row "Comparative latency": Fable 5.1 has "Slower", Opus 5.5 "Moderate", Sonnet 5.5 "Fast", Haiku 5.5 "Fastest". "Actual latency depends on prompt length, output length, and thinking effort."
 - [Fast mode](https://platform.claude.com/docs/en/build-with-claude/fast-mode):
@@ -107,11 +107,11 @@ Read 2026-10-25 (T42). The pages show no date of their own.
 - [Vision](https://platform.claude.com/docs/en/build-with-claude/vision): "To minimize latency and to simplify coordinate-based workflows, prefer resizing images before uploading them."
 - [Data residency](https://platform.claude.com/docs/en/manage-claude/data-residency): the region `us` is "priced at 1.1x the standard rate across all token pricing categories".
 - [Messages API](https://platform.claude.com/docs/en/api/messages/create): `usage` has `output_tokens_details.thinking_tokens`, `service_tier` and `speed`, and no fields of time.
-- **Read again 2026-11-13** (T140; Д12): the gain of Fast mode, which architecture 3.12 gave without a quote. [Fast mode](https://platform.claude.com/docs/en/build-with-claude/fast-mode), by its `.md` version: "Fast mode delivers up to 2.5x higher output tokens per second at premium pricing."; in "How fast mode works": "Up to 2.5x higher output tokens per second compared to standard speed", and the quote on OTPS and TTFT above stands. The models have changed since: "Fast mode is available on Claude Fable 5.2, Claude Mythos 5.2, and Claude Opus 5.5. Fast mode is in research preview on Claude Opus 5 and deprecated on Claude Opus 4.8." The page's header is as above: ZDR "eligible", with "Excludes Covered Models", and whether Fable 5.2 and Mythos 5.2 are Covered Models was not read. The copies of the Wayback Machine of [2026-10-23 06:28 UTC](http://web.archive.org/web/20261023062820/https://platform.claude.com/docs/en/build-with-claude/fast-mode) and [2026-10-26 23:59 UTC](http://web.archive.org/web/20261026235916/https://platform.claude.com/docs/en/build-with-claude/fast-mode), on either side of the reading of T42, have the same "Up to 2.5x higher output tokens per second compared to standard speed" and "Fast mode is available on Claude Opus 5.5 and in research preview on Claude Opus 5 and Claude Opus 4.8."
+- **Read again 2026-11-13**: the gain of Fast mode, which the cost and time of a check in [architecture.md](architecture.md) gave without a quote. [Fast mode](https://platform.claude.com/docs/en/build-with-claude/fast-mode), by its `.md` version: "Fast mode delivers up to 2.5x higher output tokens per second at premium pricing."; in "How fast mode works": "Up to 2.5x higher output tokens per second compared to standard speed", and the quote on OTPS and TTFT above stands. The models have changed since: "Fast mode is available on Claude Fable 5.2, Claude Mythos 5.2, and Claude Opus 5.5. Fast mode is in research preview on Claude Opus 5 and deprecated on Claude Opus 4.8." The page's header is as above: ZDR "eligible", with "Excludes Covered Models", and whether Fable 5.2 and Mythos 5.2 are Covered Models was not read. The copies of the Wayback Machine of [2026-10-23 06:28 UTC](http://web.archive.org/web/20261023062820/https://platform.claude.com/docs/en/build-with-claude/fast-mode) and [2026-10-26 23:59 UTC](http://web.archive.org/web/20261026235916/https://platform.claude.com/docs/en/build-with-claude/fast-mode), on either side of the reading of 2026-10-25, have the same "Up to 2.5x higher output tokens per second compared to standard speed" and "Fast mode is available on Claude Opus 5.5 and in research preview on Claude Opus 5 and Claude Opus 4.8."
 
 ### 1.7. Anthropic: marking, thinking and the board's schema, 2026-10-25
 
-Read 2026-10-25 (T45). The pages show no date of their own.
+Read 2026-10-25. The pages show no date of their own.
 - [Coordinates and bounding boxes](https://platform.claude.com/docs/en/build-with-claude/vision-coordinates):
   - "Claude works best with absolute pixel coordinates."; a box is "(top-left and bottom-right corners) in pixel coordinates"; "Claude does not work well when you ask for normalized coordinates";
   - "Coordinate accuracy is best when you state the expected coordinate format in your prompt and spot-check results visually before processing at scale.";
@@ -141,15 +141,15 @@ Read 2026-10-20, unless said otherwise.
   - "data sent to the OpenAI API is not used to train or improve OpenAI models (unless you explicitly opt in…)";
   - "abuse monitoring logs are generated for all API feature usage and retained for up to 30 days";
   - zero data retention is "subject to prior approval by OpenAI".
-- The [Under-18 guidance](https://developers.openai.com/api/docs/guides/safety-checks/under-18-api-guidance) has not changed since privacy 5.3 spec. In the [Services Agreement](https://cdn.openai.com/osa/openai-services-agreement.pdf), the PDF "ONLINE v.010126", §3.3(c), the Customer will not "allow minors to use OpenAI Services without consent from their parent or guardian".
+- The [Under-18 guidance](https://developers.openai.com/api/docs/guides/safety-checks/under-18-api-guidance) has not changed since `spec` read it, sources 2.2 spec. In the [Services Agreement](https://cdn.openai.com/osa/openai-services-agreement.pdf), the PDF "ONLINE v.010126", §3.3(c), the Customer will not "allow minors to use OpenAI Services without consent from their parent or guardian".
 - [Spend limits](https://developers.openai.com/api/docs/guides/spend-limits): "Enforce a hard limit" on a project.
 - [Latest model](https://developers.openai.com/api/docs/guides/latest-model): "When reasoning effort is not `none`, remove `temperature`, `top_p`, and `top_logprobs`"; "GPT-6 Astra and GPT-6.1 Sol do not support `none`". In [Chat](https://developers.openai.com/api/reference/resources/chat), `seed` is "in Beta … best effort … Determinism is not guaranteed", and the Responses API has none.
-- The middle model, which the measurement does not take (R06), — `gpt-6.1-sol`: "to balance intelligence and cost", $2.00 input and $10.00 output per 1M tokens (the same pages of models and prices).
+- The middle model, which the measurement does not take, — `gpt-6.1-sol`: "to balance intelligence and cost", $2.00 input and $10.00 output per 1M tokens (the same pages of models and prices).
 - The Go SDK `github.com/openai/openai-go/v3`: v3.82.0 of 2026-10-18, Apache-2.0.
 
 ### 1.9. OpenAI: speed and price, 2026-10-25
 
-The sources of architecture 3.12 (T44). Read 2026-10-25, by the `.md` versions of the pages.
+The sources of the cost and time of a check. Read 2026-10-25, by the `.md` versions of the pages.
 - The quotes of sources 1.8 were checked anew, and all are in place. "Batch and Flex are priced at 50% of Standard rates" now stands not on the pricing page but on the pages of the models `gpt-6-luna` and `gpt-6-astra`.
 - [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna): "`reasoning.effort` supports `none`, `low`, `medium` (default), `high`, `xhigh`, and `max`." For `none`, [Reasoning](https://developers.openai.com/api/docs/guides/reasoning) names "Latency-critical tasks that do not benefit from any reasoning or multi-chained tool calls." OpenAI publishes no numbers of time and tokens for `none`.
 - [Fast mode](https://developers.openai.com/api/docs/guides/fast-mode):
@@ -169,7 +169,7 @@ The sources of architecture 3.12 (T44). Read 2026-10-25, by the `.md` versions o
 
 ### 1.10. Fast inference providers, 2026-10-25
 
-The sources of architecture 3.12 (T44). Read 2026-10-25. The terms are our reading, not a lawyer's: each question that would stop a provider goes to a lawyer before the provider is called.
+The sources of the cost and time of a check. Read 2026-10-25. The terms are our reading, not a lawyer's: each question that would stop a provider goes to a lawyer before the provider is called.
 - **Groq:**
   - [models](https://console.groq.com/docs/models): "Preview models are intended for evaluation purposes only and should not be used in production environments as they may be discontinued at short notice." Both models with images are in the table Preview, and `qwen/qwen3.8-27b` has 450 tokens a second there;
   - [images](https://console.groq.com/docs/vision): "Each image counts as 2048 input tokens."; the price of `qwen/qwen3.8-27b` is $0.80 and $4.00 per 1M tokens, by the table of models;
@@ -211,7 +211,7 @@ The sources of architecture 3.12 (T44). Read 2026-10-25. The terms are our readi
 
 ### 1.11. Minors: the terms of OpenAI and Anthropic, 2026-11-01
 
-The sources of architecture 3.6 (T02). Read 2026-11-01. The quotes are verbatim; what is retold is ours, not a lawyer's.
+The sources of the measures for minors. Read 2026-11-01. The quotes are verbatim; what is retold is ours, not a lawyer's.
 - **OpenAI:**
   - [Under-18 guidance](https://developers.openai.com/api/docs/guides/safety-checks/under-18-api-guidance), the `.md` version of the same page:
     - "Organizations serving minors must comply with all applicable child protection, safety, and privacy laws, including the Children's Online Privacy Protection Act (COPPA).";
@@ -220,7 +220,7 @@ The sources of architecture 3.6 (T02). Read 2026-11-01. The quotes are verbatim;
     - "Use OpenAI’s most current flagship models, which incorporate the latest safety protections, particularly when building experiences for minors.";
     - "OpenAI reserves the right to audit organizations for compliance with this policy."
 
-    privacy 5.3 spec, checked 2026-10-18, names filters by age, monitoring and disclosure, and has neither age assurance nor the flagship models;
+    `spec`'s privacy rules, as read on 2026-10-18, name filters by age, monitoring and disclosure, and have neither age assurance nor the flagship models;
   - [Services Agreement](https://openai.com/policies/services-agreement/), "Updated: December 1, 2025", "Effective: January 1, 2026", para. 3.3: "Customer will not, and will not permit End Users to: … (c) allow minors to use OpenAI Services without consent from their parent or guardian". Items (a) and (b) are left out. The page itself answers a request of `curl` with 403, and the text was taken from a copy of the Wayback Machine of 2026-10-28;
   - [Usage Policies](https://openai.com/policies/usage-policies/), "Effective: November 20, 2026", and in the history of changes, "2026-10-21: … We’ve also clarified protections for children and teens". The beginning of the entry is left out. The section "Keep young people safe": "OpenAI tools must not be used to endanger anyone under 18." and "We prohibit use of our services for:", and the first item of the list is "exposing minors to age-inappropriate content, such as graphic self-harm, sexual, or violent content". This page answers 403 too, and the text was taken from a copy of the Wayback Machine of 2026-11-01. The same prohibition "exposing minors to age-inappropriate content" stands in the version now in force, "Effective: October 29, 2025", in the section "Keep minors safe" (a copy of the Wayback Machine of 2026-09-30);
   - [Your data](https://developers.openai.com/api/docs/guides/your-data):
@@ -232,7 +232,7 @@ The sources of architecture 3.6 (T02). Read 2026-11-01. The quotes are verbatim;
   - [Safety checks](https://developers.openai.com/api/docs/guides/safety-checks): "Safety identifiers are recommended but not required." By [Safety best practices](https://developers.openai.com/api/docs/guides/safety-best-practices), a safety identifier is "a string that uniquely identifies each user";
   - [Moderation](https://developers.openai.com/api/docs/guides/moderation): "The moderation endpoint is free to use". The scores can also be had in the request of generation itself, "pass a top-level `moderation` object in the generation request", and the page names no price for that.
 - **Anthropic:**
-  - [Guidelines for organizations serving minors](https://support.claude.com/en/articles/9307344-responsible-use-of-anthropic-s-models-guidelines-for-organizations-serving-minors), `dateModified` 2026-03-16, — the same article as in privacy 5.3 spec. The help site is Intercom, and the text was taken from the page:
+  - [Guidelines for organizations serving minors](https://support.claude.com/en/articles/9307344-responsible-use-of-anthropic-s-models-guidelines-for-organizations-serving-minors), `dateModified` 2026-03-16, — the same article as in sources 2.4 spec. The help site is Intercom, and the text was taken from the page:
     - the measures, which "may include, but are not limited to": "Age verification systems to ensure only intended users can access the product", "Content moderation and filtering to block inappropriate or harmful content", "Monitoring and reporting mechanisms to identify and address potential issues", "Educational resources and guidance for minors on safe and responsible use of the product";
     - "we may provide a child-safety system prompt, which organizations serving minors should implement as part of a comprehensive suite of safety measures";
     - on COPPA: "Compliance with these regulations should be clearly stated on the organization’s website or similar public-facing documentation.";
@@ -247,7 +247,7 @@ The sources of architecture 3.6 (T02). Read 2026-11-01. The quotes are verbatim;
 
 ### 1.12. The own key: spend limits and refusals of the providers, 2026-11-01
 
-The sources of architecture 3.7 (T03). Read 2026-11-01, by the `.md` versions of the same pages; the pages show no date of their own. The quotes are verbatim; what is retold is ours.
+The sources of the spending limit of an own key. Read 2026-11-01, by the `.md` versions of the same pages; the pages show no date of their own. The quotes are verbatim; what is retold is ours.
 - **Anthropic:**
   - [Rate limits](https://platform.claude.com/docs/en/api/rate-limits):
     - spend limits "set a maximum monthly cost an organization can incur for API usage";
@@ -273,7 +273,7 @@ The sources of architecture 3.7 (T03). Read 2026-11-01, by the `.md` versions of
     - "`output_tokens` remains the inclusive, authoritative total used for billing." The tokens of thinking, `thinking_tokens`, are "Always ≤ `output_tokens`".
   - [Spend Limits API](https://platform.claude.com/docs/en/manage-claude/spend-limits-api): "Scoped Admin API key required", and "Your organization must be on a Claude Enterprise plan."
   - [Usage and Cost API](https://platform.claude.com/docs/en/manage-claude/usage-cost-api): "Admin API credentials required." A key of the Admin API will do, or "a personal or service account key that isn’t scoped to a workspace; workspace API keys don’t work". And more: "The Admin API is unavailable for individual accounts."
-  - [Pricing](https://platform.claude.com/docs/en/about-claude/pricing): the prices of the four models of the adapter Claude are the same as in its code (architecture 3.2): Haiku 5.5 — $0.10 input and $0.50 output, Sonnet 5.5 — $2 and $10, Opus 5.5 — $4 and $20, Fable 5.1 — $10 and $50. The cache has prices of its own, the columns "5m cache writes", "1h cache writes" and "Cache hits and refreshes".
+  - [Pricing](https://platform.claude.com/docs/en/about-claude/pricing): the prices of the four models of the adapter Claude are the same as in its code: Haiku 5.5 — $0.10 input and $0.50 output, Sonnet 5.5 — $2 and $10, Opus 5.5 — $4 and $20, Fable 5.1 — $10 and $50. The cache has prices of its own, the columns "5m cache writes", "1h cache writes" and "Cache hits and refreshes".
 - **OpenAI:**
   - [Spend limits](https://developers.openai.com/api/docs/guides/spend-limits):
     - "To stop traffic after tracked spend reaches a configured amount, enforce a hard spend limit for your organization or an individual project.";
@@ -292,7 +292,7 @@ The sources of architecture 3.7 (T03). Read 2026-11-01, by the `.md` versions of
 
 ### 1.13. Admitted models and retention at Anthropic, 2026-11-08
 
-The sources of architecture 3.9, the rule of admission and the list of admitted models (T113). Read 2026-11-08, by the `.md` versions of the pages of the documentation; the quotes are verbatim, what is retold is ours.
+The sources of the rule of admission and the list of admitted models. Read 2026-11-08, by the `.md` versions of the pages of the documentation; the quotes are verbatim, what is retold is ours.
 - [API and data retention](https://platform.claude.com/docs/en/manage-claude/api-and-data-retention), no date on the page: "Claude Fable 5.1, Claude Mythos 5.1, Claude Fable 5, and Claude Mythos 5: These models require 30-day data retention and are not available under ZDR unless expressly authorized by Anthropic." The same page: "Conversation content (your prompts and Claude's outputs) is not retained by default; the exception is Covered Models, which require 30-day retention." The page does not name Opus 5.5, Sonnet 5.5 and Haiku 5.5 among such models.
 - [Covered Models](https://support.claude.com/en/articles/15425695-covered-models), an article of 2026-09-01: "Note: These policies apply only to the models listed on this page. All other Claude models continue to operate under your existing agreement and configured retention settings."
 - [How long do you store my organization's data?](https://privacy.claude.com/en/articles/7996866-how-long-do-you-store-my-organization-s-data), an article of 2026-07-01: "For Anthropic API users, we automatically delete inputs and outputs on our backend within 30 days of receipt or generation, except…" — then the article lists the exceptions, the agreement on zero data retention among them. It disagrees with the documentation above, which says that the content is not kept by default. For the list of admitted models this does not matter — minimal retention is stated by the deployment fact `minimal_retention` of the admission table — but such a fact is to be read by the agreement, not by one of the pages.
@@ -300,18 +300,18 @@ The sources of architecture 3.9, the rule of admission and the list of admitted 
 
 ### 1.14. Prices and cache, 2026-11-11
 
-The sources of the table of prices of architecture 3.7 (T120). Read 2026-11-11: at Anthropic by the `.md` versions of the pages, at OpenAI by the pricing page as the server gives it. The quotes are verbatim:
+The sources of the table of prices of a call's usage. Read 2026-11-11: at Anthropic by the `.md` versions of the pages, at OpenAI by the pricing page as the server gives it. The quotes are verbatim:
 - **Anthropic:**
-  - [Pricing](https://platform.claude.com/docs/en/about-claude/pricing), the table "Model pricing", per 1M tokens — input, a write to the cache for 5 minutes and for an hour, a cache hit, output: Opus 5.5 — $4, $5, $8, $0.20, $20 (the same on 2026-11-13, before the trial of T143, and again the same day, before the runs of T144, which went on past midnight UTC into 2026-11-14); Sonnet 5.5 — $2, $2.50, $4, $0.10, $10; Fable 5.1 — $10, $12.50, $20, $0.25, $50; Haiku 5.5 "(for prompts up to 100,000 tokens)" — $0.10, $0.125, $0.20, $0.01, $0.50, and "(for prompts over 100,000 tokens)" — $0.50, $0.625, $1, $0.05, $2.50 (the same on 2026-11-17, before the run of T166);
+  - [Pricing](https://platform.claude.com/docs/en/about-claude/pricing), the table "Model pricing", per 1M tokens — input, a write to the cache for 5 minutes and for an hour, a cache hit, output: Opus 5.5 — $4, $5, $8, $0.20, $20 (the same on 2026-11-13, before a trial run, and again the same day, before paid runs that went on past midnight UTC into 2026-11-14); Sonnet 5.5 — $2, $2.50, $4, $0.10, $10; Fable 5.1 — $10, $12.50, $20, $0.25, $50; Haiku 5.5 "(for prompts up to 100,000 tokens)" — $0.10, $0.125, $0.20, $0.01, $0.50, and "(for prompts over 100,000 tokens)" — $0.50, $0.625, $1, $0.05, $2.50 (the same on 2026-11-17, before a paid run);
   - the same page: "Claude Haiku 5.5 is priced by prompt length: a request whose prompt is over 100,000 tokens pays higher prices. A request’s prompt length counts all of its input tokens, including cache reads and cache writes." And on the rest: "Claude 4.6 and later models (except Claude Haiku 5.5) and Claude Mythos Preview include the full 1M token context window at standard pricing.";
-  - [Prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching): "By default, the cache has a 5-minute lifetime." How the adapter counts a write that `usage` does not divide by its lifetime is architecture 3.7;
+  - [Prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching): "By default, the cache has a 5-minute lifetime." How the adapter counts a write that `usage` does not divide by its lifetime, [architecture.md](architecture.md) says;
 - **OpenAI:**
-  - [Pricing](https://developers.openai.com/api/docs/pricing), "Standard", a short context: `gpt-6-astra` has input $10.00, output $50.00, "Cached input" $1.00, "30m write" $12.50 and "12h write" $25.00. The page gives the prices of a long context — above "272K input tokens" — only by a script, and they could not be read; what the adapter does above this threshold is architecture 3.7;
-  - [Prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching), an example of a response: `"input_tokens" : 15000 , "input_tokens_details" : { "cached_tokens" : 12000 , "cache_write_tokens" : 3000 }`. So both what is read from the cache and what is written to it are part of `input_tokens` (architecture 3.7). The writes by lifetime are `cache_write_tokens_details`, `ttl_30m_tokens` and `ttl_12h_tokens` in the types of openai-go v3.94.0.
+  - [Pricing](https://developers.openai.com/api/docs/pricing), "Standard", a short context: `gpt-6-astra` has input $10.00, output $50.00, "Cached input" $1.00, "30m write" $12.50 and "12h write" $25.00. The page gives the prices of a long context — above "272K input tokens" — only by a script, and they could not be read; what the adapter does above this threshold, [architecture.md](architecture.md) says;
+  - [Prompt caching](https://developers.openai.com/api/docs/guides/prompt-caching), an example of a response: `"input_tokens" : 15000 , "input_tokens_details" : { "cached_tokens" : 12000 , "cache_write_tokens" : 3000 }`. So both what is read from the cache and what is written to it are part of `input_tokens`. The writes by lifetime are `cache_write_tokens_details`, `ttl_30m_tokens` and `ttl_12h_tokens` in the types of openai-go v3.94.0.
 
 ### 1.15. Refusals, 2026-11-11
 
-The sources of the recognition of refusals of architecture 3.7 (T121). Read 2026-11-11, at Anthropic by the `.md` versions of the pages. The quotes are verbatim:
+The sources of the recognition of refusals. Read 2026-11-11, at Anthropic by the `.md` versions of the pages. The quotes are verbatim:
 - **Anthropic:**
   - [Errors](https://platform.claude.com/docs/en/api/errors): "401 - `authentication_error`: There’s an issue with your API key (for example, it’s malformed, revoked, or expired; see Key expiration)."; "A 401 whose message begins `CORS requests are not allowed for this Organization` is not a problem with your API key."; "402 - `billing_error`: There’s an issue with your billing or payment information."; "403 - `permission_error`: Your API key does not have permission to use the specified resource.";
   - [Rate limits](https://platform.claude.com/docs/en/api/rate-limits): for the cap of a tier, "The error type is `rate_limit_error`, the same as for a rate limit, but the response has no `retry-after` header. Retrying, including the SDK’s automatic retries, fails until access resumes." and "On the Messages API, `error.details.error_code` is `enforced_spend_limit_reached`."; for the owner's limit, "requests return HTTP 400 with error type `invalid_request_error`. The message starts with `You have reached your specified API usage limits`, or `You have reached your specified workspace API usage limits` for a workspace limit";
@@ -320,13 +320,13 @@ The sources of the recognition of refusals of architecture 3.7 (T121). Read 2026
 
 ### 1.16. The own key check, 2026-11-11
 
-The sources of `Tutor.CheckKey` of architecture 3.7 (T122). Read 2026-11-11, by the `.md` versions of the pages:
+The sources of `Tutor.CheckKey`. Read 2026-11-11, by the `.md` versions of the pages:
 - **Anthropic** — [Token counting](https://platform.claude.com/docs/en/build-with-claude/token-counting): "Token counting is **free to use** but subject to requests per minute rate limits based on your usage tier." and "Token counting and message creation have separate and independent rate limits." The code 403: "Your API key does not have permission to use the specified resource." ([Errors](https://platform.claude.com/docs/en/api/errors));
 - **OpenAI** — [List models](https://developers.openai.com/api/reference/resources/models/methods/list): "Lists the currently available models, and provides basic information about each one such as the owner and availability." The pages name no price for a request to the models, and [Pricing](https://developers.openai.com/api/docs/pricing) charges for tokens: that the description of a model is free is our inference.
 
 ### 1.17. The SDKs and the process's environment, 2026-11-13
 
-The sources of the adapters without the environment's defaults of architecture 3.2 (T137; R105): the code of the two SDKs at the versions of `go.mod`, anthropic-sdk-go v1.84.0 and openai-go v3.94.0, read 2026-11-13 in the module cache. The quotes are verbatim:
+The sources of the adapters without the environment's defaults: the code of the two SDKs at the versions of `go.mod`, anthropic-sdk-go v1.84.0 and openai-go v3.94.0, read 2026-11-13 in the module cache. The quotes are verbatim:
 - **Anthropic, the defaults** — `client.go`: `NewClient` begins "if option.HasWithoutEnvironmentDefaults(opts) { defaults = []option.RequestOption{option.WithEnvironmentProduction()} } else { defaults = DefaultClientOptions() }". `DefaultClientOptions` reads `ANTHROPIC_BASE_URL`, `ANTHROPIC_API_KEY`, `ANTHROPIC_AUTH_TOKEN`, `ANTHROPIC_PROFILE`, the federation — "Env-var federation (ANTHROPIC_FEDERATION_RULE_ID + ANTHROPIC_ORGANIZATION_ID + ANTHROPIC_IDENTITY_TOKEN_FILE / _TOKEN)", with `ANTHROPIC_SERVICE_ACCOUNT_ID` and `ANTHROPIC_WORKSPACE_ID` in `internal/auth/default.go` —, a `Fallback profile (active_config file or literal "default"`, `ANTHROPIC_WEBHOOK_SIGNING_KEY` and `ANTHROPIC_CUSTOM_HEADERS`, and puts first "option.WithHTTPClient(requestconfig.DefaultHTTPClient())". A profile is read by package `config`, which reads `ANTHROPIC_CONFIG_DIR`, `APPDATA`, `XDG_CONFIG_HOME` and `ANTHROPIC_SCOPE` too. `option/requestoption.go`: "WithoutEnvironmentDefaults returns a marker [RequestOption] that, when passed to anthropic.NewClient, causes it to skip the environment-based credential autoload performed by anthropic.DefaultClientOptions (ANTHROPIC_API_KEY, ANTHROPIC_AUTH_TOKEN, ANTHROPIC_PROFILE, env federation, fallback profile, ANTHROPIC_BASE_URL). The hardcoded production base-URL default is still applied". The client of the defaults, `internal/requestconfig/defaultclient.go`: "a clone of [http.DefaultTransport] with a response-header timeout, or [http.DefaultTransport] itself if it has been replaced by a wrapper such as otelhttp", and "const defaultResponseHeaderTimeout = 10 * time.Minute"; without it a request goes by `http.DefaultClient`.
 - **Anthropic, the tracing** — `option/tracing.go`: "The client emits spans without this option, through the registered provider."; "WithoutOpenTelemetry returns a RequestOption that turns off the OpenTelemetry spans of API calls. It is the short form of WithOpenTelemetryTraces(false)."; `WithOpenTelemetryTraces` "turns the OpenTelemetry spans of API calls, and the trace-context headers of their requests, on or off. They are on by default."; `Without this option, the environment variable ANTHROPIC_OPEN_TELEMETRY_TRACES_CONTENT_MODE selects [OpenTelemetryContentModeContent] when its value is "content".` `internal/tracing/tracing.go`, `Tracer`: "if o.Traces.Enabled != nil && !*o.Traces.Enabled { return nil }", before it reads `ANTHROPIC_OPEN_TELEMETRY` or the process's provider, `otel.GetTracerProvider()`; `StartAPICallSpan` returns nil without a tracer, and the request goes without a span and without the trace context. `ANTHROPIC_OPEN_TELEMETRY_PROPAGATION` and `ANTHROPIC_OPEN_TELEMETRY_TRACES_MAX_CONTENT_BYTES` are read only by a span.
 - **OpenAI** — `client.go`: "DefaultClientOptions read from the environment (OPENAI_API_KEY, OPENAI_ADMIN_KEY, OPENAI_ORG_ID, OPENAI_PROJECT_ID, OPENAI_WEBHOOK_SECRET, OPENAI_BASE_URL)", and `OPENAI_CUSTOM_HEADERS` besides; `NewClient` begins "defaults := DefaultClientOptions() if requestconfig.EnvironmentDefaultsDisabled(opts...) { defaults = requestconfig.InheritedOptions(defaultClientOptionsWithoutEnvironment()...) }", where "return []option.RequestOption{option.WithHTTPClient(defaultHTTPClient()), option.WithEnvironmentProduction()}", the same client with the same 10 minutes (`default_http_client.go`). The marker is internal: `internal/requestconfig/requestconfig.go`, "func WithEnvironmentDefaultsDisabled(opts ...RequestOption) RequestOption". The services read no variable: "func NewResponseService(opts ...option.RequestOption) (r ResponseService)" and `NewModelService` keep the options, and `ResponseService.New` and `ModelService.Get` put first "requestconfig.WithBearerAuthSecurity()". openai-go has no OpenTelemetry.
@@ -334,7 +334,7 @@ The sources of the adapters without the environment's defaults of architecture 3
 
 ### 1.18. Prompt caching, 2026-11-17
 
-The sources of the cache of the words' instructions in the Claude adapter, and of what the GPT adapter leaves to OpenAI (T167; R131; Д20). Read 2026-11-17 by the `.md` versions of the pages; the pages show no date of their own. The quotes are verbatim:
+The sources of the cache of the words' instructions in the Claude adapter, and of what the GPT adapter leaves to OpenAI (Д20). Read 2026-11-17 by the `.md` versions of the pages; the pages show no date of their own. The quotes are verbatim:
 - [Prompt caching](https://platform.claude.com/docs/en/build-with-claude/prompt-caching):
   - the lifetime: "By default, the cache has a 5-minute lifetime. The cache is refreshed for no additional cost each time the cached content is used."; "The lifetime is measured from the start of the request that writes or reads the cache entry, not from the end of its response.";
   - the prefix: "Prompt caching covers the full prefix: `tools`, `system`, and `messages` (in that order), up to and including the block designated with `cache_control`."; "Marking a block with `cache_control` writes exactly one cache entry: a hash of the prefix ending at that block."; "Place `cache_control` on the last block whose prefix is identical across the requests you want to share a cache."; of the automatic cache, for a prompt whose last block changes with each request: "it places the breakpoint on the last cacheable block, which in this structure is the one that changes every request, so use an explicit breakpoint on block 5 instead.";
@@ -351,7 +351,7 @@ The sources of the cache of the words' instructions in the Claude adapter, and o
 
 ### 1.19. Anthropic: the size of a picture and its coordinates, 2026-11-19
 
-The sources of the photo of a page that the Claude adapter fits to the model (T227 spec; R134). Read 2026-11-19; the pages show no date of their own. The quotes are verbatim:
+The sources of the photo of a page that the Claude adapter fits to the model. Read 2026-11-19; the pages show no date of their own. The quotes are verbatim:
 - [Vision](https://platform.claude.com/docs/en/build-with-claude/vision):
   - "The maximum dimensions for each image are 8000x8000 px."; "10 MB (base64-encoded) on the Claude API and Claude Models on Google Cloud (Google managed).";
   - "Claude supports JPEG, PNG, GIF, and WebP images (`image/jpeg`, `image/png`, `image/gif`, `image/webp`).";
@@ -369,7 +369,7 @@ The sources of the photo of a page that the Claude adapter fits to the model (T2
 
 ### 2.1. The market: how others read a handwritten solution, 2026-10-25
 
-The sources of architecture 3.12 (T41). Read 2026-10-25.
+The sources of the cost and time of a check. Read 2026-10-25.
 - The quotes were taken from the text of the pages themselves by `curl`. The help pages of Gradescope, Khan Academy and Goodnotes answered a request for the page with 403, and their text was taken from the public JSON of the same articles (the API of Zendesk).
 - In brackets is the date of the page itself, if it has one.
 - Everything below is what the companies themselves state, except what is named outright as a retelling of the press, a secondary source or someone else's review.
@@ -452,37 +452,37 @@ The sources of architecture 3.12 (T41). Read 2026-10-25.
 
 ### 2.2. Third-party measurements of speed, 2026-10-25
 
-The sources of architecture 3.12 (T42, T44). Read 2026-10-25. These are measurements on other people's tasks, not a check of the board.
+The sources of the cost and time of a check. Read 2026-10-25. These are measurements on other people's tasks, not a check of the board.
 - **Artificial Analysis:**
   - [the method](https://artificialanalysis.ai/methodology/performance-benchmarking): "Vision workload | A single 1 megapixel image and approximately 1,000 input tokens, 1,000 output tokens" — the cells of the table's row separated here by " | "; "median (P50) over the past 72 hours";
   - on speed: "we calculate output speed using the last 80% of answer chunks"; the tokens are counted by the "tiktoken library (o200k_base)", and the server stands in "Google Cloud's us-central1-a";
   - on the pages of the models, on the time to the first token of the answer: "For reasoning models, this includes the 'thinking' time of the model before providing an answer." At Claude the data of the pages do not single out the time of thinking, `reasoningTime` is 0. Our inference: it is part of the time to the first token;
-  - the numbers of the workload with a picture are from the data embedded in the pages of the models, by the row of the API of Anthropic. For example, at [Opus 5.5 · high](https://artificialanalysis.ai/models/claude-opus-5-5-high/providers): `"visionSingleImage":{"medianOutputSpeed":56.691…,"medianTimeToFirstChunk":7.8973…`. So too the pages [Haiku 5.5 · low](https://artificialanalysis.ai/models/claude-haiku-5-5-low/providers), [Sonnet 5.5 · low](https://artificialanalysis.ai/models/claude-sonnet-5-5-low/providers), [Opus 5.5 · low](https://artificialanalysis.ai/models/claude-opus-5-5-low/providers) and [Fable 5.1 · low](https://artificialanalysis.ai/models/claude-fable-5-1-low/providers). In architecture 3.12 the numbers are rounded. The variants of Sonnet, Opus and Fable are named "with fallback" there.
+  - the numbers of the workload with a picture are from the data embedded in the pages of the models, by the row of the API of Anthropic. For example, at [Opus 5.5 · high](https://artificialanalysis.ai/models/claude-opus-5-5-high/providers): `"visionSingleImage":{"medianOutputSpeed":56.691…,"medianTimeToFirstChunk":7.8973…`. So too the pages [Haiku 5.5 · low](https://artificialanalysis.ai/models/claude-haiku-5-5-low/providers), [Sonnet 5.5 · low](https://artificialanalysis.ai/models/claude-sonnet-5-5-low/providers), [Opus 5.5 · low](https://artificialanalysis.ai/models/claude-opus-5-5-low/providers) and [Fable 5.1 · low](https://artificialanalysis.ai/models/claude-fable-5-1-low/providers). In [architecture.md](architecture.md) the numbers are rounded. The variants of Sonnet, Opus and Fable are named "with fallback" there.
 - **OpenRouter**, the pages of the models — medians of live traffic, a slice of 2026-10-25 at about 05:19 UTC. The numbers change every few minutes:
   - [Opus 5.5](https://openrouter.ai/anthropic/claude-opus-5.5): the row Anthropic has the cells "$4.00", "$20.00", "$0.20", "3.02s" and "80 tps", and the row Anthropic marked "Fast" has "$8.00", "$40.00", "$0.40", "1.72s" and "133 tps";
   - so too [Haiku 5.5](https://openrouter.ai/anthropic/claude-haiku-5.5), [Sonnet 5.5](https://openrouter.ai/anthropic/claude-sonnet-5.5) and [Fable 5.1](https://openrouter.ai/anthropic/claude-fable-5.1). The pages' filter "Reasoning effort" shows all the levels at once;
   - the hints of the columns, from the page's script: "Median time to first token, measured from when the request is sent. Data from the last 30 minutes."; on speed, "measured from when the request is sent to the end of the response, so time to first token is included. Includes reasoning tokens. Only responses with more than 50 output tokens count."
-- **Artificial Analysis, for T44** — the same workload with a picture, from the data of the pages, by the row of the provider itself:
+- **Artificial Analysis, for the other providers** — the same workload with a picture, from the data of the pages, by the row of the provider itself:
   - [GPT-6 Luna, without reasoning](https://artificialanalysis.ai/models/gpt-6-luna-non-reasoning/providers): `"visionSingleImage":{"medianOutputSpeed":96.6567964259013,"medianTimeToFirstChunk":1.25676392999995`. Our inference: this is effort `none` — Luna has no other setting without reasoning;
   - so too [GPT-6 Luna · low](https://artificialanalysis.ai/models/gpt-6-luna-low/providers): 1.92 s and 103.8 tokens a second; [GPT-6 Luna · medium](https://artificialanalysis.ai/models/gpt-6-luna-medium/providers): 3.01 s and 68.1; [GPT-6 Astra · low](https://artificialanalysis.ai/models/gpt-6-astra-low/providers): 1.97 s and 36.5;
   - [Gemma 4 31B, without reasoning](https://artificialanalysis.ai/models/gemma-4-31b-non-reasoning/providers), the row SambaNova: `"medianOutputSpeed":393.250138980534,"medianTimeToFirstChunk":2.40469330750005`;
   - for Groq, Cerebras, Together and Fireworks, Artificial Analysis has no numbers on the models with pictures. OpenRouter does not show them without a key: "Only visible when authenticated with an API key or cookie; returns null for unauthenticated requests." ([the list of endpoints](https://openrouter.ai/docs/api/api-reference/endpoints/list-all-endpoints-for-a-model)).
-- **Read again 2026-11-13** (T140; Д12): the numbers of the table "where the seconds go" of architecture 3.12 that the items above do not give raw.
+- **Read again 2026-11-13**: the numbers of the table "where the seconds go" of [architecture.md](architecture.md) that the items above do not give raw.
   - **Artificial Analysis no longer measures the workload with a picture.** [The method](https://artificialanalysis.ai/methodology/performance-benchmarking), "Version 3.0.0 3 November 2026": "These replace the vision workload and the single and parallel prompt load scenarios." The pages of the models of 2026-11-13 have only the workloads "1k input tokens", "10k input tokens", "100k input tokens" and "Multi-turn", so the numbers of 2026-10-25 are no longer at the source.
   - **Its copies in the Wayback Machine** — the pages of the models, the row Anthropic, `"visionSingleImage":{"medianOutputSpeed":…,"medianTimeToFirstChunk":…`, the copy nearest to 2026-10-25 of each:
-    - [Haiku 5.5 · low, 2026-10-09 08:30 UTC](http://web.archive.org/web/20261009083023/https://artificialanalysis.ai/models/claude-haiku-5-5-low/providers): 113.968031591816 and 3.63281576200001; architecture 3.12 has 116 and 4.05 s;
-    - [Sonnet 5.5 · low, 2026-09-29 18:38 UTC](http://web.archive.org/web/20260929183848/https://artificialanalysis.ai/models/claude-sonnet-5-5-low/providers): 73.1696702895911 and 0.963358530999983; architecture 3.12 has 73 and 1.17 s;
-    - [Opus 5.5 · low, 2026-10-25 18:52 UTC](http://web.archive.org/web/20261025185220/https://artificialanalysis.ai/models/claude-opus-5-5-low/providers): 55.452985737401 and 2.66235274000002; architecture 3.12 has 55 and 2.84 s;
-    - [Opus 5.5 · high, 2026-10-25 18:53 UTC](http://web.archive.org/web/20261025185339/https://artificialanalysis.ai/models/claude-opus-5-5-high/providers): 57.0530539740461 and 7.81457842099999; the reading of T42 above has 56.691… and 7.8973…;
-    - [Fable 5.1 · low, 2026-10-24 02:57 UTC](http://web.archive.org/web/20261024025738/https://artificialanalysis.ai/models/claude-fable-5-1-low/providers): 35.6583194133928 and 0.867283970499955 — the 36 and 0.87 s of architecture 3.12 after rounding.
+    - [Haiku 5.5 · low, 2026-10-09 08:30 UTC](http://web.archive.org/web/20261009083023/https://artificialanalysis.ai/models/claude-haiku-5-5-low/providers): 113.968031591816 and 3.63281576200001; the table has 116 and 4.05 s;
+    - [Sonnet 5.5 · low, 2026-09-29 18:38 UTC](http://web.archive.org/web/20260929183848/https://artificialanalysis.ai/models/claude-sonnet-5-5-low/providers): 73.1696702895911 and 0.963358530999983; the table has 73 and 1.17 s;
+    - [Opus 5.5 · low, 2026-10-25 18:52 UTC](http://web.archive.org/web/20261025185220/https://artificialanalysis.ai/models/claude-opus-5-5-low/providers): 55.452985737401 and 2.66235274000002; the table has 55 and 2.84 s;
+    - [Opus 5.5 · high, 2026-10-25 18:53 UTC](http://web.archive.org/web/20261025185339/https://artificialanalysis.ai/models/claude-opus-5-5-high/providers): 57.0530539740461 and 7.81457842099999; the reading of 2026-10-25 above has 56.691… and 7.8973…;
+    - [Fable 5.1 · low, 2026-10-24 02:57 UTC](http://web.archive.org/web/20261024025738/https://artificialanalysis.ai/models/claude-fable-5-1-low/providers): 35.6583194133928 and 0.867283970499955 — the 36 and 0.87 s of the table after rounding.
 
-    The medians are of 72 hours, so a copy of another hour gives other numbers. Of the five rows Opus · high is held by the reading above, and Fable by its copy of the day before, after rounding; those of Haiku, Sonnet and Opus · low no copy holds (architecture 3.12). The copies of Opus · low and · high, a minute apart, show what architecture 3.12 infers: the effort moves the time to the first token, 2.66 s against 7.81 s, and not the speed, 55.5 and 57.1.
+    The medians are of 72 hours, so a copy of another hour gives other numbers. Of the five rows Opus · high is held by the reading above, and Fable by its copy of the day before, after rounding; those of Haiku, Sonnet and Opus · low no copy holds. The copies of Opus · low and · high, a minute apart, show what the table infers: the effort moves the time to the first token, 2.66 s against 7.81 s, and not the speed, 55.5 and 57.1.
   - **OpenRouter**, the same pages, 2026-11-13 at about 18:15 UTC, from the data the page embeds — the cells are drawn by its script and are not in its HTML —, the row Anthropic, `"p50_latency"` in milliseconds and `"p50_throughput"`: Haiku 5.5 — 1594 and 126; Sonnet 5.5 — 1193 and 111; Opus 5.5 — 2487 and 85, and its row with `"price":"0.000008"` and `"price":"0.00004"` per token, Fast mode, — 1751 and 172; Fable 5.1 — 3518 and 66. The hints of the columns stand in the page's script as quoted above, and the speed's goes on: "Data from the last 30 minutes, or the last 24 hours for providers with fewer than 50 such responses."
-  - **The slice of 2026-10-25 at about 05:19 UTC** is in no copy. The nearest copies of the Wayback Machine, the row Anthropic, by the same fields: [Haiku 5.5, 2026-10-23 18:15 UTC](http://web.archive.org/web/20261023181524/https://openrouter.ai/anthropic/claude-haiku-5.5) — 1434 and 154; [Opus 5.5, 2026-10-24 00:50 UTC](http://web.archive.org/web/20261024005021/https://openrouter.ai/anthropic/claude-opus-5.5) — 3458 and 77, Fast mode 1161 and 221; [Fable 5.1, 2026-10-26 04:22 UTC](http://web.archive.org/web/20261026042245/https://openrouter.ai/anthropic/claude-fable-5.1) — 3590 and 58; [Sonnet 5.5, 2026-10-26 21:10 UTC](http://web.archive.org/web/20261026211019/https://openrouter.ai/anthropic/claude-sonnet-5.5) — 1876.5 and 100. The values of Opus 5.5 of that slice are quoted above; those of Haiku, Sonnet and Fable no copy holds (architecture 3.12).
+  - **The slice of 2026-10-25 at about 05:19 UTC** is in no copy. The nearest copies of the Wayback Machine, the row Anthropic, by the same fields: [Haiku 5.5, 2026-10-23 18:15 UTC](http://web.archive.org/web/20261023181524/https://openrouter.ai/anthropic/claude-haiku-5.5) — 1434 and 154; [Opus 5.5, 2026-10-24 00:50 UTC](http://web.archive.org/web/20261024005021/https://openrouter.ai/anthropic/claude-opus-5.5) — 3458 and 77, Fast mode 1161 and 221; [Fable 5.1, 2026-10-26 04:22 UTC](http://web.archive.org/web/20261026042245/https://openrouter.ai/anthropic/claude-fable-5.1) — 3590 and 58; [Sonnet 5.5, 2026-10-26 21:10 UTC](http://web.archive.org/web/20261026211019/https://openrouter.ai/anthropic/claude-sonnet-5.5) — 1876.5 and 100. The values of Opus 5.5 of that slice are quoted above; those of Haiku, Sonnet and Fable no copy holds.
 
 ### 2.3. On-device recognizers, 2026-10-25
 
-The sources of architecture 3.12 (T44). Read 2026-10-25.
+The sources of the cost and time of a check. Read 2026-10-25.
 - **The Prompt API in Chrome:**
   - [the page of the API](https://developer.chrome.com/docs/ai/prompt-api), "Last updated: August 26, 2026": for the web, from Chrome 148; "For expectedInputs, this can be text, image, or audio."; the languages are `"en", "ja", "es", "de", and "fr"`;
   - [getting started](https://developer.chrome.com/docs/ai/get-started): "GPU: Strictly more than 4 GB of VRAM."; "CPU: 16 GB of RAM or more and 4 CPU cores or more."; "Chrome for Android, iOS, and ChromeOS on non-Chromebook Plus devices are not yet supported by the APIs which use foundation models.";
@@ -502,17 +502,17 @@ The sources of architecture 3.12 (T44). Read 2026-10-25.
 
   The ASF puts non-commercial licenses in the category X: "Non-commercial licenses: Creative Commons Non-Commercial variants" ([ASF, Third-party license policy](https://www.apache.org/legal/resolved.html)).
 - **transformers.js** — [README](https://github.com/huggingface/transformers.js): "By default, when running in the browser, the model will be run on your CPU (via WASM)." `generate()` returns no probabilities of tokens: in the code at that place stands `// TODO:`.
-- **Read 2026-11-13** (T140; Д12): the facts of the device that architecture 3.12 gave without a quote.
+- **Read 2026-11-13**: the facts of the device that the cost and time of a check in [architecture.md](architecture.md) gave without a quote.
   - **WebGPU in Firefox for Android.** MDN's [browser compatibility data](https://github.com/mdn/browser-compat-data/blob/main/api/GPU.json), `api/GPU.json`, last changed 2026-07-10: in `"firefox_android"` stands `"version_added": false`. The [implementation status](https://github.com/gpuweb/gpuweb/wiki/Implementation-Status) of the WebGPU group, the section "Firefox", the column "Android" of its table: "Behind a flag", with the footnote "Disabled by default. Use Firefox Beta or Nightly and set the `about:config` setting `gfx.webgpu.ignore-blocklist` to enable. Mozilla expects to do work on Android in 2026."
   - **PP-FormulaNet** — [Formula Recognition Module Tutorial](https://github.com/PaddlePaddle/PaddleOCR/blob/main/docs/version3.x/module_usage/formula_recognition.en.md) of PaddleOCR, last changed 2026-05-29. Of PP-FormulaNet_plus: "utilizes a more diverse formula dataset during training, including sources such as Chinese dissertations, professional books, textbooks, exam papers, and mathematics journals". Handwriting is not named for PP-FormulaNet, and in the same table it is for another model, UniMERNet: "including simple formulas, complex formulas, scanned formulas, and handwritten formulas".
   - **pix2tex** — [README](https://github.com/lukas-blecher/LaTeX-OCR), last changed 2024-02-12: "takes an image of a math formula and returns corresponding LaTeX code"; the data: "Luckily there is a lot of LaTeX code on the internet, e.g. wikipedia, arXiv." — the links left out; in its list of plans: "[ ] support handwritten formulae (kinda done, see training colab notebook)".
-  - **Florence-2** — [the card](https://huggingface.co/microsoft/Florence-2-large): MIT, the tasks `<OCR>` and `<OCR_WITH_REGION>`, and neither formulas nor handwriting are named. The card of SmolVLM above, read again the same day, names neither either, so that these two read printed formulas their cards do not say (architecture 3.12).
+  - **Florence-2** — [the card](https://huggingface.co/microsoft/Florence-2-large): MIT, the tasks `<OCR>` and `<OCR_WITH_REGION>`, and neither formulas nor handwriting are named. The card of SmolVLM above, read again the same day, names neither either, so that these two read printed formulas their cards do not say.
 
 ## 3. Laws
 
 ### 3.1. Handwriting and pen dynamics, 2026-10-21
 
-The primary sources of the study's scale of classes (sources 5.1) that R11 rests on. Checked 2026-10-21. The conclusion from them is our reading, not a lawyer's: the question for a lawyer is the study's `И9`. П-21 carried it, and В8 of table 3 of [RUN.md](../RUN.md) went into П-21. П-21 is closed by the decision R52 spec, and a lawyer's answer will be needed if the measurement shows that the writing process helps (R52 spec).
+The primary sources of the study's scale of classes (sources 5.1) that the measurement's choice to give the model the working only in the analysis rests on. Checked 2026-10-21. The conclusion from them is our reading, not a lawyer's: the question for a lawyer is the study's `И9`. П-21 carried it and is closed: nothing of the learner's writing history goes to AI, and a lawyer's answer will be needed if a measurement shows that the writing process helps.
 - [16 CFR § 312.2](https://www.ecfr.gov/current/title-16/chapter-I/subchapter-C/part-312/section-312.2), COPPA, the definition of personal information:
   - "(10) A biometric identifier that can be used for the automated or semi-automated recognition of an individual, such as fingerprints; … voiceprints; gait patterns; facial templates; or faceprints". The list is open: "such as";
   - "(11) Information concerning the child or the parents of that child that the operator collects online from the child and combines with an identifier described in this definition".
@@ -529,7 +529,7 @@ The primary sources of the study's scale of classes (sources 5.1) that R11 rests
 
 ### 4.1. The browser: the pen, the time of events and the clock, 2026-10-26
 
-The sources of the page of record mode (architecture 3.3; R25; T13). Read 2026-10-26.
+The sources of the page of record mode. Read 2026-10-26.
 - [Pointer Events Level 3](https://www.w3.org/TR/pointerevents3/), W3C Recommendation 30 June 2026:
   - pressure: "For hardware and platforms that do not support pressure, the value MUST be 0.5 when in the active buttons state and 0 otherwise";
   - release: "All pointerup events have a pressure value of 0";
@@ -549,8 +549,8 @@ The sources of the page of record mode (architecture 3.3; R25; T13). Read 2026-1
 ### 5.1. The study «Рукопись ребёнка на канве и ИИ-наставник», 2026-10-21
 
 The study «Рукопись ребёнка на канве и ИИ-наставник» ("A child's handwriting on the canvas and the AI tutor") — an [artifact](https://claude.ai/artifact/QLH6WzmmQs4MY5NvjMxb1D) of 2026-10-20: the report `files/child-handwriting.md` and nine working notes `files/notes/`. Read 2026-10-21; it is not in the repository.
-- The study's sections are A–J, its questions `И1`–`И32`: this is its own numbering. The numbers of decisions in it — `R03`, `R04`, `R05`, `R09` — are spec's numbers, not this log's.
-- The researchers read their sources on 2026-10-20, and their quotes are verbatim. Below is what R06 (the 2026-10-21 amendment), R08, R11 and the 2026-10-21 plan of measurements 1.4–1.7 rest on, with the primary source the study names. Apart from Google's terms and the law, sources 1.1 and sources 3.1, these primary sources were not read again here: the quotes are as the study gives them:
+- The study's sections are A–J, its questions `И1`–`И32`: this is its own numbering. The numbers of decisions in it are spec's numbers, not this log's.
+- The researchers read their sources on 2026-10-20, and their quotes are verbatim. Below is what the measurement's choice of providers, its four checks taken from the study, the working given only in the analysis and the plan of measurements 1.4–1.7 rest on, with the primary source the study names. Apart from Google's terms and the law, sources 1.1 and sources 3.1, these primary sources were not read again here: the quotes are as the study gives them:
 - **Google Cloud.** §20(f) and the archive of the terms of 2024-07-18 are in sources 1.1: they were checked here on 2026-10-21. By the study's reading, not a lawyer's, the prohibition of §20(d) closes Google's generative models to the whole platform, which is open to children (`И1`).
 - **The place on the handwriting.**
   - HG-Bench — 500 marked-up homework papers of Chinese K-12 pupils, a box counting at IoU ≥ 0.5: "no zero-shot system exceeds 55.22% on FA or 48.22% on FSm" ([arXiv 2606.25491](https://arxiv.org/html/2606.25491v1)).
@@ -582,29 +582,29 @@ The study «Рукопись ребёнка на канве и ИИ-настав
 
 ### 5.2. The analysis «Базовая канва и контракт „канва ↔ агент“»
 
-The analysis «Базовая канва и контракт „канва ↔ агент“» ("The base canvas and the contract 'canvas ↔ agent'") — the author sent it on 2026-10-21; it is not in the repository. It was written by a model that saw neither the code nor NovaTrail's decisions, so what is taken from it is questions, not facts: the amendment to R03, О-8 in measurements 1.4–1.7 and В15 of table 3 of [RUN.md](../RUN.md), which R43 spec closed. spec names it by the same title and with the same reservation: product 14 spec, now sources 8.4 spec (R10).
+The analysis «Базовая канва и контракт „канва ↔ агент“» ("The base canvas and the contract 'canvas ↔ agent'") — received 2026-10-21; it is not in the repository. It was written by a model that saw neither the code nor NovaTrail's decisions, so what is taken from it is questions, not facts: that one call is admitted only if the key makes nothing worse, О-8 in measurements 1.4–1.7, and a question to `spec` that `spec` has closed. `spec` names it by the same title and with the same reservation, sources 8.4 spec.
 
 ### 5.3. canvas-api at commit 0901af0
 
-[mathtrail/canvas-api](https://github.com/mathtrail/canvas-api), commit 0901af0, in a clone in a temporary folder. Read 2026-10-20, for R03; what T08 added — T77, T72 and the check by pause — on 2026-10-21:
-- **The measurement was never made.** The tasks of E2 T63–T77 are not done, and there are no reports `docs/live/02–04`. In the log: «спайки S1 и S2 не проводились» (R60 canvas-api).
-- R62 canvas-api: «опаснее всего ложный `CORRECT` — модель видит ключ в неверной записи».
-- R66 canvas-api: «в штрихах есть то, чего нет в картинке, — порядок написания».
-- T77 canvas-api, «PNG или векторы», compared three options:
+[mathtrail/canvas-api](https://github.com/mathtrail/canvas-api), commit 0901af0, in a clone in a temporary folder. Read 2026-10-20, for the choice between one call and two; what was added — the task «PNG или векторы», the «Журнал правок» and the check by pause — on 2026-10-21:
+- **The measurement was never made.** The tasks of its measurement are not done, and there are no reports `docs/live/02–04`. In its log: «спайки S1 и S2 не проводились».
+- Its log: «опаснее всего ложный `CORRECT` — модель видит ключ в неверной записи».
+- Its log: «в штрихах есть то, чего нет в картинке, — порядок написания».
+- Its task «PNG или векторы» compared three options:
   - «PNG, нарисованный на сервере из штрихов»;
   - «штрихи текстом с порядком написания, без картинки»;
   - «картинка и порядок написания вместе».
 
-  The option without a picture did not pass the check of the picture (T69 canvas-api), and eval called the model for it «своим путём — расширением порта или отдельным входом адаптера». T77 was never done.
-- The «Журнал правок» of T72 canvas-api is named, but it has no fields. There are no key frames and no log of actions either in canvas-api or in its draft `docs/plan/E2-draft.md` (read 2026-10-21, a clone in a temporary folder).
-- canvas-api rejected the check by pause. R37 canvas-api: «проверка каждого шага по паузе: распознавание каждой строки и смысл шага снова требуют правил под предмет, а с задержкой модели тихая проверка превращается в ожидание». Nor is it in canvas-api: R38, R61.
+  The option without a picture did not pass its check of the picture, and eval called the model for it «своим путём — расширением порта или отдельным входом адаптера». The task was never done.
+- The «Журнал правок» of one of its tasks is named, but it has no fields. There are no key frames and no log of actions either in canvas-api or in its draft `docs/plan/E2-draft.md` (read 2026-10-21, a clone in a temporary folder).
+- canvas-api rejected the check by pause. Its log: «проверка каждого шага по паузе: распознавание каждой строки и смысл шага снова требуют правил под предмет, а с задержкой модели тихая проверка превращается в ожидание». No later decision of its log brings it back.
 
 ### 5.4. canvas-api at revision 2796f48, 2026-10-21
 
-The revision before the turn to reading by a model. Later these decisions were superseded by canvas-api: R37, R42, and at 0901af0 they stand in `docs/decisions.md` under «Заменено». Read 2026-10-21:
-- R16 canvas-api: «Строка считается законченной, когда ребёнок перешёл к другой строке, нажал Check или 6 секунд не трогал холст. До этого ошибка в ней не показывается.» The first version «показывала ложную ошибку на недописанной строке»;
-- R18 canvas-api: the strokes went to Mathpix «без времени»;
-- R19 canvas-api: «выбор черновика — „цифровые чернила“ точнее картинки на детском почерке». The spike S1 (spec 20 canvas-api) was to check it, and S1 never took place (R60 canvas-api);
-- product 5.2 canvas-api: «Проверка запускается после паузы 1,5–2 секунды или по кнопке **Check**»; «пауза посреди мысли — это нормально».
-- T74 canvas-api: «сотня листов — разведка (≤ 5 %)», not the check of the goals of the beta (≤ 1%) of product 12 canvas-api.
-- The goals of the beta in product 12 canvas-api: false alarms ≤ 1%, false corrects ≤ 0.5%, needless requests to rewrite ≤ 5%, the accuracy of the place ≥ 80%.
+The revision before the turn to reading by a model. Later canvas-api superseded these decisions, and at 0901af0 they stand in its `docs/decisions.md` under «Заменено». Read 2026-10-21:
+- On a finished line: «Строка считается законченной, когда ребёнок перешёл к другой строке, нажал Check или 6 секунд не трогал холст. До этого ошибка в ней не показывается.» The first version «показывала ложную ошибку на недописанной строке»;
+- The strokes went to Mathpix «без времени»;
+- On the draft: «выбор черновика — „цифровые чернила“ точнее картинки на детском почерке». The spike S1 of its plan was to check it, and S1 never took place;
+- Its product document: «Проверка запускается после паузы 1,5–2 секунды или по кнопке **Check**»; «пауза посреди мысли — это нормально».
+- Its plan: «сотня листов — разведка (≤ 5 %)», not the check of the goals of the beta (≤ 1%) of its product document.
+- The goals of the beta in its product document: false alarms ≤ 1%, false corrects ≤ 0.5%, needless requests to rewrite ≤ 5%, the accuracy of the place ≥ 80%.

@@ -76,7 +76,7 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T197 | Ссылки по строгому правилу R171 spec: проход по первой части | Claude | — | T196 |
 | [x] | T185 | Ссылки: README и architecture 1–3.2 | Claude | — | T197 |
 | [x] | T186 | Ссылки: architecture 3.3–4 | Claude | — | T185 |
-| [ ] | T187 | Ссылки: документы листов и sources | Claude | — | T186 |
+| [x] | T187 | Ссылки: документы листов и sources | Claude | — | T186 |
 | [ ] | T188 | Ссылки: measurements 1–2 | Claude | — | T187 |
 | [ ] | T189 | Ссылки: measurements 3.1–3.10 | Claude | — | T188 |
 | [ ] | T190 | Ссылки: measurements 3.11–5 | Claude | — | T189 |
@@ -87,13 +87,6 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [ ] | T195 | Журнал по R171 spec: от «Move to `spec` `v0.14.0`» до конца; ключ `citations` | Claude | — | T194 |
 
 **Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, pull request #215; T196, T197 — проход по части T184 — и T185–T195 — пачка на ветке `e22-tutor-2`, один pull request (R159 spec), по «Зависит от».
-
-#### T187. Ссылки: документы листов и sources
-
-- **Цель:** [docs/sheets.md](docs/sheets.md), [docs/workbook.md](docs/workbook.md), [docs/essays.md](docs/essays.md), [docs/free-sheets.md](docs/free-sheets.md), [docs/near-sheets.md](docs/near-sheets.md) и [docs/sources.md](docs/sources.md) ссылаются по R171 spec.
-- **Сделать:** по «Ссылкам» описания эпика; в `docs/sources.md` запись хранит источник, дату и цитату, без номера задачи, и в заголовке тоже; ссылки на запись из других документов сохраняют её номер — номера записей не меняются.
-- **Как проверить:** как у T185, на этих файлах.
-- **Разделы:** R171 spec, R143 spec; описание эпика.
 
 #### T188. Ссылки: measurements 1–2
 
