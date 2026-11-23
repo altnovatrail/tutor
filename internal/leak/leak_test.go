@@ -14,7 +14,9 @@ import (
 // The test vectors of the leak check are copies of format/vectors/leaks of spec at v0.14.0 (commit
 // c318cb4), where they last changed in 8f12e24, under Apache-2.0 as spec is. CI checks the
 // repository out without the spec submodule, so the copies are what it tests; TestCopies holds them
-// to spec's wherever the submodule is there.
+// to spec's wherever the submodule is there. Their lines of comments may differ: tutor's documents
+// check forbids a comment to cite a section, which some of spec's comments do, so a copy words them
+// itself, and the data stays spec's byte for byte.
 const vectors = "testdata/leaks"
 
 // vector is a vector file: a task, as much of it as the leak check reads, and the texts searched,
@@ -151,10 +153,21 @@ func TestCopies(t *testing.T) {
 	for _, name := range names(ours) {
 		a, _ := os.ReadFile(filepath.Join(vectors, name))
 		b, _ := os.ReadFile(filepath.Join(spec, name))
-		if !bytes.Equal(a, b) {
+		if !bytes.Equal(withoutComments(a), withoutComments(b)) {
 			t.Errorf("%s is not spec's: copy it again, and say which tag in the comment of the vectors", name)
 		}
 	}
+}
+
+// withoutComments drops the lines of a YAML file that are a comment alone.
+func withoutComments(file []byte) []byte {
+	var out [][]byte
+	for _, line := range bytes.SplitAfter(file, []byte("\n")) {
+		if !bytes.HasPrefix(bytes.TrimSpace(line), []byte("#")) {
+			out = append(out, line)
+		}
+	}
+	return bytes.Join(out, nil)
 }
 
 // numbers are the numbers of a text, as numerator/denominator in lowest terms.

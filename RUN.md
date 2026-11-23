@@ -84,13 +84,6 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T192 | Журнал по R171 spec: от «The check board» до «Move to `spec` `v0.2.43`» | Claude | — | T191 |
 | [x] | T193 | Журнал по R171 spec: от «Reading into an observation» до «OpenSSF Best Practices» | Claude | — | T192 |
 | [x] | T194 | Журнал по R171 spec: от «The return of epic E3» до «The admission of words» | Claude | — | T193 |
-| [ ] | T195 | Журнал по R171 spec: от «Move to `spec` `v0.14.0`» до конца; ключ `citations` | Claude | — | T194 |
+| [x] | T195 | Журнал по R171 spec: от «Move to `spec` `v0.14.0`» до конца; ключ `citations` | Claude | — | T194 |
 
 **Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, pull request #215; T196, T197 — проход по части T184 — и T185–T195 — пачка на ветке `e22-tutor-2`, один pull request (R159 spec), по «Зависит от».
-
-#### T195. Журнал по R171 spec: от «Move to `spec` `v0.14.0`» до конца; ключ `citations`
-
-- **Цель:** записи разделов `##` [docs/decisions.md](docs/decisions.md) от «Move to `spec` `v0.14.0`» до конца — по R171 spec, их поправки свёрнуты; `"citations": true` в [docs-budgets.json](docs-budgets.json), как в `spec/repo-template/files/docs-budgets.json`, и `docs-check-repo` с ним — зелёный во всём репозитории.
-- **Сделать:** как T192; затем ключ; находки, которые остались в файлах прежних частей, — исправить здесь же.
-- **Как проверить:** `just -f spec/justfile docs-check-repo` — зелёный с ключом; `/code-review high`, один круг; в «Сделано» — ссылок было и стало по всему репозиторию, по видам, командой `cite.mjs` measurements 1.18.4 spec, против замера «до» в «Сделано» T184.
-- **Разделы:** R171 spec, R160 spec, R32 spec; описание эпика; строка 7.44 COORDINATION.md spec.
