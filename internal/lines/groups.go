@@ -8,11 +8,11 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// The rule of stroke groups of the eval protocol, R24 canvas as it is (R30): two strokes are
-// neighbours when no more than GroupPause milliseconds lie between them, from the end of the
-// earlier to the start of the later, and the boxes of their points come within GroupAcross units of
-// each other across the sheet and within GroupDown units down it. Each bound is included. A group
-// is the strokes a chain of neighbours joins.
+// The rule of stroke groups of the eval protocol, canvas's as it is, with no merge of tutor's own:
+// two strokes are neighbours when no more than GroupPause milliseconds lie between them, from the
+// end of the earlier to the start of the later, and the boxes of their points come within
+// GroupAcross units of each other across the sheet and within GroupDown units down it. Each bound
+// is included. A group is the strokes a chain of neighbours joins (R30).
 const (
 	GroupPause  = 2000 // milliseconds
 	GroupAcross = 50   // sheet units
@@ -172,7 +172,7 @@ func pieceOf(st sample.Stroke, at int) (p piece, ok bool) {
 // Tenths is a place in whole tenths of a unit, as a sample file keeps them, rounded half up: 100.05
 // units are 1000.5 tenths, which make 1001. The product is rounded on its own, float64(…), so that
 // it fuses with nothing (see internal/synth). The groups and the crop (internal/render) count in
-// them, as canvas's do (R24 and R25 canvas).
+// them, as canvas's do.
 func Tenths(v float64) int64 { return roundHalfUp(float64(v * 10)) }
 
 // roundHalfUp rounds to the nearest whole number and a half up, exactly as JavaScript's Math.round,

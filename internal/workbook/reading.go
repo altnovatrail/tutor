@@ -24,14 +24,13 @@ import (
 // The reading of a page of the workbook: one call a page, which shows the model the crop of every
 // filled box, each labelled with its place, item and slot, and asks what each box holds, as it is
 // written. The program gives each box its verdict by the box's check, and each item by its boxes,
-// module-kit's (R56 spec; R73); a blank box goes to no model, and its verdict is unreadable, blank
-// (R53 spec).
+// module-kit's; a blank box goes to no model, and its verdict is unreadable, blank.
 
 // Version is the version of the prompt of the reading of the workbook, frozen before the test of
 // the run that measures it; it has the rules of safety for children that every prompt of the
-// platform has (R54). MirroredVersion is the first version whose reader marks a digit written
+// platform has. MirroredVersion is the first version whose reader marks a digit written
 // mirrored, and the box is then unreadable, so that the learner writes it again; an earlier one
-// reads it as that digit, and Want judges its logs so (R56 spec).
+// reads it as that digit, and Want judges its logs so.
 const (
 	Version         = 3
 	MirroredVersion = 2
@@ -207,11 +206,11 @@ const (
 	Illegible Reason = "illegible"
 	Ambiguous Reason = "ambiguous"
 	// Mirrored is a box with a digit the reader says is written mirrored: ambiguous by the rule of
-	// a digit written mirrored, and the learner writes it again (R56 spec).
+	// a digit written mirrored, and the learner writes it again.
 	Mirrored Reason = "mirrored"
 	// Missing is a filled box the answer has no cell for, and Twice one it has two cells for: either
 	// makes the answer no valid observation, and every box of the page unchecked, a failure of the
-	// reading (R73).
+	// reading.
 	Missing Reason = "missing"
 	Twice   Reason = "twice"
 )
@@ -229,12 +228,12 @@ type Box struct {
 
 // Verdicts are the program's verdicts on the boxes of a page, in its order, from what a model read
 // in them, nil for a failed call: module-kit's, on the observation of the page as the eval protocol
-// writes it (R73), each with the reason in the reading's own words, which the log keeps:
+// writes it, each with the reason in the reading's own words, which the log keeps:
 //   - a blank box, which no model is shown, is unreadable, blank;
 //   - a box read blank is unreadable, blank; one with a digit read mirrored, unreadable, mirrored,
 //     ambiguous to the protocol; one read illegible or with other readings, unreadable;
 //   - otherwise the box's check judges the answer: correct, not yet right with its trap, or
-//     unreadable when the answer is not in the notation of its kind (R56 spec);
+//     unreadable when the answer is not in the notation of its kind;
 //   - a failed call is no observation, and neither is an answer with no cell for a filled box, or
 //     two: every box of the page is then unchecked, the blank ones too, and a box without its cell,
 //     or with two, is missing, or twice.
@@ -408,7 +407,7 @@ func SlotOf(v verdict.SlotVerdict) Slot {
 // Want is the verdict a right reading of a box of a scenario comes to by the prompt of a version,
 // from the verdict of the value written in it (sample.WorkbookBox.Verdict): that verdict, but from
 // MirroredVersion on, for a box with a digit written mirrored, unreadable, mirrored, so that the
-// learner writes it again (R56 spec). The run and its report both judge a reading by it.
+// learner writes it again. The run and its report both judge a reading by it.
 func Want(scenario sample.BoxScenario, of Slot, version int) Slot {
 	if version >= MirroredVersion && scenario == sample.BoxMirrored {
 		return Slot{Verdict: verdict.Unreadable, Reason: Mirrored}
@@ -427,7 +426,7 @@ var unreadableOf = map[Reason]observationv1.Unreadable{
 
 // ItemsOf are the items of a page's task as its record tells them: each item's boxes, with their
 // checks, as the line of a workbook holds them, without the text of the line, which no verdict reads.
-// The report joins two readings of the page by them, with no file of the workbook (R74).
+// The report joins two readings of the page by them, with no file of the workbook.
 func ItemsOf(pr *PageRecord) []formatv0.Item {
 	var items []formatv0.Item
 	for _, b := range pr.Boxes {

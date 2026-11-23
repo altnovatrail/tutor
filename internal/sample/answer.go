@@ -24,7 +24,7 @@ func Numbers(text string) []string {
 // ValueOf is the number a written answer gives: the first number after its last "=", and in a line
 // without one the first number after «Ответ:», or else the first of the line; "" when it has none.
 // So the bank's key "x = 2" is the key 2 of the check, and the answer line «56 : 6 = 9 (ост. 2)»
-// gives 9. The banks of the measurement write their keys so, and they do not change (R28).
+// gives 9. The banks of the measurement write their keys so, and they do not change.
 func ValueOf(text string) string {
 	t := value.Normalize(text)
 	if i := strings.LastIndex(t, "="); i >= 0 {

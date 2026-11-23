@@ -37,26 +37,26 @@ import (
 // The caps of the parts, in US dollars: $3 for the development and $6 for the test, and $2 for
 // all the sheets of a plan, without the split, which is how the author's sheets of free writing
 // run; and $8 for the sheets recorded so far, without the split, which is how the run of admission
-// takes the author's sheets, of a plan not written whole (R80).
+// takes the author's sheets, of a plan not written whole.
 var partCaps = map[string]float64{"dev": 3, "test": 6, "all": 2, "recorded": 8}
 
 // plans are the kinds of call that run asks, by -kind, each with how it plans a run over a part of
 // its sets of sheets and says what the run asks: the judge, the reading, the hint, the reading of
 // the workbook, which reads the pages of the workbook and no sheets, the assessment by the rubric,
 // which reads the essays, the words after a correct answer, which ask the cases of their set, and
-// the four calls of a task from paper, which ask the cases of its set (R135).
+// the four calls of a task from paper, which ask the cases of its set.
 var plans = map[string]struct {
 	plan func(sets []sheetFlags, part string, o options) (*runner.Run, string, error)
 	// several is whether the kind runs over several sets: the judge runs on one, since its
-	// criterion counts the test part of one set (R28).
+	// criterion counts the test part of one set.
 	several bool
 	// file names the flag of the file a kind reads in place of sets of sheets, with the samples of its
-	// pages or essays in -dir: workbook, the pages of the workbook, or essays (R71); or paper, the set
-	// of a task from paper, which draws its pictures itself and has no -dir (R135). Its run logs in
+	// pages or essays in -dir: workbook, the pages of the workbook, or essays; or paper, the set
+	// of a task from paper, which draws its pictures itself and has no -dir. Its run logs in
 	// synthetic.
 	file string
 	// caps are the kind's own caps of the parts, where it plans other than partCaps: the essays,
-	// $8 for the test (R45).
+	// $8 for the test.
 	caps map[string]float64
 }{
 	"judge":     {plan: planJudge},
@@ -73,7 +73,7 @@ var plans = map[string]struct {
 
 // options are what a run is asked besides its sets and part: how many times each call is repeated,
 // what a reading reads, and for the workbook, the file of its pages, the directory of their samples
-// and what its reading reads (R71); for the essays, their file and the directory of their samples,
+// and what its reading reads; for the essays, their file and the directory of their samples,
 // and in two calls the configuration that assesses the text read, or "" for each reader its own.
 type options struct {
 	two           bool
@@ -108,15 +108,15 @@ func (s *setsFlag) Set(v string) error {
 
 // runRun runs the calls of a kind over a part of the split, or over all the sheets of the plan. Of
 // the judge, the measurement of the writing process: every sheet in every form it has, by the three
-// judges, repeated (R24), in the prompt of the plan: version 1 on a plan of lines, version 2 on a
+// judges, repeated, in the prompt of the plan: version 1 on a plan of lines, version 2 on a
 // plan of parts, of free writing. It first says how many calls the run makes and what they are
-// expected to cost, and starts only once the author types yes (R28); till then Ctrl-C ends it as
+// expected to cost, and starts only once the author types yes; till then Ctrl-C ends it as
 // any command, and from then on it stops the run before the next call. The log goes next to the
 // sheets, out of git, named by the time, the kind, the sets of sheets and the part.
 // A run of the reading or the hint may go over several sets, each given by -set; they lie in one
 // folder, the samples or the synthetic, beside which the run logs. A run on sheets drawn by code, in
-// synthetic, the executor starts within the task's ceiling (R28); one on the author's sheets, in
-// samples, goes within the task's ceiling too, and its task says who starts it (R32).
+// synthetic, the executor starts within the task's ceiling; one on the author's sheets, in
+// samples, goes within the task's ceiling too, and its task says who starts it.
 func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr io.Writer, getenv func(string) string, now func() time.Time) int {
 	flags := flag.NewFlagSet("tutor-eval run", flag.ContinueOnError)
 	var f sheetFlags
@@ -132,10 +132,10 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 	paperPath := flags.String("paper", paperFile, "for -kind statement, solving, paper and finding, the file of the set of a task from paper, or, but for finding, a folder of exported cases, as eval/paper-cases")
 	maxUSD := flags.Float64("max-usd", 0, "start no call that could take the run past this many US dollars; $3 for dev, $6 for test ($8 for the essays), $2 for all and $8 for recorded by default")
 	logPath := flags.String("log", "", "the log of the run, a new file out of git: in samples or synthetic, and in samples alone for sheets there; by default in runs next to the directory of the sheets, and for the workbook and the essays in synthetic/runs")
-	rest := flags.String("rest", "", "the log of this run that stopped short — broke off, or stopped by its cap or an interruption —, in place of -log: the run is planned with the same flags, asks only the calls the log does not hold, and appends them and the end to it; -max-usd counts what the log spent, and the log's record keeps the cap and the moment of its first start (T166)")
-	two := flags.Bool("two", false, "for -kind essay, assess in two calls: read the essay, then assess the text read (T92)")
+	rest := flags.String("rest", "", "the log of this run that stopped short — broke off, or stopped by its cap or an interruption —, in place of -log: the run is planned with the same flags, asks only the calls the log does not hold, and appends them and the end to it; -max-usd counts what the log spent, and the log's record keeps the cap and the moment of its first start")
+	two := flags.Bool("two", false, "for -kind essay, assess in two calls: read the essay, then assess the text read")
 	assessor := flags.String("assessor", "", "for -kind essay -two, the configuration that assesses the text every reader read, as the library asks a model of its own for it, such as haiku-medium on the reading of opus-high, the run of admission (R124); each reader assesses its own reading by default")
-	casesPath := flags.String("cases", "", "for -kind hint, the file of the cases of the set of the words, such as eval/words-cases.json, and for -kind correct, of the set of the words after a correct answer, eval/correct-cases.json, on the one set of its plan, asked case by case (T118; T143)")
+	casesPath := flags.String("cases", "", "for -kind hint, the file of the cases of the set of the words, such as eval/words-cases.json, and for -kind correct, of the set of the words after a correct answer, eval/correct-cases.json, on the one set of its plan, asked case by case")
 	kindsList := flags.String("case-kinds", "", "with -cases, the kinds of case to ask, joined by commas: of a hint rung, otherwise, note; of the words after a correct answer work, choice, note; all of them by default")
 	stub := flags.Bool("stub", false, "ask no model: a stub answers by the markup, and the run needs no key and no network")
 	readersList := flags.String("readers", strings.Join(runner.E4Configs, ","), "the configurations to ask, joined by commas: "+strings.Join(runner.ConfigNames(), ", ")+"; the three of E4 by default")
@@ -345,11 +345,11 @@ func runRun(ctx context.Context, args []string, stdin io.Reader, stdout, stderr 
 }
 
 // claudeModels asks the models of a run's steps by the adapter of Claude, with the Anthropic key:
-// the runner takes the adapter from here, so that no package of the library takes the SDK (R90).
+// the runner takes the adapter from here, so that no package of the library takes the SDK.
 func claudeModels(key string) runner.Asker { return runner.Models(claude.Dial, key) }
 
 // startRun says what a planned run asks, how many calls and what they are expected to cost, and
-// starts it only once the author types yes (R28): till then Ctrl-C ends it as any command, and
+// starts it only once the author types yes: till then Ctrl-C ends it as any command, and
 // from then on it stops the run before the next call. It writes the log as a new file at path, and
 // says what the run made and spent. above says that the cap is above the plan's.
 func startRun(ctx context.Context, name string, r *runner.Run, what, above, path string, maxUSD float64, stub bool, ask runner.Asker, stdin io.Reader, stdout, stderr io.Writer, now func() time.Time) int {
@@ -549,7 +549,7 @@ func planJudge(sets []sheetFlags, part string, o options) (*runner.Run, string, 
 
 // planReading plans a run of the reading over a part of its sets, and says what it asks: the sheets
 // of each set, the readers and their repeats, and what it reads: the conditions, the false keys
-// only on correct sheets (R03), and the other heights and the states, by the readers that do not
+// only on correct sheets, and the other heights and the states, by the readers that do not
 // read once.
 func planReading(sets []sheetFlags, part string, o options) (*runner.Run, string, error) {
 	repeats := o.repeats
@@ -841,8 +841,8 @@ func planCorrect(sets []sheetFlags, part string, o options) (*runner.Run, string
 
 // planWorkbook plans a run of the reading of the workbook over the pages of a part, as the samples
 // of the directory hold them, held to the rules of the protocol by spec's sample-check, and says
-// what it asks: the pages, the readers and repeats, what is read, and the version of the prompt
-// (R71). A page whose sample the runner refuses is named and not asked of. It reads no sheets.
+// what it asks: the pages, the readers and repeats, what is read, and the version of the prompt.
+// A page whose sample the runner refuses is named and not asked of. It reads no sheets.
 func planWorkbook(_ []sheetFlags, part string, o options) (*runner.Run, string, error) {
 	w, d, seed, err := readPages(o.workbook, o.dir, checkSamples)
 	if err != nil {
@@ -886,7 +886,7 @@ func planWorkbook(_ []sheetFlags, part string, o options) (*runner.Run, string, 
 }
 
 // planEssays plans a run of the assessment by the rubric over the essays of a part, as the samples
-// of the directory hold them, by every reader in every repeat (R71). An essay whose sample the
+// of the directory hold them, by every reader in every repeat. An essay whose sample the
 // runner refuses is named and not asked of.
 func planEssays(_ []sheetFlags, part string, o options) (*runner.Run, string, error) {
 	f, d, seed, err := readEssays(o.essays, o.dir, checkSamples)

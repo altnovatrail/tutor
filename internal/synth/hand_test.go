@@ -84,12 +84,11 @@ func TestSheetDrawsThePlan(t *testing.T) {
 	}
 }
 
-// groupsHoldLines checks a drawn sheet against the yardstick canvas names for its groups (R24
-// canvas): no group of strokes holds strokes of two lines of the markup, and a line is one group
-// unless the planned erasure took a part of it, as the fix written after a pause is a group of
-// its own. This holds on the seeds of the test, not by construction: on other seeds a colon before
-// a space in a large hand parts a line, and a short line written within 2 s of the next joins it
-// (R30).
+// groupsHoldLines checks a drawn sheet against the yardstick canvas names for its groups: no group
+// of strokes holds strokes of two lines of the markup, and a line is one group unless the planned
+// erasure took a part of it, as the fix written after a pause is a group of its own. This holds on
+// the seeds of the test, not by construction: on other seeds a colon before a space in a large
+// hand parts a line, and a short line written within 2 s of the next joins it.
 func groupsHoldLines(t *testing.T, sh *sample.PlanSheet, s *sample.Sample, seed uint64) {
 	t.Helper()
 	lineOf := map[string]int{}
@@ -139,9 +138,9 @@ func TestSheetIsTheSameEachTime(t *testing.T) {
 
 // The sheets of the plan of lines come out byte for byte as the hash holds them: the set
 // synthetic/lines is drawn and split from them with seed 1 and is not drawn again, and the groups
-// of TestSheetDrawsThePlan hold on their seeds, not by construction (R30). A product is rounded on its own, float64(…), so that the
-// hash holds on every machine (see the package's comment). A point holds no pressure, so the hash
-// is of the places and times of the points alone (R75).
+// of TestSheetDrawsThePlan hold on their seeds, not by construction. A product is rounded on its
+// own, float64(…), so that the hash holds on every machine (see the package's comment). A point
+// holds no pressure, so the hash is of the places and times of the points alone.
 func TestSheetsOfLinesAsBefore(t *testing.T) {
 	_, plan := measurement(t)
 	h := sha256.New()

@@ -26,7 +26,9 @@ type Reader = runner.Reader
 // Readers are the configurations of the runner. The text of an essay, six judgements and the
 // feedback come to about 600 tokens; Haiku with thinking writes about 600 more, and Opus at high
 // effort about 1 500. Opus assesses in every repeat, not once: a judgement by a rubric changes from
-// call to call more than the reading of a digit (R45). The four the extended measurement adds (R50) are estimated so: Opus at medium as at high, Sonnet with thinking between Haiku and Opus, without thinking as Haiku without it, and Haiku at medium above Haiku at low.
+// call to call more than the reading of a digit. The four the extended measurement adds are
+// estimated so: Opus at medium as at high, Sonnet with thinking between Haiku and Opus, without
+// thinking as Haiku without it, and Haiku at medium above Haiku at low.
 func Readers() []Reader {
 	return runner.ReadersOf("essay", map[string]int{
 		"opus-high": 2100, "haiku-low": 1200, "haiku-low-no-thinking": 600,
@@ -169,11 +171,11 @@ type (
 		TextPrompt string `json:"text_prompt,omitempty"`
 		// Assessor is the configuration that assesses the text every reader read, in a run in two
 		// calls that names one, as the library asks the model of the assessment apart from the
-		// reader's (R124); with none, each reader assesses its own reading. The calls of the
+		// reader's; with none, each reader assesses its own reading. The calls of the
 		// assessment still name the reader whose text they assess.
 		Assessor *ReaderRecord `json:"assessor,omitempty"`
 		// Runner and ModuleKit are the versions of the build that ran, and Refused the samples it
-		// refused: what the runner's report takes of the run (R74).
+		// refused: what the runner's report takes of the run.
 		Runner    string           `json:"runner,omitempty"`
 		ModuleKit string           `json:"module_kit,omitempty"`
 		Refused   []runner.Refused `json:"refused,omitempty"`
@@ -193,7 +195,7 @@ type (
 		Width       int                  `json:"width"`
 		Height      int                  `json:"height"`
 		// Sample is the ID of the essay's sample, People the marks of its markup, and Unreadable the
-		// reason its truth gives no text, as the protocol names it: for the runner's report (R74).
+		// reason its truth gives no text, as the protocol names it: for the runner's report.
 		Sample     string            `json:"sample,omitempty"`
 		People     []evalsample.Mark `json:"people,omitempty"`
 		Unreadable string            `json:"unreadable,omitempty"`
@@ -217,7 +219,7 @@ type (
 		// the rule of the reading counts on the essays code drew legible.
 		Illegible bool `json:"illegible,omitempty"`
 		// Invalid is set when the answer is off the schema, which the report of the protocol names
-		// unchecked, UNCHECKED_CAUSE_INVALID (R74).
+		// unchecked, UNCHECKED_CAUSE_INVALID.
 		Invalid bool `json:"invalid,omitempty"`
 		runner.Usage
 	}

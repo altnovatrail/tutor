@@ -115,8 +115,8 @@ func TestEssaysReport(t *testing.T) {
 	if strings.Contains(fb.String(), "## Essay 2\n\n- Unmet by the plan: title.\n- Judged otherwise: title judged met.\n- The call failed") {
 		t.Error("the feedback shows a call of the second repeat")
 	}
-	// A feedback breaks the rule of R70 spec as it breaks the measurement's, but for its 80 words: the
-	// quote of the first feedback, and the third, of more words than that.
+	// A feedback breaks the platform's rule of feedback as it breaks the measurement's, but for its 80
+	// words: the quote of the first feedback, and the third, of more words than that.
 	long := essaysLog()
 	long.Calls[2].FeedbackWords = essay.PlatformWords + 1
 	if r, _ := NewEssays(long); r.Readers[0].PlatformBroken != 2 || r.Readers[0].MostWords != essay.PlatformWords+1 || !strings.Contains(r.Summary(), "that of R70 spec, with 80 words, 2") {

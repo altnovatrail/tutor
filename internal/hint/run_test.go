@@ -20,7 +20,7 @@ import (
 func clock() time.Time { return time.Date(2026, 10, 28, 12, 0, 0, 0, time.UTC) }
 
 // The tutors are the configurations of the runner, each with its output for the estimate: the three
-// of runner.E4Configs and the four the extended measurement adds (R50).
+// of runner.E4Configs and the four the extended measurement adds.
 func TestTutors(t *testing.T) {
 	var names []string
 	for _, tu := range hint.Tutors() {

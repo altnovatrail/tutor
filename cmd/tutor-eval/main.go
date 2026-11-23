@@ -1,6 +1,6 @@
 // Command tutor-eval is tutor's eval runner: it runs the AI capabilities on eval samples, on the
 // same code that api calls, and reports how they did. Its run command runs the calls of a kind on
-// the runner: the judge of the measurement of the writing process (R24), the reading of a sheet
+// the runner: the judge of the measurement of the writing process, the reading of a sheet
 // into an observation, the hint, which the run checks for leaks and its form, the reading of the
 // boxes of a page of the workbook, or the assessment of an essay by its rubric, and its report
 // command reports on a run by the kind of its log; its other commands serve the board, check the
@@ -264,7 +264,7 @@ func check(paths []string, stdout, stderr io.Writer) int {
 			continue
 		}
 		// A sample of spec's eval protocol keeps the rules of its text by spec's check alone, and tutor
-		// writes none of its own (R93 spec; R69). The directory of sheets tells one so too.
+		// writes none of its own; the directory of sheets tells one so too (R69).
 		if sheets.OfProtocol(data) {
 			fail(path, errors.New("a file of spec's eval protocol: just -f spec/justfile sample-check holds a sample to its rules, and tutor-eval sheets reads it against its plan"))
 			continue
@@ -278,7 +278,7 @@ func check(paths []string, stdout, stderr io.Writer) int {
 		}
 		switch head.Format {
 		case sample.SampleFormat:
-			fail(path, errors.New("a sample of tutor-sample v0, which no reader but tutor-eval convert takes since T105: convert writes it as a sample of the protocol"))
+			fail(path, errors.New("a sample of tutor-sample v0, which no reader but tutor-eval convert takes: convert writes it as a sample of the protocol"))
 			continue
 		case sample.PlanFormat:
 			pl, err := sample.ReadPlan(bytes.NewReader(data))

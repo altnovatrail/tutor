@@ -15,7 +15,7 @@ import (
 )
 
 // OpenTasks is the file of open tasks in tutor's tree, which a release of tutor carries as
-// tutor_<version>_open-tasks.json, byte for byte (R64): a sample that names a task of a release
+// tutor_<version>_open-tasks.json, byte for byte: a sample that names a task of a release
 // names it by that file's digest.
 const OpenTasks = "eval/open-tasks.json"
 
@@ -31,7 +31,7 @@ var tagPattern = regexp.MustCompile(`^v[0-9]+\.[0-9]+\.[0-9]+$`)
 // Releases are the files of tasks of tutor's releases, as the samples of a set of a capability name
 // them: each tag's tree of tutor under Dir, Dir/<tag>/eval/…, as git archive writes it. A sample of
 // a release is read with the bank it names at the tag it names, not with the bank of the work tree,
-// so a bank changed since that release takes nothing from the samples made on it (R76).
+// so a bank changed since that release takes nothing from the samples made on it.
 type Releases struct {
 	Dir   string
 	files map[[2]string]any

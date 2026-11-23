@@ -1,8 +1,8 @@
 // Package board is the check board: a local page where a person solves fixed tasks by hand, the
 // models read the work and judge it, and the person marks whether each model was right. Nothing
 // leaves the machine but the calls to the models; the pictures and the marks stay in a directory
-// outside git (R19). Its record mode asks no model: the author writes the sheets of the sheet plan,
-// and each is saved as a sample file in a directory outside git (R25).
+// outside git. Its record mode asks no model: the author writes the sheets of the sheet plan,
+// and each is saved as a sample file in a directory outside git.
 package board
 
 import (
@@ -60,7 +60,7 @@ const (
 )
 
 // effortBefore is the effort of a logged answer that names none: such answers were all asked at
-// high (R19).
+// high.
 const effortBefore = "high"
 
 // Choice is a model the board offers: the effort levels the page offers it at, least first, the

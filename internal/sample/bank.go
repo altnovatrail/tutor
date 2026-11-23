@@ -29,12 +29,12 @@ type Task struct {
 	Leaks []string `json:"leaks"`
 	// FalseKeys are wrong keys with their solutions: the same steps with another number. The
 	// measurement reads correct sheets with them, to see whether the model reads what it is given
-	// rather than what is written (R03).
+	// rather than what is written.
 	FalseKeys []FalseKey `json:"false_keys"`
 }
 
 // TaskKind is the kind of a task, one of the measurement's three. No code checks the lines of any
-// kind (R19): the markup says where the first error is, whatever the kind (R24).
+// kind: the markup says where the first error is, whatever the kind.
 type TaskKind string
 
 // The kinds of task.

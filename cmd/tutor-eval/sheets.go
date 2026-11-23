@@ -79,12 +79,12 @@ func parse(flags *flag.FlagSet, args []string, stderr io.Writer) (int, bool) {
 }
 
 // checkSamples holds the samples of the protocol among the sheets to the protocol's rules, by
-// spec's recipe sample-check (R69); a test replaces it.
+// spec's recipe sample-check; a test replaces it.
 var checkSamples samplecheck.Check = samplecheck.Run
 
 // readPlan reads the bank and the sheet plan and checks the plan against the bank. Its error says
 // which file fails. The bank comes with its path in the repository and its digest, by which a
-// sample of the protocol names its task (R69).
+// sample of the protocol names its task.
 func readPlan(bankPath, planPath string) (*evalsample.Bank, *sample.Plan, error) {
 	bank, err := evalsample.ReadBank(bankPath)
 	if err != nil {
@@ -101,7 +101,7 @@ func readPlan(bankPath, planPath string) (*evalsample.Bank, *sample.Plan, error)
 }
 
 // runSheets prints the summary of the sheets the record mode saved, against the plan: what is
-// recorded, what passes, by task, scenario and outcome, and nothing of the handwriting (R24). With
+// recorded, what passes, by task, scenario and outcome, and nothing of the handwriting. With
 // the split made, it says so.
 func runSheets(args []string, stdout, stderr io.Writer) int {
 	flags := flag.NewFlagSet("tutor-eval sheets", flag.ContinueOnError)

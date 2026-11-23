@@ -100,9 +100,9 @@ const (
 )
 
 // Record is the call's record: the answer as the model gave it and its words; and the words checked
-// as api checks them before they reach the device (R70 spec): what the leak check finds in them, what
-// they break of their form (words.Correct), and what the learner reads — the words, or none and why.
-// An answer off the schema is a failure of the call, logged with the reader's error. A call not asked
+// as api checks them before they reach the device: what the leak check finds in them, what they
+// break of their form (words.Correct), and what the learner reads — the words, or none and why. An
+// answer off the schema is a failure of the call, logged with the reader's error. A call not asked
 // has none. The measures that code counts go with it: the words by which the rough search finds the
 // learner's sex told (hint.Gendered), and what the words take up of a note at the side (hint.Echo).
 func (s *step) Record(o runner.Outcome) any {

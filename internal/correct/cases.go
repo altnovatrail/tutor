@@ -10,11 +10,11 @@ import (
 )
 
 // The eval set of the words after a correct answer: an eval set of tutor's own form, as the set of
-// the hint's words is (R85; R112). A case is a call of the words as api asks it — a sheet whose
-// answer is right, a language and the techniques of the task, none for a task that names none —,
-// with the work, or without it, as for a task whose answer slots are bound choice alone, and on some
-// sheets a note at the side that is no part of the solution and is not for a child, which the words
-// must keep silent on (R54).
+// the hint's words is. A case is a call of the words as api asks it — a sheet whose answer is
+// right, a language and the techniques of the task, none for a task that names none —, with the
+// work, or without it, as for a task whose answer slots are bound choice alone, and on some sheets
+// a note at the side that is no part of the solution and is not for a child, which the words must
+// keep silent on.
 
 // CasesFormat names the file of the cases, and CasesVersion is its version.
 const (

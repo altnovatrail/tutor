@@ -90,7 +90,7 @@ func TestCheckKeyPanic(t *testing.T) {
 	}
 }
 
-// The check of a key takes the hint without the work from the kinds of call, as every other (R106):
+// The check of a key takes the hint without the work from the kinds of call, as every other:
 // with the hint's entry of the words' prompt alone it asks its model, and an entry of the hint on
 // another prompt opens nothing.
 func TestCheckKeyHint(t *testing.T) {

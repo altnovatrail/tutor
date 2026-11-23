@@ -179,7 +179,7 @@ func TestCacheTokens(t *testing.T) {
 // Instructions marked to cache end at a breakpoint of the cache, for five minutes, and nothing
 // after them is marked: the message of the work is never cached. The two answers, recorded as the
 // API gives them, are a write of the prefix and a read of it, and their tokens and price come back
-// as such (R131).
+// as such.
 func TestCacheInstructions(t *testing.T) {
 	usage := func(write, read int) string {
 		return strings.Replace(evStart, `"usage":{"input_tokens":1300,"output_tokens":1}`,

@@ -26,11 +26,10 @@ var outcomes = map[v1.DebugOutcome]string{
 	v1.DebugOutcome_DEBUG_OUTCOME_UNCHECKED:  OutcomeUnchecked,
 }
 
-// exported reads a folder of the cases the debug mode exports, a file of the JSON of
-// DebugCase each, in the order of their names (R136): a case of the part dev, its pictures those
-// the Check sent and its truth the developer's. Its kind follows from the truth: a formula with "="
-// an equation, any other an expression; no key open; a key of a choice a choice; else a word
-// problem.
+// exported reads a folder of the cases the debug mode exports, a file of the JSON of DebugCase
+// each, in the order of their names: a case of the part dev, its pictures those the Check sent and
+// its truth the developer's. Its kind follows from the truth: a formula with "=" an equation, any
+// other an expression; no key open; a key of a choice a choice; else a word problem.
 func exported(dir string) (*Set, error) {
 	names, err := filepath.Glob(filepath.Join(dir, "*.json"))
 	if err != nil {

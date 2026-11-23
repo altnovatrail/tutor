@@ -14,10 +14,9 @@ import (
 
 // pageScenarios are the scenarios of the eleven boxes of a page, the most constrained first, as
 // they are given out. eval/workbook.json gives one box of a page to each scenario but correct and
-// five to that one (R40); here three boxes are mirrored and two rewritten: the digits written
-// mirrored and the values crossed out are where readings of eval/workbook.json gave their false
-// alarms, and each is measured on a line of its own, so they take five boxes of eleven, not two
-// (R56 spec).
+// five to that one; here three boxes are mirrored and two rewritten: the digits written mirrored
+// and the values crossed out are where readings of eval/workbook.json gave their false alarms, and
+// each is measured on a line of its own, so they take five boxes of eleven, not two.
 var pageScenarios = []sample.BoxScenario{
 	sample.BoxMirrored, sample.BoxMirrored, sample.BoxMirrored,
 	sample.BoxNearKey, sample.BoxSimilarDigits, sample.BoxError,
@@ -25,8 +24,8 @@ var pageScenarios = []sample.BoxScenario{
 	sample.BoxCorrect, sample.BoxCorrect,
 }
 
-// items are the ten items of a page, in the order of the pages of eval/workbook.json (R40): five of
-// the kind number, three fractions in any form and two in lowest terms, each with its own numbers.
+// items are the ten items of a page, in the order of the pages of eval/workbook.json: five of the
+// kind number, three fractions in any form and two in lowest terms, each with its own numbers.
 var items = []func(*rand.Rand) sample.WorkbookItem{
 	multiplication, division, addend, subtraction, remainder,
 	fractionSum, fractionDifference, share, reduce, reducedSum,

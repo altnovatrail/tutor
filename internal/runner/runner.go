@@ -1,7 +1,7 @@
 // Package runner runs the calls of a measurement, whatever their kind. A kind plans the calls of
 // its run and says how each is asked and logged. The runner estimates the run before it starts,
 // starts no call whose worst case could take the run past its cap, asks the calls in order, bills
-// them, and logs every answer, a JSON object a line, outside git (R05).
+// them, and logs every answer, a JSON object a line, outside git.
 package runner
 
 import (
@@ -21,13 +21,13 @@ import (
 
 const (
 	// MaxOutputTokens is the most a call may write, thinking included: the same for every
-	// configuration, as on the board, so that they are compared under one limit (R19).
+	// configuration, as on the board, so that they are compared under one limit.
 	MaxOutputTokens = 16000
 	// callTimeout is how long one call may take, as on the board.
 	callTimeout = 10 * time.Minute
 )
 
-// Config is a configuration of a model that a run asks (R24): a Claude model at an effort level,
+// Config is a configuration of a model that a run asks: a Claude model at an effort level,
 // thinking or not.
 type Config struct {
 	Name       string
@@ -37,8 +37,8 @@ type Config struct {
 }
 
 // Configs are the configurations of the measurements, in their order: the three a run asks by
-// default first (E4Configs, R24), then the four the extended measurement adds (R50), Haiku at
-// medium, and the two of the cascade of a task from paper not among them yet (R137).
+// default first (E4Configs), then the four the extended measurement adds, Haiku at
+// medium, and the two of the cascade of a task from paper not among them yet.
 func Configs() []Config {
 	model := func(id string) catalog.Model {
 		i := slices.IndexFunc(catalog.Models, func(m catalog.Model) bool { return m.ID == id })
@@ -57,7 +57,7 @@ func Configs() []Config {
 	}
 }
 
-// E4Configs are the names of the configurations a run asks unless it names others (R24).
+// E4Configs are the names of the configurations a run asks unless it names others.
 var E4Configs = []string{"opus-high", "haiku-low", "haiku-low-no-thinking"}
 
 // ConfigNames are the names of the configurations, in their order.
@@ -113,7 +113,7 @@ func (c Config) Cost(in, out int64) float64 {
 
 // CostOf is what a call that came back as resp costs, in US dollars: the input without the cache,
 // the writes to the cache at the price of their lifetime — an hour's for any but 5 minutes — and the
-// read from it, as the words' instructions are cached (R131), and the output.
+// read from it, as the words' instructions are cached, and the output.
 func (c Config) CostOf(resp provider.Response) float64 {
 	m := c.Model
 	usd := float64(resp.InputTokens)*m.Input + float64(resp.CacheReadTokens)*m.CacheRead + float64(resp.OutputTokens)*m.Output
@@ -143,7 +143,7 @@ type Step struct {
 
 // Worst is the most the step's call can cost: its most input tokens, or the expected ones if the
 // kind gave fewer, each at the higher of the input's price and that of a write to the cache for 5
-// minutes, which a request that caches its instructions pays for them on a miss (R131), and the most
+// minutes, which a request that caches its instructions pays for them on a miss, and the most
 // a call may write.
 func (st Step) Worst() float64 {
 	m := st.Config.Model
@@ -178,7 +178,7 @@ type Usage struct {
 	ModelID     string `json:"model_id,omitempty"`
 	InputTokens int64  `json:"input_tokens,omitempty"`
 	// CacheWriteTokens and CacheReadTokens are the input written to the cache, of every lifetime, and
-	// read from it, beside InputTokens, which holds the input without them (R131).
+	// read from it, beside InputTokens, which holds the input without them.
 	CacheWriteTokens int64   `json:"cache_write_tokens,omitempty"`
 	CacheReadTokens  int64   `json:"cache_read_tokens,omitempty"`
 	OutputTokens     int64   `json:"output_tokens,omitempty"`
@@ -205,7 +205,7 @@ type Head struct {
 	Estimate Estimate
 	// Runner and ModuleKit are the versions of the build that runs (Versions), and Refused the
 	// samples the run refuses, as Run names them: the record of the run keeps them for the
-	// runner's report (R74).
+	// runner's report.
 	Runner, ModuleKit string
 	Refused           []Refused
 }

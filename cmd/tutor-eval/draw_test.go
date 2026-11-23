@@ -232,7 +232,7 @@ func TestDrawRefuses(t *testing.T) {
 // The command draws the free-form plan, 40 sheets of parts: they pass the summary with the plan's
 // markup, and each has its picture, and a frame before its planned erasure. The author's three,
 // each one part that holds the whole solution as its answer, it does not draw: a sample's truth is
-// the value of its answer, and theirs is for the author's hand to write (R69).
+// the value of its answer, and theirs is for the author's hand to write.
 func TestDrawSheetsOfParts(t *testing.T) {
 	t.Parallel()
 	root := t.TempDir()

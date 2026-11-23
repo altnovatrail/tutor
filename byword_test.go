@@ -19,7 +19,7 @@ func withoutWord(t *testing.T) {
 	admission.Admitted = slices.DeleteFunc(slices.Clone(saved), func(e admission.Entry) bool { return e.Report.ByWord() })
 }
 
-// The kinds the author admitted by their word, without eval (R126), and the models each asks.
+// The kinds the author admitted by their word, without eval, and the models each asks (R126).
 var byWord = []struct {
 	call   Call
 	models []string
@@ -45,7 +45,7 @@ func names(e admission.Entry) []string {
 
 // The list's own entries admit the workbook, the essay and the rubric at the least stage author, on
 // platform AI and on an adult's own key of Anthropic, and none of them at the least stage full, on
-// an own key of OpenAI or for a child whose cells the deployment's facts do not open (R126).
+// an own key of OpenAI or for a child whose cells the deployment's facts do not open.
 func TestByWord(t *testing.T) {
 	fs := &fakes{models: map[string]*fake{"claude-opus-5-5": {}, "claude-haiku-5-5": {}, "claude-sonnet-5-5": {}}}
 	lib := library(t, adultFacts, fs)
@@ -79,7 +79,7 @@ func TestByWord(t *testing.T) {
 		}
 	}
 	// A child's workbook is read only where the deployment declares the facts for minors, as the
-	// synthetic child of api's dev-app does (R124).
+	// synthetic child of api's dev-app does.
 	minors := library(t, "anthropic:\n  data_processing_agreement: [adult, under_13]\n  minimal_retention: [adult, under_13]\n  minor_safeguards: [under_13]\n", fs)
 	if e, a, err := minors.ChooseCall(CallWorkbook, child); err != nil || !a.Admitted || len(e.Models) != 2 {
 		t.Errorf("a child's workbook with the facts for minors: %+v, %+v, %v", e, a, err)

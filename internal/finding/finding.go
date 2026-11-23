@@ -1,13 +1,13 @@
-// Package finding is the call that finds the tasks on the photo of a page from the learner's paper
-// (R162 spec): a model sees the photo of the whole page once and gives a box round each task, in
-// pixels of the photo, and nothing of the page's text. It is the capability task_finding of spec's
-// admission table (R96 spec). The program puts the boxes in the order of the page and turns them
-// into task frames, by which app cuts each task's crop on the device; the learner unpicks a frame
-// or draws one the model missed, so a frame the model gets wrong costs a tap (R134). The learner
-// may ask in words which tasks to take and how to split them: the request goes as data, with the
-// frames on the page, and the answer is still boxes alone (R138). Without a request, a request of
-// its own asks first which way up the page is and how much its lines slope, and the program turns
-// the photo upright before the tasks are found on it (R134).
+// Package finding is the call that finds the tasks on the photo of a page from the learner's
+// paper: a model sees the photo of the whole page once and gives a box round each task, in pixels
+// of the photo, and nothing of the page's text. It is the capability task_finding of spec's
+// admission table. The program puts the boxes in the order of the page and turns them into task
+// frames, by which app cuts each task's crop on the device; the learner unpicks a frame or draws
+// one the model missed, so a frame the model gets wrong costs a tap. The learner may ask in words
+// which tasks to take and how to split them: the request goes as data, with the frames on the
+// page, and the answer is still boxes alone. Without a request, a request of its own asks first
+// which way up the page is and how much its lines slope, and the program turns the photo upright
+// before the tasks are found on it.
 package finding
 
 import (
@@ -24,17 +24,17 @@ import (
 )
 
 // Version is the version of the prompt. A change to a word a model reads is a new version, and
-// the entry of the list that admitted the prompt admits it no longer (R70 spec). TestFrozenV4
+// the entry of the list that admitted the prompt admits it no longer. TestFrozenV4
 // holds it.
 const Version = 4
 
 // MaxTasks is the most tasks a page gives: the 20 attempts BeginPaperAttempts of spec's contract
 // begins at most. The model is asked for no more, and of more the program keeps the first of the
-// page (R165 spec).
+// page.
 const MaxTasks = 20
 
 // MaxOutputTokens is the most a call may write, thinking included: twenty boxes take a few hundred
-// tokens, and the rest is the model's reasoning on a crowded page (R94).
+// tokens, and the rest is the model's reasoning on a crowded page.
 const MaxOutputTokens = 8000
 
 // The instructions, one text for every page and every language.
@@ -104,13 +104,13 @@ func RequestOf(photo provider.Image, width, height int, request string, frames [
 		Text:         text,
 		SchemaName:   "task_frames",
 		Schema:       Schema,
-		// The instructions are the same in every request and hold nothing of the learner's (R131).
+		// The instructions are the same in every request and hold nothing of the learner's.
 		CacheInstructions: true,
 	}
 }
 
 // inBlock is the learner's request as it goes into its block: on one line, and a tag of either block
-// written in it cannot open or close one, so nothing of it gets out of its block (R02 spec).
+// written in it cannot open or close one, so nothing of it gets out of its block.
 func inBlock(request string) string {
 	return blockTag.ReplaceAllString(strings.NewReplacer("\r", " ", "\n", " ").Replace(request), "‹$1$2›")
 }
@@ -171,7 +171,7 @@ func Read(answer string) ([]Box, error) {
 
 // OrientMaxOutputTokens is the most the orientation may write, thinking included: its answer takes
 // some 20 tokens, and the rest is the model's reasoning on a page whose text is hard to tell, far
-// less than on the boxes of a crowded page, so a fourth of the finding's bound (R94).
+// less than on the boxes of a crowded page, so a fourth of the finding's bound.
 const OrientMaxOutputTokens = 2000
 
 // The bounds of the tilt: the model gives at most a quarter of a quarter turn either way, since a
@@ -208,7 +208,7 @@ func OrientRequestOf(photo provider.Image, width, height int) provider.Request {
 		Text:         fmt.Sprintf(orientFormat, width, height),
 		SchemaName:   OrientSchemaName,
 		Schema:       OrientSchema,
-		// No cache: the instructions are shorter than the least prompt Anthropic caches (sources 1.5).
+		// No cache: the instructions are shorter than the least prompt Anthropic caches.
 	}
 }
 
@@ -219,7 +219,7 @@ const OrientSchemaName = "page_orientation"
 var quarters = map[string]int{"up": 0, "right": -90, "down": 180, "left": 90}
 
 // orientProperties are the properties of the orientation's answer, as JSON: the side and the tilt.
-// The schema bounds no number, which Anthropic's structured outputs do not take (sources 1.7):
+// The schema bounds no number, which Anthropic's structured outputs do not take:
 // ReadOrientation checks the tilt.
 var orientProperties = json.RawMessage(`{
 		"top": {"type": "string", "enum": ["up", "right", "down", "left"]},
@@ -242,7 +242,7 @@ type Orientation struct {
 }
 
 // Turn is the turn, in whole degrees clockwise from -179 to 180, by which the photo is turned for
-// its page to read upright (R162 spec): the quarter turn its top asks, and the tilt, one of less
+// its page to read upright: the quarter turn its top asks, and the tilt, one of less
 // than leastTilt taken as none.
 func (o Orientation) Turn() int {
 	turn := quarters[o.Top]

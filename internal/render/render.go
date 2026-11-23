@@ -1,7 +1,7 @@
 // Package render draws a sheet of handwriting from its strokes, as the board shows it: ink of the
 // board's pen, #111, 3 px wide with round ends and joins, on white, one pixel to a unit of the
 // sheet. It draws the sheet at any moment of the writing: as it was finished, and just before each
-// erasure, the frame of that erasure (R11, R24). One renderer draws every form of the measurement.
+// erasure, the frame of that erasure. One renderer draws every form of the measurement.
 //
 // The drawing is the same on every machine: it works in whole numbers alone. A point stands at the
 // nearest sixteenth of a pixel, each pixel is sampled at 4 × 4 places, and a pixel takes the ink of
@@ -94,10 +94,10 @@ func shown(s *sample.Sample, t int64, gone map[string]bool) []sample.Stroke {
 // Final draws the sheet as it was finished: every stroke that no erasure took away.
 func Final(s *sample.Sample) (*image.Gray, error) { return At(s, math.MaxInt64) }
 
-// Before draws the sheet just before its erasure i, the frame of that erasure (R11): the strokes
-// written by the erasure's moment, the ones it takes away among them, without those the erasures
-// before it took away. A stroke that begins at the erasure's very moment and that it does not take
-// away is the next stroke, written after it.
+// Before draws the sheet just before its erasure i, the frame of that erasure: the strokes written
+// by the erasure's moment, the ones it takes away among them, without those the erasures before it
+// took away. A stroke that begins at the erasure's very moment and that it does not take away is
+// the next stroke, written after it.
 func Before(s *sample.Sample, i int) (*image.Gray, error) {
 	strokes, err := ShownBefore(s, i)
 	if err != nil {

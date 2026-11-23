@@ -17,7 +17,7 @@ import (
 
 // What a person's sample takes at random: its ID, and the writer's code that links a
 // person's samples with each other. The samples page of canvas makes both; the record mode of the
-// board and the converter of the author's sheets make them as it would (R75).
+// board and the converter of the author's sheets make them as it would.
 const (
 	// codeLength is the length of a writer's code made here, within the protocol's 6 to 16.
 	codeLength = 12

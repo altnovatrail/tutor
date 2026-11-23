@@ -1,13 +1,13 @@
-// Package paperwords is the tutor's words on a task from the learner's paper (R162 spec): a task
-// with no module, so with no solution, trap, technique or leading question of an author. A model
-// words one question of three kinds: the opening question, before the first wrong answer, from the
-// task's crop as printed; the words of a rung, once the program has found an answer not yet right,
-// from the crop of the work, with the box round the place of the first mistake in it; and the rung
-// put another way, with no picture (R82 spec). It sees the tasks of the crop as data — each with
-// its statement as printed, its key when the program has derived one, and the value read of the
-// learner's answer —, never the AI's solution, which nothing keeps (R02 spec). The program checks
-// the words for a leak of every key and for their form before they reach the learner, and gives
-// the fallback text in their place when they fail (R70 spec): the model only words them.
+// Package paperwords is the tutor's words on a task from the learner's paper: a task with no
+// module, so with no solution, trap, technique or leading question of an author. A model words one
+// question of three kinds: the opening question, before the first wrong answer, from the task's
+// crop as printed; the words of a rung, once the program has found an answer not yet right, from
+// the crop of the work, with the box round the place of the first mistake in it; and the rung put
+// another way, with no picture. It sees the tasks of the crop as data — each with its statement as
+// printed, its key when the program has derived one, and the value read of the learner's answer —,
+// never the AI's solution, which nothing keeps. The program checks the words for a leak of every
+// key and for their form before they reach the learner, and gives the fallback text in their place
+// when they fail: the model only words them.
 package paperwords
 
 import (
@@ -25,13 +25,12 @@ import (
 	"github.com/altnovatrail/tutor/words"
 )
 
-// Version is the version of the prompt. A change to a word a model reads is a new version, and
-// the entry of the list that admitted the prompt admits it no longer (R70 spec). TestFrozenV1
-// holds it.
+// Version is the version of the prompt. A change to a word a model reads is a new version, and the
+// entry of the list that admitted the prompt admits it no longer. TestFrozenV1 holds it.
 const Version = 1
 
 // MaxOutputTokens is the most a call may write, thinking included: the bound of every call of the
-// library that reasons (R94).
+// library that reasons.
 const MaxOutputTokens = 16000
 
 // Ask is what the request asks the model to word.
@@ -44,7 +43,7 @@ const (
 	AskOpening Ask = iota + 1
 	// AskRung is the words of a rung: Image 1 is the crop of the learner's work.
 	AskRung
-	// AskAgain is the rung put another way, with no picture (R82 spec).
+	// AskAgain is the rung put another way, with no picture.
 	AskAgain
 )
 
@@ -215,7 +214,7 @@ func RequestOf(p Prompt) (provider.Request, error) {
 		SchemaName:   "paper_words",
 		Schema:       Schema,
 		NoPicture:    len(images) == 0,
-		// The instructions are the same in every request and hold nothing of the learner's (R131).
+		// The instructions are the same in every request and hold nothing of the learner's.
 		CacheInstructions: true,
 	}, nil
 }

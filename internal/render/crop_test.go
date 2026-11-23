@@ -31,9 +31,8 @@ import (
 )
 
 // cropVectors is spec's test vectors of the crop, contracts.Vectors eval/v1/crops.json: canvas's
-// cases (R25 canvas) in the form of the protocol, their strokes a final geometry and their crops a
-// CropSet without PNG. They hold the crop's numbers, not its pixels. Their messages are read by
-// protojson.
+// cases in the form of the protocol, their strokes a final geometry and their crops a CropSet
+// without PNG. They hold the crop's numbers, not its pixels. Their messages are read by protojson.
 type cropVectors struct {
 	Rule struct {
 		Margin  int   `json:"margin"`

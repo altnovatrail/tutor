@@ -39,7 +39,7 @@ func extentOf(s sample.Stroke) extent {
 	return e
 }
 
-// holds is whether a stroke is a box's by the rule of boxes of R37 canvas: the middle of its frame
+// holds is whether a stroke is a box's by canvas's rule of boxes: the middle of its frame
 // in the box widened by 120 thousandths of its size, and the frame no wider and no higher than 1600
 // thousandths of the box.
 func holds(e extent, b synth.Box) bool {
@@ -103,7 +103,7 @@ func TestPageAgain(t *testing.T) {
 }
 
 // The pages of the workbook with seed 1 are what the measurement reads: their hash holds them, on
-// every machine (see the package's comment), their points without pressure (R75).
+// every machine (see the package's comment), their points without pressure.
 func TestPagesAsBefore(t *testing.T) {
 	wb := theWorkbook(t)
 	h := sha256.New()

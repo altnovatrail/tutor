@@ -1,11 +1,11 @@
 package provider
 
 // Place is where a box that a model gave in pixels of a picture stands on it, as an adapter tells
-// it (R53 spec): [ymin, xmin, ymax, xmax] in whole thousandths of the picture's height and width,
+// it: [ymin, xmin, ymax, xmax] in whole thousandths of the picture's height and width,
 // from 0 to 1000, the low corner rounded down and the high one up. The box, x1, y1 its top-left
 // corner and x2, y2 its bottom-right, in order, is first clamped to the picture of width × height
 // px, and divided by that size, the size of the picture sent and not one padded to a multiple of
-// 28 px, as R53 spec reads Anthropic's guide to coordinates. A box with no area on the picture, or
+// 28 px, as spec reads Anthropic's guide to coordinates. A box with no area on the picture, or
 // a picture of no size, has no place.
 func Place(x1, y1, x2, y2, width, height int) ([4]int64, bool) {
 	w, h := int64(width), int64(height)

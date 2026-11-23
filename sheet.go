@@ -26,7 +26,7 @@ const maxCropSide = 4096
 
 // SheetReading is a handwriting sheet to read: the PNG of the crop of its visible strokes, as app
 // sends it (the contract between app and api, SheetWork), the open view of its task, and the route.
-// The model sees the crop and the statement, never the key (R67 spec).
+// The model sees the crop and the statement, never the key.
 type SheetReading struct {
 	Route Route
 	Task  *open.Task
@@ -34,8 +34,8 @@ type SheetReading struct {
 }
 
 // SheetRead is what a reading of a sheet gives when Outcome is Answered: by the pair, the observation
-// of each reader, in the order of the pair, the strong reader first (R68 spec) — module-kit joins
-// them and gives the verdict (R86 spec) —; in ReadingSingle, the one observation of the one reader.
+// of each reader, in the order of the pair, the strong reader first — module-kit joins
+// them and gives the verdict —; in ReadingSingle, the one observation of the one reader.
 // Otherwise it gives none: by the pair, tutor gives both or the outcome, never one.
 type SheetRead struct {
 	Observations []*observationv1.Observation
@@ -44,10 +44,10 @@ type SheetRead struct {
 
 // ReadSheet reads a handwriting sheet by the models admitted for reading handwriting — the pair, in
 // parallel, or its one reader in ReadingSingle —, each into the observation of the task's one
-// answer slot bound anywhere (R86 spec). It reads that slot alone: the sheets of the first modules
+// answer slot bound anywhere. It reads that slot alone: the sheets of the first modules
 // have no other that AI reads. A slot bound choice is no reading of AI: api gives the option tapped
 // to module-kit. An answer that is no observation fails the reading, as a failure of AI does: there
-// is no observation of a pair then (R86 spec).
+// is no observation of a pair then.
 func (t *Tutor) ReadSheet(ctx context.Context, r SheetReading) SheetRead {
 	place, statement, err := sheetTask(r.Task)
 	if err != nil {
@@ -68,7 +68,7 @@ func (t *Tutor) ReadSheet(ctx context.Context, r SheetReading) SheetRead {
 
 // readCrop reads a crop of handwriting by the models admitted for the call c — the pair, in
 // parallel, its one reader, or the attempts of a cascade one at a time, a later one only when the
-// one before failed or read the slot as unreadable (R137) —, each by the request of the crop's
+// one before failed or read the slot as unreadable —, each by the request of the crop's
 // size, into the observation observe makes of each answer, which has places of its own. An answer
 // that is no observation fails the reading.
 func (t *Tutor) readCrop(ctx context.Context, c Call, route Route, crop []byte,

@@ -303,7 +303,7 @@ func TestWorkbookMirrored(t *testing.T) {
 	}
 }
 
-// A box of a time counts in the group of a time, not among the fractions (R111 spec).
+// A box of a time counts in the group of a time, not among the fractions.
 func TestWorkbookTime(t *testing.T) {
 	l := workbookLog()
 	for i := range l.Sheets {

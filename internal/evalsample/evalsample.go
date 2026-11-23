@@ -1,14 +1,13 @@
 // Package evalsample is a sheet of the measurement as a sample file of spec's eval protocol, the
-// message Sample of novatrail.eval.v1 (R93, R95 spec): Of writes a sheet that internal/synth drew
+// message Sample of novatrail.eval.v1: Of writes a sheet that internal/synth drew
 // as one, and Read reads one back into the sample that tutor's runner takes, internal/sample's,
 // with what its plan sheet says and the protocol does not — the scenario, the planned erasure and
 // the trap. Read refuses a sample as the protocol has the runner refuse one: one that spec's check
 // sample-check finds invalid, one without its markup, one of another task, one whose markup does
-// not fit its task, and a child's (R69).
+// not fit its task, and a child's.
 //
 // A sample that the samples page of canvas did not write, a drawn one, names canvas 0.0.0 and the
-// set of texts "none", the values of no release, which sample-check asks of a synthetic sample
-// (R93 spec).
+// set of texts "none", the values of no release, which sample-check asks of a synthetic sample.
 package evalsample
 
 import (
@@ -38,7 +37,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/task"
 )
 
-// What a drawn sample names that only the samples page of canvas has (R93 spec): no version of
+// What a drawn sample names that only the samples page of canvas has: no version of
 // canvas and no set of texts, since neither wrote or showed anything.
 const (
 	CanvasVersion  = "0.0.0"
@@ -48,7 +47,7 @@ const (
 // Pointer is the pointer a drawn stroke names: the synthetic hand writes as a pen does.
 const Pointer = "pen"
 
-// Bank is a bank of tasks as a sample names it, as the source file of its task reference (R69), and
+// Bank is a bank of tasks as a sample names it, as the source file of its task reference, and
 // the bank it holds.
 type Bank struct {
 	Source
@@ -159,7 +158,7 @@ func Of(s *sample.Sample, sh *sample.PlanSheet, b *Bank, seed uint64, id string)
 // random (NewID), and their writer's code, code; and the sheet's groups and crops, its task and its
 // markup as Of has them. A sheet the record mode of the board wrote, or one converted from a file of
 // tutor-sample v0, names canvas 0.0.0 and the set of texts "none", as the samples page of canvas
-// wrote neither (R75).
+// wrote neither.
 func PersonOf(s *sample.Sample, sh *sample.PlanSheet, b *Bank, h *evalv1.History, ids map[string]int32, id, code string) (*evalv1.Sample, error) {
 	writer := evalv1.Writer_WRITER_ADULT
 	switch s.Writer {
@@ -560,7 +559,7 @@ var answerWord = regexp.MustCompile(`(?i)(?:^|[^\p{L}])(ответ)(?:[^\p{L}]|$
 // wholeValue is the value of the answer of a whole solution the author wrote, its markup's text: the
 // key's on a sheet marked correct, and on one marked wrong the first number after the last word
 // «ответ» of the text. A sheet marked correct whose text names another number there, and one marked
-// wrong whose text names none or the key's, has no truth the author's markup gives (R75).
+// wrong whose text names none or the key's, has no truth the author's markup gives.
 func wholeValue(s *sample.Sample, t *sample.Task, text string) (string, error) {
 	key := sample.KeyOf(t.Key)
 	named := ""

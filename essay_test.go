@@ -35,7 +35,7 @@ func admitEssay(t *testing.T) {
 	admission.Admitted = append([]admission.Entry{e}, saved...)
 }
 
-// The reading of a sheet admits nothing of an essay: without the entry of the author's word (R126),
+// The reading of a sheet admits nothing of an essay: without the entry of the author's word,
 // the essay is "not admitted".
 func TestReadEssayNotAdmitted(t *testing.T) {
 	withoutWord(t)

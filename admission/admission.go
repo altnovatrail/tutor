@@ -1,11 +1,11 @@
-// Package admission is tutor's admission function (R57): one pure function that says whether the
+// Package admission is tutor's admission function: one pure function that says whether the
 // work of a learner of an age category may go to an AI provider on an AI route, for a capability of
 // AI, by spec's admission table and the deployment facts an operator declares. api calls it before
 // an attempt, and tutor before each call of a model that carries a learner's work. It does no input
 // or output, reads no clock and keeps nothing, so that the same table, facts and request give the
 // same answer anywhere.
 //
-// The table is spec's (R96 spec): Platform reads it from the Go module of spec at the tag go.mod
+// The table is spec's: Platform reads it from the Go module of spec at the tag go.mod
 // requires, as spec.Admission, and ReadTable reads any other of the same version, such as one of
 // the test vectors. Its rules are those of spec's admission text, and the function passes every
 // test vector of spec, of answers and of the rules of a table (TestAnswerVectors, TestRuleVectors).
@@ -32,14 +32,13 @@ import (
 )
 
 // Request is what the function is asked: a capability of AI, an AI route, a provider and an age
-// category, by their codes in the table. It names no identifier, no country and no age in years
-// (R06 spec).
+// category, by their codes in the table. It names no identifier, no country and no age in years.
 type Request = admissionv0.Request
 
 // Answer is the function's answer: admitted, with the cell that admits the request; or refused,
 // with the reason, the rule or the cell that refuses it when the table has one, and for
 // fact_missing the fact — and the version of the table that gave it. It holds no content and no
-// identifier, so it may be written to logs (R09 spec); as JSON it is the answer of a test vector
+// identifier, so it may be written to logs; as JSON it is the answer of a test vector
 // with the member version beside it.
 type Answer struct {
 	admissionv0.Answer

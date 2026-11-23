@@ -15,34 +15,34 @@ import (
 )
 
 // The assessment of an essay by the rubric: one call an essay, which shows the model the crop of
-// the page and gives it the topic and the criteria of the rubric as a marked block of data (R02
-// spec). The model writes down the essay as it is written, judges whether it meets each criterion
-// and on what in it, and writes the learner feedback. A rubric gives no verdict: the run compares
-// the model's judgement of each criterion with the planned truth, and the program checks that the
-// feedback does not write the essay for the learner (R05 spec).
+// the page and gives it the topic and the criteria of the rubric as a marked block of data. The
+// model writes down the essay as it is written, judges whether it meets each criterion and on what
+// in it, and writes the learner feedback. A rubric gives no verdict: the run compares the model's
+// judgement of each criterion with the planned truth, and the program checks that the feedback
+// does not write the essay for the learner.
 
 // Version is the version of the prompt of the assessment by the rubric. It is frozen before the
 // test.
 const Version = 1
 
 // Style is the presentation style every request of the measurement gives: the module of short essays
-// is for learners of any age (R41 spec), and the module's passport v0 names none (О-23).
+// is for learners of any age, and the module's passport v0 names none (О-23).
 const Style = "a learner of any age who is learning to write short essays; use plain, everyday words"
 
 // The rule of the feedback: at most MaxSentences sentences and MaxWords words, and a quoted span of
-// QuoteWords words or more only as the essay writes it (R05 spec). The prompt names them too.
+// QuoteWords words or more only as the essay writes it. The prompt names them too.
 const (
 	MaxSentences = words.FeedbackSentences
 	MaxWords     = 60
 	QuoteWords   = words.QuoteWords
 )
 
-// PlatformWords is the most words R70 spec lets the feedback have in English (words.FeedbackWords),
-// above MaxWords. The prompt and Feedback keep MaxWords, the limit of the measurement, which its
-// frozen prompt names (R45; R50).
+// PlatformWords is the most words the platform lets the feedback have in English
+// (words.FeedbackWords), above MaxWords. The prompt and Feedback keep MaxWords, the limit of the
+// measurement, which its frozen prompt names.
 var PlatformWords = words.FeedbackWords(string(sample.LangEnglish))
 
-// PlatformBroken is whether a feedback breaks the rule R70 spec sets, given what Feedback found it
+// PlatformBroken is whether a feedback breaks the platform's rule, given what Feedback found it
 // breaks and its words: the same rule, with PlatformWords in place of MaxWords.
 func PlatformBroken(breaches []string, n int) bool {
 	for _, b := range breaches {

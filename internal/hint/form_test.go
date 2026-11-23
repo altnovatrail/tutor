@@ -87,7 +87,7 @@ func TestFallback(t *testing.T) {
 
 // The leak check of a task of a bank searches for its key, by its value, unless the statement shows
 // it, and for its leak phrases: of the three banks only equation-4 and posts have their keys in their
-// statements, and there the leak phrases alone keep the answer (R39).
+// statements, and there the leak phrases alone keep the answer.
 func TestLeakTask(t *testing.T) {
 	var freed []string
 	for _, path := range []string{freeBank, linesBank, nearBank} {
@@ -124,9 +124,9 @@ func TestLeakTask(t *testing.T) {
 	}
 }
 
-// R70 spec lets a hint have 30 words in Russian and 35 in English, and a language the measurement did
-// not measure has no limit; its other rules are those of Form. A hint of 33 words breaks the form of
-// the measurement in either language, but that of R70 spec only in Russian.
+// The platform lets a hint have 30 words in Russian and 35 in English, and a language the
+// measurement did not measure has no limit; its other rules are those of Form. A hint of 33 words
+// breaks the form of the measurement in either language, but that of the platform only in Russian.
 func TestPlatformForm(t *testing.T) {
 	if hint.PlatformWords(sample.LangRussian) != 30 || hint.PlatformWords(sample.LangEnglish) != 35 || hint.PlatformWords("de") != 0 {
 		t.Errorf("the limits are %d, %d and %d", hint.PlatformWords(sample.LangRussian), hint.PlatformWords(sample.LangEnglish), hint.PlatformWords("de"))

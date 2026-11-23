@@ -87,7 +87,7 @@ func StrokeNumber(id string) (int32, error) {
 // in the event's order. So a stroke the eraser took off and an undo put back is in no erasure, and
 // an undo that took off a stroke just written is an erasure of it: the strokes shown and those not
 // shown are the fold's, and the moment each went is the one the sheet last lost it. A point has no
-// pressure: the protocol holds none (R93 spec).
+// pressure: the protocol holds none.
 //
 // It gives the fold too, whose IDs say which strokes the sheet shows at the end.
 //
@@ -110,7 +110,7 @@ func Ink(h *evalv1.History) ([]sample.Stroke, []sample.Erasure, Folded) {
 
 // ErasureEvents are the events of a history that Ink's erasures come from, one to each in its
 // order: an erase, a clear or an undo. The record mode tells by them a move of the eraser from a
-// slip, which Undo and Clear make (R25).
+// slip, which Undo and Clear make.
 func ErasureEvents(h *evalv1.History) []*evalv1.HistoryEvent {
 	_, events := erasuresOf(h, Fold(h))
 	return events

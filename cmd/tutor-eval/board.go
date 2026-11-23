@@ -20,7 +20,7 @@ import (
 	"github.com/altnovatrail/tutor/provider/gpt"
 )
 
-// The variables that hold the keys for eval (R24 spec; Т-28). They are not ANTHROPIC_API_KEY and
+// The variables that hold the keys for eval (Т-28). They are not ANTHROPIC_API_KEY and
 // OPENAI_API_KEY on purpose: with ANTHROPIC_API_KEY set, Claude Code in the same container would
 // bill its own work to the eval key.
 const (
@@ -28,7 +28,7 @@ const (
 	openAIKeyVar    = "TUTOR_OPENAI_API_KEY"
 )
 
-// The page starts with Claude Opus 5.5 at high effort ticked (R19).
+// The page starts with Claude Opus 5.5 at high effort ticked.
 const (
 	startModel  = "claude-opus-5-5"
 	startEffort = "high"
@@ -58,8 +58,8 @@ func choices(getenv func(string) string, stderr io.Writer) []board.Choice {
 }
 
 // The folders at the root of tutor that its .gitignore ignores. samples holds the author's
-// handwriting: agents may read it, and nothing of it goes into git (R05; R32). synthetic holds what
-// code draws and the runs on it, with no handwriting, and agents work with it (R28).
+// handwriting: agents may read it, and nothing of it goes into git. synthetic holds what code draws
+// and the runs on it, with no handwriting, and agents work with it.
 const (
 	samplesFolder   = "samples"
 	syntheticFolder = "synthetic"
@@ -114,8 +114,8 @@ func within(base, path string) bool {
 }
 
 // The directories each mode of the board writes to by default, in the samples folder at the root
-// of tutor, which git ignores (R05). The sheets are samples of the protocol, beside the files of
-// tutor-sample v0 in samples/sheets (R75).
+// of tutor, which git ignores. The sheets are samples of the protocol, beside the files of
+// tutor-sample v0 in samples/sheets.
 const (
 	boardDir  = samplesFolder + "/board"
 	sheetsDir = samplesFolder + "/sheets-v1"

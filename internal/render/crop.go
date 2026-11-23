@@ -12,13 +12,13 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// The crop of a sheet for checking is cut by the rule of the eval protocol, R25 canvas as it is
-// (R35). Its numbers are canvas's to the bit: the bundles of the strokes, the median height h_med,
-// the height D′ the digits are drawn at, the size, the margins, where the crop lies on the sheet
-// and the frames of the groups. They are whole numbers, in tenths of a unit for places, and each
-// one that is not whole is one division of two of them, which IEEE 754 rounds alike in Go and in
-// JavaScript. Its pixels are this renderer's, in whole numbers as the board's are; canvas's raster
-// may draw them a level of grey apart, as canvas's vectors allow.
+// The crop of a sheet for checking is cut by the rule of the eval protocol, canvas's as it is. Its
+// numbers are canvas's to the bit: the bundles of the strokes, the median height h_med, the height
+// D′ the digits are drawn at, the size, the margins, where the crop lies on the sheet and the
+// frames of the groups. They are whole numbers, in tenths of a unit for places, and each one that
+// is not whole is one division of two of them, which IEEE 754 rounds alike in Go and in JavaScript.
+// Its pixels are this renderer's, in whole numbers as the board's are; canvas's raster may draw
+// them a level of grey apart, as canvas's vectors allow (R35).
 const (
 	// CropMargin is the margin around the work, px.
 	CropMargin = 12
@@ -35,14 +35,13 @@ const (
 	cropEdge   = 1568
 	cropTokens = 1568
 	// Digit is the height of a digit a crop is drawn at unless the module's manifest names another,
-	// px (R51 spec).
+	// px.
 	Digit = 32
 	// MaxDigit is the tallest digit a crop takes, px: its ink then still stays within the margin.
 	MaxDigit = 256
 )
 
-// Heights are the heights of digits the measurement draws crops at, px; Digit is the main one
-// (R08; R28).
+// Heights are the heights of digits the measurement draws crops at, px; Digit is the main one.
 func Heights() []int { return []int{16, 24, Digit, 48} }
 
 // Frame is a group's frame on a crop: its label, and its ink in whole thousandths of the crop's

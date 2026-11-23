@@ -7,7 +7,7 @@ import (
 )
 
 // A box in pixels stands on the picture in whole thousandths of its size, clamped to it, the low
-// corner rounded down and the high one up (R53 spec). A box with no area on the picture has no
+// corner rounded down and the high one up. A box with no area on the picture has no
 // place, even where its edges would round to two thousandths apart, and neither has a box on a
 // picture of no size.
 func TestPlace(t *testing.T) {

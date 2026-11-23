@@ -440,11 +440,10 @@ func TestBuildRefuses(t *testing.T) {
 
 // The version of spec's Go module that the build takes is the tag of spec that CLAUDE.md names,
 // and, where the spec submodule is checked out, the submodule's tag: the module and the submodule
-// move together (R64). A release of spec tags the same commit contracts/<tag> too, so the
-// submodule's tag is the one that starts with v (R83 spec). That release tags the module of spec's
-// contracts with the same number, and the build takes it at the same version as spec's module
-// (R67). CI checks the repository out without the submodule, and there CLAUDE.md alone holds the
-// modules to the tag.
+// move together. A release of spec tags the same commit contracts/<tag> too, so the submodule's tag
+// is the one that starts with v. That release tags the module of spec's contracts with the same
+// number, and the build takes it at the same version as spec's module. CI checks the repository out
+// without the submodule, and there CLAUDE.md alone holds the modules to the tag.
 func TestSpecVersion(t *testing.T) {
 	info, ok := debug.ReadBuildInfo()
 	if !ok {

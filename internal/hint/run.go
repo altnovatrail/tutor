@@ -32,7 +32,7 @@ type Tutor struct {
 // Tutors are the configurations of the runner, each with the output it is expected to take: the
 // box, the trap and a hint of two short sentences come to about 200 tokens. Finding the first
 // mistake, the judge of free writing thought about 100 more on Opus and about 240 on Haiku with
-// thinking. The four configurations the extended measurement adds (R50) are estimated so: Opus at
+// thinking. The four configurations the extended measurement adds are estimated so: Opus at
 // medium as at high, Sonnet with thinking between Haiku and Opus, without thinking as Haiku without
 // it, and Haiku at medium above Haiku at low. A configuration without its output here is a mistake
 // of the code, and Tutors panics on it rather than estimate its calls at nothing.
@@ -90,7 +90,7 @@ type prepared struct {
 
 // LeakTask is a task of a bank as the leak check reads it: its statement, one paragraph, one item
 // whose answer slot checks a number, the key's value (reading.KeyOf), and its leak phrases. The
-// bank has no item text, line or options, so only the statement can show the key (R39).
+// bank has no item text, line or options, so only the statement can show the key.
 func LeakTask(t *sample.Task) leak.Task {
 	return leak.Task{
 		Statement: []string{t.Statement},
@@ -189,7 +189,7 @@ func (s *step) Right() (string, error) {
 
 // Record is the call's record: the answer as the model gave it, its box, the box's place on the
 // crop in thousandths and the part of the markup it hits, its trap and its hint; and the hint
-// checked as api checks it before the tutor's words reach the device (R39):
+// checked as api checks it before the tutor's words reach the device:
 // what the leak check finds in it, what it breaks of its form, and what the learner reads — the
 // hint, or the fallback text of the rung and why. An answer off the schema is a failure of the
 // call, logged with the reader's error, and so is the learner's fallback. A call not asked has
@@ -223,7 +223,7 @@ func (s *step) Record(o runner.Outcome) any {
 		rec.Repeated = Repeated(a.Hint, k.Asked)
 		rec.NoteEcho = Echo(a.Hint, k.Note, s.known(k.Note)...)
 	}
-	// The hint is held to the form api holds hints to, the limits of R70 spec (words.Hint).
+	// The hint is held to the form api holds hints to, the platform's limits (words.Hint).
 	for _, b := range words.Hint(a.Hint, string(s.Lang), s.sheet.Task.Statement) {
 		rec.Form = append(rec.Form, string(b))
 	}

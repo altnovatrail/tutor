@@ -160,7 +160,7 @@ func TestWordsRefuses(t *testing.T) {
 	}
 }
 
-// The hint without the work is a kind of call of its own (R106): ChooseCall takes the entry of the
+// The hint without the work is a kind of call of its own: ChooseCall takes the entry of the
 // hint that measured the words' prompt, not an entry of the hint on another prompt that stands
 // before it, as Choose by capability does, and the words without the work ask that entry's model.
 func TestChooseCallHint(t *testing.T) {
@@ -190,8 +190,8 @@ func TestChooseCallHint(t *testing.T) {
 	}
 }
 
-// The words with the work are admitted only with the hint on the analysis's model (R84), and every
-// place that decides on them holds it by one choice (R111): with the hint of another model, of
+// The words with the work are admitted only with the hint on the analysis's model, and every
+// place that decides on them holds it by one choice: with the hint of another model, of
 // another effort or on another prompt, neither ChooseCall nor Price nor the call admits the words,
 // and the check of a key asks only the models the calls would ask — the hint's own, not the
 // analysis's. With the hint on the same model, all of them admit it.

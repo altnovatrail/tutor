@@ -1,6 +1,6 @@
 // Package catalog is the Claude models the adapter of package provider/claude calls, and their
 // prices and efforts, without Anthropic's SDK: the library and the eval runner name and price a
-// model by it, so that whatever takes them takes the SDK only with the adapter itself (R90).
+// model by it, so that whatever takes them takes the SDK only with the adapter itself.
 package catalog
 
 import (
@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-// Model is a Claude model the adapter can call: its exact ID (R07 spec), how the board shows it,
+// Model is a Claude model the adapter can call: its exact ID, how the board shows it,
 // its price per million input and output tokens, in US dollars, those of a read from the cache and
 // of a write to it for five minutes and for an hour, the prices of a prompt over LongAbove tokens
 // where it has them, and the kind of thinking that turns its thinking off, or nothing if its

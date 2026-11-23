@@ -1,8 +1,8 @@
-// Package measure is the judge's kind of call on the runner: the measurement of the writing process
-// (R24). Its run asks every sheet of a part in every form it has, by every judge, repeated, in one
-// version of the judge's prompt: version 1 on the sheets of lines, version 2 on free writing. The
-// package plans the run, says how each call is asked and logged, and reads the run's log back; the
-// runner estimates the run, holds its cap, asks the calls and writes the log.
+// Package measure is the judge's kind of call on the runner: the measurement of the writing
+// process. Its run asks every sheet of a part in every form it has, by every judge, repeated, in
+// one version of the judge's prompt: version 1 on the sheets of lines, version 2 on free writing.
+// The package plans the run, says how each call is asked and logged, and reads the run's log back;
+// the runner estimates the run, holds its cap, asks the calls and writes the log.
 package measure
 
 import (
@@ -31,8 +31,8 @@ var inputs = map[judge.Version]struct{ a, journal, frame int }{
 	judge.V2: {a: 2050, journal: 360, frame: 820},
 }
 
-// Judge is a configuration of the judge (R24): a configuration of the runner, and the output tokens
-// a call is expected to take, for the estimate.
+// Judge is a configuration of the judge: a configuration of the runner, and the output tokens a
+// call is expected to take, for the estimate.
 type Judge struct {
 	runner.Config
 	Output int

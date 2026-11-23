@@ -23,7 +23,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/workbook"
 )
 
-// The runner's report of the eval protocol (R95 spec; R74): the message Report of
+// The runner's report of the eval protocol: the message Report of
 // novatrail.eval.v1, made of a run's log. A log tells a report for each reader alone, with all its
 // repeats, and for each pair of the readers — the one that reads once, Opus, with each that reads
 // in repeats —, joined by module-kit (observation.Join), repeat by repeat. Of the calls, it takes
@@ -123,7 +123,7 @@ func failure(notAsked bool, err string, invalid bool) evalv1.UncheckedCause {
 
 // checked is the reading of module-kit's verdict on a valid observation: unchecked there is the
 // check's — its predicate gave an error or no bool, or ran to its bound —, the task's and not the
-// model's (UNCHECKED_CAUSE_CHECK; R87). No observation, a join that fails and a check that
+// model's (UNCHECKED_CAUSE_CHECK). No observation, a join that fails and a check that
 // module-kit refuses give no such verdict, and their callers count them failures. tutor's own
 // checks, a number or a fraction against a key, run no predicate, so it is the tasks of modules
 // that give it.
@@ -144,7 +144,7 @@ func notReached(end *runner.End) evalv1.UncheckedCause {
 }
 
 // pairsOf names the pairs of a run's readers: the one that reads once with each that reads in
-// repeats (R08), as the reading's report pairs them too.
+// repeats, as the reading's report pairs them too.
 func pairsOf(readers []runner.ReaderRecord) [][2]runner.ReaderRecord {
 	var out [][2]runner.ReaderRecord
 	for _, strong := range readers {
@@ -169,8 +169,8 @@ func repeatsOf(rd runner.ReaderRecord, repeats int, plain bool) int {
 	return repeats
 }
 
-// setName is the name of a run's set of a capability, by the names of what it read and its part
-// (R74): lines+free+near-dev, workbook-test, essays-all.
+// setName is the name of a run's set of a capability, by the names of what it read and its part:
+// lines+free+near-dev, workbook-test, essays-all.
 func setName(names []string, part string) string { return strings.Join(names, "+") + "-" + part }
 
 func fileName(file string) string { return strings.TrimSuffix(filepath.Base(file), ".json") }

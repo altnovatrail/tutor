@@ -12,7 +12,7 @@ import (
 
 // Joined is the runner's report of one eval set of a capability that tutor reads in runs of their
 // own, each over a part of it: the sheets in a run of the reading and the pages in a run of the
-// workbook, as of canvas's synthetic samples (R76). Each part's report of one reader, or one pair,
+// workbook, as of canvas's synthetic samples. Each part's report of one reader, or one pair,
 // gives its samples, and the report joined names the set and holds them all, ascending by ID, as a
 // report of one run would. The reports must be of one runner, capability, verdicts, readers and
 // repeats, and share no sample.

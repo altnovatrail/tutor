@@ -1,10 +1,10 @@
-// Package leak is the leak check of the module format (R57 spec): the program's search for the
-// answer in a text the learner will see, the tutor's words before they reach the learner. It
-// searches for the key of every check of a number, a fraction, a choice or a time that the texts of
-// its own item do not show, a number by its value and a time by its hours and minutes, and for
-// every leak phrase of the task. It is a safeguard, not a proof: an answer put in other words, or a
-// number in words, passes it unless a leak phrase holds it. The runner checks every hint with it,
-// as api does before the tutor's words reach the device (R03 spec).
+// Package leak is the leak check of the module format: the program's search for the answer in a
+// text the learner will see, the tutor's words before they reach the learner. It searches for the
+// key of every check of a number, a fraction, a choice or a time that the texts of its own item do
+// not show, a number by its value and a time by its hours and minutes, and for every leak phrase of
+// the task. It is a safeguard, not a proof: an answer put in other words, or a number in words,
+// passes it unless a leak phrase holds it. The runner checks every hint with it, as api does before
+// the tutor's words reach the device.
 //
 // spec's own second implementation is tools/format-check/leaks.mjs, which spec's CI computes the
 // test vectors with; this one passes the same vectors (TestVectors). The scans are loops over the
@@ -302,10 +302,9 @@ func timesIn(chars []rune) []string {
 	return out
 }
 
-// timeOf is a time in the notation of a time (R111 spec) — hours of one or two digits, ":" and
-// minutes of two digits or of three that begin with no zero, so that 5:60 and 10:100 are times a
-// trap can show — by its hours and minutes as numbers, "h:m", so that 07:30 is 7:30; and false out
-// of the notation.
+// timeOf is a time in the notation of a time — hours of one or two digits, ":" and minutes of two
+// digits or of three that begin with no zero, so that 5:60 and 10:100 are times a trap can show —
+// by its hours and minutes as numbers, "h:m", so that 07:30 is 7:30; and false out of the notation.
 func timeOf(text string) (string, bool) {
 	hours, minutes, ok := strings.Cut(text, ":")
 	if !ok || len(hours) < 1 || len(hours) > 2 || !allDigits(hours) || !allDigits(minutes) {

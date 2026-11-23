@@ -18,8 +18,8 @@ import (
 	"github.com/altnovatrail/tutor/internal/task"
 )
 
-// Essays is the file of the essays as a sample names it, the source file of its task reference
-// (R69), and the rubric and essays it holds.
+// Essays is the file of the essays as a sample names it, the source file of its task reference,
+// and the rubric and essays it holds.
 type Essays struct {
 	Source
 	Essays *sample.Essays
@@ -120,7 +120,7 @@ type Essay struct {
 	Strokes []sample.Stroke
 	Seed    string
 	// ID is the sample's, People the marks of its markup, and Unreadable the reason its truth gives
-	// no text, or "": what the runner's report takes of the essay (R74).
+	// no text, or "": what the runner's report takes of the essay.
 	ID         string
 	People     []Mark
 	Unreadable string

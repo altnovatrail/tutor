@@ -10,23 +10,22 @@ import (
 	"github.com/altnovatrail/tutor/admission"
 )
 
-// The rule of admission (R80; R07 spec): which stage a runner's report admits its readers to. Only
-// a report of reading handwriting is ruled on: a sheet's by Admit, a workbook's by AdmitWorkbook
-// (R124).
+// The rule of admission: which stage a runner's report admits its readers to. Only a report of
+// reading handwriting is ruled on: a sheet's by Admit, a workbook's by AdmitWorkbook (R80).
 const (
 	// FullTarget is the target of the stage full: the upper bound of the share of false alarms, and
-	// of false "correct", no more than 1 % (product 10 spec).
+	// of false "correct", no more than 1 %.
 	FullTarget = 0.01
 	// AuthorSlots is how many answer slots of the stage author at least have a truth that is not
 	// "not yet", so that a false alarm could happen on them: 30, whose bound with no event is near
-	// 10 %, which the decision says beside it (R80).
+	// 10 %.
 	AuthorSlots = 30
 	// AuthorWrongSlots is how many at least have a truth that is not "correct", so that a false
-	// "correct" could happen on them: without them the stage would pass that share on nothing (R80).
+	// "correct" could happen on them: without them the stage would pass that share on nothing.
 	AuthorWrongSlots = 20
 	// WorkbookSet is the set the rule of the workbook admits on: the test part of
 	// eval/workbook-gen.json, pages 21–300, as the runner's report names it, without the dev part,
-	// whose pages tuned the prompt (R124).
+	// whose pages tuned the prompt.
 	WorkbookSet = "workbook-gen-test"
 	// workbookSets is how the runner's reports name every set of the workbook, by its files,
 	// eval/workbook*.json: Admit rules on none of them.
@@ -59,12 +58,12 @@ type Decision struct {
 }
 
 // Admit applies the rule of admission to a report. It admits nothing on a report whose verdicts
-// module-kit did not give (R07 spec), on one of another capability than reading handwriting, on one
+// module-kit did not give, on one of another capability than reading handwriting, on one
 // that refused a sample — a run that refuses a sample does not pass — on one that is not of a pair,
-// and on one of a set of the workbook, which AdmitWorkbook rules on (R124). Then the stage full is
+// and on one of a set of the workbook, which AdmitWorkbook rules on. Then the stage full is
 // both bounds within FullTarget, and the stage author no false alarm and no false "correct" on
 // AuthorSlots and AuthorWrongSlots slots at least. The measures of the first error and the marks of
-// an essay, which a synthetic sample's code chose (R95 spec), a run of reading does not hold, and
+// an essay, which a synthetic sample's code chose, a run of reading does not hold, and
 // the rule counts none.
 func Admit(r *evalv1.Report) Decision {
 	d, ok := admissible(r)
@@ -84,9 +83,9 @@ func Admit(r *evalv1.Report) Decision {
 	return d
 }
 
-// WorkbookDecision is what the rule of the workbook makes of a report of the reading of its pages
-// (R124; R80): the decision on the boxes an adult writes, and the boxes with a digit written
-// mirrored and those crossed out and written again, each a row of its own, with no target.
+// WorkbookDecision is what the rule of the workbook makes of a report of the reading of its pages:
+// the decision on the boxes an adult writes, and the boxes with a digit written mirrored and those
+// crossed out and written again, each a row of its own, with no target.
 type WorkbookDecision struct {
 	Decision
 	Mirrored, CrossedOut Apart
@@ -103,9 +102,9 @@ type Apart struct {
 // mirrored or crossed out is no such box: an adult writes no digit mirrored, and code draws a
 // crossed-out digit with one short stroke, so that, as measured, part of its errors comes from the
 // drawing. It counts in its own row and takes no stage away. The rule gives the stage author alone:
-// its set is synthetic, and the stage full waits for the samples of adult volunteers (R50; П-16).
+// its set is synthetic, and the stage full waits for the samples of adult volunteers (П-16).
 // It admits nothing on a set other than WorkbookSet, nor on a run its cap stopped short: an event is
-// one of all the repeats of a box (R124), and a box the run did not reach has fewer.
+// one of all the repeats of a box, and a box the run did not reach has fewer.
 func AdmitWorkbook(r *evalv1.Report) WorkbookDecision {
 	d, ok := admissible(r)
 	w := WorkbookDecision{Decision: d}
@@ -149,7 +148,7 @@ func admissible(r *evalv1.Report) (Decision, bool) {
 		d.Why = "it is not a run of reading handwriting"
 	case len(d.Readers) != 2:
 		// A sheet's answer slots are read by a pair, and so are a page's boxes, and a reading of one
-		// reader is no reading of the platform's (R68 spec).
+		// reader is no reading of the platform's.
 		d.Why = fmt.Sprintf("it names %d readers, not the pair of a reading", len(d.Readers))
 	default:
 		return d, true

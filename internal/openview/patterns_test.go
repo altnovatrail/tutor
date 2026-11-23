@@ -52,7 +52,7 @@ func enum(t *testing.T, v any) []string {
 
 // What Check copies of spec's format is what the format of spec's module says: its version, the
 // patterns of a local ID, a language tag and a digest, and the kinds and bindings Check knows. A
-// move to a tag of spec that changes one of them fails here (R64).
+// move to a tag of spec that changes one of them fails here.
 func TestPatterns(t *testing.T) {
 	version, err := fs.ReadFile(spec.Format, "VERSION")
 	if err != nil {

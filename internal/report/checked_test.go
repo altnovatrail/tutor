@@ -12,7 +12,7 @@ import (
 )
 
 // module-kit's verdict on a valid observation: unchecked is the check's, a cause of the task and not
-// of the model (R87), and any other verdict is the reading's, with no cause. tutor's own checks run
+// of the model, and any other verdict is the reading's, with no cause. tutor's own checks run
 // no predicate, so no log of its runs gives the first: only this test does.
 func TestChecked(t *testing.T) {
 	if r := checked(verdict.SlotVerdict{Verdict: verdict.Unchecked}); r.GetVerdict().GetVerdict() != string(verdict.Unchecked) ||

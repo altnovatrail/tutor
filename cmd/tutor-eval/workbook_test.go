@@ -218,7 +218,7 @@ func verdictCell(v workbook.Slot) string {
 }
 
 // A run of the bare pages alone by the configurations named — the spaces in the list are no part of a
-// name — asks each once a page and repeat, as the platform reads them, with no line of the item (R50).
+// name — asks each once a page and repeat, as the platform reads them, with no line of the item.
 func TestRunWorkbookBare(t *testing.T) {
 	log := filepath.Join(t.TempDir(), "workbook.jsonl")
 	code, out, errs := runMeasure("yes\n", "-kind", "workbook", "-workbook", theWorkbook, "-dir", drawnOf(t, theWorkbook), "-part", "dev", "-stub", "-repeats", "1", "-reads", "bare", "-readers", "sonnet-low, opus-medium", "-log", log)
@@ -232,7 +232,7 @@ func TestRunWorkbookBare(t *testing.T) {
 
 // The run of admission of the workbook on the stub: the bare pages by the pair in every repeat, Opus
 // too, the pair's runner's report of every repeat, and admit -kind workbook rules on it by the rule
-// of the workbook, with the mirrored and the crossed-out boxes in rows of their own (R124). The dev
+// of the workbook, with the mirrored and the crossed-out boxes in rows of their own. The dev
 // part of eval/workbook.json is not the set of admission, and admit says so; the rule of a sheet
 // rules on no set of the workbook.
 func TestAdmitWorkbookRun(t *testing.T) {

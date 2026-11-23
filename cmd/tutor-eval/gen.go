@@ -15,7 +15,7 @@ import (
 )
 
 // generators are what gen makes, by its first operand, each with what it says it made: the sheets
-// of lines, six a task, and the near sheets, two a task (R50).
+// of lines, six a task, and the near sheets, two a task.
 var generators = map[string]struct {
 	make func(tasks int, seed uint64, prefix string) (*sample.Bank, *sample.Plan, error)
 	what string
@@ -107,7 +107,7 @@ type fileGenerator struct {
 }
 
 // fileGenerators are what gen makes as one file, by its first operand: the pages of the workbook and
-// the essays, each with what it counts (R50), and the cases of a task from paper (R135).
+// the essays, each with what it counts, and the cases of a task from paper.
 var fileGenerators = map[string]fileGenerator{
 	"workbook": {func(n int, seed uint64) (any, int, error) {
 		wb, err := gen.Workbook(n, seed)

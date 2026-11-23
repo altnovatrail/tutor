@@ -28,7 +28,7 @@ import (
 var tag = regexp.MustCompile(`^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$`)
 
 // holds holds a report to the rules of the eval protocol that tutor writes it by, and to its file:
-// it reads back, strictly, as it was written (R74).
+// it reads back, strictly, as it was written.
 func holds(t *testing.T, name string, r *evalv1.Report) {
 	t.Helper()
 	fail := func(format string, args ...any) { t.Errorf("%s: "+format, append([]any{name}, args...)...) }

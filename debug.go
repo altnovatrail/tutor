@@ -7,7 +7,7 @@ import (
 	"github.com/altnovatrail/tutor/admission"
 )
 
-// Debug is the debug mode, in a call's Route (R163 spec; R136): the models that serve the calls of
+// Debug is the debug mode, in a call's Route: the models that serve the calls of
 // a task from paper in place of those of the list, and a record of each call of a model. api puts
 // it in the route of an account with the right to the mode alone, on a local run or on the
 // deployment; the library takes it only when Config.Debug is on, and on any other call it changes
@@ -27,10 +27,10 @@ type Debug struct {
 
 // DebugCall is one call of a model in the debug mode: the kind of the library's call; the reader of
 // the work, 1 or 2, and 0 for any other call; the model's place among the attempts of its call, 1,
-// 2 or 3 (R137); the model as it was asked, its effort and thinking with it; what the model
+// 2 or 3; the model as it was asked, its effort and thinking with it; what the model
 // returned, as it returned it; its usage when it came back with tokens; and what failed. The answer
 // is the model's reading of the learner's work: it goes to the account that set the mode alone,
-// never to a log (R09 spec).
+// never to a log.
 type DebugCall struct {
 	Call    Call
 	Reader  int
@@ -67,7 +67,7 @@ func (d *Debug) models(c Call, asked []admission.Model) []admission.Model {
 }
 
 // chose tells whether the debug mode chose the models of a kind of call: the first model, or the
-// second reader of the work. Then the call asks them, and no cascade of the list (R137).
+// second reader of the work. Then the call asks them, and no cascade of the list.
 func (d *Debug) chose(c Call) bool {
 	return d != nil && (d.First != nil || c == CallPaper && d.Second != nil)
 }

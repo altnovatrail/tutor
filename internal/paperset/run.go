@@ -26,7 +26,7 @@ import (
 
 // The kinds of call of the four runs, as their logs tell them (runner.CallKind). The finding asks
 // only the cases of several tasks that code draws, each a column of examples under one instruction,
-// with the learner's request to frame each example apart (R138).
+// with the learner's request to frame each example apart.
 const (
 	CallStatement = "statement"
 	CallSolving   = "solving"

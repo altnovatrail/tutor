@@ -117,7 +117,7 @@ func TestAdmitEssayRefuses(t *testing.T) {
 		why    string
 	}{
 		{"illegible", func(l *essay.Log) { c := read(l, 3); c.Reading, c.Illegible, c.Error = nil, true, "illegible" }, "1 legible essays were read illegible"},
-		{"illegible before T156", func(l *essay.Log) { c := read(l, 3); c.Reading, c.Error = nil, essay.ErrIllegible.Error() }, "1 legible essays were read illegible"},
+		{"illegible", func(l *essay.Log) { c := read(l, 3); c.Reading, c.Error = nil, essay.ErrIllegible.Error() }, "1 legible essays were read illegible"},
 		{"failed", func(l *essay.Log) { c := read(l, 3); c.Reading, c.Error, c.Invalid = nil, "off the schema", true }, "1 readings failed, and their essays are not measured in every repeat"},
 		{"not asked", func(l *essay.Log) { c := read(l, 3); c.Reading, c.NotAsked = nil, true }, "1 readings failed"},
 		{"corrected", func(l *essay.Log) { read(l, 4).Reading.MisspelledKept = 0 }, "1 essays had an error of the learner's read corrected"},

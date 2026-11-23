@@ -69,7 +69,7 @@ func thresholdOf(t *testing.T, r *report.Reading, reader string) report.Threshol
 	return report.Threshold{}
 }
 
-// The threshold of R03 a reader each, on known numbers:
+// The threshold of one call, a reader each, on known numbers:
 //   - haiku-low gives false alarms with the right key on five correct sheets, in each of its three
 //     repeats, and none without: d, a share, is +1 on five sheets, p 1/32, and the key makes its
 //     reading worse;
@@ -206,7 +206,7 @@ func TestReadingPairs(t *testing.T) {
 		t.Errorf("%d pairs, want Opus with each Haiku", len(r.Pairs))
 	}
 
-	// module-kit joins the two readings that the records tell (observation.Join; R73): 0.5 and 1/2
+	// module-kit joins the two readings that the records tell (observation.Join): 0.5 and 1/2
 	// are one value of number, and released; two readings illegible give no value, and nothing is
 	// released; a call that gave no verdict joins nothing.
 	b = newReadingLog(sample.OutcomeCorrect, sample.OutcomeUnreadable, sample.OutcomeCorrect)

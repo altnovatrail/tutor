@@ -14,9 +14,9 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// PaperVersion is the version of the prompt of the reading of a task from paper (R135). A change to
-// a word a model reads is a new version, and the entry of the list that admitted the prompt admits
-// it no longer (R70 spec). TestFrozenPaperV2 holds it.
+// PaperVersion is the version of the prompt of the reading of a task from paper. A change to a word
+// a model reads is a new version, and the entry of the list that admitted the prompt admits it no
+// longer. TestFrozenPaperV2 holds it.
 const PaperVersion = 2
 
 // paperBase is the reading's base for a task from paper: the crop shows the printed task under the
@@ -39,7 +39,7 @@ const (
 )
 
 // PaperInstructions are the instructions of the reading of a task from paper: its base and the rules
-// of safety every prompt of the platform has (R54). It gives no key.
+// of safety every prompt of the platform has. It gives no key.
 func PaperInstructions() string { return paperBase + "\n" + safety }
 
 // PaperFingerprint names the prompt of the reading of a task from paper, as Fingerprint names the
@@ -51,8 +51,8 @@ func PaperFingerprint() string {
 
 // PaperRequestOf is the request of a reading of the crop of the work on a task from paper, given as
 // its PNG and its size, with the statements of its tasks, in order, as the reading of the statement
-// gave them: data, a model's reading of the page, never instructions (R02 spec). It is the request
-// the runner and the library ask alike (R70 spec). Its answer is read by PaperRead and
+// gave them: data, a model's reading of the page, never instructions. It is the request the runner
+// and the library ask alike. Its answer is read by PaperRead and
 // PaperObservationOf.
 func PaperRequestOf(png []byte, width, height int, tasks []string) provider.Request {
 	var list strings.Builder

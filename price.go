@@ -49,9 +49,9 @@ type tokens struct{ in, out int64 }
 // the assessment of an essay by its rubric, the call of the words, with the work and without it, and
 // the words after a correct answer, the finding of the tasks on the photo of a page from paper, and
 // of a task from paper the reading of its statement into a formula, its solution and the reading of
-// the work on it (R135).
+// the work on it.
 // Each serves a capability with a prompt of its own, and an entry of the list admits it only when it
-// measured that prompt (R70 spec).
+// measured that prompt.
 type Call string
 
 // The kinds of call of the library.
@@ -69,17 +69,17 @@ const (
 	CallSolving   Call = "solving"
 	CallPaper     Call = "paper"
 	// The tutor's words on a task from paper: with the work, the words of a rung, and without it,
-	// the opening question and a rung put another way (R139).
+	// the opening question and a rung put another way.
 	CallPaperWords Call = "paper_words"
 	CallPaperHint  Call = "paper_hint"
 )
 
 // kind is a kind of call of the library: the capability it serves and the fingerprint of its
 // prompt, the most input tokens it takes, the most it may write, how many models of the entry
-// chosen it asks, every one when 0, whether it reads by the pair of R68 spec, which ReadingSingle
+// chosen it asks, every one when 0, whether it reads by the pair, which ReadingSingle
 // makes one reader (Tutor.asked), whether its models are the attempts of a cascade, asked one after
-// another (R137), the most output of a request each model is asked ahead of the kind's own, of the
-// same most input, 0 for none — the orientation of the page before the finding (R134) —, and the
+// another, the most output of a request each model is asked ahead of the kind's own, of the
+// same most input, 0 for none — the orientation of the page before the finding —, and the
 // tokens a call of each model is expected to take, by the model's exact ID, the averages of the
 // measurements of the model at the effort admitted, both its requests together.
 type kind struct {
@@ -95,21 +95,21 @@ type kind struct {
 
 // kinds are the kinds of call of the library. The expected tokens of the sheet, the words and the
 // words after a correct answer are those of the runs that admitted them, on the prompts they have
-// now (R82; R86; R113). The workbook, the essay and the rubric were admitted by the author's word,
-// without a run (R126): theirs are the averages of the runs that tried their prompts now. The four
-// calls of a task from paper, admitted by the author's word too, had no run (R134; R135): theirs
+// now. The workbook, the essay and the rubric were admitted by the author's word,
+// without a run: theirs are the averages of the runs that tried their prompts now. The four
+// calls of a task from paper, admitted by the author's word too, had no run: theirs
 // are an estimate from the calls of the author's own pages, for each model of their cascade, so
-// that api reserves all three attempts (R137); the finding's add those of the orientation before
+// that api reserves all three attempts; the finding's add those of the orientation before
 // it, an estimate of their own without a call — the photo and short instructions in, a few words
-// and the model's thinking out (R134). A model without them has no expected price, and api takes
+// and the model's thinking out. A model without them has no expected price, and api takes
 // the value of its own config then. The words serve the analysis of the steps with the work,
 // CallWords, and the hint without it, CallHint, by one prompt; the hint was measured with the work,
-// so the hint without it has no expected tokens (R106). The words after a correct answer are one
+// so the hint without it has no expected tokens. The words after a correct answer are one
 // kind with the work and without it, and their worst is with it. The input of each is the whole
 // input, measured before the words cached their instructions: a log with the cache splits it into
 // input_tokens, cache_write_tokens and cache_read_tokens, which a new measurement sums. Their price
 // takes it all at the input's price, between a call that reads the instructions from the cache and
-// one that writes them (R131).
+// one that writes them.
 var kinds = map[Call]kind{
 	CallSheet: {
 		capability: admissionv0.CapabilityHandwritingReading,
@@ -239,7 +239,7 @@ func (k kind) asked(models []admission.Model) []admission.Model {
 }
 
 // rubricMaxOutput is the most the assessment by a rubric may write, thinking included: the bound of
-// the runner's calls, as for every call of the library (R94).
+// the runner's calls, as for every call of the library.
 const rubricMaxOutput = 16000
 
 // tokensOf are the tokens of the pictures of n crops of side pixels on each side (render.Tokens).

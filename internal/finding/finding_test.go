@@ -7,7 +7,7 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// Version 4 is frozen: the entry of the list admits this fingerprint (R134, R138).
+// Version 4 is frozen: the entry of the list admits this fingerprint (R138).
 func TestFrozenV4(t *testing.T) {
 	const frozen = "23e1063e95678c0f8f28a8e994ac9979590d1954e4d928437ad54c7b490ee7a0"
 	if got := Fingerprint(); got != frozen || Version != 4 {

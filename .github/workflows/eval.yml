@@ -1,10 +1,9 @@
-# The eval of tutor in CI, with the platform's keys for eval from Secret Manager of infra (R120
-# spec; R90). Only a job of the GitHub environment eval gets them: the pool github-eval admits the
+# The eval of tutor in CI, with the platform's keys for eval from Secret Manager of infra. Only a job of the GitHub environment eval gets them: the pool github-eval admits the
 # token of that environment of this repository alone, and no token of Dependabot. The job checks the
 # way in and spends nothing: it reads the key of Anthropic and has the key count the tokens of one
 # word, which Anthropic's page Token counting says is free. It runs no eval set and has no trigger
 # on pull requests. The environment eval admits main and refs/pull/*/merge alone, and has no
-# reviewers (R120 spec).
+# reviewers.
 name: Eval
 
 on:
@@ -25,7 +24,7 @@ jobs:
     steps:
       # A pull request from a fork has no OIDC token, but one Dependabot opened has: the job fails
       # on either, by the author of the pull request rather than by github.actor, who only started
-      # the run, and says why (R120 spec). Dependabot's change goes to a branch of the repository
+      # the run, and says why. Dependabot's change goes to a branch of the repository
       # and is opened from there. On workflow_dispatch alone it lets every run through; it stands
       # first so that a trigger on pull requests finds it in place.
       - name: Who asks
@@ -44,7 +43,7 @@ jobs:
             fi
           fi
 
-      # Direct Workload Identity Federation, with no service account between (R120 spec).
+      # Direct Workload Identity Federation, with no service account between.
       - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093 # v3.0.0
         with:
           workload_identity_provider: projects/306463944576/locations/global/workloadIdentityPools/github-eval/providers/github

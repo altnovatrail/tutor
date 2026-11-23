@@ -443,21 +443,21 @@ func TestAround(t *testing.T) {
 	}
 }
 
-// The prompt is frozen after its dev rounds, before the test part runs (R24): any change to
-// a word a judge reads changes the fingerprint, and this test fails.
+// The prompt is frozen after its dev rounds, before the test part runs: any change to a word a
+// judge reads changes the fingerprint, and this test fails.
 func TestFrozen(t *testing.T) {
 	const frozen = "6a98139b3dbd6748f2552db5ec4ee91c72136724b0ffb7aebd461f6108e76b41"
 	if got := judge.Fingerprint(judge.V1); got != frozen {
-		t.Errorf("the prompt's fingerprint is %s, not the one frozen after T27, %s", got, frozen)
+		t.Errorf("the prompt's fingerprint is %s, not the one frozen, %s", got, frozen)
 	}
 }
 
-// Version 2 of the prompt is frozen after its dev rounds, before its test part runs (R24): any
-// change to a word a judge of free writing reads, the words of the journal of parts among them,
-// changes the fingerprint, and this test fails.
+// Version 2 of the prompt is frozen after its dev rounds, before its test part runs: any change to
+// a word a judge of free writing reads, the words of the journal of parts among them, changes the
+// fingerprint, and this test fails.
 func TestFrozenV2(t *testing.T) {
 	const frozen = "505a799f4bfb663e289a168cfc764dcdc4f6b85658aef73f3c194a0fe6d8b293"
 	if got := judge.Fingerprint(judge.V2); got != frozen {
-		t.Errorf("the fingerprint of version 2 is %s, not the one frozen after the dev rounds of T66, %s", got, frozen)
+		t.Errorf("the fingerprint of version 2 is %s, not the one frozen, %s", got, frozen)
 	}
 }

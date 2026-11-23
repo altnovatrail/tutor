@@ -12,8 +12,8 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// rubric is the rubric of the essays, its criteria and their texts as eval/essays.json gives them
-// (R44), so that a run on the essays built here measures the same criteria.
+// rubric is the rubric of the essays, its criteria and their texts as eval/essays.json gives them,
+// so that a run on the essays built here measures the same criteria.
 var rubric = []sample.Criterion{
 	{ID: sample.CriterionTitle, Text: "It has a title on its own first line."},
 	{ID: sample.CriterionSentences, Text: "It has at least five sentences."},
@@ -25,7 +25,7 @@ var rubric = []sample.Criterion{
 
 // The shares of the essays by how many criteria each leaves unmet: a fifth meet them all, a fifth
 // leave three unmet, and the rest one or two, half and half. Each criterion is then unmet in a
-// quarter of the essays, as in eval/essays.json (R44).
+// quarter of the essays, as in eval/essays.json.
 const (
 	shareAllMet = 0.2
 	shareThree  = 0.2

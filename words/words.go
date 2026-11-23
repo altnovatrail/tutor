@@ -1,5 +1,5 @@
 // Package words holds the checks of the tutor's words that api makes before they reach the learner,
-// beside the leak check (R70 spec): the form of a hint, the form of the words after a correct
+// beside the leak check: the form of a hint, the form of the words after a correct
 // answer and the rule of feedback by a rubric. The eval of tutor measures the models by the same
 // code, so that what it admits is what the platform lets through. The checks only count: they read
 // no meaning, and what a word, a sentence and a quote are, this package decides.
@@ -37,7 +37,7 @@ const (
 	Language Breach = "language"
 )
 
-// The limits of R70 spec that hold in every language.
+// The limits of the platform's rule of the tutor's words that hold in every language.
 const (
 	// HintSentences is the most sentences a hint has.
 	HintSentences = 2
@@ -47,7 +47,7 @@ const (
 	QuoteWords = 4
 )
 
-// HintWords is the most words R70 spec lets a hint have in a language, by the numbers of the
+// HintWords is the most words the platform's rule lets a hint have in a language, by the numbers of the
 // measurement: 30 in Russian and 35 in English; 0, no limit, in a language the measurement did not
 // measure. A language is its tag, such as "en", "ru-RU" or "en_US", and its first subtag counts.
 func HintWords(language string) int {
@@ -60,7 +60,7 @@ func HintWords(language string) int {
 	return 0
 }
 
-// FeedbackWords is the most words R70 spec lets feedback have: 80 in English, the one language the
+// FeedbackWords is the most words the platform's rule lets feedback have: 80 in English, the one language the
 // measurement of essays measured, and 0, no limit, in another.
 func FeedbackWords(language string) int {
 	if base(language) == "en" {
@@ -69,7 +69,7 @@ func FeedbackWords(language string) int {
 	return 0
 }
 
-// Hint is what a hint breaks of the form R70 spec sets, in the order of the breaches; nil when it
+// Hint is what a hint breaks of the form the platform sets, in the order of the breaches; nil when it
 // keeps it: exactly one question, in no more than HintSentences sentences, of 1 to HintWords words
 // of its language, and its letters of the script of its language. The statement is the task's, whose
 // Latin letters, such as the x of an equation, may stand in a Russian hint.
@@ -78,7 +78,7 @@ func Hint(text, language, statement string) []Breach {
 }
 
 // HintForm is Hint with a limit of words of its own, 0 for none: the measurement of hints held them
-// to 30 words in either language, as its prompt said (R39).
+// to 30 words in either language, as its prompt said.
 func HintForm(text, language, statement string, maxWords int) []Breach {
 	runes := []rune(norm.NFKC.String(text))
 	sentences, questions, n, _ := count(runes)
@@ -94,9 +94,9 @@ func HintForm(text, language, statement string, maxWords int) []Breach {
 
 // Correct is what the words after a correct answer break of their form, in the order of the
 // breaches; nil when they keep it: the praise of a step and one question on the technique that
-// helped, as option (2) of R109 sets it — exactly one question, and it the last sentence, so that
+// helped, as option (2) sets it — exactly one question, and it the last sentence, so that
 // no more than one sentence of praise stands before it; 1 to HintWords words of the language; and
-// the letters of its script, as a hint's.
+// the letters of its script, as a hint's (R109).
 func Correct(text, language, statement string) []Breach {
 	return CorrectForm(text, language, statement, HintWords(language))
 }
@@ -137,7 +137,7 @@ func rest(runes []rune, n int, language, statement string, maxWords int) []Breac
 // Over is whether n words break a limit: none at all, or more than the limit, 0 being no limit.
 func Over(n, limit int) bool { return n < 1 || limit > 0 && n > limit }
 
-// Feedback is what feedback by a rubric breaks of the rule R70 spec sets, in the order of the
+// Feedback is what feedback by a rubric breaks of the rule the platform sets, in the order of the
 // breaches; nil when it keeps it: no more than FeedbackSentences sentences, 1 to FeedbackWords words
 // of its language, every quoted span of QuoteWords words or more the learner's own words in a row in
 // the text read — the text the assessment got, not the essay as written, which the platform does not
@@ -149,7 +149,7 @@ func Feedback(text, read, language string) []Breach {
 
 // FeedbackForm is Feedback with a limit of words of its own, 0 for none, against the learner's own
 // text, whatever it is, with the words the feedback has: the measurement of essays held feedback to
-// 60 words, against the essay as it was written (R45). Its letters are read as written, not after
+// 60 words, against the essay as it was written. Its letters are read as written, not after
 // NFKC, as the measurement read them.
 func FeedbackForm(text, own, language string, maxWords int) (breaches []Breach, words int) {
 	sentences, _, n := Count(text)

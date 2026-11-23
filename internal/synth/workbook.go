@@ -12,7 +12,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// A page of the workbook is laid out by the numbers of R35 canvas — a page of 1000 × 1400 units,
+// A page of the workbook is laid out by canvas's numbers — a page of 1000 × 1400 units,
 // boxes of 100 × 100, margins of 40, rows 100 high and 32 apart, the line 56 from the item's left
 // edge and a box 16 from a word — in a layout of tutor's own, simpler than canvas's: every item on
 // a row of its own, its boxes where the widths of the print before them put them. Only the strokes
@@ -33,7 +33,7 @@ const (
 )
 
 // printHundredths is how wide a character of the print is, in hundredths of the print's size: the
-// widths of R35 canvas for digits, signs and the space, and one width for every other character.
+// widths canvas gives digits, signs and the space, and one width for every other character.
 func printHundredths(r rune) int {
 	switch {
 	case r >= '0' && r <= '9':
@@ -50,7 +50,7 @@ func printHundredths(r rune) int {
 	return 55
 }
 
-// printWidth is how wide a piece of the print is, in units, as R35 canvas rounds it up.
+// printWidth is how wide a piece of the print is, in units, as canvas rounds it up.
 func printWidth(s string) float64 {
 	sum := 0
 	for _, r := range s {
@@ -130,7 +130,7 @@ func CheckLayout(wb *sample.Workbook) error {
 // each item. A box holds its value written plainly, or as its scenario says: a digit leaning toward
 // another, a digit mirrored, a wrong value crossed out and the value written beside it. A fraction
 // is written stacked or inline, as its box says. The writing stays within its box, so that by the
-// rule of boxes of R37 canvas each stroke is its box's. The same seed draws the same page again. A
+// canvas's rule of boxes each stroke is its box's. The same seed draws the same page again. A
 // page that cannot be laid out (CheckLayout) is an error.
 func PageOf(pg *sample.WorkbookPage, seed uint64) (*Page, error) {
 	if len(pg.Items) > sample.MaxItems {

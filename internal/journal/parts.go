@@ -12,9 +12,9 @@ import (
 // Part is one part of a journal of parts: a group of the strokes the sheet shows, as lines.Groups
 // finds it, or erased writing. Erased writing is erased strokes that no group holds, grouped among
 // themselves by the same rule. A line erased whole and written again after a pause is such: it has
-// no neighbours on the sheet, so by the rule it is of no group (R30). An erased stroke that would
-// be a neighbour of a stroke on the sheet is of that group, though, so a line erased whole just
-// after a stroke beside it starts on that part and goes on as erased writing.
+// no neighbours on the sheet, so by the rule it is of no group. An erased stroke that would be a
+// neighbour of a stroke on the sheet is of that group, though, so a line erased whole just after a
+// stroke beside it starts on that part and goes on as erased writing.
 type Part struct {
 	// Group is the group: its strokes, the erased strokes that would be their neighbours and its
 	// rectangle. The strokes of erased writing are all erased.
@@ -101,7 +101,7 @@ var places = [3][3]string{
 
 // placeOf is where a group stands on a sheet: the third of its height and the third of its width
 // that the middle of its rectangle stands in. The place holds no coordinates, which the journal
-// does not tell (R11).
+// does not tell.
 func placeOf(g lines.StrokeGroup, sh sample.Sheet) string {
 	return places[third(g.Top+g.Bottom, sh.Height)][third(g.Left+g.Right, sh.Width)]
 }

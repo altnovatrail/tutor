@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-// sheetName is the name of a saved sheet's file, as the record mode of the board gives it (R25):
+// sheetName is the name of a saved sheet's file, as the record mode of the board gives it:
 // NN-YYYYMMDD-HHMMSS-mmm-task-scenario.json — the number of its plan sheet in two digits, the time
 // of the save in UTC to the millisecond, the task and the scenario. The start of the name is of
 // fixed width, so the last file of a sheet is the last by name.

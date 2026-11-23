@@ -12,12 +12,12 @@ import (
 	"github.com/altnovatrail/tutor/internal/sample"
 )
 
-// The eval set of the tutor's words (R85): a capability whose input is no sample has an eval set
+// The eval set of the tutor's words: a capability whose input is no sample has an eval set
 // of its own form, tutor's. A case is a call of the words as api asks it — a sheet with a mistake,
 // a rung, a language, the trap the program found at the cell of the rung, the techniques of the
 // task and the questions already asked —, with the work or without it, when the learner asks to
-// have the rung put another way (R82 spec), and on some sheets a note at the side that is no part
-// of the solution and is not for a child, which the words must keep silent on (R54).
+// have the rung put another way, and on some sheets a note at the side that is no part
+// of the solution and is not for a child, which the words must keep silent on.
 
 // CasesFormat names the file of the cases, and CasesVersion is its version.
 const (
@@ -42,7 +42,7 @@ const (
 // CaseKinds are the kinds of case, in their order.
 func CaseKinds() []CaseKind { return []CaseKind{CaseRung, CaseOtherwise, CaseNote} }
 
-// NoteKind is what a note at the side is: the five kinds the author chose (R85).
+// NoteKind is what a note at the side is: the five kinds the author chose.
 type NoteKind string
 
 // The kinds of note.

@@ -34,7 +34,7 @@ func swapLast(s string) (string, bool) {
 
 // The near set as the author checks it: tutor-eval check takes its bank and plan. Its tasks are
 // copies of tasks of the measurement's bank, word for word but for the false keys, so that that
-// bank stays as it is (R28). Each task has one false key, its near key: the key with its last digit
+// bank stays as it is. Each task has one false key, its near key: the key with its last digit
 // turned into the digit of its pair, and a solution that is the task's with the same digit turned
 // in its last line, so that the key and the sheet differ in that digit alone. The plan has two
 // sheets of each task, of the scenario similar-digits: a correct one, whose answer is the key, and

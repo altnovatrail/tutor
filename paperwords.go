@@ -24,7 +24,7 @@ import (
 // PaperAsk is what a call of the words of a task from paper asks for.
 type PaperAsk int
 
-// The kinds of words of a task from paper (R82 spec).
+// The kinds of words of a task from paper.
 const (
 	// PaperOpening is the opening question, before the first wrong answer, from the task's crop as
 	// printed, PaperWordsRequest.Statement.
@@ -44,10 +44,11 @@ type PaperWordsTask struct {
 	Read      string
 }
 
-// PaperWordsRequest is a call of the tutor's words on a task from paper (R139):
+// PaperWordsRequest is a call of the tutor's words on a task from paper:
 //   - Ask is what to word;
 //   - Statement is the task's crop as printed, a JPEG or a PNG of at most 4 MiB, for PaperOpening
-//     alone; Crop the PNG of the crop of the work, sent again, for PaperRung alone (R09 spec);
+//     alone; Crop the PNG of the crop of the work, sent again, as the server keeps none, for
+//     PaperRung alone;
 //   - Tasks are the tasks of the crop, in their order;
 //   - Task is the number of the rung's task among them, from 1, and Rung the rung api picked, 1 to
 //     3, but for PaperOpening;
@@ -56,7 +57,7 @@ type PaperWordsTask struct {
 //   - Asked are the questions the tutor has already asked on the task, in order.
 //
 // The words are checked by api for leaks and for their form (PaperBreach), before they reach the
-// learner; api gives the fallback text in their place when they fail (PaperFallback; R70 spec).
+// learner; api gives the fallback text in their place when they fail (PaperFallback).
 type PaperWordsRequest struct {
 	Route     Route
 	Ask       PaperAsk
@@ -71,7 +72,7 @@ type PaperWordsRequest struct {
 }
 
 // PaperWords asks the admitted models of the words of a task from paper, one at a time, a later
-// one only when the one before failed or its words broke the checks of PaperBreach (R137): with the
+// one only when the one before failed or its words broke the checks of PaperBreach: with the
 // work, CallPaperWords, which serves the analysis of the steps and the hint, so both are admitted
 // on its models; without it, CallPaperHint. The answer is the box round the first mistake, in
 // thousandths of the crop of the work, and the tutor's question: the last model's that answered,
@@ -173,7 +174,7 @@ const (
 // and a key of a task of the crop in them, or a number of own — the model's own answers of the
 // opening question, which nothing else keeps — BreachLeak. The leak check is module-kit's, with
 // the keys as checks of their kind and the statements as the text the learner sees with them: a
-// key the statement prints is not searched for (R57 spec). A text that both leaks and breaks its
+// key the statement prints is not searched for. A text that both leaks and breaks its
 // form is a leak.
 func PaperBreach(text, language string, tasks []PaperWordsTask, own []string) string {
 	var statements []string
@@ -203,9 +204,9 @@ func PaperBreach(text, language string, tasks []PaperWordsTask, own []string) st
 }
 
 // openings are the platform's fallback texts of the opening question of a task from paper, which
-// has no module to give a leading question (R57 spec), in each language of the interface, English
+// has no module to give a leading question, in each language of the interface, English
 // for any other. They hold no number, so that they pass the leak check of every task, and they keep
-// the form of a hint (R139).
+// the form of a hint.
 var openings = map[sample.Lang]string{
 	sample.LangEnglish: "What do you already know here, and what do you need to find?",
 	sample.LangRussian: "Что здесь уже известно и что нужно найти?",
@@ -214,7 +215,7 @@ var openings = map[sample.Lang]string{
 // PaperFallback is the fallback text of the words of a task from paper in a language of the
 // interface, by its tag: the opening question at rung 0, and at rungs 1 to 3 the rung's template
 // of the measurement of hints (hint.Fallback), which the measured languages have, the second
-// serving the third, which has no simpler case of an author (R139).
+// serving the third, which has no simpler case of an author.
 func PaperFallback(rung int, language string) string {
 	base, _, _ := strings.Cut(strings.ToLower(language), "-")
 	lang := sample.Lang(base)

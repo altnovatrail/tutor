@@ -38,8 +38,8 @@ func readVector(t *testing.T, name string, v any) {
 	}
 }
 
-// The digest of the open view by which the runner finds a sample's task (R68 spec) is the one spec's
-// vectors give (R87): of each task of the vectors of the open view, and of
+// The digest of the open view by which the runner finds a sample's task is the one spec's
+// vectors give: of each task of the vectors of the open view, and of
 // each instance of a template that an attempt of the vectors of templates names, with its numbers
 // in place.
 func TestOpenViewDigestVectors(t *testing.T) {

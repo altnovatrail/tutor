@@ -34,15 +34,15 @@ type StatementTask struct {
 
 // StatementRead is what the reading of a statement gives when Outcome is Answered: the tasks on
 // the crop, from none to 20, in the order of the page — one, or each of a column of sums framed
-// together (R162 spec).
+// together.
 type StatementRead struct {
 	Tasks   []StatementTask
 	Outcome Outcome
 }
 
 // ReadStatement asks the admitted models of the reading of a statement (CallStatement) for the
-// tasks of the crop, each with its statement and its formula (R135), one at a time, a later one only when the one before failed:
-// a statement that is no formula is an answer (R137). The crop goes as a photo does
+// tasks of the crop, each with its statement and its formula, one at a time, a later one only when the one before failed:
+// a statement that is no formula is an answer. The crop goes as a photo does
 // (provider.Photo): fitted to the size its model takes, and as a JPEG without the metadata of its
 // file. A crop that is no JPEG or PNG fails before any call; an answer off the schema fails the
 // call.
@@ -74,9 +74,9 @@ type TasksSolved struct {
 
 // SolveTask asks the admitted models of the solution (CallSolving), one solution of one model, for
 // the answers of the tasks of the crop it names: the keys of the tasks whose statement the solver
-// does not take (R162 spec; R135), all in one call. A later model is asked when the one before
+// does not take, all in one call. A later model is asked when the one before
 // failed or left a task asked with no answer a key may hold — none, or one that breaks a rule of
-// module-kit (paper.Key) —, and the last one's answers stand (R137). The crop goes as
+// module-kit (paper.Key) —, and the last one's answers stand. The crop goes as
 // ReadStatement sends it; an answer off the schema fails the call.
 func (t *Tutor) SolveTask(ctx context.Context, p PaperTask, tasks []TaskToSolve) TasksSolved {
 	asked := make([]solving.Task, len(tasks))
@@ -138,7 +138,7 @@ func askCrop[T any](ctx context.Context, t *Tutor, c Call, p PaperTask, request 
 // PaperReading is the work on a task from paper to read: the PNG of the crop of the work — the
 // tracing paper at its place with the strokes on it, and the sheet's visible strokes —, as app sends
 // it (PaperWork.crop), the statements of the tasks on it, in order, as the reading of the statement
-// gave them, and the route. The models see the crop and the statements, never a key (R67 spec).
+// gave them, and the route. The models see the crop and the statements, never a key.
 type PaperReading struct {
 	Route Route
 	Crop  []byte
@@ -147,8 +147,8 @@ type PaperReading struct {
 
 // ReadPaper reads the work on a task from paper by the models admitted for its reading (CallPaper),
 // in any reading mode, one at a time, a later one only when the one before failed or read an
-// answer as illegible or ambiguous (R137), into the observation of an answer slot for each task,
-// the task n at the place n, 1 (R162 spec): the learner's final answer to it as written, or the
+// answer as illegible or ambiguous, into the observation of an answer slot for each task,
+// the task n at the place n, 1: the learner's final answer to it as written, or the
 // label of the one option circled, with its box on the crop. api brings each value to its task's
 // key and module-kit judges it. A reading with no task fails before any call.
 func (t *Tutor) ReadPaper(ctx context.Context, r PaperReading) SheetRead {

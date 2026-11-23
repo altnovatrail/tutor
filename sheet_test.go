@@ -73,7 +73,7 @@ func TestReadSheet(t *testing.T) {
 		}
 	}
 	// Both readers see the crop and the statement, with the picture by its words, and no key; each at
-	// its effort, writing no more than the reading's bound, and with no breakpoint of the cache (R131).
+	// its effort, writing no more than the reading's bound, and with no breakpoint of the cache.
 	for _, r := range []provider.Request{opus.asked[0], haiku.asked[0]} {
 		if !bytes.Equal(r.Images[0].PNG, crop) || !strings.Contains(r.Text, "Image 1 is 300 pixels wide and 120 pixels high.") ||
 			!strings.Contains(r.Text, "Task: Ann is 3 years older than Ben.\na number line from 0 to 10\nHow old is Ann now?\nHow old is Ann now? Write the answer.") ||

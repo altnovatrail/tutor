@@ -52,7 +52,7 @@ func TestReport(t *testing.T) {
 
 // reportsBeside holds the runner's reports of the protocol that the report of a log writes beside
 // it, by their names, and the CSV of their measures: each reads back strictly, of its capability,
-// with module-kit's verdicts and samples measured (R74).
+// with module-kit's verdicts and samples measured.
 func reportsBeside(t *testing.T, log string, capability evalv1.Capability, names ...string) {
 	t.Helper()
 	base := strings.TrimSuffix(log, ".jsonl")

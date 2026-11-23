@@ -23,7 +23,7 @@ func opus() wordsjudge.Judge {
 }
 
 // The judge's prompt is frozen: a change of a word is a new version, whose control phrases run
-// again (R86).
+// again.
 func TestFrozen(t *testing.T) {
 	const frozen = "58fe6a07d5d97ef6c477825f44f844e1edd3bb705c5823b4328bb75788ca22db"
 	if got := wordsjudge.Fingerprint(); got != frozen || wordsjudge.Version != 4 {

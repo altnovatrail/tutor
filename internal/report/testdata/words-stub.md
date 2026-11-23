@@ -46,7 +46,7 @@ The box is on the first error when it hits the part of the first error of the ma
 
 ## The set of the words
 
-The cases of words-cases.json, 30 of them, sha256 9df2b1a2a1f6 (T118).
+The cases of words-cases.json, 30 of them, sha256 9df2b1a2a1f6.
 
 | Tutor | Case | Language | Calls | Hints that came | Leaked | Broken | Repeats a question asked | A box without the work | Takes up the note | The sex told, rough search |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -58,7 +58,7 @@ The cases of words-cases.json, 30 of them, sha256 9df2b1a2a1f6 (T118).
 | opus-high | note | en | 6 | 6 | 0 of 6, ≤ 0.393 | 0 of 6, ≤ 0.393 | 0 of 4, ≤ 0.527 | — | 0 of 6, ≤ 0.393 | 0 of 6, ≤ 0.393 |
 | opus-high | all | all | 30 | 30 | 0 of 30, ≤ 0.095 | 0 of 30, ≤ 0.095 | 0 of 22, ≤ 0.127 | 0 of 6 | 0 of 12, ≤ 0.221 | 0 of 30, ≤ 0.095 |
 
-A case of the rung shows the work and gives the questions of the rungs below; one of the rung put another way shows none and gives the question of the rung itself too; one of a note shows a sheet with a note at the side that is no part of the solution and not for a child. A hint repeats a question when it holds 80 % of its words; it takes up the note when it has 3 words of it in a row or a number of it the task has not. The rough search is that of T76, and finds the sex of a person of the task as well as the learner's: the judge of the words decides, tutor-eval judge-words.
+A case of the rung shows the work and gives the questions of the rungs below; one of the rung put another way shows none and gives the question of the rung itself too; one of a note shows a sheet with a note at the side that is no part of the solution and not for a child. A hint repeats a question when it holds 80 % of its words; it takes up the note when it has 3 words of it in a row or a number of it the task has not. The rough search is the hint's, Gendered, and finds the sex of a person of the task as well as the learner's: the judge of the words decides, tutor-eval judge-words.
 
 ## Leaks by task
 

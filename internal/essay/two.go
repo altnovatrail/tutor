@@ -12,10 +12,10 @@ import (
 )
 
 // TwoVersion is the version of the prompts of the assessment in two calls: the reading of an essay,
-// then the assessment of the text read (R50). They take the words of the frozen prompt of one call
+// then the assessment of the text read. They take the words of the frozen prompt of one call
 // (Version 1) wherever they fit; the reading says whether the essay as a whole can be read, both
-// keep the rules of safety for children (R54; R86 spec), and the assessment of the text writes its
-// feedback in the language the request names and tells nothing of the learner's sex (R70 spec).
+// keep the rules of safety for children, and the assessment of the text writes its feedback in the
+// language the request names and tells nothing of the learner's sex.
 const TwoVersion = 3
 
 // The steps of the assessment in two calls, as the log names them: the reading of the essay, and the
@@ -185,7 +185,7 @@ func ReadReadingOf(answer string, version int) (string, error) {
 }
 
 // ErrIllegible is a reading that could not read the essay as a whole: the essay does not reach its
-// assessment (R75 spec).
+// assessment.
 var ErrIllegible = errors.New("essay: the reading could not read the essay")
 
 // ReadText takes the answer of an assessment of the text apart as strictly as its schema: the

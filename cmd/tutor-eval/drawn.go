@@ -26,7 +26,7 @@ import (
 )
 
 // The pages of the workbook and the essays are samples of spec's eval protocol that tutor-eval draw
-// draws, a file to a page or an essay, into a directory of their own (R71): page-NN.json and
+// draws, a file to a page or an essay, into a directory of their own: page-NN.json and
 // essay-NN.json, each of the task of its number. The summaries and the runs read them there, and
 // take from the file of the workbook or of the essays what the protocol does not hold: a box's
 // scenario, the values written and crossed out, how a fraction is written, the words spelled wrong
@@ -390,7 +390,7 @@ func refusedOf(what string, n int, r *evalsample.Refusal) string {
 }
 
 // refusal is a sample a run refuses: how the run names it before it asks, and how the record of
-// the run names it, for the runner's report (R74).
+// the run names it, for the runner's report.
 type refusal struct {
 	line   string
 	record runner.Refused

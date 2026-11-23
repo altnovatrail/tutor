@@ -17,7 +17,7 @@ import (
 )
 
 // RubricAssessment is an essay to assess by the criteria of its task's rubric, the second of the
-// two calls of a task with a rubric (R75 spec): the text the reading of the essay wrote down, the
+// two calls of a task with a rubric: the text the reading of the essay wrote down, the
 // statement of the task as its topic, the criteria of the rubric in their order, in the module's
 // explanation language, the presentation style — only what of it changes the words —, the language
 // of the feedback by its tag, and the route. The model sees the text in the block <essay> and the
@@ -40,8 +40,8 @@ type CriterionMark struct {
 }
 
 // RubricAssessed is what an assessment by the rubric gives: a mark for each criterion, in the
-// rubric's order, and one feedback, which api checks by the rule of the feedback (words.Feedback; R70
-// spec) before it reaches the learner. When the call failed, every criterion is without an
+// rubric's order, and one feedback, which api checks by the rule of the feedback (words.Feedback)
+// before it reaches the learner. When the call failed, every criterion is without an
 // assessment, and there is no feedback.
 type RubricAssessed struct {
 	Criteria []CriterionMark
@@ -50,10 +50,10 @@ type RubricAssessed struct {
 }
 
 // AssessEssay assesses the text of an essay by the criteria of the rubric, by the one model admitted
-// for the assessment by a rubric with the prompt of the assessment of a text (R70 spec; R97). The
+// for the assessment by a rubric with the prompt of the assessment of a text. The
 // criteria go to the model by their numbers, from 1. Until an entry of the list measured the prompt,
 // the assessment is NotAdmitted: its target comes from the measurement on the essays of volunteers
-// (R71 spec; П-16). An answer off the schema fails the call; a criterion it judges twice, or not at
+// (П-16). An answer off the schema fails the call; a criterion it judges twice, or not at
 // all, is without an assessment, as is every criterion of a failed call.
 func (t *Tutor) AssessEssay(ctx context.Context, r RubricAssessment) RubricAssessed {
 	none := func(out Outcome) RubricAssessed {

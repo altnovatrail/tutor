@@ -217,7 +217,7 @@ func (r *Correct) Markdown(w io.Writer, logName string) error {
 		kind, lang := c.where()
 		fmt.Fprintf(&b, "| %s | %s | %s | %s | %s |\n", c.Tutor, kind, lang, shareOrDash(c.Echo), c.Gendered)
 	}
-	fmt.Fprintf(&b, "\nA case of work shows the work; one of choice shows none, as for a task whose answer slots are bound choice alone; one of a note shows a sheet with a note at the side that is no part of the solution and not for a child. The words take up the note when they have %d words of it in a row or a number of it the task has not. The rough search is that of T76, and finds the sex of a person of the task as well as the learner's: the judge of the words decides, tutor-eval judge-words.\n", hint.EchoWords)
+	fmt.Fprintf(&b, "\nA case of work shows the work; one of choice shows none, as for a task whose answer slots are bound choice alone; one of a note shows a sheet with a note at the side that is no part of the solution and not for a child. The words take up the note when they have %d words of it in a row or a number of it the task has not. The rough search is the hint's, Gendered, and finds the sex of a person of the task as well as the learner's: the judge of the words decides, tutor-eval judge-words.\n", hint.EchoWords)
 
 	b.WriteString("\n## Time and cost\n\n| Tutor | Calls | Time p50, ms | Time p95, ms | Mean cost, $ |\n|---|---|---|---|---|\n")
 	for _, c := range r.Cells {

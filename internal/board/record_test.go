@@ -433,7 +433,7 @@ func TestRecordProposeErasures(t *testing.T) {
 	}
 
 	// Two moves of the eraser that took strokes from line 1: the later is taken, as the runner takes
-	// it and the save holds the pick to it (R75), and the sheet is named. Made by Undo, the second
+	// it and the save holds the pick to it, and the sheet is named. Made by Undo, the second
 	// does not count.
 	two := slip(erasing(written(sh), sh), "s-again", 50)
 	p, out := propose(two)
@@ -969,7 +969,7 @@ func saved(name string) bool {
 }
 
 // The plans of the free-form measurement and their bank, as seen from this package's directory: the
-// 40 sheets of parts code draws, and the author's three free solutions, each one part (R28).
+// 40 sheets of parts code draws, and the author's three free solutions, each one part.
 const (
 	freePlan   = "../../eval/free-sheets.json"
 	authorPlan = "../../eval/free-author.json"

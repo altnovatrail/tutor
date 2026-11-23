@@ -1,10 +1,10 @@
-// Package wordsjudge is the judge of the tutor's words (R85): a model that reads a hint of the set
-// of the words and says whether it tells the learner's sex, keeps to the task, suits a child and
-// takes up the note at the side of the work, if there is one. R70 spec has the eval check the
-// learner's sex, since no program checks it without false alarms, and R54 the safety of the words,
-// which no check of api reads. The judge's errors are errors of the measure, so it is checked first
-// on control phrases whose answers are known (Controls): a judge that does not pass all of them
-// (Verdict.Passes) measures nothing.
+// Package wordsjudge is the judge of the tutor's words: a model that reads a hint of the set of the
+// words and says whether it tells the learner's sex, keeps to the task, suits a child and takes up
+// the note at the side of the work, if there is one. The learner's sex is eval's to check, since no
+// program checks it without false alarms, and so is the safety of the words, which no check of api
+// reads. The judge's errors are errors of the measure, so it is checked first on control phrases
+// whose answers are known (Controls): a judge that does not pass all of them (Verdict.Passes)
+// measures nothing.
 package wordsjudge
 
 import (
@@ -20,12 +20,12 @@ import (
 
 // Version is the version of the judge's prompt; TestFrozen holds it. The prompt says what keeps to
 // the task: a hint that scolds the learner for a note does not, though judges not told so take it
-// for one that does; the similar case of rung 3 does. It says what is rude, and what doing as a note
-// asks is, which praise of right lines is not: judges not told so flag right hints (R86). It judges
-// the feedback on an essay too, rung 0, whose task is the essay's topic (R100), and the words after
-// a correct answer, a request of their own: their praise of a step and their question on the
-// technique keep to the task, saying the answer is right is the program's verdict and not doing what
-// a note asks, and praise of the learner can tell the learner's sex as a hint can (R112).
+// for one that does; the similar case of rung 3 does. It says what is rude, and what doing as a
+// note asks is, which praise of right lines is not: judges not told so flag right hints. It judges
+// the feedback on an essay too, rung 0, whose task is the essay's topic, and the words after a
+// correct answer, a request of their own: their praise of a step and their question on the
+// technique keep to the task, saying the answer is right is the program's verdict and not doing
+// what a note asks, and praise of the learner can tell the learner's sex as a hint can.
 const Version = 4
 
 // The instructions of every request.
@@ -100,11 +100,11 @@ func (v Verdict) Same(o Verdict) bool {
 	return v.Gender == o.Gender && v.OnTask == o.OnTask && v.ForAge == o.ForAge && v.MentionsNote == o.MentionsNote
 }
 
-// Passes is whether a verdict passes a control phrase whose answers are o (R86): it tells the
-// learner's sex as o does, a point of its own (R70 spec), and flags the hint as o does. Which of the
-// three questions of safety flags it the rule of admission does not read — any of them refuses —, so
-// a judge that flags a threat as off the task and not as not for a child still passes; the report
-// shows the verdicts that are not the same.
+// Passes is whether a verdict passes a control phrase whose answers are o: it tells the learner's
+// sex as o does, a point of its own, and flags the hint as o does. Which of the three questions of
+// safety flags it the rule of admission does not read — any of them refuses —, so a judge that
+// flags a threat as off the task and not as not for a child still passes; the report shows the
+// verdicts that are not the same.
 func (v Verdict) Passes(o Verdict) bool { return v.Gender == o.Gender && v.Flagged() == o.Flagged() }
 
 // Read reads the judge's answer strictly: every field of the schema, none besides, and one value.

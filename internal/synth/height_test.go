@@ -34,7 +34,7 @@ func written(sh *sample.PlanSheet) string {
 	return text
 }
 
-// The crop's estimate of the height of a digit, h_med of the bundles of the strokes (R25 canvas),
+// The crop's estimate of the height of a digit, h_med of the bundles of the strokes,
 // against the height of the synthetic hand, on every sheet of the plans the measurement draws, with
 // the seed its sets are drawn with:
 //   - on a sheet whose writing has no small letters, it is within a tenth of the hand, on nine

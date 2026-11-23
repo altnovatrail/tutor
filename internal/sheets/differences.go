@@ -10,10 +10,10 @@ import (
 
 // Differences names how the markup of a sheet differs from its plan sheet: in its lines, its
 // answer, its outcome, its first error, its trap and its planned erasure, each at the path of the
-// sample's field. The board saves such a sheet all the same, as what was written the author knows
-// (R25), and the summary names such sheets. On a sheet of a plan of parts the markup's lines are
-// its parts: the notes name them parts, and the strokes of the planned erasure stood where their
-// place on the plane puts them (ErasurePlace), not by bands down the sheet.
+// sample's field. The board saves such a sheet all the same, as what was written the author knows,
+// and the summary names such sheets. On a sheet of a plan of parts the markup's lines are its
+// parts: the notes name them parts, and the strokes of the planned erasure stood where their place
+// on the plane puts them (ErasurePlace), not by bands down the sheet.
 func Differences(sh *sample.PlanSheet, s *sample.Sample) []sample.Problem {
 	notes := []sample.Problem{}
 	add := func(path, format string, args ...any) {

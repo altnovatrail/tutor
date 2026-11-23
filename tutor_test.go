@@ -170,7 +170,7 @@ func TestPrepareAndAsk(t *testing.T) {
 
 // Each model's record of usage carries its own time and retries, so that the log shows which reader
 // of a pair held the call, and when its first text came, where its adapter measures that: GPT's does
-// not, and the Haiku here stands for it (R107). A billed answer without the JSON is timed too.
+// not, and the Haiku here stands for it. A billed answer without the JSON is timed too.
 func TestAskTimes(t *testing.T) {
 	opus := &fake{resp: provider.Response{JSON: `{}`, Model: "claude-opus-5-5", InputTokens: 900, OutputTokens: 120, FirstToken: 7 * time.Millisecond, Retries: 1}}
 	haiku := &fake{resp: provider.Response{JSON: `{}`, Model: "claude-haiku-5-5", InputTokens: 900, OutputTokens: 60}, delay: 200 * time.Millisecond}
@@ -307,7 +307,7 @@ func TestPlatformKeyAndAdapters(t *testing.T) {
 }
 
 // The root package builds no adapter in: a service that takes the library carries the SDK of a
-// provider only when it takes the provider's adapter itself (R90).
+// provider only when it takes the provider's adapter itself.
 func TestRootImportsNoProvider(t *testing.T) {
 	out, err := exec.Command("go", "list", "-deps", ".").Output()
 	if err != nil {
@@ -325,10 +325,10 @@ func TestRootImportsNoProvider(t *testing.T) {
 // AfterFunc, of time or context; a server of httptest, whose handlers run on goroutines of their
 // own, or Serve and ListenAndServe of net/http; and t.Parallel, which runs tests beside one
 // another. A package that comes to start one fails until it is in RACE, and one that no longer
-// does, until it leaves (R118). Files under build constraints count too.
+// does, until it leaves; files under build constraints count too (R118).
 func TestRaceStartsGoroutines(t *testing.T) {
-	// What a package outside RACE may start, and why the detector need not watch it (R118): the
-	// runner's parallel tests share nothing they write (R92), and its board's server, ListenAndServe
+	// What a package outside RACE may start, and why the detector need not watch it: the
+	// runner's parallel tests share nothing they write, and its board's server, ListenAndServe
 	// of serveHTTP, never runs in a test — they give runBoard a serve of their own.
 	allowed := map[string]map[string]bool{
 		filepath.Join("cmd", "tutor-eval"): {"Parallel": true, "ListenAndServe": true},

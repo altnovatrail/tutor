@@ -2,7 +2,7 @@ package runner
 
 // Reader is a configuration of the runner as a kind of reading reads with it: the configuration,
 // the output tokens a call is expected to take, for the estimate, and whether it reads once whatever
-// the repeats, as Opus does in the reduced matrix (R08; R28).
+// the repeats, as Opus does in the reduced matrix.
 type Reader struct {
 	Config
 	Output int

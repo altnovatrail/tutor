@@ -77,7 +77,7 @@ func TestCorrectAnswerWordsFails(t *testing.T) {
 }
 
 // With no entry of the words after a correct answer, or one of another prompt, nothing is asked:
-// they are a kind of call of their own (R112), and neither the hint's entry nor the analysis's admits
+// they are a kind of call of their own, and neither the hint's entry nor the analysis's admits
 // them.
 func TestCorrectAnswerWordsNotAdmitted(t *testing.T) {
 	lib, opus := tutorOf(t, praised)
