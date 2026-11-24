@@ -703,3 +703,96 @@ func TestPhoto(t *testing.T) {
 		t.Errorf("a photo within the tier fits to %d × %d", w, h)
 	}
 }
+
+// The events of an answer that calls the tool draw: its input in two parts, and the end on the
+// tool's use.
+const (
+	evTool       = `{"type":"content_block_start","index":1,"content_block":{"type":"tool_use","id":"toolu_1","name":"draw","input":{}}}`
+	evToolDelta1 = `{"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":"{\"say\": \"Done\","}}`
+	evToolDelta2 = `{"type":"content_block_delta","index":1,"delta":{"type":"input_json_delta","partial_json":" \"marks\": []}"}}`
+	evToolEnd    = `{"type":"message_delta","delta":{"stop_reason":"tool_use","stop_sequence":null,"stop_details":null},"usage":{"output_tokens":45,"output_tokens_details":{"thinking_tokens":30}}}`
+)
+
+var toolRequest = provider.Request{
+	Instructions: "Act on the sheet.",
+	Text:         "Cross it out.",
+	Images:       []provider.Image{{PNG: []byte("png")}},
+	Tools: []provider.Tool{{Name: "draw", Description: "Put marks on the sheet.",
+		Schema: map[string]any{"type": "object", "additionalProperties": false, "properties": json.RawMessage(`{"say": {"type": "string"}, "marks": {}}`)}}},
+	ToolChoice: provider.ToolAuto,
+	Effort:     "medium",
+}
+
+// A request with tools offers them with the choice auto and one call at most, asks no format of
+// the answer, and its answer is the input of the tool the model called, its first part timed.
+func TestTools(t *testing.T) {
+	c, f := fakeAPI(t, catalog.Models[0], reply{body: sse(evStart, evThinking, evSignature, evStop0, evTool, evToolDelta1, evToolDelta2, evStop1, evToolEnd, evMsgStop)})
+	resp, err := c.Ask(context.Background(), toolRequest)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if resp.JSON != `{"say": "Done", "marks": []}` || resp.Tool != "draw" || resp.OutputTokens != 45 || resp.FirstToken <= 0 {
+		t.Errorf("response = %+v", resp)
+	}
+	sent := f.requests()[0]
+	holds(t, sent, `"tools":[{"input_schema":{"additionalProperties":false,"properties":{"say":{"type":"string"},"marks":{}},"type":"object"},"name":"draw","description":"Put marks on the sheet."}]`,
+		`"tool_choice":{"disable_parallel_tool_use":true,"type":"auto"}`, `"effort":"medium"`)
+	if strings.Contains(sent, `"format"`) || strings.Contains(sent, `"thinking"`) {
+		t.Errorf("a request with tools asked a format or set its thinking:\n%s", sent)
+	}
+	// An empty choice is auto.
+	r := toolRequest
+	r.ToolChoice = ""
+	if _, err := c.Ask(context.Background(), r); err != nil {
+		t.Fatal(err)
+	}
+	holds(t, f.requests()[1], `"tool_choice":{"disable_parallel_tool_use":true,"type":"auto"}`)
+}
+
+// An answer to a request with tools that calls none, or calls a tool the request did not offer, is
+// no answer, with its tokens billed; one that ran out of tokens or was refused stays one too.
+func TestToolsNoAnswer(t *testing.T) {
+	for name, body := range map[string]string{
+		"text alone":    goodStream,
+		"another tool":  sse(evStart, evThinking, evStop0, strings.Replace(evTool, `"draw"`, `"erase"`, 1), evToolDelta1, evToolDelta2, evStop1, evToolEnd, evMsgStop),
+		"out of tokens": sse(evStart, evThinking, evStop0, evTool, evToolDelta1, evStop1, `{"type":"message_delta","delta":{"stop_reason":"max_tokens","stop_sequence":null,"stop_details":null},"usage":{"output_tokens":64000}}`, evMsgStop),
+	} {
+		t.Run(name, func(t *testing.T) {
+			c, _ := fakeAPI(t, catalog.Models[0], reply{body: body})
+			resp, err := c.Ask(context.Background(), toolRequest)
+			if !errors.Is(err, provider.ErrNoAnswer) || resp.JSON != "" || resp.InputTokens != 1300 || resp.OutputTokens == 0 {
+				t.Errorf("= %+v, %v, want ErrNoAnswer with the billed tokens", resp, err)
+			}
+		})
+	}
+}
+
+// Tools the adapter will not send are refused before any call: with a schema of the answer too, a
+// forced choice, a choice with no tools, a tool with no name, one offered twice and one with no
+// schema of an object.
+func TestToolsRefused(t *testing.T) {
+	tool := toolRequest.Tools[0]
+	for name, change := range map[string]func(*provider.Request){
+		"a schema too":  func(r *provider.Request) { r.Schema = map[string]any{"type": "object"} },
+		"a forced call": func(r *provider.Request) { r.ToolChoice = "any" },
+		"no tools":      func(r *provider.Request) { r.Tools = nil },
+		"no name":       func(r *provider.Request) { r.Tools = []provider.Tool{{Schema: tool.Schema}} },
+		"twice":         func(r *provider.Request) { r.Tools = []provider.Tool{tool, tool} },
+		"no schema":     func(r *provider.Request) { r.Tools = []provider.Tool{{Name: "draw"}} },
+		"not an object": func(r *provider.Request) {
+			r.Tools = []provider.Tool{{Name: "draw", Schema: map[string]any{"type": "array"}}}
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			c, f := fakeAPI(t, catalog.Models[0], reply{body: goodStream})
+			r := toolRequest
+			change(&r)
+			if _, err := c.Ask(context.Background(), r); err == nil {
+				t.Error("no refusal")
+			}
+			if n := len(f.requests()); n != 0 {
+				t.Errorf("the API was called %d times", n)
+			}
+		})
+	}
+}

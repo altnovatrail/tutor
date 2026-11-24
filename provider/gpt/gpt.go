@@ -99,14 +99,18 @@ func (c *Client) Fit(width, height int) (int, int) {
 // GPT is not used on the board, and the measurement of the writing process asks Claude alone.
 // The picture goes with the detail "high", so that the model does not shrink it; the answer
 // is not stored at OpenAI; the reasoning effort is high, the request's or by default. GPT-6 Astra
-// always reasons, so a request without thinking is refused before any call. The answer is not
-// streamed: GPT is not used on the board, so when its first text comes is not measured.
+// always reasons, so a request without thinking is refused before any call, and so is one with
+// tools, which the adapter does not send. The answer is not streamed: GPT is not used on the
+// board, so when its first text comes is not measured.
 func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response, error) {
 	if r.Effort != "" && !slices.Contains(Efforts, r.Effort) {
 		return provider.Response{}, fmt.Errorf("gpt: no effort level %q", r.Effort)
 	}
 	if r.NoThinking {
 		return provider.Response{}, errors.New("gpt: GPT-6 Astra cannot answer without reasoning")
+	}
+	if len(r.Tools) > 0 || r.ToolChoice != "" {
+		return provider.Response{}, errors.New("gpt: the adapter offers a model no tools")
 	}
 	if err := provider.CheckImages(r, 1); err != nil {
 		return provider.Response{}, fmt.Errorf("gpt: %w", err)

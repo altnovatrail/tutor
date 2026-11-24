@@ -107,22 +107,24 @@ func TestSchemaOrder(t *testing.T) {
 	}
 }
 
-// The adapter takes high effort alone, with reasoning, and refuses anything else before it calls
-// the API.
+// The adapter takes high effort alone, with reasoning and without tools, and refuses anything else
+// before it calls the API.
 func TestRefusedBeforeCall(t *testing.T) {
 	tests := map[string]struct {
 		effort     string
 		noThinking bool
+		tools      []provider.Tool
 		want       string
 	}{
-		"another level":     {"low", false, `no effort level "low"`},
-		"without reasoning": {"high", true, "cannot answer without reasoning"},
+		"another level":     {"low", false, nil, `no effort level "low"`},
+		"without reasoning": {"high", true, nil, "cannot answer without reasoning"},
+		"with tools":        {"high", false, []provider.Tool{{Name: "draw", Schema: map[string]any{"type": "object"}}}, "offers a model no tools"},
 	}
 	for name, tt := range tests {
 		t.Run(name, func(t *testing.T) {
 			c, sent := fakeAPI(t, reply{body: goodAnswer})
 			r := request
-			r.Effort, r.NoThinking = tt.effort, tt.noThinking
+			r.Effort, r.NoThinking, r.Tools = tt.effort, tt.noThinking, tt.tools
 			if _, err := c.Ask(context.Background(), r); err == nil || !strings.Contains(err.Error(), tt.want) {
 				t.Errorf("error = %v, want it to hold %q", err, tt.want)
 			}

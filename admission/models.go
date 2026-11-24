@@ -215,7 +215,34 @@ var Admitted = []Entry{
 		Report:     paperWordsWord,
 		Prompt:     paperWordsPrompt,
 	},
+	// The drawing of grown-up mode on a task from paper, on version 1 of its prompt: the tutor's act
+	// on the sheet as a grown-up asks, with none of its limits. By the author's word, without a set
+	// and without a run, which are Д26, a cascade of its own of two attempts: Haiku 5.5 at medium,
+	// then Sonnet 5.5 at medium, named, since Sonnet's own default is high.
+	{
+		Capability: admissionv0.CapabilityDrawing,
+		Models:     drawingCascade,
+		Stage:      StageAuthor,
+		Report:     drawingWord,
+		Prompt:     drawingPrompt,
+	},
 }
+
+// drawingWord is the author's word that admitted the drawing of grown-up mode, under the same
+// suspension as paperWord, to the same last day, drawingPrompt the fingerprint of its prompt,
+// version 1, and drawingCascade its attempts, in their order.
+var (
+	drawingWord = Evidence{
+		Word:  "the author's word, while eval before admission is suspended",
+		Date:  "2026-11-24",
+		Until: "2027-01-17",
+	}
+	drawingPrompt  = "9d52730a7514cf636da305e084f4b069a22c9ab20c8a4cb8a4965c9d45db00d0"
+	drawingCascade = []Model{
+		{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"},
+		{Provider: "anthropic", ID: "claude-sonnet-5-5", Effort: "medium"},
+	}
+)
 
 // paperWordsWord is the author's word that admitted the words of a task from paper, under the same
 // suspension as paperWord, to the same last day, and paperWordsPrompt the fingerprint of their

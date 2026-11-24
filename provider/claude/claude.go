@@ -14,6 +14,7 @@ import (
 
 	"github.com/anthropics/anthropic-sdk-go"
 	"github.com/anthropics/anthropic-sdk-go/option"
+	"github.com/anthropics/anthropic-sdk-go/packages/param"
 
 	"github.com/altnovatrail/tutor/provider"
 	"github.com/altnovatrail/tutor/provider/claude/catalog"
@@ -77,8 +78,9 @@ func prices(m Model) provider.Prices {
 		CacheWrite: map[time.Duration]float64{catalog.TTL5m: m.Write5m, catalog.TTL1h: m.Write1h}, Read: catalog.PricesRead}
 }
 
-// Ask sends the pictures and the text and asks for JSON that follows the schema, at the request's
-// effort, and streams the answer, so that it sees when the answer's first text comes. Every model
+// Ask sends the pictures and the text and asks for JSON that follows the schema, or for a call of
+// one of its tools, at the request's effort, and streams the answer, so that it sees when the
+// answer's first text, or the first of a tool's input, comes. Every model
 // in Models thinks adaptively when the request names no thinking, and on Opus 5.5 and Fable 5.1
 // thinking cannot be turned off, so the effort is what sets how much a model reasons. Without one,
 // a model takes its own default: medium on Opus 5.5 and Haiku 5.5, high on Sonnet 5.5 and Fable 5.1
@@ -118,7 +120,7 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 			began = true
 		case event.Type == "message_delta":
 			counted = true
-		case first == 0 && event.Type == "content_block_delta" && event.Delta.Type == "text_delta":
+		case first == 0 && event.Type == "content_block_delta" && (event.Delta.Type == "text_delta" || event.Delta.Type == "input_json_delta"):
 			first = time.Since(sent)
 		}
 	}
@@ -151,6 +153,9 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 	case anthropic.StopReasonMaxTokens:
 		return resp, fmt.Errorf("%w: the answer ran out of tokens", provider.ErrNoAnswer)
 	}
+	if len(r.Tools) > 0 {
+		return toolAnswer(r, msg, resp)
+	}
 	var text strings.Builder
 	for _, block := range msg.Content {
 		if block.Type == "text" {
@@ -162,6 +167,23 @@ func (c *Client) Ask(ctx context.Context, r provider.Request) (provider.Response
 	}
 	resp.JSON = text.String()
 	return resp, nil
+}
+
+// toolAnswer is the answer of a request with tools: the input of the one tool the model called,
+// which must be one the request offered. An answer that called none, as one that wrote text
+// alone, is no answer: the request asked the model to act by its tools.
+func toolAnswer(r provider.Request, msg anthropic.Message, resp provider.Response) (provider.Response, error) {
+	for _, block := range msg.Content {
+		if block.Type != "tool_use" {
+			continue
+		}
+		if !slices.ContainsFunc(r.Tools, func(t provider.Tool) bool { return t.Name == block.Name }) {
+			return resp, fmt.Errorf("%w: the model called the tool %q, which the request did not offer", provider.ErrNoAnswer, block.Name)
+		}
+		resp.JSON, resp.Tool = string(block.Input), block.Name
+		return resp, nil
+	}
+	return resp, fmt.Errorf("%w: the model called no tool", provider.ErrNoAnswer)
 }
 
 // The limits of a picture that a model of the high-resolution tier takes unshrunk, every model of
@@ -192,6 +214,9 @@ func (c *Client) check(r provider.Request) error {
 	if err := provider.CheckImages(r, MaxImages); err != nil {
 		return fmt.Errorf("claude: %w", err)
 	}
+	if err := provider.CheckTools(r); err != nil {
+		return fmt.Errorf("claude: %w", err)
+	}
 	if r.Effort != "" && !slices.Contains(catalog.Efforts, r.Effort) {
 		return fmt.Errorf("claude: no effort level %q", r.Effort)
 	}
@@ -206,7 +231,8 @@ func (c *Client) check(r provider.Request) error {
 // 1:", "Image 2:"), and the text after them. Instructions the request marks to cache end at a
 // breakpoint of the cache, for the 5 minutes Anthropic keeps a write by default: the prefix up to
 // it — the system prompt — is the same in every request of their kind, and the message after it,
-// the work, is never cached.
+// the work, is never cached. A request with tools goes with no format of its answer and lets the
+// model call one tool at most, by the choice auto, which leaves its thinking on.
 func (c *Client) params(r provider.Request) anthropic.MessageNewParams {
 	system := anthropic.TextBlockParam{Text: r.Instructions}
 	// Blank instructions are no prefix to cache, and no breakpoint goes on them.
@@ -231,8 +257,22 @@ func (c *Client) params(r provider.Request) anthropic.MessageNewParams {
 		Messages:  []anthropic.MessageParam{anthropic.NewUserMessage(content...)},
 		OutputConfig: anthropic.OutputConfigParam{
 			Effort: anthropic.OutputConfigEffort(r.Effort),
-			Format: anthropic.JSONOutputFormatParam{Schema: r.Schema},
 		},
+	}
+	if len(r.Tools) == 0 {
+		p.OutputConfig.Format = anthropic.JSONOutputFormatParam{Schema: r.Schema}
+	}
+	for _, t := range r.Tools {
+		// The schema goes as its map is encoded, its keys sorted, so that the same tool is the same
+		// bytes in every request.
+		tool := anthropic.ToolUnionParamOfTool(param.Override[anthropic.ToolInputSchemaParam](t.Schema), t.Name)
+		if t.Description != "" {
+			tool.OfTool.Description = anthropic.String(t.Description)
+		}
+		p.Tools = append(p.Tools, tool)
+	}
+	if len(r.Tools) > 0 {
+		p.ToolChoice = anthropic.ToolChoiceUnionParam{OfAuto: &anthropic.ToolChoiceAutoParam{DisableParallelToolUse: anthropic.Bool(true)}}
 	}
 	if r.NoThinking {
 		switch c.model.ThinkingOff {
