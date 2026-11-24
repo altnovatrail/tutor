@@ -43,7 +43,9 @@ func Fold(h *evalv1.History) Folded {
 			delete(shown, id)
 		}
 		for _, p := range e.GetCut().GetPieces() {
-			write(p.GetStroke())
+			if p.GetStroke() != nil {
+				write(p.GetStroke())
+			}
 		}
 		for _, id := range e.GetUndo().GetRestored() {
 			shown[id] = true
@@ -100,6 +102,9 @@ func StrokeNumber(id string) (int32, error) {
 // shown are the fold's, and the moment each went is the one the sheet last lost it. A point has no
 // pressure: the protocol holds none.
 //
+// A piece of a cut comes onto the sheet at its cut, its Since, though its points keep the times of
+// the stroke it was cut of, by which the rule of groups takes it.
+//
 // It gives the fold too, whose IDs say which strokes the sheet shows at the end.
 //
 // What Ink gives is no sample of tutor-sample v0, and its check does not hold it: a stroke of a
@@ -115,6 +120,17 @@ func Ink(h *evalv1.History) ([]sample.Stroke, []sample.Erasure, Folded) {
 		strokes[i] = st
 	}
 
+	since := map[int32]int64{}
+	for _, e := range h.GetEvents() {
+		for _, p := range e.GetCut().GetPieces() {
+			if _, ok := since[p.GetStroke().GetId()]; !ok {
+				since[p.GetStroke().GetId()] = int64(e.GetTMs())
+			}
+		}
+	}
+	for i, w := range f.Written {
+		strokes[i].Since = since[w.GetId()]
+	}
 	erasures, _ := erasuresOf(h, f)
 	return strokes, erasures, f
 }
@@ -190,6 +206,15 @@ func FinalOf(f Folded) []*evalv1.FinalStroke {
 		out = append(out, st)
 	}
 	return out
+}
+
+// StrokeStyleOf is a style of tutor's code as the protocol writes it, or nil for none: StyleOf back.
+func StrokeStyleOf(st *sample.Style) *evalv1.StrokeStyle {
+	if st == nil {
+		return nil
+	}
+	pen := map[sample.Pen]evalv1.PenKind{sample.PenPen: evalv1.PenKind_PEN_KIND_PEN, sample.PenLiner: evalv1.PenKind_PEN_KIND_LINER, sample.PenMarker: evalv1.PenKind_PEN_KIND_MARKER}[st.Pen]
+	return &evalv1.StrokeStyle{Pen: pen, Color: st.Color, Width: st.Width, Opacity: int32(st.Opacity)}
 }
 
 // StyleOf is a stroke's style of the protocol as tutor's code takes it, or nil for none. A kind of

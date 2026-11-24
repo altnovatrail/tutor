@@ -107,19 +107,18 @@ func looksOf(strokes []sample.Stroke) ([]look, error) {
 		if y == nil {
 			continue
 		}
-		w := lines.Tenths(y.Width)
 		switch {
 		case y.Pen != sample.PenPen && y.Pen != sample.PenLiner && y.Pen != sample.PenMarker:
 			return nil, fmt.Errorf("render: the stroke %q has a style of no kind of pen", st.ID)
 		case !colorPattern.MatchString(y.Color):
 			return nil, fmt.Errorf("render: the stroke %q has the colour %q, and a style's is #rrggbb", st.ID, y.Color)
-		case w < 1 || w > 500:
+		case !(y.Width >= 0.1 && y.Width <= 50):
 			return nil, fmt.Errorf("render: the stroke %q has a line %v units wide, and a style's is 0.1 to 50", st.ID, y.Width)
 		case y.Opacity < 10 || y.Opacity > 100:
 			return nil, fmt.Errorf("render: the stroke %q has an opacity of %d%%, and a style's is 10 to 100", st.ID, y.Opacity)
 		}
 		rgb, _ := hex.DecodeString(y.Color[1:])
-		out[i] = look{styled: true, pen: y.Pen, width: w, rgb: [3]uint8(rgb), opacity: int64(y.Opacity)}
+		out[i] = look{styled: true, pen: y.Pen, width: lines.Tenths(y.Width), rgb: [3]uint8(rgb), opacity: int64(y.Opacity)}
 	}
 	return out, nil
 }
@@ -433,16 +432,16 @@ func (c *Crop) Draw(strokes []sample.Stroke) (image.Image, error) {
 	bounds := image.Rect(0, 0, c.Width, c.Height)
 	var gray *image.Gray
 	var rgba *image.RGBA
+	var pix []uint8
 	if slices.ContainsFunc(looks, func(l look) bool { return l.styled }) {
 		rgba = image.NewRGBA(bounds)
-		for i := range rgba.Pix {
-			rgba.Pix[i] = 0xff
-		}
+		pix = rgba.Pix
 	} else {
 		gray = image.NewGray(bounds)
-		for i := range gray.Pix {
-			gray.Pix[i] = 0xff
-		}
+		pix = gray.Pix
+	}
+	for i := range pix {
+		pix[i] = 0xff
 	}
 	top, left := int64(c.Margins[0]), int64(c.Margins[1])
 	for _, k := range drawOrder(strokes) {

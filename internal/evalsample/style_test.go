@@ -12,10 +12,12 @@ import (
 	evalv1 "github.com/altnovatrail/spec/contracts/novatrail/eval/v1"
 
 	"github.com/altnovatrail/tutor/internal/evalsample"
+	"github.com/altnovatrail/tutor/internal/journal"
 	"github.com/altnovatrail/tutor/internal/protocol"
 	"github.com/altnovatrail/tutor/internal/protocol/protocoltest"
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/sample"
+	"github.com/altnovatrail/tutor/internal/states"
 )
 
 // ReadSheet reads spec's sheet in styles — «123» in liner and in pen and an underline in marker,
@@ -92,5 +94,62 @@ func TestReadStyledSheet(t *testing.T) {
 		t.Fatal(err)
 	} else if _, ok := img.(*image.Gray); !ok {
 		t.Errorf("the crop of a stroke without a style is %T, want grey", img)
+	}
+}
+
+// On spec's sheet in styles, the piece of the cut comes onto the sheet at its cut: before it the
+// sheet shows the underline whole and no piece, the frame before the cut too, and after it the piece
+// alone; the journal takes the piece for no writing, and no state shows the underline and its piece
+// at once. A style goes back into a history written of the strokes.
+func TestStyledSheetCourse(t *testing.T) {
+	data, err := fs.ReadFile(protocoltest.Examples(t), "sheet-style.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	es, err := protocol.ReadSample(bytes.NewReader(data))
+	if err != nil {
+		t.Fatal(err)
+	}
+	strokes, erasures, _ := protocol.Ink(es.GetHistory())
+	s := &sample.Sample{Sheet: sample.Sheet{Width: 1000, Height: 1400}, Strokes: strokes, Erasures: erasures,
+		Lines: []sample.Line{{Strokes: []string{"1", "2", "3"}, Answer: true}, {Strokes: []string{"5"}}}}
+	ids := func(strokes []sample.Stroke) []string {
+		var out []string
+		for _, st := range strokes {
+			out = append(out, st.ID)
+		}
+		return out
+	}
+	cut := erasures[0].TMs
+	if got := ids(render.Shown(s, cut-1)); !slices.Equal(got, []string{"1", "2", "3", "4"}) {
+		t.Errorf("before the cut: %v", got)
+	}
+	before, err := render.ShownBefore(s, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := ids(before); !slices.Equal(got, []string{"1", "2", "3", "4"}) {
+		t.Errorf("the frame before the cut: %v", got)
+	}
+	if got := ids(render.Shown(s, cut)); !slices.Equal(got, []string{"1", "2", "3", "5"}) {
+		t.Errorf("at the cut: %v", got)
+	}
+	for _, st := range journal.Of(s).Steps {
+		if st.Kind != journal.Erased && st.Line == 2 {
+			t.Errorf("the journal writes on the line of the piece: %+v", st)
+		}
+	}
+	for _, st := range states.Of(s, false) {
+		if got := ids(st.Shown); slices.Contains(got, "4") && slices.Contains(got, "5") {
+			t.Errorf("the state after event %d shows the underline and its piece: %v", st.Event, got)
+		}
+	}
+
+	h, _, err := evalsample.HistoryOf(&sample.Sample{Strokes: []sample.Stroke{strokes[0]}}, "pen")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := h.GetEvents()[0].GetWrite().GetStyle(); got.GetPen() != evalv1.PenKind_PEN_KIND_LINER || got.GetColor() != strokes[0].Style.Color {
+		t.Errorf("the history written: the style %v", got)
 	}
 }

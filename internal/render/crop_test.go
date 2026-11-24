@@ -632,8 +632,8 @@ func TestCropRefusesStyles(t *testing.T) {
 		{"no kind of pen", sample.Style{Pen: sample.PenNone, Color: "#000000", Width: 1, Opacity: 100}},
 		{"a colour of capitals", sample.Style{Pen: sample.PenPen, Color: "#FF0000", Width: 1, Opacity: 100}},
 		{"a colour of three digits", sample.Style{Pen: sample.PenPen, Color: "#f00", Width: 1, Opacity: 100}},
-		{"a width of 0.04", sample.Style{Pen: sample.PenLiner, Color: "#000000", Width: 0.04, Opacity: 100}},
-		{"a width of 50.1", sample.Style{Pen: sample.PenLiner, Color: "#000000", Width: 50.1, Opacity: 100}},
+		{"a width of 0.05", sample.Style{Pen: sample.PenLiner, Color: "#000000", Width: 0.05, Opacity: 100}},
+		{"a width of 50.04", sample.Style{Pen: sample.PenLiner, Color: "#000000", Width: 50.04, Opacity: 100}},
 		{"an opacity of 9", sample.Style{Pen: sample.PenMarker, Color: "#000000", Width: 1, Opacity: 9}},
 		{"an opacity of 101", sample.Style{Pen: sample.PenMarker, Color: "#000000", Width: 1, Opacity: 101}},
 	} {
@@ -647,6 +647,36 @@ func TestCropRefusesStyles(t *testing.T) {
 		}
 		if _, err := crop.Draw(st); err == nil {
 			t.Errorf("%s: drawn, want it refused", c.name)
+		}
+	}
+}
+
+// A pixel takes the share of its samples that a line covers, a line thinner than the reach of the
+// samples from a pixel's centre too: on a crop, of each width in 48ths of a pixel from a dot up, the
+// pixels a diagonal line covers are those its samples count one by one.
+func TestCoverThinLines(t *testing.T) {
+	b := image.Rect(0, 0, 8, 8)
+	pts := []point{{x: 13, y: 7}, {x: 370, y: 331}}
+	for half := int64(1); half <= 40; half++ {
+		p := pen{sub: cropSub, half: half, reach: 26}
+		got := map[image.Point]int{}
+		p.cover(b, pts, func(px, py, n int) { got[image.Pt(px, py)] = n })
+		for py := range 8 {
+			for px := range 8 {
+				want := 0
+				for j := range grid {
+					for i := range grid {
+						qx := int64(px)*cropSub + cropSub/grid/2 + int64(i)*cropSub/grid
+						qy := int64(py)*cropSub + cropSub/grid/2 + int64(j)*cropSub/grid
+						if near(qx, qy, pts[0], pts[1], half) {
+							want++
+						}
+					}
+				}
+				if got[image.Pt(px, py)] != want {
+					t.Fatalf("half %d at (%d, %d): %d samples covered, want %d", half, px, py, got[image.Pt(px, py)], want)
+				}
+			}
 		}
 	}
 }

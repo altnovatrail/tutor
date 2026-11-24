@@ -76,7 +76,17 @@ type Stroke struct {
 	// Style is how the stroke looks, as a sample file of the eval protocol holds it: nil for a stroke
 	// drawn black and opaque, as every stroke of tutor-sample v0 is, which holds no style.
 	Style *Style `json:"-"`
+	// Since is the moment a piece of a cut came onto the sheet, its cut's, later than its points,
+	// which keep the times of the stroke it was cut of; 0 for a stroke written, which comes as its
+	// points are written. tutor-sample v0 holds no cut.
+	Since int64 `json:"-"`
 }
+
+// Start is the moment a stroke begins on the sheet: its first point, or a piece's Since.
+func (st Stroke) Start() int64 { return max(st.Points[0].TMs, st.Since) }
+
+// End is the moment a stroke is done: its last point, or a piece's Since.
+func (st Stroke) End() int64 { return max(st.Points[len(st.Points)-1].TMs, st.Since) }
 
 // Pen is the kind of pen a stroke of a style is written with.
 type Pen int

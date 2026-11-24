@@ -86,15 +86,15 @@ func Of(s *sample.Sample, parts bool) []State {
 	}
 	for k := 0; k+1 < len(events); k++ {
 		this, next := events[k], events[k+1]
-		if this.Stroke == nil {
+		if this.Stroke == nil || this.Piece() {
 			continue
 		}
 		if next.Stroke == nil {
 			at(k).Erasure = next.Erasure + 1
 		}
-		// The next stroke, past any erasures, is on another line or part.
+		// The next stroke, past any erasures and pieces of a cut, is on another line or part.
 		for _, later := range events[k+1:] {
-			if later.Stroke != nil {
+			if later.Stroke != nil && !later.Piece() {
 				if j.LineOf(later.Stroke.ID) != j.LineOf(this.Stroke.ID) {
 					at(k).Line = j.LineOf(this.Stroke.ID)
 				}
@@ -135,7 +135,7 @@ func pauses(s *sample.Sample, events []journal.Event) []pause {
 	longest := map[int]pause{} // by the line
 	for k := 0; k+1 < len(events); k++ {
 		this, next := events[k], events[k+1]
-		if this.Stroke == nil || next.Stroke == nil {
+		if this.Stroke == nil || next.Stroke == nil || this.Piece() || next.Piece() {
 			continue
 		}
 		line := lineOf[this.Stroke.ID]

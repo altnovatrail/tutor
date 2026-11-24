@@ -98,24 +98,28 @@ type Event struct {
 	Erasure int
 }
 
-// Start and End are when an event began and ended: a stroke at its first point and its last, an
-// erasure at its moment.
+// Start and End are when an event began and ended: a stroke at its first point and its last, a
+// piece of a cut at its cut, and an erasure at its moment.
 func (e Event) Start(s *sample.Sample) int64 {
 	if e.Stroke != nil {
-		return e.Stroke.Points[0].TMs
+		return e.Stroke.Start()
 	}
 	return s.Erasures[e.Erasure].TMs
 }
 
 func (e Event) End(s *sample.Sample) int64 {
 	if e.Stroke != nil {
-		return e.Stroke.Points[len(e.Stroke.Points)-1].TMs
+		return e.Stroke.End()
 	}
 	return s.Erasures[e.Erasure].TMs
 }
 
+// Piece reports whether the event is a piece of a cut coming onto the sheet: no writing, but what
+// the eraser left of a stroke.
+func (e Event) Piece() bool { return e.Stroke != nil && e.Stroke.Since > 0 }
+
 // Writing is the strokes with points and the erasures of a sample that passes its check, in the
-// order of the writing. Strokes and erasures each go in the order of the clock; merged, they are
+// order of the writing, a piece of a cut at its cut. Strokes and erasures each go in the order of the clock; merged, they are
 // the writing. An erasure goes before a stroke begun at its very moment, unless it takes that
 // stroke away: the stroke is then the next one, as on the frames of internal/render.
 func Writing(s *sample.Sample) []Event {
@@ -166,9 +170,11 @@ func (j *Journal) walk(s *sample.Sample, lineOf map[string]int) {
 	j.lineOf = lineOf
 	b := &builder{lineOf: lineOf, written: map[int]bool{}}
 	for _, ev := range Writing(s) {
-		if ev.Stroke != nil {
+		switch {
+		case ev.Piece():
+		case ev.Stroke != nil:
 			b.stroke(*ev.Stroke)
-		} else {
+		default:
 			b.erasure(ev.Erasure, s.Erasures[ev.Erasure])
 		}
 	}
@@ -181,7 +187,7 @@ func (j *Journal) walk(s *sample.Sample, lineOf map[string]int) {
 
 // first reports whether an erasure comes before a stroke.
 func first(e sample.Erasure, st sample.Stroke) bool {
-	start := st.Points[0].TMs
+	start := st.Start()
 	return e.TMs < start || e.TMs == start && !slices.Contains(e.Strokes, st.ID)
 }
 

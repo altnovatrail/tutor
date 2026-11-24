@@ -73,12 +73,12 @@ func Shown(s *sample.Sample, t int64) []sample.Stroke {
 }
 
 // shown is what the sheet shows at the moment t without the strokes gone: of each other stroke,
-// the points written by t. A stroke's points go in the order of its clock (internal/sample checks
-// it).
+// the points written by t, and a piece of a cut whole once its cut is made. A stroke's points go in
+// the order of its clock (internal/sample checks it).
 func shown(s *sample.Sample, t int64, gone map[string]bool) []sample.Stroke {
 	var out []sample.Stroke
 	for _, st := range s.Strokes {
-		if gone[st.ID] {
+		if gone[st.ID] || st.Since > t {
 			continue
 		}
 		n := 0
@@ -115,7 +115,7 @@ func ShownBefore(s *sample.Sample, i int) ([]sample.Stroke, error) {
 	e := s.Erasures[i]
 	gone, takes := erased(s.Erasures[:i]), erased(s.Erasures[i:i+1])
 	for _, st := range s.Strokes {
-		if len(st.Points) > 0 && st.Points[0].TMs >= e.TMs && !takes[st.ID] {
+		if len(st.Points) > 0 && st.Start() >= e.TMs && !takes[st.ID] {
 			gone[st.ID] = true
 		}
 	}
@@ -219,7 +219,7 @@ func (p pen) cover(b image.Rectangle, pts []point, paint func(px, py, n int)) {
 				switch {
 				case cover[k] == full || !near(cx, cy, a, c, p.half+p.reach):
 					continue
-				case near(cx, cy, a, c, p.half-p.reach):
+				case p.half > p.reach && near(cx, cy, a, c, p.half-p.reach):
 					cover[k] = full
 					continue
 				}
