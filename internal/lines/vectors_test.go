@@ -54,8 +54,8 @@ func TestGroupsMatchSpecVectors(t *testing.T) {
 	if v.Rule.Pause != lines.GroupPause || v.Rule.Across != lines.GroupAcross || v.Rule.Down != lines.GroupDown {
 		t.Fatalf("the vectors' rule is %+v, and the package's %d ms, %d × %d", v.Rule, lines.GroupPause, lines.GroupAcross, lines.GroupDown)
 	}
-	if len(v.Cases) != 16 {
-		t.Errorf("%d cases, want spec's 16", len(v.Cases))
+	if len(v.Cases) != 18 {
+		t.Errorf("%d cases, want spec's 18", len(v.Cases))
 	}
 	for _, c := range v.Cases {
 		t.Run(c.Name, func(t *testing.T) {

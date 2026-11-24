@@ -397,8 +397,8 @@ func examples(t *testing.T) (map[string]*evalv1.Sample, map[string][]string) {
 // reading, and the essay is an assessment whose marks name criteria of its rubric.
 func TestExamples(t *testing.T) {
 	samples, truths := examples(t)
-	if len(samples) != 5 {
-		t.Fatalf("%d example samples, want spec's 5", len(samples))
+	if len(samples) != 6 {
+		t.Fatalf("%d example samples, want spec's 6", len(samples))
 	}
 	ctx := context.Background()
 	for id, s := range samples {

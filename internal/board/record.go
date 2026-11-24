@@ -219,7 +219,7 @@ func inkOf(raw json.RawMessage) (*ink, []Note) {
 	strokes, erasures, _ := protocol.Ink(h)
 	in := &ink{history: h, strokes: strokes, erasures: erasures}
 	for _, e := range protocol.ErasureEvents(h) {
-		in.undone = append(in.undone, e.GetErase() == nil)
+		in.undone = append(in.undone, !protocol.ByEraser(e))
 	}
 	return in, nil
 }

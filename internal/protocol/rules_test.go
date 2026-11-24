@@ -206,15 +206,20 @@ func TestFoldVectors(t *testing.T) {
 	}
 }
 
-// Ink gives every stroke written and an erasure at the event that took a hidden stroke off for the
-// last time: an erasure put back by undo is none, an undo of a write is one, and a clear is one.
+// Ink gives every stroke written, the pieces of a cut among them, and an erasure at the event that
+// took a hidden stroke off for the last time: an erasure put back by undo is none, an undo of a write
+// is one, a clear is one, a cut is one of the stroke it cut, and the undo of a cut one of its piece.
 func TestInk(t *testing.T) {
 	v := readVectors(t, "groups.json")
 	want := map[string][]sample.Erasure{
 		"undone":       nil,
 		"undone-write": {{TMs: 1200, Strokes: []string{"2"}}},
 		"cleared":      {{TMs: 1200, Strokes: []string{"1", "2"}}},
+		"cut-in-two":   {{TMs: 3000, Strokes: []string{"1"}}},
+		"cut-undone":   {{TMs: 2600, Strokes: []string{"2"}}},
 	}
+	// The kind of the event each erasure comes of.
+	kinds := map[string]string{"undone-write": "undo", "cleared": "clear", "cut-in-two": "cut", "cut-undone": "undo"}
 	seen := 0
 	for _, c := range v.Cases {
 		n := name(t, c)
@@ -239,7 +244,7 @@ func TestInk(t *testing.T) {
 			t.Fatalf("%s: %d events, and %d erasures", n, len(events), len(erasures))
 		}
 		for i, e := range events {
-			if e.GetTMs() != int32(erasures[i].TMs) || (n == "undone-write") != (e.GetUndo() != nil) || (n == "cleared") != (e.GetClear() != nil) {
+			if kind := kindOf(e); e.GetTMs() != int32(erasures[i].TMs) || kind != kinds[n] || protocol.ByEraser(e) != (kind == "cut") {
 				t.Errorf("%s: erasure %d comes of the event %v", n, i, e)
 			}
 		}
@@ -270,5 +275,107 @@ func TestFinalOf(t *testing.T) {
 		if !slices.Equal(sorted, f.Visible) {
 			t.Errorf("%s: final strokes %v, and the visible %v", name(t, c), ids, f.Visible)
 		}
+	}
+}
+
+// kindOf is the kind of an event that takes strokes off: "erase", "cut", "clear" or "undo".
+func kindOf(e *evalv1.HistoryEvent) string {
+	switch {
+	case e.GetErase() != nil:
+		return "erase"
+	case e.GetCut() != nil:
+		return "cut"
+	case e.GetClear() != nil:
+		return "clear"
+	}
+	return "undo"
+}
+
+// A piece of a cut comes onto the sheet at its cut, and a written stroke as it is written; a piece
+// with no stroke, which no valid history holds, adds none.
+func TestInkSince(t *testing.T) {
+	v := readVectors(t, "groups.json")
+	for _, c := range v.Cases {
+		if name(t, c) != "cut-in-two" {
+			continue
+		}
+		strokes, _, _ := protocol.Ink(message(t, c["history"], &evalv1.History{}))
+		var since []int64
+		for _, st := range strokes {
+			since = append(since, st.Since)
+		}
+		if !slices.Equal(since, []int64{0, 0, 3000, 3000}) {
+			t.Errorf("cut-in-two: the strokes come at %v, want the pieces at the cut's 3000 ms", since)
+		}
+	}
+	h := &evalv1.History{Events: []*evalv1.HistoryEvent{
+		{TMs: 10, Event: &evalv1.HistoryEvent_Write{Write: &evalv1.Stroke{Id: 1, Pointer: "pen", Points: []*evalv1.InkPoint{{X: 1, Y: 1}}}}},
+		{TMs: 20, Event: &evalv1.HistoryEvent_Cut{Cut: &evalv1.Cut{Ids: []int32{1}, Pieces: []*evalv1.Piece{{Of: 1}}}}},
+	}}
+	if f := protocol.Fold(h); len(f.Written) != 1 || len(f.Visible) != 0 || !slices.Equal(f.Hidden, []int32{1}) {
+		t.Errorf("a piece with no stroke: %+v", f)
+	}
+}
+
+// A style of tutor's code goes back to the protocol as it came: StrokeStyleOf is StyleOf back.
+func TestStrokeStyleOf(t *testing.T) {
+	for _, kind := range []evalv1.PenKind{evalv1.PenKind_PEN_KIND_PEN, evalv1.PenKind_PEN_KIND_LINER, evalv1.PenKind_PEN_KIND_MARKER} {
+		want := &evalv1.StrokeStyle{Pen: kind, Color: "#1e9e4a", Width: 40, Opacity: 60}
+		if got := protocol.StrokeStyleOf(protocol.StyleOf(want)); !proto.Equal(got, want) {
+			t.Errorf("%v: %v", kind, got)
+		}
+	}
+	if protocol.StrokeStyleOf(nil) != nil {
+		t.Error("no style: a style")
+	}
+}
+
+// A stroke's style goes with it: Ink gives each stroke written, a piece of a cut too, the style it was
+// written in, FinalOf keeps it in the final geometry, and Final takes it back; a stroke written with
+// none has none.
+func TestStyles(t *testing.T) {
+	v := readVectors(t, "groups.json")
+	liner := &sample.Style{Pen: sample.PenLiner, Color: "#0a63d6", Width: 1.2, Opacity: 100}
+	for _, c := range v.Cases {
+		n := name(t, c)
+		h := message(t, c["history"], &evalv1.History{})
+		strokes, _, f := protocol.Ink(h)
+		var ids []string
+		for i, st := range strokes {
+			ids = append(ids, st.ID)
+			if (st.Style == nil) != (f.Written[i].GetStyle() == nil) {
+				t.Errorf("%s: stroke %s has the style %v, and was written in %v", n, st.ID, st.Style, f.Written[i].GetStyle())
+			}
+		}
+		final := protocol.FinalOf(f)
+		for i, st := range protocol.Final(final) {
+			if !proto.Equal(final[i].GetStyle(), f.Written[slices.IndexFunc(f.Written, func(w *evalv1.Stroke) bool { return w.GetId() == final[i].GetId() })].GetStyle()) ||
+				(st.Style == nil) != (final[i].GetStyle() == nil) {
+				t.Errorf("%s: the final stroke %s lost its style", n, st.ID)
+			}
+		}
+		if n != "cut-in-two" {
+			continue
+		}
+		if !slices.Equal(ids, []string{"1", "2", "3", "4"}) {
+			t.Errorf("cut-in-two: strokes %v, want the line, «1» and the two pieces", ids)
+		}
+		for _, st := range strokes {
+			if st.Style == nil || *st.Style != *liner {
+				t.Errorf("cut-in-two: stroke %s in %+v, want %+v", st.ID, st.Style, liner)
+			}
+		}
+	}
+	for kind, pen := range map[evalv1.PenKind]sample.Pen{
+		evalv1.PenKind_PEN_KIND_PEN: sample.PenPen, evalv1.PenKind_PEN_KIND_LINER: sample.PenLiner,
+		evalv1.PenKind_PEN_KIND_MARKER: sample.PenMarker, evalv1.PenKind_PEN_KIND_UNSPECIFIED: sample.PenNone, 9: sample.PenNone,
+	} {
+		got := protocol.StyleOf(&evalv1.StrokeStyle{Pen: kind, Color: "#ffcc00", Width: 12, Opacity: 40})
+		if *got != (sample.Style{Pen: pen, Color: "#ffcc00", Width: 12, Opacity: 40}) {
+			t.Errorf("%v: %+v", kind, got)
+		}
+	}
+	if protocol.StyleOf(nil) != nil {
+		t.Error("no style: a style")
 	}
 }

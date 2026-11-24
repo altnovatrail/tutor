@@ -23,7 +23,8 @@ import (
 // history are those lines.Groups finds among the strokes it shows, the table of a workbook's boxes
 // is Table's, and every set of crops is what evalsample.CropSet gives — the box of the points,
 // h_med, and each crop's height drawn, size, margins, scale, line, place on the sheet and frames.
-// The pixels are not compared: two implementations may draw a crop a level of grey apart.
+// The pixels are not compared: two implementations may draw a crop a level of a channel apart; but
+// a crop is grey, or RGB of strokes with a style, as the example's is.
 func TestExamplesFollowTheRules(t *testing.T) {
 	examples := protocoltest.Examples(t)
 	names, err := fs.Glob(examples, "*.json")
@@ -87,13 +88,13 @@ func TestExamplesFollowTheRules(t *testing.T) {
 			}
 		})
 	}
-	if checked != 5 {
-		t.Errorf("%d sample files of spec's examples, want 5", checked)
+	if checked != 6 {
+		t.Errorf("%d sample files of spec's examples, want 6", checked)
 	}
 }
 
 // cropsAre checks that a set of crops is what evalsample.CropSet gives the strokes at its heights,
-// but for the pixels of each PNG.
+// but for the pixels of each PNG, whose colour type is the example's.
 func cropsAre(t *testing.T, what string, strokes []sample.Stroke, groups []lines.StrokeGroup, set *evalv1.CropSet) {
 	t.Helper()
 	if len(set.GetCrops()) == 0 {
@@ -108,6 +109,11 @@ func cropsAre(t *testing.T, what string, strokes []sample.Stroke, groups []lines
 		t.Fatal(err)
 	}
 	want := proto.CloneOf(set)
+	for i, c := range got.GetCrops() {
+		if i < len(want.GetCrops()) && colourType(t, c.GetPng()) != colourType(t, want.GetCrops()[i].GetPng()) {
+			t.Errorf("%s at %d px: a PNG of the colour type %d, and the example's %d", what, c.GetDigitHeight(), colourType(t, c.GetPng()), colourType(t, want.GetCrops()[i].GetPng()))
+		}
+	}
 	for _, c := range append(got.GetCrops(), want.GetCrops()...) {
 		c.Png = nil
 	}
@@ -116,7 +122,15 @@ func cropsAre(t *testing.T, what string, strokes []sample.Stroke, groups []lines
 	}
 }
 
-// pointsOf are a written stroke's points as a final geometry holds them, without their times.
+// colourType is the colour type of a PNG, by its IHDR: 0 grey, 2 RGB.
+func colourType(t *testing.T, png []byte) byte {
+	t.Helper()
+	if len(png) < 26 || string(png[12:16]) != "IHDR" {
+		t.Fatal("no PNG")
+	}
+	return png[25]
+}
+
 func id(t *testing.T, s string) int32 {
 	t.Helper()
 	n, err := protocol.StrokeNumber(s)

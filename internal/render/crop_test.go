@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"hash/crc32"
+	"image"
 	"io"
 	"io/fs"
 	"math"
@@ -119,8 +120,8 @@ func TestCropVectors(t *testing.T) {
 	if !slices.Equal(r.Heights, Heights()) {
 		t.Errorf("the vectors' heights are %v, and the measurement's %v", r.Heights, Heights())
 	}
-	if len(v.Cases) != 34 {
-		t.Errorf("%d cases, want spec's 34", len(v.Cases))
+	if len(v.Cases) != 36 {
+		t.Errorf("%d cases, want spec's 36", len(v.Cases))
 	}
 	for n, c := range v.Cases {
 		vc := cases[n]
@@ -228,7 +229,7 @@ func TestCropFramesHoldTheInk(t *testing.T) {
 				f := c.Frames[i].Box
 				for y := range c.Height {
 					for x := range c.Width {
-						if img.Pix[y*c.Width+x] == 0xff {
+						if !inked(img, x, y) {
 							continue
 						}
 						if int64(1000*y) < f[0]*int64(c.Height) || int64(1000*x) < f[1]*int64(c.Width) ||
@@ -261,7 +262,7 @@ func TestCropLine(t *testing.T) {
 		x := c.Margins[1] + int(150*c.Scale) // the middle of the level line, 150 units from the left
 		ink := 0.0
 		for y := range c.Height {
-			ink += float64(0xff-img.Pix[y*c.Width+x]) / 0xff
+			ink += float64(0xff-grayOf(t, img).Pix[y*c.Width+x]) / 0xff
 		}
 		if math.Abs(ink-c.Line) > 0.25 {
 			t.Errorf("at %d px: the line's ink across it is %.3f px, and the line %.3f", digit, ink, c.Line)
@@ -363,7 +364,7 @@ func TestCropGolden(t *testing.T) {
 				t.Errorf("%s at %d px: %v, want %d × %d", s.Scenario, digit, b, c.Width, c.Height)
 			}
 			name := fmt.Sprintf("%s-%d", s.Scenario, digit)
-			got := fmt.Sprintf("%x", sha256.Sum256(img.Pix))
+			got := fmt.Sprintf("%x", sha256.Sum256(grayOf(t, img).Pix))
 			if want, has := cropGolden[name]; !has {
 				t.Errorf("%q: %q, // no golden crop", name, got)
 			} else if got != want {
@@ -384,22 +385,32 @@ func TestCropDrawsOtherStrokes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, v := range img.Pix {
+	for _, v := range grayOf(t, img).Pix {
 		if v != 0xff {
 			t.Fatal("a stroke off the crop left ink on it")
 		}
 	}
 }
 
-// A crop's PNG is as the eval protocol writes one: grey of 8 bits, colour type 0, not interlaced,
-// of the crop's size, the chunks IHDR, IDAT and IEND alone, its IDAT one zlib stream with nothing
-// after it, each row with a filter from 0 to 4. The case is the largest crop of the vectors.
+// A crop's PNG is as the eval protocol writes one: 8 bits, not interlaced, of the crop's size, the
+// chunks IHDR, IDAT and IEND alone, its IDAT one zlib stream with nothing after it, each row with a
+// filter from 0 to 4; grey, colour type 0, of strokes without a style, and RGB, colour type 2, of
+// strokes with one. The cases are the largest crop of the vectors and the one of styles.
 func TestCropPNGChunks(t *testing.T) {
 	v, cases := readCropVectors(t)
-	n := slices.IndexFunc(v.Cases, func(c cropCase) bool { return c.Name == "limit" })
-	if n < 0 {
-		t.Fatal("no case limit")
+	for _, name := range []string{"limit", "styles"} {
+		pngChunks(t, v, cases, name, map[string]byte{"limit": 0, "styles": 2}[name])
 	}
+}
+
+// pngChunks checks the PNG of a case of the vectors at each height, of the colour type given.
+func pngChunks(t *testing.T, v cropVectors, cases []vectorCase, name string, colour byte) {
+	t.Helper()
+	n := slices.IndexFunc(v.Cases, func(c cropCase) bool { return c.Name == name })
+	if n < 0 {
+		t.Fatalf("no case %s", name)
+	}
+	channels := map[byte]int{0: 1, 2: 3}[colour]
 	for _, digit := range Heights() {
 		c, err := CropOf(cases[n].strokes, cases[n].groups, digit)
 		if err != nil {
@@ -439,7 +450,7 @@ func TestCropPNGChunks(t *testing.T) {
 			t.Errorf("at %d px: chunks %s", digit, seq)
 		}
 		if len(ihdr) != 13 || int(binary.BigEndian.Uint32(ihdr)) != c.Width || int(binary.BigEndian.Uint32(ihdr[4:])) != c.Height ||
-			ihdr[8] != 8 || ihdr[9] != 0 || ihdr[10] != 0 || ihdr[11] != 0 || ihdr[12] != 0 {
+			ihdr[8] != 8 || ihdr[9] != colour || ihdr[10] != 0 || ihdr[11] != 0 || ihdr[12] != 0 {
 			t.Errorf("at %d px: IHDR %v for %d × %d", digit, ihdr, c.Width, c.Height)
 		}
 		r := bytes.NewReader(idat)
@@ -454,12 +465,217 @@ func TestCropPNGChunks(t *testing.T) {
 		if r.Len() != 0 {
 			t.Errorf("at %d px: %d bytes after the zlib stream", digit, r.Len())
 		}
-		if len(raw) != c.Height*(1+c.Width) {
-			t.Fatalf("at %d px: %d bytes of rows, want %d", digit, len(raw), c.Height*(1+c.Width))
+		if len(raw) != c.Height*(1+channels*c.Width) {
+			t.Fatalf("at %d px: %d bytes of rows, want %d", digit, len(raw), c.Height*(1+channels*c.Width))
 		}
 		for y := range c.Height {
-			if f := raw[y*(1+c.Width)]; f > 4 {
+			if f := raw[y*(1+channels*c.Width)]; f > 4 {
 				t.Errorf("at %d px: row %d has the filter %d", digit, y, f)
+			}
+		}
+	}
+}
+
+// grayOf is a crop's picture as grey, which a crop of no stroke with a style is.
+func grayOf(t *testing.T, img image.Image) *image.Gray {
+	t.Helper()
+	g, ok := img.(*image.Gray)
+	if !ok {
+		t.Fatalf("a crop of strokes without a style is %T, not grey", img)
+	}
+	return g
+}
+
+// inked reports whether the pixel at (x, y) is not white.
+func inked(img image.Image, x, y int) bool {
+	r, g, b, _ := img.At(x, y).RGBA()
+	return r != 0xffff || g != 0xffff || b != 0xffff
+}
+
+// styled is a stroke through the points in a style of the pen, the colour, the width in units and the
+// opacity given.
+func styled(id string, pen sample.Pen, color string, width float64, opacity int, pts ...sample.Point) sample.Stroke {
+	return sample.Stroke{ID: id, Points: pts, Style: &sample.Style{Pen: pen, Color: color, Width: width, Opacity: opacity}}
+}
+
+// rgbAt is the colour of a crop's pixel at the place (x, y) of the sheet, in units.
+func rgbAt(c *Crop, img image.Image, x, y float64) [3]uint8 {
+	b := c.InkBox()
+	px := c.Margins[1] + int((x-float64(b[1])/10)*c.Scale)
+	py := c.Margins[0] + int((y-float64(b[0])/10)*c.Scale)
+	r, g, bl, _ := img.At(px, py).RGBA()
+	return [3]uint8{uint8(r >> 8), uint8(g >> 8), uint8(bl >> 8)}
+}
+
+// A crop of strokes with a style is RGB, each stroke drawn on white by its style where its line
+// covers a pixel whole: a liner and a pen in their colour at their opacity over what lies under,
+// a marker multiplying what lies under by its colour, at its opacity, and a stroke without a style
+// black. A marker over a red liner leaves it red, and one that goes back over itself is no darker.
+func TestCropColours(t *testing.T) {
+	strokes := []sample.Stroke{
+		styled("1", sample.PenLiner, "#ff0000", 4, 100, sample.Point{X: 100, Y: 100}, sample.Point{X: 300, Y: 100}),
+		styled("2", sample.PenMarker, "#ffcc00", 8, 40, sample.Point{X: 200, Y: 60}, sample.Point{X: 200, Y: 160}, sample.Point{X: 200, Y: 60}),
+		styled("3", sample.PenPen, "#0000ff", 4, 50, sample.Point{X: 100, Y: 140}, sample.Point{X: 160, Y: 140}),
+		{ID: "4", Points: []sample.Point{{X: 240, Y: 60}, {X: 240, Y: 96}}},
+	}
+	c, err := CropOf(strokes, nil, Digit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	img, err := c.Draw(strokes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, ok := img.(*image.RGBA); !ok {
+		t.Fatalf("a crop of strokes with a style is %T, want RGB", img)
+	}
+	// Of white under the marker: 255 × 0.6 + 255 × c / 255 × 0.4 a channel; of the pen: 255 × 0.5
+	// and its colour × 0.5.
+	for _, p := range []struct {
+		what string
+		x, y float64
+		want [3]uint8
+	}{
+		{"the liner", 130, 100, [3]uint8{255, 0, 0}},
+		{"the marker", 200, 130, [3]uint8{255, 235, 153}},
+		{"the marker over the liner", 200, 100, [3]uint8{255, 0, 0}},
+		{"the pen", 130, 140, [3]uint8{128, 128, 255}},
+		{"a stroke without a style", 240, 80, [3]uint8{0, 0, 0}},
+		{"white", 270, 140, [3]uint8{255, 255, 255}},
+	} {
+		if got := rgbAt(c, img, p.x, p.y); got != p.want {
+			t.Errorf("%s: %v, want %v", p.what, got, p.want)
+		}
+	}
+	data, err := c.PNG(strokes)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if data[8+8+8+1] != 2 {
+		t.Errorf("a crop with a style has the colour type %d, want 2", data[8+8+8+1])
+	}
+
+	// By their IDs, whatever the order they are given in: the marker 1 first, and the liner 2 over it.
+	strokes = []sample.Stroke{
+		styled("2", sample.PenLiner, "#0000ff", 4, 100, sample.Point{X: 100, Y: 100}, sample.Point{X: 300, Y: 100}),
+		styled("1", sample.PenMarker, "#ffcc00", 8, 40, sample.Point{X: 200, Y: 60}, sample.Point{X: 200, Y: 160}),
+	}
+	if img, err = c.Draw(strokes); err != nil {
+		t.Fatal(err)
+	}
+	if got := rgbAt(c, img, 200, 100); got != [3]uint8{0, 0, 255} {
+		t.Errorf("the liner 2 over the marker 1: %v, want the liner's blue", got)
+	}
+}
+
+// A line of a style is its width at the crop's scale, 1 px at least: across a long level stroke of
+// black liner, its ink adds up to that width, give or take the quarter of a pixel the samples of a
+// pixel are apart; the crop's line is the widest of its strokes.
+func TestCropStyledLine(t *testing.T) {
+	for _, width := range []float64{0.1, 2, 7.5} {
+		strokes := []sample.Stroke{
+			styled("a", sample.PenLiner, "#000000", width, 100, sample.Point{X: 100, Y: 100}, sample.Point{X: 400, Y: 100}),
+			{ID: "b", Points: []sample.Point{{X: 500, Y: 60}, {X: 500, Y: 96}}},
+		}
+		for _, digit := range Heights() {
+			c, img, err := Cropped(strokes, digit)
+			if err != nil {
+				t.Fatal(err)
+			}
+			line := max(width*c.Scale, 1)
+			if want := max(line, float64(max(c.Drawn, 12))/12); math.Abs(c.Line-want) > 1e-9 {
+				t.Errorf("width %v at %d px: the crop's line %v, want %v", width, digit, c.Line, want)
+			}
+			x := c.Margins[1] + int(150*c.Scale)
+			ink := 0.0
+			for y := range c.Height {
+				r, _, _, _ := img.At(x, y).RGBA()
+				ink += float64(0xffff-r) / 0xffff
+			}
+			if math.Abs(ink-line) > 0.25 {
+				t.Errorf("width %v at %d px: the line's ink across it is %.3f px, and its width %.3f", width, digit, ink, line)
+			}
+		}
+	}
+}
+
+// A wide line of a style that runs across the sheet past a crop of the largest scale is drawn where
+// its edge crosses the crop: its piece is long and its half wide, past 64 bits of the distance's
+// products, and the raster's whole numbers still hold them.
+func TestCropWideLongLine(t *testing.T) {
+	work := sample.Stroke{ID: "a", Points: []sample.Point{{X: 1000, Y: 1000}, {X: 1010, Y: 1000}}}
+	c, err := CropOf([]sample.Stroke{work}, nil, MaxDigit)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// 25 units from the middle of the line to its edge, at 1003 units down.
+	long := styled("b", sample.PenLiner, "#000000", 50, 100, sample.Point{X: 0, Y: 1028}, sample.Point{X: MaxSide, Y: 1028})
+	img, err := c.Draw([]sample.Stroke{long})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := rgbAt(c, img, 1005, 1004.5); got != [3]uint8{} {
+		t.Errorf("within the wide line: %v, want black", got)
+	}
+	if got := rgbAt(c, img, 1005, 1002); got != [3]uint8{255, 255, 255} {
+		t.Errorf("past the wide line: %v, want white", got)
+	}
+}
+
+// A crop refuses a style it cannot draw, and Draw a stroke of one too.
+func TestCropRefusesStyles(t *testing.T) {
+	pts := []sample.Point{{X: 10, Y: 10}, {X: 20, Y: 10}}
+	for _, c := range []struct {
+		name  string
+		style sample.Style
+	}{
+		{"no kind of pen", sample.Style{Pen: sample.PenNone, Color: "#000000", Width: 1, Opacity: 100}},
+		{"a colour of capitals", sample.Style{Pen: sample.PenPen, Color: "#FF0000", Width: 1, Opacity: 100}},
+		{"a colour of three digits", sample.Style{Pen: sample.PenPen, Color: "#f00", Width: 1, Opacity: 100}},
+		{"a width of 0.05", sample.Style{Pen: sample.PenLiner, Color: "#000000", Width: 0.05, Opacity: 100}},
+		{"a width of 50.04", sample.Style{Pen: sample.PenLiner, Color: "#000000", Width: 50.04, Opacity: 100}},
+		{"an opacity of 9", sample.Style{Pen: sample.PenMarker, Color: "#000000", Width: 1, Opacity: 9}},
+		{"an opacity of 101", sample.Style{Pen: sample.PenMarker, Color: "#000000", Width: 1, Opacity: 101}},
+	} {
+		st := []sample.Stroke{{ID: "a", Points: pts, Style: &c.style}}
+		if _, err := CropOf(st, nil, Digit); err == nil {
+			t.Errorf("%s: cut, want it refused", c.name)
+		}
+		crop, err := CropOf([]sample.Stroke{{ID: "a", Points: pts}}, nil, Digit)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := crop.Draw(st); err == nil {
+			t.Errorf("%s: drawn, want it refused", c.name)
+		}
+	}
+}
+
+// A pixel takes the share of its samples that a line covers, a line thinner than the reach of the
+// samples from a pixel's centre too: on a crop, of each width in 48ths of a pixel from a dot up, the
+// pixels a diagonal line covers are those its samples count one by one.
+func TestCoverThinLines(t *testing.T) {
+	b := image.Rect(0, 0, 8, 8)
+	pts := []point{{x: 13, y: 7}, {x: 370, y: 331}}
+	for half := int64(1); half <= 40; half++ {
+		p := pen{sub: cropSub, half: half, reach: 26}
+		got := map[image.Point]int{}
+		p.cover(b, pts, func(px, py, n int) { got[image.Pt(px, py)] = n })
+		for py := range 8 {
+			for px := range 8 {
+				want := 0
+				for j := range grid {
+					for i := range grid {
+						qx := int64(px)*cropSub + cropSub/grid/2 + int64(i)*cropSub/grid
+						qy := int64(py)*cropSub + cropSub/grid/2 + int64(j)*cropSub/grid
+						if near(qx, qy, pts[0], pts[1], half) {
+							want++
+						}
+					}
+				}
+				if got[image.Pt(px, py)] != want {
+					t.Fatalf("half %d at (%d, %d): %d samples covered, want %d", half, px, py, got[image.Pt(px, py)], want)
+				}
 			}
 		}
 	}

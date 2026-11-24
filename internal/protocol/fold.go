@@ -20,23 +20,32 @@ type Folded struct {
 }
 
 // Fold folds a history by adding and taking off IDs alone, with no rule of the stack of undo: write
-// adds its stroke, erase and clear take off the strokes they name, and undo takes off the strokes
-// it removed and adds back those it restored. Whether a history keeps the rules of a sample file —
+// adds its stroke, erase and clear take off the strokes they name, cut takes off the strokes it names
+// and adds its pieces, each a stroke written, and undo takes off the strokes it removed and adds back
+// those it restored. Whether a history keeps the rules of a sample file —
 // strokes written once, taken off only while shown — is sample-check's to say; Fold folds any.
 func Fold(h *evalv1.History) Folded {
 	var f Folded
 	shown := map[int32]bool{}
 	written := map[int32]bool{}
+	write := func(w *evalv1.Stroke) {
+		if !written[w.GetId()] {
+			f.Written = append(f.Written, w)
+		}
+		written[w.GetId()] = true
+		shown[w.GetId()] = true
+	}
 	for _, e := range h.GetEvents() {
 		if w := e.GetWrite(); w != nil {
-			if !written[w.GetId()] {
-				f.Written = append(f.Written, w)
-			}
-			written[w.GetId()] = true
-			shown[w.GetId()] = true
+			write(w)
 		}
 		for _, id := range takenOff(e) {
 			delete(shown, id)
+		}
+		for _, p := range e.GetCut().GetPieces() {
+			if p.GetStroke() != nil {
+				write(p.GetStroke())
+			}
 		}
 		for _, id := range e.GetUndo().GetRestored() {
 			shown[id] = true
@@ -54,11 +63,14 @@ func Fold(h *evalv1.History) Folded {
 	return f
 }
 
-// takenOff are the IDs an event takes off the sheet: an erase's, a clear's, or those an undo removed.
+// takenOff are the IDs an event takes off the sheet: an erase's, a cut's, a clear's, or those an undo
+// removed.
 func takenOff(e *evalv1.HistoryEvent) []int32 {
 	switch {
 	case e.GetErase() != nil:
 		return e.GetErase().GetIds()
+	case e.GetCut() != nil:
+		return e.GetCut().GetIds()
 	case e.GetClear() != nil:
 		return e.GetClear().GetIds()
 	default:
@@ -82,12 +94,16 @@ func StrokeNumber(id string) (int32, error) {
 }
 
 // Ink is a history as tutor's code takes the strokes of a sheet (internal/sample): every stroke
-// written, in the order of its event, with its points and their times, and the erasures — at each
+// written, a piece of a cut too, in the order of its event, with its points and their times and its
+// style, and the erasures — at each
 // event that took off a stroke the sheet does not show at the end for the last time, those strokes,
 // in the event's order. So a stroke the eraser took off and an undo put back is in no erasure, and
 // an undo that took off a stroke just written is an erasure of it: the strokes shown and those not
 // shown are the fold's, and the moment each went is the one the sheet last lost it. A point has no
 // pressure: the protocol holds none.
+//
+// A piece of a cut comes onto the sheet at its cut, its Since, though its points keep the times of
+// the stroke it was cut of, by which the rule of groups takes it.
 //
 // It gives the fold too, whose IDs say which strokes the sheet shows at the end.
 //
@@ -97,24 +113,39 @@ func Ink(h *evalv1.History) ([]sample.Stroke, []sample.Erasure, Folded) {
 	f := Fold(h)
 	strokes := make([]sample.Stroke, len(f.Written))
 	for i, w := range f.Written {
-		st := sample.Stroke{ID: StrokeID(w.GetId()), Points: make([]sample.Point, len(w.GetPoints()))}
+		st := sample.Stroke{ID: StrokeID(w.GetId()), Points: make([]sample.Point, len(w.GetPoints())), Style: StyleOf(w.GetStyle())}
 		for k, p := range w.GetPoints() {
 			st.Points[k] = sample.Point{X: p.GetX(), Y: p.GetY(), TMs: int64(p.GetTMs())}
 		}
 		strokes[i] = st
 	}
 
+	since := map[int32]int64{}
+	for _, e := range h.GetEvents() {
+		for _, p := range e.GetCut().GetPieces() {
+			if _, ok := since[p.GetStroke().GetId()]; !ok {
+				since[p.GetStroke().GetId()] = int64(e.GetTMs())
+			}
+		}
+	}
+	for i, w := range f.Written {
+		strokes[i].Since = since[w.GetId()]
+	}
 	erasures, _ := erasuresOf(h, f)
 	return strokes, erasures, f
 }
 
 // ErasureEvents are the events of a history that Ink's erasures come from, one to each in its
-// order: an erase, a clear or an undo. The record mode tells by them a move of the eraser from a
-// slip, which Undo and Clear make.
+// order: an erase, a cut, a clear or an undo. The record mode tells by them a move of the eraser
+// (ByEraser) from a slip, which Undo and Clear make.
 func ErasureEvents(h *evalv1.History) []*evalv1.HistoryEvent {
 	_, events := erasuresOf(h, Fold(h))
 	return events
 }
+
+// ByEraser reports whether an event is a move of the eraser: an erase, which takes strokes whole, or
+// a cut, which takes only what it passes over.
+func ByEraser(e *evalv1.HistoryEvent) bool { return e.GetErase() != nil || e.GetCut() != nil }
 
 // erasuresOf are Ink's erasures of a history and its fold, with the event of each.
 func erasuresOf(h *evalv1.History, f Folded) ([]sample.Erasure, []*evalv1.HistoryEvent) {
@@ -146,11 +177,11 @@ func erasuresOf(h *evalv1.History, f Folded) ([]sample.Erasure, []*evalv1.Histor
 }
 
 // Final are the strokes of a final geometry as tutor's code takes the strokes of a sheet: their
-// points along each, with no time.
+// points along each, with no time, and their style.
 func Final(strokes []*evalv1.FinalStroke) []sample.Stroke {
 	out := make([]sample.Stroke, len(strokes))
 	for i, st := range strokes {
-		s := sample.Stroke{ID: StrokeID(st.GetId()), Points: make([]sample.Point, len(st.GetPoints()))}
+		s := sample.Stroke{ID: StrokeID(st.GetId()), Points: make([]sample.Point, len(st.GetPoints())), Style: StyleOf(st.GetStyle())}
 		for k, p := range st.GetPoints() {
 			s.Points[k] = sample.Point{X: p.GetX(), Y: p.GetY()}
 		}
@@ -160,7 +191,7 @@ func Final(strokes []*evalv1.FinalStroke) []sample.Stroke {
 }
 
 // FinalOf are the strokes a folded history shows at the end as strokes of a final geometry, in the
-// order they were written: each with its ID and its points, with no time. The table of boxes of a
+// order they were written: each with its ID, its points, with no time, and its style. The table of boxes of a
 // workbook takes them (Table), since the rule of boxes takes a stroke's points alone.
 func FinalOf(f Folded) []*evalv1.FinalStroke {
 	var out []*evalv1.FinalStroke
@@ -168,11 +199,38 @@ func FinalOf(f Folded) []*evalv1.FinalStroke {
 		if _, ok := slices.BinarySearch(f.Visible, w.GetId()); !ok {
 			continue
 		}
-		st := &evalv1.FinalStroke{Id: w.GetId(), Points: make([]*evalv1.FinalPoint, len(w.GetPoints()))}
+		st := &evalv1.FinalStroke{Id: w.GetId(), Points: make([]*evalv1.FinalPoint, len(w.GetPoints())), Style: w.GetStyle()}
 		for k, p := range w.GetPoints() {
 			st.Points[k] = &evalv1.FinalPoint{X: p.GetX(), Y: p.GetY()}
 		}
 		out = append(out, st)
 	}
 	return out
+}
+
+// StrokeStyleOf is a style of tutor's code as the protocol writes it, or nil for none: StyleOf back.
+func StrokeStyleOf(st *sample.Style) *evalv1.StrokeStyle {
+	if st == nil {
+		return nil
+	}
+	pen := map[sample.Pen]evalv1.PenKind{sample.PenPen: evalv1.PenKind_PEN_KIND_PEN, sample.PenLiner: evalv1.PenKind_PEN_KIND_LINER, sample.PenMarker: evalv1.PenKind_PEN_KIND_MARKER}[st.Pen]
+	return &evalv1.StrokeStyle{Pen: pen, Color: st.Color, Width: st.Width, Opacity: int32(st.Opacity)}
+}
+
+// StyleOf is a stroke's style of the protocol as tutor's code takes it, or nil for none. A kind of
+// pen the protocol does not name is PenNone, which the crop refuses.
+func StyleOf(st *evalv1.StrokeStyle) *sample.Style {
+	if st == nil {
+		return nil
+	}
+	pen := sample.PenNone
+	switch st.GetPen() {
+	case evalv1.PenKind_PEN_KIND_PEN:
+		pen = sample.PenPen
+	case evalv1.PenKind_PEN_KIND_LINER:
+		pen = sample.PenLiner
+	case evalv1.PenKind_PEN_KIND_MARKER:
+		pen = sample.PenMarker
+	}
+	return &sample.Style{Pen: pen, Color: st.GetColor(), Width: st.GetWidth(), Opacity: int(st.GetOpacity())}
 }

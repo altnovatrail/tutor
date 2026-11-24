@@ -288,7 +288,7 @@ func historyOf(s *sample.Sample, ids map[string]int32, pointer string) (*evalv1.
 			he.Event = &evalv1.HistoryEvent_Erase{Erase: &evalv1.StrokeIds{Ids: gone}}
 		} else {
 			st := s.Strokes[e.at]
-			w := &evalv1.Stroke{Id: ids[st.ID], Pointer: pointer}
+			w := &evalv1.Stroke{Id: ids[st.ID], Pointer: pointer, Style: protocol.StrokeStyleOf(st.Style)}
 			for _, p := range st.Points {
 				w.Points = append(w.Points, &evalv1.InkPoint{X: tenth(p.X), Y: tenth(p.Y), TMs: int32(p.TMs)})
 			}
