@@ -62,12 +62,13 @@ Read 2026-10-20, unless said otherwise.
 
 ### 1.4. Anthropic: images in a request
 
-Read 2026-10-26, but for the last item.
+Read 2026-11-24, by the `.md` versions of the pages; the quotes of the Vision page are those of 2026-10-26.
 - [Vision](https://platform.claude.com/docs/en/build-with-claude/vision) — several images in a request:
   - "You can include multiple images in a single request, and Claude analyzes them jointly. This is useful for comparing images, asking about differences, or working with a sequence such as pages of a document.";
-  - "When sending several images, introduce each one with a short text label (Image 1:, Image 2:, and so on) so you can refer to them by name in your prompt and in follow-up turns.";
-  - the limit is "100 for each request on the API, for models with a 200k-token context window" and "600 for each request on the API, for all other models"; "If a single API request contains more than 20 images, a stricter per-image dimension limit applies to every image in that request." A request of the measurement has at most three images: the final one and two frames.
-- Read 2026-10-21: the window of Haiku 5.5 and Opus 5.5 is "1M tokens" ([Models overview](https://platform.claude.com/docs/en/about-claude/models/overview)), so they get 600. With more than 20 images, each is at most 2,000 px: "resize each image so that neither dimension exceeds 2000 px, or keep the request to 20 or fewer image and document blocks" ([Vision](https://platform.claude.com/docs/en/build-with-claude/vision)). A picture of 1,000×1,000 px the model does not shrink: in the table of resizing both tiers have "Not resized".
+  - "When sending several images, introduce each one with a short text label (`Image 1:`, `Image 2:`, and so on) so you can refer to them by name in your prompt and in follow-up turns.";
+  - the limit is "100 for each request on the API, for models with a 200k-token context window" and "600 for each request on the API, for all other models"; "If a single API request contains more than 20 images, a stricter per-image dimension limit applies to every image in that request." A request of the measurement has at most three images: the final one and two frames;
+  - a picture of 1,000×1,000 px the model does not shrink: the table of resizing has "| 1000x1000 px (1 megapixel) | Not resized | 1,296 | Not resized | 1,296 |", the cells separated here by " | ", one pair for each tier.
+- [Models overview](https://platform.claude.com/docs/en/about-claude/models/overview): the context window of Fable 5.2, Opus 5.5, Sonnet 5.5 and Haiku 5.5 is "1M tokens", so they get 600.
 
 ### 1.5. Anthropic: prompt caching, 2026-10-25
 
@@ -76,7 +77,7 @@ Read 2026-10-26, but for the last item.
 - "Cache reads: When cached content is used (10% of base input token price, or 2.5% on Claude Fable 5.1 and Claude Mythos 5.1, and 5% on Claude Opus 5.5 and Claude Sonnet 5.5)";
 - "the minimum cacheable prompt length is: 512 tokens for Claude Fable 5.1, … Claude Opus 5.5, … and Claude Haiku 5.5". The other models of the list are left out.
 
-### 1.6. Anthropic: latency and speed, 2026-10-25
+### 1.6. Anthropic: latency and speed
 
 Read 2026-10-25, but for the gain and the models of Fast mode, 2026-11-13. The pages show no date of their own.
 - [Reducing latency](https://platform.claude.com/docs/en/test-and-evaluate/strengthen-guardrails/reduce-latency): the levers are "1. Choose the right model", "2. Optimize prompt and output length", "3. Stream responses". "For speed-critical applications, Claude Haiku 5.5 offers the fastest response times while maintaining high intelligence. Effort is its main control for speed and cost."; "The fewer tokens the model has to process and generate, the faster the response will be." On streaming: "This can significantly improve the perceived responsiveness of your application".
@@ -128,7 +129,7 @@ Read 2026-10-25. The pages show no date of their own.
   - on `between_tools`: "At `xhigh` or `max`, a request with it returns a 400 error."
 - [Structured outputs](https://platform.claude.com/docs/en/build-with-claude/structured-outputs): in the list of what is supported, "`anyOf` and `allOf` (with limitations: `allOf` with `$ref` not supported)", and in the list of what is not, "Numerical constraints (such as `minimum`, `maximum`, `multipleOf`)".
 
-### 1.8. OpenAI: models, prices and data, 2026-10-20
+### 1.8. OpenAI: models, prices and data
 
 Read 2026-10-25, the same text as on 2026-10-20, unless said otherwise.
 - [Models](https://developers.openai.com/api/docs/models): "All latest OpenAI models support text and image input". `gpt-6-luna` is "Our most efficient model", `gpt-6-astra` "Our most capable model". They have [no](https://developers.openai.com/api/docs/deprecations) retirement dates.
@@ -441,9 +442,9 @@ The sources of the cost and time of a check. Read 2026-10-25.
   - Thetawise: "ThetaWise reads the math and gets straight to work." ([the page](https://thetawise.ai/features/math-solver));
   - Mathos AI: "Our AI math solver and calculator recognize handwriting and complex formulas instantly." ([the site](https://www.mathos.ai/)).
 
-### 2.2. Third-party measurements of speed, 2026-10-25
+### 2.2. Third-party measurements of speed
 
-The sources of the cost and time of a check. Read 2026-11-13; a copy of the Wayback Machine is of the time it names. These are measurements on other people's tasks, not a check of the board.
+The sources of the cost and time of a check. Read 2026-11-13, unless said otherwise; a copy of the Wayback Machine is of the time it names. These are measurements on other people's tasks, not a check of the board.
 - **Artificial Analysis:**
   - [the method](https://artificialanalysis.ai/methodology/performance-benchmarking), "Version 3.0.0 3 November 2026": "These replace the vision workload and the single and parallel prompt load scenarios." The pages of the models have only the workloads "1k input tokens", "10k input tokens", "100k input tokens" and "Multi-turn", so the workload with a picture is no longer at the source;
   - its numbers before, in the copies of the Wayback Machine of the pages of the models, the row Anthropic, `"visionSingleImage":{"medianOutputSpeed":…,"medianTimeToFirstChunk":…`:
@@ -454,6 +455,11 @@ The sources of the cost and time of a check. Read 2026-11-13; a copy of the Wayb
     - [Fable 5.1 · low, 2026-10-24 02:57 UTC](http://web.archive.org/web/20261024025738/https://artificialanalysis.ai/models/claude-fable-5-1-low/providers): 35.6583194133928 and 0.867283970499955.
 
     The medians are of 72 hours, so a copy of another hour gives other numbers. The copies of Opus · low and · high, a minute apart, show that the effort moves the time to the first token, 2.66 s against 7.81 s, and not the speed, 55.5 and 57.1.
+- **Artificial Analysis, for the other providers**, read 2026-10-25, before its method's version 3.0.0 — the workload with a picture, from the data of the pages, by the row of the provider itself:
+  - [GPT-6 Luna, without reasoning](https://artificialanalysis.ai/models/gpt-6-luna-non-reasoning/providers): `"visionSingleImage":{"medianOutputSpeed":96.6567964259013,"medianTimeToFirstChunk":1.25676392999995`. Our inference: this is effort `none` — Luna has no other setting without reasoning;
+  - so too [GPT-6 Luna · low](https://artificialanalysis.ai/models/gpt-6-luna-low/providers): 1.92 s and 103.8 tokens a second; [GPT-6 Luna · medium](https://artificialanalysis.ai/models/gpt-6-luna-medium/providers): 3.01 s and 68.1; [GPT-6 Astra · low](https://artificialanalysis.ai/models/gpt-6-astra-low/providers): 1.97 s and 36.5;
+  - [Gemma 4 31B, without reasoning](https://artificialanalysis.ai/models/gemma-4-31b-non-reasoning/providers), the row SambaNova: `"medianOutputSpeed":393.250138980534,"medianTimeToFirstChunk":2.40469330750005`;
+  - for Groq, Cerebras, Together and Fireworks, Artificial Analysis has no numbers on the models with pictures. OpenRouter does not show them without a key: "Only visible when authenticated with an API key or cookie; returns null for unauthenticated requests." ([the list of endpoints](https://openrouter.ai/docs/api/api-reference/endpoints/list-all-endpoints-for-a-model)).
 - **OpenRouter**, the pages of the models — medians of live traffic, 2026-11-13 at about 18:15 UTC, from the data the page embeds — the cells are drawn by its script and are not in its HTML —, the row Anthropic, `"p50_latency"` in milliseconds and `"p50_throughput"`: [Haiku 5.5](https://openrouter.ai/anthropic/claude-haiku-5.5) — 1594 and 126; [Sonnet 5.5](https://openrouter.ai/anthropic/claude-sonnet-5.5) — 1193 and 111; [Opus 5.5](https://openrouter.ai/anthropic/claude-opus-5.5) — 2487 and 85, and its row with `"price":"0.000008"` and `"price":"0.00004"` per token, Fast mode, — 1751 and 172; [Fable 5.1](https://openrouter.ai/anthropic/claude-fable-5.1) — 3518 and 66. The numbers change every few minutes. The hints of the columns, from the page's script: "Median time to first token, measured from when the request is sent. Data from the last 30 minutes."; on speed, "measured from when the request is sent to the end of the response, so time to first token is included. Includes reasoning tokens. Only responses with more than 50 output tokens count. Data from the last 30 minutes, or the last 24 hours for providers with fewer than 50 such responses."
 
 ### 2.3. On-device recognizers, 2026-10-25
