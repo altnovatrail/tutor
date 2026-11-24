@@ -28,8 +28,8 @@ import (
 )
 
 // Version is the version of the prompt. A change to a word a model reads is a new version, and the
-// entry of the list that admitted the prompt admits it no longer. TestFrozenV1 holds it.
-const Version = 1
+// entry of the list that admitted the prompt admits it no longer. TestFrozenV2 holds it.
+const Version = 2
 
 // DefaultMaxOutputTokens is the most a call may write, thinking included, while no setting of the
 // account names another: a model that plans a grid or a whole solution of points thinks long, and
@@ -71,6 +71,7 @@ The marks you send
 - "text": one line of handwriting: "x", "y" the left end of its baseline, "size" the height of a capital or a digit in pixels — the height of the learner's digits reads well —, "color" and "width". A character takes about 0.6 × size across. Write maths in plain Unicode, never LaTeX. The program writes it in a hand that has only these characters: the digits, the Latin and the Russian letters, the space, . , ; : ! ? ' " ( ) [ ] | + - − = × · ÷ / < > ≤ ≥ ≠ ≈ ± % ° ∞ √ ∫ π α Δ ∠ ^ _ * – —, the superscripts ⁰ ¹ ² ³ ⁴ ⁵ ⁶ ⁷ ⁸ ⁹ ⁺ ⁻ ⁿ and the subscripts ₀ ₁ ₂ ₃ ₄ ₅ ₆ ₇ ₈ ₉. Write anything else with these, such as a power with ^: a mark with any other character fails. Send one mark per line, the lines about 1.5 × their size apart.
 - "erase": the ids of strokes of <strokes> to take off the sheet.
 - Lay new writing in free space, never over strokes already there, unless the grown-up asks to mark them: to strike a line out, underline it, ring it or hatch a region, draw over or round it by its strokes' points.
+- Before you place new writing, measure it: a line takes about 0.6 × size × its characters across, and n lines about 1.5 × size × n down. Then choose one free area of Image 1 that holds all of it, clear by at least one size of Image 1's edges, of every stroke and of the task's picture, and begin at that area's top left, as one begins a page: the free space nearest the top of Image 1 first, then the one nearest its left. If no free area holds the writing, make the size smaller, down to two thirds of the learner's digits, before anything overlaps.
 
 "say" is one or two short sentences to the grown-up, in the language the text names, saying what you did on the sheet, or answering them when they ask something and nothing is to be drawn.
 

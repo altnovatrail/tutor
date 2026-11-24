@@ -12,10 +12,10 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// Version 1 is frozen: the entry of the list admits this fingerprint.
-func TestFrozenV1(t *testing.T) {
-	const frozen = "9d52730a7514cf636da305e084f4b069a22c9ab20c8a4cb8a4965c9d45db00d0"
-	if got := Fingerprint(); got != frozen || Version != 1 {
+// Version 2 is frozen: the entry of the list admits this fingerprint.
+func TestFrozenV2(t *testing.T) {
+	const frozen = "f81733d3f5b984db86fe4070d1a15570c45464d8013be0fbac08e8197bb4f4ac"
+	if got := Fingerprint(); got != frozen || Version != 2 {
 		t.Errorf("the fingerprint of version %d is %s, not the one the list admits, %s", Version, got, frozen)
 	}
 }
@@ -186,7 +186,7 @@ func TestDraw(t *testing.T) {
 	if d.Say != "Done" || !slices.Equal(d.Erase, []int32{3}) || len(d.Faults) != 1 || !strings.Contains(d.Faults[0], "5") {
 		t.Errorf("drawn %q, erase %v, faults %q", d.Say, d.Erase, d.Faults)
 	}
-	if l := d.Lines[0]; !slices.Equal(l.Points, []float32{1, 2, 0, 600}) || l.Color != "#ff0000" || l.Width != 2 {
+	if l := d.Lines[0]; !slices.Equal(l.Points[:2], []float32{1, 2}) || !slices.Equal(l.Points[len(l.Points)-2:], []float32{0, 600}) || len(l.Points)/2 < 200 || l.Color != "#ff0000" || l.Width != 2 {
 		t.Errorf("the polyline is %+v", l)
 	}
 	e := d.Lines[1]
@@ -196,7 +196,7 @@ func TestDraw(t *testing.T) {
 	text := d.Lines[2:]
 	want, _ := synth.Handwriting("x = 2", 10, 300, 28)
 	below, _ := synth.Handwriting("y = 3", 10, 342, 28)
-	if len(text) != len(want)+len(below) || text[0].Width != 2 || text[0].Points[0] != float32(want[0][0].X) {
+	if len(text) != len(want)+len(below) || text[0].Width != 2 || text[0].Points[0] != float32(want[0][0].X) || len(text[0].Points) <= 2*len(want[0]) {
 		t.Errorf("the text is %d strokes, want %d, first %+v", len(text), len(want)+len(below), text[0])
 	}
 	if !(Drawn{Say: "x"}).Did() || (Drawn{}).Did() || d.Did() {
@@ -217,6 +217,30 @@ func TestDraw(t *testing.T) {
 		if d := Draw(&Act{Marks: []Mark{m}}, 800, 600, nil); d.Did() || len(d.Faults) != 1 {
 			t.Errorf("%s: %+v", name, d)
 		}
+	}
+}
+
+// A stroke is laid densely enough that the sheet's smoothing keeps its corners: its own points
+// kept, in order, no side longer than the step, and no more points than the most it may take.
+func TestDense(t *testing.T) {
+	pi := []synth.Point{{X: 0, Y: 40}, {X: 0, Y: 0}, {X: 30, Y: 0}, {X: 30, Y: 40}}
+	d := dense(pi, 3, densest)
+	for _, corner := range pi {
+		if !slices.Contains(d, corner) {
+			t.Errorf("the corner %v is lost: %v", corner, d)
+		}
+	}
+	for i := 1; i < len(d); i++ {
+		if side := math.Hypot(d[i].X-d[i-1].X, d[i].Y-d[i-1].Y); side > 3+1e-9 {
+			t.Errorf("a side of %g", side)
+		}
+	}
+	long := []synth.Point{{X: 0, Y: 0}, {X: 5000, Y: 0}, {X: 5000, Y: 5000}}
+	if n := len(dense(long, 3, 64)); n > 64 || n < 32 {
+		t.Errorf("a long stroke takes %d points of 64", n)
+	}
+	if n := len(dense(make([]synth.Point, 70), 3, 64)); n != 70 {
+		t.Errorf("a stroke of more points than the most changed to %d", n)
 	}
 }
 

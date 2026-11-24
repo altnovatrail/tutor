@@ -237,7 +237,7 @@ var (
 		Date:  "2026-11-24",
 		Until: "2027-01-17",
 	}
-	drawingPrompt  = "9d52730a7514cf636da305e084f4b069a22c9ab20c8a4cb8a4965c9d45db00d0"
+	drawingPrompt  = "f81733d3f5b984db86fe4070d1a15570c45464d8013be0fbac08e8197bb4f4ac"
 	drawingCascade = []Model{
 		{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"},
 		{Provider: "anthropic", ID: "claude-sonnet-5-5", Effort: "medium"},

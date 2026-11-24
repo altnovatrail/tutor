@@ -43,7 +43,7 @@ func grownUpRequest(t *testing.T) GrownUpRequest {
 		Language: "en"}
 }
 
-// An act Haiku does well is the answer: the words, the polyline as it came, the text in the hand,
+// An act Haiku does well is the answer: the words, the polyline from its ends, laid densely, the text in the hand,
 // the stroke to take off; Haiku is asked at medium with the tool, the work as its PNG and the
 // task's crop as a photo, and Sonnet is not asked.
 func TestGrownUp(t *testing.T) {
@@ -52,7 +52,7 @@ func TestGrownUp(t *testing.T) {
 	if got.Outcome.Kind != Answered || got.Words != "Struck out and solved." || !slices.Equal(got.Erase, []int32{4}) || timesAsked(m) != [3]int{1, 0, 0} || len(got.Outcome.Usage) != 1 {
 		t.Fatalf("drawn %+v, asked %v", got, timesAsked(m))
 	}
-	if s := got.Strokes[0]; !slices.Equal(s.Points, []float32{10, 50, 390, 52}) || s.Color != "#ff3b30" || s.Width != 3 {
+	if s := got.Strokes[0]; !endsAre(s.Points, 10, 50, 390, 52) || len(s.Points) <= 4 || s.Color != "#ff3b30" || s.Width != 3 {
 		t.Errorf("the line is %+v", s)
 	}
 	text, _ := synth.Handwriting("x = 2", 20, 150, 30)
@@ -112,6 +112,12 @@ func TestGrownUpLastStands(t *testing.T) {
 	}
 }
 
+// endsAre tells whether a stroke's points begin at x0, y0 and end at x1, y1.
+func endsAre(points []float32, x0, y0, x1, y1 float32) bool {
+	n := len(points)
+	return n >= 4 && slices.Equal(points[:2], []float32{x0, y0}) && slices.Equal(points[n-2:], []float32{x1, y1})
+}
+
 // A point beyond the work is moved onto its edge, and a model whose act had one gives way to the
 // next.
 func TestGrownUpOffTheWork(t *testing.T) {
@@ -119,7 +125,7 @@ func TestGrownUpOffTheWork(t *testing.T) {
 	near := `{"say": "Done.", "marks": [{"kind": "polyline", "points": [[-5, 50], [404, 205]]}]}`
 	lib, m := drawingOf(t, far, near)
 	got := lib.GrownUp(context.Background(), grownUpRequest(t))
-	if got.Outcome.Kind != Answered || timesAsked(m) != [3]int{1, 1, 0} || !slices.Equal(got.Strokes[0].Points, []float32{0, 50, 400, 200}) {
+	if got.Outcome.Kind != Answered || timesAsked(m) != [3]int{1, 1, 0} || !endsAre(got.Strokes[0].Points, 0, 50, 400, 200) {
 		t.Errorf("drawn %+v, asked %v", got, timesAsked(m))
 	}
 }

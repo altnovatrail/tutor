@@ -51,6 +51,16 @@ const (
 	widest   = 60
 )
 
+// The sheet draws a stroke as a smooth curve through the middles of its sides, which rounds a
+// corner by half its sides: a glyph of a few points would lose its corners — П reads as Л, и as н,
+// Б as 6. So a stroke is laid with a point at least every denseStep pixels, a line of text every
+// tenth of its size and no more than that, the points of a stroke no more than densest.
+const (
+	denseStep = 3
+	leastStep = 1
+	densest   = 512
+)
+
 // lineStep is the step from a line of a mark of text to the next, of its size.
 const lineStep = 1.5
 
@@ -86,11 +96,16 @@ func Draw(a *Act, width, height int, named []int32) Drawn {
 		if fault != "" {
 			d.Faults = append(d.Faults, fmt.Sprintf("mark %d: %s", i+1, fault))
 		}
+		step := float64(denseStep)
+		if m.Kind == KindText && m.Size != nil {
+			step = max(leastStep, min(denseStep, *m.Size/10))
+		}
 		off := false
 		for _, poly := range polys {
 			if len(poly) < 2 {
 				continue
 			}
+			poly = dense(poly, step, densest)
 			l := Line{Color: color, Width: float32(min(max(lineWidth, thinnest), widest))}
 			for _, p := range poly {
 				x, y := min(max(p.X, 0), w), min(max(p.Y, 0), h)
@@ -151,6 +166,37 @@ func shapes(m Mark) (polys [][]synth.Point, color string, width float64, fault s
 		return polys, color, width, fault
 	}
 	return nil, color, width, fmt.Sprintf("no kind %q", m.Kind)
+}
+
+// dense is a polyline with points added along its sides, so that none is longer than step, or than
+// the step that keeps it to most points; its own points all kept. One of most points or more is as
+// it is.
+func dense(poly []synth.Point, step float64, most int) []synth.Point {
+	if len(poly) >= most {
+		return poly
+	}
+	length := 0.0
+	for i := 1; i < len(poly); i++ {
+		length += math.Hypot(poly[i].X-poly[i-1].X, poly[i].Y-poly[i-1].Y)
+	}
+	// Each side gains at most ceil(side/step) - 1 points: within most once step is length/(most - 2n).
+	if spare := most - 2*len(poly); spare > 0 {
+		step = max(step, length/float64(spare))
+	} else {
+		return poly
+	}
+	out := make([]synth.Point, 0, most)
+	out = append(out, poly[0])
+	for i := 1; i < len(poly); i++ {
+		a, b := poly[i-1], poly[i]
+		n := int(math.Ceil(math.Hypot(b.X-a.X, b.Y-a.Y) / step))
+		for k := 1; k < n; k++ {
+			t := float64(k) / float64(n)
+			out = append(out, synth.Point{X: a.X + (b.X-a.X)*t, Y: a.Y + (b.Y-a.Y)*t})
+		}
+		out = append(out, b)
+	}
+	return out
 }
 
 // ellipse is an ellipse as a closed polyline, a side about ellipseStep long.
