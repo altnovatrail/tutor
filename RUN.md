@@ -1,6 +1,6 @@
 # RUN.md — work plan of tutor
 
-What tutor does, does not do and has still to decide — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.19.16: the component's card — architecture 3.6 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, gathered in epics; only the current epic is in detail, or two when a second runs beside it (R04; R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). No `run/TASKS.md`: a task outside an epic stands in table 1 (R103, R116).
+What tutor does, does not do and has still to decide — [docs/architecture.md](docs/architecture.md); why — [docs/decisions.md](docs/decisions.md). The platform is in `spec/`, a submodule at tag v0.19.17: the component's card — architecture 3.6 spec; the order of repositories — repositories 6 spec; learners' data and law — privacy spec; the platform's decisions — spec's log. Small tasks, one at a time, gathered in epics; only the current epic is in detail, or two when a second runs beside it (R04; R19 spec). Other tables, each a file opening with its rules (R153 spec): 2, epics for later — [run/EPICS.md](run/EPICS.md); 3, questions to the author — [run/QUESTIONS.md](run/QUESTIONS.md); 4, debt — [run/DEBT.md](run/DEBT.md). No `run/TASKS.md`: a task outside an epic stands in table 1 (R103, R116).
 
 Language (R154 spec): rules and tables in English, terse, for the session; the epic's description, table 1 and the bodies of tasks in Russian — the author writes and reviews them.
 
@@ -57,6 +57,8 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 
 **2026-11-23: тег v0.19.16 и строка 5.23.** Оркестратор `spec` дал T198 — одну задачу, своя ветка и свой pull request: переход на `spec` `v0.19.16`, в котором T283 spec и R172 spec — стиль штриха и частичное стирание, — и `internal/evalsample` по ним (строка 5.23 COORDINATION.md spec).
 
+**2026-11-24: тег v0.19.17.** Оркестратор `spec` дал T199 — одну задачу, своя ветка и свой pull request: переход на `spec` `v0.19.17`, в котором T286 spec — проверка `devcontainer-outdated`, — и расширения VS Code и Claude Code до последних стабильных версий (строка 7.58 COORDINATION.md spec).
+
 **Результат:** `tutor` на теге `spec` `v0.19.12`, и его ссылки — по строгому правилу R171 spec (строка 7.44 COORDINATION.md spec).
 
 **Основа:** R156 spec, R159 spec, R171 spec, R160 spec; RULES.md spec, Citations и Across repositories; R103.
@@ -88,5 +90,6 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T194 | Журнал по R171 spec: от «The return of epic E3» до «The admission of words» | Claude | — | T193 |
 | [x] | T195 | Журнал по R171 spec: от «Move to `spec` `v0.14.0`» до конца; ключ `citations` | Claude | — | T194 |
 | [x] | T198 | Образцы со стилем штриха и частичным стиранием (R172 spec), обрезка в цвете | Claude | — | T195 |
+| [x] | T199 | Переход на тег `spec` v0.19.17 | Claude | — | T198 |
 
-**Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, pull request #215; T196, T197 — проход по части T184 — и T185–T195 — пачка на ветке `e22-tutor-2`, pull request #216 (R159 spec), по «Зависит от». T198 — своя ветка `t198-styles`, pull request #217.
+**Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, pull request #215; T196, T197 — проход по части T184 — и T185–T195 — пачка на ветке `e22-tutor-2`, pull request #216 (R159 spec), по «Зависит от». T198 — своя ветка `t198-styles`, pull request #217. T199 — своя ветка `t199-spec`, pull request PRNUM.
