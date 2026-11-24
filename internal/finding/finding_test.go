@@ -7,10 +7,10 @@ import (
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// Version 4 is frozen: the entry of the list admits this fingerprint.
-func TestFrozenV4(t *testing.T) {
-	const frozen = "23e1063e95678c0f8f28a8e994ac9979590d1954e4d928437ad54c7b490ee7a0"
-	if got := Fingerprint(); got != frozen || Version != 4 {
+// Version 5 is frozen: the entry of the list admits this fingerprint.
+func TestFrozenV5(t *testing.T) {
+	const frozen = "f53df0bb4a622cb83a633e8a4450244a066b42a500dc2d5ed958215d97195dd5"
+	if got := Fingerprint(); got != frozen || Version != 5 {
 		t.Errorf("the fingerprint of version %d is %s, not the one the list admits, %s", Version, got, frozen)
 	}
 }
@@ -26,7 +26,8 @@ func TestRequestOf(t *testing.T) {
 		t.Error(err)
 	}
 	// The model is told not to copy the page, and of how many tasks it may give.
-	if !strings.Contains(Instructions(), "the answer holds the boxes alone") || !strings.Contains(Instructions(), "at most 20 tasks") {
+	if !strings.Contains(Instructions(), "the answer holds the boxes alone") || !strings.Contains(Instructions(), "at most 20 tasks") ||
+		!strings.Contains(Instructions(), "the tasks under one instruction share its box") {
 		t.Error("the instructions lost a rule")
 	}
 }
@@ -57,26 +58,32 @@ func TestRequestOfARequest(t *testing.T) {
 	}
 }
 
+// zeros is the box of no instruction.
+const zeros = `"instruction": {"x1": 0, "y1": 0, "x2": 0, "y2": 0}`
+
 func TestRead(t *testing.T) {
-	boxes, err := Read(`{"tasks": [{"x1": 300, "y1": 40, "x2": 10, "y2": 200}, {"x1": 0, "y1": 0, "x2": 5, "y2": 5}]}`)
-	if err != nil || len(boxes) != 2 || boxes[0] != (Box{X1: 10, Y1: 40, X2: 300, Y2: 200}) {
+	boxes, err := Read(`{"tasks": [{"x1": 300, "y1": 40, "x2": 10, "y2": 200, "instruction": {"x1": 300, "y1": 30, "x2": 10, "y2": 5}}, {"x1": 0, "y1": 0, "x2": 5, "y2": 5, ` + zeros + `}]}`)
+	if err != nil || len(boxes) != 2 || boxes[0].Box != (Box{X1: 10, Y1: 40, X2: 300, Y2: 200}) || boxes[0].Instruction != (Box{X1: 10, Y1: 5, X2: 300, Y2: 30}) || boxes[1].Instruction != (Box{}) {
 		t.Fatalf("read %v, %v", boxes, err)
 	}
 	if boxes, err := Read(`{"tasks": []}`); err != nil || len(boxes) != 0 {
 		t.Errorf("no task: %v, %v", boxes, err)
 	}
 	// More than the model was asked for are read, and the caller keeps the first of the page.
-	twentyOne := `{"tasks": [` + strings.Repeat(`{"x1": 0, "y1": 0, "x2": 5, "y2": 5},`, MaxTasks) + `{"x1": 0, "y1": 0, "x2": 5, "y2": 5}]}`
+	twentyOne := `{"tasks": [` + strings.Repeat(`{"x1": 0, "y1": 0, "x2": 5, "y2": 5, `+zeros+`},`, MaxTasks) + `{"x1": 0, "y1": 0, "x2": 5, "y2": 5, ` + zeros + `}]}`
 	if boxes, err := Read(twentyOne); err != nil || len(boxes) != MaxTasks+1 {
 		t.Errorf("twenty-one: %d, %v", len(boxes), err)
 	}
 	for name, answer := range map[string]string{
-		"not JSON":         `tasks`,
-		"no tasks":         `{}`,
-		"another field":    `{"tasks": [], "text": "Name: Ann"}`,
-		"a missed corner":  `{"tasks": [{"x1": 0, "y1": 0, "x2": 5}]}`,
-		"a field of a box": `{"tasks": [{"x1": 0, "y1": 0, "x2": 5, "y2": 5, "label": "1"}]}`,
-		"more after it":    `{"tasks": []} {}`,
+		"not JSON":                `tasks`,
+		"no tasks":                `{}`,
+		"another field":           `{"tasks": [], "text": "Name: Ann"}`,
+		"a missed corner":         `{"tasks": [{"x1": 0, "y1": 0, "x2": 5, ` + zeros + `}]}`,
+		"no instruction":          `{"tasks": [{"x1": 0, "y1": 0, "x2": 5, "y2": 5}]}`,
+		"an instruction's corner": `{"tasks": [{"x1": 0, "y1": 0, "x2": 5, "y2": 5, "instruction": {"x1": 0, "y1": 0, "x2": 5}}]}`,
+		"a field of a box":        `{"tasks": [{"x1": 0, "y1": 0, "x2": 5, "y2": 5, ` + zeros + `, "label": "1"}]}`,
+		"its text":                `{"tasks": [{"x1": 0, "y1": 0, "x2": 5, "y2": 5, "instruction": {"x1": 0, "y1": 0, "x2": 5, "y2": 5, "text": "Compute"}}]}`,
+		"more after it":           `{"tasks": []} {}`,
 	} {
 		if _, err := Read(answer); err == nil {
 			t.Errorf("%s: read", name)

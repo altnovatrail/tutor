@@ -30,16 +30,17 @@ func number(v string) *paperv1.Answer {
 }
 
 // A folder of the cases the debug mode exported is a set of the part dev, read in the order of the
-// files' names: each case's kind follows from its truth — of more than one task, several —, its
-// pictures are those the Check sent — the task's crop as the library sends a photo, a JPEG —, and
-// the stub, which is right by that truth, is right on each. The finding, judged by the lines code
-// draws, runs on none of them. A case with no outcome, with a task of no statement, or with no task
-// is refused.
+// files' names: each case's kind follows from its truth — of more than one task, several; of a
+// Check, which has no key, exported —, its pictures are those the Check sent — the task's crop and
+// the instruction's as the library sends a photo, a JPEG, and the work as the PNG it is —, and the
+// stub, which is right by that truth, is right on each. The finding, judged by the lines code
+// draws, runs on none of them. A case with no outcome or with no task is refused.
 func TestExportedCases(t *testing.T) {
 	dir := t.TempDir()
 	write := func(name string, c *v1.DebugCase) {
 		t.Helper()
-		c.Work = &v1.PaperWork{Statement: pngOf(t, 300, 80), Crop: pngOf(t, 320, 160)}
+		instruction := c.GetWork().GetInstruction()
+		c.Work = &v1.PaperWork{Statement: pngOf(t, 300, 80), Crop: pngOf(t, 320, 160), Instruction: instruction}
 		data, err := protojson.Marshal(c)
 		if err != nil {
 			t.Fatal(err)
@@ -57,12 +58,18 @@ func TestExportedCases(t *testing.T) {
 		{Statement: "□ + 3 = 10", Formula: "x+3=10", Key: number("7"), Outcome: v1.DebugOutcome_DEBUG_OUTCOME_UNREADABLE},
 		{Statement: "Draw a line.", Outcome: v1.DebugOutcome_DEBUG_OUTCOME_UNCHECKED},
 	}})
+	write("c.json", &v1.DebugCase{Work: &v1.PaperWork{Instruction: pngOf(t, 300, 30)}, Tasks: []*v1.DebugTask{
+		{Read: "12", Outcome: v1.DebugOutcome_DEBUG_OUTCOME_CORRECT, CheckVerdict: "correct", CheckRead: "12"},
+		{Outcome: v1.DebugOutcome_DEBUG_OUTCOME_SO_FAR_CORRECT, CheckVerdict: "incorrect"},
+		{Outcome: v1.DebugOutcome_DEBUG_OUTCOME_UNCHECKED, CheckVerdict: "no_answer"},
+	}})
+	write("d.json", &v1.DebugCase{Tasks: task(&v1.DebugTask{Statement: "Underline the noun.", Read: "cat", Outcome: v1.DebugOutcome_DEBUG_OUTCOME_NOT_YET})})
 
 	s, err := paperset.Read(dir)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(s.Cases) != 3 || s.Cases[0].Kind != paperset.KindExpression || s.Cases[0].Tasks[0].Read != "85" ||
+	if len(s.Cases) != 5 || s.Cases[3].Kind != paperset.KindSeveral || s.Cases[3].Tasks[1].Outcome != paperset.OutcomeSoFarCorrect || s.Cases[4].Kind != paperset.KindExported || s.Cases[0].Kind != paperset.KindExpression || s.Cases[0].Tasks[0].Read != "85" ||
 		s.Cases[1].Kind != paperset.KindSeveral || len(s.Cases[1].Tasks) != 3 || s.Cases[1].Tasks[2].Key != nil || s.Cases[1].Tasks[1].Formula != "x+3=10" ||
 		s.Cases[2].Kind != paperset.KindWord || s.Cases[2].Tasks[0].Outcome != paperset.OutcomeNotYet || s.Cases[2].Part != "dev" {
 		t.Fatalf("the set = %+v", s.Cases)
@@ -72,6 +79,7 @@ func TestExportedCases(t *testing.T) {
 		t.Errorf("the digest = %q, %v; again %q", digest, err, again)
 	}
 	f := &paperset.File{Name: dir, SHA256: digest, Set: s}
+	instructions := 0
 	for _, kind := range paperset.CallKinds {
 		r, err := paperset.New(kind, "dev", f, haiku(t), 1)
 		if kind == paperset.CallFinding {
@@ -85,13 +93,23 @@ func TestExportedCases(t *testing.T) {
 		}
 		for _, st := range r.Steps {
 			req, err := st.Call.Request()
-			if err != nil || len(req.Images) != 1 {
+			want := []string{"image/jpeg"}
+			if kind == paperset.CallCheck {
+				want = append(want, "image/png")
+				if len(req.Images) == 3 {
+					want = append(want, "image/jpeg")
+					instructions++
+				}
+			}
+			if err != nil || len(req.Images) != len(want) {
 				t.Fatalf("%s: the request %+v, %v", kind, req, err)
 			}
-			media, _ := req.Images[0].MediaType()
-			if want := map[bool]string{true: "image/png", false: "image/jpeg"}[kind == paperset.CallPaper]; media != want {
-				t.Errorf("%s: the picture is %s, want %s", kind, media, want)
+			for i, w := range want {
+				if media, _ := req.Images[i].MediaType(); media != w {
+					t.Errorf("%s: picture %d is %s, want %s", kind, i+1, media, w)
+				}
 			}
+
 			right, err := st.Call.Right()
 			if err != nil {
 				t.Fatal(err)
@@ -100,6 +118,10 @@ func TestExportedCases(t *testing.T) {
 				t.Errorf("%s: the stub's %s is %+v", kind, right, rec)
 			}
 		}
+	}
+
+	if instructions != 1 {
+		t.Errorf("%d Checks sent the instruction, not 1", instructions)
 	}
 
 	// Beside a case of several tasks that code draws, the finding asks that one alone.
@@ -117,11 +139,10 @@ func TestExportedCases(t *testing.T) {
 	}
 
 	for name, c := range map[string]*v1.DebugCase{
-		"no outcome":   {Tasks: task(&v1.DebugTask{Statement: "1 =", Key: number("1"), Read: "1"})},
-		"no statement": {Tasks: task(&v1.DebugTask{Key: number("1"), Read: "1", Outcome: v1.DebugOutcome_DEBUG_OUTCOME_CORRECT})},
-		"no task":      {},
+		"no outcome": {Tasks: task(&v1.DebugTask{Statement: "1 =", Key: number("1"), Read: "1"})},
+		"no task":    {},
 	} {
-		write("c.json", c)
+		write("e.json", c)
 		if _, err := paperset.Read(dir); err == nil {
 			t.Errorf("a case with %s was read", name)
 		}

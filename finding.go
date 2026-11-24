@@ -37,18 +37,26 @@ const sameAsDrawn = 0.8
 
 // TasksFound is what the finding gives: the task frames, in whole thousandths of the photo turned by
 // Turn, in the order of the page, top to bottom, when Outcome is Answered — none when the model found
-// no task —; and the turn, in whole degrees clockwise from -179 to 180, by which the photo was turned
+// no task —; the frame of the instruction printed above each, in the same thousandths, at the
+// frame's place, nil where the page prints none, the frames under one instruction each with its
+// frame; and the turn, in whole degrees clockwise from -179 to 180, by which the photo was turned
 // for its page to read upright (provider.Turn), 0 with a request and with no frames.
 type TasksFound struct {
-	Frames  []*observationv1.CropBox
-	Turn    int
-	Outcome Outcome
+	Frames       []*observationv1.CropBox
+	Instructions []*observationv1.CropBox
+	Turn         int
+	Outcome      Outcome
 }
 
-// found is what one model of the finding gave: the frames, on the photo turned by turn.
+// foundTask is a frame found and the frame of its instruction, or nil.
+type foundTask struct {
+	frame, instruction *observationv1.CropBox
+}
+
+// found is what one model of the finding gave: the tasks, on the photo turned by turn.
 type found struct {
-	frames []*observationv1.CropBox
-	turn   int
+	tasks []foundTask
+	turn  int
 }
 
 // FindTasks asks the admitted models of the finding (CallFinding) for the tasks on the photo of a
@@ -61,7 +69,8 @@ type found struct {
 // off the schema fails the attempt. A box with no area on the photo is no frame, nor one that
 // covers a frame the learner drew, which the models' cascade drops once it is over: a model that
 // gave only such frames found tasks, and the next one is not asked. The frames go top to bottom,
-// and of two at one height the left first, the first finding.MaxTasks of them.
+// and of two at one height the left first, the first finding.MaxTasks of them, each with the frame
+// of its instruction, which the same model gave, at the same place of Instructions.
 func (t *Tutor) FindTasks(ctx context.Context, f TaskFinding) TasksFound {
 	calls, a, refused := t.prepare(CallFinding, f.Route)
 	if refused != nil {
@@ -70,18 +79,22 @@ func (t *Tutor) FindTasks(ctx context.Context, f TaskFinding) TasksFound {
 	photos := provider.NewPhotos(f.Photo)
 	got, out := cascade(ctx, calls, func(c call) (found, Outcome) {
 		return t.findBy(ctx, a, c, f, photos)
-	}, func(g found) bool { return len(g.frames) > 0 })
-	frames := got.frames
+	}, func(g found) bool { return len(g.tasks) > 0 })
+	tasks := got.tasks
 	if f.Request != "" {
-		frames = slices.DeleteFunc(frames, func(b *observationv1.CropBox) bool { return CoversDrawn(b, f.Drawn) })
+		tasks = slices.DeleteFunc(tasks, func(t foundTask) bool { return CoversDrawn(t.frame, f.Drawn) })
 	}
-	if len(frames) > finding.MaxTasks {
-		frames = frames[:finding.MaxTasks]
+	if len(tasks) > finding.MaxTasks {
+		tasks = tasks[:finding.MaxTasks]
 	}
-	if len(frames) == 0 {
-		got.turn = 0
+	if len(tasks) == 0 {
+		return TasksFound{Outcome: out}
 	}
-	return TasksFound{Frames: frames, Turn: got.turn, Outcome: out}
+	result := TasksFound{Turn: got.turn, Outcome: out}
+	for _, t := range tasks {
+		result.Frames, result.Instructions = append(result.Frames, t.frame), append(result.Instructions, t.instruction)
+	}
+	return result
 }
 
 // findBy is one attempt of the finding, by one model: without a request, the orientation of the
@@ -114,23 +127,33 @@ func (t *Tutor) findBy(ctx context.Context, a admission.Answer, c call, f TaskFi
 	if out.Kind != Answered {
 		return found{}, out
 	}
-	boxes, err := finding.Read(resps[0].JSON)
+	read, err := finding.Read(resps[0].JSON)
 	if err != nil {
 		out.Kind, out.Err = Failed, fmt.Errorf("tutor: %s: %w", c.model.Name(), err)
 		return found{}, out
 	}
-	frames := make([]*observationv1.CropBox, 0, len(boxes))
-	for _, b := range boxes {
-		place, ok := provider.Place(b.X1, b.Y1, b.X2, b.Y2, width, height)
-		if !ok {
+	tasks := make([]foundTask, 0, len(read))
+	for _, r := range read {
+		frame := placeOn(r.Box, width, height)
+		if frame == nil {
 			continue
 		}
-		frames = append(frames, &observationv1.CropBox{Ymin: int32(place[0]), Xmin: int32(place[1]), Ymax: int32(place[2]), Xmax: int32(place[3])})
+		tasks = append(tasks, foundTask{frame: frame, instruction: placeOn(r.Instruction, width, height)})
 	}
-	slices.SortStableFunc(frames, func(x, y *observationv1.CropBox) int {
-		return cmp.Or(cmp.Compare(x.Ymin, y.Ymin), cmp.Compare(x.Xmin, y.Xmin))
+	slices.SortStableFunc(tasks, func(x, y foundTask) int {
+		return cmp.Or(cmp.Compare(x.frame.Ymin, y.frame.Ymin), cmp.Compare(x.frame.Xmin, y.frame.Xmin))
 	})
-	return found{frames: frames, turn: turn}, out
+	return found{tasks: tasks, turn: turn}, out
+}
+
+// placeOn is a box in pixels of the photo of width × height px as a frame in thousandths of it, or
+// nil for a box with no area on it, the zero box of no instruction among them.
+func placeOn(b finding.Box, width, height int) *observationv1.CropBox {
+	place, ok := provider.Place(b.X1, b.Y1, b.X2, b.Y2, width, height)
+	if !ok {
+		return nil
+	}
+	return &observationv1.CropBox{Ymin: int32(place[0]), Xmin: int32(place[1]), Ymax: int32(place[2]), Xmax: int32(place[3])}
 }
 
 // orient asks one model which way up the page lies on the photo, as photos fits it, and gives the

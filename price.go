@@ -9,6 +9,7 @@ import (
 	"github.com/altnovatrail/spec/types/admissionv0"
 
 	"github.com/altnovatrail/tutor/admission"
+	"github.com/altnovatrail/tutor/internal/checking"
 	"github.com/altnovatrail/tutor/internal/correct"
 	"github.com/altnovatrail/tutor/internal/essay"
 	"github.com/altnovatrail/tutor/internal/finding"
@@ -16,7 +17,6 @@ import (
 	"github.com/altnovatrail/tutor/internal/paperwords"
 	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/render"
-	"github.com/altnovatrail/tutor/internal/solving"
 	"github.com/altnovatrail/tutor/internal/statement"
 	"github.com/altnovatrail/tutor/internal/workbook"
 	"github.com/altnovatrail/tutor/provider"
@@ -48,8 +48,8 @@ type tokens struct{ in, out int64 }
 // Call is a kind of call of the library: the reading of a sheet, of a workbook page and of an essay,
 // the assessment of an essay by its rubric, the call of the words, with the work and without it, and
 // the words after a correct answer, the finding of the tasks on the photo of a page from paper, and
-// of a task from paper the reading of its statement into a formula, its solution and the reading of
-// the work on it.
+// of a task from paper the reading of its statement, the Check of the work on it and the tutor's
+// words put another way.
 // Each serves a capability with a prompt of its own, and an entry of the list admits it only when it
 // measured that prompt.
 type Call string
@@ -64,14 +64,11 @@ const (
 	CallRubric   Call = "rubric"
 	CallCorrect  Call = "correct"
 	CallFinding  Call = "finding"
-	// The calls of a task from paper: its statement into a formula, its solution, and the work.
+	// The calls of a task from paper: its statement read for Recognise, the Check of the work, and
+	// the tutor's words of a rung put another way, without the work.
 	CallStatement Call = "statement"
-	CallSolving   Call = "solving"
-	CallPaper     Call = "paper"
-	// The tutor's words on a task from paper: with the work, the words of a rung, and without it,
-	// the opening question and a rung put another way.
-	CallPaperWords Call = "paper_words"
-	CallPaperHint  Call = "paper_hint"
+	CallChecking  Call = "checking"
+	CallPaperHint Call = "paper_hint"
 )
 
 // kind is a kind of call of the library: the capability it serves and the fingerprint of its
@@ -96,12 +93,14 @@ type kind struct {
 // kinds are the kinds of call of the library. The expected tokens of the sheet, the words and the
 // words after a correct answer are those of the runs that admitted them, on the prompts they have
 // now. The workbook, the essay and the rubric were admitted by the author's word,
-// without a run: theirs are the averages of the runs that tried their prompts now. The four
+// without a run: theirs are the averages of the runs that tried their prompts now. The
 // calls of a task from paper, admitted by the author's word too, had no run: theirs
 // are an estimate from the calls of the author's own pages, for each model of their cascade, so
 // that api reserves all three attempts; the finding's add those of the orientation before
 // it, an estimate of their own without a call — the photo and short instructions in, a few words
-// and the model's thinking out. A model without them has no expected price, and api takes
+// and the model's thinking out —; the Check's, an estimate without a call too, are those of the
+// statement, the solution and the reading of the work that it takes the place of, its words beside,
+// and the words put another way those of the words without their picture. A model without them has no expected price, and api takes
 // the value of its own config then. The words serve the analysis of the steps with the work,
 // CallWords, and the hint without it, CallHint, by one prompt; the hint was measured with the work,
 // so the hint without it has no expected tokens. The words after a correct answer are one
@@ -191,41 +190,25 @@ var kinds = map[Call]kind{
 		cascade:    true,
 		expected:   map[string]tokens{"claude-haiku-5-5": {in: 1520, out: 500}, "claude-sonnet-5-5": {in: 1520, out: 260}, "claude-opus-5-5": {in: 1520, out: 260}},
 	},
-	CallSolving: {
-		capability: admissionv0.CapabilityTaskSolving,
-		prompt:     solving.Fingerprint(),
-		maxIn:      maxTextBytes + maxPhotoTokens,
-		maxOut:     solving.MaxOutputTokens,
+	// The Check takes the photo of the task's crop and of its instruction, each at most what a
+	// photo takes, and the work, a crop of handwriting never shrunk.
+	CallChecking: {
+		capability: admissionv0.CapabilityTaskChecking,
+		prompt:     checking.Fingerprint(),
+		maxIn:      maxTextBytes + 2*maxPhotoTokens + tokensOf(maxCropSide, 1),
+		maxOut:     checking.MaxOutputTokens,
 		models:     3,
 		cascade:    true,
-		expected:   map[string]tokens{"claude-haiku-5-5": {in: 1520, out: 500}, "claude-sonnet-5-5": {in: 1520, out: 260}, "claude-opus-5-5": {in: 1520, out: 260}},
-	},
-	CallPaper: {
-		capability: admissionv0.CapabilityHandwritingReading,
-		prompt:     reading.PaperFingerprint(),
-		maxIn:      maxTextBytes + tokensOf(maxCropSide, 1),
-		maxOut:     reading.MaxOutputTokens,
-		models:     3,
-		cascade:    true,
-		expected:   map[string]tokens{"claude-haiku-5-5": {in: 910, out: 60}, "claude-sonnet-5-5": {in: 910, out: 100}, "claude-opus-5-5": {in: 910, out: 100}},
-	},
-	CallPaperWords: {
-		capability: admissionv0.CapabilitySolutionAnalysis,
-		prompt:     paperwords.Fingerprint(),
-		maxIn:      maxTextBytes + tokensOf(maxCropSide, 1),
-		maxOut:     paperwords.MaxOutputTokens,
-		models:     3,
-		cascade:    true,
-		expected:   map[string]tokens{"claude-haiku-5-5": {in: 2300, out: 1500}, "claude-sonnet-5-5": {in: 2300, out: 700}, "claude-opus-5-5": {in: 2300, out: 450}},
+		expected:   map[string]tokens{"claude-haiku-5-5": {in: 3500, out: 2500}, "claude-sonnet-5-5": {in: 3500, out: 1200}, "claude-opus-5-5": {in: 3500, out: 900}},
 	},
 	CallPaperHint: {
 		capability: admissionv0.CapabilityHint,
 		prompt:     paperwords.Fingerprint(),
-		maxIn:      maxTextBytes + maxPhotoTokens,
+		maxIn:      maxTextBytes,
 		maxOut:     paperwords.MaxOutputTokens,
 		models:     3,
 		cascade:    true,
-		expected:   map[string]tokens{"claude-haiku-5-5": {in: 2000, out: 1200}, "claude-sonnet-5-5": {in: 2000, out: 600}, "claude-opus-5-5": {in: 2000, out: 400}},
+		expected:   map[string]tokens{"claude-haiku-5-5": {in: 1200, out: 1200}, "claude-sonnet-5-5": {in: 1200, out: 600}, "claude-opus-5-5": {in: 1200, out: 400}},
 	},
 }
 

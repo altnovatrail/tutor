@@ -1,7 +1,6 @@
 package paperset
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,45 +8,46 @@ import (
 	"slices"
 	"time"
 
-	"github.com/altnovatrail/module-kit/observation"
 	"github.com/altnovatrail/module-kit/paper"
-	observationv1 "github.com/altnovatrail/spec/contracts/novatrail/observation/v1"
-	paperv1 "github.com/altnovatrail/spec/contracts/novatrail/paper/v1"
-	"google.golang.org/protobuf/proto"
 
+	"github.com/altnovatrail/tutor/internal/checking"
 	"github.com/altnovatrail/tutor/internal/finding"
-	"github.com/altnovatrail/tutor/internal/reading"
 	"github.com/altnovatrail/tutor/internal/render"
 	"github.com/altnovatrail/tutor/internal/runner"
-	"github.com/altnovatrail/tutor/internal/solving"
 	"github.com/altnovatrail/tutor/internal/statement"
 	"github.com/altnovatrail/tutor/provider"
 )
 
-// The kinds of call of the four runs, as their logs tell them (runner.CallKind). The finding asks
+// The kinds of call of the three runs, as their logs tell them (runner.CallKind). The finding asks
 // only the cases of several tasks that code draws, each a column of examples under one instruction,
 // with the learner's request to frame each example apart.
 const (
 	CallStatement = "statement"
-	CallSolving   = "solving"
-	CallPaper     = "paper"
+	CallCheck     = "check"
 	CallFinding   = "finding"
 )
 
 // CallKinds are the kinds of call of the set, in their order.
-var CallKinds = []string{CallStatement, CallSolving, CallPaper, CallFinding}
+var CallKinds = []string{CallStatement, CallCheck, CallFinding}
 
 // FindingRequest is the learner's request every case of the finding sends.
 const FindingRequest = "each example a task of its own"
 
-// The input tokens a call is expected to take besides its picture's, for the estimate, and a
+// The language and the age category every Check of the set asks with: those of the author's own
+// profile, the only one whose work a case may hold.
+const (
+	checkLanguage = "en"
+	checkCategory = "adult"
+)
+
+// The input tokens a call is expected to take besides its pictures', for the estimate, and a
 // generous count of all of them for the worst case; and the output each kind is expected to write.
 const (
 	inputsOfText = 1500
-	inputBudget  = 8000
+	inputBudget  = 12000
 )
 
-var outputs = map[string]int64{CallStatement: 300, CallSolving: 2000, CallPaper: 600, CallFinding: 400}
+var outputs = map[string]int64{CallStatement: 300, CallCheck: 2500, CallFinding: 400}
 
 // prompts are the fingerprint and the version of each kind's prompt, which the run's record keeps.
 var prompts = map[string]struct {
@@ -55,8 +55,7 @@ var prompts = map[string]struct {
 	version     int
 }{
 	CallStatement: {statement.Fingerprint, statement.Version},
-	CallSolving:   {solving.Fingerprint, solving.Version},
-	CallPaper:     {reading.PaperFingerprint, reading.PaperVersion},
+	CallCheck:     {checking.Fingerprint, checking.Version},
 	CallFinding:   {finding.Fingerprint, finding.Version},
 }
 
@@ -82,7 +81,7 @@ type step struct {
 	pictures *Pictures
 }
 
-// photo is a picture as a request of the statement or the solution sends it: the library sends the
+// photo is a picture as a request of the statement or the Check sends it: the library sends the
 // task's crop as provider.Photo makes it, a JPEG, as an exported case holds it, and a PNG goes as
 // one here, which no Fitter shrinks.
 func photo(p picture) provider.Image { return provider.Image{PNG: p.PNG, JPEG: p.JPEG} }
@@ -94,48 +93,55 @@ func (s *step) Request() (provider.Request, error) {
 	case CallStatement:
 		req = statement.RequestOf(photo(s.pictures.Statement), s.pictures.Statement.Width, s.pictures.Statement.Height)
 		req.MaxOutputTokens = statement.MaxOutputTokens
-	case CallSolving:
-		req = solving.RequestOf(photo(s.pictures.Statement), s.pictures.Statement.Width, s.pictures.Statement.Height, s.asked())
-		req.MaxOutputTokens = solving.MaxOutputTokens
 	case CallFinding:
 		req = finding.RequestOf(photo(s.pictures.Statement), s.pictures.Statement.Width, s.pictures.Statement.Height, FindingRequest, nil)
 		req.MaxOutputTokens = finding.MaxOutputTokens
 	default:
-		req = reading.PaperRequestOf(s.pictures.Work.PNG, s.pictures.Work.Width, s.pictures.Work.Height, s.statements())
-		req.MaxOutputTokens = reading.MaxOutputTokens
+		p := checking.Prompt{
+			Statement: checking.Picture{Image: photo(s.pictures.Statement), Width: s.pictures.Statement.Width, Height: s.pictures.Statement.Height},
+			Work:      checking.Picture{Image: provider.Image{PNG: s.pictures.Work.PNG}, Width: s.pictures.Work.Width, Height: s.pictures.Work.Height},
+			Tasks:     len(s.kase.Tasks), Language: checkLanguage, AgeCategory: checkCategory,
+		}
+		if in := s.pictures.Instruction; in != nil {
+			p.Instruction = &checking.Picture{Image: photo(*in), Width: in.Width, Height: in.Height}
+		}
+		var err error
+		if req, err = checking.RequestOf(p); err != nil {
+			return provider.Request{}, err
+		}
+		req.MaxOutputTokens = checking.MaxOutputTokens
 	}
 	return req, nil
 }
 
-// asked are the tasks the solution is asked: every task of the case, by its number and statement,
-// so that the run measures the solution of each.
-func (s *step) asked() []solving.Task {
-	tasks := make([]solving.Task, len(s.kase.Tasks))
-	for i, t := range s.kase.Tasks {
-		tasks[i] = solving.Task{Number: i + 1, Statement: t.Statement}
+// expected is the verdict of the Check a task of the case comes to by its truth, or "" for any: no
+// work drawn is no answer; of an exported case, work so far correct is no answer too, and so is a
+// task unchecked, which the Check leaves with no verdict when it reads no answer; and a task code
+// draws unchecked, an open one, may take any.
+func (s *step) expected(t Task) string {
+	exported := s.kase.pictures != nil
+	switch {
+	case t.Outcome == OutcomeUnchecked && !exported:
+		return ""
+	case t.Outcome == OutcomeUnchecked, t.Outcome == OutcomeSoFarCorrect, t.Work == "" && !exported:
+		return checking.VerdictNoAnswer
+	case t.Outcome == OutcomeCorrect:
+		return checking.VerdictCorrect
+	case t.Outcome == OutcomeNotYet:
+		return checking.VerdictIncorrect
 	}
-	return tasks
-}
-
-// statements are the statements of the case's tasks, in order, as the reading of the work is given
-// them.
-func (s *step) statements() []string {
-	out := make([]string, len(s.kase.Tasks))
-	for i, t := range s.kase.Tasks {
-		out[i] = t.Statement
-	}
-	return out
+	return checking.VerdictUnreadable
 }
 
 // Right is the answer of a model that is always right, by the case's truth: its tasks with their
-// statements and formulas, their keys, an observation of the values read, one for each task with
-// work, or a box round each task's line of the statement's picture.
+// statements and formulas, the verdict and the value read of each task, or a box round each task's
+// line of the statement's picture.
 func (s *step) Right() (string, error) {
 	switch s.kind {
 	case CallFinding:
-		boxes := []map[string]int{}
+		boxes := []map[string]any{}
 		for _, b := range s.lines() {
-			boxes = append(boxes, map[string]int{"x1": b.X1, "y1": b.Y1, "x2": b.X2, "y2": b.Y2})
+			boxes = append(boxes, map[string]any{"x1": b.X1, "y1": b.Y1, "x2": b.X2, "y2": b.Y2, "instruction": map[string]int{"x1": 0, "y1": 0, "x2": 0, "y2": 0}})
 		}
 		data, err := json.Marshal(map[string]any{"tasks": boxes})
 		return string(data), err
@@ -146,32 +152,38 @@ func (s *step) Right() (string, error) {
 		}
 		data, err := json.Marshal(map[string]any{"tasks": tasks})
 		return string(data), err
-	case CallSolving:
-		answers := map[int]*paperv1.Answer{}
-		for i, t := range s.kase.Tasks {
-			answers[i+1] = t.Key.Answer()
-		}
-		return solving.Answered(answers)
 	}
-	o := reading.PaperObservation{Parts: []reading.Part{}, Results: []reading.PaperResult{}}
+	slots := make([]checking.Slot, len(s.kase.Tasks))
 	for i, t := range s.kase.Tasks {
-		if t.Work != "" {
-			o.Parts = append(o.Parts, reading.Part{Kind: reading.KindText, Text: t.Work, Legible: true, OtherReadings: []string{}})
-			o.Results = append(o.Results, reading.PaperResult{Result: reading.Result{Part: len(o.Parts), Value: t.Read, OtherValues: []string{}}, Task: i + 1, Box: []int{}})
+		slots[i] = checking.Slot{Task: i + 1, Verdict: s.expected(t), Read: t.Read, Answer: written(t.Key)}
+		if slots[i].Verdict == "" {
+			slots[i].Verdict = checking.VerdictCorrect
+		}
+		if slots[i].Verdict == checking.VerdictNoAnswer {
+			slots[i].Read = ""
 		}
 	}
-	data, err := json.Marshal(o)
-	return string(data), err
+	return checking.Answered(slots, "Look at your work once more.", []string{"Where do you begin?", "Look at the first line."})
+}
+
+// written is a key as the learner writes it: the number, or the label of the option, "" for none.
+func written(k *Key) string {
+	switch {
+	case k == nil:
+		return ""
+	case k.Choice != "":
+		return k.Choice
+	}
+	return k.Number
 }
 
 // Record is the call's record: the answer as the model gave it, and what the program makes of it
 // against the truth of each task of the case. Of the statement, each formula and what the solver
 // gives on it — right when the tasks are as many as the case's, and each formula gives the answer
 // the solver gives on the true one, or both are no formula, since a formula read of a word problem
-// is the reading's mistake. Of the solution, the key it makes of each task (paper.Key) — right when
-// each judges its task's right value correct, or neither has a key. Of the work, the verdict of each
-// task by its key on the observation brought to it — right when each is its task's outcome; with no
-// key it is unchecked. An answer off the schema fails the call.
+// is the reading's mistake. Of the Check, each task's verdict and value read — right when each
+// verdict is the one its truth comes to (step.expected). Of the finding, how many boxes. An answer
+// off the schema fails the call.
 func (s *step) Record(o runner.Outcome) any {
 	rec := CallRecord{Kind: "call", Call: s.Call, NotAsked: o.NotAsked, Answer: o.Answer, Error: o.Error, Usage: o.Usage}
 	if o.NotAsked || o.Error != "" {
@@ -180,10 +192,14 @@ func (s *step) Record(o runner.Outcome) any {
 	tasks := s.kase.Tasks
 	switch s.kind {
 	case CallFinding:
-		boxes, err := finding.Read(o.Answer)
+		found, err := finding.Read(o.Answer)
 		if err != nil {
 			rec.Error = err.Error()
 			return rec
+		}
+		boxes := make([]finding.Box, len(found))
+		for i, f := range found {
+			boxes[i] = f.Box
 		}
 		rec.Boxes = len(boxes)
 		rec.Right = len(boxes) == len(tasks) && s.apart(boxes) && s.onLines(boxes)
@@ -201,38 +217,18 @@ func (s *step) Record(o runner.Outcome) any {
 				rec.Right = rec.Right && solvedOf(r.Formula) == solvedOf(tasks[i].Formula) && (r.Formula == "") == (tasks[i].Formula == "")
 			}
 		}
-	case CallSolving:
-		answers, err := solving.Read(o.Answer, s.asked())
-		if err != nil {
-			rec.Error = err.Error()
-			return rec
-		}
-		rec.Keys, rec.Right = []*Key{}, true
-		for i, t := range tasks {
-			key, truth := paper.Key(nil, answers[i+1]), t.Key.Answer()
-			rec.Keys = append(rec.Keys, keyOf(key.GetAnswer()))
-			rec.Right = rec.Right && (truth == nil) == (key.GetAnswer() == nil) && (truth == nil || judgesRight(key.GetAnswer(), truth))
-		}
 	default:
-		read, err := reading.PaperRead(o.Answer, len(tasks))
+		check, err := checking.Read(o.Answer, len(tasks), s.pictures.Work.Width, s.pictures.Work.Height)
 		if err != nil {
 			rec.Error = err.Error()
 			return rec
 		}
-		obs := reading.PaperObservationOf(read, len(tasks))
-		rec.Verdicts, rec.Reasons, rec.Right = []string{}, []string{}, true
-		for i, t := range tasks {
-			v := slotVerdict{Verdict: OutcomeUnchecked}
-			if truth := t.Key.Answer(); truth != nil {
-				slot := proto.Clone(obs.GetAnswerSlots()[i]).(*observationv1.AnswerSlotObservation)
-				slot.AnswerSlot, slot.CropBox = &observationv1.AnswerSlotPlace{Item: 1, Slot: 1}, nil
-				if v, err = verdictOf(truth, &observationv1.Observation{AnswerSlots: []*observationv1.AnswerSlotObservation{slot}}); err != nil {
-					rec.Error = err.Error()
-					return rec
-				}
+		rec.Verdicts, rec.Reads, rec.Right = []string{}, []string{}, true
+		for i, slot := range check.Slots {
+			rec.Verdicts, rec.Reads = append(rec.Verdicts, slot.Verdict), append(rec.Reads, slot.Read)
+			if want := s.expected(tasks[i]); want != "" {
+				rec.Right = rec.Right && slot.Verdict == want
 			}
-			rec.Verdicts, rec.Reasons = append(rec.Verdicts, v.Verdict), append(rec.Reasons, v.Reason)
-			rec.Right = rec.Right && v.Verdict == t.Outcome
 		}
 	}
 	return rec
@@ -299,55 +295,17 @@ func solvedOf(formula string) string {
 	return n.GetValue()
 }
 
-// judgesRight is whether a key of AI judges correct the value a truth's key holds, and is of its
-// kind: so a key of 0.5 is the truth's 1/2, and one of other options is not its choice.
-func judgesRight(key, truth *paperv1.Answer) bool {
-	value := truth.GetNumber().GetValue()
-	if c := truth.GetChoice(); c != nil {
-		if key.GetChoice() == nil || len(key.GetChoice().GetOptions()) != len(c.GetOptions()) {
-			return false
+// tokensOf are the tokens of the pictures a kind of call sends of a case: the statement's crop, and
+// to the Check the work and the instruction's crop too.
+func tokensOf(kind string, p *Pictures) int {
+	n := render.Tokens(p.Statement.Width, p.Statement.Height)
+	if kind == CallCheck {
+		n += render.Tokens(p.Work.Width, p.Work.Height)
+		if p.Instruction != nil {
+			n += render.Tokens(p.Instruction.Width, p.Instruction.Height)
 		}
-		value = c.GetKey()
-	} else if key.GetNumber() == nil {
-		return false
 	}
-	o := &observationv1.Observation{AnswerSlots: []*observationv1.AnswerSlotObservation{{
-		AnswerSlot: &observationv1.AnswerSlotPlace{Item: 1, Slot: 1},
-		Read:       &observationv1.AnswerSlotObservation_Value{Value: value},
-	}}}
-	v, err := verdictOf(key, o)
-	return err == nil && v.Verdict == OutcomeCorrect
-}
-
-// slotVerdict is the verdict of the one answer slot of a task from paper and its reason.
-type slotVerdict struct{ Verdict, Reason string }
-
-// verdictOf is the verdict by a key on an observation, as api gives it: the values brought to the
-// key, the observation validated and judged against the task's one item.
-func verdictOf(key *paperv1.Answer, o *observationv1.Observation) (slotVerdict, error) {
-	items := paper.Items(key)
-	brought := paper.Brought(key, o)
-	if err := observation.Validate(items, brought); err != nil {
-		return slotVerdict{}, err
-	}
-	got, err := observation.Verdicts(context.Background(), items, brought, nil)
-	if err != nil {
-		return slotVerdict{}, err
-	}
-	s := got[0].Slots[0]
-	return slotVerdict{Verdict: string(s.Verdict), Reason: string(s.Reason)}, nil
-}
-
-// keyOf is a key as the file of a set writes it, or nil for none.
-func keyOf(a *paperv1.Answer) *Key {
-	switch {
-	case a.GetNumber() != nil:
-		n := a.GetNumber()
-		return &Key{Number: n.GetValue(), Units: n.GetUnits(), Unknown: n.GetUnknown()}
-	case a.GetChoice() != nil:
-		return &Key{Options: a.GetChoice().GetOptions(), Choice: a.GetChoice().GetKey()}
-	}
-	return nil
+	return n
 }
 
 // New plans a run of a kind of call over the cases of a part of a set, by the configurations,
@@ -359,6 +317,13 @@ func New(kind, part string, f *File, configs []runner.Config, repeats int) (*run
 		return nil, fmt.Errorf("paperset: no kind of call %q", kind)
 	}
 	cases := f.Set.Of(part)
+	if kind == CallStatement {
+		// The reading of a statement is judged by the statement of each task, which an exported
+		// case of a Check holds only when Recognise read one.
+		cases = slices.DeleteFunc(slices.Clone(cases), func(c Case) bool {
+			return slices.ContainsFunc(c.Tasks, func(t Task) bool { return t.Statement == "" })
+		})
+	}
 	if kind == CallFinding {
 		// The finding is judged by the lines synth writes the tasks on (step.lines): the photo of a
 		// case the debug mode exported has lines no code knows.
@@ -396,11 +361,7 @@ func New(kind, part string, f *File, configs []runner.Config, repeats int) (*run
 	}
 	for rep := 1; rep <= repeats; rep++ {
 		for i := range cases {
-			pic := drawn[i].Statement
-			if kind == CallPaper {
-				pic = drawn[i].Work
-			}
-			in := int64(inputsOfText + render.Tokens(pic.Width, pic.Height))
+			in := int64(inputsOfText + tokensOf(kind, drawn[i]))
 			for _, c := range configs {
 				call := Call{Case: cases[i].Number, Config: c.Name, Repeat: rep}
 				r.Steps = append(r.Steps, runner.Step{Config: c, In: in, Out: outputs[kind], WorstIn: inputBudget, Call: &step{Call: call, kind: kind, kase: &cases[i], pictures: drawn[i]}})
@@ -412,7 +373,7 @@ func New(kind, part string, f *File, configs []runner.Config, repeats int) (*run
 
 // The records of a run's log, a JSON object a line, each with its kind: the run first, then each
 // case, each call, and the end, which is the runner's (runner.End). The run's record tells its kind
-// of call — statement, solving or paper —, so that tutor-eval report tells its log from the others.
+// of call — statement, check or finding —, so that tutor-eval report tells its log from the others.
 type (
 	// RunRecord tells the run: its kind of call, part, set by its file, SHA-256 and seed, its
 	// configurations and repeats, its cap and estimate, the fingerprint and the version of its
@@ -453,8 +414,8 @@ type (
 	}
 	// CallRecord tells a call: the answer as the model gave it, the failure if it failed, and what it
 	// took; what the program made of it, task by task — the formulas and what the solver gives on
-	// each, the keys, the verdicts and their reasons, or how many boxes the finding gave —, and
-	// whether that is right by the case's truth.
+	// each, the Check's verdicts and values read, or how many boxes the finding gave —, and whether
+	// that is right by the case's truth.
 	CallRecord struct {
 		Kind string `json:"kind"`
 		Call
@@ -463,9 +424,8 @@ type (
 		Error    string   `json:"error,omitempty"`
 		Formulas []string `json:"formulas,omitempty"`
 		Solved   []string `json:"solved,omitempty"`
-		Keys     []*Key   `json:"keys,omitempty"`
 		Verdicts []string `json:"verdicts,omitempty"`
-		Reasons  []string `json:"reasons,omitempty"`
+		Reads    []string `json:"reads,omitempty"`
 		Boxes    int      `json:"boxes,omitempty"`
 		Right    bool     `json:"right"`
 		runner.Usage

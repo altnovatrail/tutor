@@ -8,7 +8,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/runner"
 )
 
-// paperFile is the set of a task from paper that gen paper made, which the runs of its four calls
+// paperFile is the set of a task from paper that gen paper made, which the runs of its three calls
 // read by default.
 const paperFile = "eval/paper-gen.json"
 
@@ -17,8 +17,7 @@ const paperFile = "eval/paper-gen.json"
 // measured alone.
 var paperConfigs = map[string][]string{
 	paperset.CallStatement: cascadeConfigs,
-	paperset.CallSolving:   cascadeConfigs,
-	paperset.CallPaper:     cascadeConfigs,
+	paperset.CallCheck:     cascadeConfigs,
 	paperset.CallFinding:   cascadeConfigs,
 }
 

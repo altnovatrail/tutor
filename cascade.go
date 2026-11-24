@@ -3,8 +3,6 @@ package tutor
 import (
 	"context"
 	"time"
-
-	observationv1 "github.com/altnovatrail/spec/contracts/novatrail/observation/v1"
 )
 
 // cascadeFloor is the least time a later attempt of a cascade needs before the deadline of its
@@ -64,25 +62,4 @@ func timeFor(ctx context.Context) bool {
 	}
 	d, ok := ctx.Deadline()
 	return !ok || time.Until(d) >= cascadeFloor
-}
-
-// cascading tells whether the calls of a kind are the attempts of a cascade rather than models asked
-// at once.
-func cascading(calls []call) bool {
-	return len(calls) > 0 && calls[0].attempt > 0
-}
-
-// readable tells whether a reading of the work did: no answer slot of its observations illegible or
-// ambiguous, which a stronger model may read. A slot blank, with no final answer or with several is
-// what the work holds, and a later model would read the same at many times the price.
-func readable(obs []*observationv1.Observation) bool {
-	for _, o := range obs {
-		for _, s := range o.GetAnswerSlots() {
-			switch s.GetUnreadable() {
-			case observationv1.Unreadable_UNREADABLE_ILLEGIBLE, observationv1.Unreadable_UNREADABLE_AMBIGUOUS:
-				return false
-			}
-		}
-	}
-	return len(obs) > 0
 }

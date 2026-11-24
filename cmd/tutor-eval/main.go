@@ -89,7 +89,7 @@ const usage = `usage:
                              handwriting
   tutor-eval split -seed N [-dev K] [-dir D] [-bank F] [-plan F]
                              divide the recorded sheets into development and test, once
-  tutor-eval run -part dev|test|all|recorded [-kind judge|reading|hint|correct|workbook|essay|statement|solving|paper|finding]
+  tutor-eval run -part dev|test|all|recorded [-kind judge|reading|hint|correct|workbook|essay|statement|check|finding]
                  [-repeats N] [-max-usd N] [-log F] [-stub] [-dir D] [-bank F] [-plan F] [-set D,B,P]...
                  [-reads LIST] [-workbook F] [-essays F] [-paper F] [-readers LIST]
                  [-two] [-cases F] [-case-kinds LIST]
@@ -109,7 +109,7 @@ const usage = `usage:
                              default; a hint with -cases asks the cases of the set of the words
                              on the one set of their plan, those of the kinds -case-kinds names,
                              and with -part recorded those of the sheets recorded so far; the
-                             statement, the solving, the paper and the finding — of the cases
+                             statement, the check and the finding — of the cases
                              of several tasks alone — ask the cases of a part of -paper,
                              eval/paper-gen.json by default or a folder of the cases the
                              debug mode exported, as eval/paper-cases, by the models the

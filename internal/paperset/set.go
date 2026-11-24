@@ -1,13 +1,13 @@
-// Package paperset is the eval set of a task from paper and its four runs: the reading of a
-// statement into its tasks and their formulas, the solution of tasks by AI, the reading of the work
-// on a task against its keys, and the finding of the tasks of several framed together, each apart,
-// by the learner's request. A case is the crop of one task of one of five kinds, or of several
-// tasks framed together, with the truth of each task by construction — the formula, the key, what
-// the learner writes and the verdict it comes to —, and its pictures are drawn from it when a run
-// asks them, the same from the same case on any machine, so the set is one file and no folder of
-// samples; a folder of the cases the debug mode exported holds its pictures instead. The printed
-// statement is drawn by synth's hand, as the learner's writing is: the runs on the stub measure the
-// plumbing, and a paid run needs photos of printed pages (Д22).
+// Package paperset is the eval set of a task from paper and its three runs: the reading of a
+// statement into its tasks and their formulas, the Check of the work on a task, and the finding of
+// the tasks of several framed together, each apart, by the learner's request. A case is the crop of
+// one task of one of five kinds, or of several tasks framed together, with the truth of each task by
+// construction — the formula, the key, what the learner writes and the verdict it comes to —, and
+// its pictures are drawn from it when a run asks them, the same from the same case on any
+// machine, so the set is one file and no folder of samples; a folder of the cases the debug mode
+// exported holds its pictures instead. The printed statement is drawn by synth's hand, as the
+// learner's writing is: the runs on the stub measure the plumbing, and a paid run needs photos of
+// printed pages (Д22).
 package paperset
 
 import (
@@ -27,8 +27,9 @@ import (
 
 // The kinds of a case: an expression and an equation, which are formulas; a word problem with a
 // number for its answer, a choice among printed options, both no formula; an open task, a drawing,
-// which has no one answer and so no key; and a crop of several tasks framed together, each with an
-// answer of its own and a key of its own.
+// which has no one answer and so no key; a crop of several tasks framed together, each with an
+// answer of its own and a key of its own; and a case the debug mode exported whose truth names no
+// key, so no kind of these.
 const (
 	KindExpression = "expression"
 	KindEquation   = "equation"
@@ -36,18 +37,23 @@ const (
 	KindChoice     = "choice"
 	KindOpen       = "open"
 	KindSeveral    = "several"
+	KindExported   = "exported"
 )
 
 // Kinds are the kinds of a case, in the order the generator makes them.
 var Kinds = []string{KindExpression, KindEquation, KindWord, KindChoice, KindOpen, KindSeveral}
 
-// The outcomes a task's work comes to: the verdicts of module-kit by the key, and unchecked for a
-// task with no key.
+// caseKinds are the kinds of a case, an exported one's among them, in the order of a report.
+var caseKinds = append(slices.Clone(Kinds), KindExported)
+
+// The outcomes a task's work comes to: the verdicts by the key, and unchecked for a task with no
+// key; and of an exported case, so far correct for work with no answer and no mistake.
 const (
-	OutcomeCorrect    = "correct"
-	OutcomeNotYet     = "not_yet"
-	OutcomeUnreadable = "unreadable"
-	OutcomeUnchecked  = "unchecked"
+	OutcomeCorrect      = "correct"
+	OutcomeNotYet       = "not_yet"
+	OutcomeUnreadable   = "unreadable"
+	OutcomeUnchecked    = "unchecked"
+	OutcomeSoFarCorrect = "so_far_correct"
 )
 
 // Set is the file of the set: what it is, the seed it was made from, and its cases, numbered from 1.
@@ -110,9 +116,10 @@ func (k *Key) Answer() *paperv1.Answer {
 // Read reads the file of a set strictly, or a folder of the cases the debug mode exported (exported):
 // no field it does not name, the cases numbered from 1 in order, each of a known kind, part and
 // outcome, with a statement, or the pictures of an exported case; one task, or of several tasks from
-// 2 to 20; each task with a statement, a value read exactly when it has work, and a key exactly when
-// it is not unchecked; and, of one task, a key exactly when it is not open and a formula exactly of
-// a formula's kind.
+// 2 to 20; each task with a value read exactly when it has work, and of a case drawn by code a
+// statement, a key exactly when it is not unchecked, and, of one task, a key exactly when it is not
+// open and a formula exactly of a formula's kind. An exported case's truth is the developer's, which
+// may name no statement and no key.
 func Read(path string) (*Set, error) {
 	var s Set
 	if info, err := os.Stat(path); err != nil {
@@ -142,7 +149,7 @@ func Read(path string) (*Set, error) {
 		if c.Number != i+1 {
 			problems = append(problems, fmt.Sprintf("the number is %d", c.Number))
 		}
-		if !slices.Contains(Kinds, c.Kind) {
+		if exported := c.pictures != nil; !slices.Contains(Kinds, c.Kind) && (!exported || c.Kind != KindExported) {
 			problems = append(problems, fmt.Sprintf("the kind %q is none of the set's", c.Kind))
 		}
 		if c.Part != sample.PartDev && c.Part != sample.PartTest {
@@ -156,14 +163,24 @@ func Read(path string) (*Set, error) {
 		}
 		for j, t := range c.Tasks {
 			var of []string
-			if !slices.Contains([]string{OutcomeCorrect, OutcomeNotYet, OutcomeUnreadable, OutcomeUnchecked}, t.Outcome) {
-				of = append(of, fmt.Sprintf("the outcome %q is none of the set's", t.Outcome))
+			outcomes := []string{OutcomeCorrect, OutcomeNotYet, OutcomeUnreadable, OutcomeUnchecked}
+			if c.pictures != nil {
+				outcomes = append(outcomes, OutcomeSoFarCorrect)
 			}
-			if t.Statement == "" {
-				of = append(of, "it has no statement")
+			if !slices.Contains(outcomes, t.Outcome) {
+				of = append(of, fmt.Sprintf("the outcome %q is none of the set's", t.Outcome))
 			}
 			if (t.Work == "") != (t.Read == "") {
 				of = append(of, "it has a value read exactly when it has work")
+			}
+			if c.pictures != nil {
+				if len(of) > 0 {
+					problems = append(problems, fmt.Sprintf("task %d: %s", j+1, strings.Join(of, ", ")))
+				}
+				continue
+			}
+			if t.Statement == "" {
+				of = append(of, "it has no statement")
 			}
 			if (t.Key == nil) != (t.Outcome == OutcomeUnchecked) {
 				of = append(of, "it has a key exactly when it is not unchecked")
@@ -206,9 +223,12 @@ const (
 )
 
 // Pictures are what a run shows of a case: the PNG of the task's crop, the statement alone, and of
-// the crop of the work, the statement with the learner's line under each task, each with its size.
+// the crop of the work, the statement with the learner's line under each task, each with its size;
+// and of an exported case the crop of the instruction above the frame, or nil, which code draws
+// into the statement.
 type Pictures struct {
 	Statement, Work picture
+	Instruction     *picture
 }
 
 type picture struct {

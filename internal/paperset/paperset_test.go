@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/altnovatrail/tutor/internal/checking"
 	"github.com/altnovatrail/tutor/internal/gen"
 	"github.com/altnovatrail/tutor/internal/paperset"
 	"github.com/altnovatrail/tutor/internal/runner"
@@ -37,8 +38,8 @@ func recordOf(st runner.Step, answer string) paperset.CallRecord {
 }
 
 // The answer of the stub is right on every case of every kind, and the run's pictures are those of
-// the case: the statement's crop for the statement, the solution and the finding, the work's for the
-// reading. The cases of several tasks go to every run, and to the finding alone.
+// the case: the statement's crop for the statement and the finding, and the work's beside it for the
+// Check. The cases of several tasks go to every run, and to the finding alone.
 func TestStubIsRight(t *testing.T) {
 	f := setOf(t, 30)
 	several := 0
@@ -62,7 +63,7 @@ func TestStubIsRight(t *testing.T) {
 				t.Fatal(err)
 			}
 			req, err := st.Call.Request()
-			if err != nil || len(req.Images) != 1 {
+			if images := map[bool]int{true: 2, false: 1}[kind == paperset.CallCheck]; err != nil || len(req.Images) != images {
 				t.Fatalf("%s: the request %+v, %v", kind, req, err)
 			}
 			if rec := recordOf(st, right); !rec.Right || rec.Error != "" {
@@ -72,19 +73,28 @@ func TestStubIsRight(t *testing.T) {
 	}
 }
 
-// one is the answer of the statement of one task with a formula, and solved one of the solution
-// of one task by its kind and its fields.
+// one is the answer of the statement of one task with a formula.
 func one(formula string) string {
 	return `{"tasks": [{"statement": "a task", "formula": "` + formula + `"}]}`
 }
 
-func solved(kind, value, options, key string) string {
-	return `{"answers": [{"task": 1, "kind": "` + kind + `", "value": "` + value + `", "units": [], "unknown": "", "options": [` + options + `], "key": "` + key + `"}]}`
+// checked is the answer of the Check with a verdict for each task, in order.
+func checked(t *testing.T, verdicts ...string) string {
+	t.Helper()
+	var slots []checking.Slot
+	for i, v := range verdicts {
+		slots = append(slots, checking.Slot{Task: i + 1, Verdict: v})
+	}
+	answer, err := checking.Answered(slots, "", []string{"Where?", "Here?"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return answer
 }
 
 // A model's mistakes are counted wrong: a formula read of a word problem, or one another than the
-// truth's, or another count of tasks; no key of a task with one, or another value; and a reading of
-// another value. A case of several tasks is right only when each of its tasks is.
+// truth's, or another count of tasks; and a verdict of the Check other than the one the truth comes
+// to, or a slot too few. A case of several tasks is right only when each of its tasks is.
 func TestMistakesAreWrong(t *testing.T) {
 	f := setOf(t, 6)
 	findingIsWrong(t, f)
@@ -128,53 +138,51 @@ func TestMistakesAreWrong(t *testing.T) {
 		}
 	}
 
-	so := steps(paperset.CallSolving)
-	none := solved("none", "", "", "")
-	for i, answer := range map[int]string{0: none, 2: solved("number", "1", "", ""), 3: solved("choice", "", `"A", "B"`, "A")} {
-		if rec := recordOf(so[i], answer); rec.Right {
-			t.Errorf("case %d: %s is right", i+1, answer)
+	ch := steps(paperset.CallCheck)
+	for i, answer := range map[int]string{0: checked(t, checking.VerdictIncorrect), 1: checked(t, checking.VerdictUnreadable), 2: checked(t, checking.VerdictNoAnswer)} {
+		if rec := recordOf(ch[i], answer); rec.Right || len(rec.Verdicts) != 1 {
+			t.Errorf("case %d: %s is %+v", i+1, answer, rec)
 		}
 	}
-	if rec := recordOf(so[4], none); !rec.Right || len(rec.Keys) != 1 || rec.Keys[0] != nil {
-		t.Errorf("an open task with no key: %+v", rec)
-	}
-	// Several tasks are right with the key of each, and wrong with one missing.
-	right, err := so[5].Call.Right()
+	// A task drawn blank is no answer, and an open one takes any verdict.
+	blank, err := paperset.New(paperset.CallCheck, "all", setOf(t, 13), haiku(t), 1)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if rec := recordOf(so[5], right); !rec.Right || len(rec.Keys) != len(several.Tasks) || rec.Keys[1].Number != several.Tasks[1].Key.Number {
-		t.Errorf("several tasks: %+v", rec)
+	if rec := recordOf(blank.Steps[12], checked(t, checking.VerdictNoAnswer)); !rec.Right {
+		t.Errorf("a blank task: %+v", rec)
 	}
-	if rec := recordOf(so[5], solved("number", several.Tasks[0].Key.Number, "", "")); rec.Right || rec.Keys[0] == nil || rec.Keys[1] != nil {
-		t.Errorf("several tasks, one solved: %+v", rec)
+	if rec := recordOf(ch[4], checked(t, checking.VerdictIncorrect)); !rec.Right {
+		t.Errorf("an open task: %+v", rec)
 	}
-
-	pa := steps(paperset.CallPaper)
-	wrong := `{"parts": [{"kind": "text", "text": "7", "legible": true, "other_readings": []}], "results": [{"task": 1, "part": 1, "box": [], "value": "7", "other_values": []}]}`
-	if rec := recordOf(pa[0], wrong); rec.Right || len(rec.Verdicts) != 1 || rec.Verdicts[0] != paperset.OutcomeNotYet {
-		t.Errorf("another value: %+v", rec)
-	}
-	if rec := recordOf(pa[0], `{}`); rec.Right || rec.Error == "" {
+	if rec := recordOf(ch[0], `{}`); rec.Right || rec.Error == "" {
 		t.Errorf("off the schema: %+v", rec)
 	}
-	// Several tasks are right with each read as written, and wrong with the second not read.
-	if right, err = pa[5].Call.Right(); err != nil {
+	// Several tasks are right with each verdict as the truth's, and wrong with the second correct
+	// or a slot too few.
+	right, err := ch[5].Call.Right()
+	if err != nil {
 		t.Fatal(err)
 	}
-	if rec := recordOf(pa[5], right); !rec.Right || len(rec.Verdicts) != len(several.Tasks) || rec.Verdicts[1] != paperset.OutcomeNotYet {
+	if rec := recordOf(ch[5], right); !rec.Right || len(rec.Verdicts) != len(several.Tasks) || rec.Verdicts[1] != checking.VerdictIncorrect || rec.Reads[0] != several.Tasks[0].Read {
 		t.Errorf("several tasks: %+v", rec)
 	}
-	first := `{"parts": [{"kind": "text", "text": "` + several.Tasks[0].Work + `", "legible": true, "other_readings": []}], "results": [{"task": 1, "part": 1, "box": [10, 10, 90, 90], "value": "` + several.Tasks[0].Read + `", "other_values": []}]}`
-	if rec := recordOf(pa[5], first); rec.Right || rec.Verdicts[0] != paperset.OutcomeCorrect || rec.Verdicts[1] != paperset.OutcomeUnreadable {
-		t.Errorf("several tasks, the second not read: %+v", rec)
+	verdicts := make([]string, len(several.Tasks))
+	for i := range verdicts {
+		verdicts[i] = checking.VerdictCorrect
+	}
+	if rec := recordOf(ch[5], checked(t, verdicts...)); rec.Right {
+		t.Errorf("several tasks, the second correct: %+v", rec)
+	}
+	if rec := recordOf(ch[5], checked(t, checking.VerdictCorrect)); rec.Right || rec.Error == "" {
+		t.Errorf("several tasks, one slot: %+v", rec)
 	}
 }
 
 // The report counts the calls of each configuration by the kinds of case.
 func TestReport(t *testing.T) {
 	f := setOf(t, 10)
-	r, err := paperset.New(paperset.CallSolving, "all", f, haiku(t), 1)
+	r, err := paperset.New(paperset.CallCheck, "all", f, haiku(t), 1)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -187,11 +195,11 @@ func TestReport(t *testing.T) {
 	for i, st := range r.Steps {
 		answer, _ := st.Call.Right()
 		if i == 0 {
-			answer = solved("none", "", "", "")
+			answer = checked(t, checking.VerdictIncorrect)
 		}
 		_ = enc.Encode(st.Call.Record(runner.Outcome{Answer: answer}))
 	}
-	l, err := paperset.ReadLog(&b, paperset.CallSolving)
+	l, err := paperset.ReadLog(&b, paperset.CallCheck)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -273,22 +281,27 @@ func findingIsWrong(t *testing.T, f *paperset.File) {
 		t.Fatalf("the request of the finding: %q, %v", req.Text, err)
 	}
 	var right struct {
-		Tasks []map[string]int `json:"tasks"`
+		Tasks []map[string]any `json:"tasks"`
 	}
 	answer, err := st.Call.Right()
 	if err != nil || json.Unmarshal([]byte(answer), &right) != nil || len(right.Tasks) < 2 {
 		t.Fatalf("the stub's finding: %s, %v", answer, err)
 	}
+	// The boxes of the stub's tasks, by their corners, and a box as the answer gives it, with no
+	// instruction.
+	corners := func(b map[string]any) map[string]int {
+		return map[string]int{"x1": int(b["x1"].(float64)), "y1": int(b["y1"].(float64)), "x2": int(b["x2"].(float64)), "y2": int(b["y2"].(float64))}
+	}
 	box := func(b map[string]int) string {
-		data, _ := json.Marshal(b)
+		data, _ := json.Marshal(map[string]any{"x1": b["x1"], "y1": b["y1"], "x2": b["x2"], "y2": b["y2"], "instruction": map[string]int{"x1": 0, "y1": 0, "x2": 0, "y2": 0}})
 		return string(data)
 	}
-	first, second := right.Tasks[0], right.Tasks[1]
+	first, second := corners(right.Tasks[0]), corners(right.Tasks[1])
 	both := map[string]int{"x1": first["x1"], "y1": first["y1"], "x2": second["x2"], "y2": second["y2"]}
 	off := map[string]int{"x1": first["x1"], "y1": first["y1"], "x2": first["x2"] + 1, "y2": first["y2"]}
 	rest := []string{}
 	for _, b := range right.Tasks[2:] {
-		rest = append(rest, box(b))
+		rest = append(rest, box(corners(b)))
 	}
 	tail := strings.Join(rest, ",")
 	if tail != "" {

@@ -69,7 +69,7 @@ func NewReport(l *Log) (*Report, error) {
 	}
 	r := &Report{log: l}
 	for _, name := range names {
-		for _, kind := range append(slices.Clone(Kinds), "all") {
+		for _, kind := range append(slices.Clone(caseKinds), "all") {
 			if row := counts[at{name, kind}]; row != nil {
 				r.rows = append(r.rows, *row)
 			}

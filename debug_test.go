@@ -13,7 +13,6 @@ import (
 
 var (
 	sonnetLow = admission.Model{Provider: "anthropic", ID: "claude-sonnet-5-5", Effort: "low", NoThinking: true}
-	opusHigh  = admission.Model{Provider: "anthropic", ID: "claude-opus-5-5", Effort: "high"}
 )
 
 // debugLibrary is the library of haikuOf with the debug mode on, and Sonnet beside Haiku and Opus.
@@ -54,15 +53,15 @@ func TestDebugFirst(t *testing.T) {
 	if q := m["claude-sonnet-5-5"].asked; len(q) != 1 || q[0].Effort != "low" || !q[0].NoThinking {
 		t.Errorf("Sonnet was asked %+v", q)
 	}
-	if len(rec) != 1 || rec[0].Call != CallStatement || rec[0].Reader != 0 || rec[0].Attempt != 1 || rec[0].Model != sonnetLow || rec[0].Answer != `{"tasks": [{"statement": "37 + 48 =", "formula": "37+48"}]}` ||
+	if len(rec) != 1 || rec[0].Call != CallStatement || rec[0].Attempt != 1 || rec[0].Model != sonnetLow || rec[0].Answer != `{"tasks": [{"statement": "37 + 48 =", "formula": "37+48"}]}` ||
 		rec[0].Usage == nil || rec[0].Usage.InputTokens != 900 || rec[0].Err != nil {
 		t.Errorf("recorded %+v", rec)
 	}
 	// A chosen model that does not do is the call's answer: no later attempt.
-	m["claude-sonnet-5-5"].resp.JSON = noAnswer
-	if got := lib.SolveTask(context.Background(), PaperTask{Route: r, Statement: photoJPEG(t, 30, 30)}, []TaskToSolve{{Number: 1, Statement: "Ann has 3 apples."}}); got.Outcome.Kind != Answered || got.Answers[1] != nil ||
-		len(m["claude-opus-5-5"].asked) != 0 || len(m["claude-sonnet-5-5"].asked) != 2 {
-		t.Errorf("solved %+v", got)
+	m["claude-sonnet-5-5"].resp.JSON = checkAnswer("", twoHints, checkTask(1, "incorrect", "low", "13", "12"), checkTask(2, "unreadable", "high", "", "7"))
+	if got := lib.CheckPaper(context.Background(), PaperCheck{Route: r, Statement: photoJPEG(t, 30, 30), Work: cropPNG(t, 400, 200), Tasks: 2, Language: "en"}); got.Outcome.Kind != Answered ||
+		got.Slots[0].Confidence != "low" || len(m["claude-opus-5-5"].asked) != 0 || len(m["claude-sonnet-5-5"].asked) != 2 || rec[1].Call != CallChecking || rec[1].Attempt != 1 {
+		t.Errorf("checked %+v, recorded %+v", got, rec)
 	}
 	// The price follows the models of the mode too: Sonnet alone has prices.
 	p, a, err := lib.Price(CallStatement, r)
@@ -82,38 +81,14 @@ func TestDebugAsAdmitted(t *testing.T) {
 		t.Fatalf("read %+v", got)
 	}
 	m["claude-haiku-5-5"].err = errors.New("down")
-	lib.SolveTask(context.Background(), PaperTask{Route: r, Statement: photoJPEG(t, 30, 30)}, []TaskToSolve{{Number: 1, Statement: "Ann has 3 apples."}})
-	if len(rec) != 4 || rec[0].Model.ID != "claude-haiku-5-5" || rec[0].Attempt != 1 || rec[1].Call != CallSolving || rec[1].Err == nil {
+	lib.CheckPaper(context.Background(), PaperCheck{Route: r, Statement: photoJPEG(t, 30, 30), Work: cropPNG(t, 40, 20), Tasks: 1, Language: "en"})
+	if len(rec) != 4 || rec[0].Model.ID != "claude-haiku-5-5" || rec[0].Attempt != 1 || rec[1].Call != CallChecking || rec[1].Err == nil {
 		t.Fatalf("recorded %+v", rec)
 	}
 	for i, id := range []string{"claude-haiku-5-5", "claude-sonnet-5-5", "claude-opus-5-5"} {
-		if c := rec[i+1]; c.Call != CallSolving || c.Attempt != i+1 || c.Model.ID != id {
+		if c := rec[i+1]; c.Call != CallChecking || c.Attempt != i+1 || c.Model.ID != id {
 			t.Errorf("attempt %d: %+v", i+1, c)
 		}
-	}
-}
-
-// A second model reads the work beside the first, as a pair: two observations, two readers.
-func TestDebugSecondReader(t *testing.T) {
-	lib, m := debugLibrary(t, paperObservation)
-	var rec []DebugCall
-	r := platform
-	r.Debug = &Debug{First: &opusHigh, Second: &sonnetLow, Record: func(c DebugCall) { rec = append(rec, c) }}
-	got := lib.ReadPaper(context.Background(), PaperReading{Route: r, Crop: cropPNG(t, 400, 300), Tasks: []string{"Circle the larger number."}})
-	if got.Outcome.Kind != Answered || len(got.Observations) != 2 || len(got.Outcome.Usage) != 2 {
-		t.Fatalf("read %+v", got)
-	}
-	if q := m["claude-opus-5-5"].asked; len(q) != 1 || q[0].Effort != "high" || q[0].NoThinking {
-		t.Errorf("Opus was asked %+v", q)
-	}
-	if len(rec) != 2 || rec[0].Reader != 1 || rec[1].Reader != 2 || rec[0].Attempt != 1 || rec[1].Attempt != 1 || rec[1].Model != sonnetLow {
-		t.Errorf("recorded %+v", rec)
-	}
-	// The second reads nothing but the work: the statement keeps one model.
-	rec = nil
-	lib.ReadStatement(context.Background(), PaperTask{Route: r, Statement: photoJPEG(t, 30, 30)})
-	if len(rec) != 1 || rec[0].Model != opusHigh {
-		t.Errorf("the statement recorded %+v", rec)
 	}
 }
 

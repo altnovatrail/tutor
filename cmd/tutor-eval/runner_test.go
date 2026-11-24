@@ -180,7 +180,7 @@ func TestRunRefuses(t *testing.T) {
 	}{
 		{[]string{"-stub"}, exitUsage, `-part is ""`},
 		{[]string{"-part", "every", "-stub"}, exitUsage, `-part is "every": give dev, test or all`},
-		{[]string{"-part", "test", "-stub", "-kind", "rubric"}, exitUsage, `-kind is "rubric": give correct or essay or finding or hint or judge or paper or reading or solving or statement or workbook`},
+		{[]string{"-part", "test", "-stub", "-kind", "rubric"}, exitUsage, `-kind is "rubric": give check or correct or essay or finding or hint or judge or reading or statement or workbook`},
 		{[]string{"-part", "test", "-stub", "-repeats", "0"}, exitUsage, "-repeats must be 1 or more"},
 		{[]string{"-part", "test", "-stub", "-max-usd", "0"}, exitUsage, "-max-usd above 0"},
 		{[]string{"-part", "test", "-stub", "-readers", "opus-high,gpt-6"}, exitUsage, `-readers is "opus-high,gpt-6": no configuration "gpt-6": give opus-high, haiku-low`},
