@@ -92,4 +92,4 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T198 | Образцы со стилем штриха и частичным стиранием (R172 spec), обрезка в цвете | Claude | — | T195 |
 | [x] | T199 | Переход на тег `spec` v0.19.17 | Claude | — | T198 |
 
-**Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, pull request #215; T196, T197 — проход по части T184 — и T185–T195 — пачка на ветке `e22-tutor-2`, pull request #216 (R159 spec), по «Зависит от». T198 — своя ветка `t198-styles`, pull request #217. T199 — своя ветка `t199-spec`, pull request PRNUM.
+**Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, pull request #215; T196, T197 — проход по части T184 — и T185–T195 — пачка на ветке `e22-tutor-2`, pull request #216 (R159 spec), по «Зависит от». T198 — своя ветка `t198-styles`, pull request #217. T199 — своя ветка `t199-spec`, pull request #218.
