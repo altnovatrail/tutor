@@ -20,8 +20,7 @@ func TestPaperOnTheStub(t *testing.T) {
 	}
 	for kind, says := range map[string]string{
 		"statement": "statement, haiku-high: 15 of 15 answered right, 100.0%",
-		"solving":   "solving, haiku-high: 15 of 15 answered right, 100.0%",
-		"paper":     "paper, haiku-high: 15 of 15 answered right, 100.0%",
+		"check":     "check, haiku-high: 15 of 15 answered right, 100.0%",
 		"finding":   "finding, haiku-high: 2 of 2 answered right, 100.0%",
 	} {
 		log := filepath.Join(dir, kind+".jsonl")
@@ -34,7 +33,7 @@ func TestPaperOnTheStub(t *testing.T) {
 			t.Errorf("the report of %s ends %d: %s%s", kind, code, out, errs)
 		}
 	}
-	data, err := os.ReadFile(filepath.Join(dir, "paper.jsonl"))
+	data, err := os.ReadFile(filepath.Join(dir, "check.jsonl"))
 	if err != nil || strings.Count(string(data), `"kind":"case"`) != 15 || strings.Count(string(data), `"kind":"call"`) != 45 {
 		t.Errorf("the log of the work holds:\n%.300s, %v", data, err)
 	}
@@ -42,10 +41,10 @@ func TestPaperOnTheStub(t *testing.T) {
 		args []string
 		says string
 	}{
-		{[]string{"-kind", "paper", "-paper", set, "-dir", dir, "-part", "all", "-stub"}, "-dir names samples, and the paper draws its pictures from the set"},
+		{[]string{"-kind", "check", "-paper", set, "-dir", dir, "-part", "all", "-stub"}, "-dir names samples, and the check draws its pictures from the set"},
 		{[]string{"-kind", "reading", "-paper", set, "-part", "all", "-stub"}, "-workbook, -essays and -paper are for"},
-		{[]string{"-kind", "solving", "-paper", set, "-bank", set, "-part", "all", "-stub"}, "-bank names sheets"},
-		{[]string{"-kind", "solving", "-paper", filepath.Join(dir, "none.json"), "-part", "all", "-stub", "-log", filepath.Join(dir, "x.jsonl")}, "no such file"},
+		{[]string{"-kind", "check", "-paper", set, "-bank", set, "-part", "all", "-stub"}, "-bank names sheets"},
+		{[]string{"-kind", "check", "-paper", filepath.Join(dir, "none.json"), "-part", "all", "-stub", "-log", filepath.Join(dir, "x.jsonl")}, "no such file"},
 	} {
 		if code, _, errs := runMeasure("no\n", c.args...); code == exitOK || !strings.Contains(errs, c.says) {
 			t.Errorf("%v ends %d: %s", c.args, code, errs)

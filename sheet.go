@@ -67,9 +67,7 @@ func (t *Tutor) ReadSheet(ctx context.Context, r SheetReading) SheetRead {
 }
 
 // readCrop reads a crop of handwriting by the models admitted for the call c — the pair, in
-// parallel, its one reader, or the attempts of a cascade one at a time, a later one only when the
-// one before failed or read the slot as unreadable —, each by the request of the crop's
-// size, into the observation observe makes of each answer, which has places of its own. An answer
+// parallel, or its one reader —, each by the request of the crop's size, into the observation observe makes of each answer, which has places of its own. An answer
 // that is no observation fails the reading.
 func (t *Tutor) readCrop(ctx context.Context, c Call, route Route, crop []byte,
 	request func(width, height int) provider.Request, observe func(answer string) (*observationv1.Observation, error)) SheetRead {
@@ -85,13 +83,6 @@ func (t *Tutor) readCrop(ctx context.Context, c Call, route Route, crop []byte,
 	req.MaxOutputTokens = reading.MaxOutputTokens
 	if err := checkText(req); err != nil {
 		return SheetRead{Outcome: Outcome{Kind: Failed, Admission: a, Err: err}}
-	}
-	if cascading(calls) {
-		obs, out := cascade(ctx, calls, func(cl call) ([]*observationv1.Observation, Outcome) {
-			read := readBy(ctx, c, a, []call{cl}, req, observe)
-			return read.Observations, read.Outcome
-		}, readable)
-		return SheetRead{Observations: obs, Outcome: out}
 	}
 	return readBy(ctx, c, a, calls, req, observe)
 }

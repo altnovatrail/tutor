@@ -212,8 +212,8 @@ func (t *Tutor) ChooseCall(c Call, r Route) (admission.Entry, admission.Answer, 
 // reserves a quota for, and the models a key is checked for, are those the call asks. The
 // words with the work word the hint in the same call, so they are admitted only when the hint is
 // admitted on the model of the analysis: when the model the hint without the work chooses, by
-// the same prompt, is the analysis's first, and of a cascade, the words of a task from paper, when
-// its models are the analysis's, in their order. Otherwise the answer is the hint's refusal,
+// the same prompt, is the analysis's first, and of a cascade when its models are the analysis's,
+// in their order. Otherwise the answer is the hint's refusal,
 // or model_not_admitted when the hint is another model's — another ID or another effort.
 func (t *Tutor) chooseCall(c Call, r Route) (admission.Entry, admission.Answer, error) {
 	k := kinds[c]
@@ -224,7 +224,7 @@ func (t *Tutor) chooseCall(c Call, r Route) (admission.Entry, admission.Answer, 
 	// The debug mode bypasses the list: its models serve the call, and the admission's refusal
 	// stands only where it names none.
 	if d := debugOf(c, r); d != nil && (a.Admitted || d.First != nil) {
-		e.Models = d.models(c, k.asked(e.Models))
+		e.Models = d.models(k.asked(e.Models))
 		a.Admitted, a.Reason = true, nil
 		return e, a, nil
 	}
@@ -251,7 +251,7 @@ func (t *Tutor) chooseCall(c Call, r Route) (admission.Entry, admission.Answer, 
 
 // wordsHint is the kind of the hint without the work that a kind of words with the work words in
 // the same call.
-var wordsHint = map[Call]Call{CallWords: CallHint, CallPaperWords: CallPaperHint}
+var wordsHint = map[Call]Call{CallWords: CallHint}
 
 // asked are the models of an entry a kind of call asks (kind.asked), and for a reading by the pair in
 // ReadingSingle the one reader alone, found as it is. An entry without it is errNoSingleReader: the
@@ -384,13 +384,12 @@ type Outcome struct {
 }
 
 // call is a model of the entry chosen with its client, and in the debug mode the kind of the
-// library's call, the reader of the work and the mode, which records it. attempt is the model's
+// library's call and the mode, which records it. attempt is the model's
 // place among the attempts of a cascade, from 1, and 0 where the call asks its models at once.
 type call struct {
 	model   admission.Model
 	client  provider.Model
 	kind    Call
-	reader  int
 	attempt int
 	debug   *Debug
 }
@@ -411,7 +410,7 @@ func (t *Tutor) prepare(c Call, r Route) ([]call, admission.Answer, *Outcome) {
 	}
 	// The models of a cascade are its attempts, one after another, unless the debug mode chose the
 	// models of the call.
-	cascading := kinds[c].cascade && !debugOf(c, r).chose(c)
+	cascading := kinds[c].cascade && !debugOf(c, r).chose()
 	calls := make([]call, 0, len(e.Models))
 	for _, m := range e.Models {
 		client, err := t.client(m, r.Own)
@@ -419,14 +418,8 @@ func (t *Tutor) prepare(c Call, r Route) ([]call, admission.Answer, *Outcome) {
 			return nil, a, &Outcome{Kind: Failed, Admission: a, Err: err}
 		}
 		cl := call{model: m, client: client, kind: c, debug: debugOf(c, r)}
-		switch {
-		case cascading:
+		if cascading {
 			cl.attempt = len(calls) + 1
-			if c == CallPaper {
-				cl.reader = 1
-			}
-		case c == CallPaper:
-			cl.reader = len(calls) + 1
 		}
 		calls = append(calls, cl)
 	}
@@ -498,7 +491,7 @@ func ask(ctx context.Context, a admission.Answer, calls []call, reqs []provider.
 			out.Usage, used = append(out.Usage, u), &u
 		}
 		if c.debug != nil && c.debug.Record != nil {
-			c.debug.Record(DebugCall{Call: c.kind, Reader: c.reader, Attempt: max(c.attempt, 1), Model: c.model, Answer: resps[i].JSON, Usage: used, Err: errs[i]})
+			c.debug.Record(DebugCall{Call: c.kind, Attempt: max(c.attempt, 1), Model: c.model, Answer: resps[i].JSON, Usage: used, Err: errs[i]})
 		}
 		if errs[i] == nil {
 			continue

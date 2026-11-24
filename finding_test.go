@@ -39,10 +39,10 @@ func (f fitHalf) Fit(w, h int) (int, int) { return w / 2, h / 2 }
 // later model is asked.
 func TestFindTasks(t *testing.T) {
 	haiku := &fake{resp: provider.Response{JSON: `{"tasks": [
-		{"x1": 20, "y1": 300, "x2": 380, "y2": 400},
-		{"x1": 210, "y1": 20, "x2": 380, "y2": 120},
-		{"x1": 20, "y1": 20, "x2": 190, "y2": 120},
-		{"x1": 500, "y1": 500, "x2": 600, "y2": 600}
+		{"x1": 20, "y1": 300, "x2": 380, "y2": 400, "instruction": {"x1": 20, "y1": 280, "x2": 380, "y2": 300}},
+		{"x1": 210, "y1": 20, "x2": 380, "y2": 120, "instruction": {"x1": 20, "y1": 0, "x2": 380, "y2": 20}},
+		{"x1": 20, "y1": 20, "x2": 190, "y2": 120, "instruction": {"x1": 20, "y1": 0, "x2": 380, "y2": 20}},
+		{"x1": 500, "y1": 500, "x2": 600, "y2": 600, "instruction": {"x1": 0, "y1": 0, "x2": 0, "y2": 0}}
 	]}`, Model: "claude-haiku-5-5", InputTokens: 3000, OutputTokens: 200}}
 	opus := &fake{}
 	fs := &fakes{models: map[string]*fake{"claude-haiku-5-5": haiku, "claude-sonnet-5-5": {}, "claude-opus-5-5": opus}}
@@ -67,6 +67,11 @@ func TestFindTasks(t *testing.T) {
 	if f[0].Ymin != 40 || f[0].Xmin != 50 || f[0].Ymax != 240 || f[0].Xmax != 475 || f[1].Xmin != 525 || f[2].Ymin != 600 || f[2].Ymax != 800 {
 		t.Errorf("the frames are %v", f)
 	}
+	// Each frame keeps its instruction's frame at its place, the two under one instruction the same.
+	in := got.Instructions
+	if len(in) != 3 || in[0].Ymin != 0 || in[0].Ymax != 40 || in[0].Xmin != 50 || in[0].Xmax != 950 || in[1].Ymin != 0 || in[1].Xmax != 950 || in[2].Ymin != 560 || in[2].Ymax != 600 {
+		t.Errorf("the instructions are %v", in)
+	}
 	if len(opus.asked) != 0 {
 		t.Errorf("Opus was asked %d times", len(opus.asked))
 	}
@@ -90,7 +95,7 @@ func TestFindTasks(t *testing.T) {
 func TestFindTasksKeepsTheFirst(t *testing.T) {
 	var boxes []string
 	for i := finding.MaxTasks + 4; i >= 1; i-- {
-		boxes = append(boxes, fmt.Sprintf(`{"x1": 0, "y1": %d, "x2": 30, "y2": %d}`, i*10, i*10+5))
+		boxes = append(boxes, fmt.Sprintf(`{"x1": 0, "y1": %d, "x2": 30, "y2": %d, `+noInstruction+`}`, i*10, i*10+5))
 	}
 	lib, m := cascadeOf(t, `{"tasks": [`+strings.Join(boxes, ",")+`]}`, `{}`, `{}`)
 	got := lib.FindTasks(context.Background(), TaskFinding{Route: platform, Photo: photoJPEG(t, 40, 300)})
@@ -156,7 +161,7 @@ func TestFindTasksNotAdmitted(t *testing.T) {
 // such frames found tasks, and the next is not asked. Without a request no frame is sent and none is
 // dropped.
 func TestFindTasksByARequest(t *testing.T) {
-	answer := `{"tasks": [{"x1": 0, "y1": 200, "x2": 400, "y2": 300}, {"x1": 0, "y1": 50, "x2": 200, "y2": 150}, {"x1": 200, "y1": 50, "x2": 400, "y2": 150}]}`
+	answer := `{"tasks": [{"x1": 0, "y1": 200, "x2": 400, "y2": 300, ` + noInstruction + `}, {"x1": 0, "y1": 50, "x2": 200, "y2": 150, ` + noInstruction + `}, {"x1": 200, "y1": 50, "x2": 400, "y2": 150, ` + noInstruction + `}]}`
 	lib, m := cascadeOf(t, answer, `{}`, `{}`)
 	f := TaskFinding{Route: platform, Photo: photoJPEG(t, 1000, 500), Request: "split frame 1",
 		Found: []*observationv1.CropBox{{Ymin: 100, Xmin: 500, Ymax: 300, Xmax: 900}, {Ymin: 100, Xmin: 0, Ymax: 300, Xmax: 400}},
@@ -178,7 +183,7 @@ func TestFindTasksByARequest(t *testing.T) {
 		t.Errorf("without a request: %+v, %q", got, text)
 	}
 
-	repeats, r := cascadeOf(t, `{"tasks": [{"x1": 0, "y1": 200, "x2": 400, "y2": 300}]}`, `{}`, `{}`)
+	repeats, r := cascadeOf(t, `{"tasks": [{"x1": 0, "y1": 200, "x2": 400, "y2": 300, `+noInstruction+`}]}`, `{}`, `{}`)
 	f.Request = "only the drawn one"
 	if got := repeats.FindTasks(context.Background(), f); got.Outcome.Kind != Answered || len(got.Frames) != 0 || len(r["claude-sonnet-5-5"].asked) != 0 {
 		t.Errorf("only a drawn frame repeated: %+v, Sonnet asked %d times", got, len(r["claude-sonnet-5-5"].asked))

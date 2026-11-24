@@ -171,24 +171,23 @@ var Admitted = []Entry{
 		Report:     authorsWord,
 		Prompt:     "a9bf54404fbb8215ac2def2ec16b0a053846ffb9d88ced72ca7d2560b0246cba",
 	},
-	// The four calls of a task from paper, by the author's word, without a run, until the day
+	// The three calls of a task from paper, by the author's word, without a run, until the day
 	// paperWord names, each a cascade of three attempts, the cheapest first: Haiku 5.5 at high, then
 	// Sonnet 5.5 at medium, then Opus 5.5 at medium, all with thinking. The finding of the tasks on
-	// the photo of a page, on version 4 of its prompt, which first asks which way up the page is,
-	// with the learner's request about the page, ran on the stub alone, the cases of several tasks
-	// of the set of a task from paper, and has no set of whole pages, Д21.
+	// the photo of a page, on version 5 of its prompt, which first asks which way up the page is and
+	// gives the box of each task's instruction, with the learner's request about the page, ran on
+	// the stub alone, the cases of several tasks of the set of a task from paper, and has no set of
+	// whole pages, Д21.
 	{
 		Capability: admissionv0.CapabilityTaskFinding,
 		Models:     paperCascade,
 		Stage:      StageAuthor,
 		Report:     paperWord,
-		Prompt:     "23e1063e95678c0f8f28a8e994ac9979590d1954e4d928437ad54c7b490ee7a0",
+		Prompt:     "f53df0bb4a622cb83a633e8a4450244a066b42a500dc2d5ed958215d97195dd5",
 	},
-	// The statement read into its tasks and their formulas, on version 3 of its prompt, which writes a
-	// fraction and a power LaTeX's way and leaves out a task's label and separator; and the solution,
-	// on version 2 of its prompt, one solution a model until the author has seen how often it errs;
-	// and the work read by one model at a time in any reading mode, on version 2 of the reading of
-	// paper. Their sets ran on the stub alone, and the paid run is Д22.
+	// The statement read into its tasks and their formulas for Recognise, on version 3 of its prompt,
+	// which writes a fraction and a power LaTeX's way and leaves out a task's label and separator;
+	// its set ran on the stub alone, and the paid run is Д22.
 	{
 		Capability: admissionv0.CapabilityStatementReading,
 		Models:     paperCascade,
@@ -196,31 +195,18 @@ var Admitted = []Entry{
 		Report:     paperWord,
 		Prompt:     "6454ba0b86393043e8c7bad38335e51cd6098a3bb9932d7b27c3ea75fa259c10",
 	},
+	// The Check, the work judged with no key in one call — each task's verdict, the place of each
+	// mistake, the tutor's words and the ladder of hints —, on version 1 of its prompt. Its set ran
+	// on the stub alone, and the paid run is Д22.
 	{
-		Capability: admissionv0.CapabilityTaskSolving,
+		Capability: admissionv0.CapabilityTaskChecking,
 		Models:     paperCascade,
 		Stage:      StageAuthor,
 		Report:     paperWord,
-		Prompt:     "b59a541a92783214fc16a1624a966cc734e96bf33b208b6c706ca1e048a74b8e",
+		Prompt:     "5ccea5ef87bd5ef1b01d6e6ec2eaceb1ec68b25323e1cc13fd5794d8b3d24543",
 	},
-	{
-		Capability: admissionv0.CapabilityHandwritingReading,
-		Models:     paperCascade,
-		Stage:      StageAuthor,
-		Report:     paperWord,
-		Prompt:     "84e47c2f1536337d365e374a16476fbfd5afb9674811979af02994eca11c01d8",
-	},
-	// The tutor's words on a task from paper — the opening question, a rung's words with the place of
-	// the first mistake, and a rung put another way —, on version 1 of their prompt, the analysis and
-	// the hint by the same cascade, as both are the words of one call. By the author's word, without
-	// a set and without a run, which are Д24.
-	{
-		Capability: admissionv0.CapabilitySolutionAnalysis,
-		Models:     paperCascade,
-		Stage:      StageAuthor,
-		Report:     paperWordsWord,
-		Prompt:     paperWordsPrompt,
-	},
+	// The tutor's words of a rung of the Check's ladder put another way, without the work, on
+	// version 2 of their prompt. By the author's word, without a set and without a run, which are Д24.
 	{
 		Capability: admissionv0.CapabilityHint,
 		Models:     paperCascade,
@@ -232,14 +218,14 @@ var Admitted = []Entry{
 
 // paperWordsWord is the author's word that admitted the words of a task from paper, under the same
 // suspension as paperWord, to the same last day, and paperWordsPrompt the fingerprint of their
-// prompt, version 1.
+// prompt, version 2.
 var (
 	paperWordsWord = Evidence{
 		Word:  "the author's word, while eval before admission is suspended",
 		Date:  "2026-11-20",
 		Until: "2027-01-17",
 	}
-	paperWordsPrompt = "db9d46040adf1135e94064091ccf8c94d9232607f68338e39eb684228ac5f719"
+	paperWordsPrompt = "90f888684b3a0fa3356de15c8a897a4f0a62de153b1d20108fcbd8df526e6282"
 )
 
 // authorsWord is the evidence of the entries the author admitted without eval, while eval before

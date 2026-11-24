@@ -72,13 +72,11 @@ func question(t *open.Task) *formatv0.Text {
 // WordsAnswer is what the call of words gives, when Outcome is Answered: the box round the first
 // mistake, in thousandths of the crop, the same message as an observation's, or nil when
 // the model found none or saw no work; the trap of the request's that the mistake falls into, or
-// empty; the tutor's question; and, of the opening question of a task from paper, the model's own
-// answers of its tasks, which the learner never sees and api's leak check alone reads (PaperBreach).
+// empty; and the tutor's question.
 type WordsAnswer struct {
 	Box      *observationv1.CropBox
 	Trap     string
 	Question string
-	Answers  []string
 	Outcome  Outcome
 }
 
