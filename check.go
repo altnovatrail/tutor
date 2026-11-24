@@ -20,7 +20,8 @@ import (
 //     sheet's strokes in sight (PaperWork.crop), on which every box of the answer lies;
 //   - Instruction is the crop of the instruction printed above the frame, a JPEG or a PNG, or nil
 //     when the finding gave none (PaperWork.instruction);
-//   - Tasks is how many tasks the frame holds, 1 to 20;
+//   - Tasks is how many tasks the frame holds, 1 to 20, or 0 before any Check has counted them, when
+//     the model finds the frame's tasks itself, 1 to 20 in the order of the page;
 //   - Language is the language of the profile's interface, by its tag, and AgeCategory the
 //     profile's age category as api names it, the route's when empty;
 //   - History is the attempt's Checks before this one, in order, which api keeps.
@@ -47,7 +48,7 @@ type CheckTurn struct {
 }
 
 // PaperChecked is what the Check gives when Outcome is Answered: a slot for each task, 1 to
-// Tasks, in the order of the frame; the tutor's words, "" where they named the hidden answer of a
+// Tasks or to the count the model gave, in the order of the frame; the tutor's words, "" where they named the hidden answer of a
 // task not yet correct; and the ladder of 2 or 3 hints, each rung that named one given way to its
 // fallback text (PaperFallback).
 type PaperChecked struct {
@@ -90,12 +91,12 @@ type CheckError struct {
 // boxes are those of the picture app holds. Once the cascade is over, the tutor's words and each
 // rung are searched for the hidden answer of every task not yet correct, a number the learner wrote
 // in a slot being no leak (PaperBreach's search): words that name one are left out, and such a rung
-// is its fallback text. A frame of no task or of more than 20, a crop that is no picture and a work
+// is its fallback text. A count of tasks below 0 or above 20, a crop that is no picture and a work
 // that is no PNG fail before any call.
 func (t *Tutor) CheckPaper(ctx context.Context, c PaperCheck) PaperChecked {
 	fail := func(err error) PaperChecked { return PaperChecked{Outcome: Outcome{Kind: Failed, Err: err}} }
-	if c.Tasks < 1 || c.Tasks > checking.MaxTasks {
-		return fail(fmt.Errorf("tutor: the Check of %d tasks, not 1 to %d", c.Tasks, checking.MaxTasks))
+	if c.Tasks < 0 || c.Tasks > checking.MaxTasks {
+		return fail(fmt.Errorf("tutor: the Check of %d tasks, not 0 to %d", c.Tasks, checking.MaxTasks))
 	}
 	if len(c.Statement) == 0 {
 		return fail(errors.New("tutor: the Check has no crop of the task"))

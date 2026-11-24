@@ -64,7 +64,7 @@ const instructions = `You are the tutor of a learner who solves tasks from their
 
 Image 1 is the crop of the page that holds the tasks, as printed, with nothing written on it. Image 2 is the learner's work: the same crop with the learner's strokes on it, and the strokes they wrote beside it, in colour. Image 3, when there is one, is the instruction printed above the tasks on the page, such as "Fill in the missing numbers" or the rule of a grid. The text gives the size of each image, how many tasks the crop holds, the learner's language and age category, and the Checks of this work before this one.
 
-1. Find the tasks of the crop, as many as the text says, in the order of the page: top to bottom, and left to right in a row, numbered from 1 in that order. Each sum or equation with an answer of its own is a task, and the parts of one word problem are one. Find where the learner wrote each task's answer, or would write it.
+1. Find the tasks of the crop, as many as the text says or, when it leaves the count to you, as many as the crop holds, from 1 to 20, in the order of the page: top to bottom, and left to right in a row, numbered from 1 in that order. Each sum or equation with an answer of its own is a task, and the parts of one word problem are one. Find where the learner wrote each task's answer, or would write it.
 2. Solve each task yourself first, from Image 1 and Image 3, and check your solution: write it in "solution", and the answer, as the learner would write it, in "answer". Only then read the learner's work on Image 2 and compare it with yours. Read the learner's writing exactly as it is: a wrong digit or sign stays wrong. What is printed is the task, not the learner's work.
 3. Judge every task. "verdict" is "correct" when the learner's answer is right; "incorrect" when it is wrong, or when the work toward it holds a mistake; "no_answer" when the learner has written no answer to it; "unreadable" when you cannot read what the learner wrote. "read" is the learner's answer as written, "" when there is none; a circled option is the answer, read as its label without brackets. "read_box" is the box round the answer read, in pixels of Image 2, all four corners 0 when nothing is read.
 4. Before the learner has written an answer, say whether their work so far is right: with no mistake, the verdict is "no_answer" and "errors" is empty; with a mistake, the verdict is "incorrect", with that mistake first in "errors".
@@ -85,6 +85,7 @@ const (
 	instructionLabel = "Image 3: the instruction printed above the tasks on the page."
 	sizeFormat       = "Image %d is %d pixels wide and %d pixels high."
 	tasksFormat      = "Tasks in the crop: %d."
+	tasksToCount     = "Tasks in the crop: count them yourself, from 1 to 20."
 	languageFormat   = "Language: %s."
 	learnerFormat    = "Learner's age category: %s."
 	noHistory        = "This is the first Check of this work."
@@ -102,7 +103,7 @@ func Instructions() string { return instructions }
 // block, and the schema, whose names the model reads too. An entry of the list of admitted models
 // holds it (admission.Entry).
 func Fingerprint() string {
-	parts := []string{instructions, statementLabel, workLabel, instructionLabel, sizeFormat, tasksFormat, languageFormat, learnerFormat,
+	parts := []string{instructions, statementLabel, workLabel, instructionLabel, sizeFormat, tasksFormat, tasksToCount, languageFormat, learnerFormat,
 		noHistory, historyFormat, turnFormat, verdictFormat, none, string(schemaProperties)}
 	return fmt.Sprintf("%x", sha256.Sum256([]byte(strings.Join(parts, "\x00"))))
 }
@@ -123,7 +124,7 @@ type Turn struct {
 }
 
 // Prompt is what a request holds: the task's crop as printed, the work, the instruction above the
-// frame or nil, the number of tasks in the frame, the language of the interface by its tag, the
+// frame or nil, the number of tasks in the frame, or 0 for the model to count them, the language of the interface by its tag, the
 // learner's age category as api names it, and the Checks before this one, in order.
 type Prompt struct {
 	Statement   Picture
@@ -135,14 +136,14 @@ type Prompt struct {
 	History     []Turn
 }
 
-// RequestOf is what the Check asks of a model. A frame of no task or of more than MaxTasks, a
+// RequestOf is what the Check asks of a model. A count of tasks below 0 or above MaxTasks, a
 // work that is no PNG, a crop of the task that is none, and a request with no language or no age
 // category are refused. The language goes by its name where the checks of words know it, and
 // otherwise by its tag. The model, its effort and how many tokens it may write the caller sets.
 func RequestOf(p Prompt) (provider.Request, error) {
 	switch {
-	case p.Tasks < 1 || p.Tasks > MaxTasks:
-		return provider.Request{}, fmt.Errorf("checking: %d tasks in the frame, not 1 to %d", p.Tasks, MaxTasks)
+	case p.Tasks < 0 || p.Tasks > MaxTasks:
+		return provider.Request{}, fmt.Errorf("checking: %d tasks in the frame, not 0 to %d", p.Tasks, MaxTasks)
 	case len(p.Work.Image.PNG) == 0:
 		return provider.Request{}, errors.New("checking: the work is no PNG")
 	case len(p.Statement.Image.PNG) == 0 && len(p.Statement.Image.JPEG) == 0:
@@ -164,7 +165,11 @@ func RequestOf(p Prompt) (provider.Request, error) {
 	if name, ok := hint.LanguageName(p.Language); ok {
 		language = name
 	}
-	lines := append(sizes, fmt.Sprintf(tasksFormat, p.Tasks), fmt.Sprintf(languageFormat, oneLine(language)), fmt.Sprintf(learnerFormat, oneLine(p.AgeCategory)))
+	count := tasksToCount
+	if p.Tasks > 0 {
+		count = fmt.Sprintf(tasksFormat, p.Tasks)
+	}
+	lines := append(sizes, count, fmt.Sprintf(languageFormat, oneLine(language)), fmt.Sprintf(learnerFormat, oneLine(p.AgeCategory)))
 	text := strings.Join(lines, "\n") + "\n\n" + history(p.History)
 	return provider.Request{
 		Instructions: instructions,
@@ -340,7 +345,8 @@ var (
 
 // Read takes a model's answer apart as strictly as the schema, for a frame of tasks tasks on a work
 // of width × height px: every field and nothing else; exactly one answer of each task from 1 to
-// tasks, put in that order; each verdict and confidence one of the schema's; 2 or 3 hints; and every
+// tasks, or, with tasks 0, of each task from 1 to the count the model gave, 1 to MaxTasks, put in
+// that order; each verdict and confidence one of the schema's; 2 or 3 hints; and every
 // box within the work, its corners put in order, given in thousandths of the crop (provider.Place),
 // a box of four zeros none.
 func Read(answer string, tasks, width, height int) (*Check, error) {
@@ -362,6 +368,11 @@ func Read(answer string, tasks, width, height int) (*Check, error) {
 	}
 	if n := len(*raw.Hints); n < minHints || n > maxHints {
 		return nil, fmt.Errorf("checking: %d hints, not %d or %d", n, minHints, maxHints)
+	}
+	if n := len(*raw.Tasks); tasks == 0 && (n < 1 || n > MaxTasks) {
+		return nil, fmt.Errorf("checking: %d tasks counted, not 1 to %d", n, MaxTasks)
+	} else if tasks == 0 {
+		tasks = n
 	}
 	if len(*raw.Tasks) != tasks {
 		return nil, fmt.Errorf("checking: %d tasks answered of %d", len(*raw.Tasks), tasks)

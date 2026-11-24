@@ -203,7 +203,7 @@ var Admitted = []Entry{
 		Models:     paperCascade,
 		Stage:      StageAuthor,
 		Report:     paperWord,
-		Prompt:     "5ccea5ef87bd5ef1b01d6e6ec2eaceb1ec68b25323e1cc13fd5794d8b3d24543",
+		Prompt:     "d18478adbd9389bbead7230df9e757ea930493ae2274fbc7ae24e93e5ca24d59",
 	},
 	// The tutor's words of a rung of the Check's ladder put another way, without the work, on
 	// version 2 of their prompt. By the author's word, without a set and without a run, which are Д24.

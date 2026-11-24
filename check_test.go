@@ -159,12 +159,27 @@ func TestCheckPaperLeaks(t *testing.T) {
 	}
 }
 
+// Before any Check has counted the frame's tasks, the model counts them, and its slots are the
+// answer; a count off the frame's bounds is off the schema, and the next model is asked.
+func TestCheckPaperCounts(t *testing.T) {
+	lib, m := cascadeOf(t, checkAnswer("", twoHints), sureCheck, `{}`)
+	c := paperCheck(t)
+	c.Tasks = 0
+	got := lib.CheckPaper(context.Background(), c)
+	if got.Outcome.Kind != Answered || len(got.Slots) != 2 || got.Slots[1].Task != 2 || timesAsked(m) != [3]int{1, 1, 0} {
+		t.Fatalf("checked %+v, asked %v", got, timesAsked(m))
+	}
+	if r := m["claude-sonnet-5-5"].asked[0]; !strings.Contains(r.Text, "Tasks in the crop: count them yourself, from 1 to 20.") {
+		t.Errorf("the text is %s", r.Text)
+	}
+}
+
 // A request the Check does not take fails before any call, and without the author's word it is not
 // admitted; a limit ends the cascade.
 func TestCheckPaperFails(t *testing.T) {
 	lib, m := cascadeOf(t, sureCheck, sureCheck, sureCheck)
 	for name, change := range map[string]func(*PaperCheck){
-		"no task":       func(c *PaperCheck) { c.Tasks = 0 },
+		"-1 tasks":      func(c *PaperCheck) { c.Tasks = -1 },
 		"21 tasks":      func(c *PaperCheck) { c.Tasks = 21 },
 		"no crop":       func(c *PaperCheck) { c.Statement = nil },
 		"a work of JPG": func(c *PaperCheck) { c.Work = photoJPEG(t, 40, 30) },
