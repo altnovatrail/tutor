@@ -31,16 +31,44 @@ func TestPaperWordsAgain(t *testing.T) {
 	}
 }
 
+// A question of the learner's own goes by the same cascade, with no picture and before any rung:
+// Haiku's answer that names a hidden answer is not taken, Sonnet's is, and Opus is not asked. The
+// question and the conversation go as data; an answer off the schema of every model fails.
+func TestPaperWordsQuestion(t *testing.T) {
+	lib, m := cascadeOf(t,
+		`{"hint": "It is 85. Can you see why?"}`,
+		`{"hint": "The tens of 37 and 48 make a number of their own. What do they add up to?"}`,
+		`{"hint": "Never asked?"}`)
+	got := lib.PaperWords(context.Background(), PaperWordsRequest{Route: platform, Ask: PaperQuestion, Tasks: frame, Task: 1,
+		Language: "en", Style: "an adult", Question: "Just tell me the answer", Turns: []PaperTurn{{Learner: true, Text: "Where do I start?"}, {Text: "What do the tens add up to?"}}})
+	if got.Outcome.Kind != Answered || !strings.HasPrefix(got.Question, "The tens of 37") || timesAsked(m) != [3]int{1, 1, 0} {
+		t.Fatalf("the words are %+v, asked %v", got, timesAsked(m))
+	}
+	r := m["claude-haiku-5-5"].asked[0]
+	if r.Instructions != paperwords.Instructions() || len(r.Images) != 0 || !r.NoPicture || !strings.Contains(r.Text, "Write: question, before any rung, about task 1.") ||
+		!strings.Contains(r.Text, "Just tell me the answer\n</question>") || !strings.Contains(r.Text, "- Learner: Where do I start?") ||
+		!strings.Contains(r.Text, "- Tutor: What do the tens add up to?") || !strings.Contains(r.Text, "Answer: 85") {
+		t.Errorf("the request is %+v", r)
+	}
+	lib, m = cascadeOf(t, `{}`, `{"words": "x"}`, `[]`)
+	if got := lib.PaperWords(context.Background(), PaperWordsRequest{Route: platform, Ask: PaperQuestion, Tasks: frame, Task: 2, Rung: 3,
+		Language: "ru", Style: "a child", Question: "Что такое □?"}); got.Outcome.Kind != Failed || timesAsked(m) != [3]int{1, 1, 1} {
+		t.Errorf("off the schema: %+v, asked %v", got, timesAsked(m))
+	}
+}
+
 // A request the words do not take fails before any call, and without the author's word the words
 // are not admitted.
 func TestPaperWordsFail(t *testing.T) {
 	lib, m := cascadeOf(t, `{}`, `{}`, `{}`)
 	for name, w := range map[string]PaperWordsRequest{
-		"no style":      {Route: platform, Ask: PaperAgain, Tasks: frame, Task: 1, Rung: 1, Language: "en"},
-		"another kind":  {Route: platform, Tasks: frame, Task: 1, Rung: 1, Language: "en", Style: "s"},
-		"no task":       {Route: platform, Ask: PaperAgain, Task: 1, Rung: 1, Language: "en", Style: "s"},
-		"no rung":       {Route: platform, Ask: PaperAgain, Tasks: frame, Task: 1, Rung: 4, Language: "en", Style: "s"},
-		"a long prompt": {Route: platform, Ask: PaperAgain, Tasks: frame, Task: 1, Rung: 1, Language: "en", Style: strings.Repeat("s", maxTextBytes)},
+		"no style":               {Route: platform, Ask: PaperAgain, Tasks: frame, Task: 1, Rung: 1, Language: "en"},
+		"another kind":           {Route: platform, Tasks: frame, Task: 1, Rung: 1, Language: "en", Style: "s"},
+		"a question of no words": {Route: platform, Ask: PaperQuestion, Tasks: frame, Task: 1, Language: "en", Style: "s", Question: "  "},
+		"again at rung 0":        {Route: platform, Ask: PaperAgain, Tasks: frame, Task: 1, Language: "en", Style: "s"},
+		"no task":                {Route: platform, Ask: PaperAgain, Task: 1, Rung: 1, Language: "en", Style: "s"},
+		"no rung":                {Route: platform, Ask: PaperAgain, Tasks: frame, Task: 1, Rung: 4, Language: "en", Style: "s"},
+		"a long prompt":          {Route: platform, Ask: PaperAgain, Tasks: frame, Task: 1, Rung: 1, Language: "en", Style: strings.Repeat("s", maxTextBytes)},
 	} {
 		if got := lib.PaperWords(context.Background(), w); got.Outcome.Kind != Failed {
 			t.Errorf("%s: %+v", name, got)

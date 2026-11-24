@@ -25,9 +25,20 @@ import (
 // PaperAsk is what a call of the words of a task from paper asks for.
 type PaperAsk int
 
-// The kinds of words of a task from paper: the Check gives the tutor's words and the ladder of
-// hints, so the one left is a rung put another way, with no picture ("Explain differently").
-const PaperAgain PaperAsk = 1
+// The kinds of words of a task from paper beyond the Check, which gives the tutor's words and the
+// ladder of hints, each with no picture: a rung put another way ("Explain differently"), and the
+// answer to a question of the learner's own about the task.
+const (
+	PaperAgain    PaperAsk = 1
+	PaperQuestion PaperAsk = 2
+)
+
+// PaperTurn is a turn of the conversation on a task before a question: the learner's, or the
+// tutor's words — a hint or an answer.
+type PaperTurn struct {
+	Learner bool
+	Text    string
+}
 
 // PaperWordsTask is a task of the frame as the words see it: its statement as printed, as the
 // reading of the statement gave it, or ""; the model's own solution and answer of the Check, which
@@ -41,14 +52,16 @@ type PaperWordsTask struct {
 }
 
 // PaperWordsRequest is a call of the tutor's words on a task from paper:
-//   - Ask is what to word, PaperAgain;
+//   - Ask is what to word, PaperAgain or PaperQuestion;
 //   - Tasks are the tasks of the frame, in their order;
-//   - Task is the number of the rung's task among them, from 1, and Rung the rung of the Check's
-//     ladder, 1 to 3;
+//   - Task is the number of the task the words are about among them, from 1, and Rung the rung of
+//     the Check's ladder, 1 to 3, or for a question 0 while no rung is given;
 //   - Language is the language of the profile's interface, by its tag; Style only what of the
 //     presentation style changes the words;
 //   - Asked are the hints the tutor has already given on the task, in order, the last the one to
-//     put another way.
+//     put another way;
+//   - Question is the learner's question, and Turns the conversation on the task before it, oldest
+//     first: both data the model reads, never instructions, and only of PaperQuestion.
 //
 // The words are checked by api for leaks and for their form (PaperBreach), before they reach the
 // learner; api gives the fallback text in their place when they fail (PaperFallback).
@@ -61,22 +74,33 @@ type PaperWordsRequest struct {
 	Language string
 	Style    string
 	Asked    []string
+	Question string
+	Turns    []PaperTurn
 }
 
 // PaperWords asks the admitted models of the words of a task from paper (CallPaperHint), one at a
 // time, a later one only when the one before failed, answered off the schema or its words broke the
 // checks of PaperBreach. The answer is the tutor's question, the last model's that answered, whether
-// or not its words passed. A request of another kind, with no style or no task fails before any
-// call; an answer off the schema fails the call.
+// or not its words passed. A request of another kind, with no style or no task, and a question with
+// no words, fails before any call; an answer off the schema fails the call.
 func (t *Tutor) PaperWords(ctx context.Context, w PaperWordsRequest) WordsAnswer {
 	fail := func(err error) WordsAnswer { return WordsAnswer{Outcome: Outcome{Kind: Failed, Err: err}} }
-	if w.Ask != PaperAgain {
+	switch {
+	case w.Ask != PaperAgain && w.Ask != PaperQuestion:
 		return fail(fmt.Errorf("tutor: no kind of words of paper %d", w.Ask))
+	case w.Ask == PaperQuestion && strings.TrimSpace(w.Question) == "":
+		return fail(errors.New("tutor: the question has no words"))
 	}
 	if strings.TrimSpace(w.Style) == "" {
 		return fail(errors.New("tutor: the words have no style of presentation"))
 	}
 	p := paperwords.Prompt{Task: w.Task, Rung: w.Rung, Language: w.Language, Style: w.Style, Asked: w.Asked}
+	if w.Ask == PaperQuestion {
+		p.Question = w.Question
+		for _, turn := range w.Turns {
+			p.Turns = append(p.Turns, paperwords.Turn{Learner: turn.Learner, Text: turn.Text})
+		}
+	}
 	for i, task := range w.Tasks {
 		p.Tasks = append(p.Tasks, paperwords.Task{Number: i + 1, Statement: task.Statement, Solution: task.Solution, Answer: task.Answer, Read: task.Read})
 	}

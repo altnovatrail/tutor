@@ -205,8 +205,9 @@ var Admitted = []Entry{
 		Report:     paperWord,
 		Prompt:     "d18478adbd9389bbead7230df9e757ea930493ae2274fbc7ae24e93e5ca24d59",
 	},
-	// The tutor's words of a rung of the Check's ladder put another way, without the work, on
-	// version 2 of their prompt. By the author's word, without a set and without a run, which are Д24.
+	// The tutor's words of a task from paper without the work, on version 3 of their prompt: a rung
+	// of the Check's ladder put another way, and the answer to a question of the learner's own. By
+	// the author's word, without a set and without a run, which are Д24.
 	{
 		Capability: admissionv0.CapabilityHint,
 		Models:     paperCascade,
@@ -218,14 +219,14 @@ var Admitted = []Entry{
 
 // paperWordsWord is the author's word that admitted the words of a task from paper, under the same
 // suspension as paperWord, to the same last day, and paperWordsPrompt the fingerprint of their
-// prompt, version 2.
+// prompt, version 3, which the question of the learner's own came with.
 var (
 	paperWordsWord = Evidence{
 		Word:  "the author's word, while eval before admission is suspended",
-		Date:  "2026-11-20",
+		Date:  "2026-11-24",
 		Until: "2027-01-17",
 	}
-	paperWordsPrompt = "90f888684b3a0fa3356de15c8a897a4f0a62de153b1d20108fcbd8df526e6282"
+	paperWordsPrompt = "6d2e75eb43b6ebf21dec735033ba27cfb96e32117e3f2e77b723ac54473eda34"
 )
 
 // authorsWord is the evidence of the entries the author admitted without eval, while eval before
