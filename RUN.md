@@ -18,7 +18,7 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
    - Exception, no confirmation: the task's checks by R146 spec. AI calls on the stub: the tests' fake adapters and `-stub` of the runner `cmd/tutor-eval`, with no key. `tutor`'s one path in a browser is the board; a container of the kind `go` has no Playwright, so the executor checks the board without a browser: by its tests, and by `go run ./cmd/tutor-eval board` with `-dir` outside the work tree and a fake key in `TUTOR_ANTHROPIC_API_KEY`, by requests to its server. `just board` is the author's: it takes the real key and writes to `samples/` (R110).
    - A real AI call only where the task checks the model's answers — the words, the reading, the assessment —, that is, by an eval run (R28): on the eval key, `~/.config/tutor/anthropic.key`, under its own spend limit at the provider, set by the author, and within the ceiling the task's text names. With no ceiling in the task, a real call waits for confirmation, like anything else that costs money. «Сделано» of such a task names what was spent: the provider, the number of calls and the sum.
    - Nothing on devices: `tutor` has no learner's screens, and the board is the author's tool.
-5. External facts and measurements — as RULES.md, How we work, says.
+5. External facts and measurements — as RULES.md, The bar and How we work, says, and [docs/sources.md](docs/sources.md) by its opening.
 6. End with the checks of what the task changed: documents — `just -f spec/justfile docs-check-repo` (CLAUDE.md, Environment); code — the rule of its part. Then `/code-review high`, one round; a small change may skip the review.
 7. Do not commit: the author commits after review, unless the author's word says otherwise, as «доведи до мержа». A run of spec's orchestrator, «Сделай эпик E…», is such a word on each of its tasks: its executor works by the contract `spec/tools/orchestrator/executor.md` — commits, pushes and opens the pull request, never merges (R156 spec; R115).
 8. End with a short report in Russian: what was done, files, how to check, what the review found or why there was none, what is open and what goes «в реестр spec».
@@ -39,7 +39,7 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 
 **Task body** (Russian): «Цель», «Сделать», «Как проверить», «Разделы»; as needed «Не делать», «Решить при планировании», «Мой шаг», «Стоимость», «Риски»; from planning «Почему», «Решено автором (дата)», «Выяснилось при планировании»; when done «Сделано (дата)» (rule 9).
 
-**Citations** — RULES.md spec, Citations: a task's number stands only here, in `run/` and in `docs/plan/` (R171 spec). Own sections — `architecture 2`, own decisions — `R03`; spec's — «architecture 3.5 spec», «R18 spec», its open questions — «Т-22», «П-7», «О-2»: the repository keeps no registers; other NovaTrail repositories' decisions — «R03 api»; MathTrail's — «R44 canvas-api», in a list «canvas-api: R44, R59». A task — «T03», from another repository «T03 tutor».
+**Citations** — RULES.md spec, Citations: a task's number stands only here, in `run/` and in `docs/plan/` (R171 spec); outside them only a fact no run checks, or a measurement, cites its record — `sources 1.1` or `measurements 1.1`, spec's `sources 2.3 spec`. Own sections — `architecture 2`, own decisions — `R03`; spec's — «architecture 3.5 spec», «R18 spec», its open questions — «Т-22», «П-7», «О-2»: the repository keeps no registers; other NovaTrail repositories' decisions — «R03 api»; MathTrail's — «R44 canvas-api», in a list «canvas-api: R44, R59». A task — «T03», from another repository «T03 tutor».
 
 ## Epics
 
@@ -57,7 +57,9 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 
 **2026-11-23: тег v0.19.16 и строка 5.23.** Оркестратор `spec` дал T198 — одну задачу, своя ветка и свой pull request: переход на `spec` `v0.19.16`, в котором T283 spec и R172 spec — стиль штриха и частичное стирание, — и `internal/evalsample` по ним (строка 5.23 COORDINATION.md spec).
 
-**2026-11-24: тег v0.19.17.** Оркестратор `spec` дал T199 — одну задачу, своя ветка и свой pull request: переход на `spec` `v0.20.0`, в котором T286 spec — проверка `devcontainer-outdated`, — и расширения VS Code и Claude Code до последних стабильных версий (строка 7.58 COORDINATION.md spec).
+**2026-11-24: тег v0.19.17.** Оркестратор `spec` дал T199 — одну задачу, своя ветка и свой pull request: переход на `spec` `v0.19.17`, в котором T286 spec — проверка `devcontainer-outdated`, — и расширения VS Code и Claude Code до последних стабильных версий (строка 7.58 COORDINATION.md spec).
+
+**2026-11-24: правило записей `sources`.** Оркестратор `spec` дал T200 — одну задачу, своя ветка и свой pull request: `docs/sources.md` по правилу записей `spec` `v0.20.0`, на который подмодуль подняла выкладка другой задачи (строка 7.70 COORDINATION.md spec).
 
 **Результат:** `tutor` на теге `spec` `v0.19.12`, и его ссылки — по строгому правилу R171 spec (строка 7.44 COORDINATION.md spec).
 
@@ -91,5 +93,14 @@ A task starts with «Выполни задачу T01 из RUN.md» in a new sess
 | [x] | T195 | Журнал по R171 spec: от «Move to `spec` `v0.14.0`» до конца; ключ `citations` | Claude | — | T194 |
 | [x] | T198 | Образцы со стилем штриха и частичным стиранием (R172 spec), обрезка в цвете | Claude | — | T195 |
 | [x] | T199 | Переход на тег `spec` v0.19.17 | Claude | — | T198 |
+| [ ] | T200 | `docs/sources.md` по правилу записей `spec` v0.20.0 | Claude | — | T199 |
 
-**Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, pull request #215; T196, T197 — проход по части T184 — и T185–T195 — пачка на ветке `e22-tutor-2`, pull request #216 (R159 spec), по «Зависит от». T198 — своя ветка `t198-styles`, pull request #217. T199 — своя ветка `t199-spec`, pull request #218.
+**Порядок:** T183 и T184 — пачка на ветке `e22-tutor`, pull request #215; T196, T197 — проход по части T184 — и T185–T195 — пачка на ветке `e22-tutor-2`, pull request #216 (R159 spec), по «Зависит от». T198 — своя ветка `t198-styles`, pull request #217. T199 — своя ветка `t199-spec`, pull request #218. T200 — своя ветка `t200-sources`.
+
+#### T200. `docs/sources.md` по правилу записей `spec` v0.20.0
+
+- **Цель:** `docs/sources.md` по правилу записей `spec/RULES.md` нового тега: запись — только у того, что прогон не проверит или у чего нет версии; остальное — ссылка на месте с версией или коммитом, тест или `measurements`; теги `spec` и файлы репозиториев NovaTrail — git.
+- **Почему:** строка 7.70 COORDINATION.md spec. Подмодуль `spec/` уже на v0.20.0 — его подняла выкладка другой задачи, только подмодуль и пины; перехода на другой тег нет, но строки CLAUDE.md, RUN.md и вводные документов о правиле записей — из заготовки шаблона этого тега, по `spec/tools/orchestrator/tasks/spec-tag.md`.
+- **Сделать:** переход на тег по `spec/tools/orchestrator/tasks/spec-tag.md` — CLAUDE.md, RUN.md и вводная `docs/sources.md` из заготовки шаблона; свернуть повторные чтения до текущего; записи о тегах `spec` и файлах других репозиториев — удалить, утверждения — ссылка на тег или репозиторий@коммит; поведение инструментов и сервисов под тестом, пробным PR или записью `measurements` — ссылка на месте с версией или коммитом, запись удалить; номера не переиспользовать, архивы `docs/plan/` не трогать; ссылки на записи `spec` (`… spec`) сверить с записью нового тега: удалённая или суженная, что утверждения уже не держит (так 5.4 — теперь только белая книга Edge), — так же. Ссылки, которые нашла задача `spec`: docs/architecture.md:61 — `sources 5.4 spec` о `localService`. Смысл утверждений не менять. Больше одного ревью — по правилу 11 остальное — следующими задачами таблицы 1, строка ждёт всех.
+- **Как проверить:** `just -f spec/justfile docs-check-repo` и проверки частей, чьи файлы задеты, — зелёные; размер `docs/sources.md` до и после — в отчёт.
+- **Разделы:** `spec/RULES.md`, «The bar» и «Citations»; R171 `spec`; строка «Порядка».

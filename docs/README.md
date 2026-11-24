@@ -6,7 +6,7 @@
 
 - [architecture.md](architecture.md) — the component: what it does and does not do, its data and links, what is still to decide, and how it is built.
 - [decisions.md](decisions.md) — the decision log: what was decided, why, and what was rejected.
-- [sources.md](sources.md) — the external facts the documents rest on — a provider's terms, a price, a law —, each with its address, the date it was read and a quote.
+- [sources.md](sources.md) — the records of the facts no run checks that the documents rest on, each with its address, the date read and a quote.
 - [measurements.md](measurements.md) — the measurements: what was measured, how, on what, and the numbers.
 - The sheet plans and the drawn pages of eval: [sheets.md](sheets.md), [free-sheets.md](free-sheets.md), [near-sheets.md](near-sheets.md), [workbook.md](workbook.md) and [essays.md](essays.md).
 - [plan/](plan/) — the archives of the done epics and of the answered questions, in Russian.
