@@ -12,9 +12,9 @@ import (
 // route of an account with the right to the mode alone, on a local run or on the deployment; the
 // library takes it only when Config.Debug is on, and on any other call it changes nothing.
 type Debug struct {
-	// First serves every call of a task from paper — CallFinding, CallStatement, CallChecking and
-	// the tutor's words put another way, CallPaperHint —, one attempt with no later one; nil leaves
-	// each its models of the list.
+	// First serves every call of a task from paper — CallFinding, CallStatement, CallChecking, the
+	// tutor's words, CallPaperHint, and the drawing of grown-up mode, CallDrawing —, one attempt
+	// with no later one; nil leaves each its models of the list.
 	First *admission.Model
 	// Record gets each call of a model of the call, once the models have answered, in their order,
 	// from the goroutine of the call.
@@ -41,7 +41,7 @@ var errDebugOff = errors.New("tutor: the route has the debug mode, and the confi
 // debugged tells whether the debug mode serves a kind of call: the calls of a task from paper.
 func debugged(c Call) bool {
 	switch c {
-	case CallFinding, CallStatement, CallChecking, CallPaperHint:
+	case CallFinding, CallStatement, CallChecking, CallPaperHint, CallDrawing:
 		return true
 	}
 	return false

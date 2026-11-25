@@ -1,7 +1,8 @@
 // Package synth draws synthetic samples, for eval and for tests, and a synthetic bank of tasks for
 // tests. No handwriting is in the repository: the strokes here are drawn by code, from a simple
 // vector font, with time and a little jitter, so that they look like what a pen gives without being
-// anyone's hand. Every sample is the same each time it is drawn, on any machine.
+// anyone's hand. Every sample is the same each time it is drawn, on any machine. The same font,
+// with the signs of school mathematics, writes the tutor's own lines on a sheet (Handwriting).
 //
 // A product that goes into a sum is rounded on its own, float64(…). Go may otherwise fuse a
 // multiplication and an addition into one instruction where the processor has one, as arm64

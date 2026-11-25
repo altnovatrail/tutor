@@ -62,6 +62,57 @@ type Request struct {
 	// or the text after them. The GPT adapter sends nothing for it, and OpenAI may cache by
 	// itself more of a request than its instructions.
 	CacheInstructions bool
+	// Tools are the tools the model may call in place of an answer of the schema: a request with
+	// tools has no schema, and its answer is the input of the one tool the model called. ToolChoice
+	// is how it may call them, ToolAuto alone, which an empty one is; an adapter that sends no tools
+	// refuses a request with any before a call.
+	Tools      []Tool
+	ToolChoice ToolChoice
+}
+
+// Tool is a tool a request offers a model: its name, what it does, which the model reads, and the
+// JSON schema of its input, of type object. A value of the schema may be a json.RawMessage, as in
+// Request.Schema.
+type Tool struct {
+	Name        string
+	Description string
+	Schema      map[string]any
+}
+
+// ToolChoice is how a model may call the tools of a request.
+type ToolChoice string
+
+// ToolAuto lets the model decide whether to call a tool, and which: the one choice that leaves it
+// its thinking, which a forced call turns off.
+const ToolAuto ToolChoice = "auto"
+
+// CheckTools refuses the tools of a request that an adapter which sends them will not send: a
+// request with a schema too, a choice other than ToolAuto, a choice with no tools, and a tool with
+// no name, a name twice or no schema of an object.
+func CheckTools(r Request) error {
+	switch {
+	case len(r.Tools) == 0 && r.ToolChoice != "":
+		return errors.New("a choice of tools with no tools")
+	case len(r.Tools) == 0:
+		return nil
+	case r.Schema != nil:
+		return errors.New("a request with both a schema of its answer and tools")
+	case r.ToolChoice != "" && r.ToolChoice != ToolAuto:
+		return fmt.Errorf("the choice of tools %q", r.ToolChoice)
+	}
+	seen := map[string]bool{}
+	for i, t := range r.Tools {
+		switch {
+		case t.Name == "":
+			return fmt.Errorf("tool %d has no name", i+1)
+		case seen[t.Name]:
+			return fmt.Errorf("the tool %s is offered twice", t.Name)
+		case t.Schema == nil || t.Schema["type"] != "object":
+			return fmt.Errorf("the tool %s has no schema of an object", t.Name)
+		}
+		seen[t.Name] = true
+	}
+	return nil
 }
 
 // Response is a model's answer: JSON that follows the request's schema, the model the provider
@@ -73,9 +124,10 @@ type Request struct {
 // after a failed attempt. A call that fails with ErrNoAnswer still returns its tokens, since they
 // are billed. Partial is a streamed answer that began and broke off before the provider gave the
 // final count of its tokens: the tokens it holds are those counted so far, and the bill is not
-// known.
+// known. Of a request with tools, JSON is the input of the tool the model called, and Tool its name.
 type Response struct {
 	JSON            string
+	Tool            string
 	Model           string
 	InputTokens     int64
 	CacheWrites     []CacheWrite
@@ -107,8 +159,8 @@ type Model interface {
 // model's exact ID and a key, and refuses an ID it does not call.
 type Dial func(id, key string) (Model, error)
 
-// ErrNoAnswer is an answer that came back without the JSON asked for: the model refused, or ran
-// out of tokens before it finished.
+// ErrNoAnswer is an answer that came back without the JSON asked for: the model refused, ran out
+// of tokens before it finished, or called no tool it was offered.
 var ErrNoAnswer = errors.New("no answer")
 
 // CheckImages refuses the pictures of a request that an adapter sending at most pictures will not

@@ -366,9 +366,6 @@ func Read(answer string, tasks, width, height int) (*Check, error) {
 	if raw.Tasks == nil || raw.TutorWords == nil || raw.Hints == nil {
 		return nil, errors.New("checking: the answer lacks the tasks, the tutor's words or the hints")
 	}
-	if n := len(*raw.Hints); n < minHints || n > maxHints {
-		return nil, fmt.Errorf("checking: %d hints, not %d or %d", n, minHints, maxHints)
-	}
 	if n := len(*raw.Tasks); tasks == 0 && (n < 1 || n > MaxTasks) {
 		return nil, fmt.Errorf("checking: %d tasks counted, not 1 to %d", n, MaxTasks)
 	} else if tasks == 0 {
@@ -387,6 +384,11 @@ func Read(answer string, tasks, width, height int) (*Check, error) {
 			return nil, fmt.Errorf("checking: an answer of task %d, not in the frame or answered twice", s.Task)
 		}
 		slots = append(slots, s)
+	}
+	// The instructions let a work all correct go without a ladder, which the program never shows.
+	allCorrect := !slices.ContainsFunc(slots, func(s Slot) bool { return s.Verdict != VerdictCorrect })
+	if n := len(*raw.Hints); (n < minHints || n > maxHints) && (n != 0 || !allCorrect) {
+		return nil, fmt.Errorf("checking: %d hints, not %d or %d", n, minHints, maxHints)
 	}
 	slices.SortFunc(slots, func(a, b Slot) int { return a.Task - b.Task })
 	return &Check{Slots: slots, TutorWords: *raw.TutorWords, Hints: slices.Clone(*raw.Hints)}, nil

@@ -13,6 +13,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/correct"
 	"github.com/altnovatrail/tutor/internal/essay"
 	"github.com/altnovatrail/tutor/internal/finding"
+	"github.com/altnovatrail/tutor/internal/grownup"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/paperwords"
 	"github.com/altnovatrail/tutor/internal/reading"
@@ -31,13 +32,17 @@ const maxTextBytes = 24000
 
 // checkText refuses a request whose instructions, text and labels of its pictures are longer than
 // maxTextBytes.
-func checkText(r provider.Request) error {
+func checkText(r provider.Request) error { return checkTextWithin(r, maxTextBytes) }
+
+// checkTextWithin is checkText with a bound of its own, for a kind whose text holds more than
+// maxTextBytes, as the strokes of the drawing.
+func checkTextWithin(r provider.Request, most int) error {
 	n := len(r.Instructions) + len(r.Text)
 	for _, im := range r.Images {
 		n += len(im.Label)
 	}
-	if n > maxTextBytes {
-		return fmt.Errorf("tutor: the request takes %d bytes of text, more than the %d its worst price holds", n, maxTextBytes)
+	if n > most {
+		return fmt.Errorf("tutor: the request takes %d bytes of text, more than the %d its worst price holds", n, most)
 	}
 	return nil
 }
@@ -48,8 +53,8 @@ type tokens struct{ in, out int64 }
 // Call is a kind of call of the library: the reading of a sheet, of a workbook page and of an essay,
 // the assessment of an essay by its rubric, the call of the words, with the work and without it, and
 // the words after a correct answer, the finding of the tasks on the photo of a page from paper, and
-// of a task from paper the reading of its statement, the Check of the work on it and the tutor's
-// words put another way.
+// of a task from paper the reading of its statement, the Check of the work on it, the tutor's
+// words beyond it and the drawing of grown-up mode.
 // Each serves a capability with a prompt of its own, and an entry of the list admits it only when it
 // measured that prompt.
 type Call string
@@ -69,6 +74,8 @@ const (
 	CallStatement Call = "statement"
 	CallChecking  Call = "checking"
 	CallPaperHint Call = "paper_hint"
+	// The drawing of grown-up mode on a task from paper: the tutor's act on the sheet.
+	CallDrawing Call = "drawing"
 )
 
 // kind is a kind of call of the library: the capability it serves and the fingerprint of its
@@ -100,8 +107,10 @@ type kind struct {
 // it, an estimate of their own without a call — the photo and short instructions in, a few words
 // and the model's thinking out —; the Check's, an estimate without a call too, are those of the
 // statement, the solution and the reading of the work that it takes the place of, its words beside,
-// and the words put another way those of the words without their picture. A model without them has no expected price, and api takes
-// the value of its own config then. The words serve the analysis of the steps with the work,
+// and the words put another way those of the words without their picture. The drawing's, an
+// estimate too, are those of the calls of a probe on a synthetic sheet, a 2 mm grid under a curve
+// among them, with the task's crop beside. A model without them has no expected price, and api
+// takes the value of its own config then. The words serve the analysis of the steps with the work,
 // CallWords, and the hint without it, CallHint, by one prompt; the hint was measured with the work,
 // so the hint without it has no expected tokens. The words after a correct answer are one
 // kind with the work and without it, and their worst is with it. The input of each is the whole
@@ -209,6 +218,17 @@ var kinds = map[Call]kind{
 		models:     3,
 		cascade:    true,
 		expected:   map[string]tokens{"claude-haiku-5-5": {in: 1200, out: 1200}, "claude-sonnet-5-5": {in: 1200, out: 600}, "claude-opus-5-5": {in: 1200, out: 400}},
+	},
+	// The drawing takes the work, a crop never shrunk, the task's crop as a photo, and a text of the
+	// strokes up to its own bound.
+	CallDrawing: {
+		capability: admissionv0.CapabilityDrawing,
+		prompt:     grownup.Fingerprint(),
+		maxIn:      grownup.MaxTextBytes + maxPhotoTokens + tokensOf(maxCropSide, 1),
+		maxOut:     grownup.DefaultMaxOutputTokens,
+		models:     2,
+		cascade:    true,
+		expected:   map[string]tokens{"claude-haiku-5-5": {in: 6500, out: 25000}, "claude-sonnet-5-5": {in: 6500, out: 5500}},
 	},
 }
 

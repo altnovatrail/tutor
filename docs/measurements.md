@@ -1382,6 +1382,25 @@ Each run checked that the prompt the library asks reads no worse than the eval p
 - **The expected tokens** of `price.go`: the finding's input 1,820 for every model; the statement's and the solution's 1,520, `SubmitWork`'s Opus, whose calls were these two and the reading; the reading's 910, a crop of work and its text, as Haiku's calls of the reading alone gave. The output of Haiku at `high` is above what its calls at the efforts the author tried gave — 450 for the finding, 500 for the statement and the solution, 60 for the reading —, and Sonnet's is Opus's where Sonnet has no line: 150 and 130 for the finding, 260 for the statement and the solution, 100 for the reading.
 - **What it does not say:** a few dozen calls of one person's pages, at the efforts of the debug mode, not the cascade's; the eval of Д21 and Д22, when paid runs return, gives the averages of admission (Д23).
 
+### 3.26. A probe of the drawing of grown-up mode, 2026-11-24
+
+**What and why** (2026-11-24). Whether a model places marks on a sheet precisely enough for the program to only put them there, and at what cost, before the drawing was built. One call of the Messages API by `curl`, outside the repository and the library: the probe's system prompt, the tool `draw` with the choice auto and the kind `path` beside those `internal/grownup` keeps, the synthetic sheet of 1200 × 900 units as one image, its strokes as JSON, and the request; no crop of the task. Step 1 asked a solution written on the sheet; step 2 a 2 mm grid hatched under the curve of x·sin x + 1 the sheet held. The tokens are the API's `usage`; the times and the prices are the author's notes of the runs.
+
+| Step | Model · effort | max_tokens | Input | Output | Stop | Time | $ |
+|---|---|---|---|---|---|---|---|
+| 2 | Haiku 5.5 · `high` | 32,000 | 4,733 | 32,000 | `max_tokens` | — | — |
+| 2 | Haiku 5.5 · `high` | 64,000 | 4,733 | 44,142 | `tool_use` | 177 s | 0.023 |
+| 2 | Haiku 5.5 · `medium` | 32,000 | 4,733 | 25,218 | `tool_use` | 102 s | 0.013 |
+| 2 | Haiku 5.5 · `low` | 32,000 | 4,733 | 5,900 | `tool_use` | — | — |
+| 2 | Sonnet 5.5 | 32,000 | 4,733 | 5,369 | `tool_use` | 35 s | 0.06 |
+| 2 | Opus 5.5 | 32,000 | 4,733 | 6,824 | `tool_use` | 56 s | 0.15 |
+| 1 | Haiku 5.5 | 32,000 | 4,156 | 2,512 | `tool_use` | — | — |
+| 1 | Opus 5.5 | 32,000 | 4,156 | 1,798 | `tool_use` | — | — |
+
+- **What it showed:** the grids of Haiku at `high` and `medium`, Sonnet and Opus lay precisely in the region under the curve, by the author's look at their pictures; most marks of the grid came as `path`. Haiku at `high` needs more than 32,000 tokens for such a grid.
+- **The expected tokens** of `price.go`: the input 6,500, the probe's with a photo of the task's crop beside; the output Haiku `medium`'s 25,000 and Sonnet's 5,500.
+- **What it does not say:** one sheet and two requests, a call each; the effort of a call the table names none of is not in its file; the prompt of `internal/grownup` differs from the probe's — the crop's pixels for the sheet's units, no `path`, the task's crop —, so its own share of precise acts is not measured (Д26).
+
 ## 4. Claude Code sessions
 
 ### 4.1. The spending of tutor's sessions

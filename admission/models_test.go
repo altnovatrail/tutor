@@ -14,6 +14,7 @@ import (
 	"github.com/altnovatrail/tutor/internal/correct"
 	"github.com/altnovatrail/tutor/internal/essay"
 	"github.com/altnovatrail/tutor/internal/finding"
+	"github.com/altnovatrail/tutor/internal/grownup"
 	"github.com/altnovatrail/tutor/internal/hint"
 	"github.com/altnovatrail/tutor/internal/paperwords"
 	"github.com/altnovatrail/tutor/internal/reading"
@@ -213,6 +214,21 @@ func TestAdmitted(t *testing.T) {
 			t.Errorf("the Check, %s: no fault", name)
 		}
 	}
+	// The drawing is a cascade of one to three attempts, admitted with its prompt now.
+	drawing := Entry{Capability: admissionv0.CapabilityDrawing, Models: []Model{haiku, opus}, Stage: StageAuthor, Report: evidence, Prompt: grownup.Fingerprint()}
+	if f := listFaults([]Entry{drawing}); len(f) != 0 {
+		t.Errorf("a good entry of the drawing has faults: %v", f)
+	}
+	for name, change := range map[string]func(*Entry){
+		"four models":    func(e *Entry) { e.Models = []Model{haiku, opus, haiku, opus} },
+		"another prompt": func(e *Entry) { e.Prompt = checking.Fingerprint() },
+	} {
+		e := drawing
+		change(&e)
+		if len(listFaults([]Entry{e})) == 0 {
+			t.Errorf("the drawing, %s: no fault", name)
+		}
+	}
 	// An entry by the author's word has no report but the word, its day and its last day, holds the
 	// stage author alone, and is a fault once that day has passed.
 	word := Evidence{Word: "the author's word", Date: "2026-11-17", Until: "2027-01-17"}
@@ -360,6 +376,9 @@ func listFaultsOn(list []Entry, today string) []string {
 		}
 		if e.Capability == admissionv0.CapabilityTaskChecking && (!cascade || e.Prompt != checking.Fingerprint()) {
 			out = append(out, fmt.Sprintf("entry %d of the Check: %d models, prompt %s, theirs now %s", i, len(e.Models), e.Prompt, checking.Fingerprint()))
+		}
+		if e.Capability == admissionv0.CapabilityDrawing && (!cascade || e.Prompt != grownup.Fingerprint()) {
+			out = append(out, fmt.Sprintf("entry %d of the drawing: %d models, prompt %s, theirs now %s", i, len(e.Models), e.Prompt, grownup.Fingerprint()))
 		}
 		if e.Capability == admissionv0.CapabilityRubricAssessment && (len(e.Models) != 1 || e.Prompt != essay.TextFingerprint()) {
 			out = append(out, fmt.Sprintf("entry %d of the rubric: %d models, prompt %s, the assessment's now %s", i, len(e.Models), e.Prompt, essay.TextFingerprint()))

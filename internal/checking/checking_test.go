@@ -131,11 +131,18 @@ func TestRead(t *testing.T) {
 	if c, err := Read(three, 1, 400, 200); err != nil || len(c.Hints) != 3 {
 		t.Errorf("three hints: %+v, %v", c, err)
 	}
+	// A work all correct may go without a ladder, as the instructions let it; a task not yet correct may not.
+	right := strings.Replace(task1, `"verdict": "no_answer"`, `"verdict": "correct"`, 1)
+	if c, err := Read(`{"tasks": [`+right+`], "tutor_words": "Right.", "hints": []}`, 1, 400, 200); err != nil || len(c.Hints) != 0 {
+		t.Errorf("all correct, no hints: %+v, %v", c, err)
+	}
 	off := strings.Replace(task1, `"verdict": "no_answer"`, `"verdict": "not_yet"`, 1)
 	for name, answer := range map[string]string{
 		"not JSON":         `12`,
 		"no hints":         `{"tasks": [` + task1 + `], "tutor_words": ""}`,
 		"one hint":         `{"tasks": [` + task1 + `], "tutor_words": "", "hints": ["a"]}`,
+		"none, one wrong":  `{"tasks": [` + strings.Replace(task1, `"verdict": "no_answer"`, `"verdict": "correct"`, 1) + `, ` + task2 + `], "tutor_words": "", "hints": []}`,
+		"one hint, right":  `{"tasks": [` + strings.Replace(task1, `"verdict": "no_answer"`, `"verdict": "correct"`, 1) + `], "tutor_words": "", "hints": ["a"]}`,
 		"four hints":       `{"tasks": [` + task1 + `], "tutor_words": "", "hints": ["a", "b", "c", "d"]}`,
 		"another field":    `{"tasks": [` + task1 + `], "tutor_words": "", "hints": ["a", "b"], "score": 1}`,
 		"another verdict":  `{"tasks": [` + off + `], "tutor_words": "", "hints": ["a", "b"]}`,

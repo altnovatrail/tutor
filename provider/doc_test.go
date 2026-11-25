@@ -77,3 +77,27 @@ func TestWorstInput(t *testing.T) {
 		t.Errorf("worst input = %v", p.WorstInput())
 	}
 }
+
+// The tools of a request go alone, with the choice auto or none, each named once with the schema of
+// an object; a request with no tools and no choice has nothing to refuse.
+func TestCheckTools(t *testing.T) {
+	draw := provider.Tool{Name: "draw", Schema: map[string]any{"type": "object"}}
+	for name, c := range map[string]struct {
+		r  provider.Request
+		ok bool
+	}{
+		"no tools":            {provider.Request{}, true},
+		"a tool":              {provider.Request{Tools: []provider.Tool{draw}}, true},
+		"a tool, auto":        {provider.Request{Tools: []provider.Tool{draw}, ToolChoice: provider.ToolAuto}, true},
+		"a choice, no tools":  {provider.Request{ToolChoice: provider.ToolAuto}, false},
+		"a schema too":        {provider.Request{Tools: []provider.Tool{draw}, Schema: map[string]any{"type": "object"}}, false},
+		"a forced choice":     {provider.Request{Tools: []provider.Tool{draw}, ToolChoice: "any"}, false},
+		"no name":             {provider.Request{Tools: []provider.Tool{{Schema: draw.Schema}}}, false},
+		"twice":               {provider.Request{Tools: []provider.Tool{draw, draw}}, false},
+		"no schema of object": {provider.Request{Tools: []provider.Tool{{Name: "draw", Schema: map[string]any{"type": "string"}}}}, false},
+	} {
+		if err := provider.CheckTools(c.r); (err == nil) != c.ok {
+			t.Errorf("%s: %v", name, err)
+		}
+	}
+}

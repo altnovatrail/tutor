@@ -205,8 +205,9 @@ var Admitted = []Entry{
 		Report:     paperWord,
 		Prompt:     "d18478adbd9389bbead7230df9e757ea930493ae2274fbc7ae24e93e5ca24d59",
 	},
-	// The tutor's words of a rung of the Check's ladder put another way, without the work, on
-	// version 2 of their prompt. By the author's word, without a set and without a run, which are Д24.
+	// The tutor's words of a task from paper without the work, on version 3 of their prompt: a rung
+	// of the Check's ladder put another way, and the answer to a question of the learner's own. By
+	// the author's word, without a set and without a run, which are Д24.
 	{
 		Capability: admissionv0.CapabilityHint,
 		Models:     paperCascade,
@@ -214,18 +215,45 @@ var Admitted = []Entry{
 		Report:     paperWordsWord,
 		Prompt:     paperWordsPrompt,
 	},
+	// The drawing of grown-up mode on a task from paper, on version 1 of its prompt: the tutor's act
+	// on the sheet as a grown-up asks, with none of its limits. By the author's word, without a set
+	// and without a run, which are Д26, a cascade of its own of two attempts: Haiku 5.5 at medium,
+	// then Sonnet 5.5 at medium, named, since Sonnet's own default is high.
+	{
+		Capability: admissionv0.CapabilityDrawing,
+		Models:     drawingCascade,
+		Stage:      StageAuthor,
+		Report:     drawingWord,
+		Prompt:     drawingPrompt,
+	},
 }
+
+// drawingWord is the author's word that admitted the drawing of grown-up mode, under the same
+// suspension as paperWord, to the same last day, drawingPrompt the fingerprint of its prompt,
+// version 1, and drawingCascade its attempts, in their order.
+var (
+	drawingWord = Evidence{
+		Word:  "the author's word, while eval before admission is suspended",
+		Date:  "2026-11-24",
+		Until: "2027-01-17",
+	}
+	drawingPrompt  = "f81733d3f5b984db86fe4070d1a15570c45464d8013be0fbac08e8197bb4f4ac"
+	drawingCascade = []Model{
+		{Provider: "anthropic", ID: "claude-haiku-5-5", Effort: "medium"},
+		{Provider: "anthropic", ID: "claude-sonnet-5-5", Effort: "medium"},
+	}
+)
 
 // paperWordsWord is the author's word that admitted the words of a task from paper, under the same
 // suspension as paperWord, to the same last day, and paperWordsPrompt the fingerprint of their
-// prompt, version 2.
+// prompt, version 3, which the question of the learner's own came with.
 var (
 	paperWordsWord = Evidence{
 		Word:  "the author's word, while eval before admission is suspended",
-		Date:  "2026-11-20",
+		Date:  "2026-11-24",
 		Until: "2027-01-17",
 	}
-	paperWordsPrompt = "90f888684b3a0fa3356de15c8a897a4f0a62de153b1d20108fcbd8df526e6282"
+	paperWordsPrompt = "6d2e75eb43b6ebf21dec735033ba27cfb96e32117e3f2e77b723ac54473eda34"
 )
 
 // authorsWord is the evidence of the entries the author admitted without eval, while eval before
