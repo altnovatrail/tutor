@@ -49,6 +49,27 @@ func TestCascadeOfTheFinding(t *testing.T) {
 	}
 }
 
+// A hook of WithNextModel hears of each later model before it is asked, by its place and the
+// list's length, and of none when the first one does.
+func TestNextModelHook(t *testing.T) {
+	const sum = `{"tasks": [{"statement": "37 + 48 =", "formula": "37+48"}]}`
+	const broken = `{"tasks": [{"statement": "37 + 48 =", "formula": 1}]}`
+	p := PaperTask{Route: platform, Statement: photoJPEG(t, 30, 30)}
+	heard := func(haiku, sonnet string) [][2]int {
+		lib, _ := cascadeOf(t, haiku, sonnet, sum)
+		var got [][2]int
+		ctx := WithNextModel(context.Background(), func(model, models int) { got = append(got, [2]int{model, models}) })
+		lib.ReadStatement(ctx, p)
+		return got
+	}
+	if got := heard(broken, broken); len(got) != 2 || got[0] != [2]int{1, 3} || got[1] != [2]int{2, 3} {
+		t.Errorf("two later models heard as %v", got)
+	}
+	if got := heard(sum, sum); len(got) != 0 {
+		t.Errorf("the first model did, yet the hook heard %v", got)
+	}
+}
+
 // The statement asks a later model only on a failure: one that is no formula is the answer.
 func TestCascadeOfTheStatement(t *testing.T) {
 	const sum = `{"tasks": [{"statement": "37 + 48 =", "formula": "37+48"}]}`
