@@ -6,8 +6,8 @@ toolchain go1.27.4
 
 require (
 	github.com/altnovatrail/module-kit v0.3.16
-	github.com/altnovatrail/spec v0.21.0
-	github.com/altnovatrail/spec/contracts v0.21.0
+	github.com/altnovatrail/spec v0.21.2
+	github.com/altnovatrail/spec/contracts v0.21.2
 	github.com/anthropics/anthropic-sdk-go v1.84.0
 	github.com/openai/openai-go/v3 v3.105.0
 	github.com/santhosh-tekuri/jsonschema/v6 v6.0.3
