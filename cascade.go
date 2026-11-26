@@ -27,8 +27,11 @@ func cascade[T any](ctx context.Context, calls []call, try func(call) (T, Outcom
 		usage      []Usage
 	)
 	for i, c := range calls {
-		if i > 0 && !timeFor(ctx) {
-			break
+		if i > 0 {
+			if !timeFor(ctx) {
+				break
+			}
+			NextModel(ctx, i, len(calls))
 		}
 		got, out := try(c)
 		usage = append(usage, out.Usage...)
@@ -52,6 +55,25 @@ func cascade[T any](ctx context.Context, calls []call, try func(call) (T, Outcom
 	}
 	bestOut.Usage = usage
 	return best, bestOut
+}
+
+type nextModelKey struct{}
+
+// WithNextModel gives ctx a hook that a cascade of a call made with it calls before it asks a later
+// model: model is the place of that model in the call's list, from 0, and models the list's length.
+// The hook runs on the call's own goroutine and holds the cascade until it returns, so it should be
+// quick and must not fail the call.
+func WithNextModel(ctx context.Context, next func(model, models int)) context.Context {
+	return context.WithValue(ctx, nextModelKey{}, next)
+}
+
+// NextModel tells the hook WithNextModel gave ctx, if any, that a call goes on to the model at
+// place model of a list of models: what a cascade does, and a stand-in for tutor, as a test's or
+// the stub's, may do too.
+func NextModel(ctx context.Context, model, models int) {
+	if next, ok := ctx.Value(nextModelKey{}).(func(int, int)); ok {
+		next(model, models)
+	}
 }
 
 // timeFor tells whether a later attempt may begin: ctx is not done, and cascadeFloor is left before
