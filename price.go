@@ -3,6 +3,7 @@ package tutor
 import (
 	"errors"
 	"fmt"
+	"maps"
 	"slices"
 	"time"
 
@@ -230,6 +231,12 @@ var kinds = map[Call]kind{
 		cascade:    true,
 		expected:   map[string]tokens{"claude-haiku-5-5": {in: 6500, out: 25000}, "claude-sonnet-5-5": {in: 6500, out: 5500}},
 	},
+}
+
+// Calls are the kinds of call of the library, in the order of their names: every kind a call of a
+// model may be of, which api names in its record of the debug mode.
+func Calls() []Call {
+	return slices.Sorted(maps.Keys(kinds))
 }
 
 // asked are the models of an entry a call of the kind asks: the first models of them when the kind
