@@ -223,7 +223,7 @@ func (t *Tutor) chooseCall(c Call, r Route) (admission.Entry, admission.Answer, 
 	}
 	// The debug mode bypasses the list: its models serve the call, and the admission's refusal
 	// stands only where it names none.
-	if d := debugOf(c, r); d != nil && (a.Admitted || d.First != nil) {
+	if d := choiceOf(c, r); d != nil && (a.Admitted || d.First != nil) {
 		e.Models = d.models(k.asked(e.Models))
 		a.Admitted, a.Reason = true, nil
 		return e, a, nil
@@ -385,12 +385,15 @@ type Outcome struct {
 
 // call is a model of the entry chosen with its client, and in the debug mode the kind of the
 // library's call and the mode, which records it. attempt is the model's
-// place among the attempts of a cascade, from 1, and 0 where the call asks its models at once.
+// place among the attempts of a cascade, from 1, and 0 where the call asks its models at once;
+// reader is a reader's place among the models of a reading, from 1, and 0 where the kind is no
+// reading of a sheet or a page.
 type call struct {
 	model   admission.Model
 	client  provider.Model
 	kind    Call
 	attempt int
+	reader  int
 	debug   *Debug
 }
 
@@ -410,16 +413,20 @@ func (t *Tutor) prepare(c Call, r Route) ([]call, admission.Answer, *Outcome) {
 	}
 	// The models of a cascade are its attempts, one after another, unless the debug mode chose the
 	// models of the call.
-	cascading := kinds[c].cascade && !debugOf(c, r).chose()
+	cascading := kinds[c].cascade && !choiceOf(c, r).chose()
 	calls := make([]call, 0, len(e.Models))
 	for _, m := range e.Models {
 		client, err := t.client(m, r.Own)
 		if err != nil {
 			return nil, a, &Outcome{Kind: Failed, Admission: a, Err: err}
 		}
-		cl := call{model: m, client: client, kind: c, debug: debugOf(c, r)}
+		// The mode records every kind of call; it chooses the models of a task from paper alone.
+		cl := call{model: m, client: client, kind: c, debug: r.Debug}
 		if cascading {
 			cl.attempt = len(calls) + 1
+		}
+		if kinds[c].pair {
+			cl.reader = len(calls) + 1
 		}
 		calls = append(calls, cl)
 	}
@@ -491,7 +498,7 @@ func ask(ctx context.Context, a admission.Answer, calls []call, reqs []provider.
 			out.Usage, used = append(out.Usage, u), &u
 		}
 		if c.debug != nil && c.debug.Record != nil {
-			c.debug.Record(DebugCall{Call: c.kind, Attempt: max(c.attempt, 1), Model: c.model, Answer: resps[i].JSON, Usage: used, Err: errs[i]})
+			c.debug.Record(DebugCall{Call: c.kind, Attempt: max(c.attempt, 1), Reader: c.reader, Model: c.model, Answer: resps[i].JSON, Usage: used, Err: errs[i]})
 		}
 		if errs[i] == nil {
 			continue
